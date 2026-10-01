@@ -18,7 +18,7 @@
     <link rel="icon" type="image/svg+xml" href="icon.svg?v=24.6">
     <link rel="apple-touch-icon" href="icon-192.png?v=24.6">
     <link rel="manifest" href="manifest.json?v=24.6">
-    <link rel="stylesheet" href="style.css?v=24.6">
+    <link rel="stylesheet" href="style.css?v=24.7">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -847,19 +847,19 @@
         
         <!-- Lobby Pre-Partida -->
         <div id="dueloLobby" class="duelo-lobby-container">
-<div style="padding: 1rem 1rem 0;">
+            <div style="padding: 1rem 1rem 0;">
                 <button id="backFromDueloBtn" class="button button--ghost button--sm" type="button" style="font-weight: 600;">
-                    ⬅️ Volver a Estudiar Juntos
+                    ⬅️ Volver al Inicio
                 </button>
             </div>
             
             <div class="duelo-header-hero">
                 <div class="hero__badge">
-                    <span>⚔️ Estudio Grupal Competitivo y Cooperativo</span>
+                    <span>🤝 Multijugador Online en Tiempo Real</span>
                 </div>
-                <h1 class="duelo-title">Modo Duelo de Bolillero</h1>
+                <h1 class="duelo-title">Estudiar Juntos</h1>
                 <p class="duelo-subtitle">
-                    Competí y colaborá con tus compañeros en tiempo real desde distintos celulares o computadoras, o jugá en el mismo dispositivo.
+                    Desafíos sincronizados en vivo entre celulares y computadoras. Elegí un juego, la modalidad y compartí el PIN con tu grupo.
                 </p>
             </div>
 
@@ -899,33 +899,15 @@
                 </button>
             </div>
 
-            <!-- Selector de Modo Duelo: Online Multijugador vs Local -->
-            <div class="duelo-mode-selector">
-                <button id="dueloModeOnlineBtn" class="duelo-mode-tab is-active" type="button">
-                    <span class="duelo-mode-tab__icon">🌐</span>
-                    <div class="duelo-mode-tab__text">
-                        <strong>Modo Duelo Online</strong>
-                        <span>Multijugador en simultáneo entre distintos celulares / PCs</span>
-                    </div>
-                </button>
-                <button id="dueloModeLocalBtn" class="duelo-mode-tab" type="button">
-                    <span class="duelo-mode-tab__icon">📱</span>
-                    <div class="duelo-mode-tab__text">
-                        <strong>Modo Local Compartido</strong>
-                        <span>Todos juegan desde este mismo dispositivo</span>
-                    </div>
-                </button>
-            </div>
-
-            <!-- ==================== SUB-PANEL: MODO DUELO ONLINE ==================== -->
+            <!-- ==================== SUB-PANEL: SALA ONLINE MULTIJUGADOR ==================== -->
             <div id="dueloOnlinePanel" class="duelo-online-panel">
-                <!-- Pestañas de Cambio de Vista en Móvil (Crear vs Unirse) -->
+                <!-- Pestañas de Vista: Crear Sala vs Unirse -->
                 <div class="duelo-online-view-tabs" id="dueloOnlineViewTabs">
                     <button type="button" class="duelo-online-view-tab is-active" id="dueloTabHostBtn" data-tab="host">
                         <span class="duelo-tab-icon">👑</span>
                         <div class="duelo-tab-text">
                             <strong class="duelo-tab-title">Crear Sala</strong>
-                            <span class="duelo-tab-sub">Sos el Anfitrión</span>
+                            <span class="duelo-tab-sub">Configurar partida</span>
                         </div>
                     </button>
                     <button type="button" class="duelo-online-view-tab" id="dueloTabJoinBtn" data-tab="join">
@@ -939,7 +921,7 @@
 
                 <!-- Vista Inicial: Crear o Unirse a una Sala -->
                 <div id="dueloOnlineSetupView" class="duelo-online-setup-grid">
-                    <!-- Tarjeta: Crear Sala Online -->
+                    <!-- Tarjeta: Crear Sala Online con Flujo Secuencial -->
                     <div class="panel duelo-lobby-card duelo-lobby-card--host is-active" id="dueloLobbyCardHost">
                         <div class="panel__header">
                             <div style="display: flex; align-items: center; gap: 0.5rem;">
@@ -948,11 +930,16 @@
                             </div>
                             <span class="badge badge--accent">Host</span>
                         </div>
-                        <p class="duelo-card-desc">Elegí el desafío, la modalidad y compartí el Link Mágico o PIN con tus compañeros:</p>
+                        <p class="duelo-card-desc">Completá los pasos para configurar el desafío y abrir la sala de espera:</p>
 
-                        <!-- 1. Cuadrícula de Juegos Moderna -->
-                        <div class="duelo-setup-section">
-                            <label class="duelo-section-label">🎮 Elegí el Desafío de la Sala</label>
+                        <!-- ==================== PASO 1: ELEGÍ EL JUEGO ==================== -->
+                        <div class="duelo-wizard-step is-active" id="dueloStep1Juego">
+                            <div class="duelo-wizard-header">
+                                <span class="duelo-step-badge">Paso 1</span>
+                                <h3 class="duelo-step-title">🎮 Elegí el Desafío de la Sala</h3>
+                            </div>
+                            <p class="duelo-step-desc">Seleccioná a qué juego querés competir o colaborar con tus compañeros:</p>
+
                             <div class="duelo-game-cards-grid" id="dueloGameCardsGrid">
                                 <button type="button" class="duelo-game-card is-selected" data-game="bomba">
                                     <div class="duelo-game-card__icon-wrap">
@@ -1024,7 +1011,6 @@
                                     <span class="duelo-game-card__check" aria-hidden="true">✔</span>
                                 </button>
                             </div>
-                            <!-- Select invisible mantenido para retrocompatibilidad total -->
                             <select id="dueloOnlineGameSelect" class="duelo-select" style="display: none;">
                                 <option value="bomba" selected>💣 Desactivá la Bomba</option>
                                 <option value="bolillero">🎲 Bolillero VS Online</option>
@@ -1034,9 +1020,14 @@
                             </select>
                         </div>
 
-                        <!-- 2. Modalidad / Formato de Partida (Versus vs Cooperativo) -->
-                        <div class="duelo-setup-section" style="margin-top: 1.25rem;">
-                            <label class="duelo-section-label">🤝 Modalidad de Partida (Hasta 8 Jugadores)</label>
+                        <!-- ==================== PASO 2: ELEGÍ LA MODALIDAD ==================== -->
+                        <div class="duelo-wizard-step is-active" id="dueloStep2Modo" style="margin-top: 1.5rem;">
+                            <div class="duelo-wizard-header">
+                                <span class="duelo-step-badge">Paso 2</span>
+                                <h3 class="duelo-step-title">🤝 Elegí la Modalidad de Partida</h3>
+                            </div>
+                            <p class="duelo-step-desc">¿Cómo querés competir o colaborar con los demás participantes?</p>
+
                             <div class="duelo-format-cards-grid" id="dueloFormatCardsGrid">
                                 <button type="button" class="duelo-format-card is-selected" data-mode="versus">
                                     <div class="duelo-format-card__icon">⚔️</div>
@@ -1055,7 +1046,6 @@
                                     <span class="duelo-format-card__check" aria-hidden="true">✔</span>
                                 </button>
                             </div>
-                            <!-- Selects ocultos para compatibilidad -->
                             <select id="dueloOnlineModeSelect" class="duelo-select" style="display: none;">
                                 <option value="versus" selected>⚔️ Modo Versus</option>
                                 <option value="coop">🤝 Modo Cooperativo</option>
@@ -1067,95 +1057,114 @@
                             <span class="duelo-field-hint" id="dueloOnlineModoHint" style="margin-top: 0.35rem; display: block;">Compitan entre todos con podio en vivo y robo relámpago.</span>
                         </div>
 
-                        <div class="field-toggle" style="margin: 1rem 0 0.5rem;" id="dueloOnlineTiebreakerRow">
-                            <label class="toggle-label" for="dueloOnlineAutoTiebreaker">
-                                <input id="dueloOnlineAutoTiebreaker" type="checkbox" checked>
-                                <span>⚡ Ronda de Desempate Automática con Minijuego</span>
-                            </label>
-                        </div>
-
-                        <!-- 3. Materia y Tiempo -->
-                        <div class="duelo-setup-row" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; margin-top: 1rem;">
-                            <div class="field" style="margin-bottom: 0;">
-                                <label for="dueloOnlineListaSelect">📚 Materia / Lista de Estudio</label>
-                                <select id="dueloOnlineListaSelect" class="duelo-select">
-                                    <!-- Opciones cargadas dinámicamente -->
-                                </select>
-                                <span class="duelo-field-hint" id="dueloOnlineListaHint">Cargando temas...</span>
+                        <!-- ==================== PASO 3: OPCIONES Y CREAR SALA ==================== -->
+                        <div class="duelo-wizard-step is-active" id="dueloStep3Opciones" style="margin-top: 1.5rem;">
+                            <div class="duelo-wizard-header">
+                                <span class="duelo-step-badge">Paso 3</span>
+                                <h3 class="duelo-step-title">⚙️ Opciones y Crear Sala Online</h3>
                             </div>
 
-                            <div class="field" style="margin-bottom: 0;">
-                                <label for="dueloOnlineTimeSelect">⏱️ Tiempo de la Partida / Turno</label>
-                                <select id="dueloOnlineTimeSelect" class="duelo-select">
-                                    <option value="30">30 segundos (Rápido)</option>
-                                    <option value="45">45 segundos</option>
-                                    <option value="60">1 minuto</option>
-                                    <option value="90" selected>1 minuto 30 segundos (Recomendado)</option>
-                                    <option value="120">2 minutos</option>
-                                    <option value="180">3 minutos</option>
-                                </select>
+                            <div class="duelo-setup-summary-banner" id="dueloSetupSummaryBanner">
+                                <span class="summary-icon" id="dueloSummaryIcon">💣</span>
+                                <div class="summary-text">
+                                    <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+                                        <strong id="dueloSummaryGameTitle" style="font-size: 1.05rem; color: #fff;">Desactivá la Bomba</strong>
+                                        <span class="badge badge--accent" id="dueloSummaryModeTitle">⚔️ Versus Competitivo</span>
+                                    </div>
+                                    <span style="font-size: 0.8rem; color: var(--color-text-muted);">Capacidad máxima: hasta 8 jugadores sincronizados</span>
+                                </div>
                             </div>
-                        </div>
 
-                        <!-- Checkbox Contraseña Opcional -->
-                        <div class="field-toggle" style="margin-top: 1rem;">
-                            <label class="toggle-label" for="dueloOnlineHasPassword">
-                                <input id="dueloOnlineHasPassword" type="checkbox">
-                                <span>🔒 Proteger sala con Contraseña Opcional</span>
-                            </label>
-                        </div>
-                        <div id="dueloOnlinePasswordRow" class="field hidden" style="margin-top: 0.5rem;">
-                            <label for="dueloOnlineRoomPassword">Contraseña de la Sala</label>
-                            <input id="dueloOnlineRoomPassword" type="text" maxlength="20" placeholder="Ej: estudio2026" autocomplete="off">
-                        </div>
+                            <div class="field-toggle" style="margin: 1rem 0 0.5rem;" id="dueloOnlineTiebreakerRow">
+                                <label class="toggle-label" for="dueloOnlineAutoTiebreaker">
+                                    <input id="dueloOnlineAutoTiebreaker" type="checkbox" checked>
+                                    <span>⚡ Ronda de Desempate Automática con Minijuego</span>
+                                </label>
+                            </div>
 
-                        <!-- Opciones de Comodines y Reglas para la Sala Online -->
-                        <div class="duelo-switches-list" style="margin-top: 1rem;">
-                            <label class="duelo-switch-row" for="dueloOnlineComodinSocorro">
-                                <input type="checkbox" id="dueloOnlineComodinSocorro" checked>
-                                <span class="duelo-switch-box" aria-hidden="true"></span>
-                                <div class="duelo-switch-info">
-                                    <strong>🤝 Socorro</strong>
-                                    <span>Pedir ayuda a un compañero por 5 pts cada uno.</span>
+                            <!-- Materia y Tiempo -->
+                            <div class="duelo-setup-row" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; margin-top: 1rem;">
+                                <div class="field" style="margin-bottom: 0;">
+                                    <label for="dueloOnlineListaSelect">📚 Materia / Lista de Estudio</label>
+                                    <select id="dueloOnlineListaSelect" class="duelo-select">
+                                        <!-- Opciones cargadas dinámicamente -->
+                                    </select>
+                                    <span class="duelo-field-hint" id="dueloOnlineListaHint">Cargando temas...</span>
                                 </div>
-                            </label>
-                            <label class="duelo-switch-row" for="dueloOnlineComodinPista">
-                                <input type="checkbox" id="dueloOnlineComodinPista" checked>
-                                <span class="duelo-switch-box" aria-hidden="true"></span>
-                                <div class="duelo-switch-info">
-                                    <strong>💡 Pista clave</strong>
-                                    <span>15 segundos extra de consulta.</span>
-                                </div>
-                            </label>
-                            <label class="duelo-switch-row" for="dueloOnlineComodinPaso">
-                                <input type="checkbox" id="dueloOnlineComodinPaso" checked>
-                                <span class="duelo-switch-box" aria-hidden="true"></span>
-                                <div class="duelo-switch-info">
-                                    <strong>🔄 Paso y Rebote</strong>
-                                    <span>Cambia el tema sin penalización.</span>
-                                </div>
-                            </label>
-                            <label class="duelo-switch-row" for="dueloOnlineReglaRacha">
-                                <input type="checkbox" id="dueloOnlineReglaRacha" checked>
-                                <span class="duelo-switch-box" aria-hidden="true"></span>
-                                <div class="duelo-switch-info">
-                                    <strong>🔥 Racha de Fuego</strong>
-                                    <span>Puntaje doble (+20 pts) al hilvanar 2 impecables.</span>
-                                </div>
-                            </label>
-                            <label class="duelo-switch-row" for="dueloOnlineReglaRobo">
-                                <input type="checkbox" id="dueloOnlineReglaRobo" checked>
-                                <span class="duelo-switch-box" aria-hidden="true"></span>
-                                <div class="duelo-switch-info">
-                                    <strong>⚡ Robo Relámpago Online</strong>
-                                    <span>Pulsador en simultáneo si alguien saca 0 pts.</span>
-                                </div>
-                            </label>
-                        </div>
 
-                        <button id="dueloCreateRoomBtn" class="button button--primary button--full button--lg" type="button" style="margin-top: 1.5rem; font-size: 1.05rem; box-shadow: 0 4px 20px rgba(99, 102, 241, 0.35);">
-                            ✨ Crear Sala y Obtener Link Mágico
-                        </button>
+                                <div class="field" style="margin-bottom: 0;">
+                                    <label for="dueloOnlineTimeSelect">⏱️ Tiempo de la Partida / Turno</label>
+                                    <select id="dueloOnlineTimeSelect" class="duelo-select">
+                                        <option value="30">30 segundos (Rápido)</option>
+                                        <option value="45">45 segundos</option>
+                                        <option value="60">1 minuto</option>
+                                        <option value="90" selected>1 minuto 30 segundos (Recomendado)</option>
+                                        <option value="120">2 minutos</option>
+                                        <option value="180">3 minutos</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Checkbox Contraseña Opcional -->
+                            <div class="field-toggle" style="margin-top: 1rem;">
+                                <label class="toggle-label" for="dueloOnlineHasPassword">
+                                    <input id="dueloOnlineHasPassword" type="checkbox">
+                                    <span>🔒 Proteger sala con Contraseña Opcional</span>
+                                </label>
+                            </div>
+                            <div id="dueloOnlinePasswordRow" class="field hidden" style="margin-top: 0.5rem;">
+                                <label for="dueloOnlineRoomPassword">Contraseña de la Sala</label>
+                                <input id="dueloOnlineRoomPassword" type="text" maxlength="20" placeholder="Ej: estudio2026" autocomplete="off">
+                            </div>
+
+                            <!-- Opciones de Comodines y Reglas para la Sala Online -->
+                            <div class="duelo-switches-list" style="margin-top: 1rem;">
+                                <label class="duelo-switch-row" for="dueloOnlineComodinSocorro">
+                                    <input type="checkbox" id="dueloOnlineComodinSocorro" checked>
+                                    <span class="duelo-switch-box" aria-hidden="true"></span>
+                                    <div class="duelo-switch-info">
+                                        <strong>🤝 Socorro</strong>
+                                        <span>Pedir ayuda a un compañero por 5 pts cada uno.</span>
+                                    </div>
+                                </label>
+                                <label class="duelo-switch-row" for="dueloOnlineComodinPista">
+                                    <input type="checkbox" id="dueloOnlineComodinPista" checked>
+                                    <span class="duelo-switch-box" aria-hidden="true"></span>
+                                    <div class="duelo-switch-info">
+                                        <strong>💡 Pista clave</strong>
+                                        <span>15 segundos extra de consulta.</span>
+                                    </div>
+                                </label>
+                                <label class="duelo-switch-row" for="dueloOnlineComodinPaso">
+                                    <input type="checkbox" id="dueloOnlineComodinPaso" checked>
+                                    <span class="duelo-switch-box" aria-hidden="true"></span>
+                                    <div class="duelo-switch-info">
+                                        <strong>🔄 Paso y Rebote</strong>
+                                        <span>Cambia el tema sin penalización.</span>
+                                    </div>
+                                </label>
+                                <label class="duelo-switch-row" for="dueloOnlineReglaRacha">
+                                    <input type="checkbox" id="dueloOnlineReglaRacha" checked>
+                                    <span class="duelo-switch-box" aria-hidden="true"></span>
+                                    <div class="duelo-switch-info">
+                                        <strong>🔥 Racha de Fuego</strong>
+                                        <span>Puntaje doble (+20 pts) al hilvanar 2 impecables.</span>
+                                    </div>
+                                </label>
+                                <label class="duelo-switch-row" for="dueloOnlineReglaRobo">
+                                    <input type="checkbox" id="dueloOnlineReglaRobo" checked>
+                                    <span class="duelo-switch-box" aria-hidden="true"></span>
+                                    <div class="duelo-switch-info">
+                                        <strong>⚡ Robo Relámpago Online</strong>
+                                        <span>Pulsador en simultáneo si alguien saca 0 pts.</span>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <button id="dueloCreateRoomBtn" class="button button--primary button--full button--lg button--create-room-glow" type="button" style="margin-top: 1.5rem; font-size: 1.1rem; box-shadow: 0 4px 24px rgba(99, 102, 241, 0.45);">
+                                ✨ Crear Sala y Abrir Lobby Online
+                            </button>
+                        </div>
                     </div>
 
                     <!-- Tarjeta: Unirse a Sala Online Existente -->
@@ -1198,203 +1207,94 @@
                     </div>
                 </div>
 
-                <!-- Vista de Sala de Espera Activa (Lobby en Vivo) -->
-                <div id="dueloOnlineWaitingRoom" class="duelo-waiting-room hidden">
-                    <div class="duelo-waiting-header">
-                        <div class="duelo-waiting-room-tag">
-                            <span class="duelo-waiting-pulse"></span>
-                            <span>SALA ONLINE EN VIVO</span>
-                        </div>
-                        <div class="duelo-waiting-code-display">
-                            <span class="duelo-code-label">CÓDIGO DE SALA:</span>
-                            <span class="duelo-code-value" id="dueloWaitingRoomCode">XXXXX</span>
-                        </div>
-                    </div>
-
-                    <!-- Enlaces Mágicos de Invitación -->
-                    <div class="duelo-magic-link-box">
-                        <div class="duelo-magic-link-input-wrap">
-                            <input id="dueloMagicLinkInput" type="text" readonly value="https://luibanez.vercel.app/?room=XXXXX">
-                            <button id="dueloCopyLinkBtn" class="button button--secondary button--sm" type="button">
-                                📋 Copiar Link Mágico
-                            </button>
-                            <button id="dueloShareLinkBtn" class="button button--primary button--sm" type="button">
-                                📲 Compartir
-                            </button>
-                        </div>
-                        <div class="duelo-magic-link-status" id="dueloCopySuccessHint" style="display: none;">
-                            ✅ ¡Enlace copiado al portapapeles! Pasáselo a tus compañeros.
-                        </div>
-                    </div>
-
-                    <!-- Lista de Jugadores Conectados en Tiempo Real -->
-                    <div class="duelo-waiting-players-section">
-                        <div class="duelo-section-header">
-                            <h3 class="duelo-subheading">👥 Jugadores en la Sala (<span id="dueloOnlineConnectedCount">1/8</span>)</h3>
-                            <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
-                                <span id="dueloWaitingRoomModoBadge" class="badge badge--accent">⚔️ Versus (Hasta 8)</span>
-                                <span class="badge badge--success" id="dueloServerStatusBadge">🟢 Servidor Conectado</span>
-                            </div>
-                        </div>
-                        <div class="duelo-online-players-grid" id="dueloOnlinePlayersGrid">
-                            <!-- Fichas de jugadores conectados en vivo generadas por JS -->
-                        </div>
-                    </div>
-
-                    <!-- Controles para Iniciar Partida (Host) o Esperar -->
-                    <div class="duelo-waiting-actions">
-                        <div id="dueloHostControlsArea" class="duelo-host-controls">
-                            <button id="dueloLaunchOnlineMatchBtn" class="button button--primary button--lg button--duel-launch" type="button">
-                                🚀 ¡COMENZAR DUELO ONLINE AHORA!
-                            </button>
-                            <span class="duelo-hint-text">El anfitrión inicia la partida para todos los participantes.</span>
-                        </div>
-                        <div id="dueloGuestWaitArea" class="duelo-guest-wait hidden">
-                            <div class="duelo-waiting-spinner"></div>
-                            <span>Esperando a que el anfitrión inicie el combate...</span>
-                        </div>
-                        <button id="dueloLeaveOnlineRoomBtn" class="button button--ghost" type="button">
-                            ✕ Salir de la Sala
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- ==================== SUB-PANEL: MODO LOCAL (MISMO DISPOSITIVO) ==================== -->
-            <div id="dueloLocalPanel" class="duelo-local-panel hidden">
-                <div class="duelo-lobby-grid">
-                    <!-- Columna 1: Jugadores y Lista de Estudio Local -->
-                    <div class="panel duelo-lobby-card">
-                        <div class="panel__header">
-                            <h2 class="panel__title">👥 Jugadores de la Partida</h2>
-                            <span class="badge badge--primary" id="dueloPlayerCountBadge">2 jugadores</span>
-                        </div>
-
-                        <div class="field">
-                            <label for="dueloPlayerInput">Nombre del participante</label>
-                            <div class="duelo-input-group">
-                                <input id="dueloPlayerInput" type="text" maxlength="25" placeholder="Escribí un nombre (ej. Lucas)" autocomplete="off">
-                                <button id="dueloAddPlayerBtn" class="button button--secondary" type="button">+ Agregar</button>
-                            </div>
-                        </div>
-
-                        <!-- Lista de fichas de jugadores -->
-                        <div class="duelo-players-chips" id="dueloPlayersChips" aria-label="Participantes cargados">
-                            <!-- Generados dinámicamente -->
-                        </div>
-
-                        <div class="field" style="margin-top: 1.5rem;">
-                            <label for="dueloListaSelect">Materia / Lista de Estudio</label>
-                            <select id="dueloListaSelect" class="duelo-select">
-                                <!-- Opciones cargadas dinámicamente -->
-                            </select>
-                            <span class="duelo-field-hint" id="dueloListaHint">Cargando temas disponibles...</span>
-                        </div>
-                    </div>
-
-                    <!-- Columna 2: Tiempos, Comodines y Reglas Especiales Local -->
-                    <div class="panel duelo-lobby-card">
-                        <div class="panel__header">
-                            <h2 class="panel__title">⏱️ Tiempo de Turno Global</h2>
-                        </div>
-                        <p class="duelo-card-desc">Duración del cronómetro igual para todos los participantes:</p>
-                        
-                        <div class="duelo-time-selector">
-                            <div class="duelo-time-inputs">
-                                <div class="field field--compact">
-                                    <label for="dueloMinutosInput">Minutos</label>
-                                    <input id="dueloMinutosInput" type="number" min="0" max="15" value="1" class="duelo-time-num">
-                                </div>
-                                <span class="duelo-time-separator">:</span>
-                                <div class="field field--compact">
-                                    <label for="dueloSegundosInput">Segundos</label>
-                                    <input id="dueloSegundosInput" type="number" min="0" max="59" value="30" class="duelo-time-num">
+                <!-- ==================== LOBBY SQUARE / SALA DE ESPERA TEMÁTICA ==================== -->
+                <div id="dueloOnlineWaitingRoom" class="duelo-waiting-room-wrapper hidden">
+                    <div class="duelo-lobby-box lobby-theme--bomba" id="dueloLobbySquareBox">
+                        <!-- Cabecera del Lobby Temático -->
+                        <div class="duelo-lobby-box__header">
+                            <div class="duelo-lobby-game-identity">
+                                <span class="duelo-lobby-game-icon" id="dueloLobbyGameIcon">💣</span>
+                                <div>
+                                    <h2 class="duelo-lobby-game-title" id="dueloLobbyGameTitle">Desactivá la Bomba</h2>
+                                    <div class="duelo-lobby-badges">
+                                        <span class="badge badge--accent" id="dueloWaitingRoomModoBadge">⚔️ Versus (Hasta 8)</span>
+                                        <span class="badge badge--success" id="dueloServerStatusBadge">🟢 Servidor Conectado</span>
+                                    </div>
                                 </div>
                             </div>
 
-                            <!-- Presets rápidos -->
-                            <div class="duelo-presets">
-                                <button type="button" class="preset-pill" data-seconds="30">30s</button>
-                                <button type="button" class="preset-pill" data-seconds="45">45s</button>
-                                <button type="button" class="preset-pill" data-seconds="60">1m</button>
-                                <button type="button" class="preset-pill is-active" data-seconds="90">1m 30s</button>
-                                <button type="button" class="preset-pill" data-seconds="120">2m</button>
+                            <!-- Código de Sala PIN en Gigante -->
+                            <div class="duelo-lobby-pin-wrap">
+                                <span class="duelo-lobby-pin-label">CÓDIGO DE SALA</span>
+                                <div class="duelo-lobby-pin-display">
+                                    <span class="duelo-lobby-pin-val" id="dueloWaitingRoomCode">LUIB7</span>
+                                </div>
                             </div>
                         </div>
 
-                        <!-- Selector de Comodines -->
-                        <div class="duelo-comodines-section">
-                            <div class="duelo-section-header">
-                                <h3 class="duelo-subheading">🃏 Selector de Comodines (1 uso por jugador)</h3>
-                                <button id="dueloToggleAllComodinesBtn" class="button button--ghost button--xs" type="button">
-                                    Alternar todos
+                        <!-- Barra de Link Mágico -->
+                        <div class="duelo-magic-link-box">
+                            <div class="duelo-magic-link-input-wrap">
+                                <input id="dueloMagicLinkInput" type="text" readonly value="https://luibanez.vercel.app/?room=LUIB7">
+                                <button id="dueloCopyLinkBtn" class="button button--secondary button--sm" type="button">
+                                    📋 Copiar Link Mágico
+                                </button>
+                                <button id="dueloShareLinkBtn" class="button button--primary button--sm" type="button">
+                                    📲 Compartir
                                 </button>
                             </div>
-
-                            <div class="duelo-switches-list">
-                                <label class="duelo-switch-row" for="dueloComodinSocorro">
-                                    <input type="checkbox" id="dueloComodinSocorro" checked>
-                                    <span class="duelo-switch-box" aria-hidden="true"></span>
-                                    <div class="duelo-switch-info">
-                                        <strong>🤝 Socorro</strong>
-                                        <span>Pedir ayuda a un compañero y resolver a medias por 5 pts cada uno.</span>
-                                    </div>
-                                </label>
-
-                                <label class="duelo-switch-row" for="dueloComodinPista">
-                                    <input type="checkbox" id="dueloComodinPista" checked>
-                                    <span class="duelo-switch-box" aria-hidden="true"></span>
-                                    <div class="duelo-switch-info">
-                                        <strong>💡 Pista clave</strong>
-                                        <span>Otorga 15 segundos extra para consultar apuntes o fórmulas.</span>
-                                    </div>
-                                </label>
-
-                                <label class="duelo-switch-row" for="dueloComodinPaso">
-                                    <input type="checkbox" id="dueloComodinPaso" checked>
-                                    <span class="duelo-switch-box" aria-hidden="true"></span>
-                                    <div class="duelo-switch-info">
-                                        <strong>🔄 Paso y Rebote</strong>
-                                        <span>Cambia el tema actual por otro disponible de la lista sin penalización.</span>
-                                    </div>
-                                </label>
+                            <div class="duelo-magic-link-status" id="dueloCopySuccessHint" style="display: none;">
+                                ✅ ¡Enlace copiado al portapapeles! Pasáselo a tus compañeros.
                             </div>
                         </div>
 
-                        <!-- Reglas Especiales -->
-                        <div class="duelo-rules-section">
-                            <h3 class="duelo-subheading">⚡ Reglas Especiales</h3>
-                            <div class="duelo-switches-list">
-                                <label class="duelo-switch-row" for="dueloReglaRacha">
-                                    <input type="checkbox" id="dueloReglaRacha" checked>
-                                    <span class="duelo-switch-box" aria-hidden="true"></span>
-                                    <div class="duelo-switch-info">
-                                        <strong>🔥 Racha de Fuego</strong>
-                                        <span>2 respuestas impecables seguidas duplican el puntaje en el próximo turno (+20 pts).</span>
-                                    </div>
-                                </label>
-
-                                <label class="duelo-switch-row" for="dueloReglaRobo">
-                                    <input type="checkbox" id="dueloReglaRobo" checked>
-                                    <span class="duelo-switch-box" aria-hidden="true"></span>
-                                    <div class="duelo-switch-info">
-                                        <strong>⚡ Robo Relámpago</strong>
-                                        <span>Si el jugador saca 0 pts, los demás compiten con pulsador para robar puntos en la mitad del tiempo.</span>
-                                    </div>
-                                </label>
+                        <!-- Sala de Espera (Hasta 8 Jugadores) -->
+                        <div class="duelo-waiting-players-section">
+                            <div class="duelo-section-header">
+                                <h3 class="duelo-subheading">
+                                    👥 Sala de Espera (<span id="dueloOnlineConnectedCount">1/8</span> Jugadores)
+                                </h3>
+                                <span class="duelo-ready-summary-badge" id="dueloReadySummaryBadge">
+                                    ⏳ Esperando que confirmen...
+                                </span>
                             </div>
+
+                            <!-- 8 Slots Cuadrícula -->
+                            <div class="duelo-online-players-grid" id="dueloOnlinePlayersGrid">
+                                <!-- Se generan 8 slots dinámicamente -->
+                            </div>
+                        </div>
+
+                        <!-- Área de Acciones: Botón Listo para Invitados y Botón Empezar para Host -->
+                        <div class="duelo-lobby-box__footer">
+                            <!-- Controles para el Anfitrión -->
+                            <div id="dueloHostControlsArea" class="duelo-host-controls">
+                                <button id="dueloLaunchOnlineMatchBtn" class="button button--primary button--lg button--duel-launch" type="button">
+                                    🚀 ¡COMENZAR PARTIDA AHORA!
+                                </button>
+                                <span class="duelo-hint-text" id="dueloHostStatusHint">
+                                    El anfitrión puede empezar cuando todos los que estén en la sala pongan "Estoy Listo".
+                                </span>
+                            </div>
+
+                            <!-- Controles para los Invitados (Botón Estoy Listo) -->
+                            <div id="dueloGuestWaitArea" class="duelo-guest-wait-area hidden">
+                                <div class="duelo-guest-ready-action">
+                                    <button id="dueloGuestReadyBtn" class="button button--success button--lg button--ready-toggle" type="button">
+                                        ✅ ¡Estoy Listo!
+                                    </button>
+                                </div>
+                                <div class="duelo-guest-status-text">
+                                    <div class="duelo-waiting-spinner"></div>
+                                    <span id="dueloGuestStatusMsg">Esperando a que el anfitrión inicie la partida cuando todos estén listos...</span>
+                                </div>
+                            </div>
+
+                            <button id="dueloLeaveOnlineRoomBtn" class="button button--ghost button--sm" type="button">
+                                ✕ Salir de la Sala
+                            </button>
                         </div>
                     </div>
-                </div>
-
-                <!-- Botones de Acción del Lobby Local -->
-                <div class="duelo-start-action">
-                    <button id="dueloStartBtn" class="button button--primary button--lg button--duel-launch" type="button">
-                        🚀 ¡INICIAR DUELO LOCAL!
-                    </button>
-                    <button id="dueloViewFamaFromLobbyBtn" class="button button--ghost" type="button">
-                        🏆 Ver Salón de la Fama
-                    </button>
                 </div>
             </div>
         </div>
@@ -2722,7 +2622,7 @@
 </dialog>
 
 <script src="mqtt.min.js"></script>
-<script src="script.js?v=24.6" defer></script>
+<script src="script.js?v=24.7" defer></script>
 
 <!-- =========================================================
      MODAL DE PROMPT PARA GEMINI (CREAR JUEGOS DESDE PDF)

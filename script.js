@@ -808,7 +808,7 @@ function cambiarVista(vista) {
     const vistas = [
         { id: "home", domView: dom.viewHome },
         { id: "solo", domView: dom.viewSolo },
-        { id: "juntos", domView: dom.viewJuntos },
+        { id: "juntos", domView: dom.viewDuelo },
         { id: "bolillero", domView: dom.viewBolillero },
         { id: "duelo", domView: dom.viewDuelo },
         { id: "fama", domView: dom.viewFama },
@@ -830,7 +830,7 @@ function cambiarVista(vista) {
     if (dom.navSoloBtn) dom.navSoloBtn.classList.toggle("is-active", vistaDestino === "solo" || vistaDestino === "bolillero");
     if (dom.navJuntosBtn) dom.navJuntosBtn.classList.toggle("is-active", vistaDestino === "juntos" || vistaDestino === "duelo");
     if (dom.navBolilleroBtn) dom.navBolilleroBtn.classList.toggle("is-active", vistaDestino === "bolillero");
-    if (dom.navDueloBtn) dom.navDueloBtn.classList.toggle("is-active", vistaDestino === "duelo");
+    if (dom.navDueloBtn) dom.navDueloBtn.classList.toggle("is-active", vistaDestino === "duelo" || vistaDestino === "juntos");
     if (dom.navFamaBtn) dom.navFamaBtn.classList.toggle("is-active", vistaDestino === "fama");
 
     // 3. Sincronizar navegación en el Drawer lateral (Off-canvas)
@@ -849,10 +849,12 @@ function cambiarVista(vista) {
     estado.interfaz.vistaActual = vistaDestino;
     window.location.hash = vistaDestino;
 
-    if (vistaDestino === "duelo") {
-        if (!dueloEstado.partida.activa) {
+    if (vistaDestino === "duelo" || vistaDestino === "juntos") {
+        if (!dueloEstado.partida.activa && !onlineDueloEstado.codigoSala) {
             actualizarDropdownListasDuelo();
-            renderDueloPlayersChips();
+            renderPerfilUsuarioDuelo();
+            if (dom.dueloOnlineSetupView) dom.dueloOnlineSetupView.classList.remove("hidden");
+            if (dom.dueloOnlineWaitingRoom) dom.dueloOnlineWaitingRoom.classList.add("hidden");
         }
     } else if (vistaDestino === "fama") {
         renderSalonDeLaFama();
@@ -2469,43 +2471,80 @@ function obtenerTopicSala(codigo) {
 function conectarMqttSiEsNecesario(callback) {
     if (typeof mqtt === "undefined") {
         console.warn("Librería MQTT no disponible todavía.");
-        return;
-    }
-
-    if (onlineDueloEstado.clienteMqtt && onlineDueloEstado.clienteMqtt.connected) {
+        if (dom.dueloServerStatusBadge) {
+            dom.dueloServerStatusBadge.textContent = "🟡 Servidor Local";
+            dom.dueloServerStatusBadge.className = "badge badge--warning";
+        }
         if (callback) callback();
         return;
     }
 
-    const clientId = "luib_" + Math.random().toString(16).slice(2, 10);
-    onlineDueloEstado.clienteMqtt = mqtt.connect(MQTT_BROKER_URL, {
-        clientId,
-        keepalive: 30,
-        reconnectPeriod: 2500,
-        connectTimeout: 8000
-    });
-
-    onlineDueloEstado.clienteMqtt.on("connect", () => {
-        onlineDueloEstado.conectado = true;
+    if (onlineDueloEstado.clienteMqtt && onlineDueloEstado.clienteMqtt.connected) {
         if (dom.dueloServerStatusBadge) {
             dom.dueloServerStatusBadge.textContent = "🟢 Servidor Conectado";
             dom.dueloServerStatusBadge.className = "badge badge--success";
         }
         if (callback) callback();
-    });
+        return;
+    }
 
-    onlineDueloEstado.clienteMqtt.on("error", err => {
-        console.warn("MQTT Error:", err);
-    });
+    if (onlineDueloEstado.clienteMqtt && !onlineDueloEstado.clienteMqtt.connected) {
+        onlineDueloEstado.clienteMqtt.once("connect", () => {
+            onlineDueloEstado.conectado = true;
+            if (dom.dueloServerStatusBadge) {
+                dom.dueloServerStatusBadge.textContent = "🟢 Servidor Conectado";
+                dom.dueloServerStatusBadge.className = "badge badge--success";
+            }
+            if (callback) callback();
+        });
+        return;
+    }
 
-    onlineDueloEstado.clienteMqtt.on("message", (topic, message) => {
-        try {
-            const data = JSON.parse(message.toString());
-            procesarMensajeMqttSala(data);
-        } catch (e) {
-            console.error("Error al procesar mensaje MQTT:", e);
-        }
-    });
+    const clientId = "luib_" + Math.random().toString(16).slice(2, 10);
+    try {
+        onlineDueloEstado.clienteMqtt = mqtt.connect(MQTT_BROKER_URL, {
+            clientId,
+            keepalive: 30,
+            reconnectPeriod: 2500,
+            connectTimeout: 8000
+        });
+
+        onlineDueloEstado.clienteMqtt.on("connect", () => {
+            onlineDueloEstado.conectado = true;
+            if (dom.dueloServerStatusBadge) {
+                dom.dueloServerStatusBadge.textContent = "🟢 Servidor Conectado";
+                dom.dueloServerStatusBadge.className = "badge badge--success";
+            }
+            if (callback) callback();
+        });
+
+        onlineDueloEstado.clienteMqtt.on("reconnect", () => {
+            if (dom.dueloServerStatusBadge) {
+                dom.dueloServerStatusBadge.textContent = "🟡 Reconectando...";
+                dom.dueloServerStatusBadge.className = "badge badge--warning";
+            }
+        });
+
+        onlineDueloEstado.clienteMqtt.on("error", err => {
+            console.warn("MQTT Error:", err);
+            if (dom.dueloServerStatusBadge) {
+                dom.dueloServerStatusBadge.textContent = "⚠️ Reintentando conexión";
+                dom.dueloServerStatusBadge.className = "badge badge--danger";
+            }
+        });
+
+        onlineDueloEstado.clienteMqtt.on("message", (topic, message) => {
+            try {
+                const data = JSON.parse(message.toString());
+                procesarMensajeMqttSala(data);
+            } catch (e) {
+                console.error("Error al procesar mensaje MQTT:", e);
+            }
+        });
+    } catch (e) {
+        console.error("Error al iniciar MQTT:", e);
+        if (callback) callback();
+    }
 }
 
 function publicarMensajeSala(data) {
@@ -2515,51 +2554,65 @@ function publicarMensajeSala(data) {
 }
 
 function crearSalaOnline() {
-    const listaId = dom.dueloOnlineListaSelect ? dom.dueloOnlineListaSelect.value : estado.listaSeleccionadaId;
-    const tiempo = dom.dueloOnlineTimeSelect ? parseInt(dom.dueloOnlineTimeSelect.value, 10) : 90;
-    const tienePass = dom.dueloOnlineHasPassword ? dom.dueloOnlineHasPassword.checked : false;
-    const pass = tienePass && dom.dueloOnlineRoomPassword ? dom.dueloOnlineRoomPassword.value.trim() : "";
-    const formatoModo = dom.dueloOnlineModoSelect ? dom.dueloOnlineModoSelect.value : "versus";
+    try {
+        const listaId = dom.dueloOnlineListaSelect ? dom.dueloOnlineListaSelect.value : estado.listaSeleccionadaId;
+        const tiempo = dom.dueloOnlineTimeSelect ? parseInt(dom.dueloOnlineTimeSelect.value, 10) : 90;
+        const tienePass = dom.dueloOnlineHasPassword ? dom.dueloOnlineHasPassword.checked : false;
+        const pass = tienePass && dom.dueloOnlineRoomPassword ? dom.dueloOnlineRoomPassword.value.trim() : "";
+        const formatoModo = dom.dueloOnlineModoSelect ? dom.dueloOnlineModoSelect.value : (onlineDueloEstado.formatoModo || "versus");
+        const juego = dom.dueloOnlineGameSelect ? dom.dueloOnlineGameSelect.value : (onlineDueloEstado.juegoSeleccionado || "bomba");
 
-    const codigo = generarCodigoSala();
-    onlineDueloEstado.esHost = true;
-    onlineDueloEstado.codigoSala = codigo;
-    onlineDueloEstado.tienePassword = tienePass;
-    onlineDueloEstado.passwordSala = pass;
-    onlineDueloEstado.formatoModo = formatoModo;
+        const codigo = generarCodigoSala();
+        onlineDueloEstado.esHost = true;
+        onlineDueloEstado.codigoSala = codigo;
+        onlineDueloEstado.tienePassword = tienePass;
+        onlineDueloEstado.passwordSala = pass;
+        onlineDueloEstado.formatoModo = formatoModo;
+        onlineDueloEstado.juegoSeleccionado = juego;
 
-    // Crear configuración de la sala
-    dueloEstado.config.formatoModo = formatoModo;
-    dueloEstado.config.tiempoTurnoSegundos = tiempo;
-    dueloEstado.config.listaId = listaId;
-    dueloEstado.config.comodines.socorro = dom.dueloOnlineComodinSocorro ? dom.dueloOnlineComodinSocorro.checked : true;
-    dueloEstado.config.comodines.pista = dom.dueloOnlineComodinPista ? dom.dueloOnlineComodinPista.checked : true;
-    dueloEstado.config.comodines.pasoRebote = dom.dueloOnlineComodinPaso ? dom.dueloOnlineComodinPaso.checked : true;
-    dueloEstado.config.reglas.rachaFuego = dom.dueloOnlineReglaRacha ? dom.dueloOnlineReglaRacha.checked : true;
-    dueloEstado.config.reglas.roboRelampago = dom.dueloOnlineReglaRobo ? dom.dueloOnlineReglaRobo.checked : true;
+        // Crear configuración de la sala
+        dueloEstado.config.formatoModo = formatoModo;
+        dueloEstado.config.tiempoTurnoSegundos = tiempo;
+        dueloEstado.config.listaId = listaId;
+        dueloEstado.config.comodines.socorro = dom.dueloOnlineComodinSocorro ? dom.dueloOnlineComodinSocorro.checked : true;
+        dueloEstado.config.comodines.pista = dom.dueloOnlineComodinPista ? dom.dueloOnlineComodinPista.checked : true;
+        dueloEstado.config.comodines.pasoRebote = dom.dueloOnlineComodinPaso ? dom.dueloOnlineComodinPaso.checked : true;
+        dueloEstado.config.reglas.rachaFuego = dom.dueloOnlineReglaRacha ? dom.dueloOnlineReglaRacha.checked : true;
+        dueloEstado.config.reglas.roboRelampago = dom.dueloOnlineReglaRobo ? dom.dueloOnlineReglaRobo.checked : true;
 
-    // Agregar host a la lista de jugadores
-    onlineDueloEstado.jugadores = [{
-        id: perfilUsuario.id,
-        apodo: perfilUsuario.apodo,
-        avatar: perfilUsuario.avatar,
-        tipoAvatar: perfilUsuario.tipoAvatar,
-        fotoDataUrl: perfilUsuario.fotoDataUrl,
-        victorias: perfilUsuario.victorias || 0,
-        rachaActual: 0,
-        puntos: 0,
-        puntosAportados: 0,
-        robosExitosos: 0,
-        comodinesUsados: { socorro: false, pista: false, pasoRebote: false },
-        esHost: true
-    }];
+        // Agregar anfitrión a la lista de jugadores (el host está listo por defecto)
+        onlineDueloEstado.jugadores = [{
+            id: perfilUsuario.id,
+            apodo: perfilUsuario.apodo,
+            avatar: perfilUsuario.avatar,
+            tipoAvatar: perfilUsuario.tipoAvatar,
+            fotoDataUrl: perfilUsuario.fotoDataUrl,
+            victorias: perfilUsuario.victorias || 0,
+            rachaActual: 0,
+            puntos: 0,
+            puntosAportados: 0,
+            robosExitosos: 0,
+            comodinesUsados: { socorro: false, pista: false, pasoRebote: false },
+            esHost: true,
+            listo: true
+        }];
 
-    conectarMqttSiEsNecesario(() => {
-        const topic = obtenerTopicSala(codigo);
-        onlineDueloEstado.clienteMqtt.subscribe(topic, () => {
-            mostrarSalaDeEsperaOnline(codigo);
+        // Mostrar DE INMEDIATO el Lobby Cuadrado con el fondo temático
+        mostrarSalaDeEsperaOnline(codigo);
+
+        // Suscribirse a MQTT en paralelo
+        conectarMqttSiEsNecesario(() => {
+            const topic = obtenerTopicSala(codigo);
+            if (onlineDueloEstado.clienteMqtt) {
+                onlineDueloEstado.clienteMqtt.subscribe(topic, (err) => {
+                    if (err) console.warn("Error al suscribirse al topic:", err);
+                });
+            }
         });
-    });
+    } catch (err) {
+        console.error("Error al crear sala online:", err);
+        alert("Ocurrió un error al crear la sala: " + err.message);
+    }
 }
 
 function unirseASalaOnline(codigoIngresado, passIngresado = "") {
@@ -2573,30 +2626,35 @@ function unirseASalaOnline(codigoIngresado, passIngresado = "") {
     onlineDueloEstado.codigoSala = codigo;
     onlineDueloEstado.passwordSala = passIngresado.trim();
 
+    // Mostrar de inmediato la sala de espera
+    mostrarSalaDeEsperaOnline(codigo);
+
     conectarMqttSiEsNecesario(() => {
         const topic = obtenerTopicSala(codigo);
-        onlineDueloEstado.clienteMqtt.subscribe(topic, () => {
-            // Enviar saludo de unión
-            publicarMensajeSala({
-                tipo: "INTENTO_UNION",
-                password: passIngresado.trim(),
-                jugador: {
-                    id: perfilUsuario.id,
-                    apodo: perfilUsuario.apodo,
-                    avatar: perfilUsuario.avatar,
-                    tipoAvatar: perfilUsuario.tipoAvatar,
-                    fotoDataUrl: perfilUsuario.fotoDataUrl,
-                    victorias: perfilUsuario.victorias || 0,
-                    rachaActual: 0,
-                    puntos: 0,
-                    puntosAportados: 0,
-                    robosExitosos: 0,
-                    comodinesUsados: { socorro: false, pista: false, pasoRebote: false },
-                    esHost: false
-                }
+        if (onlineDueloEstado.clienteMqtt) {
+            onlineDueloEstado.clienteMqtt.subscribe(topic, () => {
+                // Enviar saludo de unión con listo: false
+                publicarMensajeSala({
+                    tipo: "INTENTO_UNION",
+                    password: passIngresado.trim(),
+                    jugador: {
+                        id: perfilUsuario.id,
+                        apodo: perfilUsuario.apodo,
+                        avatar: perfilUsuario.avatar,
+                        tipoAvatar: perfilUsuario.tipoAvatar,
+                        fotoDataUrl: perfilUsuario.fotoDataUrl,
+                        victorias: perfilUsuario.victorias || 0,
+                        rachaActual: 0,
+                        puntos: 0,
+                        puntosAportados: 0,
+                        robosExitosos: 0,
+                        comodinesUsados: { socorro: false, pista: false, pasoRebote: false },
+                        esHost: false,
+                        listo: false
+                    }
+                });
             });
-            mostrarSalaDeEsperaOnline(codigo);
-        });
+        }
     });
 }
 
@@ -2604,6 +2662,28 @@ function mostrarSalaDeEsperaOnline(codigo) {
     if (dom.dueloOnlineSetupView) dom.dueloOnlineSetupView.classList.add("hidden");
     if (dom.dueloOnlineWaitingRoom) dom.dueloOnlineWaitingRoom.classList.remove("hidden");
     if (dom.dueloWaitingRoomCode) dom.dueloWaitingRoomCode.textContent = codigo;
+
+    const juegoId = onlineDueloEstado.juegoSeleccionado || (dom.dueloOnlineGameSelect ? dom.dueloOnlineGameSelect.value : "bomba");
+    onlineDueloEstado.juegoSeleccionado = juegoId;
+
+    // Aplicar clase temática del juego elegido al cuadrado del lobby
+    const box = document.getElementById("dueloLobbySquareBox");
+    if (box) {
+        box.className = `duelo-lobby-box lobby-theme--${juegoId}`;
+    }
+
+    const gameMeta = {
+        bomba: { icon: "💣", title: "Desactivá la Bomba" },
+        bolillero: { icon: "🎲", title: "Bolillero de Estudio" },
+        impostor: { icon: "🕵️‍♂️", title: "Caza al Impostor" },
+        memotest: { icon: "🧠", title: "Memotest Teórico" },
+        triatlon: { icon: "🏅", title: "Triatlón Académico" }
+    };
+    const meta = gameMeta[juegoId] || gameMeta.bomba;
+    const iconElem = document.getElementById("dueloLobbyGameIcon");
+    const titleElem = document.getElementById("dueloLobbyGameTitle");
+    if (iconElem) iconElem.textContent = meta.icon;
+    if (titleElem) titleElem.textContent = meta.title;
 
     if (dom.dueloWaitingRoomModoBadge) {
         if (onlineDueloEstado.formatoModo === "coop") {
@@ -2621,6 +2701,19 @@ function mostrarSalaDeEsperaOnline(codigo) {
     if (dom.dueloHostControlsArea) dom.dueloHostControlsArea.classList.toggle("hidden", !onlineDueloEstado.esHost);
     if (dom.dueloGuestWaitArea) dom.dueloGuestWaitArea.classList.toggle("hidden", onlineDueloEstado.esHost);
 
+    // Si es invitado, actualizar el botón de "Estoy Listo"
+    if (!onlineDueloEstado.esHost) {
+        const miJugador = onlineDueloEstado.jugadores.find(j => j.id === perfilUsuario.id);
+        const btnReady = document.getElementById("dueloGuestReadyBtn");
+        if (btnReady) {
+            const estaListo = miJugador ? !!miJugador.listo : false;
+            btnReady.className = estaListo
+                ? "button button--warning button--lg button--ready-toggle"
+                : "button button--success button--lg button--ready-toggle";
+            btnReady.innerHTML = estaListo ? "⏳ Cancelar Listo" : "✅ ¡Estoy Listo!";
+        }
+    }
+
     renderJugadoresSalaEspera();
 }
 
@@ -2633,26 +2726,113 @@ function renderJugadoresSalaEspera() {
         dom.dueloOnlineConnectedCount.textContent = `${jugadores.length}/8`;
     }
 
-    jugadores.forEach(j => {
-        const card = document.createElement("div");
-        card.className = `duelo-online-player-chip ${j.esHost ? "is-host" : ""} ${j.id === perfilUsuario.id ? "is-self" : ""}`;
-        card.innerHTML = `
-            ${renderAvatarHTML(j, 0, false, 36)}
-            <span class="duelo-online-player-chip__name">${j.apodo || j.nombre}</span>
-            ${j.esHost ? '<span class="duelo-online-player-chip__host-tag">HOST</span>' : ""}
-        `;
-        dom.dueloOnlinePlayersGrid.appendChild(card);
-    });
+    // Renderizar exactamente los 8 slots
+    for (let i = 0; i < 8; i++) {
+        if (i < jugadores.length) {
+            const j = jugadores[i];
+            const isSelf = j.id === perfilUsuario.id;
+            const card = document.createElement("div");
+            card.className = `duelo-online-player-chip ${j.esHost ? "is-host" : ""} ${isSelf ? "is-self" : ""}`;
+
+            let readyBadgeHTML = "";
+            if (j.esHost) {
+                readyBadgeHTML = '<span class="duelo-slot-host-badge">👑 HOST</span>';
+            } else if (j.listo) {
+                readyBadgeHTML = '<span class="duelo-slot-ready-badge is-ready">🟢 ¡LISTO!</span>';
+            } else {
+                readyBadgeHTML = '<span class="duelo-slot-ready-badge is-waiting">⏳ ESPERANDO...</span>';
+            }
+
+            card.innerHTML = `
+                ${renderAvatarHTML(j, 0, false, 44)}
+                <span class="duelo-online-player-chip__name" title="${j.apodo || j.nombre}">${j.apodo || j.nombre} ${isSelf ? "(Vos)" : ""}</span>
+                ${readyBadgeHTML}
+            `;
+            dom.dueloOnlinePlayersGrid.appendChild(card);
+        } else {
+            // Slot vacío
+            const emptySlot = document.createElement("div");
+            emptySlot.className = "duelo-online-slot-empty";
+            emptySlot.innerHTML = `
+                <span class="empty-icon">➕</span>
+                <span>Esperando jugador...</span>
+                <span style="font-size: 0.7rem; opacity: 0.6;">Slot ${i + 1} de 8</span>
+            `;
+            dom.dueloOnlinePlayersGrid.appendChild(emptySlot);
+        }
+    }
+
+    // Lógica del botón Iniciar Partida del Host según el Ready Check
+    const invitados = jugadores.filter(j => !j.esHost);
+    const totalInvitados = invitados.length;
+    const listosCount = invitados.filter(j => j.listo).length;
+    const badgeSummary = document.getElementById("dueloReadySummaryBadge");
+
+    if (badgeSummary) {
+        if (totalInvitados === 0) {
+            badgeSummary.textContent = "👥 Esperando que entren compañeros...";
+            badgeSummary.className = "duelo-ready-summary-badge";
+        } else if (listosCount === totalInvitados) {
+            badgeSummary.textContent = `🟢 ¡Todos listos (${listosCount}/${totalInvitados})!`;
+            badgeSummary.className = "duelo-ready-summary-badge badge--success";
+        } else {
+            badgeSummary.textContent = `⏳ ${listosCount}/${totalInvitados} Listos`;
+            badgeSummary.className = "duelo-ready-summary-badge badge--warning";
+        }
+    }
 
     if (dom.dueloLaunchOnlineMatchBtn) {
-        dom.dueloLaunchOnlineMatchBtn.disabled = jugadores.length < 2;
-        if (jugadores.length < 2) {
-            dom.dueloLaunchOnlineMatchBtn.title = "Se necesitan al menos 2 jugadores para iniciar";
+        const hintElem = document.getElementById("dueloHostStatusHint");
+        if (totalInvitados === 0) {
+            // Host solo: puede iniciar para probar en solitario
+            dom.dueloLaunchOnlineMatchBtn.disabled = false;
+            dom.dueloLaunchOnlineMatchBtn.classList.remove("button--disabled");
+            dom.dueloLaunchOnlineMatchBtn.classList.remove("button--pulse-launch");
+            dom.dueloLaunchOnlineMatchBtn.innerHTML = "🚀 ¡INICIAR PARTIDA! (Solo / Práctica)";
+            if (hintElem) hintElem.textContent = "Podés iniciar para probar en solitario o compartir el PIN para jugar en grupo.";
         } else {
-            dom.dueloLaunchOnlineMatchBtn.title = "Iniciar el combate online";
+            const todosListos = listosCount === totalInvitados;
+            if (todosListos) {
+                // Todos los participantes pusieron "Estoy Listo"
+                dom.dueloLaunchOnlineMatchBtn.disabled = false;
+                dom.dueloLaunchOnlineMatchBtn.classList.remove("button--disabled");
+                dom.dueloLaunchOnlineMatchBtn.classList.add("button--pulse-launch");
+                dom.dueloLaunchOnlineMatchBtn.innerHTML = `🚀 ¡TODOS LISTOS! (${listosCount}/${totalInvitados}) EMPEZAR PARTIDA`;
+                if (hintElem) hintElem.textContent = "¡Todos tus compañeros están listos! Presioná empezar para arrancar a la vez.";
+            } else {
+                // Faltan participantes por confirmar
+                dom.dueloLaunchOnlineMatchBtn.disabled = true;
+                dom.dueloLaunchOnlineMatchBtn.classList.add("button--disabled");
+                dom.dueloLaunchOnlineMatchBtn.classList.remove("button--pulse-launch");
+                dom.dueloLaunchOnlineMatchBtn.innerHTML = `⏳ Esperando que todos pongan 'Estoy Listo' (${listosCount}/${totalInvitados})`;
+                if (hintElem) hintElem.textContent = `Faltan ${totalInvitados - listosCount} jugador(es) por confirmar que están listos.`;
+            }
         }
     }
 }
+
+function toggleReadyInvitado() {
+    const miJugador = onlineDueloEstado.jugadores.find(j => j.id === perfilUsuario.id);
+    if (!miJugador) return;
+    miJugador.listo = !miJugador.listo;
+
+    const btnReady = document.getElementById("dueloGuestReadyBtn");
+    if (btnReady) {
+        btnReady.className = miJugador.listo
+            ? "button button--warning button--lg button--ready-toggle"
+            : "button button--success button--lg button--ready-toggle";
+        btnReady.innerHTML = miJugador.listo ? "⏳ Cancelar Listo" : "✅ ¡Estoy Listo!";
+    }
+
+    publicarMensajeSala({
+        tipo: "JUGADOR_READY_STATUS",
+        jugadorId: perfilUsuario.id,
+        listo: miJugador.listo
+    });
+
+    renderJugadoresSalaEspera();
+}
+window.toggleReadyInvitado = toggleReadyInvitado;
 
 function procesarMensajeMqttSala(data) {
     if (!data || !data.tipo) return;
@@ -2669,18 +2849,19 @@ function procesarMensajeMqttSala(data) {
             }
 
             // Evitar duplicados y verificar límite de 8 jugadores
-            const idx = onlineDueloEstado.jugadores.findIndex(j => j.id === data.jugador.id);
+            const jugadorData = { ...data.jugador, listo: false };
+            const idx = onlineDueloEstado.jugadores.findIndex(j => j.id === jugadorData.id);
             if (idx === -1) {
                 if (onlineDueloEstado.jugadores.length >= 8) {
                     publicarMensajeSala({
                         tipo: "SALA_LLENA",
-                        targetJugadorId: data.jugador.id
+                        targetJugadorId: jugadorData.id
                     });
                     return;
                 }
-                onlineDueloEstado.jugadores.push(data.jugador);
+                onlineDueloEstado.jugadores.push(jugadorData);
             } else {
-                onlineDueloEstado.jugadores[idx] = data.jugador;
+                onlineDueloEstado.jugadores[idx] = jugadorData;
             }
 
             // Sincronizar estado completo a la sala
@@ -2688,7 +2869,8 @@ function procesarMensajeMqttSala(data) {
                 tipo: "SINCRONIZAR_SALA",
                 jugadores: onlineDueloEstado.jugadores,
                 config: dueloEstado.config,
-                formatoModo: onlineDueloEstado.formatoModo
+                formatoModo: onlineDueloEstado.formatoModo,
+                juegoSeleccionado: onlineDueloEstado.juegoSeleccionado
             });
             renderJugadoresSalaEspera();
         }
@@ -2704,7 +2886,29 @@ function procesarMensajeMqttSala(data) {
             onlineDueloEstado.formatoModo = data.formatoModo;
             dueloEstado.config.formatoModo = data.formatoModo;
         }
+        if (data.juegoSeleccionado) {
+            onlineDueloEstado.juegoSeleccionado = data.juegoSeleccionado;
+        }
         mostrarSalaDeEsperaOnline(onlineDueloEstado.codigoSala);
+    }
+
+    // 3. Ready Status de un jugador
+    if (data.tipo === "JUGADOR_READY_STATUS") {
+        const target = onlineDueloEstado.jugadores.find(j => j.id === data.jugadorId);
+        if (target) {
+            target.listo = !!data.listo;
+            renderJugadoresSalaEspera();
+        }
+        if (onlineDueloEstado.esHost) {
+            publicarMensajeSala({
+                tipo: "SINCRONIZAR_SALA",
+                jugadores: onlineDueloEstado.jugadores,
+                config: dueloEstado.config,
+                formatoModo: onlineDueloEstado.formatoModo,
+                juegoSeleccionado: onlineDueloEstado.juegoSeleccionado
+            });
+        }
+        return;
     }
 
     // Sala llena
@@ -2713,7 +2917,7 @@ function procesarMensajeMqttSala(data) {
         salirDeSalaOnline();
     }
 
-    // 3. Rechazo de password
+    // 4. Rechazo de password
     if (data.tipo === "RECHAZO_PASSWORD" && data.targetJugadorId === perfilUsuario.id) {
         alert("La contraseña ingresada para esta sala es incorrecta.");
         salirDeSalaOnline();
@@ -2946,12 +3150,18 @@ function iniciarCombateOnlineDesdeHost() {
 
     // Para el Bolillero:
     const lista = estado.listas.find(l => l.id === dueloEstado.config.listaId) || estado.listas[0];
-    if (!lista || lista.temas.length === 0) {
-        alert("La lista seleccionada no tiene temas para sortear.");
-        return;
-    }
-
-    const temasDisponibles = [...lista.temas];
+    const temasDisponibles = (lista && lista.temas && lista.temas.length > 0)
+        ? [...lista.temas]
+        : [
+            { id: "t1", palabra: "Teoría General de Sistemas", explicacion: "Enfoque holístico de sistemas interconectados." },
+            { id: "t2", palabra: "Axiomas de Comunicación", explicacion: "Principios de Paul Watzlawick sobre interacción." },
+            { id: "t3", palabra: "Leyes de la Termodinámica", explicacion: "Conservación de la energía y entropía." },
+            { id: "t4", palabra: "Principio de Indeterminación", explicacion: "Límite de precisión cuántica de Heisenberg." },
+            { id: "t5", palabra: "Estructuras de Datos", explicacion: "Organización y manipulación de datos en memoria." },
+            { id: "t6", palabra: "Recursión y Algoritmos", explicacion: "Resolución de problemas mediante subproblemas." },
+            { id: "t7", palabra: "Arquitectura de Software", explicacion: "Patrones y diseño de componentes de sistemas." },
+            { id: "t8", palabra: "Bases de Datos Relacionales", explicacion: "Modelo entidad-relación y álgebra relacional." }
+        ];
 
     publicarMensajeSala({
         tipo: "INICIO_PARTIDA_ONLINE",
@@ -3532,8 +3742,8 @@ function actualizarDropdownListasDuelo() {
         selectElem.innerHTML = "";
         if (estado.listas.length === 0) {
             const opt = document.createElement("option");
-            opt.value = "";
-            opt.textContent = "No hay listas creadas (creá una en el Bolillero)";
+            opt.value = "default_estudio";
+            opt.textContent = "📚 Repaso General Universitario (10 temas)";
             selectElem.appendChild(opt);
             return;
         }
@@ -3550,12 +3760,13 @@ function actualizarDropdownListasDuelo() {
         }
     });
 
-    const listaActual = estado.listas.find(l => l.id === (dom.dueloListaSelect?.value || dueloEstado.config.listaId));
-    if (dom.dueloListaHint && listaActual) {
-        dom.dueloListaHint.textContent = `${listaActual.temas.length} temas disponibles para la batalla.`;
-    }
-    if (dom.dueloOnlineListaHint && listaActual) {
-        dom.dueloOnlineListaHint.textContent = `${listaActual.temas.length} temas disponibles para la batalla.`;
+    const listaActual = estado.listas.find(l => l.id === (dom.dueloOnlineListaSelect?.value || dueloEstado.config.listaId));
+    if (dom.dueloOnlineListaHint) {
+        if (listaActual) {
+            dom.dueloOnlineListaHint.textContent = `${listaActual.temas.length} temas disponibles para la sala.`;
+        } else {
+            dom.dueloOnlineListaHint.textContent = `Temario predeterminado listo para jugar.`;
+        }
     }
 }
 
@@ -8557,10 +8768,32 @@ function seleccionarJuegoLobby(juegoId) {
     if (dom.dueloOnlineGameSelect) {
         dom.dueloOnlineGameSelect.value = juegoId;
     }
+    onlineDueloEstado.juegoSeleccionado = juegoId;
+
     const cards = document.querySelectorAll(".duelo-game-card");
     cards.forEach(card => {
         card.classList.toggle("is-selected", card.dataset.game === juegoId);
     });
+
+    const gameNames = {
+        bomba: "Desactivá la Bomba",
+        bolillero: "Bolillero de Estudio",
+        impostor: "Caza al Impostor",
+        memotest: "Memotest Teórico",
+        triatlon: "Triatlón Académico"
+    };
+    const gameIcons = {
+        bomba: "💣",
+        bolillero: "🎲",
+        impostor: "🕵️‍♂️",
+        memotest: "🧠",
+        triatlon: "🏅"
+    };
+
+    const titleElem = document.getElementById("dueloSummaryGameTitle");
+    const iconElem = document.getElementById("dueloSummaryIcon");
+    if (titleElem) titleElem.textContent = gameNames[juegoId] || juegoId;
+    if (iconElem) iconElem.textContent = gameIcons[juegoId] || "🎮";
 
     if (dom.dueloLaunchOnlineMatchBtn) {
         const gameTitles = {
@@ -8570,7 +8803,13 @@ function seleccionarJuegoLobby(juegoId) {
             memotest: "🧠 ¡INICIAR MEMOTEST CONECTADO!",
             triatlon: "🏅 ¡INICIAR TRIATLÓN ACADÉMICO!"
         };
-        dom.dueloLaunchOnlineMatchBtn.innerHTML = gameTitles[juegoId] || "🚀 ¡COMENZAR DUELO ONLINE AHORA!";
+        dom.dueloLaunchOnlineMatchBtn.innerHTML = gameTitles[juegoId] || "🚀 ¡COMENZAR PARTIDA AHORA!";
+    }
+
+    // Scroll suave y enfoque al Paso 2 (Modalidad)
+    const step2 = document.getElementById("dueloStep2Modo");
+    if (step2) {
+        step2.scrollIntoView({ behavior: "smooth", block: "nearest" });
     }
 }
 window.seleccionarJuegoLobby = seleccionarJuegoLobby;
@@ -8590,6 +8829,18 @@ function seleccionarFormatoLobby(formatoId) {
         hint.textContent = formatoId === "coop"
             ? "Colaboren en equipo contra el cronómetro con relevos y maletín compartido."
             : "Compitan entre todos con podio en vivo y robo relámpago.";
+    }
+
+    const modeTitle = document.getElementById("dueloSummaryModeTitle");
+    if (modeTitle) {
+        modeTitle.textContent = formatoId === "coop" ? "🤝 Cooperativo en Equipo" : "⚔️ Versus Competitivo";
+        modeTitle.className = formatoId === "coop" ? "badge badge--success" : "badge badge--accent";
+    }
+
+    // Scroll suave y enfoque al Paso 3 (Opciones)
+    const step3 = document.getElementById("dueloStep3Opciones");
+    if (step3) {
+        step3.scrollIntoView({ behavior: "smooth", block: "nearest" });
     }
 }
 window.seleccionarFormatoLobby = seleccionarFormatoLobby;
@@ -8631,6 +8882,12 @@ function setupDueloLobbyTabs() {
             seleccionarFormatoLobby(card.dataset.mode);
         });
     });
+
+    // Botón para que los invitados alternen su estado "Estoy Listo"
+    const guestReadyBtn = document.getElementById("dueloGuestReadyBtn");
+    if (guestReadyBtn) {
+        guestReadyBtn.addEventListener("click", toggleReadyInvitado);
+    }
 
     // Default select
     seleccionarJuegoLobby("bomba");
