@@ -703,10 +703,111 @@ function abrirTarjetaScratchpad() {
 window.abrirTarjetaScratchpad = abrirTarjetaScratchpad;
 
 /* ==========================================================
+   MODO DESARROLLADOR (ACCESO EXCLUSIVO LUCAS - ESTUDIAR JUNTOS)
+   ========================================================== */
+function esModoDevActivo() {
+    try {
+        return localStorage.getItem("modo_dev_lucas") === "true";
+    } catch (e) {
+        return false;
+    }
+}
+
+function activarModoDev(silencioso = false) {
+    try {
+        localStorage.setItem("modo_dev_lucas", "true");
+    } catch (e) {}
+    aplicarModoDevUI();
+    if (!silencioso) {
+        mostrarToast("🛠️ ¡Modo Desarrollador activado! Acceso exclusivo concedido a Lucas.", "exito");
+    }
+}
+
+function desactivarModoDev() {
+    try {
+        localStorage.removeItem("modo_dev_lucas");
+    } catch (e) {}
+    aplicarModoDevUI();
+    mostrarToast("🔒 Modo Desarrollador desactivado. Estudiar Juntos vuelve a estar bloqueado.");
+    if (estado && estado.interfaz && (estado.interfaz.vistaActual === "juntos" || estado.interfaz.vistaActual === "duelo")) {
+        cambiarVista("home");
+    }
+}
+
+function aplicarModoDevUI() {
+    const activo = esModoDevActivo();
+    document.body.classList.toggle("modo-dev-activo", activo);
+
+    const devBadge = document.getElementById("juntosDevBadgeNotice");
+    if (devBadge) devBadge.style.display = activo ? "flex" : "none";
+
+    if (dom.navJuntosBtn) {
+        if (activo) {
+            dom.navJuntosBtn.classList.remove("nav-link--locked");
+            dom.navJuntosBtn.classList.add("nav-link--dev");
+            dom.navJuntosBtn.title = "Estudiar Juntos (🛠️ Modo Dev Lucas)";
+            dom.navJuntosBtn.innerHTML = `🤝 Estudiar Juntos <span class="badge badge--accent" style="font-size: 0.65rem; padding: 2px 6px; margin-left: 4px;">DEV</span>`;
+        } else {
+            dom.navJuntosBtn.classList.add("nav-link--locked");
+            dom.navJuntosBtn.classList.remove("nav-link--dev");
+            dom.navJuntosBtn.title = "Estudiar Juntos (Próximamente)";
+            dom.navJuntosBtn.innerHTML = `🤝 Estudiar Juntos`;
+        }
+    }
+
+    if (dom.drawerNavJuntos) {
+        const txt = dom.drawerNavJuntos.querySelector(".drawer-nav-text");
+        if (activo) {
+            dom.drawerNavJuntos.classList.remove("drawer-nav-item--locked");
+            if (txt) txt.textContent = "Estudiar Juntos (DEV)";
+        } else {
+            dom.drawerNavJuntos.classList.add("drawer-nav-item--locked");
+            if (txt) txt.textContent = "Estudiar Juntos (Próximamente)";
+        }
+    }
+
+    if (dom.heroGoJuntosBtn) {
+        if (activo) {
+            dom.heroGoJuntosBtn.classList.remove("is-locked-btn");
+            dom.heroGoJuntosBtn.innerHTML = `🛠️ Probar Estudiar Juntos (DEV)`;
+        } else {
+            dom.heroGoJuntosBtn.classList.add("is-locked-btn");
+            dom.heroGoJuntosBtn.innerHTML = `🔒 Estudiar Juntos (Próximamente)`;
+        }
+    }
+
+    if (dom.homeGoToJuntosBtn) {
+        if (activo) {
+            dom.homeGoToJuntosBtn.classList.remove("is-locked-btn");
+            dom.homeGoToJuntosBtn.classList.add("button--primary");
+            dom.homeGoToJuntosBtn.innerHTML = `🛠️ Entrar en Modo Dev`;
+        } else {
+            dom.homeGoToJuntosBtn.classList.add("is-locked-btn");
+            dom.homeGoToJuntosBtn.classList.remove("button--primary");
+            dom.homeGoToJuntosBtn.innerHTML = `🔒 Próximamente (En Construcción)`;
+        }
+    }
+}
+
+function inicializarModoDev() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const hash = window.location.hash.toLowerCase();
+    if (urlParams.get("dev") === "true" || hash === "#dev" || hash.includes("dev=true")) {
+        activarModoDev();
+        if (window.history.replaceState) {
+            const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+            window.history.replaceState({ path: cleanUrl }, '', cleanUrl);
+        }
+    } else {
+        aplicarModoDevUI();
+    }
+}
+
+/* ==========================================================
    NAVEGACIÓN SPA (VISTAS: HOME / BOLILLERO / DUELO / FAMA)
    ========================================================== */
 function cambiarVista(vista) {
-    if (vista === "juntos" || vista === "duelo") {
+    if ((vista === "juntos" || vista === "duelo") && !esModoDevActivo()) {
         mostrarToast("🔒 Acceso cerrado: El modo Estudiar Juntos no está disponible temporalmente.", "aviso");
         vista = "home";
     }
@@ -918,7 +1019,11 @@ function inicializarDrawerMenu() {
     }
     if (dom.drawerNavJuntos) {
         dom.drawerNavJuntos.addEventListener("click", () => {
-            mostrarToast("🔒 Acceso cerrado: El modo Estudiar Juntos no está disponible temporalmente.", "aviso");
+            if (esModoDevActivo()) {
+                cambiarVista("juntos");
+            } else {
+                mostrarToast("🔒 Acceso cerrado: El modo Estudiar Juntos no está disponible temporalmente.", "aviso");
+            }
             cerrarDrawerMenu();
         });
     }
@@ -980,6 +1085,34 @@ function inicializarDrawerMenu() {
     });
 
     actualizarDrawerListas();
+
+    // Easter Egg / Acceso Secreto Desarrollador (5 toques en la versión para Lucas)
+    let versionClickCount = 0;
+    let versionClickTimer = null;
+    const versionRow = document.querySelector(".drawer-version-row");
+    if (versionRow) {
+        versionRow.addEventListener("click", (e) => {
+            if (e.target && e.target.id === "btnForzarActualizar") return;
+            versionClickCount++;
+            clearTimeout(versionClickTimer);
+            versionClickTimer = setTimeout(() => { versionClickCount = 0; }, 2500);
+            if (versionClickCount >= 5) {
+                versionClickCount = 0;
+                if (esModoDevActivo()) {
+                    const salir = confirm("🛠️ Modo Desarrollador está ACTIVO.\n\n¿Deseás desactivarlo y volver al modo público bloqueado?");
+                    if (salir) desactivarModoDev();
+                } else {
+                    const pass = prompt("🔐 Acceso Desarrollador Luibañez\nIngresá la clave de acceso de Lucas:");
+                    if (pass && (pass.toLowerCase().trim() === "lucas" || pass.trim() === "1234" || pass.toLowerCase().trim() === "mintx")) {
+                        activarModoDev();
+                        mostrarToast("🛠️ ¡Modo Desarrollador activado para Lucas!", "exito");
+                    } else if (pass !== null) {
+                        mostrarToast("❌ Clave incorrecta.", "error");
+                    }
+                }
+            }
+        });
+    }
 }
 
 function abrirDrawerMenu() {
@@ -5177,11 +5310,19 @@ function registrarEventos() {
     if (dom.navHomeBtn) dom.navHomeBtn.addEventListener("click", () => cambiarVista("home"));
     if (dom.navSoloBtn) dom.navSoloBtn.addEventListener("click", () => cambiarVista("solo"));
     if (dom.navJuntosBtn) dom.navJuntosBtn.addEventListener("click", () => {
-        mostrarToast("🔒 Acceso cerrado: El modo Estudiar Juntos no está disponible temporalmente.");
+        if (esModoDevActivo()) {
+            cambiarVista("juntos");
+        } else {
+            mostrarToast("🔒 Acceso cerrado: El modo Estudiar Juntos no está disponible temporalmente.");
+        }
     });
     if (dom.navBolilleroBtn) dom.navBolilleroBtn.addEventListener("click", () => cambiarVista("bolillero"));
     if (dom.navDueloBtn) dom.navDueloBtn.addEventListener("click", () => {
-        mostrarToast("🔒 Acceso cerrado: El modo Duelos Online no está disponible temporalmente.");
+        if (esModoDevActivo()) {
+            cambiarVista("duelo");
+        } else {
+            mostrarToast("🔒 Acceso cerrado: El modo Duelos Online no está disponible temporalmente.");
+        }
     });
     if (dom.navFamaBtn) dom.navFamaBtn.addEventListener("click", () => cambiarVista("fama"));
     if (dom.brandLink) {
@@ -5210,13 +5351,29 @@ function registrarEventos() {
     // Botones Hero y Portal Hub desde Inicio (viewHome)
     if (dom.heroGoSoloBtn) dom.heroGoSoloBtn.addEventListener("click", () => cambiarVista("solo"));
     if (dom.heroGoJuntosBtn) dom.heroGoJuntosBtn.addEventListener("click", () => {
-        mostrarToast("🔒 Acceso cerrado: El modo Estudiar Juntos no está disponible temporalmente.");
+        if (esModoDevActivo()) {
+            cambiarVista("juntos");
+        } else {
+            mostrarToast("🔒 Acceso cerrado: El modo Estudiar Juntos no está disponible temporalmente.");
+        }
     });
     if (dom.homeGoToSoloBtn) dom.homeGoToSoloBtn.addEventListener("click", () => cambiarVista("solo"));
     if (dom.homeGoToJuntosBtn) dom.homeGoToJuntosBtn.addEventListener("click", () => {
-        mostrarToast("🔒 Acceso cerrado: El modo Estudiar Juntos no está disponible temporalmente.");
+        if (esModoDevActivo()) {
+            cambiarVista("juntos");
+        } else {
+            mostrarToast("🔒 Acceso cerrado: El modo Estudiar Juntos no está disponible temporalmente.");
+        }
     });
     if (dom.homeGoToFamaBtn) dom.homeGoToFamaBtn.addEventListener("click", () => cambiarVista("fama"));
+
+    // Botón de salir de Modo Desarrollador dentro de viewJuntos
+    const btnSalirModoDev = document.getElementById("btnSalirModoDev");
+    if (btnSalirModoDev) {
+        btnSalirModoDev.addEventListener("click", () => {
+            desactivarModoDev();
+        });
+    }
 
     // Botones Cuadrículas de Estudiar Solo (viewSolo)
     if (dom.soloOpenBolilleroBtn) dom.soloOpenBolilleroBtn.addEventListener("click", () => cambiarVista("bolillero"));
@@ -5875,7 +6032,7 @@ function seleccionarTemaManualBolillero(temaId, dispararIaInmediata = false) {
 
     window.addEventListener("hashchange", () => {
         const hash = window.location.hash.replace("#", "");
-        if (["bolillero", "duelo", "fama", "home"].includes(hash)) {
+        if (["solo", "juntos", "bolillero", "duelo", "fama", "home"].includes(hash)) {
             cambiarVista(hash);
         }
     });
@@ -5898,6 +6055,7 @@ function seleccionarTemaManualBolillero(temaId, dispararIaInmediata = false) {
 function iniciarAplicacion() {
     inicializarTema();
     inicializarModoRendimiento();
+    inicializarModoDev();
     inicializarRutas();
     cargarDatos();
     cargarPerfilUsuario();
@@ -7058,12 +7216,12 @@ function detonarBomba(motivo) {
             avanzarRondaTriatlon(2);
         }, 2500);
     } else {
-        // Vibrar durante 2.5s, detener la vibración, regresar al menú principal y notificar
+        // La animación de explosión dura exactamente 3 segundos y luego se detiene
+        // pero se queda en la pantalla de resultado con los botones para reintentar o salir
         setTimeout(() => {
             if (dom.arenaBomba) dom.arenaBomba.classList.remove("bomba-exploding");
-            cambiarVista("home");
-            mostrarToast(`💥 Partida finalizada: Se sumaron ${puntos} pts al Salón de la Fama.`);
-        }, 2500);
+            mostrarToast(`💥 ¡Bomba detonada! Podés reintentar o salir al menú.`);
+        }, 3000);
     }
 }
 

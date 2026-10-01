@@ -5968,6 +5968,15 @@ input:focus {
     color: #fde68a !important;
 }
 
+/* Modo Desarrollador Exclusivo (Lucas) */
+body.modo-dev-activo .juntos-locked-notice {
+    display: none !important;
+}
+.nav-link--dev {
+    color: #c084fc !important;
+    border-color: rgba(168, 85, 247, 0.4) !important;
+}
+
 .juntos-locked-notice {
     background: linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(30, 27, 75, 0.4));
     border: 2px dashed rgba(245, 158, 11, 0.5);
