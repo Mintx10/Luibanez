@@ -15,10 +15,10 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     
-    <link rel="icon" type="image/svg+xml" href="icon.svg?v=24.9">
-    <link rel="apple-touch-icon" href="icon-192.png?v=24.9">
-    <link rel="manifest" href="manifest.json?v=24.9">
-    <link rel="stylesheet" href="style.css?v=24.9">
+    <link rel="icon" type="image/svg+xml" href="icon.svg?v=25.0">
+    <link rel="apple-touch-icon" href="icon-192.png?v=25.0">
+    <link rel="manifest" href="manifest.json?v=25.0">
+    <link rel="stylesheet" href="style.css?v=25.0">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -223,23 +223,9 @@
             </div>
         </div>
 
-        <!-- Sección 3: Listas de Estudio Activas -->
-        <div class="drawer-section">
-            <div class="drawer-section__title-row">
-                <span class="drawer-section__label">Listas de Estudio</span>
-                <div style="display: flex; gap: 0.35rem;">
-                    <button id="drawerGeminiPromptBtn" class="button button--accent button--xs" type="button" title="Copiar Prompt para Gemini">✨ IA Prompt</button>
-                    <button id="drawerNewListBtn" class="button button--ghost button--xs" type="button">+ Nueva</button>
-                </div>
-            </div>
-            <ul id="drawerListsContainer" class="drawer-lists-list" aria-label="Listas de estudio en menú lateral">
-                <!-- Se puebla dinámicamente con script.js -->
-            </ul>
-        </div>
-
         <!-- Versión y botón de actualización forzada -->
         <div class="drawer-version-row" style="padding: 0.85rem 1rem; border-top: 1px solid var(--color-border); font-size: 0.75rem; color: var(--color-text-muted); display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02); margin-top: auto;">
-            <span id="drawerVersionTag" style="cursor: pointer; user-select: none;" title="Versión de Luibañez">⚡ Luibañez <strong style="color: var(--color-text);">v24.9</strong></span>
+            <span id="drawerVersionTag" style="cursor: pointer; user-select: none;" title="Versión de Luibañez">⚡ Luibañez <strong style="color: var(--color-text);">v25.0</strong></span>
             <button id="btnForzarActualizar" class="button button--ghost button--xs" type="button" style="font-size: 0.72rem; padding: 0.2rem 0.55rem; border-radius: 999px; border: 1px solid var(--color-border);" title="Limpiar caché y recargar versión más reciente">🔄 Actualizar</button>
         </div>
     </div>
@@ -354,13 +340,8 @@
                     </div>
                 </article>
 
-                <!-- Tarjeta Portal 2: Estudiar Juntos (Bloqueado con candado, cadenas y cartel de Próximamente) -->
-                <article class="module-card module-card--duel module-card--locked" style="position: relative; overflow: hidden; border-color: rgba(245, 158, 11, 0.45); padding: 1.85rem;">
-                    <div class="locked-chain-ribbon">
-                        <span>⛓️</span>
-                        <span>🔒 PRÓXIMAMENTE</span>
-                        <span>⛓️</span>
-                    </div>
+                <!-- Tarjeta Portal 2: Estudiar Juntos -->
+                <article class="module-card module-card--duel module-card--active" style="position: relative; overflow: hidden; border-color: rgba(99, 102, 241, 0.45); padding: 1.85rem;">
                     <div class="module-card__header">
                         <div class="module-card__icon module-card__icon--duel" style="font-size: 2rem; position: relative;">
                             🤝
@@ -376,8 +357,8 @@
                         Salas sincrónicas entre celulares y PC con Link Mágico y PIN: modalidades <strong>Versus competitivo</strong> y <strong>Cooperativo en equipo</strong> (Bomba compartida, Memotest en equipo y Repaso grupal).
                     </p>
                     <div class="module-card__actions" style="margin-top: auto; padding-top: 1rem;">
-                        <button id="homeGoToJuntosBtn" class="button button--secondary button--full" type="button" title="Entrar a Estudiar Juntos">
-                            🤝 Entrar a Estudiar Juntos
+                        <button id="homeGoToJuntosBtn" class="button button--primary button--full" type="button" title="Entrar a Estudiar Juntos">
+                            🤝 Entrar a Estudiar Juntos ➜
                         </button>
                     </div>
                 </article>
@@ -1772,28 +1753,8 @@
     <section id="viewJuegosEdu" class="view view--hidden" aria-label="Arena de Juegos Educativos">
         <div class="juegos-edu-container">
             
-            <!-- Barra de Apuntes y Material de Estudio (PDF / IA Gemini) -->
-            <div class="juegos-apuntes-bar" id="juegosApuntesBar">
-                <div class="juegos-apuntes-info">
-                    <span class="juegos-apuntes-icon">📄</span>
-                    <div class="juegos-apuntes-text-wrap">
-                        <span class="juegos-apuntes-label">Material de Estudio para este Desafío:</span>
-                        <span class="juegos-apuntes-status" id="juegosApuntesStatus">Sin PDF cargado (usando banco temático de la materia)</span>
-                    </div>
-                </div>
-                <div class="juegos-apuntes-actions">
-                    <input type="file" id="juegosPdfInput" accept=".pdf,.txt" class="hidden">
-                    <button id="juegosUploadPdfBtn" class="button button--secondary button--xs" type="button">
-                        📎 Cargar PDF
-                    </button>
-                    <button id="juegosGenerateIABtn" class="button button--accent button--xs" type="button" title="Generar desafío en tiempo real con Gemini basado en el PDF">
-                        ✨ Desafío IA (Gemini)
-                    </button>
-                    <button id="juegosRemovePdfBtn" class="button button--ghost button--xs hidden" type="button" title="Quitar PDF">
-                        ✕ Quitar
-                    </button>
-                </div>
-            </div>
+            <!-- Input de archivo PDF oculto para compatibilidad interna de motor IA -->
+            <input type="file" id="juegosPdfInput" accept=".pdf,.txt" class="hidden">
 
             <!-- Overlay de Carga Inteligente de IA (Sincronización de cronómetro) -->
             <div id="juegosIALoadingOverlay" class="juegos-ia-loading-overlay hidden">
@@ -2753,7 +2714,7 @@
 </dialog>
 
 <script src="mqtt.min.js"></script>
-<script src="script.js?v=24.9" defer></script>
+<script src="script.js?v=25.0" defer></script>
 
 <!-- =========================================================
      MODAL DE PROMPT PARA GEMINI (CREAR JUEGOS DESDE PDF)

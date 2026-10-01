@@ -341,9 +341,19 @@ const dom = {
     drawerMenu: document.getElementById("drawerMenu"),
     drawerCloseBtn: document.getElementById("drawerCloseBtn"),
     drawerNavHome: document.getElementById("drawerNavHome"),
+    drawerNavSolo: document.getElementById("drawerNavSolo"),
+    drawerNavJuntos: document.getElementById("drawerNavJuntos"),
     drawerNavBolillero: document.getElementById("drawerNavBolillero"),
     drawerNavDuelo: document.getElementById("drawerNavDuelo"),
     drawerNavFama: document.getElementById("drawerNavFama"),
+    drawerNavSoloBomba: document.getElementById("drawerNavSoloBomba"),
+    drawerNavSoloImpostor: document.getElementById("drawerNavSoloImpostor"),
+    drawerNavSoloMemotest: document.getElementById("drawerNavSoloMemotest"),
+    drawerNavOnlineBolillero: document.getElementById("drawerNavOnlineBolillero"),
+    drawerNavOnlineBomba: document.getElementById("drawerNavOnlineBomba"),
+    drawerNavOnlineImpostor: document.getElementById("drawerNavOnlineImpostor"),
+    drawerNavOnlineMemotest: document.getElementById("drawerNavOnlineMemotest"),
+    drawerNavOnlineTriatlon: document.getElementById("drawerNavOnlineTriatlon"),
     drawerThemeToggleBtn: document.getElementById("drawerThemeToggleBtn"),
     drawerThemeToggleIcon: document.getElementById("drawerThemeToggleIcon"),
     drawerThemeLabel: document.getElementById("drawerThemeLabel"),
@@ -1039,6 +1049,63 @@ function inicializarDrawerMenu() {
     if (dom.drawerNavFama) {
         dom.drawerNavFama.addEventListener("click", () => {
             cambiarVista("fama");
+            cerrarDrawerMenu();
+        });
+    }
+
+    // Modo Solo - Juegos desde el Drawer lateral
+    if (dom.drawerNavSoloBomba) {
+        dom.drawerNavSoloBomba.addEventListener("click", () => {
+            if (typeof abrirArenaJuego === "function") abrirArenaJuego("bomba", "solo");
+            cerrarDrawerMenu();
+        });
+    }
+    if (dom.drawerNavSoloImpostor) {
+        dom.drawerNavSoloImpostor.addEventListener("click", () => {
+            if (typeof abrirArenaJuego === "function") abrirArenaJuego("impostor", "solo");
+            cerrarDrawerMenu();
+        });
+    }
+    if (dom.drawerNavSoloMemotest) {
+        dom.drawerNavSoloMemotest.addEventListener("click", () => {
+            if (typeof abrirArenaJuego === "function") abrirArenaJuego("memotest", "solo");
+            cerrarDrawerMenu();
+        });
+    }
+
+    // Modo Duelo - Juegos y Salas desde el Drawer lateral
+    if (dom.drawerNavOnlineBolillero) {
+        dom.drawerNavOnlineBolillero.addEventListener("click", () => {
+            cambiarVista("duelo");
+            if (typeof seleccionarJuegoLobby === "function") seleccionarJuegoLobby("bolillero");
+            cerrarDrawerMenu();
+        });
+    }
+    if (dom.drawerNavOnlineBomba) {
+        dom.drawerNavOnlineBomba.addEventListener("click", () => {
+            cambiarVista("duelo");
+            if (typeof seleccionarJuegoLobby === "function") seleccionarJuegoLobby("bomba");
+            cerrarDrawerMenu();
+        });
+    }
+    if (dom.drawerNavOnlineImpostor) {
+        dom.drawerNavOnlineImpostor.addEventListener("click", () => {
+            cambiarVista("duelo");
+            if (typeof seleccionarJuegoLobby === "function") seleccionarJuegoLobby("impostor");
+            cerrarDrawerMenu();
+        });
+    }
+    if (dom.drawerNavOnlineMemotest) {
+        dom.drawerNavOnlineMemotest.addEventListener("click", () => {
+            cambiarVista("duelo");
+            if (typeof seleccionarJuegoLobby === "function") seleccionarJuegoLobby("memotest");
+            cerrarDrawerMenu();
+        });
+    }
+    if (dom.drawerNavOnlineTriatlon) {
+        dom.drawerNavOnlineTriatlon.addEventListener("click", () => {
+            cambiarVista("duelo");
+            if (typeof seleccionarJuegoLobby === "function") seleccionarJuegoLobby("triatlon");
             cerrarDrawerMenu();
         });
     }
@@ -7244,7 +7311,7 @@ function iniciarAplicacion() {
     }
     const drawerVersionTag = document.getElementById("drawerVersionTag");
     if (drawerVersionTag) {
-        drawerVersionTag.innerHTML = `⚡ Luibañez <strong style="color: var(--color-text);">v24.9</strong>`;
+        drawerVersionTag.innerHTML = `⚡ Luibañez <strong style="color: var(--color-text);">v25.0</strong>`;
         drawerVersionTag.addEventListener("click", () => {
             forzarActualizacionCompleta(true);
         });
@@ -7286,7 +7353,7 @@ function iniciarAplicacion() {
 // =========================================================
 // GESTOR DE VERSIONES Y ACTUALIZACIÓN AUTOMÁTICA
 // =========================================================
-const APP_BUILD_VERSION = "24.9";
+const APP_BUILD_VERSION = "25.0";
 
 async function forzarActualizacionCompleta(mostrarNotificacion = true) {
     if (mostrarNotificacion && typeof mostrarToast === "function") {
