@@ -3952,6 +3952,74 @@ input:focus {
 }
 
 /* =========================================================
+   SELECTOR Y VINCULACIÓN DE PDF EN PASO 3 DE CREAR SALA
+   ========================================================= */
+.duelo-pdf-card-box {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    background: rgba(30, 41, 59, 0.55);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: 0.85rem 1.15rem;
+    transition: all var(--transition);
+}
+
+.duelo-pdf-card-box:hover {
+    border-color: rgba(99, 102, 241, 0.4);
+    background: rgba(30, 41, 59, 0.7);
+}
+
+.duelo-pdf-card-info {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    flex: 1;
+    min-width: 0;
+}
+
+.duelo-pdf-card-icon {
+    font-size: 1.85rem;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.duelo-pdf-card-details {
+    min-width: 0;
+    flex: 1;
+}
+
+.duelo-pdf-card-details strong {
+    color: #fff;
+    font-size: 0.95rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 320px;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.duelo-pdf-card-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+
+@media (max-width: 640px) {
+    .duelo-pdf-card-box {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .duelo-pdf-card-actions {
+        width: 100%;
+        justify-content: flex-end;
+    }
+}
+
+/* =========================================================
    SALA DE ESPERA TEMÁTICA: CUADRADO DEL LOBBY
    ========================================================= */
 

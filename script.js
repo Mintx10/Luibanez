@@ -805,17 +805,18 @@ function inicializarModoDev() {
    NAVEGACIÓN SPA (VISTAS: HOME / BOLILLERO / DUELO / FAMA)
    ========================================================== */
 function cambiarVista(vista) {
+    const rawTarget = (vista === "duelo" || vista === "juntos") ? "juntos" : vista;
+    const vistasValidas = ["home", "solo", "juntos", "bolillero", "fama", "juegos"];
+    const vistaDestino = vistasValidas.includes(rawTarget) ? rawTarget : "home";
+
     const vistas = [
         { id: "home", domView: dom.viewHome },
         { id: "solo", domView: dom.viewSolo },
         { id: "juntos", domView: dom.viewDuelo },
         { id: "bolillero", domView: dom.viewBolillero },
-        { id: "duelo", domView: dom.viewDuelo },
         { id: "fama", domView: dom.viewFama },
         { id: "juegos", domView: dom.viewJuegosEdu }
     ];
-
-    const vistaDestino = vistas.some(v => v.id === vista) ? vista : "home";
 
     // 1. Alternar visibilidad de las vistas
     vistas.forEach(({ id, domView }) => {
@@ -828,9 +829,9 @@ function cambiarVista(vista) {
     // 2. Sincronizar botones de la barra superior (Navbar)
     if (dom.navHomeBtn) dom.navHomeBtn.classList.toggle("is-active", vistaDestino === "home");
     if (dom.navSoloBtn) dom.navSoloBtn.classList.toggle("is-active", vistaDestino === "solo" || vistaDestino === "bolillero");
-    if (dom.navJuntosBtn) dom.navJuntosBtn.classList.toggle("is-active", vistaDestino === "juntos" || vistaDestino === "duelo");
+    if (dom.navJuntosBtn) dom.navJuntosBtn.classList.toggle("is-active", vistaDestino === "juntos");
     if (dom.navBolilleroBtn) dom.navBolilleroBtn.classList.toggle("is-active", vistaDestino === "bolillero");
-    if (dom.navDueloBtn) dom.navDueloBtn.classList.toggle("is-active", vistaDestino === "duelo" || vistaDestino === "juntos");
+    if (dom.navDueloBtn) dom.navDueloBtn.classList.toggle("is-active", vistaDestino === "juntos");
     if (dom.navFamaBtn) dom.navFamaBtn.classList.toggle("is-active", vistaDestino === "fama");
 
     // 3. Sincronizar navegación en el Drawer lateral (Off-canvas)
@@ -839,7 +840,6 @@ function cambiarVista(vista) {
         solo: dom.drawerNavSolo,
         juntos: dom.drawerNavJuntos,
         bolillero: dom.drawerNavBolillero,
-        duelo: dom.drawerNavDuelo,
         fama: dom.drawerNavFama
     };
     Object.entries(drawerNavMap).forEach(([id, btn]) => {
@@ -847,9 +847,13 @@ function cambiarVista(vista) {
     });
 
     estado.interfaz.vistaActual = vistaDestino;
-    window.location.hash = vistaDestino;
 
-    if (vistaDestino === "duelo" || vistaDestino === "juntos") {
+    const currentHash = window.location.hash.replace("#", "");
+    if (currentHash !== vistaDestino) {
+        window.location.hash = vistaDestino;
+    }
+
+    if (vistaDestino === "juntos") {
         if (!dueloEstado.partida.activa && !onlineDueloEstado.codigoSala) {
             actualizarDropdownListasDuelo();
             renderPerfilUsuarioDuelo();
@@ -867,8 +871,9 @@ function cambiarVista(vista) {
 
 function inicializarRutas() {
     const hash = window.location.hash.replace("#", "");
-    if (["solo", "juntos", "bolillero", "duelo", "fama", "home"].includes(hash)) {
-        cambiarVista(hash);
+    const normalized = (hash === "duelo" || hash === "juntos") ? "juntos" : hash;
+    if (["solo", "juntos", "bolillero", "fama", "home"].includes(normalized)) {
+        cambiarVista(normalized);
     } else {
         cambiarVista("home");
     }
@@ -2685,6 +2690,28 @@ function mostrarSalaDeEsperaOnline(codigo) {
     if (iconElem) iconElem.textContent = meta.icon;
     if (titleElem) titleElem.textContent = meta.title;
 
+        const matBadge = document.getElementById("dueloWaitingRoomMaterialBadge");
+    if (matBadge) {
+        const apunte = apuntesEstado.global || apuntesEstado.bomba || apuntesEstado.bolillero;
+        const listaId = dueloEstado.config.listaId;
+        if (listaId === "pdf_global" && apunte && apunte.nombre) {
+            matBadge.textContent = `📄 PDF: ${apunte.nombre}`;
+            matBadge.style.display = "inline-flex";
+        } else {
+            const lista = estado.listas.find(l => l.id === listaId);
+            if (lista) {
+                matBadge.textContent = `📚 ${lista.nombre}`;
+                matBadge.style.display = "inline-flex";
+            } else if (apunte && apunte.nombre) {
+                matBadge.textContent = `📄 PDF: ${apunte.nombre}`;
+                matBadge.style.display = "inline-flex";
+            } else {
+                matBadge.textContent = "📚 Repaso General";
+                matBadge.style.display = "inline-flex";
+            }
+        }
+    }
+    
     if (dom.dueloWaitingRoomModoBadge) {
         if (onlineDueloEstado.formatoModo === "coop") {
             dom.dueloWaitingRoomModoBadge.textContent = "🤝 Modo Cooperativo (Hasta 8)";
@@ -3133,7 +3160,7 @@ function salirDeSalaOnline() {
     if (dom.dueloOnlineSetupView) dom.dueloOnlineSetupView.classList.remove("hidden");
 }
 
-function iniciarCombateOnlineDesdeHost() {
+async function iniciarCombateOnlineDesdeHost() {
     if (!onlineDueloEstado.esHost) return;
     if (onlineDueloEstado.jugadores.length < 1) {
         alert("Se necesita al menos 1 jugador para iniciar la partida.");
@@ -3144,24 +3171,41 @@ function iniciarCombateOnlineDesdeHost() {
 
     // Si el desafío elegido es "Desactivá la Bomba":
     if (juego === "bomba") {
-        iniciarBombaOnlineHost();
+        await iniciarBombaOnlineHost();
         return;
     }
 
     // Para el Bolillero:
-    const lista = estado.listas.find(l => l.id === dueloEstado.config.listaId) || estado.listas[0];
-    const temasDisponibles = (lista && lista.temas && lista.temas.length > 0)
-        ? [...lista.temas]
-        : [
-            { id: "t1", palabra: "Teoría General de Sistemas", explicacion: "Enfoque holístico de sistemas interconectados." },
-            { id: "t2", palabra: "Axiomas de Comunicación", explicacion: "Principios de Paul Watzlawick sobre interacción." },
-            { id: "t3", palabra: "Leyes de la Termodinámica", explicacion: "Conservación de la energía y entropía." },
-            { id: "t4", palabra: "Principio de Indeterminación", explicacion: "Límite de precisión cuántica de Heisenberg." },
-            { id: "t5", palabra: "Estructuras de Datos", explicacion: "Organización y manipulación de datos en memoria." },
-            { id: "t6", palabra: "Recursión y Algoritmos", explicacion: "Resolución de problemas mediante subproblemas." },
-            { id: "t7", palabra: "Arquitectura de Software", explicacion: "Patrones y diseño de componentes de sistemas." },
-            { id: "t8", palabra: "Bases de Datos Relacionales", explicacion: "Modelo entidad-relación y álgebra relacional." }
-        ];
+    const listaId = dom.dueloOnlineListaSelect ? dom.dueloOnlineListaSelect.value : dueloEstado.config.listaId;
+    const apunte = apuntesEstado.global || apuntesEstado.bolillero;
+    let temasDisponibles = [];
+
+    if (listaId === "pdf_global" && apunte && apunte.texto) {
+        const conceptos = extraerConceptosHeuristicos(apunte.texto, 15);
+        if (conceptos.length > 0) {
+            temasDisponibles = conceptos.map((c, idx) => ({
+                id: `t_pdf_${idx + 1}`,
+                palabra: c,
+                explicacion: `Concepto clave extraído de ${apunte.nombre}`
+            }));
+        }
+    }
+
+    if (temasDisponibles.length === 0) {
+        const lista = estado.listas.find(l => l.id === listaId) || estado.listas[0];
+        temasDisponibles = (lista && lista.temas && lista.temas.length > 0)
+            ? [...lista.temas]
+            : [
+                { id: "t1", palabra: "Teoría General de Sistemas", explicacion: "Enfoque holístico de sistemas interconectados." },
+                { id: "t2", palabra: "Axiomas de Comunicación", explicacion: "Principios de Paul Watzlawick sobre interacción." },
+                { id: "t3", palabra: "Leyes de la Termodinámica", explicacion: "Conservación de la energía y entropía." },
+                { id: "t4", palabra: "Principio de Indeterminación", explicacion: "Límite de precisión cuántica de Heisenberg." },
+                { id: "t5", palabra: "Estructuras de Datos", explicacion: "Organización y manipulación de datos en memoria." },
+                { id: "t6", palabra: "Recursión y Algoritmos", explicacion: "Resolución de problemas mediante subproblemas." },
+                { id: "t7", palabra: "Arquitectura de Software", explicacion: "Patrones y diseño de componentes de sistemas." },
+                { id: "t8", palabra: "Bases de Datos Relacionales", explicacion: "Modelo entidad-relación y álgebra relacional." }
+            ];
+    }
 
     publicarMensajeSala({
         tipo: "INICIO_PARTIDA_ONLINE",
@@ -3171,16 +3215,150 @@ function iniciarCombateOnlineDesdeHost() {
     });
 }
 
-function iniciarBombaOnlineHost() {
+// Extractor inteligente de oraciones y conceptos reales de PDF para Bomba (Fallback Offline / Sin Gemini)
+function generarDesafioBombaDesdeTextoPDF(texto, nombreArchivo) {
+    const nombre = (nombreArchivo || "Material de Estudio").replace(/\.pdf$/i, '');
+    if (!texto || typeof texto !== "string" || texto.length < 50) {
+        return asegurarDatosJuegoTema({ id: "bomba_pdf", nombre, descripcion: `Contenido de ${nombre}` }, 0);
+    }
+
+    // Extraer oraciones sustantivas completas del PDF
+    const oraciones = texto
+        .split(/(?<=[.?!])\s+/)
+        .map(s => s.trim().replace(/^\[PÁGINA \d+\]:\s*/, ''))
+        .filter(s => s.length >= 35 && s.length <= 150 && !s.includes('http') && !/^\d+$/.test(s) && !s.toLowerCase().startsWith('página'));
+
+    const conceptos = extraerConceptosHeuristicos(texto, 10);
+    const concepto1 = conceptos[0] || nombre;
+    const concepto2 = conceptos[1] || (conceptos[0] ? `análisis de ${conceptos[0]}` : "el marco teórico");
+    const concepto3 = conceptos[2] || (conceptos[0] ? `síntesis de ${conceptos[0]}` : "la conclusión conceptual");
+
+    // Seleccionar afirmaciones reales del material
+    const s1 = oraciones[0] || `Los postulados de ${concepto1} definen el marco de análisis formal según el material.`;
+    const s2 = oraciones[Math.floor(oraciones.length / 3)] || oraciones[1] || `Las condiciones de ${concepto2} determinan la respuesta y dinámica del modelo analizado.`;
+    const s3 = oraciones[Math.floor((oraciones.length * 2) / 3)] || oraciones[2] || `La integración metodológica de ${concepto3} fundamenta las conclusiones del estudio.`;
+
+    function generarDistractores(oracionCorrecta, idxBase) {
+        const pool = oraciones.filter(o => o !== oracionCorrecta);
+        const dist = [];
+        for (let i = 0; i < pool.length && dist.length < 3; i++) {
+            const cand = pool[(idxBase + i) % pool.length];
+            if (cand && !dist.includes(cand)) dist.push(cand);
+        }
+        while (dist.length < 3) {
+            dist.push(`Se descartan los postulados válidos sobre ${nombre} para este caso específico.`);
+            dist.push(`La variación observada resulta incompatible con los principios generales expuestos.`);
+            dist.push(`El comportamiento del sistema no admite correlación con los fundamentos teóricos.`);
+        }
+        return dist.slice(0, 3);
+    }
+
+    function armarFase(pregunta, correcta, idxBase) {
+        const distractores = generarDistractores(correcta, idxBase);
+        const opciones = [correcta, ...distractores];
+        const shuffled = opciones.map((opt, i) => ({ opt, isCorrect: i === 0 }))
+                                 .sort(() => Math.random() - 0.5);
+        const respIdx = shuffled.findIndex(item => item.isCorrect);
+        return {
+            pregunta,
+            opciones: shuffled.map(item => item.opt),
+            respuestaCorrecta: respIdx >= 0 ? respIdx : 0,
+            explicacion: `Afirmación extraída directamente de ${nombreArchivo}: "${correcta.slice(0, 100)}..."`
+        };
+    }
+
+    return {
+        id: "bomba_pdf_" + Date.now(),
+        nombre,
+        descripcion: `Desafío conceptual basado en ${nombreArchivo}`,
+        bomba: {
+            fase1: armarFase(`Cable Rojo (Fundamento): Según ${nombreArchivo}, ¿cuál es la afirmación verdadera sobre "${concepto1}"?`, s1, 3),
+            fase2: armarFase(`Cable Azul (Propiedades): En relación a "${concepto2}", ¿qué deducción analítica establece el material?`, s2, 7),
+            fase3: armarFase(`Cable Verde (Clave Maestra): Para desactivar el detonador, identificá la síntesis teórica clave sobre "${concepto3}":`, s3, 11)
+        }
+    };
+}
+
+async function iniciarBombaOnlineHost() {
     if (!onlineDueloEstado.esHost) return;
-    const listaId = dom.dueloOnlineListaSelect ? dom.dueloOnlineListaSelect.value : estado.listaSeleccionadaId;
-    const lista = estado.listas.find(l => l.id === listaId) || estado.listas[0] || { id: "default", titulo: "Materia de Estudio", temas: [] };
+    const listaId = dom.dueloOnlineListaSelect ? dom.dueloOnlineListaSelect.value : dueloEstado.config.listaId;
+    const apunte = (listaId === "pdf_global" || !listaId || listaId === "default_estudio")
+        ? (apuntesEstado.global || apuntesEstado.bomba || apuntesEstado.bolillero)
+        : (apuntesEstado.global || apuntesEstado.bomba);
+
+    const lista = estado.listas.find(l => l.id === listaId);
+
+    // Estado visual de carga en el botón del Host
+    if (dom.dueloLaunchOnlineMatchBtn) {
+        dom.dueloLaunchOnlineMatchBtn.disabled = true;
+        dom.dueloLaunchOnlineMatchBtn.innerHTML = "⏳ Generando preguntas con IA...";
+    }
 
     let tema = null;
-    if (lista.temas && lista.temas.length > 0) {
+    let listaNombre = "Materia de Estudio";
+
+    // 1. Si hay un PDF activo cargado:
+    if (apunte && apunte.texto) {
+        listaNombre = apunte.nombre;
+        const nombreLimpio = apunte.nombre.replace(/\.pdf$/i, '');
+        try {
+            mostrarToast(`⚡ Formulando preguntas de Bomba desde "${apunte.nombre}" con IA...`);
+            const data = await generarPreguntaIA({
+                materia: nombreLimpio,
+                tema: nombreLimpio,
+                tipoJuego: 'bomba',
+                contextoPDF: apunte.texto
+            });
+            if (data && data.fase1 && data.fase2 && data.fase3) {
+                tema = {
+                    id: "bomba_pdf_" + Date.now(),
+                    nombre: nombreLimpio,
+                    descripcion: `Desafío basado en el material: ${apunte.nombre}`,
+                    bomba: {
+                        fase1: data.fase1,
+                        fase2: data.fase2,
+                        fase3: data.fase3
+                    }
+                };
+            }
+        } catch (err) {
+            console.warn("Fallo consulta Gemini para Bomba Online, usando extractor inteligente de PDF:", err);
+            mostrarToast("⚠️ Conexión con Gemini sin respuesta directa: formulando preguntas directamente desde el texto de tu PDF");
+        }
+
+        // Si Gemini no respondió o no hay API key, extraer directamente del texto del PDF
+        if (!tema) {
+            tema = generarDesafioBombaDesdeTextoPDF(apunte.texto, apunte.nombre);
+        }
+    } else if (lista && lista.temas && lista.temas.length > 0) {
+        // 2. Si se eligió una lista de temas personalizada:
+        listaNombre = lista.titulo || lista.nombre;
         const randIdx = Math.floor(Math.random() * lista.temas.length);
-        tema = asegurarDatosJuegoTema(lista.temas[randIdx], randIdx);
+        const temaSeleccionado = lista.temas[randIdx];
+        try {
+            const data = await generarPreguntaIA({
+                materia: listaNombre,
+                tema: temaSeleccionado.palabra || temaSeleccionado.nombre,
+                tipoJuego: 'bomba'
+            });
+            if (data && data.fase1 && data.fase2 && data.fase3) {
+                tema = {
+                    ...temaSeleccionado,
+                    bomba: {
+                        fase1: data.fase1,
+                        fase2: data.fase2,
+                        fase3: data.fase3
+                    }
+                };
+            }
+        } catch (err) {
+            console.warn("Gemini offline para lista temática, usando datos del tema:", err);
+        }
+        if (!tema) {
+            tema = asegurarDatosJuegoTema(temaSeleccionado, randIdx);
+        }
     }
+
     if (!tema) {
         tema = asegurarDatosJuegoTema({ id: "t1", nombre: "Fundamentos y Principios Clave", descripcion: "Bases teóricas y postulados esenciales." }, 0);
     }
@@ -3195,7 +3373,7 @@ function iniciarBombaOnlineHost() {
         tema,
         tiempo,
         codigoSala: onlineDueloEstado.codigoSala,
-        listaNombre: lista.titulo || lista.nombre || "Materia de Estudio"
+        listaNombre: listaNombre
     };
 
     publicarMensajeSala(payload);
@@ -3737,36 +3915,88 @@ function cambiarModoDueloLobby(nuevoModo) {
 
 function actualizarDropdownListasDuelo() {
     const selects = [dom.dueloListaSelect, dom.dueloOnlineListaSelect];
+    const apunte = apuntesEstado.global || apuntesEstado.bomba || apuntesEstado.bolillero;
+
     selects.forEach(selectElem => {
         if (!selectElem) return;
         selectElem.innerHTML = "";
-        if (estado.listas.length === 0) {
+
+        // Si hay un PDF activo cargado, agregarlo como primera opción destacada
+        if (apunte && apunte.nombre) {
+            const optPdf = document.createElement("option");
+            optPdf.value = "pdf_global";
+            optPdf.textContent = `📄 PDF: ${apunte.nombre} (${apunte.paginas || 1} págs)`;
+            selectElem.appendChild(optPdf);
+        }
+
+        if (estado.listas.length === 0 && (!apunte || !apunte.nombre)) {
             const opt = document.createElement("option");
             opt.value = "default_estudio";
             opt.textContent = "📚 Repaso General Universitario (10 temas)";
             selectElem.appendChild(opt);
             return;
         }
+
         estado.listas.forEach(l => {
             const opt = document.createElement("option");
             opt.value = l.id;
             opt.textContent = `${l.nombre} (${l.temas.length} temas)`;
             selectElem.appendChild(opt);
         });
-        if (dueloEstado.config.listaId && estado.listas.some(l => l.id === dueloEstado.config.listaId)) {
+
+        if (dueloEstado.config.listaId === "pdf_global" && apunte) {
+            selectElem.value = "pdf_global";
+        } else if (dueloEstado.config.listaId && estado.listas.some(l => l.id === dueloEstado.config.listaId)) {
             selectElem.value = dueloEstado.config.listaId;
+        } else if (apunte && apunte.nombre) {
+            selectElem.value = "pdf_global";
         } else if (estado.listas.length > 0) {
             selectElem.value = estado.listas[0].id;
         }
     });
 
-    const listaActual = estado.listas.find(l => l.id === (dom.dueloOnlineListaSelect?.value || dueloEstado.config.listaId));
+    const val = dom.dueloOnlineListaSelect?.value || dueloEstado.config.listaId;
     if (dom.dueloOnlineListaHint) {
-        if (listaActual) {
-            dom.dueloOnlineListaHint.textContent = `${listaActual.temas.length} temas disponibles para la sala.`;
+        if (val === "pdf_global" && apunte && apunte.nombre) {
+            dom.dueloOnlineListaHint.textContent = `📄 Preguntas formuladas con IA a partir de "${apunte.nombre}" (${apunte.paginas || 1} págs).`;
         } else {
-            dom.dueloOnlineListaHint.textContent = `Temario predeterminado listo para jugar.`;
+            const listaActual = estado.listas.find(l => l.id === val);
+            if (listaActual) {
+                dom.dueloOnlineListaHint.textContent = `${listaActual.temas.length} temas disponibles para la sala.`;
+            } else {
+                dom.dueloOnlineListaHint.textContent = `Temario predeterminado listo para jugar.`;
+            }
         }
+    }
+
+    actualizarCardPdfEnCrearSala();
+}
+
+function actualizarCardPdfEnCrearSala() {
+    const apunte = apuntesEstado.global || apuntesEstado.bomba || apuntesEstado.bolillero;
+    const titleEl = document.getElementById("dueloPdfCardTitle");
+    const subEl = document.getElementById("dueloPdfCardSub");
+    const badgeEl = document.getElementById("dueloPdfCardBadge");
+    const uploadBtn = document.getElementById("dueloUploadPdfBtn");
+    const removeBtn = document.getElementById("dueloRemovePdfBtn");
+
+    if (!titleEl) return;
+
+    if (apunte && apunte.nombre) {
+        titleEl.textContent = `📄 ${apunte.nombre}`;
+        if (subEl) subEl.textContent = `${apunte.paginas || 1} págs • ${apunte.palabras || 0} palabras • Guardado y activo para la sala`;
+        if (badgeEl) {
+            badgeEl.style.display = "inline-flex";
+            badgeEl.textContent = "Conectado";
+        }
+        if (uploadBtn) uploadBtn.textContent = "📂 Cambiar PDF";
+        if (removeBtn) removeBtn.classList.remove("hidden");
+    } else {
+        titleEl.textContent = "Material PDF para la Sala";
+        if (subEl) subEl.textContent = "Cargá un apunte o libro PDF para que la sala juegue con preguntas reales de tu materia.";
+        if (badgeEl) badgeEl.style.display = "none";
+        if (uploadBtn) uploadBtn.textContent = "📂 Cargar Archivo PDF";
+        if (removeBtn) removeBtn.classList.add("hidden");
     }
 }
 
@@ -5208,6 +5438,7 @@ async function guardarApuntesEnStorage() {
 }
 
 function actualizarUIIndicadoresPDF() {
+    actualizarCardPdfEnCrearSala();
     const apunteActivo = apuntesEstado.global || apuntesEstado.bolillero || apuntesEstado.bomba;
     
     // 1. Centro Principal de Apuntes en Inicio (viewHome)
@@ -5880,6 +6111,60 @@ function registrarEventos() {
         });
     }
 
+    // 5. Estudiar Juntos - Carga y Cambio de PDF en Crear Sala
+    const dueloPdfInput = document.getElementById("dueloOnlinePdfInput");
+    const dueloUploadBtn = document.getElementById("dueloUploadPdfBtn");
+    const dueloRemoveBtn = document.getElementById("dueloRemovePdfBtn");
+
+    if (dueloUploadBtn && dueloPdfInput) {
+        dueloUploadBtn.addEventListener("click", () => dueloPdfInput.click());
+    }
+
+    if (dueloPdfInput) {
+        dueloPdfInput.addEventListener("change", async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            mostrarToast("📑 Procesando nuevo material de estudio para la sala...");
+            try {
+                const res = await procesarArchivoPDF(file);
+                apuntesEstado.global = res;
+                apuntesEstado.bomba = res;
+                apuntesEstado.bolillero = res;
+                apuntesEstado.impostor = res;
+                apuntesEstado.memotest = res;
+                await guardarApuntesEnStorage();
+                actualizarUIIndicadoresPDF();
+                actualizarDropdownListasDuelo();
+                if (dom.dueloOnlineListaSelect) {
+                    dom.dueloOnlineListaSelect.value = "pdf_global";
+                }
+                mostrarToast(`✅ Archivo "${res.nombre}" vinculado a la sala. ¡Listo para jugar!`);
+            } catch (err) {
+                alert(err.message);
+            }
+        });
+    }
+
+    if (dueloRemoveBtn) {
+        dueloRemoveBtn.addEventListener("click", async () => {
+            apuntesEstado.global = null;
+            apuntesEstado.bomba = null;
+            apuntesEstado.bolillero = null;
+            apuntesEstado.impostor = null;
+            apuntesEstado.memotest = null;
+            await guardarApuntesEnStorage();
+            actualizarUIIndicadoresPDF();
+            actualizarDropdownListasDuelo();
+            mostrarToast("🗑️ Archivo PDF desvinculado de la sala.");
+        });
+    }
+
+    if (dom.dueloOnlineListaSelect) {
+        dom.dueloOnlineListaSelect.addEventListener("change", () => {
+            actualizarDropdownListasDuelo();
+        });
+    }
+
     if (dom.mainRemovePdfBtn) {
         dom.mainRemovePdfBtn.addEventListener("click", async () => {
             apuntesEstado.global = null;
@@ -6041,7 +6326,7 @@ function registrarEventos() {
 
     // Botones Volver Atrás (Back buttons)
     if (dom.backFromBolilleroBtn) dom.backFromBolilleroBtn.addEventListener("click", () => cambiarVista("solo"));
-    if (dom.backFromDueloBtn) dom.backFromDueloBtn.addEventListener("click", () => cambiarVista("juntos"));
+    if (dom.backFromDueloBtn) dom.backFromDueloBtn.addEventListener("click", () => cambiarVista("home"));
 
     // Botones Estudiar Juntos (viewJuntos) - Lobby Rápido y Modos
     if (dom.juntosQuickCreateBtn) dom.juntosQuickCreateBtn.addEventListener("click", () => {
@@ -6750,8 +7035,11 @@ function seleccionarTemaManualBolillero(temaId, dispararIaInmediata = false) {
 
     window.addEventListener("hashchange", () => {
         const hash = window.location.hash.replace("#", "");
-        if (["solo", "juntos", "bolillero", "duelo", "fama", "home"].includes(hash)) {
-            cambiarVista(hash);
+        const normalized = (hash === "duelo" || hash === "juntos") ? "juntos" : hash;
+        if (["solo", "juntos", "bolillero", "fama", "home"].includes(normalized)) {
+            if (normalized !== estado.interfaz.vistaActual) {
+                cambiarVista(normalized);
+            }
         }
     });
 
@@ -6864,7 +7152,7 @@ function iniciarAplicacion() {
     }
     const drawerVersionTag = document.getElementById("drawerVersionTag");
     if (drawerVersionTag) {
-        drawerVersionTag.innerHTML = `⚡ Luibañez <strong style="color: var(--color-text);">v24.7</strong>`;
+        drawerVersionTag.innerHTML = `⚡ Luibañez <strong style="color: var(--color-text);">v24.8</strong>`;
         drawerVersionTag.addEventListener("click", () => {
             forzarActualizacionCompleta(true);
         });
@@ -6906,7 +7194,7 @@ function iniciarAplicacion() {
 // =========================================================
 // GESTOR DE VERSIONES Y ACTUALIZACIÓN AUTOMÁTICA
 // =========================================================
-const APP_BUILD_VERSION = "24.7";
+const APP_BUILD_VERSION = "24.8";
 
 async function forzarActualizacionCompleta(mostrarNotificacion = true) {
     if (mostrarNotificacion && typeof mostrarToast === "function") {

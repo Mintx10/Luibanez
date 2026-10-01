@@ -15,10 +15,10 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     
-    <link rel="icon" type="image/svg+xml" href="icon.svg?v=24.7">
-    <link rel="apple-touch-icon" href="icon-192.png?v=24.7">
-    <link rel="manifest" href="manifest.json?v=24.7">
-    <link rel="stylesheet" href="style.css?v=24.7">
+    <link rel="icon" type="image/svg+xml" href="icon.svg?v=24.8">
+    <link rel="apple-touch-icon" href="icon-192.png?v=24.8">
+    <link rel="manifest" href="manifest.json?v=24.8">
+    <link rel="stylesheet" href="style.css?v=24.8">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -239,7 +239,7 @@
 
         <!-- Versión y botón de actualización forzada -->
         <div class="drawer-version-row" style="padding: 0.85rem 1rem; border-top: 1px solid var(--color-border); font-size: 0.75rem; color: var(--color-text-muted); display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02); margin-top: auto;">
-            <span id="drawerVersionTag" style="cursor: pointer; user-select: none;" title="Versión de Luibañez">⚡ Luibañez <strong style="color: var(--color-text);">v24.7</strong></span>
+            <span id="drawerVersionTag" style="cursor: pointer; user-select: none;" title="Versión de Luibañez">⚡ Luibañez <strong style="color: var(--color-text);">v24.8</strong></span>
             <button id="btnForzarActualizar" class="button button--ghost button--xs" type="button" style="font-size: 0.72rem; padding: 0.2rem 0.55rem; border-radius: 999px; border: 1px solid var(--color-border);" title="Limpiar caché y recargar versión más reciente">🔄 Actualizar</button>
         </div>
     </div>
@@ -526,183 +526,6 @@
                     </button>
                 </article>
 
-            </div>
-        </div>
-    </section>
-
-    <!-- ==================== VISTA 3: ESTUDIAR JUNTOS (PÁGINA DEDICADA VERSUS & COOPERATIVO) ==================== -->
-    <section id="viewJuntos" class="view view--hidden" aria-label="Página de Estudiar Juntos">
-        <div class="modules-hub" style="max-width: 1200px; margin: 0 auto; padding: 1rem 1rem 3rem;">
-            
-            <!-- Encabezado de la Página Juntos -->
-            <div class="page-header" style="margin-bottom: 2rem; padding-bottom: 1.25rem; border-bottom: 1px solid var(--color-border); opacity: 0.85;">
-                <div class="hub-category-badge badge badge--accent" style="margin-bottom: 0.5rem;">
-                    <span>🤝 APARTADO ESTUDIAR JUNTOS — MULTIJUGADOR ONLINE EN VIVO</span>
-                </div>
-                <h1 class="page-title" style="font-size: 2.2rem; font-weight: 800; color: #fff; margin: 0.25rem 0 0.5rem;">
-                    Estudiar Juntos
-                </h1>
-                <p class="page-subtitle" style="color: var(--color-text-muted); font-size: 1rem; max-width: 750px; line-height: 1.5;">
-                    Salas sincronizadas en tiempo real entre celulares y PC con Link Mágico y código de sala. Elegí cómo jugar:
-                </p>
-
-                <!-- Barra rápida de Lobby / Acceso a Sala -->
-                <div class="juntos-quick-lobby-bar" style="display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 1.25rem; align-items: center;">
-                    <button id="juntosQuickCreateBtn" class="button button--primary" type="button">
-                        ➕ Crear Sala Online
-                    </button>
-                    <button id="juntosQuickJoinBtn" class="button button--secondary" type="button">
-                        🔑 Ingresar PIN (5 letras)
-                    </button>
-                </div>
-            </div>
-
-            <!-- SUBDIVISIÓN 1: MODO VERSUS (COMPETITIVO) -->
-            <div class="juntos-subdivision-header juntos-subdivision--versus" style="margin-bottom: 1.25rem;">
-                <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
-                    <span class="badge badge--accent" style="font-size: 0.9rem; padding: 0.35rem 0.75rem;">⚔️ MODO VERSUS (COMPETITIVO)</span>
-                    <span class="badge badge--dark">Puntajes & Rachas</span>
-                </div>
-                <h3 class="juntos-subdivision-title" style="margin-top: 0.35rem;">Competencia en Tiempo Real</h3>
-                <p class="juntos-subdivision-desc">
-                    Demostrá tu velocidad, respondé antes que tus compañeros y ganá puestos en el podio.
-                </p>
-            </div>
-
-            <div class="juntos-grid modules-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.35rem; margin-bottom: 2.5rem;">
-                <!-- Tarjeta Duelo 1: Bolillero VS Online -->
-                <article class="module-card module-card--active module-card--duel" id="cardDueloBolillero">
-                    <div class="module-card__header">
-                        <div class="module-card__icon module-card__icon--duel">🎲</div>
-                        <span class="badge badge--accent">Versus En Vivo</span>
-                    </div>
-                    <h3 class="module-card__title">Bolillero VS Online</h3>
-                    <p class="module-card__desc">
-                        Doble ruleta sincronizada (jugador + tema), cronómetro compartido, votación individual per-device y Robo Relámpago ⚡.
-                    </p>
-                    <button id="openDueloBolilleroCardBtn" class="button button--primary button--full" type="button">
-                        Entrar a Bolillero VS ⚔️
-                    </button>
-                </article>
-
-                <!-- Tarjeta Duelo 2: Bomba VS -->
-                <article class="module-card module-card--active module-card--duel" id="cardDueloBomba">
-                    <div class="module-card__header">
-                        <div class="module-card__icon module-card__icon--danger">💣</div>
-                        <span class="badge badge--danger">Bomba Versus</span>
-                    </div>
-                    <h3 class="module-card__title">La Bomba Versus</h3>
-                    <p class="module-card__desc">
-                        Competencia de velocidad pura: el primero que resuelve las fases teóricas y corta los 3 cables desactiva antes.
-                    </p>
-                    <button id="openDueloBombaCardBtn" class="button button--secondary button--full" type="button">
-                        Desactivar en Versus 💣
-                    </button>
-                </article>
-
-                <!-- Tarjeta Duelo 3: Impostor VS -->
-                <article class="module-card module-card--active module-card--duel" id="cardDueloImpostor">
-                    <div class="module-card__header">
-                        <div class="module-card__icon module-card__icon--impostor">🕵️‍♂️</div>
-                        <span class="badge badge--warning">Rachas en Vivo</span>
-                    </div>
-                    <h3 class="module-card__title">Caza al Impostor Versus</h3>
-                    <p class="module-card__desc">
-                        Olas simultáneas de tarjetas conceptuales. Detectá el error antes que tus rivales y robá multiplicadores en vivo.
-                    </p>
-                    <button id="openDueloImpostorCardBtn" class="button button--secondary button--full" type="button">
-                        Cazar en Versus 🕵️‍♂️
-                    </button>
-                </article>
-
-                <!-- Tarjeta Duelo 4: Memotest VS -->
-                <article class="module-card module-card--active module-card--duel" id="cardDueloMemotest">
-                    <div class="module-card__header">
-                        <div class="module-card__icon module-card__icon--memotest">🧠</div>
-                        <span class="badge badge--accent">Tablero VS</span>
-                    </div>
-                    <h3 class="module-card__title">Memotest Versus Online</h3>
-                    <p class="module-card__desc">
-                        Duelo de memoria y velocidad conceptual por turnos o simultáneo en un tablero interactivo contra reloj.
-                    </p>
-                    <button id="openDueloMemotestCardBtn" class="button button--secondary button--full" type="button">
-                        Memotest en Versus 🧠
-                    </button>
-                </article>
-
-                <!-- Tarjeta Duelo 5: Modo Triatlón -->
-                <article class="module-card module-card--active module-card--triatlon" id="cardDueloTriatlon">
-                    <div class="module-card__header">
-                        <div class="module-card__icon module-card__icon--triatlon">🏅</div>
-                        <span class="badge badge--gold">3 Rondas</span>
-                    </div>
-                    <h3 class="module-card__title">Modo Triatlón 🏆</h3>
-                    <p class="module-card__desc">
-                        El desafío definitivo: las 3 pruebas encadenadas (Bomba ➔ Impostor ➔ Memotest) con podio olímpico acumulado.
-                    </p>
-                    <button id="openDueloTriatlonCardBtn" class="button button--primary button--full" type="button">
-                        Jugar Triatlón 🏅
-                    </button>
-                </article>
-            </div>
-
-            <!-- SUBDIVISIÓN 2: MODO COOPERATIVO (EN EQUIPO) -->
-            <div class="juntos-subdivision-header juntos-subdivision--coop" style="margin-bottom: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--color-border);">
-                <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
-                    <span class="badge badge--success" style="font-size: 0.9rem; padding: 0.35rem 0.75rem;">🤝 MODO COOPERATIVO (EN EQUIPO)</span>
-                    <span class="badge badge--dark">Estudio Colaborativo</span>
-                </div>
-                <h3 class="juntos-subdivision-title" style="margin-top: 0.35rem;">Estudio Colaborativo en Equipo</h3>
-                <p class="juntos-subdivision-desc">
-                    Únanse para salvar la materia: compartan el maletín, debatan fórmulas y resuelvan desafíos juntos sin competir.
-                </p>
-            </div>
-
-            <div class="juntos-grid modules-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.35rem;">
-                <!-- Tarjeta Co-op 1: Bomba Cooperativa -->
-                <article class="module-card module-card--active module-card--solo" id="cardCoopBomba" style="border-color: rgba(16, 185, 129, 0.4);">
-                    <div class="module-card__header">
-                        <div class="module-card__icon" style="background: rgba(16, 185, 129, 0.15); color: #10b981;">🤝</div>
-                        <span class="badge badge--success">Equipo vs Tiempo</span>
-                    </div>
-                    <h3 class="module-card__title">Bomba Cooperativa</h3>
-                    <p class="module-card__desc">
-                        Todo el equipo comparte el mismo maletín, cables y cronómetro. Cada uno aporta su cálculo para desactivarla antes de que detone.
-                    </p>
-                    <button id="openCoopBombaBtn" class="button button--primary button--full" type="button" style="background: #10b981; border-color: #10b981;">
-                        Desactivar en Equipo 🤝
-                    </button>
-                </article>
-
-                <!-- Tarjeta Co-op 2: Memotest en Equipo -->
-                <article class="module-card module-card--active module-card--solo" id="cardCoopMemotest" style="border-color: rgba(16, 185, 129, 0.4);">
-                    <div class="module-card__header">
-                        <div class="module-card__icon" style="background: rgba(16, 185, 129, 0.15); color: #10b981;">🧠</div>
-                        <span class="badge badge--success">Mente Colectiva</span>
-                    </div>
-                    <h3 class="module-card__title">Memotest en Equipo</h3>
-                    <p class="module-card__desc">
-                        Tablero compartido donde el grupo debate las conexiones entre conceptos teóricos y fórmulas matemáticas para despejarlo juntos.
-                    </p>
-                    <button id="openCoopMemotestBtn" class="button button--secondary button--full" type="button">
-                        Memotest Colaborativo 🧠
-                    </button>
-                </article>
-
-                <!-- Tarjeta Co-op 3: Bolillero de Repaso Grupal -->
-                <article class="module-card module-card--active module-card--solo" id="cardCoopBolillero" style="border-color: rgba(16, 185, 129, 0.4);">
-                    <div class="module-card__header">
-                        <div class="module-card__icon" style="background: rgba(16, 185, 129, 0.15); color: #10b981;">📚</div>
-                        <span class="badge badge--success">Repaso Grupal</span>
-                    </div>
-                    <h3 class="module-card__title">Bolillero de Repaso Grupal</h3>
-                    <p class="module-card__desc">
-                        Sorteo colaborativo para mesas de estudio: definan quién expone el tema, quién profundiza los conceptos teóricos y quién toma apuntes en el pizarrón.
-                    </p>
-                    <button id="openCoopBolilleroBtn" class="button button--secondary button--full open-bolillero-btn" type="button">
-                        Repasar en Grupo 📚
-                    </button>
-                </article>
             </div>
         </div>
     </section>
@@ -1082,6 +905,31 @@
                                 </label>
                             </div>
 
+                            <!-- Selector y Vinculación de Material PDF para la Sala -->
+                            <div class="duelo-pdf-card-box" id="dueloPdfCardBox" style="margin-top: 1rem;">
+                                <div class="duelo-pdf-card-info">
+                                    <div class="duelo-pdf-card-icon" id="dueloPdfCardIcon">📄</div>
+                                    <div class="duelo-pdf-card-details">
+                                        <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                                            <strong id="dueloPdfCardTitle">Material PDF para la Sala</strong>
+                                            <span class="badge badge--success" id="dueloPdfCardBadge" style="display: none;">Conectado a la Sala</span>
+                                        </div>
+                                        <p id="dueloPdfCardSub" style="margin: 0.25rem 0 0; font-size: 0.8rem; color: var(--color-text-muted);">
+                                            Cargá un apunte o libro PDF para que la sala juegue con preguntas reales de tu materia.
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="duelo-pdf-card-actions">
+                                    <input type="file" id="dueloOnlinePdfInput" accept=".pdf,.txt,.md" style="display: none;">
+                                    <button type="button" class="button button--secondary button--sm" id="dueloUploadPdfBtn">
+                                        📂 Cargar / Cambiar PDF
+                                    </button>
+                                    <button type="button" class="button button--ghost button--sm hidden" id="dueloRemovePdfBtn" title="Desvincular PDF y usar temario predeterminado">
+                                        🗑️
+                                    </button>
+                                </div>
+                            </div>
+
                             <!-- Materia y Tiempo -->
                             <div class="duelo-setup-row" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; margin-top: 1rem;">
                                 <div class="field" style="margin-bottom: 0;">
@@ -1219,6 +1067,7 @@
                                     <div class="duelo-lobby-badges">
                                         <span class="badge badge--accent" id="dueloWaitingRoomModoBadge">⚔️ Versus (Hasta 8)</span>
                                         <span class="badge badge--success" id="dueloServerStatusBadge">🟢 Servidor Conectado</span>
+                                        <span class="badge badge--info" id="dueloWaitingRoomMaterialBadge" style="display: inline-flex;">📄 Material: General</span>
                                     </div>
                                 </div>
                             </div>
@@ -2622,7 +2471,7 @@
 </dialog>
 
 <script src="mqtt.min.js"></script>
-<script src="script.js?v=24.7" defer></script>
+<script src="script.js?v=24.8" defer></script>
 
 <!-- =========================================================
      MODAL DE PROMPT PARA GEMINI (CREAR JUEGOS DESDE PDF)
