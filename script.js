@@ -760,53 +760,30 @@ function aplicarModoDevUI() {
     document.body.classList.toggle("modo-dev-activo", activo);
 
     const devBadge = document.getElementById("juntosDevBadgeNotice");
-    if (devBadge) devBadge.style.display = activo ? "flex" : "none";
+    if (devBadge) devBadge.style.display = "none";
 
     if (dom.navJuntosBtn) {
-        if (activo) {
-            dom.navJuntosBtn.classList.remove("nav-link--locked");
-            dom.navJuntosBtn.classList.add("nav-link--dev");
-            dom.navJuntosBtn.title = "Estudiar Juntos (🛠️ Modo Dev Lucas)";
-            dom.navJuntosBtn.innerHTML = `🤝 Estudiar Juntos <span class="badge badge--accent" style="font-size: 0.65rem; padding: 2px 6px; margin-left: 4px;">DEV</span>`;
-        } else {
-            dom.navJuntosBtn.classList.add("nav-link--locked");
-            dom.navJuntosBtn.classList.remove("nav-link--dev");
-            dom.navJuntosBtn.title = "Estudiar Juntos (Próximamente)";
-            dom.navJuntosBtn.innerHTML = `🤝 Estudiar Juntos`;
-        }
+        dom.navJuntosBtn.classList.remove("nav-link--locked");
+        dom.navJuntosBtn.title = "Estudiar Juntos";
+        dom.navJuntosBtn.innerHTML = `🤝 Estudiar Juntos`;
     }
 
     if (dom.drawerNavJuntos) {
+        dom.drawerNavJuntos.classList.remove("drawer-nav-item--locked");
         const txt = dom.drawerNavJuntos.querySelector(".drawer-nav-text");
-        if (activo) {
-            dom.drawerNavJuntos.classList.remove("drawer-nav-item--locked");
-            if (txt) txt.textContent = "Estudiar Juntos (DEV)";
-        } else {
-            dom.drawerNavJuntos.classList.add("drawer-nav-item--locked");
-            if (txt) txt.textContent = "Estudiar Juntos (Próximamente)";
-        }
+        if (txt) txt.textContent = "Estudiar Juntos";
     }
 
     if (dom.heroGoJuntosBtn) {
-        if (activo) {
-            dom.heroGoJuntosBtn.classList.remove("is-locked-btn");
-            dom.heroGoJuntosBtn.innerHTML = `🛠️ Probar Estudiar Juntos (DEV)`;
-        } else {
-            dom.heroGoJuntosBtn.classList.add("is-locked-btn");
-            dom.heroGoJuntosBtn.innerHTML = `🔒 Estudiar Juntos (Próximamente)`;
-        }
+        dom.heroGoJuntosBtn.classList.remove("is-locked-btn");
+        dom.heroGoJuntosBtn.innerHTML = `🤝 Entrar a Estudiar Juntos`;
+        dom.heroGoJuntosBtn.title = "Ir a Estudiar Juntos";
     }
 
     if (dom.homeGoToJuntosBtn) {
-        if (activo) {
-            dom.homeGoToJuntosBtn.classList.remove("is-locked-btn");
-            dom.homeGoToJuntosBtn.classList.add("button--primary");
-            dom.homeGoToJuntosBtn.innerHTML = `🛠️ Entrar en Modo Dev`;
-        } else {
-            dom.homeGoToJuntosBtn.classList.add("is-locked-btn");
-            dom.homeGoToJuntosBtn.classList.remove("button--primary");
-            dom.homeGoToJuntosBtn.innerHTML = `🔒 Próximamente (En Construcción)`;
-        }
+        dom.homeGoToJuntosBtn.classList.remove("is-locked-btn");
+        dom.homeGoToJuntosBtn.innerHTML = `🤝 Entrar a Estudiar Juntos`;
+        dom.homeGoToJuntosBtn.title = "Ir a Estudiar Juntos";
     }
 }
 
@@ -828,11 +805,6 @@ function inicializarModoDev() {
    NAVEGACIÓN SPA (VISTAS: HOME / BOLILLERO / DUELO / FAMA)
    ========================================================== */
 function cambiarVista(vista) {
-    if ((vista === "juntos" || vista === "duelo") && !esModoDevActivo()) {
-        mostrarToast("🔒 Acceso cerrado: El modo Estudiar Juntos no está disponible temporalmente.", "aviso");
-        vista = "home";
-    }
-
     const vistas = [
         { id: "home", domView: dom.viewHome },
         { id: "solo", domView: dom.viewSolo },
@@ -1040,11 +1012,7 @@ function inicializarDrawerMenu() {
     }
     if (dom.drawerNavJuntos) {
         dom.drawerNavJuntos.addEventListener("click", () => {
-            if (esModoDevActivo()) {
-                cambiarVista("juntos");
-            } else {
-                mostrarToast("🔒 Acceso cerrado: El modo Estudiar Juntos no está disponible temporalmente.", "aviso");
-            }
+            cambiarVista("juntos");
             cerrarDrawerMenu();
         });
     }
@@ -1056,7 +1024,7 @@ function inicializarDrawerMenu() {
     }
     if (dom.drawerNavDuelo) {
         dom.drawerNavDuelo.addEventListener("click", () => {
-            mostrarToast("🔒 Acceso cerrado: El modo Duelo no está disponible temporalmente.", "aviso");
+            cambiarVista("duelo");
             cerrarDrawerMenu();
         });
     }
@@ -2751,6 +2719,106 @@ function procesarMensajeMqttSala(data) {
         salirDeSalaOnline();
     }
 
+    // 4. Iniciar Partida de Bomba Online (Versus o Coop)
+    if (data.tipo === "INICIO_BOMBA_ONLINE") {
+        arrancarBombaOnlineCliente(data);
+        return;
+    }
+
+    if (data.tipo === "BOMBA_PROGRESO") {
+        if (juegosEduEstado.bombaOnline) {
+            const rival = juegosEduEstado.bombaOnline.jugadores.find(j => j.id === data.jugadorId);
+            if (rival) {
+                const subioFase = data.fase > rival.fase;
+                rival.fase = data.fase;
+                rival.fallos = data.fallos;
+                if (data.estado === "desactivada") rival.desactivada = true;
+                renderBombaOnlineTracker();
+
+                if (subioFase && rival.id !== perfilUsuario.id) {
+                    mostrarToast(`⚡ ¡${rival.apodo} cortó el Cable ${data.fase - 1}!`);
+                }
+            }
+        }
+        return;
+    }
+
+    if (data.tipo === "BOMBA_DESACTIVADA") {
+        if (juegosEduEstado.bombaOnline) {
+            juegosEduEstado.bombaOnline.desactivacionesCount = (juegosEduEstado.bombaOnline.desactivacionesCount || 0) + 1;
+            const puesto = juegosEduEstado.bombaOnline.desactivacionesCount;
+            const rival = juegosEduEstado.bombaOnline.jugadores.find(j => j.id === data.jugadorId);
+            if (rival) {
+                rival.desactivada = true;
+                rival.posicion = puesto;
+                rival.puntos = data.puntos;
+            }
+            renderBombaOnlineTracker();
+
+            if (data.jugadorId !== perfilUsuario.id) {
+                mostrarToast(`🏆 ¡${data.apodo} desactivó la bomba (#${puesto} con ${data.puntos} pts)!`);
+                reproducirSonido("ruletaFin");
+            }
+        }
+        return;
+    }
+
+    if (data.tipo === "BOMBA_DETONADA") {
+        if (juegosEduEstado.bombaOnline) {
+            const rival = juegosEduEstado.bombaOnline.jugadores.find(j => j.id === data.jugadorId);
+            if (rival) {
+                rival.detonada = true;
+            }
+            renderBombaOnlineTracker();
+            if (data.jugadorId !== perfilUsuario.id) {
+                mostrarToast(`💥 ¡A ${data.apodo} le detonó la bomba!`);
+            }
+        }
+        return;
+    }
+
+    if (data.tipo === "COOP_BOMBA_FASE") {
+        if (juegosEduEstado.bomba && juegosEduEstado.bomba.fase < data.fase) {
+            juegosEduEstado.bomba.fase = data.fase;
+            actualizarCablesBomba();
+            const tema = juegosEduEstado.temas[0];
+            if (data.fase === 2) {
+                if (dom.bombaFase1View) dom.bombaFase1View.classList.add("hidden");
+                if (dom.bombaFase2View) dom.bombaFase2View.classList.remove("hidden");
+                renderFase2Bomba(tema);
+            } else if (data.fase === 3) {
+                if (dom.bombaFase2View) dom.bombaFase2View.classList.add("hidden");
+                if (dom.bombaFase3View) dom.bombaFase3View.classList.remove("hidden");
+                renderFase3Bomba(tema);
+            }
+            reproducirSonido("ruletaFin");
+            mostrarToast(`🤝 ¡El equipo avanzó al Cable ${data.fase}!`);
+        }
+        return;
+    }
+
+    if (data.tipo === "COOP_BOMBA_FALLO") {
+        reproducirSonido("chispazo");
+        dispararGlitchBomba();
+        juegosEduEstado.bomba.fallos++;
+        juegosEduEstado.bomba.tiempoRestante = Math.max(5, juegosEduEstado.bomba.tiempoRestante - 15);
+        actualizarTimerBombaDisplay();
+        mostrarToast(`⚠️ ¡Fallo grupal en el equipo! -15s`);
+        if (juegosEduEstado.bomba.fallos >= 3) {
+            detonarBomba("3 errores en equipo provocaron la detonación.");
+        }
+        return;
+    }
+
+    if (data.tipo === "BOMBA_VOLVER_LOBBY") {
+        clearInterval(juegosEduEstado.bomba.timerId);
+        juegosEduEstado.esOnline = false;
+        cambiarVista("duelo");
+        mostrarSalaDeEsperaOnline(onlineDueloEstado.codigoSala);
+        mostrarToast("🔄 Volvieron a la sala de espera.");
+        return;
+    }
+
     // 4. Iniciar Partida Online
     if (data.tipo === "INICIO_PARTIDA_ONLINE") {
         dueloEstado.partida.activa = true;
@@ -2863,11 +2931,20 @@ function salirDeSalaOnline() {
 
 function iniciarCombateOnlineDesdeHost() {
     if (!onlineDueloEstado.esHost) return;
-    if (onlineDueloEstado.jugadores.length < 2) {
-        alert("Se necesitan al menos 2 jugadores para iniciar la batalla.");
+    if (onlineDueloEstado.jugadores.length < 1) {
+        alert("Se necesita al menos 1 jugador para iniciar la partida.");
         return;
     }
 
+    const juego = dom.dueloOnlineGameSelect ? dom.dueloOnlineGameSelect.value : "bomba";
+
+    // Si el desafío elegido es "Desactivá la Bomba":
+    if (juego === "bomba") {
+        iniciarBombaOnlineHost();
+        return;
+    }
+
+    // Para el Bolillero:
     const lista = estado.listas.find(l => l.id === dueloEstado.config.listaId) || estado.listas[0];
     if (!lista || lista.temas.length === 0) {
         alert("La lista seleccionada no tiene temas para sortear.");
@@ -2881,6 +2958,165 @@ function iniciarCombateOnlineDesdeHost() {
         jugadores: onlineDueloEstado.jugadores,
         temasDisponibles,
         formatoModo: onlineDueloEstado.formatoModo
+    });
+}
+
+function iniciarBombaOnlineHost() {
+    if (!onlineDueloEstado.esHost) return;
+    const listaId = dom.dueloOnlineListaSelect ? dom.dueloOnlineListaSelect.value : estado.listaSeleccionadaId;
+    const lista = estado.listas.find(l => l.id === listaId) || estado.listas[0] || { id: "default", titulo: "Materia de Estudio", temas: [] };
+
+    let tema = null;
+    if (lista.temas && lista.temas.length > 0) {
+        const randIdx = Math.floor(Math.random() * lista.temas.length);
+        tema = asegurarDatosJuegoTema(lista.temas[randIdx], randIdx);
+    }
+    if (!tema) {
+        tema = asegurarDatosJuegoTema({ id: "t1", nombre: "Fundamentos y Principios Clave", descripcion: "Bases teóricas y postulados esenciales." }, 0);
+    }
+
+    const formatoModo = onlineDueloEstado.formatoModo || "versus";
+    const tiempo = formatoModo === "coop" ? 120 : 90;
+
+    const payload = {
+        tipo: "INICIO_BOMBA_ONLINE",
+        jugadores: onlineDueloEstado.jugadores,
+        formatoModo,
+        tema,
+        tiempo,
+        codigoSala: onlineDueloEstado.codigoSala,
+        listaNombre: lista.titulo || lista.nombre || "Materia de Estudio"
+    };
+
+    publicarMensajeSala(payload);
+    arrancarBombaOnlineCliente(payload);
+}
+
+function arrancarBombaOnlineCliente(data) {
+    juegosEduEstado.esOnline = true;
+    juegosEduEstado.juegoActual = "bomba";
+    juegosEduEstado.modo = data.formatoModo || "versus";
+
+    juegosEduEstado.bombaOnline = {
+        jugadores: (data.jugadores || []).map(j => ({
+            id: j.id,
+            apodo: j.apodo || "Jugador",
+            avatar: j.avatar || "👤",
+            fase: 1,
+            fallos: 0,
+            desactivada: false,
+            detonada: false,
+            posicion: 0,
+            puntos: 0
+        })),
+        desactivacionesCount: 0,
+        codigoSala: data.codigoSala || onlineDueloEstado.codigoSala,
+        formatoModo: data.formatoModo || "versus"
+    };
+
+    // Sincronizar el tema exacto
+    juegosEduEstado.temas = [data.tema];
+    juegosEduEstado.temaIndice = 0;
+
+    // Actualizar cabecera de arena
+    if (dom.juegosGameSubtitle) dom.juegosGameSubtitle.textContent = `Materia: ${data.listaNombre || "Estudio"}`;
+    if (dom.juegosModeBadge) {
+        dom.juegosModeBadge.textContent = data.formatoModo === "coop" ? "🤝 Bomba Cooperativa" : "⚔️ Bomba Versus";
+        dom.juegosModeBadge.className = `badge ${data.formatoModo === 'coop' ? 'badge--accent' : 'badge--warning'}`;
+    }
+
+    if (dom.dueloOnlineWaitingRoom) dom.dueloOnlineWaitingRoom.classList.add("hidden");
+    if (dom.dueloLobby) dom.dueloLobby.classList.add("hidden");
+    cambiarVista("juegos");
+
+    if (dom.arenaImpostor) dom.arenaImpostor.classList.add("hidden");
+    if (dom.arenaMemotest) dom.arenaMemotest.classList.add("hidden");
+    if (dom.triatlonProgressBar) dom.triatlonProgressBar.classList.add("hidden");
+    if (dom.arenaBomba) dom.arenaBomba.classList.remove("hidden");
+
+    iniciarBomba(data.formatoModo);
+
+    // Tracker UI
+    const tracker = document.getElementById("bombaOnlineTracker");
+    if (tracker) tracker.classList.remove("hidden");
+
+    const modeLabel = document.getElementById("bombaTrackerModeLabel");
+    if (modeLabel) {
+        modeLabel.textContent = data.formatoModo === "coop"
+            ? "🤝 MISIÓN COOPERATIVA EN EQUIPO (HASTA 8 JUGADORES)"
+            : "⚔️ RIVALES EN VIVO (VERSUS HASTA 8 JUGADORES)";
+    }
+
+    const roomCodeTag = document.getElementById("bombaTrackerRoomCode");
+    if (roomCodeTag) roomCodeTag.textContent = `SALA: ${data.codigoSala || onlineDueloEstado.codigoSala || ""}`;
+
+    renderBombaOnlineTracker();
+}
+
+function renderBombaOnlineTracker() {
+    const grid = document.getElementById("bombaRivalsGrid");
+    if (!grid || !juegosEduEstado.bombaOnline) return;
+
+    grid.innerHTML = "";
+    juegosEduEstado.bombaOnline.jugadores.forEach(j => {
+        const esTu = j.id === perfilUsuario.id;
+        const chip = document.createElement("div");
+        chip.className = `bomba-rival-chip ${esTu ? 'is-you' : ''} ${j.desactivada ? 'is-winner' : ''} ${j.detonada ? 'is-exploded' : ''}`;
+
+        let statusText = "⚡ Cable 1";
+        let statusClass = "status-c1";
+        if (j.desactivada) {
+            statusText = `🏆 ${j.posicion || 1}º DESACTIVADA`;
+            statusClass = "status-defused";
+        } else if (j.detonada) {
+            statusText = "💥 DETONÓ";
+            statusClass = "status-boom";
+        } else if (j.fase === 2) {
+            statusText = "⚡ Cable 2";
+            statusClass = "status-c2";
+        } else if (j.fase === 3) {
+            statusText = "🔥 Maestro";
+            statusClass = "status-c3";
+        }
+
+        chip.innerHTML = `
+            <div class="bomba-rival-top">
+                <span class="bomba-rival-avatar">${j.avatar || '👤'}</span>
+                <span class="bomba-rival-name" title="${j.apodo}">${j.apodo} ${esTu ? '(Tú)' : ''}</span>
+            </div>
+            <div class="bomba-rival-status ${statusClass}">${statusText}</div>
+            <div class="bomba-rival-progress">
+                <div class="bomba-rival-seg ${j.fase > 1 || j.desactivada ? 'done' : j.fase === 1 ? 'active' : ''}"></div>
+                <div class="bomba-rival-seg ${j.fase > 2 || j.desactivada ? 'done' : j.fase === 2 ? 'active' : ''}"></div>
+                <div class="bomba-rival-seg ${j.desactivada ? 'done' : j.fase === 3 ? 'active' : ''}"></div>
+            </div>
+        `;
+        grid.appendChild(chip);
+    });
+}
+
+function notificarProgresoBombaOnline(fase, fallos = 0) {
+    if (!juegosEduEstado.esOnline) return;
+
+    if (juegosEduEstado.bombaOnline) {
+        const miJugador = juegosEduEstado.bombaOnline.jugadores.find(j => j.id === perfilUsuario.id);
+        if (miJugador) {
+            miJugador.fase = fase;
+            miJugador.fallos = fallos;
+            if (fase > 3) miJugador.desactivada = true;
+        }
+        renderBombaOnlineTracker();
+    }
+
+    publicarMensajeSala({
+        tipo: "BOMBA_PROGRESO",
+        jugadorId: perfilUsuario.id,
+        apodo: perfilUsuario.apodo,
+        avatar: perfilUsuario.avatar,
+        fase,
+        fallos,
+        tiempoRestante: juegosEduEstado.bomba ? juegosEduEstado.bomba.tiempoRestante : 0,
+        estado: fase > 3 ? "desactivada" : "jugando"
     });
 }
 
@@ -5540,21 +5776,9 @@ function registrarEventos() {
     /* Navegación Principal */
     if (dom.navHomeBtn) dom.navHomeBtn.addEventListener("click", () => cambiarVista("home"));
     if (dom.navSoloBtn) dom.navSoloBtn.addEventListener("click", () => cambiarVista("solo"));
-    if (dom.navJuntosBtn) dom.navJuntosBtn.addEventListener("click", () => {
-        if (esModoDevActivo()) {
-            cambiarVista("juntos");
-        } else {
-            mostrarToast("🔒 Acceso cerrado: El modo Estudiar Juntos no está disponible temporalmente.");
-        }
-    });
+    if (dom.navJuntosBtn) dom.navJuntosBtn.addEventListener("click", () => cambiarVista("juntos"));
     if (dom.navBolilleroBtn) dom.navBolilleroBtn.addEventListener("click", () => cambiarVista("bolillero"));
-    if (dom.navDueloBtn) dom.navDueloBtn.addEventListener("click", () => {
-        if (esModoDevActivo()) {
-            cambiarVista("duelo");
-        } else {
-            mostrarToast("🔒 Acceso cerrado: El modo Duelos Online no está disponible temporalmente.");
-        }
-    });
+    if (dom.navDueloBtn) dom.navDueloBtn.addEventListener("click", () => cambiarVista("duelo"));
     if (dom.navFamaBtn) dom.navFamaBtn.addEventListener("click", () => cambiarVista("fama"));
     if (dom.brandLink) {
         dom.brandLink.addEventListener("click", (e) => {
@@ -5581,21 +5805,9 @@ function registrarEventos() {
 
     // Botones Hero y Portal Hub desde Inicio (viewHome)
     if (dom.heroGoSoloBtn) dom.heroGoSoloBtn.addEventListener("click", () => cambiarVista("solo"));
-    if (dom.heroGoJuntosBtn) dom.heroGoJuntosBtn.addEventListener("click", () => {
-        if (esModoDevActivo()) {
-            cambiarVista("juntos");
-        } else {
-            mostrarToast("🔒 Acceso cerrado: El modo Estudiar Juntos no está disponible temporalmente.");
-        }
-    });
+    if (dom.heroGoJuntosBtn) dom.heroGoJuntosBtn.addEventListener("click", () => cambiarVista("juntos"));
     if (dom.homeGoToSoloBtn) dom.homeGoToSoloBtn.addEventListener("click", () => cambiarVista("solo"));
-    if (dom.homeGoToJuntosBtn) dom.homeGoToJuntosBtn.addEventListener("click", () => {
-        if (esModoDevActivo()) {
-            cambiarVista("juntos");
-        } else {
-            mostrarToast("🔒 Acceso cerrado: El modo Estudiar Juntos no está disponible temporalmente.");
-        }
-    });
+    if (dom.homeGoToJuntosBtn) dom.homeGoToJuntosBtn.addEventListener("click", () => cambiarVista("juntos"));
     if (dom.homeGoToFamaBtn) dom.homeGoToFamaBtn.addEventListener("click", () => cambiarVista("fama"));
 
     // Botón de salir de Modo Desarrollador dentro de viewJuntos
@@ -5625,50 +5837,67 @@ function registrarEventos() {
         cambiarVista("duelo");
         if (dom.dueloCreateRoomModal) dom.dueloCreateRoomModal.showModal();
     });
+    if (dom.juntosQuickCreateBtn) dom.juntosQuickCreateBtn.addEventListener("click", () => {
+        cambiarVista("duelo");
+        cambiarModoDueloLobby("online");
+        const tabHost = document.getElementById("dueloTabHostBtn");
+        if (tabHost) tabHost.click();
+    });
     if (dom.juntosQuickJoinBtn) dom.juntosQuickJoinBtn.addEventListener("click", () => {
         cambiarVista("duelo");
-        const pinInput = document.getElementById("dueloJoinRoomInput");
+        cambiarModoDueloLobby("online");
+        const tabJoin = document.getElementById("dueloTabJoinBtn");
+        if (tabJoin) tabJoin.click();
+        const pinInput = document.getElementById("dueloJoinRoomCode");
         if (pinInput) pinInput.focus();
     });
     if (dom.openDueloBolilleroCardBtn) dom.openDueloBolilleroCardBtn.addEventListener("click", () => {
         cambiarVista("duelo");
         cambiarModoDueloLobby("online");
-        if (dom.dueloOnlineModoSelect) {
-            dom.dueloOnlineModoSelect.value = "versus";
-            dom.dueloOnlineModoSelect.dispatchEvent(new Event("change"));
-        }
+        seleccionarJuegoLobby("bolillero");
+        seleccionarFormatoLobby("versus");
     });
     if (dom.openDueloBombaCardBtn) dom.openDueloBombaCardBtn.addEventListener("click", () => {
         cambiarVista("duelo");
-        if (dom.dueloOnlineGameSelect) dom.dueloOnlineGameSelect.value = "bomba";
+        cambiarModoDueloLobby("online");
+        seleccionarJuegoLobby("bomba");
+        seleccionarFormatoLobby("versus");
     });
     if (dom.openDueloImpostorCardBtn) dom.openDueloImpostorCardBtn.addEventListener("click", () => {
         cambiarVista("duelo");
-        if (dom.dueloOnlineGameSelect) dom.dueloOnlineGameSelect.value = "impostor";
+        cambiarModoDueloLobby("online");
+        seleccionarJuegoLobby("impostor");
+        seleccionarFormatoLobby("versus");
     });
     if (dom.openDueloMemotestCardBtn) dom.openDueloMemotestCardBtn.addEventListener("click", () => {
         cambiarVista("duelo");
-        if (dom.dueloOnlineGameSelect) dom.dueloOnlineGameSelect.value = "memotest";
+        cambiarModoDueloLobby("online");
+        seleccionarJuegoLobby("memotest");
+        seleccionarFormatoLobby("versus");
     });
     if (dom.openDueloTriatlonCardBtn) dom.openDueloTriatlonCardBtn.addEventListener("click", () => {
         cambiarVista("duelo");
-        if (dom.dueloOnlineGameSelect) dom.dueloOnlineGameSelect.value = "triatlon";
+        cambiarModoDueloLobby("online");
+        seleccionarJuegoLobby("triatlon");
+        seleccionarFormatoLobby("versus");
     });
     if (dom.openCoopBombaBtn) dom.openCoopBombaBtn.addEventListener("click", () => {
         cambiarVista("duelo");
-        if (dom.dueloOnlineGameSelect) dom.dueloOnlineGameSelect.value = "bomba";
+        cambiarModoDueloLobby("online");
+        seleccionarJuegoLobby("bomba");
+        seleccionarFormatoLobby("coop");
     });
     if (dom.openCoopMemotestBtn) dom.openCoopMemotestBtn.addEventListener("click", () => {
         cambiarVista("duelo");
-        if (dom.dueloOnlineGameSelect) dom.dueloOnlineGameSelect.value = "memotest";
+        cambiarModoDueloLobby("online");
+        seleccionarJuegoLobby("memotest");
+        seleccionarFormatoLobby("coop");
     });
     if (dom.openCoopBolilleroBtn) dom.openCoopBolilleroBtn.addEventListener("click", () => {
         cambiarVista("duelo");
         cambiarModoDueloLobby("online");
-        if (dom.dueloOnlineModoSelect) {
-            dom.dueloOnlineModoSelect.value = "coop";
-            dom.dueloOnlineModoSelect.dispatchEvent(new Event("change"));
-        }
+        seleccionarJuegoLobby("bolillero");
+        seleccionarFormatoLobby("coop");
     });
 
     // Botones adicionales hacia el bolillero
@@ -7258,12 +7487,13 @@ function renderFase1Bomba(tema) {
                 mostrarToast("✂️ ¡Cable 1 cortado con éxito! Fundamento teórico verificado.");
                 juegosEduEstado.bomba.fase = 2;
                 actualizarCablesBomba();
+                notificarProgresoBombaOnline(2, juegosEduEstado.bomba.fallos);
                 setTimeout(() => {
                     if (dom.bombaFase1View) dom.bombaFase1View.classList.add("hidden");
                     if (dom.bombaFase2View) dom.bombaFase2View.classList.remove("hidden");
                     renderFase2Bomba(tema);
                     if (juegosEduEstado.modo === "coop" && onlineDueloEstado.conectado) {
-                        enviarMensajeMQTT({ tipo: "COOP_BOMBA_FASE", fase: 2 });
+                        publicarMensajeSala({ tipo: "COOP_BOMBA_FASE", fase: 2 });
                     }
                 }, 500);
             } else {
@@ -7272,6 +7502,10 @@ function renderFase1Bomba(tema) {
                 reproducirSonido("chispazo");
                 dispararGlitchBomba();
                 juegosEduEstado.bomba.fallos++;
+                notificarProgresoBombaOnline(1, juegosEduEstado.bomba.fallos);
+                if (juegosEduEstado.modo === "coop" && onlineDueloEstado.conectado) {
+                    publicarMensajeSala({ tipo: "COOP_BOMBA_FALLO" });
+                }
                 juegosEduEstado.bomba.tiempoRestante = Math.max(5, juegosEduEstado.bomba.tiempoRestante - 15);
                 actualizarTimerBombaDisplay();
                 mostrarToast("💥 ¡Chispazo! Fundamento incorrecto (-15s)");
@@ -7326,12 +7560,13 @@ function renderFase2Bomba(tema) {
                 mostrarToast("✂️ ¡Cable 2 cortado con éxito! Análisis conceptual validado.");
                 juegosEduEstado.bomba.fase = 3;
                 actualizarCablesBomba();
+                notificarProgresoBombaOnline(3, juegosEduEstado.bomba.fallos);
                 setTimeout(() => {
                     if (dom.bombaFase2View) dom.bombaFase2View.classList.add("hidden");
                     if (dom.bombaFase3View) dom.bombaFase3View.classList.remove("hidden");
                     renderFase3Bomba(tema);
                     if (juegosEduEstado.modo === "coop" && onlineDueloEstado.conectado) {
-                        enviarMensajeMQTT({ tipo: "COOP_BOMBA_FASE", fase: 3 });
+                        publicarMensajeSala({ tipo: "COOP_BOMBA_FASE", fase: 3 });
                     }
                 }, 500);
             } else {
@@ -7340,6 +7575,10 @@ function renderFase2Bomba(tema) {
                 reproducirSonido("chispazo");
                 dispararGlitchBomba();
                 juegosEduEstado.bomba.fallos++;
+                notificarProgresoBombaOnline(2, juegosEduEstado.bomba.fallos);
+                if (juegosEduEstado.modo === "coop" && onlineDueloEstado.conectado) {
+                    publicarMensajeSala({ tipo: "COOP_BOMBA_FALLO" });
+                }
                 juegosEduEstado.bomba.tiempoRestante = Math.max(5, juegosEduEstado.bomba.tiempoRestante - 15);
                 actualizarTimerBombaDisplay();
                 mostrarToast("💥 ¡Error de análisis! (-15s)");
@@ -7393,6 +7632,7 @@ function renderFase3Bomba(tema) {
                 reproducirSonido("victoria");
                 juegosEduEstado.bomba.fase = 4;
                 actualizarCablesBomba();
+                notificarProgresoBombaOnline(4, juegosEduEstado.bomba.fallos);
                 mostrarToast("✂️ ¡CABLE MAESTRO CORTADO! Detonador desactivado.");
                 setTimeout(() => {
                     desactivarBombaExito();
@@ -7403,6 +7643,10 @@ function renderFase3Bomba(tema) {
                 reproducirSonido("chispazo");
                 dispararGlitchBomba();
                 juegosEduEstado.bomba.fallos++;
+                notificarProgresoBombaOnline(3, juegosEduEstado.bomba.fallos);
+                if (juegosEduEstado.modo === "coop" && onlineDueloEstado.conectado) {
+                    publicarMensajeSala({ tipo: "COOP_BOMBA_FALLO" });
+                }
                 juegosEduEstado.bomba.tiempoRestante = Math.max(5, juegosEduEstado.bomba.tiempoRestante - 20);
                 actualizarTimerBombaDisplay();
                 mostrarToast("❌ ¡Síntesis errónea en cable maestro! (-20s)");
@@ -7452,6 +7696,34 @@ function desactivarBombaExito() {
         `;
     }
 
+    // Si es modo online, sincronizar con la sala
+    if (juegosEduEstado.esOnline) {
+        if (juegosEduEstado.bombaOnline) {
+            juegosEduEstado.bombaOnline.desactivacionesCount = (juegosEduEstado.bombaOnline.desactivacionesCount || 0) + 1;
+            const miPuesto = juegosEduEstado.bombaOnline.desactivacionesCount;
+            const miJugador = juegosEduEstado.bombaOnline.jugadores.find(j => j.id === perfilUsuario.id);
+            if (miJugador) {
+                miJugador.desactivada = true;
+                miJugador.posicion = miPuesto;
+                miJugador.puntos = puntos;
+            }
+            renderBombaOnlineTracker();
+            mostrarToast(`🏆 ¡Desactivaste la bomba en el ${miPuesto}º puesto!`);
+        }
+
+        publicarMensajeSala({
+            tipo: "BOMBA_DESACTIVADA",
+            jugadorId: perfilUsuario.id,
+            apodo: perfilUsuario.apodo,
+            puntos,
+            tiempoRestante: b.tiempoRestante,
+            fallos: b.fallos
+        });
+
+        const btnVolver = document.getElementById("bombaBackToLobbyBtn");
+        if (btnVolver) btnVolver.classList.remove("hidden");
+    }
+
     // Registrar en el Salón de la Fama Multiverso
     registrarResultadoJuego("bomba", puntos, true);
 
@@ -7484,6 +7756,26 @@ function detonarBomba(motivo) {
         dom.bombaResultStats.innerHTML = `<p style="color: #f87171; font-weight: bold; font-size: 1.1rem;">💥 Puntos obtenidos: ${puntos} pts</p>`;
     }
 
+    if (juegosEduEstado.esOnline) {
+        if (juegosEduEstado.bombaOnline) {
+            const miJugador = juegosEduEstado.bombaOnline.jugadores.find(j => j.id === perfilUsuario.id);
+            if (miJugador) {
+                miJugador.detonada = true;
+            }
+            renderBombaOnlineTracker();
+        }
+
+        publicarMensajeSala({
+            tipo: "BOMBA_DETONADA",
+            jugadorId: perfilUsuario.id,
+            apodo: perfilUsuario.apodo,
+            motivo
+        });
+
+        const btnVolver = document.getElementById("bombaBackToLobbyBtn");
+        if (btnVolver) btnVolver.classList.remove("hidden");
+    }
+
     registrarResultadoJuego("bomba", puntos, false);
 
     if (juegosEduEstado.juegoActual === "triatlon") {
@@ -7494,11 +7786,9 @@ function detonarBomba(motivo) {
             avanzarRondaTriatlon(2);
         }, 2500);
     } else {
-        // La animación de explosión dura exactamente 3 segundos y luego se detiene
-        // pero se queda en la pantalla de resultado con los botones para reintentar o salir
         setTimeout(() => {
             if (dom.arenaBomba) dom.arenaBomba.classList.remove("bomba-exploding");
-            mostrarToast(`💥 ¡Bomba detonada! Podés reintentar o salir al menú.`);
+            mostrarToast(`💥 ¡Bomba detonada! Podés reintentar o volver al lobby.`);
         }, 3000);
     }
 }
@@ -8260,6 +8550,95 @@ function obtenerBadgesEspecialesHtml(insignias) {
 }
 
 /* =========================================================
+   SALA MULTIJUGADOR V24.6: TABS, SELECCIÓN DE JUEGO Y FORMATO
+   ========================================================= */
+
+function seleccionarJuegoLobby(juegoId) {
+    if (dom.dueloOnlineGameSelect) {
+        dom.dueloOnlineGameSelect.value = juegoId;
+    }
+    const cards = document.querySelectorAll(".duelo-game-card");
+    cards.forEach(card => {
+        card.classList.toggle("is-selected", card.dataset.game === juegoId);
+    });
+
+    if (dom.dueloLaunchOnlineMatchBtn) {
+        const gameTitles = {
+            bomba: "💣 ¡INICIAR DESACTIVÁ LA BOMBA!",
+            bolillero: "🎲 ¡COMENZAR BOLILLERO ONLINE!",
+            impostor: "🕵️‍♂️ ¡INICIAR CAZA AL IMPOSTOR!",
+            memotest: "🧠 ¡INICIAR MEMOTEST CONECTADO!",
+            triatlon: "🏅 ¡INICIAR TRIATLÓN ACADÉMICO!"
+        };
+        dom.dueloLaunchOnlineMatchBtn.innerHTML = gameTitles[juegoId] || "🚀 ¡COMENZAR DUELO ONLINE AHORA!";
+    }
+}
+window.seleccionarJuegoLobby = seleccionarJuegoLobby;
+
+function seleccionarFormatoLobby(formatoId) {
+    if (dom.dueloOnlineModoSelect) dom.dueloOnlineModoSelect.value = formatoId;
+    if (dom.dueloOnlineModeSelect) dom.dueloOnlineModeSelect.value = formatoId;
+    onlineDueloEstado.formatoModo = formatoId;
+
+    const cards = document.querySelectorAll(".duelo-format-card");
+    cards.forEach(card => {
+        card.classList.toggle("is-selected", card.dataset.mode === formatoId);
+    });
+
+    const hint = document.getElementById("dueloOnlineModoHint");
+    if (hint) {
+        hint.textContent = formatoId === "coop"
+            ? "Colaboren en equipo contra el cronómetro con relevos y maletín compartido."
+            : "Compitan entre todos con podio en vivo y robo relámpago.";
+    }
+}
+window.seleccionarFormatoLobby = seleccionarFormatoLobby;
+
+function setupDueloLobbyTabs() {
+    const tabHost = document.getElementById("dueloTabHostBtn");
+    const tabJoin = document.getElementById("dueloTabJoinBtn");
+    const cardHost = document.getElementById("dueloLobbyCardHost");
+    const cardJoin = document.getElementById("dueloLobbyCardJoin");
+
+    if (tabHost && tabJoin) {
+        tabHost.addEventListener("click", () => {
+            tabHost.classList.add("is-active");
+            tabJoin.classList.remove("is-active");
+            if (cardHost) cardHost.classList.add("is-active");
+            if (cardJoin) cardJoin.classList.remove("is-active");
+        });
+
+        tabJoin.addEventListener("click", () => {
+            tabJoin.classList.add("is-active");
+            tabHost.classList.remove("is-active");
+            if (cardJoin) cardJoin.classList.add("is-active");
+            if (cardHost) cardHost.classList.remove("is-active");
+            const codeInput = document.getElementById("dueloJoinRoomCode");
+            if (codeInput) codeInput.focus();
+        });
+    }
+
+    const gameCards = document.querySelectorAll(".duelo-game-card");
+    gameCards.forEach(card => {
+        card.addEventListener("click", () => {
+            seleccionarJuegoLobby(card.dataset.game);
+        });
+    });
+
+    const formatCards = document.querySelectorAll(".duelo-format-card");
+    formatCards.forEach(card => {
+        card.addEventListener("click", () => {
+            seleccionarFormatoLobby(card.dataset.mode);
+        });
+    });
+
+    // Default select
+    seleccionarJuegoLobby("bomba");
+    seleccionarFormatoLobby("versus");
+}
+window.setupDueloLobbyTabs = setupDueloLobbyTabs;
+
+/* =========================================================
    VINCULACIÓN DE EVENTOS PARA LOS NUEVOS MÓDULOS (v5)
    ========================================================= */
 
@@ -8302,7 +8681,7 @@ function registrarEventosModulosV5() {
     if (openDueloBolillero) {
         openDueloBolillero.addEventListener("click", () => {
             cambiarVista("duelo");
-            if (dom.dueloOnlineGameSelect) dom.dueloOnlineGameSelect.value = "bolillero";
+            seleccionarJuegoLobby("bolillero");
         });
     }
 
@@ -8310,7 +8689,7 @@ function registrarEventosModulosV5() {
     if (openDueloBomba) {
         openDueloBomba.addEventListener("click", () => {
             cambiarVista("duelo");
-            if (dom.dueloOnlineGameSelect) dom.dueloOnlineGameSelect.value = "bomba";
+            seleccionarJuegoLobby("bomba");
         });
     }
 
@@ -8318,7 +8697,7 @@ function registrarEventosModulosV5() {
     if (openDueloImpostor) {
         openDueloImpostor.addEventListener("click", () => {
             cambiarVista("duelo");
-            if (dom.dueloOnlineGameSelect) dom.dueloOnlineGameSelect.value = "impostor";
+            seleccionarJuegoLobby("impostor");
         });
     }
 
@@ -8326,7 +8705,7 @@ function registrarEventosModulosV5() {
     if (openDueloMemotest) {
         openDueloMemotest.addEventListener("click", () => {
             cambiarVista("duelo");
-            if (dom.dueloOnlineGameSelect) dom.dueloOnlineGameSelect.value = "memotest";
+            seleccionarJuegoLobby("memotest");
         });
     }
 
@@ -8334,7 +8713,7 @@ function registrarEventosModulosV5() {
     if (openDueloTriatlon) {
         openDueloTriatlon.addEventListener("click", () => {
             cambiarVista("duelo");
-            if (dom.dueloOnlineGameSelect) dom.dueloOnlineGameSelect.value = "triatlon";
+            seleccionarJuegoLobby("triatlon");
         });
     }
 
@@ -8367,7 +8746,7 @@ function registrarEventosModulosV5() {
     if (drawerOnlineBolillero) {
         drawerOnlineBolillero.addEventListener("click", () => {
             cambiarVista("duelo");
-            if (dom.dueloOnlineGameSelect) dom.dueloOnlineGameSelect.value = "bolillero";
+            seleccionarJuegoLobby("bolillero");
             cerrarDrawerMenu();
         });
     }
@@ -8376,7 +8755,7 @@ function registrarEventosModulosV5() {
     if (drawerOnlineBomba) {
         drawerOnlineBomba.addEventListener("click", () => {
             cambiarVista("duelo");
-            if (dom.dueloOnlineGameSelect) dom.dueloOnlineGameSelect.value = "bomba";
+            seleccionarJuegoLobby("bomba");
             cerrarDrawerMenu();
         });
     }
@@ -8385,7 +8764,7 @@ function registrarEventosModulosV5() {
     if (drawerOnlineImpostor) {
         drawerOnlineImpostor.addEventListener("click", () => {
             cambiarVista("duelo");
-            if (dom.dueloOnlineGameSelect) dom.dueloOnlineGameSelect.value = "impostor";
+            seleccionarJuegoLobby("impostor");
             cerrarDrawerMenu();
         });
     }
@@ -8394,7 +8773,7 @@ function registrarEventosModulosV5() {
     if (drawerOnlineMemotest) {
         drawerOnlineMemotest.addEventListener("click", () => {
             cambiarVista("duelo");
-            if (dom.dueloOnlineGameSelect) dom.dueloOnlineGameSelect.value = "memotest";
+            seleccionarJuegoLobby("memotest");
             cerrarDrawerMenu();
         });
     }
@@ -8403,7 +8782,7 @@ function registrarEventosModulosV5() {
     if (drawerOnlineTriatlon) {
         drawerOnlineTriatlon.addEventListener("click", () => {
             cambiarVista("duelo");
-            if (dom.dueloOnlineGameSelect) dom.dueloOnlineGameSelect.value = "triatlon";
+            seleccionarJuegoLobby("triatlon");
             cerrarDrawerMenu();
         });
     }
@@ -8469,23 +8848,20 @@ function registrarEventosModulosV5() {
         });
     });
 
-    // 7. Lanzamiento de partidas desde Duelo Online
-    if (dom.dueloLaunchOnlineMatchBtn) {
-        const originalLaunch = dom.dueloLaunchOnlineMatchBtn.onclick;
-        dom.dueloLaunchOnlineMatchBtn.addEventListener("click", () => {
-            const juego = dom.dueloOnlineGameSelect ? dom.dueloOnlineGameSelect.value : "bolillero";
-            const modo = dom.dueloOnlineModeSelect ? dom.dueloOnlineModeSelect.value : "versus";
-            const listaId = dom.dueloOnlineListaSelect ? dom.dueloOnlineListaSelect.value : null;
+    // 7. Configuración de Pestañas y Tarjetas de la Sala Multijugador
+    setupDueloLobbyTabs();
 
-            if (juego !== "bolillero") {
-                enviarMensajeMQTT({
-                    tipo: "START_EDU_GAME",
-                    juego,
-                    modo,
-                    listaId
-                });
-                abrirArenaJuego(juego, modo, listaId);
+    // 8. Botón volver al lobby de la sala desde la bomba
+    const btnBombaLobby = document.getElementById("bombaBackToLobbyBtn");
+    if (btnBombaLobby) {
+        btnBombaLobby.addEventListener("click", () => {
+            if (onlineDueloEstado.esHost) {
+                publicarMensajeSala({ tipo: "BOMBA_VOLVER_LOBBY" });
             }
+            clearInterval(juegosEduEstado.bomba.timerId);
+            juegosEduEstado.esOnline = false;
+            cambiarVista("duelo");
+            mostrarSalaDeEsperaOnline(onlineDueloEstado.codigoSala);
         });
     }
 }

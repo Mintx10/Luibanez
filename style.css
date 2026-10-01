@@ -3528,35 +3528,355 @@ input:focus {
 }
 
 /* =========================================================
-   PANEL ONLINE & SALA DE ESPERA EN VIVO
+   PANEL ONLINE & SALA DE ESPERA EN VIVO (REDESIGN V24.6)
    ========================================================= */
+
+/* Switcher de Pestañas en Móvil (Crear vs Unirse) */
+.duelo-online-view-tabs {
+    display: none;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.65rem;
+    margin-bottom: 1.25rem;
+    background: rgba(15, 23, 42, 0.6);
+    padding: 0.35rem;
+    border-radius: 14px;
+    border: 1px solid var(--color-border);
+}
+
+@media (max-width: 860px) {
+    .duelo-online-view-tabs {
+        display: grid;
+    }
+}
+
+.duelo-online-view-tab {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem 0.5rem;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    background: transparent;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    transition: all 0.22s ease;
+    text-align: left;
+}
+
+.duelo-online-view-tab .duelo-tab-icon {
+    font-size: 1.25rem;
+}
+
+.duelo-online-view-tab .duelo-tab-text {
+    display: flex;
+    flex-direction: column;
+}
+
+.duelo-online-view-tab .duelo-tab-title {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--color-text);
+}
+
+.duelo-online-view-tab .duelo-tab-sub {
+    font-size: 0.72rem;
+    color: var(--color-text-muted);
+}
+
+.duelo-online-view-tab.is-active {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.22), rgba(168, 85, 247, 0.22));
+    border-color: rgba(99, 102, 241, 0.5);
+    color: #fff;
+    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.2);
+}
+
+.duelo-online-view-tab.is-active .duelo-tab-title {
+    color: #818cf8;
+}
+
+/* Grid contenedor del lobby */
 .duelo-online-setup-grid {
     display: grid;
-    grid-template-columns: 1.2fr 0.8fr;
+    grid-template-columns: minmax(360px, 1.35fr) minmax(320px, 0.85fr);
     gap: 1.5rem;
+    align-items: start;
+}
+
+@media (max-width: 860px) {
+    .duelo-online-setup-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .duelo-online-setup-grid .duelo-lobby-card {
+        display: none;
+    }
+
+    .duelo-online-setup-grid .duelo-lobby-card.is-active {
+        display: block;
+    }
+}
+
+/* 🎮 Cuadrícula de Selección de Juego */
+.duelo-setup-section {
+    margin-bottom: 1rem;
+}
+
+.duelo-section-label {
+    display: block;
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 0.5rem;
+}
+
+.duelo-game-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+}
+
+.duelo-game-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.85rem 0.95rem;
+    border-radius: 12px;
+    background: rgba(30, 41, 59, 0.65);
+    border: 1.5px solid rgba(255, 255, 255, 0.08);
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    user-select: none;
+}
+
+.duelo-game-card:hover {
+    border-color: rgba(99, 102, 241, 0.5);
+    background: rgba(30, 41, 59, 0.9);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+}
+
+.duelo-game-card.is-selected {
+    border-color: #6366f1;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.24), rgba(168, 85, 247, 0.16));
+    box-shadow: 0 0 20px rgba(99, 102, 241, 0.28), inset 0 0 12px rgba(99, 102, 241, 0.1);
+    transform: translateY(-2px);
+}
+
+.duelo-game-card__icon-wrap {
+    font-size: 1.7rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    background: rgba(15, 23, 42, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.duelo-game-card.is-selected .duelo-game-card__icon-wrap {
+    background: rgba(99, 102, 241, 0.25);
+    border-color: rgba(99, 102, 241, 0.5);
+}
+
+.duelo-game-card__body {
+    flex: 1;
+    min-width: 0;
+}
+
+.duelo-game-card__top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.4rem;
+    margin-bottom: 0.25rem;
+}
+
+.duelo-game-card__title {
+    font-size: 0.95rem;
+    color: #fff;
+    font-weight: 700;
+}
+
+.duelo-game-card.is-selected .duelo-game-card__title {
+    color: #a5b4fc;
+}
+
+.duelo-game-card__desc {
+    font-size: 0.78rem;
+    color: var(--color-text-muted);
+    line-height: 1.35;
+    margin: 0;
+}
+
+.duelo-game-card__check {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #6366f1;
+    color: #fff;
+    font-size: 0.65rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    opacity: 0;
+    transform: scale(0.6);
+    transition: all 0.2s ease;
+}
+
+.duelo-game-card.is-selected .duelo-game-card__check {
+    opacity: 1;
+    transform: scale(1);
+}
+
+/* 🤝 Selector de Modalidad (Versus vs Coop) */
+.duelo-format-cards-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    margin-top: 0.4rem;
+}
+
+@media (max-width: 600px) {
+    .duelo-format-cards-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.duelo-format-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.85rem 1rem;
+    border-radius: 12px;
+    background: rgba(30, 41, 59, 0.6);
+    border: 1.5px solid rgba(255, 255, 255, 0.08);
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.2s ease;
+    position: relative;
+    user-select: none;
+}
+
+.duelo-format-card:hover {
+    border-color: rgba(99, 102, 241, 0.5);
+    background: rgba(30, 41, 59, 0.85);
+    transform: translateY(-2px);
+}
+
+.duelo-format-card.is-selected {
+    border-color: #38bdf8;
+    background: linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(99, 102, 241, 0.2));
+    box-shadow: 0 0 20px rgba(56, 189, 248, 0.25);
+    transform: translateY(-2px);
+}
+
+.duelo-format-card__icon {
+    font-size: 1.6rem;
+    flex-shrink: 0;
+}
+
+.duelo-format-card__info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.duelo-format-card__title {
+    font-size: 0.95rem;
+    color: #fff;
+    font-weight: 700;
+}
+
+.duelo-format-card.is-selected .duelo-format-card__title {
+    color: #7dd3fc;
+}
+
+.duelo-format-card__sub {
+    font-size: 0.78rem;
+    color: var(--color-text-muted);
+    line-height: 1.3;
+}
+
+.duelo-format-card__check {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #38bdf8;
+    color: #0f172a;
+    font-size: 0.65rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    opacity: 0;
+    transform: scale(0.6);
+    transition: all 0.2s ease;
+}
+
+.duelo-format-card.is-selected .duelo-format-card__check {
+    opacity: 1;
+    transform: scale(1);
+}
+
+/* Input PIN Gigante */
+.duelo-join-code-input {
+    width: 100%;
+    text-align: center;
+    font-family: 'JetBrains Mono', monospace, Consolas, Courier;
+    font-size: 1.7rem;
+    letter-spacing: 6px;
+    font-weight: 800;
+    padding: 0.85rem;
+    text-transform: uppercase;
+    border-radius: 12px;
+    background: rgba(15, 23, 42, 0.85);
+    border: 2px solid rgba(99, 102, 241, 0.4);
+    color: #60a5fa;
+    transition: all 0.2s ease;
+}
+
+.duelo-join-code-input:focus {
+    outline: none;
+    border-color: #818cf8;
+    box-shadow: 0 0 24px rgba(99, 102, 241, 0.45);
+    background: rgba(15, 23, 42, 0.95);
 }
 
 .duelo-join-player-preview {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0.75rem 1rem;
+    padding: 0.85rem 1.15rem;
     background: var(--color-surface);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
-    margin: 1rem 0;
+    margin: 1.25rem 0;
 }
 
 .duelo-join-label {
-    font-size: 0.82rem;
+    font-size: 0.85rem;
     color: var(--color-text-muted);
 }
 
 .duelo-join-badge {
     display: flex;
     align-items: center;
-    gap: 0.4rem;
-    font-size: 0.95rem;
+    gap: 0.5rem;
+    font-size: 1rem;
 }
 
 .duelo-online-tips {
@@ -4675,6 +4995,152 @@ input:focus {
 /* =========================================================
    JUEGO 1: 💣 DESACTIVÁ LA BOMBA (DEFUSE THE BOMB)
    ========================================================= */
+
+/* Tracker Multijugador Online en Tiempo Real (Hasta 8 Jugadores) */
+.bomba-online-tracker {
+    background: rgba(15, 23, 42, 0.85);
+    backdrop-filter: blur(12px);
+    border: 1.5px solid rgba(99, 102, 241, 0.4);
+    border-radius: 14px;
+    padding: 0.85rem 1rem;
+    margin-bottom: 1.25rem;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+}
+
+.bomba-tracker-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding-bottom: 0.65rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.bomba-tracker-tag {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.82rem;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    color: #e2e8f0;
+}
+
+.bomba-tracker-room-code {
+    font-family: monospace;
+    font-size: 0.85rem;
+    color: #818cf8;
+    background: rgba(99, 102, 241, 0.15);
+    padding: 0.2rem 0.6rem;
+    border-radius: 6px;
+    border: 1px solid rgba(99, 102, 241, 0.3);
+}
+
+.bomba-rivals-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 0.5rem;
+    margin-top: 0.65rem;
+}
+
+.bomba-rival-chip {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    background: rgba(30, 41, 59, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    padding: 0.55rem 0.65rem;
+    position: relative;
+    transition: all 0.25s ease;
+}
+
+.bomba-rival-chip.is-you {
+    border-color: rgba(99, 102, 241, 0.6);
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(30, 41, 59, 0.8));
+}
+
+.bomba-rival-chip.is-winner {
+    border-color: #22c55e;
+    box-shadow: 0 0 15px rgba(34, 197, 94, 0.35);
+    background: rgba(34, 197, 94, 0.15);
+}
+
+.bomba-rival-chip.is-exploded {
+    border-color: #ef4444;
+    background: rgba(239, 68, 68, 0.12);
+    opacity: 0.8;
+}
+
+.bomba-rival-top {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    min-width: 0;
+}
+
+.bomba-rival-avatar {
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+.bomba-rival-name {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.bomba-rival-status {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 0.15rem 0.4rem;
+    border-radius: 4px;
+    display: inline-block;
+    text-align: center;
+}
+
+.bomba-rival-status.status-c1 { background: rgba(56, 189, 248, 0.2); color: #38bdf8; }
+.bomba-rival-status.status-c2 { background: rgba(168, 85, 247, 0.2); color: #c084fc; }
+.bomba-rival-status.status-c3 { background: rgba(234, 179, 8, 0.2); color: #facc15; }
+.bomba-rival-status.status-defused { background: rgba(34, 197, 94, 0.25); color: #4ade80; }
+.bomba-rival-status.status-boom { background: rgba(239, 68, 68, 0.25); color: #f87171; }
+
+.bomba-rival-progress {
+    display: flex;
+    gap: 3px;
+    height: 4px;
+    border-radius: 2px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.bomba-rival-seg {
+    flex: 1;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 2px;
+    transition: background 0.3s ease;
+}
+
+.bomba-rival-seg.done {
+    background: #22c55e;
+    box-shadow: 0 0 6px rgba(34, 197, 94, 0.5);
+}
+
+.bomba-rival-seg.active {
+    background: #38bdf8;
+    animation: pulseActive 1s infinite alternate;
+}
+
+@keyframes pulseActive {
+    from { opacity: 0.6; }
+    to { opacity: 1; }
+}
+
 .bomba-casing {
     background: #14171f;
     border: 3px solid #2a2e3d;

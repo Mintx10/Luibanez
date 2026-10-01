@@ -15,10 +15,10 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     
-    <link rel="icon" type="image/svg+xml" href="icon.svg?v=24.5">
-    <link rel="apple-touch-icon" href="icon-192.png?v=24.5">
-    <link rel="manifest" href="manifest.json?v=24.5">
-    <link rel="stylesheet" href="style.css?v=24.5">
+    <link rel="icon" type="image/svg+xml" href="icon.svg?v=24.6">
+    <link rel="apple-touch-icon" href="icon-192.png?v=24.6">
+    <link rel="manifest" href="manifest.json?v=24.6">
+    <link rel="stylesheet" href="style.css?v=24.6">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -52,8 +52,8 @@
             <button id="navSoloBtn" class="nav-link" type="button" data-view="solo" title="Ir a Estudiar Solo">
                 👤 Estudiar Solo
             </button>
-            <button id="navJuntosBtn" class="nav-link nav-link--locked" type="button" data-view="juntos" title="Estudiar Juntos (Próximamente)">
-                🔒 Estudiar Juntos
+            <button id="navJuntosBtn" class="nav-link" type="button" data-view="juntos" title="Ir a Estudiar Juntos">
+                🤝 Estudiar Juntos
             </button>
             <button id="navFamaBtn" class="nav-link" type="button" data-view="fama">
                 🏆 Salón de la Fama
@@ -117,10 +117,9 @@
                     <span class="drawer-nav-icon" aria-hidden="true">👤</span>
                     <span class="drawer-nav-text">Estudiar Solo</span>
                 </button>
-                <button id="drawerNavJuntos" class="drawer-nav-item drawer-nav-item--locked" type="button" data-view="juntos">
-                    <span class="drawer-nav-icon" aria-hidden="true">🔒</span>
+                <button id="drawerNavJuntos" class="drawer-nav-item" type="button" data-view="juntos">
+                    <span class="drawer-nav-icon" aria-hidden="true">🤝</span>
                     <span class="drawer-nav-text">Estudiar Juntos</span>
-                    <span class="badge badge--warning" style="margin-left: auto; font-size: 0.65rem; padding: 0.15rem 0.45rem;">Próximamente</span>
                 </button>
                 <button id="drawerNavFama" class="drawer-nav-item" type="button" data-view="fama">
                     <span class="drawer-nav-icon" aria-hidden="true">🏆</span>
@@ -240,7 +239,7 @@
 
         <!-- Versión y botón de actualización forzada -->
         <div class="drawer-version-row" style="padding: 0.85rem 1rem; border-top: 1px solid var(--color-border); font-size: 0.75rem; color: var(--color-text-muted); display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02); margin-top: auto;">
-            <span id="drawerVersionTag" style="cursor: pointer; user-select: none;" title="Versión de Luibañez">⚡ Luibañez <strong style="color: var(--color-text);">v24.5</strong></span>
+            <span id="drawerVersionTag" style="cursor: pointer; user-select: none;" title="Versión de Luibañez">⚡ Luibañez <strong style="color: var(--color-text);">v24.6</strong></span>
             <button id="btnForzarActualizar" class="button button--ghost button--xs" type="button" style="font-size: 0.72rem; padding: 0.2rem 0.55rem; border-radius: 999px; border: 1px solid var(--color-border);" title="Limpiar caché y recargar versión más reciente">🔄 Actualizar</button>
         </div>
     </div>
@@ -271,8 +270,8 @@
                 <button id="heroGoSoloBtn" class="button button--primary button--lg" type="button">
                     👤 Entrar a Estudiar Solo
                 </button>
-                <button id="heroGoJuntosBtn" class="button button--secondary button--lg is-locked-btn" type="button" title="Próximamente disponible">
-                    🔒 Estudiar Juntos (Próximamente)
+                <button id="heroGoJuntosBtn" class="button button--secondary button--lg" type="button" title="Ir a Estudiar Juntos">
+                    🤝 Entrar a Estudiar Juntos
                 </button>
             </div>
         </div>
@@ -364,22 +363,21 @@
                     </div>
                     <div class="module-card__header">
                         <div class="module-card__icon module-card__icon--duel" style="font-size: 2rem; position: relative;">
-                            ⚔️
-                            <span class="lock-mini-badge">🔒</span>
+                            🤝
                         </div>
-                        <span class="badge badge--warning" style="background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4);">
-                            🔒 En Construcción
+                        <span class="badge badge--accent">
+                            ✨ Multijugador Online
                         </span>
                     </div>
                     <h3 class="module-card__title" style="font-size: 1.45rem;">
-                        Estudiar Juntos <span style="font-size: 0.95rem; color: #fbbf24; font-weight: normal;">(Próximamente)</span>
+                        Estudiar Juntos
                     </h3>
                     <p class="module-card__desc" style="font-size: 0.95rem; line-height: 1.5; color: var(--color-text-muted);">
                         Salas sincrónicas entre celulares y PC con Link Mágico y PIN: modalidades <strong>Versus competitivo</strong> y <strong>Cooperativo en equipo</strong> (Bomba compartida, Memotest en equipo y Repaso grupal).
                     </p>
                     <div class="module-card__actions" style="margin-top: auto; padding-top: 1rem;">
-                        <button id="homeGoToJuntosBtn" class="button button--secondary button--full is-locked-btn" type="button" title="Próximamente disponible">
-                            🔒 Próximamente (En Construcción)
+                        <button id="homeGoToJuntosBtn" class="button button--secondary button--full" type="button" title="Entrar a Estudiar Juntos">
+                            🤝 Entrar a Estudiar Juntos
                         </button>
                     </div>
                 </article>
@@ -536,31 +534,6 @@
     <section id="viewJuntos" class="view view--hidden" aria-label="Página de Estudiar Juntos">
         <div class="modules-hub" style="max-width: 1200px; margin: 0 auto; padding: 1rem 1rem 3rem;">
             
-            <!-- Cartel de Modo Desarrollador (Solo visible para Lucas en Modo Dev) -->
-            <div id="juntosDevBadgeNotice" style="display: none; background: linear-gradient(135deg, rgba(99, 102, 241, 0.22), rgba(168, 85, 247, 0.22)); border: 1.5px solid rgba(168, 85, 247, 0.5); border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 1.5rem; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; box-shadow: 0 4px 20px rgba(168, 85, 247, 0.15);">
-                <div style="display: flex; align-items: center; gap: 0.75rem;">
-                    <span style="font-size: 1.6rem;">🛠️</span>
-                    <div>
-                        <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
-                            <strong style="color: #c084fc; font-size: 1rem;">Modo Desarrollador Activo (Lucas)</strong>
-                            <span class="badge badge--accent" style="font-size: 0.7rem; padding: 2px 7px;">EXCLUSIVO</span>
-                        </div>
-                        <p style="margin: 0.2rem 0 0; font-size: 0.82rem; color: #cbd5e1;">Acceso exclusivo para probar y diseñar los cambios de Estudiar Juntos. Los demás usuarios ven esta sección bloqueada con candado 🔒.</p>
-                    </div>
-                </div>
-                <button id="btnSalirModoDev" class="button button--ghost button--sm" type="button" style="border: 1px solid rgba(255,255,255,0.25); color: #fca5a5; font-size: 0.8rem; padding: 0.4rem 0.85rem;" title="Cerrar modo dev y volver a ver como usuario normal">
-                    🔒 Salir del Modo Dev
-                </button>
-            </div>
-
-            <!-- Cartel de Próximamente con Cadenas y Candado -->
-            <div class="juntos-locked-notice">
-                <div class="juntos-locked-chains">⛓️ 🔒 ⛓️</div>
-                <h2 class="juntos-locked-title">MODO MULTIJUGADOR EN CONSTRUCCIÓN</h2>
-                <p class="juntos-locked-subtitle">Las salas sincrónicas online, Duelos versus y desafíos cooperativos estarán disponibles muy pronto en la próxima actualización.</p>
-                <span class="badge badge--warning" style="font-size: 0.85rem; padding: 0.4rem 0.85rem; font-weight: 700;">🚧 PRÓXIMAMENTE DISPONIBLE</span>
-            </div>
-
             <!-- Encabezado de la Página Juntos -->
             <div class="page-header" style="margin-bottom: 2rem; padding-bottom: 1.25rem; border-bottom: 1px solid var(--color-border); opacity: 0.85;">
                 <div class="hub-category-badge badge badge--accent" style="margin-bottom: 0.5rem;">
@@ -946,74 +919,186 @@
 
             <!-- ==================== SUB-PANEL: MODO DUELO ONLINE ==================== -->
             <div id="dueloOnlinePanel" class="duelo-online-panel">
+                <!-- Pestañas de Cambio de Vista en Móvil (Crear vs Unirse) -->
+                <div class="duelo-online-view-tabs" id="dueloOnlineViewTabs">
+                    <button type="button" class="duelo-online-view-tab is-active" id="dueloTabHostBtn" data-tab="host">
+                        <span class="duelo-tab-icon">👑</span>
+                        <div class="duelo-tab-text">
+                            <strong class="duelo-tab-title">Crear Sala</strong>
+                            <span class="duelo-tab-sub">Sos el Anfitrión</span>
+                        </div>
+                    </button>
+                    <button type="button" class="duelo-online-view-tab" id="dueloTabJoinBtn" data-tab="join">
+                        <span class="duelo-tab-icon">🚪</span>
+                        <div class="duelo-tab-text">
+                            <strong class="duelo-tab-title">Unirse a Sala</strong>
+                            <span class="duelo-tab-sub">Con PIN de 5 letras</span>
+                        </div>
+                    </button>
+                </div>
+
                 <!-- Vista Inicial: Crear o Unirse a una Sala -->
                 <div id="dueloOnlineSetupView" class="duelo-online-setup-grid">
                     <!-- Tarjeta: Crear Sala Online -->
-                    <div class="panel duelo-lobby-card">
+                    <div class="panel duelo-lobby-card duelo-lobby-card--host is-active" id="dueloLobbyCardHost">
                         <div class="panel__header">
-                            <h2 class="panel__title">👑 Crear Sala Online</h2>
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <span style="font-size: 1.5rem;">👑</span>
+                                <h2 class="panel__title">Crear Sala Online</h2>
+                            </div>
                             <span class="badge badge--accent">Host</span>
                         </div>
-                        <p class="duelo-card-desc">Creá una sala, configurala a tu gusto y compartí el Link Mágico con tus amigos:</p>
+                        <p class="duelo-card-desc">Elegí el desafío, la modalidad y compartí el Link Mágico o PIN con tus compañeros:</p>
 
-                        <div class="field">
-                            <label for="dueloOnlineGameSelect">🎮 Tipo de Desafío</label>
-                            <select id="dueloOnlineGameSelect" class="duelo-select">
-                                <option value="bolillero" selected>🎲 Bolillero VS Online</option>
-                                <option value="bomba">💣 Desactivá la Bomba</option>
+                        <!-- 1. Cuadrícula de Juegos Moderna -->
+                        <div class="duelo-setup-section">
+                            <label class="duelo-section-label">🎮 Elegí el Desafío de la Sala</label>
+                            <div class="duelo-game-cards-grid" id="dueloGameCardsGrid">
+                                <button type="button" class="duelo-game-card is-selected" data-game="bomba">
+                                    <div class="duelo-game-card__icon-wrap">
+                                        <span class="duelo-game-card__icon">💣</span>
+                                    </div>
+                                    <div class="duelo-game-card__body">
+                                        <div class="duelo-game-card__top">
+                                            <strong class="duelo-game-card__title">Desactivá la Bomba</strong>
+                                            <span class="badge badge--danger" style="font-size: 0.65rem; padding: 2px 6px;">Tensión</span>
+                                        </div>
+                                        <p class="duelo-game-card__desc">Cables, reloj crítico y deducción teórica bajo extrema presión.</p>
+                                    </div>
+                                    <span class="duelo-game-card__check" aria-hidden="true">✔</span>
+                                </button>
+
+                                <button type="button" class="duelo-game-card" data-game="bolillero">
+                                    <div class="duelo-game-card__icon-wrap">
+                                        <span class="duelo-game-card__icon">🎲</span>
+                                    </div>
+                                    <div class="duelo-game-card__body">
+                                        <div class="duelo-game-card__top">
+                                            <strong class="duelo-game-card__title">Bolillero de Estudio</strong>
+                                            <span class="badge badge--accent" style="font-size: 0.65rem; padding: 2px 6px;">Ruleta</span>
+                                        </div>
+                                        <p class="duelo-game-card__desc">Sorteo de temas en vivo, turnos al azar, votaciones grupales y podio.</p>
+                                    </div>
+                                    <span class="duelo-game-card__check" aria-hidden="true">✔</span>
+                                </button>
+
+                                <button type="button" class="duelo-game-card" data-game="impostor">
+                                    <div class="duelo-game-card__icon-wrap">
+                                        <span class="duelo-game-card__icon">🕵️‍♂️</span>
+                                    </div>
+                                    <div class="duelo-game-card__body">
+                                        <div class="duelo-game-card__top">
+                                            <strong class="duelo-game-card__title">Caza al Impostor</strong>
+                                            <span class="badge badge--warning" style="font-size: 0.65rem; padding: 2px 6px;">Falacias</span>
+                                        </div>
+                                        <p class="duelo-game-card__desc">Descubrí la afirmación tramposa infiltrada entre definiciones reales.</p>
+                                    </div>
+                                    <span class="duelo-game-card__check" aria-hidden="true">✔</span>
+                                </button>
+
+                                <button type="button" class="duelo-game-card" data-game="memotest">
+                                    <div class="duelo-game-card__icon-wrap">
+                                        <span class="duelo-game-card__icon">🧠</span>
+                                    </div>
+                                    <div class="duelo-game-card__body">
+                                        <div class="duelo-game-card__top">
+                                            <strong class="duelo-game-card__title">Memotest Teórico</strong>
+                                            <span class="badge badge--success" style="font-size: 0.65rem; padding: 2px 6px;">Memoria</span>
+                                        </div>
+                                        <p class="duelo-game-card__desc">Asociá axiomas, fórmulas y conceptos teóricos en parejas sincronizadas.</p>
+                                    </div>
+                                    <span class="duelo-game-card__check" aria-hidden="true">✔</span>
+                                </button>
+
+                                <button type="button" class="duelo-game-card" data-game="triatlon">
+                                    <div class="duelo-game-card__icon-wrap">
+                                        <span class="duelo-game-card__icon">🏅</span>
+                                    </div>
+                                    <div class="duelo-game-card__body">
+                                        <div class="duelo-game-card__top">
+                                            <strong class="duelo-game-card__title">Triatlón Académico</strong>
+                                            <span class="badge badge--gold" style="font-size: 0.65rem; padding: 2px 6px;">3 Rondas</span>
+                                        </div>
+                                        <p class="duelo-game-card__desc">La prueba olímpica: Bomba + Impostor + Memotest con puntajes combinados.</p>
+                                    </div>
+                                    <span class="duelo-game-card__check" aria-hidden="true">✔</span>
+                                </button>
+                            </div>
+                            <!-- Select invisible mantenido para retrocompatibilidad total -->
+                            <select id="dueloOnlineGameSelect" class="duelo-select" style="display: none;">
+                                <option value="bomba" selected>💣 Desactivá la Bomba</option>
+                                <option value="bolillero">🎲 Bolillero VS Online</option>
                                 <option value="impostor">🕵️‍♂️ Caza al Impostor</option>
                                 <option value="memotest">🧠 Memotest Conectado</option>
                                 <option value="triatlon">🏅 Modo Triatlón (3 Rondas)</option>
                             </select>
                         </div>
 
-                        <div class="field">
-                            <label for="dueloOnlineModeSelect">🤝 Modalidad de Partida</label>
-                            <select id="dueloOnlineModeSelect" class="duelo-select">
-                                <option value="versus" selected>⚔️ Modo Versus (Todos contra todos)</option>
-                                <option value="coop">🤝 Modo Cooperativo (Equipo contra el reloj)</option>
+                        <!-- 2. Modalidad / Formato de Partida (Versus vs Cooperativo) -->
+                        <div class="duelo-setup-section" style="margin-top: 1.25rem;">
+                            <label class="duelo-section-label">🤝 Modalidad de Partida (Hasta 8 Jugadores)</label>
+                            <div class="duelo-format-cards-grid" id="dueloFormatCardsGrid">
+                                <button type="button" class="duelo-format-card is-selected" data-mode="versus">
+                                    <div class="duelo-format-card__icon">⚔️</div>
+                                    <div class="duelo-format-card__info">
+                                        <strong class="duelo-format-card__title">Versus Competitivo</strong>
+                                        <span class="duelo-format-card__sub">Todos contra todos: podio en vivo, racha de fuego y robo relámpago.</span>
+                                    </div>
+                                    <span class="duelo-format-card__check" aria-hidden="true">✔</span>
+                                </button>
+                                <button type="button" class="duelo-format-card" data-mode="coop">
+                                    <div class="duelo-format-card__icon">🤝</div>
+                                    <div class="duelo-format-card__info">
+                                        <strong class="duelo-format-card__title">Cooperativo en Equipo</strong>
+                                        <span class="duelo-format-card__sub">Equipo contra el reloj: maletín compartido, vidas de grupo y relevos.</span>
+                                    </div>
+                                    <span class="duelo-format-card__check" aria-hidden="true">✔</span>
+                                </button>
+                            </div>
+                            <!-- Selects ocultos para compatibilidad -->
+                            <select id="dueloOnlineModeSelect" class="duelo-select" style="display: none;">
+                                <option value="versus" selected>⚔️ Modo Versus</option>
+                                <option value="coop">🤝 Modo Cooperativo</option>
                             </select>
+                            <select id="dueloOnlineModoSelect" class="duelo-select" style="display: none;">
+                                <option value="versus" selected>⚔️ Versus Competitivo</option>
+                                <option value="coop">🤝 Cooperativo en Equipo</option>
+                            </select>
+                            <span class="duelo-field-hint" id="dueloOnlineModoHint" style="margin-top: 0.35rem; display: block;">Compitan entre todos con podio en vivo y robo relámpago.</span>
                         </div>
 
-                        <div class="field-toggle" style="margin-bottom: 0.75rem;" id="dueloOnlineTiebreakerRow">
+                        <div class="field-toggle" style="margin: 1rem 0 0.5rem;" id="dueloOnlineTiebreakerRow">
                             <label class="toggle-label" for="dueloOnlineAutoTiebreaker">
                                 <input id="dueloOnlineAutoTiebreaker" type="checkbox" checked>
                                 <span>⚡ Ronda de Desempate Automática con Minijuego</span>
                             </label>
                         </div>
 
-                        <!-- Formato de Sala (Versus hasta 8 jugadores vs Cooperativo) -->
-                        <div class="field" style="margin-bottom: 0.85rem;">
-                            <label for="dueloOnlineModoSelect">Formato de Juego (Hasta 8 Jugadores)</label>
-                            <select id="dueloOnlineModoSelect" class="duelo-select">
-                                <option value="versus" selected>⚔️ Versus Competitivo (Podio, Rachas y Robos)</option>
-                                <option value="coop">🤝 Cooperativo en Equipo (Meta Compartida y Relevos)</option>
-                            </select>
-                            <span class="duelo-field-hint" id="dueloOnlineModoHint">Compitan entre todos con podio en vivo y robo relámpago.</span>
-                        </div>
+                        <!-- 3. Materia y Tiempo -->
+                        <div class="duelo-setup-row" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; margin-top: 1rem;">
+                            <div class="field" style="margin-bottom: 0;">
+                                <label for="dueloOnlineListaSelect">📚 Materia / Lista de Estudio</label>
+                                <select id="dueloOnlineListaSelect" class="duelo-select">
+                                    <!-- Opciones cargadas dinámicamente -->
+                                </select>
+                                <span class="duelo-field-hint" id="dueloOnlineListaHint">Cargando temas...</span>
+                            </div>
 
-                        <div class="field">
-                            <label for="dueloOnlineListaSelect">Materia / Lista de Estudio</label>
-                            <select id="dueloOnlineListaSelect" class="duelo-select">
-                                <!-- Opciones cargadas dinámicamente -->
-                            </select>
-                            <span class="duelo-field-hint" id="dueloOnlineListaHint">Cargando temas...</span>
-                        </div>
-
-                        <div class="field">
-                            <label for="dueloOnlineTimeSelect">Tiempo por Turno</label>
-                            <select id="dueloOnlineTimeSelect" class="duelo-select">
-                                <option value="30">30 segundos (Rápido)</option>
-                                <option value="45">45 segundos</option>
-                                <option value="60">1 minuto</option>
-                                <option value="90" selected>1 minuto 30 segundos (Recomendado)</option>
-                                <option value="120">2 minutos</option>
-                                <option value="180">3 minutos</option>
-                            </select>
+                            <div class="field" style="margin-bottom: 0;">
+                                <label for="dueloOnlineTimeSelect">⏱️ Tiempo de la Partida / Turno</label>
+                                <select id="dueloOnlineTimeSelect" class="duelo-select">
+                                    <option value="30">30 segundos (Rápido)</option>
+                                    <option value="45">45 segundos</option>
+                                    <option value="60">1 minuto</option>
+                                    <option value="90" selected>1 minuto 30 segundos (Recomendado)</option>
+                                    <option value="120">2 minutos</option>
+                                    <option value="180">3 minutos</option>
+                                </select>
+                            </div>
                         </div>
 
                         <!-- Checkbox Contraseña Opcional -->
-                        <div class="field-toggle" style="margin-top: 0.75rem;">
+                        <div class="field-toggle" style="margin-top: 1rem;">
                             <label class="toggle-label" for="dueloOnlineHasPassword">
                                 <input id="dueloOnlineHasPassword" type="checkbox">
                                 <span>🔒 Proteger sala con Contraseña Opcional</span>
@@ -1068,22 +1153,25 @@
                             </label>
                         </div>
 
-                        <button id="dueloCreateRoomBtn" class="button button--primary button--full" type="button" style="margin-top: 1.25rem;">
-                            ✨ Crear Sala y Obtener Link
+                        <button id="dueloCreateRoomBtn" class="button button--primary button--full button--lg" type="button" style="margin-top: 1.5rem; font-size: 1.05rem; box-shadow: 0 4px 20px rgba(99, 102, 241, 0.35);">
+                            ✨ Crear Sala y Obtener Link Mágico
                         </button>
                     </div>
 
                     <!-- Tarjeta: Unirse a Sala Online Existente -->
-                    <div class="panel duelo-lobby-card">
+                    <div class="panel duelo-lobby-card duelo-lobby-card--join" id="dueloLobbyCardJoin">
                         <div class="panel__header">
-                            <h2 class="panel__title">🚪 Unirse a Sala</h2>
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <span style="font-size: 1.5rem;">🚪</span>
+                                <h2 class="panel__title">Unirse a Sala</h2>
+                            </div>
                             <span class="badge badge--primary">Invitación</span>
                         </div>
-                        <p class="duelo-card-desc">Ingresá el código o abrí el Link Mágico que te pasó el creador:</p>
+                        <p class="duelo-card-desc">Ingresá el PIN de 5 letras que te pasaron o abrí el Link Mágico directo en tu navegador:</p>
 
-                        <div class="field">
-                            <label for="dueloJoinRoomCode">Código de Sala (5 letras)</label>
-                            <input id="dueloJoinRoomCode" type="text" maxlength="8" placeholder="Ej: LUIB7" style="text-transform: uppercase; font-family: monospace; font-size: 1.2rem; letter-spacing: 2px;" autocomplete="off">
+                        <div class="field" style="margin-bottom: 1.25rem;">
+                            <label for="dueloJoinRoomCode" style="font-weight: 700; color: #fff;">Código PIN de Sala (5 letras)</label>
+                            <input id="dueloJoinRoomCode" class="duelo-join-code-input" type="text" maxlength="8" placeholder="LUIB7" autocomplete="off" autocorrect="off" autocapitalize="characters">
                         </div>
 
                         <div class="field">
@@ -1094,12 +1182,12 @@
                         <div class="duelo-join-player-preview">
                             <span class="duelo-join-label">Te unirás como:</span>
                             <div class="duelo-join-badge">
-                                <span id="dueloJoinAvatarPreview">👤</span>
-                                <strong id="dueloJoinNamePreview">Invitado</strong>
+                                <span id="dueloJoinAvatarPreview" style="font-size: 1.4rem;">👤</span>
+                                <strong id="dueloJoinNamePreview" style="font-size: 1.05rem;">Invitado</strong>
                             </div>
                         </div>
 
-                        <button id="dueloJoinRoomBtn" class="button button--secondary button--full" type="button" style="margin-top: 1.25rem;">
+                        <button id="dueloJoinRoomBtn" class="button button--secondary button--full button--lg" type="button" style="margin-top: 1.5rem; font-size: 1.05rem;">
                             🚀 Entrar a la Sala
                         </button>
 
@@ -1739,6 +1827,20 @@
 
             <!-- ==================== JUEGO 1: 💣 DESACTIVÁ LA BOMBA ==================== -->
             <div id="arenaBomba" class="juego-arena hidden">
+                <!-- Tracker Multijugador Online (Rivales / Equipo hasta 8 jugadores) -->
+                <div id="bombaOnlineTracker" class="bomba-online-tracker hidden">
+                    <div class="bomba-tracker-header">
+                        <div class="bomba-tracker-tag">
+                            <span class="live-pulse"></span>
+                            <span id="bombaTrackerModeLabel">⚔️ RIVALES EN VIVO (VERSUS)</span>
+                        </div>
+                        <div class="bomba-tracker-room-code" id="bombaTrackerRoomCode">SALA: LUIB7</div>
+                    </div>
+                    <div class="bomba-rivals-grid" id="bombaRivalsGrid">
+                        <!-- Generado dinámicamente: hasta 8 jugadores -->
+                    </div>
+                </div>
+
                 <div class="bomba-casing">
                     <div class="bomba-casing__header">
                         <div class="bomba-danger-stripe"></div>
@@ -1835,8 +1937,9 @@
                                     <h3 class="bomba-result-title" id="bombaResultTitle">¡BOMBA DESACTIVADA!</h3>
                                     <p class="bomba-result-desc" id="bombaResultDesc">Completaste las 3 fases a tiempo.</p>
                                     <div class="bomba-result-stats" id="bombaResultStats"></div>
-                                    <div class="bomba-result-actions">
+                                    <div class="bomba-result-actions" id="bombaResultActions">
                                         <button id="bombaPlayAgainBtn" class="button button--primary" type="button">Jugar Otra Bomba 💣</button>
+                                        <button id="bombaBackToLobbyBtn" class="button button--accent hidden" type="button">🔄 Volver a la Sala de Espera</button>
                                         <button id="bombaExitBtn" class="button button--secondary" type="button">Salir al Menú</button>
                                     </div>
                                 </div>
@@ -2619,7 +2722,7 @@
 </dialog>
 
 <script src="mqtt.min.js"></script>
-<script src="script.js?v=24.5" defer></script>
+<script src="script.js?v=24.6" defer></script>
 
 <!-- =========================================================
      MODAL DE PROMPT PARA GEMINI (CREAR JUEGOS DESDE PDF)
