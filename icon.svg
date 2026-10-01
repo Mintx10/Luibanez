@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f1117" />
+      <stop offset="100%" stop-color="#171a22" />
+    </linearGradient>
+    <linearGradient id="sphereGrad" x1="30%" y1="20%" x2="90%" y2="90%">
+      <stop offset="0%" stop-color="#9fc4ff" />
+      <stop offset="35%" stop-color="#4f8cff" />
+      <stop offset="70%" stop-color="#2457ba" />
+      <stop offset="100%" stop-color="#0d2252" />
+    </linearGradient>
+    <linearGradient id="glowGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4f8cff" stop-opacity="0.4" />
+      <stop offset="100%" stop-color="#7b5cff" stop-opacity="0.1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Background rounded rect -->
+  <rect width="512" height="512" rx="112" fill="url(#bgGrad)" />
+  <rect width="512" height="512" rx="112" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="4" />
+
+  <!-- Outer Glow -->
+  <circle cx="256" cy="256" r="180" fill="url(#glowGrad)" filter="blur(20px)" />
+
+  <!-- 3D Sphere -->
+  <circle cx="256" cy="256" r="140" fill="url(#sphereGrad)" />
+
+  <!-- Inner emblem -->
+  <circle cx="256" cy="256" r="58" fill="#ffffff" />
+  
+  <!-- Dice symbol / Sparkle -->
+  <text x="256" y="278" font-size="68" text-anchor="middle" font-family="Inter, sans-serif" font-weight="900" fill="#1d212b">🎲</text>
+
+  <!-- Specular Reflection -->
+  <ellipse cx="210" cy="170" rx="42" ry="24" transform="rotate(-30 210 170)" fill="rgba(255,255,255,0.6)" />
+</svg>

@@ -1,0 +1,8422 @@
+"use strict";
+
+/* ==========================================================
+   CONSTANTES & CLAVES DE ALMACENAMIENTO
+   ========================================================== */
+const STORAGE_KEY = "bolillero-estudio-v3";
+const POMODORO_STORAGE_KEY = "bolillero-pomodoro-config";
+const THEME_STORAGE_KEY = "luibanez-theme";
+const PIN_STORAGE_KEY = "luibanez-pomodoro-pinned";
+const POS_STORAGE_KEY = "luibanez-pomodoro-pos";
+const DUELO_STORAGE_KEY = "luibanez-duelo-historial";
+const DUELO_PREFS_KEY = "luibanez-duelo-prefs";
+const ACCOUNTS_STORAGE_KEY = "luibanez_cuentas_v2";
+const ACTIVE_USER_STORAGE_KEY = "luibanez_perfil_activo_v2";
+const MQTT_BROKER_URL = "wss://broker.emqx.io:8084/mqtt";
+
+/* ==========================================================
+   ESTADO GLOBAL
+   ========================================================== */
+const perfilUsuario = {
+    esInvitado: true,
+    id: "guest_" + Math.random().toString(36).slice(2, 8),
+    apodo: "Invitado",
+    avatar: "🦁",
+    tipoAvatar: "emoji", // "emoji" | "foto"
+    fotoDataUrl: "",
+    victorias: 0,
+    partidasJugadas: 0,
+    puntosTotales: 0,
+    maxRachaHistorica: 0,
+    totalRobos: 0,
+    pin: null,
+    email: ""
+};
+
+const onlineDueloEstado = {
+    conectado: false,
+    clienteMqtt: null,
+    esHost: false,
+    modo: "online", // "online" | "local"
+    codigoSala: "",
+    tienePassword: false,
+    passwordSala: "",
+    jugadores: [],
+    chat: [],
+    unreadCount: 0,
+    chatAbierto: false,
+    grabandoAudio: false,
+    mediaRecorder: null,
+    audioChunks: [],
+    recIntervalId: null,
+    recSegundos: 0,
+    votacionActiva: false,
+    votoEmitido: false,
+    votosRecibidos: {},
+    roboOnlineActivo: false,
+    primerRoboReclamado: false
+};
+
+const estado = {
+    listas: [],
+    listaSeleccionadaId: null,
+    ronda: {
+        disponibles: [],
+        ultimoTemaId: null
+    },
+    interfaz: {
+        girando: false,
+        vistaActual: "home"
+    }
+};
+
+const pomodoroEstado = {
+    config: {
+        estudioMinutos: 25,
+        descansoCortoMinutos: 5,
+        descansoLargoMinutos: 15,
+        sonidoHabilitado: true
+    },
+    modoActual: "estudio",
+    segundosRestantes: 25 * 60,
+    totalSegundosModo: 25 * 60,
+    activo: false,
+    intervalId: null,
+    ciclosCompletados: 0,
+    audioCtx: null
+};
+
+const estadoFlotante = {
+    abierto: false,
+    fijado: false,
+    arrastrando: false,
+    offsetX: 0,
+    offsetY: 0
+};
+
+const dueloEstado = {
+    config: {
+        jugadores: ["Lucas", "Sofía"],
+        listaId: null,
+        tiempoTurnoSegundos: 90,
+        comodines: {
+            socorro: true,
+            pista: true,
+            pasoRebote: true
+        },
+        reglas: {
+            rachaFuego: true,
+            roboRelampago: true
+        }
+    },
+    partida: {
+        activa: false,
+        rondaNumero: 1,
+        turnoNumero: 0,
+        jugadorActualId: null,
+        temaActual: null,
+        temasDisponibles: [],
+        girando: false,
+        tiempoRestante: 90,
+        temporizadorActivo: false,
+        intervalId: null,
+        comodinActivo: null,
+        jugadorSocorroId: null,
+        robo: {
+            activo: false,
+            ladronId: null,
+            tiempoRestante: 0,
+            intervalId: null
+        },
+        jugadores: [],
+        historialTurnos: []
+    }
+};
+
+/* ==========================================================
+   SELECTORES DEL DOM
+   ========================================================== */
+const dom = {
+
+    // Extensiones LUIBAÑEZ v5 (Juegos Educativos & Gemini & Multiverso)
+    viewJuegosEdu: document.getElementById("viewJuegosEdu"),
+    juegosBackBtn: document.getElementById("juegosBackBtn"),
+    juegosGameIcon: document.getElementById("juegosGameIcon"),
+    juegosGameTitle: document.getElementById("juegosGameTitle"),
+    juegosGameSubtitle: document.getElementById("juegosGameSubtitle"),
+    juegosModeBadge: document.getElementById("juegosModeBadge"),
+    juegosDifficultyBadge: document.getElementById("juegosDifficultyBadge"),
+    triatlonProgressBar: document.getElementById("triatlonProgressBar"),
+    triatlonStep1: document.getElementById("triatlonStep1"),
+    triatlonStep2: document.getElementById("triatlonStep2"),
+    triatlonStep3: document.getElementById("triatlonStep3"),
+    triatlonTotalScore: document.getElementById("triatlonTotalScore"),
+    arenaBomba: document.getElementById("arenaBomba"),
+    bombaTimerDisplay: document.getElementById("bombaTimerDisplay"),
+    bombaPulseStrip: document.getElementById("bombaPulseStrip"),
+    bombaLcdScreen: document.getElementById("bombaLcdScreen"),
+    bombaMinutes: document.getElementById("bombaMinutes"),
+    bombaSeconds: document.getElementById("bombaSeconds"),
+    bombaWireSlot1: document.getElementById("bombaWireSlot1"),
+    bombaWireSlot2: document.getElementById("bombaWireSlot2"),
+    bombaWireSlot3: document.getElementById("bombaWireSlot3"),
+    bombaWire1Status: document.getElementById("bombaWire1Status"),
+    bombaWire2Status: document.getElementById("bombaWire2Status"),
+    bombaWire3Status: document.getElementById("bombaWire3Status"),
+    bombaFase1View: document.getElementById("bombaFase1View"),
+    bombaFase1Question: document.getElementById("bombaFase1Question"),
+    bombaFase1Options: document.getElementById("bombaFase1Options"),
+    bombaFase2View: document.getElementById("bombaFase2View"),
+    bombaFase2Question: document.getElementById("bombaFase2Question"),
+    bombaFase2ProblemBox: document.getElementById("bombaFase2ProblemBox"),
+    bombaFase2Options: document.getElementById("bombaFase2Options"),
+    bombaFase3View: document.getElementById("bombaFase3View"),
+    bombaFase3Question: document.getElementById("bombaFase3Question"),
+    bombaFase3ProblemBox: document.getElementById("bombaFase3ProblemBox"),
+    bombaFase3Options: document.getElementById("bombaFase3Options"),
+    bombaResultView: document.getElementById("bombaResultView"),
+    bombaResultIcon: document.getElementById("bombaResultIcon"),
+    bombaResultTitle: document.getElementById("bombaResultTitle"),
+    bombaResultDesc: document.getElementById("bombaResultDesc"),
+    bombaResultStats: document.getElementById("bombaResultStats"),
+    bombaPlayAgainBtn: document.getElementById("bombaPlayAgainBtn"),
+    bombaExitBtn: document.getElementById("bombaExitBtn"),
+    arenaImpostor: document.getElementById("arenaImpostor"),
+    impostorSetupPanel: document.getElementById("impostorSetupPanel"),
+    impostorActiveBoard: document.getElementById("impostorActiveBoard"),
+    impostorTimeSelector: document.getElementById("impostorTimeSelector"),
+    impostorRoundsSelector: document.getElementById("impostorRoundsSelector"),
+    impostorSetupStatusText: document.getElementById("impostorSetupStatusText"),
+    impostorStartGameBtn: document.getElementById("impostorStartGameBtn"),
+    impostorCaseNum: document.getElementById("impostorCaseNum"),
+    impostorTimerBar: document.getElementById("impostorTimerBar"),
+    impostorStreakBadge: document.getElementById("impostorStreakBadge"),
+    impostorScoreDisplay: document.getElementById("impostorScoreDisplay"),
+    impostorTopicBadge: document.getElementById("impostorTopicBadge"),
+    impostorQuestionText: document.getElementById("impostorQuestionText"),
+    impostorCardsGrid: document.getElementById("impostorCardsGrid"),
+    impostorFeedbackBox: document.getElementById("impostorFeedbackBox"),
+    impostorNextWaveBtn: document.getElementById("impostorNextWaveBtn"),
+    impostorComodinesTray: document.getElementById("impostorComodinesTray"),
+    impostorBtn5050: document.getElementById("impostorBtn5050"),
+    impostorCount5050: document.getElementById("impostorCount5050"),
+    impostorBtnTiempo: document.getElementById("impostorBtnTiempo"),
+    impostorCountTiempo: document.getElementById("impostorCountTiempo"),
+    impostorBtnSocorro: document.getElementById("impostorBtnSocorro"),
+    impostorCountSocorro: document.getElementById("impostorCountSocorro"),
+    arenaMemotest: document.getElementById("arenaMemotest"),
+    memotestPairsCount: document.getElementById("memotestPairsCount"),
+    memotestMovesCount: document.getElementById("memotestMovesCount"),
+    memotestTimerDisplay: document.getElementById("memotestTimerDisplay"),
+    memotestScoreDisplay: document.getElementById("memotestScoreDisplay"),
+    memotestGrid: document.getElementById("memotestGrid"),
+    copyGeminiPromptBtn: document.getElementById("copyGeminiPromptBtn"),
+    drawerGeminiPromptBtn: document.getElementById("drawerGeminiPromptBtn"),
+    geminiPromptModal: document.getElementById("geminiPromptModal"),
+    closeGeminiPromptModalBtn: document.getElementById("closeGeminiPromptModalBtn"),
+    closeGeminiPromptBottomBtn: document.getElementById("closeGeminiPromptBottomBtn"),
+    copyGeminiPromptInnerBtn: document.getElementById("copyGeminiPromptInnerBtn"),
+    geminiPromptTextarea: document.getElementById("geminiPromptTextarea"),
+    dueloOnlineGameSelect: document.getElementById("dueloOnlineGameSelect"),
+    dueloOnlineModeSelect: document.getElementById("dueloOnlineModeSelect"),
+    dueloOnlineAutoTiebreaker: document.getElementById("dueloOnlineAutoTiebreaker"),
+    famaGlobalWinRate: document.getElementById("famaGlobalWinRate"),
+
+        /* Google Gemini API & Apuntes PDF */
+    bolilleroUploadPdfBtn: document.getElementById("bolilleroUploadPdfBtn"),
+    bolilleroPdfInput: document.getElementById("bolilleroPdfInput"),
+    bolilleroIACard: document.getElementById("bolilleroIACard"),
+    bolilleroIASourceBadge: document.getElementById("bolilleroIASourceBadge"),
+    bolilleroIAGenerateBtn: document.getElementById("bolilleroIAGenerateBtn"),
+    bolilleroIALoader: document.getElementById("bolilleroIALoader"),
+    bolilleroIALoaderText: document.getElementById("bolilleroIALoaderText"),
+    bolilleroIAContent: document.getElementById("bolilleroIAContent"),
+    bolilleroIAPregunta: document.getElementById("bolilleroIAPregunta"),
+    bolilleroIAOpciones: document.getElementById("bolilleroIAOpciones"),
+    bolilleroIAFeedback: document.getElementById("bolilleroIAFeedback"),
+    bolilleroIARetryBtn: document.getElementById("bolilleroIARetryBtn"),
+
+    juegosApuntesBar: document.getElementById("juegosApuntesBar"),
+    juegosApuntesStatus: document.getElementById("juegosApuntesStatus"),
+    juegosPdfInput: document.getElementById("juegosPdfInput"),
+    juegosUploadPdfBtn: document.getElementById("juegosUploadPdfBtn"),
+    juegosGenerateIABtn: document.getElementById("juegosGenerateIABtn"),
+    juegosRemovePdfBtn: document.getElementById("juegosRemovePdfBtn"),
+    juegosIALoadingOverlay: document.getElementById("juegosIALoadingOverlay"),
+    juegosIALoadingTitle: document.getElementById("juegosIALoadingTitle"),
+    juegosIALoadingDesc: document.getElementById("juegosIALoadingDesc"),
+
+    /* Centro Principal de Apuntes (PDF Hub Global) */
+    mainGlobalPdfInput: document.getElementById("mainGlobalPdfInput"),
+    mainUploadPdfBtn: document.getElementById("mainUploadPdfBtn"),
+    mainPdfHubEmpty: document.getElementById("mainPdfHubEmpty"),
+    mainPdfHubActive: document.getElementById("mainPdfHubActive"),
+    mainPdfFileName: document.getElementById("mainPdfFileName"),
+    mainPdfFileStats: document.getElementById("mainPdfFileStats"),
+    mainChangePdfBtn: document.getElementById("mainChangePdfBtn"),
+    mainRemovePdfBtn: document.getElementById("mainRemovePdfBtn"),
+    bolilleroGlobalPdfBadge: document.getElementById("bolilleroGlobalPdfBadge"),
+    bolilleroGlobalPdfName: document.getElementById("bolilleroGlobalPdfName"),
+    bolilleroIaWordsBtn: document.getElementById("bolilleroIaWordsBtn"),
+    bolilleroIaWordsModal: document.getElementById("bolilleroIaWordsModal"),
+    closeIaWordsModalBtn: document.getElementById("closeIaWordsModalBtn"),
+    cancelIaWordsModalBtn: document.getElementById("cancelIaWordsModalBtn"),
+    iaWordsForm: document.getElementById("iaWordsForm"),
+    iaWordsCountInput: document.getElementById("iaWordsCountInput"),
+    iaWordsPdfName: document.getElementById("iaWordsPdfName"),
+    iaWordsCurrentListName: document.getElementById("iaWordsCurrentListName"),
+    submitIaWordsBtn: document.getElementById("submitIaWordsBtn"),
+    submitIaWordsText: document.getElementById("submitIaWordsText"),
+
+    soloUploadGlobalPdfBtn: document.getElementById("soloUploadGlobalPdfBtn"),
+    soloGlobalPdfInput: document.getElementById("soloGlobalPdfInput"),
+    soloPdfCardDesc: document.getElementById("soloPdfCardDesc"),
+
+    /* Navegación y Vistas */
+    navHomeBtn: document.getElementById("navHomeBtn"),
+    navSoloBtn: document.getElementById("navSoloBtn"),
+    navJuntosBtn: document.getElementById("navJuntosBtn"),
+    navBolilleroBtn: document.getElementById("navBolilleroBtn"),
+    navDueloBtn: document.getElementById("navDueloBtn"),
+    navFamaBtn: document.getElementById("navFamaBtn"),
+    brandLink: document.getElementById("brandLink"),
+    viewHome: document.getElementById("viewHome"),
+    viewSolo: document.getElementById("viewSolo"),
+    viewJuntos: document.getElementById("viewJuntos"),
+    viewBolillero: document.getElementById("viewBolillero"),
+    viewDuelo: document.getElementById("viewDuelo"),
+    viewFama: document.getElementById("viewFama"),
+    interactiveBall: document.getElementById("interactiveBall"),
+    heroGoSoloBtn: document.getElementById("heroGoSoloBtn"),
+    heroGoJuntosBtn: document.getElementById("heroGoJuntosBtn"),
+    homeGoToSoloBtn: document.getElementById("homeGoToSoloBtn"),
+    homeGoToJuntosBtn: document.getElementById("homeGoToJuntosBtn"),
+    homeGoToFamaBtn: document.getElementById("homeGoToFamaBtn"),
+    soloOpenBolilleroBtn: document.getElementById("soloOpenBolilleroBtn"),
+    soloOpenBombaBtn: document.getElementById("soloOpenBombaBtn"),
+    soloOpenImpostorBtn: document.getElementById("soloOpenImpostorBtn"),
+    soloOpenMemotestBtn: document.getElementById("soloOpenMemotestBtn"),
+    soloNewListShortcutBtn: document.getElementById("soloNewListShortcutBtn"),
+    backFromBolilleroBtn: document.getElementById("backFromBolilleroBtn"),
+    backFromDueloBtn: document.getElementById("backFromDueloBtn"),
+    juntosQuickCreateBtn: document.getElementById("juntosQuickCreateBtn"),
+    juntosQuickJoinBtn: document.getElementById("juntosQuickJoinBtn"),
+    openDueloBolilleroCardBtn: document.getElementById("openDueloBolilleroCardBtn"),
+    openDueloBombaCardBtn: document.getElementById("openDueloBombaCardBtn"),
+    openDueloImpostorCardBtn: document.getElementById("openDueloImpostorCardBtn"),
+    openDueloMemotestCardBtn: document.getElementById("openDueloMemotestCardBtn"),
+    openDueloTriatlonCardBtn: document.getElementById("openDueloTriatlonCardBtn"),
+    openCoopBombaBtn: document.getElementById("openCoopBombaBtn"),
+    openCoopMemotestBtn: document.getElementById("openCoopMemotestBtn"),
+    openCoopBolilleroBtn: document.getElementById("openCoopBolilleroBtn"),
+    heroEnterBolilleroBtn: document.getElementById("heroEnterBolilleroBtn"),
+    openBolilleroBtns: document.querySelectorAll(".open-bolillero-btn"),
+    openPomodoroFromCardBtn: document.getElementById("openPomodoroFromCardBtn"),
+    openDueloFromCardBtn: document.getElementById("openDueloFromCardBtn"),
+    openFamaFromCardBtn: document.getElementById("openFamaFromCardBtn"),
+
+    /* Tema Sol/Luna */
+    themeToggleBtn: document.getElementById("themeToggleBtn"),
+    themeToggleIcon: document.getElementById("themeToggleIcon"),
+
+    /* Alternador Modo Rendimiento (Lite / Visual Pro) */
+    perfToggleBtn: document.getElementById("perfToggleBtn"),
+    perfToggleIcon: document.getElementById("perfToggleIcon"),
+    drawerPerfToggleBtn: document.getElementById("drawerPerfToggleBtn"),
+    drawerPerfToggleIcon: document.getElementById("drawerPerfToggleIcon"),
+    drawerPerfLabel: document.getElementById("drawerPerfLabel"),
+
+    /* Menú Plegable (☰) y Drawer Lateral */
+    menuToggleBtn: document.getElementById("menuToggleBtn"),
+    drawerBackdrop: document.getElementById("drawerBackdrop"),
+    drawerMenu: document.getElementById("drawerMenu"),
+    drawerCloseBtn: document.getElementById("drawerCloseBtn"),
+    drawerNavHome: document.getElementById("drawerNavHome"),
+    drawerNavBolillero: document.getElementById("drawerNavBolillero"),
+    drawerNavDuelo: document.getElementById("drawerNavDuelo"),
+    drawerNavFama: document.getElementById("drawerNavFama"),
+    drawerThemeToggleBtn: document.getElementById("drawerThemeToggleBtn"),
+    drawerThemeToggleIcon: document.getElementById("drawerThemeToggleIcon"),
+    drawerThemeLabel: document.getElementById("drawerThemeLabel"),
+    drawerPomoIndicator: document.getElementById("drawerPomoIndicator"),
+    drawerPomoBadge: document.getElementById("drawerPomoBadge"),
+    drawerPomoTime: document.getElementById("drawerPomoTime"),
+    drawerPomoToggleBtn: document.getElementById("drawerPomoToggleBtn"),
+    drawerPomoOpenCardBtn: document.getElementById("drawerPomoOpenCardBtn"),
+    drawerNewListBtn: document.getElementById("drawerNewListBtn"),
+    drawerListsContainer: document.getElementById("drawerListsContainer"),
+
+    /* Dynamic Island (Píldora) */
+    pomodoroPill: document.getElementById("pomodoroPill"),
+    pillTimer: document.getElementById("pillTimer"),
+    pillBadge: document.getElementById("pillBadge"),
+
+    /* Tarjeta Flotante Pomodoro */
+    pomodoroFloatingCard: document.getElementById("pomodoroFloatingCard"),
+    floatingCardHeader: document.getElementById("floatingCardHeader"),
+    floatingBadge: document.getElementById("floatingBadge"),
+    pinPomodoroBtn: document.getElementById("pinPomodoroBtn"),
+    minimizePomodoroBtn: document.getElementById("minimizePomodoroBtn"),
+
+    
+    /* Bolillero y Listas */
+    listsContainer: document.getElementById("listsContainer"),
+    newListButton: document.getElementById("newListButton"),
+    currentListTitle: document.getElementById("currentListTitle"),
+    currentListDescription: document.getElementById("currentListDescription"),
+    topicsGrid: document.getElementById("topicsGrid"),
+    addTopicButton: document.getElementById("addTopicButton"),
+    spinButton: document.getElementById("spinButton"),
+    rollingDisplay: document.getElementById("rollingDisplay"),
+    resultSection: document.getElementById("resultSection"),
+    selectedTopic: document.getElementById("selectedTopic"),
+    drawAgainButton: document.getElementById("drawAgainButton"),
+    restoreRoundButton: document.getElementById("restoreRoundButton"),
+    importButton: document.getElementById("importButton"),
+    importFileInput: document.getElementById("importFileInput"),
+
+    /* Pomodoro Controles */
+    modeStudyBtn: document.getElementById("modeStudyBtn"),
+    modeShortBreakBtn: document.getElementById("modeShortBreakBtn"),
+    modeLongBreakBtn: document.getElementById("modeLongBreakBtn"),
+    pomodoroDisplay: document.getElementById("pomodoroDisplay"),
+    pomodoroProgressBar: document.getElementById("pomodoroProgressBar"),
+    pomodoroContext: document.getElementById("pomodoroContext"),
+    pomodoroToggleBtn: document.getElementById("pomodoroToggleBtn"),
+    pomodoroToggleIcon: document.getElementById("pomodoroToggleIcon"),
+    pomodoroToggleText: document.getElementById("pomodoroToggleText"),
+    pomodoroResetBtn: document.getElementById("pomodoroResetBtn"),
+    pomodoroSkipBtn: document.getElementById("pomodoroSkipBtn"),
+    pomodoroCyclesCount: document.getElementById("pomodoroCyclesCount"),
+    pomodoroConfigButton: document.getElementById("pomodoroConfigButton"),
+
+    /* Duelo Perfil de Usuario & Alerta */
+    dueloUserCard: document.getElementById("dueloUserCard"),
+    dueloUserAvatarWrap: document.getElementById("dueloUserAvatarWrap"),
+    dueloUserAvatarDisplay: document.getElementById("dueloUserAvatarDisplay"),
+    dueloUserNameDisplay: document.getElementById("dueloUserNameDisplay"),
+    dueloUserRankBadge: document.getElementById("dueloUserRankBadge"),
+    dueloUserMetaDisplay: document.getElementById("dueloUserMetaDisplay"),
+    dueloChangeAvatarBtn: document.getElementById("dueloChangeAvatarBtn"),
+    dueloAuthModalBtn: document.getElementById("dueloAuthModalBtn"),
+    dueloGuestAlert: document.getElementById("dueloGuestAlert"),
+    dueloCreateAccountPromptBtn: document.getElementById("dueloCreateAccountPromptBtn"),
+
+    /* Duelo Selector de Modo */
+    dueloModeOnlineBtn: document.getElementById("dueloModeOnlineBtn"),
+    dueloModeLocalBtn: document.getElementById("dueloModeLocalBtn"),
+    dueloOnlinePanel: document.getElementById("dueloOnlinePanel"),
+    dueloLocalPanel: document.getElementById("dueloLocalPanel"),
+
+    /* Duelo Setup Online & Sala de Espera */
+    dueloOnlineSetupView: document.getElementById("dueloOnlineSetupView"),
+    dueloOnlineListaSelect: document.getElementById("dueloOnlineListaSelect"),
+    dueloOnlineListaHint: document.getElementById("dueloOnlineListaHint"),
+    dueloOnlineTimeSelect: document.getElementById("dueloOnlineTimeSelect"),
+    dueloOnlineHasPassword: document.getElementById("dueloOnlineHasPassword"),
+    dueloOnlinePasswordRow: document.getElementById("dueloOnlinePasswordRow"),
+    dueloOnlineRoomPassword: document.getElementById("dueloOnlineRoomPassword"),
+    dueloOnlineComodinSocorro: document.getElementById("dueloOnlineComodinSocorro"),
+    dueloOnlineComodinPista: document.getElementById("dueloOnlineComodinPista"),
+    dueloOnlineComodinPaso: document.getElementById("dueloOnlineComodinPaso"),
+    dueloOnlineReglaRacha: document.getElementById("dueloOnlineReglaRacha"),
+    dueloOnlineReglaRobo: document.getElementById("dueloOnlineReglaRobo"),
+    dueloCreateRoomBtn: document.getElementById("dueloCreateRoomBtn"),
+    dueloJoinRoomCode: document.getElementById("dueloJoinRoomCode"),
+    dueloJoinRoomPass: document.getElementById("dueloJoinRoomPass"),
+    dueloJoinAvatarPreview: document.getElementById("dueloJoinAvatarPreview"),
+    dueloJoinNamePreview: document.getElementById("dueloJoinNamePreview"),
+    dueloJoinRoomBtn: document.getElementById("dueloJoinRoomBtn"),
+    dueloOnlineWaitingRoom: document.getElementById("dueloOnlineWaitingRoom"),
+    dueloWaitingRoomCode: document.getElementById("dueloWaitingRoomCode"),
+    dueloMagicLinkInput: document.getElementById("dueloMagicLinkInput"),
+    dueloCopyLinkBtn: document.getElementById("dueloCopyLinkBtn"),
+    dueloShareLinkBtn: document.getElementById("dueloShareLinkBtn"),
+    dueloCopySuccessHint: document.getElementById("dueloCopySuccessHint"),
+    dueloOnlineConnectedCount: document.getElementById("dueloOnlineConnectedCount"),
+    dueloServerStatusBadge: document.getElementById("dueloServerStatusBadge"),
+    dueloOnlinePlayersGrid: document.getElementById("dueloOnlinePlayersGrid"),
+    dueloHostControlsArea: document.getElementById("dueloHostControlsArea"),
+    dueloLaunchOnlineMatchBtn: document.getElementById("dueloLaunchOnlineMatchBtn"),
+    dueloGuestWaitArea: document.getElementById("dueloGuestWaitArea"),
+    dueloLeaveOnlineRoomBtn: document.getElementById("dueloLeaveOnlineRoomBtn"),
+
+    /* Duelo Lobby Local */
+    dueloLobby: document.getElementById("dueloLobby"),
+    dueloPlayerCountBadge: document.getElementById("dueloPlayerCountBadge"),
+    dueloPlayerInput: document.getElementById("dueloPlayerInput"),
+    dueloAddPlayerBtn: document.getElementById("dueloAddPlayerBtn"),
+    dueloPlayersChips: document.getElementById("dueloPlayersChips"),
+    dueloListaSelect: document.getElementById("dueloListaSelect"),
+    dueloListaHint: document.getElementById("dueloListaHint"),
+    dueloMinutosInput: document.getElementById("dueloMinutosInput"),
+    dueloSegundosInput: document.getElementById("dueloSegundosInput"),
+    dueloToggleAllComodinesBtn: document.getElementById("dueloToggleAllComodinesBtn"),
+    dueloComodinSocorro: document.getElementById("dueloComodinSocorro"),
+    dueloComodinPista: document.getElementById("dueloComodinPista"),
+    dueloComodinPaso: document.getElementById("dueloComodinPaso"),
+    dueloReglaRacha: document.getElementById("dueloReglaRacha"),
+    dueloReglaRobo: document.getElementById("dueloReglaRobo"),
+    dueloStartBtn: document.getElementById("dueloStartBtn"),
+    dueloViewFamaFromLobbyBtn: document.getElementById("dueloViewFamaFromLobbyBtn"),
+
+    /* Duelo Arena */
+    dueloArena: document.getElementById("dueloArena"),
+    dueloBarListName: document.getElementById("dueloBarListName"),
+    dueloBarRemainingTopics: document.getElementById("dueloBarRemainingTopics"),
+    dueloEndMatchBtn: document.getElementById("dueloEndMatchBtn"),
+    dueloPlayerRoulette: document.getElementById("dueloPlayerRoulette"),
+    dueloTopicRoulette: document.getElementById("dueloTopicRoulette"),
+    dueloSpinBtn: document.getElementById("dueloSpinBtn"),
+    dueloTurnArea: document.getElementById("dueloTurnArea"),
+    dueloTurnHeader: document.getElementById("dueloTurnHeader"),
+    dueloTurnAvatar: document.getElementById("dueloTurnAvatar"),
+    dueloTurnPlayerName: document.getElementById("dueloTurnPlayerName"),
+    dueloTurnStreakBadge: document.getElementById("dueloTurnStreakBadge"),
+    dueloQuickScratchpadBtn: document.getElementById("dueloQuickScratchpadBtn"),
+    dueloQuickPomodoroBtn: document.getElementById("dueloQuickPomodoroBtn"),
+    dueloActiveTopicTitle: document.getElementById("dueloActiveTopicTitle"),
+    dueloTimerDigits: document.getElementById("dueloTimerDigits"),
+    dueloTimerToggleBtn: document.getElementById("dueloTimerToggleBtn"),
+    dueloTimerBar: document.getElementById("dueloTimerBar"),
+    dueloComodinesTray: document.getElementById("dueloComodinesTray"),
+    dueloBtnSocorro: document.getElementById("dueloBtnSocorro"),
+    dueloBtnPista: document.getElementById("dueloBtnPista"),
+    dueloBtnPaso: document.getElementById("dueloBtnPaso"),
+    dueloLocalEvalSection: document.getElementById("dueloLocalEvalSection"),
+    dueloGradeImpecableBtn: document.getElementById("dueloGradeImpecableBtn"),
+    dueloImpecablePtsLabel: document.getElementById("dueloImpecablePtsLabel"),
+    dueloGradeAyudaBtn: document.getElementById("dueloGradeAyudaBtn"),
+    dueloGradePasoBtn: document.getElementById("dueloGradePasoBtn"),
+
+    /* Votación Individual Online */
+    dueloOnlineVoteBox: document.getElementById("dueloOnlineVoteBox"),
+    dueloVoteTargetPlayerName: document.getElementById("dueloVoteTargetPlayerName"),
+    dueloOnlineVote10Btn: document.getElementById("dueloOnlineVote10Btn"),
+    dueloOnlineVote5Btn: document.getElementById("dueloOnlineVote5Btn"),
+    dueloOnlineVote0Btn: document.getElementById("dueloOnlineVote0Btn"),
+    dueloOnline10PtsLabel: document.getElementById("dueloOnline10PtsLabel"),
+    dueloLiveVoteChips: document.getElementById("dueloLiveVoteChips"),
+
+    /* Robo Relámpago Local & Online */
+    dueloRoboBox: document.getElementById("dueloRoboBox"),
+    dueloBuzzerContainer: document.getElementById("dueloBuzzerContainer"),
+    dueloThiefActiveArea: document.getElementById("dueloThiefActiveArea"),
+    dueloThiefTitle: document.getElementById("dueloThiefTitle"),
+    dueloThiefTimerDigits: document.getElementById("dueloThiefTimerDigits"),
+    dueloThiefSuccessBtn: document.getElementById("dueloThiefSuccessBtn"),
+    dueloThiefFailBtn: document.getElementById("dueloThiefFailBtn"),
+    dueloOnlineRoboOverlay: document.getElementById("dueloOnlineRoboOverlay"),
+    dueloOnlineBuzzerTriggerBtn: document.getElementById("dueloOnlineBuzzerTriggerBtn"),
+    dueloOnlineRoboStatus: document.getElementById("dueloOnlineRoboStatus"),
+
+    dueloScoreboardList: document.getElementById("dueloScoreboardList"),
+    dueloRoundCounterBadge: document.getElementById("dueloRoundCounterBadge"),
+    dueloTurnLog: document.getElementById("dueloTurnLog"),
+
+    /* Chat Multimedia en Vivo */
+    dueloChatDock: document.getElementById("dueloChatDock"),
+    dueloChatToggleBtn: document.getElementById("dueloChatToggleBtn"),
+    dueloChatUnreadBadge: document.getElementById("dueloChatUnreadBadge"),
+    dueloChatWindow: document.getElementById("dueloChatWindow"),
+    dueloChatCloseBtn: document.getElementById("dueloChatCloseBtn"),
+    dueloChatMessages: document.getElementById("dueloChatMessages"),
+    dueloVoiceRecordingBar: document.getElementById("dueloVoiceRecordingBar"),
+    dueloVoiceRecTimer: document.getElementById("dueloVoiceRecTimer"),
+    dueloVoiceCancelBtn: document.getElementById("dueloVoiceCancelBtn"),
+    dueloVoiceSendBtn: document.getElementById("dueloVoiceSendBtn"),
+    dueloChatForm: document.getElementById("dueloChatForm"),
+    dueloChatPhotoInput: document.getElementById("dueloChatPhotoInput"),
+    dueloChatPhotoBtn: document.getElementById("dueloChatPhotoBtn"),
+    dueloChatMicBtn: document.getElementById("dueloChatMicBtn"),
+    dueloChatTextInput: document.getElementById("dueloChatTextInput"),
+    dueloChatSendBtn: document.getElementById("dueloChatSendBtn"),
+    photoZoomModal: document.getElementById("photoZoomModal"),
+    photoZoomImg: document.getElementById("photoZoomImg"),
+    photoZoomCloseBtn: document.getElementById("photoZoomCloseBtn"),
+
+    /* Salón de la Fama */
+    famaPlayNewDueloBtn: document.getElementById("famaPlayNewDueloBtn"),
+    famaClearHistoryBtn: document.getElementById("famaClearHistoryBtn"),
+    famaTotalMatchesCount: document.getElementById("famaTotalMatchesCount"),
+    famaTopChampionName: document.getElementById("famaTopChampionName"),
+    famaTotalPointsDistributed: document.getElementById("famaTotalPointsDistributed"),
+    famaLeaderboardBody: document.getElementById("famaLeaderboardBody"),
+    famaMatchesBadge: document.getElementById("famaMatchesBadge"),
+    famaMatchesGrid: document.getElementById("famaMatchesGrid"),
+
+    /* Modales */
+    listModal: document.getElementById("listModal"),
+    listForm: document.getElementById("listForm"),
+    listNameInput: document.getElementById("listNameInput"),
+    cancelListButton: document.getElementById("cancelListButton"),
+
+    topicModal: document.getElementById("topicModal"),
+    topicForm: document.getElementById("topicForm"),
+    topicInput: document.getElementById("topicInput"),
+    cancelTopicButton: document.getElementById("cancelTopicButton"),
+
+    pomodoroModal: document.getElementById("pomodoroModal"),
+    pomodoroForm: document.getElementById("pomodoroForm"),
+    studyDurationInput: document.getElementById("studyDurationInput"),
+    shortBreakDurationInput: document.getElementById("shortBreakDurationInput"),
+    longBreakDurationInput: document.getElementById("longBreakDurationInput"),
+    soundEnabledInput: document.getElementById("soundEnabledInput"),
+    cancelPomodoroButton: document.getElementById("cancelPomodoroButton"),
+
+    dueloVictoryModal: document.getElementById("dueloVictoryModal"),
+    victoryModalTitle: document.getElementById("victoryModalTitle"),
+    victoryModalSubtitle: document.getElementById("victoryModalSubtitle"),
+    dueloPodioContainer: document.getElementById("dueloPodioContainer"),
+    dueloSpecialMentions: document.getElementById("dueloSpecialMentions"),
+    victoryRegisterGuestBtn: document.getElementById("victoryRegisterGuestBtn"),
+    victoryCopySummaryBtn: document.getElementById("victoryCopySummaryBtn"),
+    victoryGoToFamaBtn: document.getElementById("victoryGoToFamaBtn"),
+    victoryCloseBtn: document.getElementById("victoryCloseBtn"),
+    dueloSocorroModal: document.getElementById("dueloSocorroModal"),
+    dueloSocorroOptions: document.getElementById("dueloSocorroOptions"),
+    dueloCancelSocorroBtn: document.getElementById("dueloCancelSocorroBtn"),
+
+    /* Modal Cuentas & PIN */
+    authAccountModal: document.getElementById("authAccountModal"),
+    authModalCloseBtn: document.getElementById("authModalCloseBtn"),
+    authTabRegister: document.getElementById("authTabRegister"),
+    authTabLogin: document.getElementById("authTabLogin"),
+    authRegisterForm: document.getElementById("authRegisterForm"),
+    authRegApodo: document.getElementById("authRegApodo"),
+    authRegAvatarPreview: document.getElementById("authRegAvatarPreview"),
+    authRegOpenAvatarPickerBtn: document.getElementById("authRegOpenAvatarPickerBtn"),
+    authRegPin: document.getElementById("authRegPin"),
+    authRegEmail: document.getElementById("authRegEmail"),
+    authContinueGuestBtn: document.getElementById("authContinueGuestBtn"),
+    authSubmitRegisterBtn: document.getElementById("authSubmitRegisterBtn"),
+    authLoginForm: document.getElementById("authLoginForm"),
+    authLoginSelect: document.getElementById("authLoginSelect"),
+    authLoginPin: document.getElementById("authLoginPin"),
+    authLoginError: document.getElementById("authLoginError"),
+    authForgotPinBtn: document.getElementById("authForgotPinBtn"),
+    authSubmitLoginBtn: document.getElementById("authSubmitLoginBtn"),
+
+    /* Modal Selector de Avatares */
+    avatarPickerModal: document.getElementById("avatarPickerModal"),
+    avatarModalCloseBtn: document.getElementById("avatarModalCloseBtn"),
+    avatarTabEmojis: document.getElementById("avatarTabEmojis"),
+    avatarTabPhoto: document.getElementById("avatarTabPhoto"),
+    avatarPanelEmojis: document.getElementById("avatarPanelEmojis"),
+    avatarPanelPhoto: document.getElementById("avatarPanelPhoto"),
+    avatarEmojiSearchInput: document.getElementById("avatarEmojiSearchInput"),
+    avatarEmojiCategoryPills: document.getElementById("avatarEmojiCategoryPills"),
+    avatarEmojisGrid: document.getElementById("avatarEmojisGrid"),
+    avatarCustomEmojiInput: document.getElementById("avatarCustomEmojiInput"),
+    avatarCustomEmojiBtn: document.getElementById("avatarCustomEmojiBtn"),
+    avatarFileInput: document.getElementById("avatarFileInput"),
+    avatarCaptureCameraBtn: document.getElementById("avatarCaptureCameraBtn"),
+    avatarUploadGalleryBtn: document.getElementById("avatarUploadGalleryBtn"),
+    avatarCropPreviewImg: document.getElementById("avatarCropPreviewImg"),
+    avatarCropPlaceholder: document.getElementById("avatarCropPlaceholder"),
+    avatarCanvas: document.getElementById("avatarCanvas"),
+    avatarConfirmPhotoBtn: document.getElementById("avatarConfirmPhotoBtn"),
+
+    /* Templates */
+    listItemTemplate: document.getElementById("listItemTemplate"),
+    topicCardTemplate: document.getElementById("topicCardTemplate"),
+
+    /* Modal de Reglas e Instrucciones */
+    rulesModal: document.getElementById("rulesModal"),
+    rulesModalIcon: document.getElementById("rulesModalIcon"),
+    rulesModalTitle: document.getElementById("rulesModalTitle"),
+    rulesModalSubtitle: document.getElementById("rulesModalSubtitle"),
+    rulesModalBody: document.getElementById("rulesModalBody"),
+    rulesModalCloseBtn: document.getElementById("rulesModalCloseBtn"),
+    rulesModalUnderstoodBtn: document.getElementById("rulesModalUnderstoodBtn"),
+    rulesDontShowAgainCheckbox: document.getElementById("rulesDontShowAgainCheckbox"),
+    bolilleroRulesBtn: document.getElementById("bolilleroRulesBtn"),
+    juegosRulesBtn: document.getElementById("juegosRulesBtn"),
+    soloRulesBtn: document.getElementById("soloRulesBtn"),
+    pdfHubRulesBtn: document.getElementById("pdfHubRulesBtn")
+};
+
+/* ==========================================================
+   SISTEMA DE NOTIFICACIONES TOAST (GLOBAL)
+   ========================================================== */
+function mostrarToast(mensaje, duracion = 3200) {
+    if (!mensaje) return;
+    let container = document.getElementById("appToastContainer");
+    if (!container) {
+        container = document.createElement("div");
+        container.id = "appToastContainer";
+        container.className = "app-toast-container";
+        container.setAttribute("aria-live", "polite");
+        document.body.appendChild(container);
+    }
+
+    const toast = document.createElement("div");
+    toast.className = "app-toast-item";
+    toast.innerHTML = `<span class="app-toast-text">${mensaje}</span>`;
+
+    container.appendChild(toast);
+
+    requestAnimationFrame(() => {
+        toast.classList.add("is-visible");
+    });
+
+    const remover = () => {
+        toast.classList.remove("is-visible");
+        toast.classList.add("is-hiding");
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.parentNode.removeChild(toast);
+            }
+        }, 300);
+    };
+
+    const timer = setTimeout(remover, duracion);
+    toast.addEventListener("click", () => {
+        clearTimeout(timer);
+        remover();
+    });
+}
+window.mostrarToast = mostrarToast;
+
+function toggleTarjetaScratchpad() {
+    if (typeof window.togglePizarron === "function") {
+        window.togglePizarron();
+    } else {
+        const scratchpadCard = document.getElementById("scratchpadFloatingCard");
+        if (scratchpadCard) {
+            scratchpadCard.classList.toggle("is-minimized");
+        }
+    }
+}
+window.toggleTarjetaScratchpad = toggleTarjetaScratchpad;
+
+function abrirTarjetaScratchpad() {
+    if (typeof window.abrirPizarron === "function") {
+        window.abrirPizarron();
+    } else {
+        const scratchpadCard = document.getElementById("scratchpadFloatingCard");
+        if (scratchpadCard) {
+            scratchpadCard.classList.remove("is-minimized");
+        }
+    }
+}
+window.abrirTarjetaScratchpad = abrirTarjetaScratchpad;
+
+/* ==========================================================
+   NAVEGACIÓN SPA (VISTAS: HOME / BOLILLERO / DUELO / FAMA)
+   ========================================================== */
+function cambiarVista(vista) {
+    if (vista === "juntos" || vista === "duelo") {
+        mostrarToast("🔒 Acceso cerrado: El modo Estudiar Juntos no está disponible temporalmente.", "aviso");
+        vista = "home";
+    }
+
+    const vistas = [
+        { id: "home", domView: dom.viewHome },
+        { id: "solo", domView: dom.viewSolo },
+        { id: "juntos", domView: dom.viewJuntos },
+        { id: "bolillero", domView: dom.viewBolillero },
+        { id: "duelo", domView: dom.viewDuelo },
+        { id: "fama", domView: dom.viewFama },
+        { id: "juegos", domView: dom.viewJuegosEdu }
+    ];
+
+    const vistaDestino = vistas.some(v => v.id === vista) ? vista : "home";
+
+    // 1. Alternar visibilidad de las vistas
+    vistas.forEach(({ id, domView }) => {
+        if (!domView) return;
+        const esActiva = id === vistaDestino;
+        domView.classList.toggle("view--hidden", !esActiva);
+        domView.classList.toggle("view--active", esActiva);
+    });
+
+    // 2. Sincronizar botones de la barra superior (Navbar)
+    if (dom.navHomeBtn) dom.navHomeBtn.classList.toggle("is-active", vistaDestino === "home");
+    if (dom.navSoloBtn) dom.navSoloBtn.classList.toggle("is-active", vistaDestino === "solo" || vistaDestino === "bolillero");
+    if (dom.navJuntosBtn) dom.navJuntosBtn.classList.toggle("is-active", vistaDestino === "juntos" || vistaDestino === "duelo");
+    if (dom.navBolilleroBtn) dom.navBolilleroBtn.classList.toggle("is-active", vistaDestino === "bolillero");
+    if (dom.navDueloBtn) dom.navDueloBtn.classList.toggle("is-active", vistaDestino === "duelo");
+    if (dom.navFamaBtn) dom.navFamaBtn.classList.toggle("is-active", vistaDestino === "fama");
+
+    // 3. Sincronizar navegación en el Drawer lateral (Off-canvas)
+    const drawerNavMap = {
+        home: dom.drawerNavHome,
+        solo: dom.drawerNavSolo,
+        juntos: dom.drawerNavJuntos,
+        bolillero: dom.drawerNavBolillero,
+        duelo: dom.drawerNavDuelo,
+        fama: dom.drawerNavFama
+    };
+    Object.entries(drawerNavMap).forEach(([id, btn]) => {
+        if (btn) btn.classList.toggle("is-active", id === vistaDestino);
+    });
+
+    estado.interfaz.vistaActual = vistaDestino;
+    window.location.hash = vistaDestino;
+
+    if (vistaDestino === "duelo") {
+        if (!dueloEstado.partida.activa) {
+            actualizarDropdownListasDuelo();
+            renderDueloPlayersChips();
+        }
+    } else if (vistaDestino === "fama") {
+        renderSalonDeLaFama();
+    } else if (vistaDestino === "bolillero") {
+        comprobarYMostrarReglas("bolillero");
+    }
+
+    window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function inicializarRutas() {
+    const hash = window.location.hash.replace("#", "");
+    if (["solo", "juntos", "bolillero", "duelo", "fama", "home"].includes(hash)) {
+        cambiarVista(hash);
+    } else {
+        cambiarVista("home");
+    }
+}
+
+/* ==========================================================
+   MODO CLARO / OSCURO (TEMA)
+   ========================================================== */
+function inicializarTema() {
+    const temaGuardado = localStorage.getItem(THEME_STORAGE_KEY) || "dark";
+    aplicarTema(temaGuardado);
+}
+
+function aplicarTema(tema) {
+    document.documentElement.setAttribute("data-theme", tema);
+    localStorage.setItem(THEME_STORAGE_KEY, tema);
+
+    if (dom.themeToggleIcon) {
+        dom.themeToggleIcon.textContent = tema === "dark" ? "☀️" : "🌙";
+    }
+    if (dom.themeToggleBtn) {
+        dom.themeToggleBtn.setAttribute(
+            "aria-label",
+            tema === "dark" ? "Cambiar a modo claro" : "Cambiar a modo oscuro"
+        );
+    }
+
+    // Sincronizar en Drawer
+    if (dom.drawerThemeToggleIcon) {
+        dom.drawerThemeToggleIcon.textContent = tema === "dark" ? "☀️" : "🌙";
+    }
+    if (dom.drawerThemeLabel) {
+        dom.drawerThemeLabel.textContent = tema === "dark" ? "Claro" : "Oscuro";
+    }
+}
+
+function alternarTema() {
+    const temaActual = document.documentElement.getAttribute("data-theme") || "dark";
+    const nuevoTema = temaActual === "dark" ? "light" : "dark";
+    aplicarTema(nuevoTema);
+}
+
+/* ==========================================================
+   SISTEMA DE MODO RENDIMIENTO (LITE / VISUAL PRO)
+   ========================================================== */
+function inicializarModoRendimiento() {
+    let modo = "full";
+    try {
+        const guardado = localStorage.getItem("bolillero_perf_mode");
+        if (guardado) {
+            modo = guardado;
+        } else if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+            modo = "lite";
+        }
+    } catch (e) {
+        modo = "full";
+    }
+    aplicarModoRendimiento(modo, false);
+}
+
+function aplicarModoRendimiento(modo, notificar = false) {
+    const modoNormalizado = modo === "lite" ? "lite" : "full";
+    window.bolilleroPerfMode = modoNormalizado;
+    try {
+        localStorage.setItem("bolillero_perf_mode", modoNormalizado);
+    } catch (e) {
+        console.warn("No se pudo guardar bolillero_perf_mode", e);
+    }
+
+    const isLite = modoNormalizado === "lite";
+    if (isLite) {
+        document.body.classList.add("mode-lite");
+    } else {
+        document.body.classList.remove("mode-lite");
+    }
+
+    // Sincronizar botón de barra superior
+    if (dom.perfToggleBtn) {
+        dom.perfToggleBtn.setAttribute(
+            "title",
+            isLite
+                ? "Modo Lite activo (Ahorro máximo & 60 FPS). Clic para activar Efectos Visuales Pro."
+                : "Efectos Visuales Pro activos. Clic para activar Modo Lite (Ahorro de batería)."
+        );
+        dom.perfToggleBtn.setAttribute(
+            "aria-label",
+            isLite ? "Cambiar a modo efectos visuales" : "Cambiar a modo lite"
+        );
+    }
+    if (dom.perfToggleIcon) {
+        dom.perfToggleIcon.textContent = isLite ? "⚡" : "✨";
+    }
+
+    // Sincronizar en Drawer Menú
+    if (dom.drawerPerfToggleIcon) {
+        dom.drawerPerfToggleIcon.textContent = isLite ? "⚡" : "✨";
+    }
+    if (dom.drawerPerfLabel) {
+        dom.drawerPerfLabel.textContent = isLite ? "Lite (Ahorro)" : "Visual Pro";
+    }
+
+    if (notificar) {
+        if (isLite) {
+            mostrarToast("⚡ Modo Lite activado: Máxima velocidad, fluidez y ahorro de batería.");
+        } else {
+            mostrarToast("✨ Modo Visual Pro activado: Animaciones y efectos cinemáticos completos.");
+        }
+    }
+}
+
+function alternarModoRendimiento() {
+    const modoActual = window.bolilleroPerfMode || "full";
+    const nuevoModo = modoActual === "full" ? "lite" : "full";
+    aplicarModoRendimiento(nuevoModo, true);
+}
+
+/* ==========================================================
+   MENÚ PLEGABLE IZQUIERDO (☰) Y DRAWER LATERAL
+   ========================================================== */
+function inicializarDrawerMenu() {
+    if (dom.menuToggleBtn) {
+        dom.menuToggleBtn.addEventListener("click", toggleDrawerMenu);
+    }
+    if (dom.drawerCloseBtn) {
+        dom.drawerCloseBtn.addEventListener("click", cerrarDrawerMenu);
+    }
+    if (dom.drawerBackdrop) {
+        dom.drawerBackdrop.addEventListener("click", cerrarDrawerMenu);
+    }
+
+    // Navegación desde el Drawer
+    if (dom.drawerNavHome) {
+        dom.drawerNavHome.addEventListener("click", () => {
+            cambiarVista("home");
+            cerrarDrawerMenu();
+        });
+    }
+    if (dom.drawerNavSolo) {
+        dom.drawerNavSolo.addEventListener("click", () => {
+            cambiarVista("solo");
+            cerrarDrawerMenu();
+        });
+    }
+    if (dom.drawerNavJuntos) {
+        dom.drawerNavJuntos.addEventListener("click", () => {
+            mostrarToast("🔒 Acceso cerrado: El modo Estudiar Juntos no está disponible temporalmente.", "aviso");
+            cerrarDrawerMenu();
+        });
+    }
+    if (dom.drawerNavBolillero) {
+        dom.drawerNavBolillero.addEventListener("click", () => {
+            cambiarVista("bolillero");
+            cerrarDrawerMenu();
+        });
+    }
+    if (dom.drawerNavDuelo) {
+        dom.drawerNavDuelo.addEventListener("click", () => {
+            mostrarToast("🔒 Acceso cerrado: El modo Duelo no está disponible temporalmente.", "aviso");
+            cerrarDrawerMenu();
+        });
+    }
+    if (dom.drawerNavFama) {
+        dom.drawerNavFama.addEventListener("click", () => {
+            cambiarVista("fama");
+            cerrarDrawerMenu();
+        });
+    }
+
+    // Herramientas rápidas en Drawer
+    if (dom.drawerThemeToggleBtn) {
+        dom.drawerThemeToggleBtn.addEventListener("click", () => {
+            alternarTema();
+        });
+    }
+    if (dom.drawerPerfToggleBtn) {
+        dom.drawerPerfToggleBtn.addEventListener("click", () => {
+            alternarModoRendimiento();
+        });
+    }
+
+    // Pomodoro en Drawer
+    if (dom.drawerPomoToggleBtn) {
+        dom.drawerPomoToggleBtn.addEventListener("click", togglePomodoro);
+    }
+    if (dom.drawerPomoOpenCardBtn) {
+        dom.drawerPomoOpenCardBtn.addEventListener("click", () => {
+            abrirTarjetaPomodoro();
+            cerrarDrawerMenu();
+        });
+    }
+
+    // Nueva lista desde Drawer
+    if (dom.drawerNewListBtn) {
+        dom.drawerNewListBtn.addEventListener("click", () => {
+            cerrarDrawerMenu();
+            if (dom.newListButton) dom.newListButton.click();
+        });
+    }
+
+    // Cerrar con Escape
+    window.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && dom.drawerMenu && dom.drawerMenu.classList.contains("is-open")) {
+            cerrarDrawerMenu();
+        }
+    });
+
+    actualizarDrawerListas();
+}
+
+function abrirDrawerMenu() {
+    if (!dom.drawerMenu) return;
+    dom.drawerMenu.classList.add("is-open");
+    dom.drawerMenu.setAttribute("aria-hidden", "false");
+    if (dom.drawerBackdrop) {
+        dom.drawerBackdrop.classList.add("is-open");
+    }
+    if (dom.menuToggleBtn) {
+        dom.menuToggleBtn.setAttribute("aria-expanded", "true");
+    }
+    actualizarDrawerListas();
+}
+
+function cerrarDrawerMenu() {
+    if (!dom.drawerMenu) return;
+    dom.drawerMenu.classList.remove("is-open");
+    dom.drawerMenu.setAttribute("aria-hidden", "true");
+    if (dom.drawerBackdrop) {
+        dom.drawerBackdrop.classList.remove("is-open");
+    }
+    if (dom.menuToggleBtn) {
+        dom.menuToggleBtn.setAttribute("aria-expanded", "false");
+    }
+}
+
+function toggleDrawerMenu() {
+    if (!dom.drawerMenu) return;
+    if (dom.drawerMenu.classList.contains("is-open")) {
+        cerrarDrawerMenu();
+    } else {
+        abrirDrawerMenu();
+    }
+}
+
+function actualizarDrawerListas() {
+    if (!dom.drawerListsContainer) return;
+    dom.drawerListsContainer.replaceChildren();
+
+    if (!estado.listas || estado.listas.length === 0) {
+        const li = document.createElement("li");
+        li.className = "drawer-list-item";
+        li.style.color = "var(--color-text-muted)";
+        li.style.fontStyle = "italic";
+        li.textContent = "No hay listas creadas";
+        dom.drawerListsContainer.appendChild(li);
+        return;
+    }
+
+    const fragment = document.createDocumentFragment();
+    estado.listas.forEach(lista => {
+        const li = document.createElement("li");
+        li.className = "drawer-list-item";
+        if (lista.id === estado.listaSeleccionadaId) {
+            li.classList.add("is-selected");
+        }
+        li.dataset.id = lista.id;
+
+        const nameSpan = document.createElement("span");
+        nameSpan.className = "drawer-list-item__name";
+        nameSpan.textContent = `📚 ${lista.nombre}`;
+
+        const countSpan = document.createElement("span");
+        countSpan.className = "drawer-list-item__count";
+        const cant = (lista.temas || []).length;
+        countSpan.textContent = `${cant} tema${cant === 1 ? "" : "s"}`;
+
+        li.appendChild(nameSpan);
+        li.appendChild(countSpan);
+
+        li.addEventListener("click", () => {
+            seleccionarLista(lista.id);
+            cambiarVista("bolillero");
+            cerrarDrawerMenu();
+        });
+
+        fragment.appendChild(li);
+    });
+
+    dom.drawerListsContainer.appendChild(fragment);
+}
+
+/* ==========================================================
+   TARJETA FLOTANTE CON TACHUELA (📌) & DRAG & DROP
+   ========================================================== */
+function inicializarTarjetaFlotante() {
+    // Restaurar si estaba fijada
+    const estabaFijada = localStorage.getItem(PIN_STORAGE_KEY) === "true";
+    if (estabaFijada) {
+        estadoFlotante.fijado = true;
+        dom.pinPomodoroBtn.classList.add("is-pinned");
+        dom.pinPomodoroBtn.title = "Tarjeta fijada en pantalla (📌)";
+        abrirTarjetaPomodoro();
+    }
+
+    // Restaurar posición si fue guardada
+    try {
+        const posGuardada = localStorage.getItem(POS_STORAGE_KEY);
+        if (posGuardada) {
+            const { left, top } = JSON.parse(posGuardada);
+            if (left && top) {
+                dom.pomodoroFloatingCard.style.left = left;
+                dom.pomodoroFloatingCard.style.top = top;
+                dom.pomodoroFloatingCard.style.right = "auto";
+            }
+        }
+    } catch {}
+
+    // Eventos de arrastre con Pointer Events
+    dom.floatingCardHeader.addEventListener("pointerdown", iniciarArrastre);
+    window.addEventListener("pointermove", moverArrastre);
+    window.addEventListener("pointerup", finalizarArrastre);
+    window.addEventListener("pointercancel", finalizarArrastre);
+}
+
+function abrirTarjetaPomodoro() {
+    estadoFlotante.abierto = true;
+    dom.pomodoroFloatingCard.classList.remove("is-minimized");
+    dom.pomodoroFloatingCard.setAttribute("aria-hidden", "false");
+}
+
+function cerrarTarjetaPomodoro(forzar = false) {
+    if (estadoFlotante.fijado && !forzar) {
+        return; // Si está fijada con tachuela, no se cierra automáticamente
+    }
+    estadoFlotante.abierto = false;
+    dom.pomodoroFloatingCard.classList.add("is-minimized");
+    dom.pomodoroFloatingCard.setAttribute("aria-hidden", "true");
+}
+
+function toggleTarjetaPomodoro() {
+    if (dom.pomodoroFloatingCard.classList.contains("is-minimized")) {
+        abrirTarjetaPomodoro();
+    } else {
+        cerrarTarjetaPomodoro(true);
+    }
+}
+
+function toggleFijarTarjeta() {
+    estadoFlotante.fijado = !estadoFlotante.fijado;
+    dom.pinPomodoroBtn.classList.toggle("is-pinned", estadoFlotante.fijado);
+    dom.pinPomodoroBtn.title = estadoFlotante.fijado
+        ? "Tarjeta fijada en pantalla (📌)"
+        : "Fijar en pantalla (📌)";
+    localStorage.setItem(PIN_STORAGE_KEY, String(estadoFlotante.fijado));
+}
+
+function iniciarArrastre(e) {
+    if (e.target.closest("button") || e.target.closest("input")) return;
+    estadoFlotante.arrastrando = true;
+    const rect = dom.pomodoroFloatingCard.getBoundingClientRect();
+    estadoFlotante.offsetX = e.clientX - rect.left;
+    estadoFlotante.offsetY = e.clientY - rect.top;
+    dom.pomodoroFloatingCard.classList.add("is-dragging");
+    try {
+        dom.floatingCardHeader.setPointerCapture(e.pointerId);
+    } catch {}
+}
+
+function moverArrastre(e) {
+    if (!estadoFlotante.arrastrando) return;
+    e.preventDefault();
+
+    const cardW = dom.pomodoroFloatingCard.offsetWidth;
+    const cardH = dom.pomodoroFloatingCard.offsetHeight;
+
+    let nuevaX = e.clientX - estadoFlotante.offsetX;
+    let nuevaY = e.clientY - estadoFlotante.offsetY;
+
+    // Viewport clamping
+    const maxX = window.innerWidth - cardW - 10;
+    const maxY = window.innerHeight - cardH - 10;
+
+    nuevaX = Math.max(10, Math.min(nuevaX, maxX));
+    nuevaY = Math.max(65, Math.min(nuevaY, maxY));
+
+    dom.pomodoroFloatingCard.style.left = `${nuevaX}px`;
+    dom.pomodoroFloatingCard.style.top = `${nuevaY}px`;
+    dom.pomodoroFloatingCard.style.right = "auto";
+}
+
+function finalizarArrastre(e) {
+    if (!estadoFlotante.arrastrando) return;
+    estadoFlotante.arrastrando = false;
+    dom.pomodoroFloatingCard.classList.remove("is-dragging");
+    try {
+        dom.floatingCardHeader.releasePointerCapture(e.pointerId);
+    } catch {}
+
+    const pos = {
+        left: dom.pomodoroFloatingCard.style.left,
+        top: dom.pomodoroFloatingCard.style.top
+    };
+    localStorage.setItem(POS_STORAGE_KEY, JSON.stringify(pos));
+}
+
+/* ==========================================================
+   BOLILLERO: DATOS Y STORAGE
+   ========================================================== */
+function crearDatosIniciales() {
+    const listaId = crypto.randomUUID();
+    return {
+        listas: [
+            {
+                id: listaId,
+                nombre: "SFI 1ER PARCIAL",
+                temas: [
+                    { id: crypto.randomUUID(), titulo: "Unidad 1: Funciones del Mercado Financiero" },
+                    { id: crypto.randomUUID(), titulo: "Unidad 2: Regulación Financiera y Crisis 2008" },
+                    { id: crypto.randomUUID(), titulo: "Unidad 3: Teoría de los Fondos Prestables" },
+                    { id: crypto.randomUUID(), titulo: "Unidad 4: Mercado de Renta Fija y Bonos" }
+                ]
+            }
+        ],
+        listaSeleccionadaId: listaId
+    };
+}
+
+function guardarDatos() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        listas: estado.listas,
+        listaSeleccionadaId: estado.listaSeleccionadaId
+    }));
+}
+
+function cargarDatos() {
+    try {
+        const guardados = localStorage.getItem(STORAGE_KEY);
+        if (!guardados) {
+            const iniciales = crearDatosIniciales();
+            estado.listas = iniciales.listas;
+            estado.listaSeleccionadaId = iniciales.listaSeleccionadaId;
+            guardarDatos();
+            return;
+        }
+        const parsed = JSON.parse(guardados);
+        estado.listas = Array.isArray(parsed.listas) ? parsed.listas : [];
+        estado.listaSeleccionadaId = parsed.listaSeleccionadaId ?? null;
+    } catch {
+        const iniciales = crearDatosIniciales();
+        estado.listas = iniciales.listas;
+        estado.listaSeleccionadaId = iniciales.listaSeleccionadaId;
+        guardarDatos();
+    }
+}
+
+function obtenerListaSeleccionada() {
+    return estado.listas.find(l => l.id === estado.listaSeleccionadaId) ?? null;
+}
+
+function reconstruirBolillero() {
+    const lista = obtenerListaSeleccionada();
+    if (!lista) {
+        estado.ronda.disponibles = [];
+        estado.ronda.ultimoTemaId = null;
+        return;
+    }
+    estado.ronda.disponibles = lista.temas.map(t => t.id);
+    estado.ronda.ultimoTemaId = null;
+}
+
+function actualizarInterfaz() {
+    guardarDatos();
+    reconstruirBolillero();
+    render();
+}
+
+function render() {
+    renderCabecera();
+    renderListas();
+    renderTemas();
+    renderResultado();
+    renderEstadoBotones();
+}
+
+function renderCabecera() {
+    const lista = obtenerListaSeleccionada();
+    if (!lista) {
+        dom.currentListTitle.textContent = "Sin lista seleccionada";
+        dom.currentListDescription.textContent = "Creá una lista o importá un archivo para comenzar.";
+        return;
+    }
+    dom.currentListTitle.textContent = lista.nombre;
+    const cant = lista.temas.length;
+    const disponibles = estado.ronda.disponibles.length;
+    dom.currentListDescription.textContent = `${cant} tema${cant === 1 ? "" : "s"} en total (${disponibles} disponibles)`;
+}
+
+function renderListas() {
+    dom.listsContainer.replaceChildren();
+    const fragment = document.createDocumentFragment();
+
+    estado.listas.forEach(lista => {
+        const elemento = dom.listItemTemplate.content.firstElementChild.cloneNode(true);
+        const boton = elemento.querySelector(".list-item__button");
+        boton.dataset.id = lista.id;
+        boton.querySelector(".list-item__name").textContent = lista.nombre;
+
+        if (lista.id === estado.listaSeleccionadaId) {
+            boton.classList.add("is-active");
+            boton.setAttribute("aria-current", "page");
+        }
+        fragment.appendChild(elemento);
+    });
+    dom.listsContainer.appendChild(fragment);
+
+    actualizarDrawerListas();
+}
+
+function renderTemas() {
+    dom.topicsGrid.replaceChildren();
+    const lista = obtenerListaSeleccionada();
+    if (!lista) return;
+
+    const fragment = document.createDocumentFragment();
+    lista.temas.forEach(tema => {
+        const tarjeta = dom.topicCardTemplate.content.firstElementChild.cloneNode(true);
+        tarjeta.dataset.id = tema.id;
+        
+        const estaDisponible = estado.ronda.disponibles.includes(tema.id);
+        if (!estaDisponible) {
+            tarjeta.style.opacity = "0.35";
+            tarjeta.title = "Ya salió en esta ronda";
+        }
+
+        tarjeta.querySelector(".topic-card__title").textContent = tema.titulo;
+        fragment.appendChild(tarjeta);
+    });
+    dom.topicsGrid.appendChild(fragment);
+}
+
+function renderResultado() {
+    if (!estado.ronda.ultimoTemaId) {
+        dom.resultSection.classList.add("hidden");
+        if (dom.bolilleroIACard) dom.bolilleroIACard.classList.add("hidden");
+        return;
+    }
+    const lista = obtenerListaSeleccionada();
+    const tema = lista?.temas.find(t => t.id === estado.ronda.ultimoTemaId);
+    if (!tema) {
+        dom.resultSection.classList.add("hidden");
+        if (dom.bolilleroIACard) dom.bolilleroIACard.classList.add("hidden");
+        return;
+    }
+    dom.selectedTopic.textContent = tema.titulo;
+    dom.resultSection.classList.remove("hidden");
+
+    // Preparar tarjeta de Pregunta con IA en Bolillero
+    if (dom.bolilleroIACard) {
+        dom.bolilleroIACard.classList.remove("hidden");
+        actualizarUIIndicadoresPDF();
+    }
+}
+
+function renderEstadoBotones() {
+    const lista = obtenerListaSeleccionada();
+    const hayLista = Boolean(lista);
+    const hayTemas = hayLista && lista.temas.length > 0;
+    const hayDisponibles = estado.ronda.disponibles.length > 0;
+
+    if (dom.addTopicButton) dom.addTopicButton.disabled = !hayLista || estado.interfaz.girando;
+    if (dom.spinButton) dom.spinButton.disabled = !hayTemas || !hayDisponibles || estado.interfaz.girando;
+    if (dom.drawAgainButton) dom.drawAgainButton.disabled = !hayDisponibles || estado.interfaz.girando;
+    if (dom.importButton) dom.importButton.disabled = estado.interfaz.girando;
+}
+
+/* ==========================================================
+   ANIMACIÓN DE RULETA PLACENTERA
+   ========================================================== */
+async function girarBolillero() {
+    if (estado.interfaz.girando) return;
+
+    const lista = obtenerListaSeleccionada();
+    const temasDisponibles = lista.temas.filter(t => estado.ronda.disponibles.includes(t.id));
+
+    if (temasDisponibles.length === 0) {
+        alert("¡Ya salieron todos los temas de esta lista! Restaurá el bolillero para volver a empezar.");
+        return;
+    }
+
+    estado.interfaz.girando = true;
+    renderEstadoBotones();
+    dom.resultSection.classList.add("hidden");
+    dom.rollingDisplay.classList.remove("is-winner");
+    dom.rollingDisplay.classList.add("is-spinning");
+
+    const esLite = window.bolilleroPerfMode === "lite";
+    const duracion = esLite ? 200 : 3000;
+    const inicio = performance.now();
+    let intervalo = esLite ? 80 : 45;
+
+    while (true) {
+        const transcurrido = performance.now() - inicio;
+        if (transcurrido >= duracion) break;
+
+        const temaAleatorio = temasDisponibles[Math.floor(Math.random() * temasDisponibles.length)];
+        dom.rollingDisplay.textContent = temaAleatorio.titulo;
+
+        const progreso = transcurrido / duracion;
+        intervalo = 45 + (progreso * progreso * 300);
+
+        await new Promise(resolve => setTimeout(resolve, intervalo));
+    }
+
+    const ganador = temasDisponibles[Math.floor(Math.random() * temasDisponibles.length)];
+    
+    estado.ronda.ultimoTemaId = ganador.id;
+    dom.rollingDisplay.textContent = ganador.titulo;
+    
+    dom.rollingDisplay.classList.remove("is-spinning");
+    dom.rollingDisplay.classList.add("is-winner");
+
+    // Eliminar automáticamente de los disponibles de la ronda
+    estado.ronda.disponibles = estado.ronda.disponibles.filter(id => id !== ganador.id);
+
+    estado.interfaz.girando = false;
+    actualizarContextoPomodoro(ganador.titulo);
+    render();
+}
+
+function restaurarBolillero() {
+    reconstruirBolillero();
+    dom.rollingDisplay.textContent = "—";
+    dom.rollingDisplay.classList.remove("is-winner");
+    actualizarContextoPomodoro(null);
+    render();
+}
+
+/* ==========================================================
+   IMPORTACIÓN DE ARCHIVOS
+   ========================================================== */
+function manejarImportacionArchivo(evento) {
+    const archivo = evento.target.files[0];
+    if (!archivo) return;
+
+    const lector = new FileReader();
+    lector.onload = function(e) {
+        const contenido = e.target.result;
+        procesarContenidoImportado(archivo.name, contenido);
+        dom.importFileInput.value = "";
+    };
+    lector.readAsText(archivo);
+}
+
+function procesarContenidoImportado(nombreArchivo, texto) {
+    let temasArray = [];
+    const nombreLista = nombreArchivo.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " ");
+
+    if (nombreArchivo.endsWith(".json")) {
+        try {
+            const data = JSON.parse(texto);
+            temasArray = Array.isArray(data) ? data : (data.temas || []);
+        } catch {
+            mostrarToast("⚠️ El archivo JSON no tiene un formato válido.", "error");
+            return;
+        }
+    } else {
+        temasArray = texto
+            .split("\n")
+            .map(linea => linea.trim())
+            .filter(linea => linea.length > 0 && !linea.startsWith("#"));
+    }
+
+    if (temasArray.length === 0) {
+        mostrarToast("⚠️ No se encontraron palabras o temas en el archivo.", "aviso");
+        return;
+    }
+
+    const nuevosTemas = temasArray.map(item => ({
+        id: crypto.randomUUID(),
+        titulo: typeof item === "string" ? item : (item.titulo || "Tema sin nombre")
+    }));
+
+    const listaActual = obtenerListaSeleccionada();
+    if (listaActual) {
+        listaActual.temas.push(...nuevosTemas);
+        actualizarInterfaz();
+        mostrarToast(`📂 ¡${nuevosTemas.length} palabras del bloc de notas agregadas a "${listaActual.nombre}"!`, "exito");
+    } else {
+        const nuevaListaId = crypto.randomUUID();
+        estado.listas.push({
+            id: nuevaListaId,
+            nombre: nombreLista.toUpperCase(),
+            temas: nuevosTemas
+        });
+        estado.listaSeleccionadaId = nuevaListaId;
+        actualizarInterfaz();
+        mostrarToast(`📂 ¡Lista "${nombreLista.toUpperCase()}" creada con ${nuevosTemas.length} palabras!`, "exito");
+    }
+}
+
+/* ==========================================================
+   CRUD LISTAS & TEMAS
+   ========================================================== */
+function crearLista(nombre) {
+    if (!nombre.trim()) return;
+    const nueva = { id: crypto.randomUUID(), nombre: nombre.trim().toUpperCase(), temas: [] };
+    estado.listas.push(nueva);
+    estado.listaSeleccionadaId = nueva.id;
+    actualizarInterfaz();
+}
+
+function agregarTema(titulo) {
+    const lista = obtenerListaSeleccionada();
+    if (!lista || !titulo.trim()) return;
+    lista.temas.push({ id: crypto.randomUUID(), titulo: titulo.trim() });
+    actualizarInterfaz();
+}
+
+function eliminarLista(id) {
+    if (!confirm("¿Eliminar esta lista?")) return;
+    estado.listas = estado.listas.filter(l => l.id !== id);
+    estado.listaSeleccionadaId = estado.listas.length ? estado.listas[0].id : null;
+    actualizarInterfaz();
+}
+
+function eliminarTema(id) {
+    const lista = obtenerListaSeleccionada();
+    if (!lista) return;
+    lista.temas = lista.temas.filter(t => t.id !== id);
+    actualizarInterfaz();
+}
+
+/* ==========================================================
+   POMODORO / CRONÓMETRO (DYNAMIC ISLAND & FLOTANTE)
+   ========================================================== */
+function cargarConfigPomodoro() {
+    try {
+        const guardado = localStorage.getItem(POMODORO_STORAGE_KEY);
+        if (!guardado) {
+            const duracion = obtenerDuracionModoSegundos(pomodoroEstado.modoActual);
+            pomodoroEstado.totalSegundosModo = duracion;
+            pomodoroEstado.segundosRestantes = duracion;
+            return;
+        }
+        const datos = JSON.parse(guardado);
+        if (datos && typeof datos === "object") {
+            if (Number.isFinite(datos.estudioMinutos) && datos.estudioMinutos >= 1) {
+                pomodoroEstado.config.estudioMinutos = Math.min(Math.max(1, Math.round(datos.estudioMinutos)), 180);
+            }
+            if (Number.isFinite(datos.descansoCortoMinutos) && datos.descansoCortoMinutos >= 1) {
+                pomodoroEstado.config.descansoCortoMinutos = Math.min(Math.max(1, Math.round(datos.descansoCortoMinutos)), 60);
+            }
+            if (Number.isFinite(datos.descansoLargoMinutos) && datos.descansoLargoMinutos >= 1) {
+                pomodoroEstado.config.descansoLargoMinutos = Math.min(Math.max(1, Math.round(datos.descansoLargoMinutos)), 60);
+            }
+            if (typeof datos.sonidoHabilitado === "boolean") {
+                pomodoroEstado.config.sonidoHabilitado = datos.sonidoHabilitado;
+            }
+        }
+    } catch (error) {
+        console.warn("No se pudo cargar la configuración de Pomodoro:", error);
+    }
+
+    const duracion = obtenerDuracionModoSegundos(pomodoroEstado.modoActual);
+    pomodoroEstado.totalSegundosModo = duracion;
+    if (!pomodoroEstado.activo) {
+        pomodoroEstado.segundosRestantes = duracion;
+    }
+}
+
+function guardarConfigPomodoro() {
+    try {
+        localStorage.setItem(POMODORO_STORAGE_KEY, JSON.stringify(pomodoroEstado.config));
+    } catch (error) {
+        console.warn("No se pudo guardar la configuración de Pomodoro:", error);
+    }
+}
+
+function obtenerDuracionModoSegundos(modo) {
+    switch (modo) {
+        case "descanso-corto":
+            return pomodoroEstado.config.descansoCortoMinutos * 60;
+        case "descanso-largo":
+            return pomodoroEstado.config.descansoLargoMinutos * 60;
+        case "estudio":
+        default:
+            return pomodoroEstado.config.estudioMinutos * 60;
+    }
+}
+
+function formatearTiempo(segundosTotales) {
+    const minutos = Math.floor(segundosTotales / 60);
+    const segundos = segundosTotales % 60;
+    const minStr = String(minutos).padStart(2, "0");
+    const segStr = String(segundos).padStart(2, "0");
+    return `${minStr}:${segStr}`;
+}
+
+function reproducirAlarmaPomodoro() {
+    if (!pomodoroEstado.config.sonidoHabilitado) return;
+    try {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass) return;
+
+        if (!pomodoroEstado.audioCtx) {
+            pomodoroEstado.audioCtx = new AudioContextClass();
+        }
+        if (pomodoroEstado.audioCtx.state === "suspended") {
+            pomodoroEstado.audioCtx.resume();
+        }
+
+        const ctx = pomodoroEstado.audioCtx;
+        const ahora = ctx.currentTime;
+        const notas = [
+            { freq: 659.25, inicio: ahora, fin: ahora + 0.18 },
+            { freq: 880.00, inicio: ahora + 0.22, fin: ahora + 0.48 }
+        ];
+
+        notas.forEach(({ freq, inicio, fin }) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+
+            osc.type = "sine";
+            osc.frequency.setValueAtTime(freq, inicio);
+
+            gain.gain.setValueAtTime(0.001, inicio);
+            gain.gain.exponentialRampToValueAtTime(0.28, inicio + 0.03);
+            gain.gain.exponentialRampToValueAtTime(0.0001, fin);
+
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+
+            osc.start(inicio);
+            osc.stop(fin);
+        });
+    } catch (error) {
+        console.warn("No se pudo reproducir la alarma de Pomodoro:", error);
+    }
+}
+
+function iniciarPomodoro() {
+    if (pomodoroEstado.activo) return;
+
+    try {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (AudioContextClass && !pomodoroEstado.audioCtx) {
+            pomodoroEstado.audioCtx = new AudioContextClass();
+        }
+    } catch {}
+
+    pomodoroEstado.activo = true;
+
+    if (dom.pomodoroToggleIcon) dom.pomodoroToggleIcon.textContent = "⏸";
+    if (dom.pomodoroToggleText) dom.pomodoroToggleText.textContent = "Pausar";
+    if (dom.pomodoroToggleBtn) {
+        dom.pomodoroToggleBtn.classList.remove("button--primary");
+        dom.pomodoroToggleBtn.classList.add("button--secondary");
+    }
+    if (dom.pomodoroDisplay) dom.pomodoroDisplay.classList.remove("is-pulsing");
+
+    renderPomodoro();
+    pomodoroEstado.intervalId = setInterval(tickPomodoro, 1000);
+}
+
+function pausarPomodoro() {
+    if (!pomodoroEstado.activo && !pomodoroEstado.intervalId) return;
+
+    clearInterval(pomodoroEstado.intervalId);
+    pomodoroEstado.intervalId = null;
+    pomodoroEstado.activo = false;
+
+    if (dom.pomodoroToggleIcon) dom.pomodoroToggleIcon.textContent = "▶";
+    if (dom.pomodoroToggleText) {
+        dom.pomodoroToggleText.textContent =
+            pomodoroEstado.segundosRestantes < pomodoroEstado.totalSegundosModo ? "Continuar" : "Iniciar";
+    }
+    if (dom.pomodoroToggleBtn) {
+        dom.pomodoroToggleBtn.classList.remove("button--secondary");
+        dom.pomodoroToggleBtn.classList.add("button--primary");
+    }
+
+    document.title = "Luibañez | Plataforma de Estudio";
+    renderPomodoro();
+}
+
+function togglePomodoro() {
+    if (pomodoroEstado.activo) {
+        pausarPomodoro();
+    } else {
+        iniciarPomodoro();
+    }
+}
+
+function reiniciarPomodoro() {
+    const estabaActivo = pomodoroEstado.activo;
+    pausarPomodoro();
+
+    pomodoroEstado.segundosRestantes = obtenerDuracionModoSegundos(pomodoroEstado.modoActual);
+    pomodoroEstado.totalSegundosModo = pomodoroEstado.segundosRestantes;
+
+    if (dom.pomodoroToggleText) dom.pomodoroToggleText.textContent = "Iniciar";
+    if (dom.pomodoroDisplay) dom.pomodoroDisplay.classList.remove("is-pulsing");
+
+    renderPomodoro();
+    if (estabaActivo) {
+        iniciarPomodoro();
+    }
+}
+
+function cambiarModoPomodoro(nuevoModo) {
+    if (
+        pomodoroEstado.modoActual === nuevoModo &&
+        !pomodoroEstado.activo &&
+        pomodoroEstado.segundosRestantes === pomodoroEstado.totalSegundosModo
+    ) {
+        return;
+    }
+
+    pausarPomodoro();
+    pomodoroEstado.modoActual = nuevoModo;
+    pomodoroEstado.segundosRestantes = obtenerDuracionModoSegundos(nuevoModo);
+    pomodoroEstado.totalSegundosModo = pomodoroEstado.segundosRestantes;
+
+    if (dom.pomodoroToggleText) dom.pomodoroToggleText.textContent = "Iniciar";
+    if (dom.pomodoroDisplay) dom.pomodoroDisplay.classList.remove("is-pulsing");
+
+    renderPomodoro();
+}
+
+function siguienteFasePomodoro() {
+    pausarPomodoro();
+
+    if (pomodoroEstado.modoActual === "estudio") {
+        pomodoroEstado.ciclosCompletados++;
+        if (pomodoroEstado.ciclosCompletados % 4 === 0) {
+            cambiarModoPomodoro("descanso-largo");
+        } else {
+            cambiarModoPomodoro("descanso-corto");
+        }
+    } else {
+        cambiarModoPomodoro("estudio");
+    }
+}
+
+function tickPomodoro() {
+    if (pomodoroEstado.segundosRestantes > 1) {
+        pomodoroEstado.segundosRestantes--;
+        renderPomodoro();
+    } else {
+        pomodoroEstado.segundosRestantes = 0;
+        renderPomodoro();
+        pausarPomodoro();
+        reproducirAlarmaPomodoro();
+
+        if (dom.pomodoroDisplay) {
+            dom.pomodoroDisplay.classList.add("is-pulsing");
+        }
+
+        setTimeout(() => {
+            if (dom.pomodoroDisplay) {
+                dom.pomodoroDisplay.classList.remove("is-pulsing");
+            }
+            siguienteFasePomodoro();
+        }, 1200);
+    }
+}
+
+function renderPomodoro() {
+    const tiempoStr = formatearTiempo(pomodoroEstado.segundosRestantes);
+
+    // Display flotante
+    if (dom.pomodoroDisplay) {
+        dom.pomodoroDisplay.textContent = tiempoStr;
+    }
+
+    // Dynamic Island
+    if (dom.pillTimer) {
+        dom.pillTimer.textContent = tiempoStr;
+    }
+
+    // Progreso
+    const porcentaje = pomodoroEstado.totalSegundosModo > 0
+        ? Math.max(0, Math.min(100, (pomodoroEstado.segundosRestantes / pomodoroEstado.totalSegundosModo) * 100))
+        : 0;
+
+    if (dom.pomodoroProgressBar) {
+        dom.pomodoroProgressBar.style.width = `${porcentaje}%`;
+        const track = dom.pomodoroProgressBar.parentElement;
+        if (track) {
+            track.setAttribute("aria-valuenow", String(Math.round(porcentaje)));
+        }
+    }
+
+    // Modos en Dynamic Island y Tarjeta Flotante
+    let modoTexto = "Estudio";
+    if (pomodoroEstado.modoActual === "descanso-corto") modoTexto = "Corto";
+    if (pomodoroEstado.modoActual === "descanso-largo") modoTexto = "Largo";
+
+    if (dom.pillBadge) dom.pillBadge.textContent = modoTexto;
+    if (dom.floatingBadge) dom.floatingBadge.textContent = modoTexto;
+
+    if (dom.pomodoroPill) {
+        dom.pomodoroPill.dataset.mode = pomodoroEstado.modoActual;
+        dom.pomodoroPill.classList.toggle("is-running", pomodoroEstado.activo);
+    }
+
+    if (dom.pomodoroFloatingCard) {
+        dom.pomodoroFloatingCard.dataset.mode = pomodoroEstado.modoActual;
+    }
+
+    // Sincronizar mini-widget Pomodoro en Drawer lateral
+    if (dom.drawerPomoTime) {
+        dom.drawerPomoTime.textContent = tiempoStr;
+    }
+    if (dom.drawerPomoBadge) {
+        dom.drawerPomoBadge.textContent = modoTexto;
+    }
+    if (dom.drawerPomoIndicator) {
+        dom.drawerPomoIndicator.classList.toggle("is-running", pomodoroEstado.activo);
+    }
+    if (dom.drawerPomoToggleBtn) {
+        dom.drawerPomoToggleBtn.textContent = pomodoroEstado.activo ? "Pausar" : "Iniciar";
+    }
+
+    // Botones de modo
+    const botonesModo = [
+        { btn: dom.modeStudyBtn, modo: "estudio" },
+        { btn: dom.modeShortBreakBtn, modo: "descanso-corto" },
+        { btn: dom.modeLongBreakBtn, modo: "descanso-largo" }
+    ];
+
+    botonesModo.forEach(({ btn, modo }) => {
+        if (!btn) return;
+        const esActivo = pomodoroEstado.modoActual === modo;
+        btn.classList.toggle("is-active", esActivo);
+        btn.setAttribute("aria-selected", String(esActivo));
+    });
+
+    if (dom.pomodoroCyclesCount) {
+        dom.pomodoroCyclesCount.textContent = String(pomodoroEstado.ciclosCompletados);
+    }
+
+    if (pomodoroEstado.activo) {
+        document.title = `(${tiempoStr}) Luibañez`;
+    }
+}
+
+function actualizarContextoPomodoro(titulo) {
+    if (!dom.pomodoroContext) return;
+    if (titulo) {
+        dom.pomodoroContext.innerHTML = `Tema en estudio: <strong>${titulo}</strong>`;
+    } else {
+        dom.pomodoroContext.textContent = "Listo para estudiar";
+    }
+}
+
+function abrirModalPomodoro() {
+    if (!dom.pomodoroModal) return;
+    dom.studyDurationInput.value = pomodoroEstado.config.estudioMinutos;
+    dom.shortBreakDurationInput.value = pomodoroEstado.config.descansoCortoMinutos;
+    dom.longBreakDurationInput.value = pomodoroEstado.config.descansoLargoMinutos;
+    dom.soundEnabledInput.checked = pomodoroEstado.config.sonidoHabilitado;
+    dom.pomodoroModal.showModal();
+    dom.studyDurationInput.focus();
+}
+
+function cerrarModalPomodoro() {
+    if (!dom.pomodoroModal) return;
+    dom.pomodoroModal.close();
+}
+
+function guardarFormularioPomodoro(evento) {
+    evento.preventDefault();
+    const estudioMin = parseInt(dom.studyDurationInput.value, 10);
+    const descansoCortoMin = parseInt(dom.shortBreakDurationInput.value, 10);
+    const descansoLargoMin = parseInt(dom.longBreakDurationInput.value, 10);
+    const sonido = dom.soundEnabledInput.checked;
+
+    if (Number.isFinite(estudioMin) && estudioMin >= 1 && estudioMin <= 180) {
+        pomodoroEstado.config.estudioMinutos = estudioMin;
+    }
+    if (Number.isFinite(descansoCortoMin) && descansoCortoMin >= 1 && descansoCortoMin <= 60) {
+        pomodoroEstado.config.descansoCortoMinutos = descansoCortoMin;
+    }
+    if (Number.isFinite(descansoLargoMin) && descansoLargoMin >= 1 && descansoLargoMin <= 60) {
+        pomodoroEstado.config.descansoLargoMinutos = descansoLargoMin;
+    }
+    pomodoroEstado.config.sonidoHabilitado = sonido;
+
+    guardarConfigPomodoro();
+
+    if (!pomodoroEstado.activo) {
+        pomodoroEstado.totalSegundosModo = obtenerDuracionModoSegundos(pomodoroEstado.modoActual);
+        pomodoroEstado.segundosRestantes = pomodoroEstado.totalSegundosModo;
+        if (dom.pomodoroToggleText) {
+            dom.pomodoroToggleText.textContent = "Iniciar";
+        }
+    }
+
+    renderPomodoro();
+    dom.pomodoroModal.close();
+}
+
+// modules.js - Complete logic for Accounts, Avatars, Online Multiplayer Duel and Multimedia Chat
+
+
+/* ==========================================================
+   MÓDULO 1: CUENTAS CON PIN & MODO INVITADO
+   ========================================================== */
+function obtenerCuentasGuardadas() {
+    try {
+        const data = localStorage.getItem(ACCOUNTS_STORAGE_KEY);
+        return data ? JSON.parse(data) : [];
+    } catch {
+        return [];
+    }
+}
+
+function guardarCuentas(cuentas) {
+    try {
+        localStorage.setItem(ACCOUNTS_STORAGE_KEY, JSON.stringify(cuentas));
+    } catch {}
+}
+
+function cargarPerfilUsuario() {
+    try {
+        const data = localStorage.getItem(ACTIVE_USER_STORAGE_KEY);
+        if (data) {
+            const perfil = JSON.parse(data);
+            Object.assign(perfilUsuario, perfil);
+        }
+    } catch {}
+    actualizarUIPerfilUsuario();
+}
+
+function guardarPerfilUsuario() {
+    try {
+        localStorage.setItem(ACTIVE_USER_STORAGE_KEY, JSON.stringify(perfilUsuario));
+    } catch {}
+    actualizarUIPerfilUsuario();
+}
+
+function actualizarUIPerfilUsuario() {
+    const { frameClasses, tierName } = obtenerMarcoEvolutivo(perfilUsuario.victorias || 0);
+
+    if (dom.dueloUserAvatarWrap) {
+        dom.dueloUserAvatarWrap.innerHTML = renderAvatarHTML(perfilUsuario, 0, false, 48);
+    }
+    if (dom.dueloUserNameDisplay) {
+        dom.dueloUserNameDisplay.textContent = perfilUsuario.apodo || "Invitado";
+    }
+    if (dom.dueloUserRankBadge) {
+        dom.dueloUserRankBadge.textContent = tierName;
+        dom.dueloUserRankBadge.className = `badge badge--${(perfilUsuario.victorias || 0) >= 10 ? "accent" : "warning"}`;
+    }
+    if (dom.dueloUserMetaDisplay) {
+        if (perfilUsuario.esInvitado) {
+            dom.dueloUserMetaDisplay.textContent = "Modo Invitado (Sin PIN)";
+        } else {
+            dom.dueloUserMetaDisplay.textContent = `Cuenta Verificada • ${perfilUsuario.victorias || 0} victorias 👑`;
+        }
+    }
+    if (dom.dueloGuestAlert) {
+        dom.dueloGuestAlert.classList.toggle("hidden", !perfilUsuario.esInvitado);
+    }
+    if (dom.dueloAuthModalBtn) {
+        dom.dueloAuthModalBtn.textContent = perfilUsuario.esInvitado ? "🔐 Crear Cuenta" : "👤 Mi Perfil";
+    }
+
+    if (dom.dueloJoinNamePreview) {
+        dom.dueloJoinNamePreview.textContent = perfilUsuario.apodo || "Invitado";
+    }
+    if (dom.dueloJoinAvatarPreview) {
+        dom.dueloJoinAvatarPreview.innerHTML = renderAvatarHTML(perfilUsuario, 0, false, 24);
+    }
+}
+
+function abrirModalAuth(pestaña = "register") {
+    if (!dom.authAccountModal) return;
+    cambiarPestañaAuth(pestaña);
+    poblarSelectCuentasAuth();
+    if (dom.authRegApodo) {
+        dom.authRegApodo.value = perfilUsuario.apodo !== "Invitado" ? perfilUsuario.apodo : "";
+    }
+    if (dom.authRegAvatarPreview) {
+        dom.authRegAvatarPreview.innerHTML = renderAvatarHTML(perfilUsuario, 0, false, 40);
+    }
+    dom.authAccountModal.showModal();
+}
+
+function cambiarPestañaAuth(pestaña) {
+    if (dom.authTabRegister) dom.authTabRegister.classList.toggle("is-active", pestaña === "register");
+    if (dom.authTabLogin) dom.authTabLogin.classList.toggle("is-active", pestaña === "login");
+    if (dom.authRegisterForm) dom.authRegisterForm.classList.toggle("hidden", pestaña !== "register");
+    if (dom.authLoginForm) dom.authLoginForm.classList.toggle("hidden", pestaña !== "login");
+    if (dom.authLoginError) dom.authLoginError.classList.add("hidden");
+}
+
+function poblarSelectCuentasAuth() {
+    if (!dom.authLoginSelect) return;
+    const cuentas = obtenerCuentasGuardadas();
+    dom.authLoginSelect.innerHTML = "";
+    if (cuentas.length === 0) {
+        dom.authLoginSelect.innerHTML = "<option value=''>No hay cuentas guardadas aún</option>";
+        return;
+    }
+    cuentas.forEach(c => {
+        const opt = document.createElement("option");
+        opt.value = c.id;
+        opt.textContent = `${c.avatar || "👤"} ${c.apodo} (${c.victorias || 0} 👑)`;
+        dom.authLoginSelect.appendChild(opt);
+    });
+}
+
+function crearOActualizarCuenta(apodo, avatar, tipoAvatar, fotoDataUrl, pin, email = "") {
+    if (!apodo || apodo.trim().length === 0) {
+        alert("Por favor ingresá un apodo o nombre válido.");
+        return null;
+    }
+    if (!pin || pin.length !== 4 || !/^\d{4}$/.test(pin)) {
+        alert("El PIN de seguridad debe contener exactamente 4 números.");
+        return null;
+    }
+
+    const cuentas = obtenerCuentasGuardadas();
+    let cuenta = cuentas.find(c => c.apodo.toLowerCase() === apodo.trim().toLowerCase());
+
+    if (!cuenta) {
+        cuenta = {
+            id: "acc_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6),
+            apodo: apodo.trim(),
+            avatar: avatar || "🦁",
+            tipoAvatar: tipoAvatar || "emoji",
+            fotoDataUrl: fotoDataUrl || "",
+            pin: String(pin),
+            email: email ? email.trim() : "",
+            victorias: perfilUsuario.victorias || 0,
+            partidasJugadas: perfilUsuario.partidasJugadas || 0,
+            puntosTotales: perfilUsuario.puntosTotales || 0,
+            maxRachaHistorica: perfilUsuario.maxRachaHistorica || 0,
+            totalRobos: perfilUsuario.totalRobos || 0,
+            fechaCreacion: Date.now()
+        };
+        cuentas.push(cuenta);
+    } else {
+        cuenta.pin = String(pin);
+        cuenta.avatar = avatar || cuenta.avatar;
+        cuenta.tipoAvatar = tipoAvatar || cuenta.tipoAvatar;
+        cuenta.fotoDataUrl = fotoDataUrl !== undefined ? fotoDataUrl : cuenta.fotoDataUrl;
+        if (email) cuenta.email = email.trim();
+        cuenta.victorias += (perfilUsuario.victorias || 0);
+        cuenta.puntosTotales += (perfilUsuario.puntosTotales || 0);
+        if ((perfilUsuario.maxRachaHistorica || 0) > cuenta.maxRachaHistorica) {
+            cuenta.maxRachaHistorica = perfilUsuario.maxRachaHistorica;
+        }
+        cuenta.totalRobos += (perfilUsuario.totalRobos || 0);
+    }
+
+    guardarCuentas(cuentas);
+
+    // Activar perfil
+    perfilUsuario.esInvitado = false;
+    perfilUsuario.id = cuenta.id;
+    perfilUsuario.apodo = cuenta.apodo;
+    perfilUsuario.avatar = cuenta.avatar;
+    perfilUsuario.tipoAvatar = cuenta.tipoAvatar;
+    perfilUsuario.fotoDataUrl = cuenta.fotoDataUrl;
+    perfilUsuario.victorias = cuenta.victorias;
+    perfilUsuario.puntosTotales = cuenta.puntosTotales;
+    perfilUsuario.maxRachaHistorica = cuenta.maxRachaHistorica;
+    perfilUsuario.totalRobos = cuenta.totalRobos;
+    perfilUsuario.pin = cuenta.pin;
+    perfilUsuario.email = cuenta.email;
+
+    guardarPerfilUsuario();
+    if (dom.authAccountModal) dom.authAccountModal.close();
+    return cuenta;
+}
+
+function iniciarSesionConPin(cuentaId, pinIngresado) {
+    const cuentas = obtenerCuentasGuardadas();
+    const cuenta = cuentas.find(c => c.id === cuentaId);
+    if (!cuenta || cuenta.pin !== String(pinIngresado).trim()) {
+        if (dom.authLoginError) dom.authLoginError.classList.remove("hidden");
+        return false;
+    }
+
+    perfilUsuario.esInvitado = false;
+    perfilUsuario.id = cuenta.id;
+    perfilUsuario.apodo = cuenta.apodo;
+    perfilUsuario.avatar = cuenta.avatar;
+    perfilUsuario.tipoAvatar = cuenta.tipoAvatar;
+    perfilUsuario.fotoDataUrl = cuenta.fotoDataUrl;
+    perfilUsuario.victorias = cuenta.victorias;
+    perfilUsuario.puntosTotales = cuenta.puntosTotales;
+    perfilUsuario.maxRachaHistorica = cuenta.maxRachaHistorica;
+    perfilUsuario.totalRobos = cuenta.totalRobos;
+    perfilUsuario.pin = cuenta.pin;
+    perfilUsuario.email = cuenta.email;
+
+    guardarPerfilUsuario();
+    if (dom.authAccountModal) dom.authAccountModal.close();
+    return true;
+}
+
+function cerrarSesionPerfil() {
+    perfilUsuario.esInvitado = true;
+    perfilUsuario.id = "guest_" + Math.random().toString(36).slice(2, 8);
+    perfilUsuario.apodo = "Invitado";
+    perfilUsuario.avatar = "🦁";
+    perfilUsuario.tipoAvatar = "emoji";
+    perfilUsuario.fotoDataUrl = "";
+    perfilUsuario.victorias = 0;
+    perfilUsuario.puntosTotales = 0;
+    perfilUsuario.pin = null;
+    perfilUsuario.email = "";
+    guardarPerfilUsuario();
+}
+
+function recuperarPin() {
+    const cuentas = obtenerCuentasGuardadas();
+    if (cuentas.length === 0) {
+        alert("No hay cuentas registradas en este dispositivo.");
+        return;
+    }
+    const ident = prompt("Ingresá tu apodo o email para recuperar el PIN:");
+    if (!ident) return;
+
+    const encontrada = cuentas.find(c =>
+        c.apodo.toLowerCase() === ident.trim().toLowerCase() ||
+        (c.email && c.email.toLowerCase() === ident.trim().toLowerCase())
+    );
+
+    if (encontrada) {
+        alert(`¡Cuenta encontrada para ${encontrada.apodo}! Tu PIN de 4 números es: ${encontrada.pin}`);
+    } else {
+        alert("No se encontró ninguna cuenta con ese apodo o email.");
+    }
+}
+
+/* ==========================================================
+   MÓDULO 2: SISTEMA DE AVATARES TOTALES & MARCOS EVOLUTIVOS
+   ========================================================== */
+const CATALOGO_EMOJIS = [
+    { e: "😀", cat: "faces", k: "feliz sonrisa cara sonriente" },
+    { e: "😎", cat: "faces", k: "lentes canchero genial gafas sol" },
+    { e: "🤠", cat: "faces", k: "vaquero sombrero sheriff cowboy" },
+    { e: "🥳", cat: "faces", k: "fiesta cumple festejo cotillon" },
+    { e: "🤓", cat: "faces", k: "nerd estudioso anteojos libro inteligente" },
+    { e: "🧐", cat: "faces", k: "monoculo detective profesor lupa" },
+    { e: "🤖", cat: "faces", k: "robot tecnologia ia maquina" },
+    { e: "👻", cat: "faces", k: "fantasma susto terror miedo" },
+    { e: "👽", cat: "faces", k: "alien extraterrestre ovni ufo" },
+    { e: "😈", cat: "faces", k: "diablo diablito pillo picaro demonio" },
+    { e: "🧙‍♂️", cat: "faces", k: "mago magia hechicero" },
+    { e: "🥷", cat: "faces", k: "ninja sigilo guerrero" },
+    { e: "🧑‍🎓", cat: "faces", k: "estudiante graduado birrete facultad" },
+    { e: "👩‍🔬", cat: "faces", k: "cientifica laboratorio fisica quimica" },
+    { e: "👑", cat: "faces", k: "rey reina corona monarca ganador" },
+    { e: "🦁", cat: "animals", k: "leon rey selva felino" },
+    { e: "🐯", cat: "animals", k: "tigre felino selva rayas" },
+    { e: "🦊", cat: "animals", k: "zorro astuto bosque naranja" },
+    { e: "🐺", cat: "animals", k: "lobo manada aullido noche" },
+    { e: "🦅", cat: "animals", k: "aguila ave vuelo cielo garra" },
+    { e: "🐉", cat: "animals", k: "dragon fuego mitologico escama" },
+    { e: "🦈", cat: "animals", k: "tiburon mar oceano cazador" },
+    { e: "🦖", cat: "animals", k: "dinosaurio t-rex jurasico" },
+    { e: "🦄", cat: "animals", k: "unicornio magico caballo cuerno" },
+    { e: "🦉", cat: "animals", k: "buho lechuza sabio sabiduria noche" },
+    { e: "🐼", cat: "animals", k: "panda oso bambu tierno" },
+    { e: "🐙", cat: "animals", k: "pulpo tentaculos mar inteligencia" },
+    { e: "🍀", cat: "animals", k: "trebol cuatro hojas suerte fortuna" },
+    { e: "🌵", cat: "animals", k: "cactus desierto verde planta" },
+    { e: "🍕", cat: "food", k: "pizza queso comida fiesta" },
+    { e: "🍔", cat: "food", k: "hamburguesa carne queso burger" },
+    { e: "🌮", cat: "food", k: "taco mexicano comida picante" },
+    { e: "🍩", cat: "food", k: "dona rosquilla dulce cafe glaseada" },
+    { e: "🥑", cat: "food", k: "palta aguacate verde sano" },
+    { e: "🍣", cat: "food", k: "sushi salmon comida japonesa" },
+    { e: "☕", cat: "food", k: "cafe caliente desayuno estudio energia" },
+    { e: "🧉", cat: "food", k: "mate argentino uruguayo yerba termo" },
+    { e: "🍦", cat: "food", k: "helado postre dulce verano cucurucho" },
+    { e: "🍟", cat: "food", k: "papas fritas comida rapida crocante" },
+    { e: "⚽", cat: "sports", k: "futbol pelota gol partido cancha" },
+    { e: "🏀", cat: "sports", k: "basquet pelota aro basket nba" },
+    { e: "🎮", cat: "sports", k: "gamer videojuego joystick play control consola" },
+    { e: "🥊", cat: "sports", k: "boxeo guante pelea combate round" },
+    { e: "🏆", cat: "sports", k: "trofeo copa campeon victoria oro premio" },
+    { e: "🎯", cat: "sports", k: "diana tiro blanco objetivo flecha precision" },
+    { e: "🚀", cat: "sports", k: "cohete despegue nave espacio velocidad" },
+    { e: "🎸", cat: "sports", k: "guitarra musica rock instrumento acustica electrica" },
+    { e: "♟️", cat: "sports", k: "ajedrez peon rey jaque estrategia tablero" },
+    { e: "🎲", cat: "sports", k: "dado azar sorteo juego bolillero mesa" },
+    { e: "💡", cat: "objects", k: "foco lamparita idea luz inspiracion" },
+    { e: "⚡", cat: "objects", k: "rayo trueno relampago energia electricidad rapido" },
+    { e: "🔥", cat: "objects", k: "fuego llama calor racha fuego caliente" },
+    { e: "💎", cat: "objects", k: "diamante gema joya valor brillante" },
+    { e: "⚔️", cat: "objects", k: "espadas duelo batalla pelea combate guerra" },
+    { e: "🛡️", cat: "objects", k: "escudo defensa proteccion armadura" },
+    { e: "🔮", cat: "objects", k: "bola cristal magia futuro adivina" },
+    { e: "🧬", cat: "objects", k: "adn genetica ciencia biologia molecula" },
+    { e: "📚", cat: "objects", k: "libros estudio materia aprender biblioteca" },
+    { e: "🪐", cat: "objects", k: "planeta saturno galaxia cosmos universo" },
+    { e: "⭐", cat: "symbols", k: "estrella brillante cielo calificacion" },
+    { e: "✨", cat: "symbols", k: "destello brillo magia chispa nuevo" },
+    { e: "❤️", cat: "symbols", k: "corazon rojo amor pasion vida" },
+    { e: "💯", cat: "symbols", k: "cien perfecto diez puntos examen excelente" },
+    { e: "🧿", cat: "symbols", k: "ojo turco amuleto suerte proteccion" }
+];
+
+function obtenerMarcoEvolutivo(victorias, rachaActual = 0, esLider = false) {
+    let tierClass = "avatar-tier--0";
+    let tierName = "Novato";
+    let tierIcon = "🌱";
+
+    if (victorias >= 20) {
+        tierClass = "avatar-tier--4";
+        tierName = "Legendario Cósmico";
+        tierIcon = "🌌";
+    } else if (victorias >= 15) {
+        tierClass = "avatar-tier--3";
+        tierName = "Diamante Iridiscente";
+        tierIcon = "💎";
+    } else if (victorias >= 10) {
+        tierClass = "avatar-tier--2";
+        tierName = "Oro Resplandeciente";
+        tierIcon = "👑";
+    } else if (victorias >= 5) {
+        tierClass = "avatar-tier--1";
+        tierName = "Plata Neón";
+        tierIcon = "⚡";
+    }
+
+    const clases = [tierClass];
+    if (rachaActual >= 2) clases.push("avatar-frame--fire");
+    if (esLider) clases.push("avatar-frame--leader");
+
+    return {
+        frameClasses: clases.join(" "),
+        tierName,
+        tierIcon
+    };
+}
+
+function renderAvatarHTML(jugador, racha = 0, esLider = false, size = 48) {
+    const vics = jugador?.victorias || 0;
+    const { frameClasses } = obtenerMarcoEvolutivo(vics, racha, esLider);
+    const styleAttr = `style="width:${size}px; height:${size}px; font-size:${Math.round(size * 0.55)}px;"`;
+
+    if (jugador?.tipoAvatar === "foto" && jugador.fotoDataUrl) {
+        return `<div class="duelo-avatar-circle ${frameClasses}" ${styleAttr}><img src="${jugador.fotoDataUrl}" alt="${jugador.apodo || 'Avatar'}"></div>`;
+    }
+    return `<div class="duelo-avatar-circle ${frameClasses}" ${styleAttr}>${jugador?.avatar || '👤'}</div>`;
+}
+
+let tempAvatarSeleccionado = {
+    tipo: "emoji",
+    valor: "🦁",
+    dataUrl: ""
+};
+
+function abrirSelectorAvatar() {
+    if (!dom.avatarPickerModal) return;
+    tempAvatarSeleccionado = {
+        tipo: perfilUsuario.tipoAvatar || "emoji",
+        valor: perfilUsuario.avatar || "🦁",
+        dataUrl: perfilUsuario.fotoDataUrl || ""
+    };
+    renderCatalogoEmojis("all", "");
+    dom.avatarPickerModal.showModal();
+}
+
+function renderCatalogoEmojis(catFiltro = "all", textoBusqueda = "") {
+    if (!dom.avatarEmojisGrid) return;
+    dom.avatarEmojisGrid.innerHTML = "";
+
+    const query = textoBusqueda.toLowerCase().trim();
+    const filtrados = CATALOGO_EMOJIS.filter(item => {
+        const coincideCat = catFiltro === "all" || item.cat === catFiltro;
+        const coincideQuery = !query || item.k.includes(query) || item.e.includes(query);
+        return coincideCat && coincideQuery;
+    });
+
+    filtrados.forEach(item => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "avatar-emoji-item-btn";
+        btn.textContent = item.e;
+        btn.title = item.k;
+        btn.addEventListener("click", () => {
+            aplicarAvatarSeleccionado("emoji", item.e, "");
+        });
+        dom.avatarEmojisGrid.appendChild(btn);
+    });
+}
+
+function aplicarAvatarSeleccionado(tipo, valor, dataUrl) {
+    perfilUsuario.tipoAvatar = tipo;
+    perfilUsuario.avatar = valor;
+    perfilUsuario.fotoDataUrl = dataUrl;
+    guardarPerfilUsuario();
+
+    if (dom.authRegAvatarPreview) {
+        dom.authRegAvatarPreview.innerHTML = renderAvatarHTML(perfilUsuario, 0, false, 40);
+    }
+    if (dom.avatarPickerModal) {
+        dom.avatarPickerModal.close();
+    }
+}
+
+function procesarFotoSubida(file) {
+    if (!file || !file.type.startsWith("image/")) {
+        alert("Por favor seleccioná un archivo de imagen válido.");
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = e => {
+        const img = new Image();
+        img.onload = () => {
+            const canvas = dom.avatarCanvas || document.createElement("canvas");
+            canvas.width = 128;
+            canvas.height = 128;
+            const ctx = canvas.getContext("2d");
+
+            // Recorte cuadrado centrado
+            const minDim = Math.min(img.width, img.height);
+            const sx = (img.width - minDim) / 2;
+            const sy = (img.height - minDim) / 2;
+
+            ctx.clearRect(0, 0, 128, 128);
+            ctx.drawImage(img, sx, sy, minDim, minDim, 0, 0, 128, 128);
+
+            const compressedDataUrl = canvas.toDataURL("image/jpeg", 0.72);
+            tempAvatarSeleccionado = {
+                tipo: "foto",
+                valor: "📷",
+                dataUrl: compressedDataUrl
+            };
+
+            if (dom.avatarCropPreviewImg) {
+                dom.avatarCropPreviewImg.src = compressedDataUrl;
+                dom.avatarCropPreviewImg.classList.remove("hidden");
+            }
+            if (dom.avatarCropPlaceholder) {
+                dom.avatarCropPlaceholder.classList.add("hidden");
+            }
+            if (dom.avatarConfirmPhotoBtn) {
+                dom.avatarConfirmPhotoBtn.disabled = false;
+            }
+        };
+        img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+}
+
+/* ==========================================================
+   MÓDULO 3: MOTOR DUELO MULTIJUGADOR ONLINE (MQTT / WEBSOCKETS)
+   ========================================================== */
+function generarCodigoSala() {
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    let code = "";
+    for (let i = 0; i < 5; i++) {
+        code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return code;
+}
+
+function obtenerTopicSala(codigo) {
+    return `luibanez/duel/v1/${codigo.toUpperCase().trim()}`;
+}
+
+function conectarMqttSiEsNecesario(callback) {
+    if (typeof mqtt === "undefined") {
+        console.warn("Librería MQTT no disponible todavía.");
+        return;
+    }
+
+    if (onlineDueloEstado.clienteMqtt && onlineDueloEstado.clienteMqtt.connected) {
+        if (callback) callback();
+        return;
+    }
+
+    const clientId = "luib_" + Math.random().toString(16).slice(2, 10);
+    onlineDueloEstado.clienteMqtt = mqtt.connect(MQTT_BROKER_URL, {
+        clientId,
+        keepalive: 30,
+        reconnectPeriod: 2500,
+        connectTimeout: 8000
+    });
+
+    onlineDueloEstado.clienteMqtt.on("connect", () => {
+        onlineDueloEstado.conectado = true;
+        if (dom.dueloServerStatusBadge) {
+            dom.dueloServerStatusBadge.textContent = "🟢 Servidor Conectado";
+            dom.dueloServerStatusBadge.className = "badge badge--success";
+        }
+        if (callback) callback();
+    });
+
+    onlineDueloEstado.clienteMqtt.on("error", err => {
+        console.warn("MQTT Error:", err);
+    });
+
+    onlineDueloEstado.clienteMqtt.on("message", (topic, message) => {
+        try {
+            const data = JSON.parse(message.toString());
+            procesarMensajeMqttSala(data);
+        } catch (e) {
+            console.error("Error al procesar mensaje MQTT:", e);
+        }
+    });
+}
+
+function publicarMensajeSala(data) {
+    if (!onlineDueloEstado.clienteMqtt || !onlineDueloEstado.codigoSala) return;
+    const topic = obtenerTopicSala(onlineDueloEstado.codigoSala);
+    onlineDueloEstado.clienteMqtt.publish(topic, JSON.stringify(data), { qos: 0 });
+}
+
+function crearSalaOnline() {
+    const listaId = dom.dueloOnlineListaSelect ? dom.dueloOnlineListaSelect.value : estado.listaSeleccionadaId;
+    const tiempo = dom.dueloOnlineTimeSelect ? parseInt(dom.dueloOnlineTimeSelect.value, 10) : 90;
+    const tienePass = dom.dueloOnlineHasPassword ? dom.dueloOnlineHasPassword.checked : false;
+    const pass = tienePass && dom.dueloOnlineRoomPassword ? dom.dueloOnlineRoomPassword.value.trim() : "";
+
+    const codigo = generarCodigoSala();
+    onlineDueloEstado.esHost = true;
+    onlineDueloEstado.codigoSala = codigo;
+    onlineDueloEstado.tienePassword = tienePass;
+    onlineDueloEstado.passwordSala = pass;
+
+    // Crear configuración de la sala
+    dueloEstado.config.tiempoTurnoSegundos = tiempo;
+    dueloEstado.config.listaId = listaId;
+    dueloEstado.config.comodines.socorro = dom.dueloOnlineComodinSocorro ? dom.dueloOnlineComodinSocorro.checked : true;
+    dueloEstado.config.comodines.pista = dom.dueloOnlineComodinPista ? dom.dueloOnlineComodinPista.checked : true;
+    dueloEstado.config.comodines.pasoRebote = dom.dueloOnlineComodinPaso ? dom.dueloOnlineComodinPaso.checked : true;
+    dueloEstado.config.reglas.rachaFuego = dom.dueloOnlineReglaRacha ? dom.dueloOnlineReglaRacha.checked : true;
+    dueloEstado.config.reglas.roboRelampago = dom.dueloOnlineReglaRobo ? dom.dueloOnlineReglaRobo.checked : true;
+
+    // Agregar host a la lista de jugadores
+    onlineDueloEstado.jugadores = [{
+        id: perfilUsuario.id,
+        apodo: perfilUsuario.apodo,
+        avatar: perfilUsuario.avatar,
+        tipoAvatar: perfilUsuario.tipoAvatar,
+        fotoDataUrl: perfilUsuario.fotoDataUrl,
+        victorias: perfilUsuario.victorias || 0,
+        rachaActual: 0,
+        puntos: 0,
+        robosExitosos: 0,
+        comodinesUsados: { socorro: false, pista: false, pasoRebote: false },
+        esHost: true
+    }];
+
+    conectarMqttSiEsNecesario(() => {
+        const topic = obtenerTopicSala(codigo);
+        onlineDueloEstado.clienteMqtt.subscribe(topic, () => {
+            mostrarSalaDeEsperaOnline(codigo);
+        });
+    });
+}
+
+function unirseASalaOnline(codigoIngresado, passIngresado = "") {
+    const codigo = (codigoIngresado || "").trim().toUpperCase();
+    if (!codigo || codigo.length < 3) {
+        alert("Ingresá un código de sala válido.");
+        return;
+    }
+
+    onlineDueloEstado.esHost = false;
+    onlineDueloEstado.codigoSala = codigo;
+    onlineDueloEstado.passwordSala = passIngresado.trim();
+
+    conectarMqttSiEsNecesario(() => {
+        const topic = obtenerTopicSala(codigo);
+        onlineDueloEstado.clienteMqtt.subscribe(topic, () => {
+            // Enviar saludo de unión
+            publicarMensajeSala({
+                tipo: "INTENTO_UNION",
+                password: passIngresado.trim(),
+                jugador: {
+                    id: perfilUsuario.id,
+                    apodo: perfilUsuario.apodo,
+                    avatar: perfilUsuario.avatar,
+                    tipoAvatar: perfilUsuario.tipoAvatar,
+                    fotoDataUrl: perfilUsuario.fotoDataUrl,
+                    victorias: perfilUsuario.victorias || 0,
+                    rachaActual: 0,
+                    puntos: 0,
+                    robosExitosos: 0,
+                    comodinesUsados: { socorro: false, pista: false, pasoRebote: false },
+                    esHost: false
+                }
+            });
+            mostrarSalaDeEsperaOnline(codigo);
+        });
+    });
+}
+
+function mostrarSalaDeEsperaOnline(codigo) {
+    if (dom.dueloOnlineSetupView) dom.dueloOnlineSetupView.classList.add("hidden");
+    if (dom.dueloOnlineWaitingRoom) dom.dueloOnlineWaitingRoom.classList.remove("hidden");
+    if (dom.dueloWaitingRoomCode) dom.dueloWaitingRoomCode.textContent = codigo;
+
+    const magicLink = `${window.location.origin}${window.location.pathname}?room=${codigo}`;
+    if (dom.dueloMagicLinkInput) dom.dueloMagicLinkInput.value = magicLink;
+
+    if (dom.dueloHostControlsArea) dom.dueloHostControlsArea.classList.toggle("hidden", !onlineDueloEstado.esHost);
+    if (dom.dueloGuestWaitArea) dom.dueloGuestWaitArea.classList.toggle("hidden", onlineDueloEstado.esHost);
+
+    renderJugadoresSalaEspera();
+}
+
+function renderJugadoresSalaEspera() {
+    if (!dom.dueloOnlinePlayersGrid) return;
+    dom.dueloOnlinePlayersGrid.innerHTML = "";
+
+    const jugadores = onlineDueloEstado.jugadores || [];
+    if (dom.dueloOnlineConnectedCount) {
+        dom.dueloOnlineConnectedCount.textContent = String(jugadores.length);
+    }
+
+    jugadores.forEach(j => {
+        const card = document.createElement("div");
+        card.className = `duelo-online-player-chip ${j.esHost ? "is-host" : ""} ${j.id === perfilUsuario.id ? "is-self" : ""}`;
+        card.innerHTML = `
+            ${renderAvatarHTML(j, 0, false, 36)}
+            <span class="duelo-online-player-chip__name">${j.apodo}</span>
+            ${j.esHost ? '<span class="duelo-online-player-chip__host-tag">HOST</span>' : ""}
+        `;
+        dom.dueloOnlinePlayersGrid.appendChild(card);
+    });
+
+    if (dom.dueloLaunchOnlineMatchBtn) {
+        dom.dueloLaunchOnlineMatchBtn.disabled = jugadores.length < 2;
+        if (jugadores.length < 2) {
+            dom.dueloLaunchOnlineMatchBtn.title = "Se necesitan al menos 2 jugadores para iniciar";
+        } else {
+            dom.dueloLaunchOnlineMatchBtn.title = "Iniciar el combate online";
+        }
+    }
+}
+
+function procesarMensajeMqttSala(data) {
+    if (!data || !data.tipo) return;
+
+    // 1. Intento de unión de un jugador
+    if (data.tipo === "INTENTO_UNION") {
+        if (onlineDueloEstado.esHost) {
+            if (onlineDueloEstado.tienePassword && data.password !== onlineDueloEstado.passwordSala) {
+                publicarMensajeSala({
+                    tipo: "RECHAZO_PASSWORD",
+                    targetJugadorId: data.jugador.id
+                });
+                return;
+            }
+
+            // Evitar duplicados
+            const idx = onlineDueloEstado.jugadores.findIndex(j => j.id === data.jugador.id);
+            if (idx === -1) {
+                onlineDueloEstado.jugadores.push(data.jugador);
+            } else {
+                onlineDueloEstado.jugadores[idx] = data.jugador;
+            }
+
+            // Sincronizar estado completo a la sala
+            publicarMensajeSala({
+                tipo: "SINCRONIZAR_SALA",
+                jugadores: onlineDueloEstado.jugadores,
+                config: dueloEstado.config
+            });
+            renderJugadoresSalaEspera();
+        }
+    }
+
+    // 2. Sincronización del Host
+    if (data.tipo === "SINCRONIZAR_SALA") {
+        onlineDueloEstado.jugadores = data.jugadores || [];
+        if (data.config) {
+            dueloEstado.config = data.config;
+        }
+        renderJugadoresSalaEspera();
+    }
+
+    // 3. Rechazo de password
+    if (data.tipo === "RECHAZO_PASSWORD" && data.targetJugadorId === perfilUsuario.id) {
+        alert("La contraseña ingresada para esta sala es incorrecta.");
+        salirDeSalaOnline();
+    }
+
+    // 4. Iniciar Partida Online
+    if (data.tipo === "INICIO_PARTIDA_ONLINE") {
+        dueloEstado.partida.activa = true;
+        dueloEstado.partida.rondaNumero = 1;
+        dueloEstado.partida.turnoNumero = 0;
+        dueloEstado.partida.jugadores = data.jugadores;
+        dueloEstado.partida.temasDisponibles = data.temasDisponibles;
+        dueloEstado.partida.historialTurnos = [];
+
+        // Cambiar vista a la arena
+        if (dom.dueloLobby) dom.dueloLobby.classList.add("hidden");
+        if (dom.dueloArena) dom.dueloArena.classList.remove("hidden");
+        actualizarMarcadorDueloUI();
+
+        // Si es modo online, mostrar votación online y ocultar botón girar si no es mi turno
+        if (dom.dueloLocalEvalSection) dom.dueloLocalEvalSection.classList.add("hidden");
+        if (dom.dueloOnlineVoteBox) dom.dueloOnlineVoteBox.classList.remove("hidden");
+    }
+
+    // 5. Giro de la doble ruleta sincronizado
+    if (data.tipo === "RULETA_GIRAR") {
+        ejecutarAnimacionRuletaSincronizada(data.jugadorGanador, data.temaGanador, data.duracion);
+    }
+
+    // 6. Sincronización de cronómetro
+    if (data.tipo === "CRONO_TICK") {
+        dueloEstado.partida.tiempoRestante = data.tiempo;
+        actualizarCronometroTurnoDueloUI();
+    }
+
+    // 7. Voto emitido por un dispositivo
+    if (data.tipo === "VOTO_EMITIDO") {
+        procesarVotoOnlineRecibido(data.votanteId, data.votanteNombre, data.voto);
+    }
+
+    // 8. Resultado oficial de la votación
+    if (data.tipo === "RESULTADO_VOTACION") {
+        aplicarResultadoVotacionOnline(data);
+    }
+
+    // 9. Robo Relámpago activado
+    if (data.tipo === "ROBO_DISPONIBLE") {
+        activarRoboRelampagoOnlinePantalla(data.tema);
+    }
+
+    // 10. Reclamo de robo relámpago
+    if (data.tipo === "ROBO_RECLAMADO") {
+        atribuirRoboRelampagoOnline(data.ladronId, data.ladronNombre);
+    }
+
+    // 11. Chat Mensaje Multimedia
+    if (data.tipo === "CHAT_MSG") {
+        recibirMensajeChatEnVivo(data.msg);
+    }
+
+    // 12. Fin de Partida
+    if (data.tipo === "FIN_PARTIDA_ONLINE") {
+        finalizarDueloPartida(false, data.campeones, data.partidaGuardada);
+    }
+}
+
+function salirDeSalaOnline() {
+    if (onlineDueloEstado.clienteMqtt && onlineDueloEstado.codigoSala) {
+        publicarMensajeSala({
+            tipo: "SALIDA_JUGADOR",
+            jugadorId: perfilUsuario.id
+        });
+        onlineDueloEstado.clienteMqtt.unsubscribe(obtenerTopicSala(onlineDueloEstado.codigoSala));
+    }
+    onlineDueloEstado.codigoSala = "";
+    onlineDueloEstado.esHost = false;
+    onlineDueloEstado.jugadores = [];
+    if (dom.dueloOnlineWaitingRoom) dom.dueloOnlineWaitingRoom.classList.add("hidden");
+    if (dom.dueloOnlineSetupView) dom.dueloOnlineSetupView.classList.remove("hidden");
+}
+
+function iniciarCombateOnlineDesdeHost() {
+    if (!onlineDueloEstado.esHost) return;
+    if (onlineDueloEstado.jugadores.length < 2) {
+        alert("Se necesitan al menos 2 jugadores para iniciar la batalla.");
+        return;
+    }
+
+    const lista = estado.listas.find(l => l.id === dueloEstado.config.listaId) || estado.listas[0];
+    if (!lista || lista.temas.length === 0) {
+        alert("La lista seleccionada no tiene temas para sortear.");
+        return;
+    }
+
+    const temasDisponibles = [...lista.temas];
+
+    publicarMensajeSala({
+        tipo: "INICIO_PARTIDA_ONLINE",
+        jugadores: onlineDueloEstado.jugadores,
+        temasDisponibles
+    });
+}
+
+async function girarDobleRuletaOnline() {
+    if (dueloEstado.partida.girando) return;
+    if (!onlineDueloEstado.esHost) return; // En online, el host comanda el sorteo
+
+    const partida = dueloEstado.partida;
+    if (partida.temasDisponibles.length === 0) {
+        finalizarDueloPartida(true);
+        return;
+    }
+
+    // Seleccionar ganadores de antemano
+    const jugadorGanador = partida.jugadores[Math.floor(Math.random() * partida.jugadores.length)];
+    const temaGanador = partida.temasDisponibles[Math.floor(Math.random() * partida.temasDisponibles.length)];
+
+    publicarMensajeSala({
+        tipo: "RULETA_GIRAR",
+        jugadorGanador,
+        temaGanador,
+        duracion: 3000
+    });
+}
+
+async function ejecutarAnimacionRuletaSincronizada(jugadorGanador, temaGanador, duracion = 3000) {
+    const partida = dueloEstado.partida;
+    partida.girando = true;
+
+    if (dom.dueloTurnArea) dom.dueloTurnArea.classList.add("hidden");
+    if (dom.dueloRoboBox) dom.dueloRoboBox.classList.add("hidden");
+    if (dom.dueloPlayerRoulette) {
+        dom.dueloPlayerRoulette.className = "duelo-roulette-display is-spinning";
+    }
+    if (dom.dueloTopicRoulette) {
+        dom.dueloTopicRoulette.className = "duelo-roulette-display is-spinning";
+    }
+
+    const inicio = performance.now();
+    let intervalo = 50;
+
+    while (true) {
+        const transcurrido = performance.now() - inicio;
+        if (transcurrido >= duracion) break;
+
+        const randJ = partida.jugadores[Math.floor(Math.random() * partida.jugadores.length)];
+        const randT = partida.temasDisponibles[Math.floor(Math.random() * partida.temasDisponibles.length)];
+
+        if (dom.dueloPlayerRoulette) dom.dueloPlayerRoulette.textContent = `${randJ.avatar || "👤"} ${randJ.apodo || randJ.nombre}`;
+        if (dom.dueloTopicRoulette && randT) dom.dueloTopicRoulette.textContent = randT.titulo;
+
+        const progreso = transcurrido / duracion;
+        intervalo = 50 + (progreso * progreso * 300);
+        await new Promise(r => setTimeout(r, intervalo));
+    }
+
+    if (dom.dueloPlayerRoulette) {
+        dom.dueloPlayerRoulette.textContent = `${jugadorGanador.avatar || "👤"} ${jugadorGanador.apodo || jugadorGanador.nombre}`;
+        dom.dueloPlayerRoulette.className = "duelo-roulette-display is-winner";
+    }
+    if (dom.dueloTopicRoulette) {
+        dom.dueloTopicRoulette.textContent = temaGanador.titulo;
+        dom.dueloTopicRoulette.className = "duelo-roulette-display is-winner";
+    }
+
+    reproducirSonidoDuelo("beep");
+
+    setTimeout(() => {
+        prepararTurnoActivoDuelo(jugadorGanador, temaGanador);
+        partida.girando = false;
+    }, 450);
+}
+
+/* Votación Individual Online */
+function emitirVotoOnline(votoValor) {
+    if (onlineDueloEstado.votoEmitido) return;
+    onlineDueloEstado.votoEmitido = true;
+
+    // Deshabilitar botones de voto temporalmente
+    [dom.dueloOnlineVote10Btn, dom.dueloOnlineVote5Btn, dom.dueloOnlineVote0Btn].forEach(b => {
+        if (b) b.disabled = true;
+    });
+
+    publicarMensajeSala({
+        tipo: "VOTO_EMITIDO",
+        votanteId: perfilUsuario.id,
+        votanteNombre: perfilUsuario.apodo,
+        voto: votoValor
+    });
+}
+
+function procesarVotoOnlineRecibido(votanteId, votanteNombre, voto) {
+    onlineDueloEstado.votosRecibidos[votanteId] = voto;
+
+    // Renderizar chips de votos en pantalla
+    if (dom.dueloLiveVoteChips) {
+        const chipId = `vote_chip_${votanteId}`;
+        let chip = document.getElementById(chipId);
+        if (!chip) {
+            chip = document.createElement("div");
+            chip.id = chipId;
+            chip.className = "duelo-vote-chip";
+            dom.dueloLiveVoteChips.appendChild(chip);
+        }
+        const emojiVoto = voto === 10 ? "🟢 +10" : voto === 5 ? "🟡 +5" : "🔴 0";
+        chip.textContent = `${votanteNombre}: ${emojiVoto}`;
+    }
+
+    // Si es el host, verificar si todos votaron
+    if (onlineDueloEstado.esHost) {
+        const totalJugadores = dueloEstado.partida.jugadores.length;
+        const totalVotos = Object.keys(onlineDueloEstado.votosRecibidos).length;
+
+        // Si ya votó la mayoría de los rivales (o pasaron 10s), computar
+        if (totalVotos >= Math.max(1, totalJugadores - 1)) {
+            computarResultadoVotacionOnline();
+        }
+    }
+}
+
+function computarResultadoVotacionOnline() {
+    const votos = Object.values(onlineDueloEstado.votosRecibidos);
+    if (votos.length === 0) return;
+
+    // Ponderación de voto mayoritario
+    let count10 = 0, count5 = 0, count0 = 0;
+    votos.forEach(v => {
+        if (v === 10) count10++;
+        else if (v === 5) count5++;
+        else count0++;
+    });
+
+    let decision = "impecable";
+    if (count0 > count10 && count0 > count5) {
+        decision = "paso";
+    } else if (count5 >= count10) {
+        decision = "ayuda";
+    }
+
+    publicarMensajeSala({
+        tipo: "RESULTADO_VOTACION",
+        decision
+    });
+}
+
+function aplicarResultadoVotacionOnline(data) {
+    // Resetear estado de votación
+    onlineDueloEstado.votoEmitido = false;
+    onlineDueloEstado.votosRecibidos = {};
+    if (dom.dueloLiveVoteChips) dom.dueloLiveVoteChips.innerHTML = "";
+    [dom.dueloOnlineVote10Btn, dom.dueloOnlineVote5Btn, dom.dueloOnlineVote0Btn].forEach(b => {
+        if (b) b.disabled = false;
+    });
+
+    // Calificar turno con la decisión consensuada
+    calificarTurnoDuelo(data.decision);
+}
+
+/* Robo Relámpago Online */
+function activarRoboRelampagoOnlinePantalla(tema) {
+    // Mostrar overlay gigante de Robo Relámpago si no fui yo quien sacó 0 pts
+    const soyElQueFallo = dueloEstado.partida.jugadorActualId === perfilUsuario.id;
+    if (!soyElQueFallo && dom.dueloOnlineRoboOverlay) {
+        dom.dueloOnlineRoboOverlay.classList.remove("hidden");
+        if (dom.dueloOnlineBuzzerTriggerBtn) {
+            dom.dueloOnlineBuzzerTriggerBtn.disabled = false;
+        }
+        if (dom.dueloOnlineRoboStatus) {
+            dom.dueloOnlineRoboStatus.textContent = "¡TOCÁ PRIMERO!";
+        }
+        reproducirSonidoDuelo("buzzer");
+    }
+}
+
+function tocarPulsadorRoboOnline() {
+    if (dom.dueloOnlineBuzzerTriggerBtn) dom.dueloOnlineBuzzerTriggerBtn.disabled = true;
+    publicarMensajeSala({
+        tipo: "ROBO_RECLAMADO",
+        ladronId: perfilUsuario.id,
+        ladronNombre: perfilUsuario.apodo
+    });
+}
+
+function atribuirRoboRelampagoOnline(ladronId, ladronNombre) {
+    if (dom.dueloOnlineRoboOverlay) {
+        dom.dueloOnlineRoboOverlay.classList.add("hidden");
+    }
+    // Activar al ladrón en la partida
+    activarLadronDuelo(ladronId);
+}
+
+/* ==========================================================
+   MÓDULO 4: CHAT EN VIVO MULTIMEDIA (TEXTO, EMOJIS, FOTOS, AUDIOS)
+   ========================================================== */
+function enviarMensajeChat(texto = "", photoDataUrl = "", audioDataUrl = "") {
+    if (!onlineDueloEstado.codigoSala) return;
+    if (!texto.trim() && !photoDataUrl && !audioDataUrl) return;
+
+    const msg = {
+        id: "msg_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6),
+        senderId: perfilUsuario.id,
+        senderName: perfilUsuario.apodo,
+        senderAvatar: perfilUsuario.avatar,
+        tipoAvatar: perfilUsuario.tipoAvatar,
+        fotoDataUrl: perfilUsuario.fotoDataUrl,
+        text: texto.trim(),
+        photoDataUrl,
+        audioDataUrl,
+        timestamp: Date.now()
+    };
+
+    publicarMensajeSala({
+        tipo: "CHAT_MSG",
+        msg
+    });
+
+    if (dom.dueloChatTextInput) dom.dueloChatTextInput.value = "";
+}
+
+function recibirMensajeChatEnVivo(msg) {
+    if (!msg || !dom.dueloChatMessages) return;
+
+    onlineDueloEstado.chat.push(msg);
+
+    const esMio = msg.senderId === perfilUsuario.id;
+    const msgDiv = document.createElement("div");
+    msgDiv.className = `duelo-chat-msg ${esMio ? "duelo-chat-msg--mine" : "duelo-chat-msg--other"}`;
+
+    const horaStr = new Date(msg.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+    let contenidoHtml = "";
+    if (msg.text) {
+        contenidoHtml += `<div class="duelo-chat-bubble">${msg.text}</div>`;
+    }
+    if (msg.photoDataUrl) {
+        contenidoHtml += `<img src="${msg.photoDataUrl}" class="duelo-chat-img" alt="Foto de apunte" onclick="abrirLightboxFoto('${msg.photoDataUrl}')">`;
+    }
+    if (msg.audioDataUrl) {
+        contenidoHtml += `
+            <div class="duelo-chat-bubble">
+                <div class="duelo-audio-player">
+                    <button type="button" class="duelo-audio-play-btn" onclick="reproducirAudioNota(this, '${msg.audioDataUrl}')">▶</button>
+                    <span class="duelo-audio-time">Nota de voz 🎙️</span>
+                </div>
+            </div>
+        `;
+    }
+
+    msgDiv.innerHTML = `
+        <div class="duelo-chat-msg-header">
+            <span>${msg.senderName}</span>
+            <span>• ${horaStr}</span>
+        </div>
+        ${contenidoHtml}
+    `;
+
+    dom.dueloChatMessages.appendChild(msgDiv);
+    dom.dueloChatMessages.scrollTop = dom.dueloChatMessages.scrollHeight;
+
+    // Notificación en badge si el chat está minimizado y no es mío
+    if (!onlineDueloEstado.chatAbierto && !esMio) {
+        onlineDueloEstado.unreadCount++;
+        if (dom.dueloChatUnreadBadge) {
+            dom.dueloChatUnreadBadge.textContent = String(onlineDueloEstado.unreadCount);
+            dom.dueloChatUnreadBadge.classList.remove("hidden");
+        }
+    }
+}
+
+function reproducirAudioNota(btn, audioSrc) {
+    const audio = new Audio(audioSrc);
+    btn.textContent = "⏸";
+    audio.play();
+    audio.onended = () => {
+        btn.textContent = "▶";
+    };
+    audio.onerror = () => {
+        btn.textContent = "▶";
+    };
+}
+
+function abrirLightboxFoto(src) {
+    if (!dom.photoZoomModal || !dom.photoZoomImg) return;
+    dom.photoZoomImg.src = src;
+    dom.photoZoomModal.showModal();
+}
+
+
+async function iniciarGrabacionVoz() {
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        onlineDueloEstado.audioChunks = [];
+        onlineDueloEstado.mediaRecorder = new MediaRecorder(stream);
+        onlineDueloEstado.mediaRecorder.ondataavailable = e => {
+            if (e.data.size > 0) onlineDueloEstado.audioChunks.push(e.data);
+        };
+        onlineDueloEstado.mediaRecorder.start();
+        onlineDueloEstado.grabandoAudio = true;
+        onlineDueloEstado.recSegundos = 0;
+        if (dom.dueloVoiceRecTimer) dom.dueloVoiceRecTimer.textContent = "00:00";
+        if (dom.dueloVoiceRecordingBar) dom.dueloVoiceRecordingBar.classList.remove("hidden");
+        onlineDueloEstado.recIntervalId = setInterval(() => {
+            onlineDueloEstado.recSegundos++;
+            const m = String(Math.floor(onlineDueloEstado.recSegundos / 60)).padStart(2, "0");
+            const s = String(onlineDueloEstado.recSegundos % 60).padStart(2, "0");
+            if (dom.dueloVoiceRecTimer) dom.dueloVoiceRecTimer.textContent = `${m}:${s}`;
+        }, 1000);
+    } catch (err) {
+        alert("No se pudo acceder al micrófono para grabar la nota de voz. Por favor verificá los permisos en el navegador.");
+    }
+}
+
+function detenerYEnviarGrabacionVoz() {
+    if (!onlineDueloEstado.mediaRecorder || onlineDueloEstado.mediaRecorder.state === "inactive") return;
+    clearInterval(onlineDueloEstado.recIntervalId);
+    onlineDueloEstado.mediaRecorder.onstop = () => {
+        const blob = new Blob(onlineDueloEstado.audioChunks, { type: "audio/webm" });
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            enviarMensajeChat("", "", reader.result);
+        };
+        reader.readAsDataURL(blob);
+        onlineDueloEstado.mediaRecorder.stream.getTracks().forEach(t => t.stop());
+    };
+    onlineDueloEstado.mediaRecorder.stop();
+    if (dom.dueloVoiceRecordingBar) dom.dueloVoiceRecordingBar.classList.add("hidden");
+    onlineDueloEstado.grabandoAudio = false;
+}
+
+function toggleVentanaChat() {
+    onlineDueloEstado.chatAbierto = !onlineDueloEstado.chatAbierto;
+    if (dom.dueloChatWindow) {
+        dom.dueloChatWindow.classList.toggle("is-collapsed", !onlineDueloEstado.chatAbierto);
+    }
+    if (onlineDueloEstado.chatAbierto) {
+        onlineDueloEstado.unreadCount = 0;
+        if (dom.dueloChatUnreadBadge) {
+            dom.dueloChatUnreadBadge.classList.add("hidden");
+        }
+        if (dom.dueloChatMessages) {
+            dom.dueloChatMessages.scrollTop = dom.dueloChatMessages.scrollHeight;
+        }
+    }
+}
+
+console.log("Modules syntax OK!");
+
+
+/* ==========================================================
+   MODO DUELO DE BOLILLERO (MULTIJUGADOR & SALÓN DE LA FAMA)
+   ========================================================== */
+function cargarPreferenciasDuelo() {
+    try {
+        const guardado = localStorage.getItem(DUELO_PREFS_KEY);
+        if (guardado) {
+            const prefs = JSON.parse(guardado);
+            if (Array.isArray(prefs.jugadores) && prefs.jugadores.length > 0) {
+                dueloEstado.config.jugadores = prefs.jugadores;
+            }
+            if (Number.isFinite(prefs.tiempoTurnoSegundos) && prefs.tiempoTurnoSegundos >= 10) {
+                dueloEstado.config.tiempoTurnoSegundos = prefs.tiempoTurnoSegundos;
+            }
+            if (prefs.comodines) {
+                dueloEstado.config.comodines = { ...dueloEstado.config.comodines, ...prefs.comodines };
+            }
+            if (prefs.reglas) {
+                dueloEstado.config.reglas = { ...dueloEstado.config.reglas, ...prefs.reglas };
+            }
+        }
+    } catch {}
+}
+
+function guardarPreferenciasDuelo() {
+    try {
+        localStorage.setItem(DUELO_PREFS_KEY, JSON.stringify(dueloEstado.config));
+    } catch {}
+}
+
+function inicializarDueloLobby() {
+    cargarPreferenciasDuelo();
+    actualizarDropdownListasDuelo();
+    renderDueloPlayersChips();
+
+    // Sincronizar inputs de tiempo
+    if (dom.dueloMinutosInput && dom.dueloSegundosInput) {
+        const total = dueloEstado.config.tiempoTurnoSegundos;
+        dom.dueloMinutosInput.value = Math.floor(total / 60);
+        dom.dueloSegundosInput.value = total % 60;
+    }
+
+    // Sincronizar checkboxes de comodines
+    if (dom.dueloComodinSocorro) dom.dueloComodinSocorro.checked = !!dueloEstado.config.comodines.socorro;
+    if (dom.dueloComodinPista) dom.dueloComodinPista.checked = !!dueloEstado.config.comodines.pista;
+    if (dom.dueloComodinPaso) dom.dueloComodinPaso.checked = !!dueloEstado.config.comodines.pasoRebote;
+
+    // Sincronizar reglas
+    if (dom.dueloReglaRacha) dom.dueloReglaRacha.checked = !!dueloEstado.config.reglas.rachaFuego;
+    if (dom.dueloReglaRobo) dom.dueloReglaRobo.checked = !!dueloEstado.config.reglas.roboRelampago;
+}
+
+function cambiarModoDueloLobby(nuevoModo) {
+    onlineDueloEstado.modo = nuevoModo;
+    if (dom.dueloModeOnlineBtn) dom.dueloModeOnlineBtn.classList.toggle("is-active", nuevoModo === "online");
+    if (dom.dueloModeLocalBtn) dom.dueloModeLocalBtn.classList.toggle("is-active", nuevoModo === "local");
+    if (dom.dueloOnlinePanel) dom.dueloOnlinePanel.classList.toggle("hidden", nuevoModo !== "online");
+    if (dom.dueloLocalPanel) dom.dueloLocalPanel.classList.toggle("hidden", nuevoModo !== "local");
+}
+
+function actualizarDropdownListasDuelo() {
+    const selects = [dom.dueloListaSelect, dom.dueloOnlineListaSelect];
+    selects.forEach(selectElem => {
+        if (!selectElem) return;
+        selectElem.innerHTML = "";
+        if (estado.listas.length === 0) {
+            const opt = document.createElement("option");
+            opt.value = "";
+            opt.textContent = "No hay listas creadas (creá una en el Bolillero)";
+            selectElem.appendChild(opt);
+            return;
+        }
+        estado.listas.forEach(l => {
+            const opt = document.createElement("option");
+            opt.value = l.id;
+            opt.textContent = `${l.nombre} (${l.temas.length} temas)`;
+            selectElem.appendChild(opt);
+        });
+        if (dueloEstado.config.listaId && estado.listas.some(l => l.id === dueloEstado.config.listaId)) {
+            selectElem.value = dueloEstado.config.listaId;
+        } else if (estado.listas.length > 0) {
+            selectElem.value = estado.listas[0].id;
+        }
+    });
+
+    const listaActual = estado.listas.find(l => l.id === (dom.dueloListaSelect?.value || dueloEstado.config.listaId));
+    if (dom.dueloListaHint && listaActual) {
+        dom.dueloListaHint.textContent = `${listaActual.temas.length} temas disponibles para la batalla.`;
+    }
+    if (dom.dueloOnlineListaHint && listaActual) {
+        dom.dueloOnlineListaHint.textContent = `${listaActual.temas.length} temas disponibles para la batalla.`;
+    }
+}
+
+function renderDueloPlayersChips() {
+    if (!dom.dueloPlayersChips) return;
+    dom.dueloPlayersChips.innerHTML = "";
+
+    const avatars = ["🧑‍🎓", "👩‍🎓", "🧙‍♂️", "👩‍🔬", "🦁", "⚡", "🦊", "🚀", "🎯", "👑"];
+
+    dueloEstado.config.jugadores.forEach((nombre, idx) => {
+        const chip = document.createElement("div");
+        chip.className = "duelo-player-chip";
+        const avatar = avatars[idx % avatars.length];
+
+        chip.innerHTML = `
+            <span class="duelo-player-chip__avatar" aria-hidden="true">${avatar}</span>
+            <span>${nombre}</span>
+            <button class="duelo-player-chip__delete" type="button" data-idx="${idx}" title="Eliminar a ${nombre}">✕</button>
+        `;
+        dom.dueloPlayersChips.appendChild(chip);
+    });
+
+    if (dom.dueloPlayerCountBadge) {
+        const count = dueloEstado.config.jugadores.length;
+        dom.dueloPlayerCountBadge.textContent = `${count} ${count === 1 ? "jugador" : "jugadores"}`;
+        dom.dueloPlayerCountBadge.className = count >= 2 ? "badge badge--primary" : "badge badge--warning";
+    }
+}
+
+function agregarJugadorDuelo(nombre) {
+    const limpio = nombre.trim();
+    if (!limpio) return;
+    if (dueloEstado.config.jugadores.some(n => n.toLowerCase() === limpio.toLowerCase())) {
+        alert("Ya existe un jugador con ese nombre.");
+        return;
+    }
+    if (dueloEstado.config.jugadores.length >= 10) {
+        alert("El límite para una partida es de 10 jugadores.");
+        return;
+    }
+
+    dueloEstado.config.jugadores.push(limpio);
+    guardarPreferenciasDuelo();
+    renderDueloPlayersChips();
+    if (dom.dueloPlayerInput) {
+        dom.dueloPlayerInput.value = "";
+        dom.dueloPlayerInput.focus();
+    }
+}
+
+function eliminarJugadorDuelo(indice) {
+    if (dueloEstado.config.jugadores.length <= 1) {
+        alert("Debe haber al menos 1 jugador.");
+        return;
+    }
+    dueloEstado.config.jugadores.splice(indice, 1);
+    guardarPreferenciasDuelo();
+    renderDueloPlayersChips();
+}
+
+function actualizarTiempoTurnoLobby() {
+    if (!dom.dueloMinutosInput || !dom.dueloSegundosInput) return;
+    const min = parseInt(dom.dueloMinutosInput.value, 10) || 0;
+    const seg = parseInt(dom.dueloSegundosInput.value, 10) || 0;
+    const total = Math.max(10, min * 60 + seg);
+    dueloEstado.config.tiempoTurnoSegundos = total;
+    guardarPreferenciasDuelo();
+}
+
+function toggleTodosLosComodines() {
+    const hayAlgunoActivo =
+        dueloEstado.config.comodines.socorro ||
+        dueloEstado.config.comodines.pista ||
+        dueloEstado.config.comodines.pasoRebote;
+
+    const nuevoValor = !hayAlgunoActivo;
+    dueloEstado.config.comodines.socorro = nuevoValor;
+    dueloEstado.config.comodines.pista = nuevoValor;
+    dueloEstado.config.comodines.pasoRebote = nuevoValor;
+
+    if (dom.dueloComodinSocorro) dom.dueloComodinSocorro.checked = nuevoValor;
+    if (dom.dueloComodinPista) dom.dueloComodinPista.checked = nuevoValor;
+    if (dom.dueloComodinPaso) dom.dueloComodinPaso.checked = nuevoValor;
+
+    guardarPreferenciasDuelo();
+}
+
+/* Partida de Duelo */
+function iniciarDueloPartida() {
+    if (dueloEstado.config.jugadores.length < 2) {
+        alert("¡Para jugar un duelo se necesitan al menos 2 jugadores!");
+        if (dom.dueloPlayerInput) dom.dueloPlayerInput.focus();
+        return;
+    }
+
+    const listaId = dom.dueloListaSelect ? dom.dueloListaSelect.value : dueloEstado.config.listaId;
+    const lista = estado.listas.find(l => l.id === listaId);
+
+    if (!lista || !Array.isArray(lista.temas) || lista.temas.length === 0) {
+        alert("La materia seleccionada no tiene temas disponibles para sortear.");
+        return;
+    }
+
+    dueloEstado.config.listaId = listaId;
+    actualizarTiempoTurnoLobby();
+    guardarPreferenciasDuelo();
+
+    // Inicializar estado de partida
+    const avatars = ["🧑‍🎓", "👩‍🎓", "🧙‍♂️", "👩‍🔬", "🦁", "⚡", "🦊", "🚀", "🎯", "👑"];
+
+    dueloEstado.partida = {
+        activa: true,
+        rondaNumero: 1,
+        turnoNumero: 0,
+        jugadorActualId: null,
+        temaActual: null,
+        temasDisponibles: [...lista.temas],
+        girando: false,
+        tiempoRestante: dueloEstado.config.tiempoTurnoSegundos,
+        temporizadorActivo: false,
+        intervalId: null,
+        comodinActivo: null,
+        jugadorSocorroId: null,
+        robo: {
+            activo: false,
+            ladronId: null,
+            tiempoRestante: 0,
+            intervalId: null
+        },
+        jugadores: dueloEstado.config.jugadores.map((nombre, i) => ({
+            id: `player_${i}`,
+            nombre,
+            avatar: avatars[i % avatars.length],
+            puntos: 0,
+            rachaActual: 0,
+            maxRacha: 0,
+            robosExitosos: 0,
+            comodinesUsados: {
+                socorro: false,
+                pista: false,
+                pasoRebote: false
+            }
+        })),
+        historialTurnos: []
+    };
+
+    // Cambiar de Lobby a Arena
+    if (dom.dueloLobby) dom.dueloLobby.classList.add("hidden");
+    if (dom.dueloArena) dom.dueloArena.classList.remove("hidden");
+    if (dom.dueloTurnArea) dom.dueloTurnArea.classList.add("hidden");
+    if (dom.dueloRoboBox) dom.dueloRoboBox.classList.add("hidden");
+
+    if (dom.dueloBarListName) dom.dueloBarListName.textContent = lista.nombre;
+    actualizarMarcadorDueloUI();
+
+    if (dom.dueloPlayerRoulette) {
+        dom.dueloPlayerRoulette.textContent = "🎲 ¿Quién pasa al frente?";
+        dom.dueloPlayerRoulette.className = "duelo-roulette-display";
+    }
+    if (dom.dueloTopicRoulette) {
+        dom.dueloTopicRoulette.textContent = "🎰 ¿Qué tema toca?";
+        dom.dueloTopicRoulette.className = "duelo-roulette-display";
+    }
+
+    if (dom.dueloTurnLog) {
+        dom.dueloTurnLog.innerHTML = `<li class="duelo-turn-log-item">¡Comienza el duelo de ${lista.nombre}! Buena suerte a todos.</li>`;
+    }
+
+    reproducirSonidoDuelo("fanfare");
+}
+
+async function girarDobleRuletaDuelo() {
+    if (onlineDueloEstado.modo === "online" && onlineDueloEstado.codigoSala) {
+        girarDobleRuletaOnline();
+        return;
+    }
+    const partida = dueloEstado.partida;
+    if (!partida.activa || partida.girando) return;
+    if (partida.temasDisponibles.length === 0) {
+        alert("¡Ya no quedan más temas disponibles en esta materia!");
+        finalizarDueloPartida();
+        return;
+    }
+
+    partida.girando = true;
+    pausarCronometroTurnoDuelo();
+
+    if (dom.dueloTurnArea) dom.dueloTurnArea.classList.add("hidden");
+    if (dom.dueloRoboBox) dom.dueloRoboBox.classList.add("hidden");
+
+    if (dom.dueloPlayerRoulette) {
+        dom.dueloPlayerRoulette.className = "duelo-roulette-display is-spinning";
+    }
+    if (dom.dueloTopicRoulette) {
+        dom.dueloTopicRoulette.className = "duelo-roulette-display is-spinning";
+    }
+
+    // Elegir próximo jugador por turno equilibrado
+    const idxSiguiente = partida.turnoNumero % partida.jugadores.length;
+    const jugadorGanador = partida.jugadores[idxSiguiente];
+
+    // Elegir tema al azar de los disponibles
+    const idxTema = Math.floor(Math.random() * partida.temasDisponibles.length);
+    const temaGanador = partida.temasDisponibles[idxTema];
+
+    // Animación cuadrática simultánea de ambas ruletas
+    const duracion = 2600;
+    const inicio = performance.now();
+    let intervalo = 50;
+
+    while (true) {
+        const transcurrido = performance.now() - inicio;
+        if (transcurrido >= duracion) break;
+
+        // Ruleta de jugador
+        const jRandom = partida.jugadores[Math.floor(Math.random() * partida.jugadores.length)];
+        if (dom.dueloPlayerRoulette) dom.dueloPlayerRoulette.textContent = `${jRandom.avatar} ${jRandom.nombre}`;
+
+        // Ruleta de tema
+        const tRandom = partida.temasDisponibles[Math.floor(Math.random() * partida.temasDisponibles.length)];
+        if (dom.dueloTopicRoulette) dom.dueloTopicRoulette.textContent = tRandom.titulo;
+
+        const progreso = transcurrido / duracion;
+        intervalo = 50 + (progreso * progreso * 280);
+        await new Promise(r => setTimeout(r, intervalo));
+    }
+
+    // Fijar ganadores del sorteo
+    partida.jugadorActualId = jugadorGanador.id;
+    partida.temaActual = temaGanador;
+    partida.turnoNumero++;
+    partida.rondaNumero = Math.floor((partida.turnoNumero - 1) / partida.jugadores.length) + 1;
+
+    if (dom.dueloPlayerRoulette) {
+        dom.dueloPlayerRoulette.textContent = `${jugadorGanador.avatar} ${jugadorGanador.nombre}`;
+        dom.dueloPlayerRoulette.className = "duelo-roulette-display is-winner";
+    }
+
+    if (dom.dueloTopicRoulette) {
+        dom.dueloTopicRoulette.textContent = temaGanador.titulo;
+        dom.dueloTopicRoulette.className = "duelo-roulette-display is-winner";
+    }
+
+    reproducirSonidoDuelo("beep");
+
+    // Activar Turn Area
+    setTimeout(() => {
+        prepararTurnoActivoDuelo(jugadorGanador, temaGanador);
+        partida.girando = false;
+    }, 450);
+}
+
+function prepararTurnoActivoDuelo(jugador, tema) {
+    const partida = dueloEstado.partida;
+    partida.comodinActivo = null;
+    partida.jugadorSocorroId = null;
+
+    if (dom.dueloTurnArea) dom.dueloTurnArea.classList.remove("hidden");
+    if (dom.dueloTurnAvatar) dom.dueloTurnAvatar.textContent = jugador.avatar;
+    if (dom.dueloTurnPlayerName) dom.dueloTurnPlayerName.textContent = jugador.nombre;
+    if (dom.dueloActiveTopicTitle) dom.dueloActiveTopicTitle.textContent = tema.titulo;
+
+    // Racha de Fuego
+    const tieneRacha = dueloEstado.config.reglas.rachaFuego && jugador.rachaActual >= 2;
+    if (dom.dueloTurnStreakBadge) {
+        if (tieneRacha) {
+            dom.dueloTurnStreakBadge.textContent = `🔥 Racha de Fuego x2 (${jugador.rachaActual} impecables) - ¡PUNTAJE DOBLE!`;
+            dom.dueloTurnStreakBadge.className = "duelo-turn-streak-badge has-fire";
+        } else if (jugador.rachaActual === 1) {
+            dom.dueloTurnStreakBadge.textContent = "⭐ 1 impecable seguida";
+            dom.dueloTurnStreakBadge.className = "duelo-turn-streak-badge";
+        } else {
+            dom.dueloTurnStreakBadge.textContent = "Sin racha activa";
+            dom.dueloTurnStreakBadge.className = "duelo-turn-streak-badge";
+        }
+    }
+
+    if (dom.dueloImpecablePtsLabel) {
+        dom.dueloImpecablePtsLabel.textContent = tieneRacha ? "+20 pts 🔥" : "+10 pts";
+    }
+
+    // Comodines del jugador
+    actualizarComodinesJugadorUI(jugador);
+
+    // Iniciar cronómetro global del turno
+    partida.tiempoRestante = dueloEstado.config.tiempoTurnoSegundos;
+    actualizarCronometroTurnoDueloUI();
+    iniciarCronometroTurnoDuelo();
+}
+
+function actualizarComodinesJugadorUI(jugador) {
+    const comodinesConfig = dueloEstado.config.comodines;
+
+    if (dom.dueloBtnSocorro) {
+        dom.dueloBtnSocorro.style.display = comodinesConfig.socorro ? "inline-flex" : "none";
+        dom.dueloBtnSocorro.disabled = jugador.comodinesUsados.socorro;
+        dom.dueloBtnSocorro.classList.toggle("is-used", jugador.comodinesUsados.socorro);
+    }
+
+    if (dom.dueloBtnPista) {
+        dom.dueloBtnPista.style.display = comodinesConfig.pista ? "inline-flex" : "none";
+        dom.dueloBtnPista.disabled = jugador.comodinesUsados.pista;
+        dom.dueloBtnPista.classList.toggle("is-used", jugador.comodinesUsados.pista);
+    }
+
+    if (dom.dueloBtnPaso) {
+        dom.dueloBtnPaso.style.display = comodinesConfig.pasoRebote ? "inline-flex" : "none";
+        dom.dueloBtnPaso.disabled = jugador.comodinesUsados.pasoRebote;
+        dom.dueloBtnPaso.classList.toggle("is-used", jugador.comodinesUsados.pasoRebote);
+    }
+}
+
+/* Cronómetro de Turno */
+function iniciarCronometroTurnoDuelo() {
+    const partida = dueloEstado.partida;
+    if (partida.intervalId) clearInterval(partida.intervalId);
+
+    partida.temporizadorActivo = true;
+    if (dom.dueloTimerToggleBtn) dom.dueloTimerToggleBtn.textContent = "⏸";
+
+    partida.intervalId = setInterval(() => {
+        if (partida.tiempoRestante > 1) {
+            partida.tiempoRestante--;
+            actualizarCronometroTurnoDueloUI();
+            if (partida.tiempoRestante === 10) {
+                reproducirSonidoDuelo("beep");
+            }
+        } else {
+            partida.tiempoRestante = 0;
+            actualizarCronometroTurnoDueloUI();
+            pausarCronometroTurnoDuelo();
+            reproducirSonidoDuelo("buzzer");
+        }
+    }, 1000);
+}
+
+function pausarCronometroTurnoDuelo() {
+    const partida = dueloEstado.partida;
+    if (partida.intervalId) {
+        clearInterval(partida.intervalId);
+        partida.intervalId = null;
+    }
+    partida.temporizadorActivo = false;
+    if (dom.dueloTimerToggleBtn) dom.dueloTimerToggleBtn.textContent = "▶";
+}
+
+function toggleCronometroTurnoDuelo() {
+    if (dueloEstado.partida.temporizadorActivo) {
+        pausarCronometroTurnoDuelo();
+    } else {
+        iniciarCronometroTurnoDuelo();
+    }
+}
+
+function actualizarCronometroTurnoDueloUI() {
+    const segundos = dueloEstado.partida.tiempoRestante;
+    const m = Math.floor(segundos / 60);
+    const s = segundos % 60;
+    const str = `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+
+    if (dom.dueloTimerDigits) {
+        dom.dueloTimerDigits.textContent = str;
+        dom.dueloTimerDigits.className = "duelo-timer-digits";
+        if (segundos <= 10) {
+            dom.dueloTimerDigits.classList.add("is-danger");
+        } else if (segundos <= 30) {
+            dom.dueloTimerDigits.classList.add("is-warning");
+        }
+    }
+
+    if (dom.dueloTimerBar) {
+        const total = dueloEstado.config.tiempoTurnoSegundos;
+        const pct = total > 0 ? (segundos / total) * 100 : 0;
+        dom.dueloTimerBar.style.width = `${pct}%`;
+        dom.dueloTimerBar.className = "duelo-timer-fill";
+        if (segundos <= 10) {
+            dom.dueloTimerBar.classList.add("is-danger");
+        } else if (segundos <= 30) {
+            dom.dueloTimerBar.classList.add("is-warning");
+        }
+    }
+}
+
+/* Comodines del Jugador */
+function usarComodinSocorro() {
+    const partida = dueloEstado.partida;
+    const jugador = partida.jugadores.find(j => j.id === partida.jugadorActualId);
+    if (!jugador || jugador.comodinesUsados.socorro) return;
+
+    if (!dom.dueloSocorroOptions || !dom.dueloSocorroModal) return;
+    dom.dueloSocorroOptions.innerHTML = "";
+
+    const companeros = partida.jugadores.filter(j => j.id !== jugador.id);
+    companeros.forEach(comp => {
+        const btn = document.createElement("button");
+        btn.className = "duelo-socorro-player-btn";
+        btn.type = "button";
+        btn.innerHTML = `<span>${comp.avatar}</span> <strong>${comp.nombre}</strong> <small>(${comp.puntos} pts)</small>`;
+        btn.onclick = () => seleccionarCompaneroSocorro(comp.id);
+        dom.dueloSocorroOptions.appendChild(btn);
+    });
+
+    dom.dueloSocorroModal.showModal();
+}
+
+function seleccionarCompaneroSocorro(companeroId) {
+    const partida = dueloEstado.partida;
+    const jugador = partida.jugadores.find(j => j.id === partida.jugadorActualId);
+    const companero = partida.jugadores.find(j => j.id === companeroId);
+
+    if (!jugador || !companero) return;
+
+    jugador.comodinesUsados.socorro = true;
+    partida.jugadorSocorroId = companeroId;
+    partida.comodinActivo = "socorro";
+
+    if (dom.dueloSocorroModal) dom.dueloSocorroModal.close();
+    actualizarComodinesJugadorUI(jugador);
+    alert(`🤝 ¡Socorro activado con ${companero.nombre}! Si responden correctamente, sumarán 5 pts cada uno.`);
+}
+
+function usarComodinPista() {
+    const partida = dueloEstado.partida;
+    const jugador = partida.jugadores.find(j => j.id === partida.jugadorActualId);
+    if (!jugador || jugador.comodinesUsados.pista) return;
+
+    jugador.comodinesUsados.pista = true;
+    partida.tiempoRestante += 15;
+    actualizarCronometroTurnoDueloUI();
+    actualizarComodinesJugadorUI(jugador);
+    reproducirSonidoDuelo("beep");
+    alert("💡 ¡Pista clave activada! Tenés 15 segundos extra para consultar tus apuntes o fórmulas.");
+}
+
+function usarComodinPaso() {
+    const partida = dueloEstado.partida;
+    const jugador = partida.jugadores.find(j => j.id === partida.jugadorActualId);
+    if (!jugador || jugador.comodinesUsados.pasoRebote) return;
+    if (partida.temasDisponibles.length <= 1) {
+        alert("No hay otros temas disponibles para cambiar.");
+        return;
+    }
+
+    jugador.comodinesUsados.pasoRebote = true;
+    actualizarComodinesJugadorUI(jugador);
+
+    // Cambiar de tema
+    const otrosTemas = partida.temasDisponibles.filter(t => t.id !== partida.temaActual.id);
+    const nuevoTema = otrosTemas[Math.floor(Math.random() * otrosTemas.length)];
+    partida.temaActual = nuevoTema;
+
+    if (dom.dueloActiveTopicTitle) dom.dueloActiveTopicTitle.textContent = nuevoTema.titulo;
+    if (dom.dueloTopicRoulette) dom.dueloTopicRoulette.textContent = nuevoTema.titulo;
+
+    reproducirSonidoDuelo("fanfare");
+    alert(`🔄 ¡Paso y Rebote! Tu nuevo tema es: "${nuevoTema.titulo}".`);
+}
+
+/* Calificación de Turno & Robo Relámpago */
+function calificarTurnoDuelo(tipo) {
+    const partida = dueloEstado.partida;
+    const jugador = partida.jugadores.find(j => j.id === partida.jugadorActualId);
+    if (!jugador) return;
+
+    pausarCronometroTurnoDuelo();
+
+    if (tipo === "impecable") {
+        const rachaActiva = dueloEstado.config.reglas.rachaFuego && jugador.rachaActual >= 2;
+        let pts = rachaActiva ? 20 : 10;
+
+        if (partida.comodinActivo === "socorro" && partida.jugadorSocorroId) {
+            const comp = partida.jugadores.find(j => j.id === partida.jugadorSocorroId);
+            jugador.puntos += 5;
+            if (comp) comp.puntos += 5;
+            agregarRegistroTurnoDuelo(`🤝 ${jugador.nombre} y ${comp ? comp.nombre : "compañero"} resolvieron con Socorro (+5 pts c/u)`, 5);
+        } else {
+            jugador.puntos += pts;
+            jugador.rachaActual++;
+            if (jugador.rachaActual > jugador.maxRacha) {
+                jugador.maxRacha = jugador.rachaActual;
+            }
+            if (rachaActiva) {
+                agregarRegistroTurnoDuelo(`🔥 ¡IMPECABLE DOBLE! ${jugador.nombre} sumó +20 pts con Racha de Fuego`, 20);
+                reproducirSonidoDuelo("fanfare");
+            } else {
+                agregarRegistroTurnoDuelo(`🟢 ${jugador.nombre} respondió ¡Impecable! (+10 pts)`, 10);
+                reproducirSonidoDuelo("fanfare");
+            }
+        }
+
+        avanzarSiguienteTemaDuelo();
+    } else if (tipo === "ayuda") {
+        if (partida.comodinActivo === "socorro" && partida.jugadorSocorroId) {
+            const comp = partida.jugadores.find(j => j.id === partida.jugadorSocorroId);
+            jugador.puntos += 5;
+            if (comp) comp.puntos += 5;
+            agregarRegistroTurnoDuelo(`🤝 ${jugador.nombre} y ${comp ? comp.nombre : "compañero"} con Socorro (+5 pts c/u)`, 5);
+        } else {
+            jugador.puntos += 5;
+            jugador.rachaActual = 0;
+            agregarRegistroTurnoDuelo(`🟡 ${jugador.nombre} respondió con ayuda (+5 pts)`, 5);
+            reproducirSonidoDuelo("beep");
+        }
+
+        avanzarSiguienteTemaDuelo();
+    } else if (tipo === "paso") {
+        jugador.rachaActual = 0;
+        agregarRegistroTurnoDuelo(`🔴 ${jugador.nombre} pasó / no supo el tema (0 pts)`, 0);
+
+        // Comprobar si se activa el Robo Relámpago
+        const otrosJugadores = partida.jugadores.filter(j => j.id !== jugador.id);
+        if (dueloEstado.config.reglas.roboRelampago && otrosJugadores.length > 0) {
+            iniciarRoboRelampago(otrosJugadores);
+        } else {
+            avanzarSiguienteTemaDuelo();
+        }
+    }
+}
+
+function iniciarRoboRelampago(otrosJugadores) {
+    const partida = dueloEstado.partida;
+    partida.robo.activo = true;
+    partida.robo.ladronId = null;
+
+    if (!dom.dueloRoboBox || !dom.dueloBuzzerContainer) return;
+
+    dom.dueloRoboBox.classList.remove("hidden");
+    if (dom.dueloThiefActiveArea) dom.dueloThiefActiveArea.classList.add("hidden");
+    dom.dueloBuzzerContainer.classList.remove("hidden");
+    dom.dueloBuzzerContainer.innerHTML = "";
+
+    otrosJugadores.forEach(j => {
+        const btn = document.createElement("button");
+        btn.className = "duelo-buzzer-btn";
+        btn.type = "button";
+        btn.textContent = `⚡ ¡Yo robo! — ${j.nombre}`;
+        btn.onclick = () => pulsarRoboRelampago(j.id);
+        dom.dueloBuzzerContainer.appendChild(btn);
+    });
+
+    reproducirSonidoDuelo("buzzer");
+}
+
+function pulsarRoboRelampago(ladronId) {
+    const partida = dueloEstado.partida;
+    const ladron = partida.jugadores.find(j => j.id === ladronId);
+    if (!ladron) return;
+
+    partida.robo.ladronId = ladronId;
+
+    if (dom.dueloBuzzerContainer) dom.dueloBuzzerContainer.classList.add("hidden");
+    if (dom.dueloThiefActiveArea) dom.dueloThiefActiveArea.classList.remove("hidden");
+    if (dom.dueloThiefTitle) dom.dueloThiefTitle.textContent = `⚡ ¡${ladron.nombre} pulsa el Robo Relámpago!`;
+
+    // Tiempo rápido: la mitad del turno global
+    partida.robo.tiempoRestante = Math.max(10, Math.floor(dueloEstado.config.tiempoTurnoSegundos / 2));
+    actualizarCronometroRoboUI();
+
+    if (partida.robo.intervalId) clearInterval(partida.robo.intervalId);
+    partida.robo.intervalId = setInterval(() => {
+        if (partida.robo.tiempoRestante > 1) {
+            partida.robo.tiempoRestante--;
+            actualizarCronometroRoboUI();
+        } else {
+            partida.robo.tiempoRestante = 0;
+            actualizarCronometroRoboUI();
+            clearInterval(partida.robo.intervalId);
+            partida.robo.intervalId = null;
+            reproducirSonidoDuelo("buzzer");
+        }
+    }, 1000);
+
+    reproducirSonidoDuelo("beep");
+}
+
+function actualizarCronometroRoboUI() {
+    const s = dueloEstado.partida.robo.tiempoRestante;
+    const str = `00:${String(s).padStart(2, "0")}`;
+    if (dom.dueloThiefTimerDigits) dom.dueloThiefTimerDigits.textContent = str;
+}
+
+function calificarRoboRelampago(exito) {
+    const partida = dueloEstado.partida;
+    if (partida.robo.intervalId) {
+        clearInterval(partida.robo.intervalId);
+        partida.robo.intervalId = null;
+    }
+
+    const ladron = partida.jugadores.find(j => j.id === partida.robo.ladronId);
+
+    if (exito && ladron) {
+        ladron.puntos += 10;
+        ladron.robosExitosos++;
+        agregarRegistroTurnoDuelo(`⚡ ¡Robo Relámpago exitoso de ${ladron.nombre}! (+10 pts)`, 10);
+        reproducirSonidoDuelo("fanfare");
+    } else if (ladron) {
+        agregarRegistroTurnoDuelo(`⚡ Robo fallido de ${ladron.nombre} (0 pts)`, 0);
+        reproducirSonidoDuelo("buzzer");
+    }
+
+    if (dom.dueloRoboBox) dom.dueloRoboBox.classList.add("hidden");
+    partida.robo.activo = false;
+    avanzarSiguienteTemaDuelo();
+}
+
+function avanzarSiguienteTemaDuelo() {
+    const partida = dueloEstado.partida;
+
+    // Consumir el tema sorteado
+    if (partida.temaActual) {
+        partida.temasDisponibles = partida.temasDisponibles.filter(t => t.id !== partida.temaActual.id);
+    }
+
+    actualizarMarcadorDueloUI();
+
+    if (dom.dueloTurnArea) dom.dueloTurnArea.classList.add("hidden");
+    if (dom.dueloRoboBox) dom.dueloRoboBox.classList.add("hidden");
+
+    if (partida.temasDisponibles.length === 0) {
+        alert("🎉 ¡Se sortearon todos los temas de la materia! Fin del duelo.");
+        finalizarDueloPartida();
+        return;
+    }
+
+    if (dom.dueloPlayerRoulette) dom.dueloPlayerRoulette.textContent = "🎲 ¿Quién es el siguiente?";
+    if (dom.dueloTopicRoulette) dom.dueloTopicRoulette.textContent = "🎰 ¿Qué tema tocará?";
+}
+
+function actualizarMarcadorDueloUI() {
+    const partida = dueloEstado.partida;
+    if (!partida.activa || !dom.dueloScoreboardList) return;
+
+    dom.dueloScoreboardList.innerHTML = "";
+
+    // Ordenar de mayor a menor puntaje
+    const ranking = [...partida.jugadores].sort((a, b) => b.puntos - a.puntos);
+
+    ranking.forEach((j, i) => {
+        const item = document.createElement("div");
+        item.className = "duelo-scoreboard-item";
+        if (i === 0) item.classList.add("is-first");
+
+        const medallas = ["🥇", "🥈", "🥉"];
+        const rankStr = medallas[i] || `${i + 1}°`;
+
+        item.innerHTML = `
+            <div class="duelo-score-info">
+                <span class="duelo-score-rank">${rankStr}</span>
+                <span>${j.avatar}</span>
+                <span class="duelo-score-name">${j.nombre}</span>
+                ${j.rachaActual >= 2 ? '<span title="Racha de fuego">🔥</span>' : ""}
+            </div>
+            <span class="duelo-score-points">${j.puntos} pts</span>
+        `;
+        dom.dueloScoreboardList.appendChild(item);
+    });
+
+    if (dom.dueloRoundCounterBadge) {
+        dom.dueloRoundCounterBadge.textContent = `Ronda ${partida.rondaNumero}`;
+    }
+
+    if (dom.dueloBarRemainingTopics) {
+        dom.dueloBarRemainingTopics.textContent = `Temas restantes: ${partida.temasDisponibles.length}`;
+    }
+}
+
+function agregarRegistroTurnoDuelo(mensaje, pts) {
+    if (!dom.dueloTurnLog) return;
+    const li = document.createElement("li");
+    li.className = "duelo-turn-log-item";
+    li.innerHTML = `<span>${mensaje}</span> <strong style="color: ${pts > 0 ? "var(--color-success)" : "var(--color-text-muted)"}">${pts > 0 ? "+" + pts : "0"}</strong>`;
+
+    const empty = dom.dueloTurnLog.querySelector(".duelo-log-empty");
+    if (empty) empty.remove();
+
+    dom.dueloTurnLog.insertBefore(li, dom.dueloTurnLog.firstChild);
+}
+
+function finalizarDueloPartida(forzar = false) {
+    const partida = dueloEstado.partida;
+    if (!partida.activa) return;
+
+    pausarCronometroTurnoDuelo();
+    if (partida.robo.intervalId) clearInterval(partida.robo.intervalId);
+
+    partida.activa = false;
+
+    // Calcular podio
+    const ranking = [...partida.jugadores].sort((a, b) => b.puntos - a.puntos);
+    const ganador = ranking[0];
+
+    // Rey de la racha y Ladrón relámpago
+    const reyRacha = [...partida.jugadores].sort((a, b) => b.maxRacha - a.maxRacha)[0];
+    const ladron = [...partida.jugadores].sort((a, b) => b.robosExitosos - a.robosExitosos)[0];
+
+    const lista = estado.listas.find(l => l.id === dueloEstado.config.listaId);
+    const nombreLista = lista ? lista.nombre : "Materia";
+
+    // Guardar partida en Salón de la Fama
+    const partidaGuardada = {
+        id: crypto.randomUUID(),
+        fecha: new Date().toISOString(),
+        listaNombre: nombreLista,
+        totalTurnos: partida.turnoNumero,
+        ganador: {
+            nombre: ganador ? ganador.nombre : "Sin campeón",
+            puntos: ganador ? ganador.puntos : 0
+        },
+        reyRacha: {
+            nombre: reyRacha ? reyRacha.nombre : "—",
+            racha: reyRacha ? reyRacha.maxRacha : 0
+        },
+        ladronRelampago: {
+            nombre: ladron ? ladron.nombre : "—",
+            robos: ladron ? ladron.robosExitosos : 0
+        },
+        posiciones: ranking.map((j, i) => ({
+            rank: i + 1,
+            nombre: j.nombre,
+            puntos: j.puntos,
+            maxRacha: j.maxRacha,
+            robosExitosos: j.robosExitosos
+        }))
+    };
+
+    const historial = cargarHistorialDuelo();
+    historial.unshift(partidaGuardada);
+    guardarHistorialDuelo(historial);
+
+    // Mostrar Modal de Victoria
+    mostrarModalVictoriaDuelo(partidaGuardada);
+}
+
+function mostrarModalVictoriaDuelo(partida) {
+    if (!dom.dueloVictoryModal) return;
+
+    if (dom.victoryModalSubtitle) {
+        dom.victoryModalSubtitle.textContent = `Duelo de "${partida.listaNombre}" finalizado`;
+    }
+
+    if (dom.dueloPodioContainer) {
+        dom.dueloPodioContainer.innerHTML = "";
+        const pos = partida.posiciones;
+
+        // Estructura podio: 2° a la izquierda, 1° al medio, 3° a la derecha
+        const ordenPodio = [pos[1] || null, pos[0] || null, pos[2] || null];
+        const clases = ["podio-step--second", "podio-step--first", "podio-step--third"];
+        const medallas = ["🥈", "👑", "🥉"];
+        const alturas = ["2", "1", "3"];
+
+        ordenPodio.forEach((j, idx) => {
+            if (!j) return;
+            const step = document.createElement("div");
+            step.className = `podio-step ${clases[idx]}`;
+            step.innerHTML = `
+                <span class="podio-avatar">${medallas[idx]}</span>
+                <span class="podio-name">${j.nombre}</span>
+                <span class="podio-points">${j.puntos} pts</span>
+                <div class="podio-box">${alturas[idx]}</div>
+            `;
+            dom.dueloPodioContainer.appendChild(step);
+        });
+    }
+
+    if (dom.dueloSpecialMentions) {
+        dom.dueloSpecialMentions.innerHTML = "";
+        if (partida.reyRacha && partida.reyRacha.racha > 1) {
+            const chip = document.createElement("span");
+            chip.className = "duelo-mention-chip";
+            chip.innerHTML = `🔥 <strong>Rey de la Racha:</strong> ${partida.reyRacha.nombre} (${partida.reyRacha.racha} seguidas)`;
+            dom.dueloSpecialMentions.appendChild(chip);
+        }
+        if (partida.ladronRelampago && partida.ladronRelampago.robos > 0) {
+            const chip = document.createElement("span");
+            chip.className = "duelo-mention-chip";
+            chip.innerHTML = `⚡ <strong>Ladrón Relámpago:</strong> ${partida.ladronRelampago.nombre} (${partida.ladronRelampago.robos} robos)`;
+            dom.dueloSpecialMentions.appendChild(chip);
+        }
+    }
+
+    if (dom.victoryCopySummaryBtn) {
+        dom.victoryCopySummaryBtn.onclick = () => {
+            const texto = generarResumenWhatsApp(partida);
+            navigator.clipboard.writeText(texto).then(() => {
+                alert("¡Resumen de la partida copiado al portapapeles listo para WhatsApp! 📲");
+            });
+        };
+    }
+
+    // Botón de rescate al historial para invitados
+    if (dom.victoryRegisterGuestBtn) {
+        if (perfilUsuario.esInvitado) {
+            dom.victoryRegisterGuestBtn.classList.remove("hidden");
+            dom.victoryRegisterGuestBtn.onclick = () => {
+                abrirModalAuth("register");
+            };
+        } else {
+            dom.victoryRegisterGuestBtn.classList.add("hidden");
+        }
+    }
+
+    // Si el jugador local está registrado, actualizar sus estadísticas oficiales
+    if (!perfilUsuario.esInvitado && partida.posiciones) {
+        const miPos = partida.posiciones.find(p => p.nombre.toLowerCase() === perfilUsuario.apodo.toLowerCase());
+        if (miPos) {
+            if (miPos.rank === 1) perfilUsuario.victorias = (perfilUsuario.victorias || 0) + 1;
+            perfilUsuario.puntosTotales = (perfilUsuario.puntosTotales || 0) + miPos.puntos;
+            perfilUsuario.partidasJugadas = (perfilUsuario.partidasJugadas || 0) + 1;
+            if (miPos.maxRacha > (perfilUsuario.maxRachaHistorica || 0)) {
+                perfilUsuario.maxRachaHistorica = miPos.maxRacha;
+            }
+            perfilUsuario.totalRobos = (perfilUsuario.totalRobos || 0) + (miPos.robosExitosos || 0);
+            guardarPerfilUsuario();
+
+            const cuentas = obtenerCuentasGuardadas();
+            const idx = cuentas.findIndex(c => c.id === perfilUsuario.id);
+            if (idx !== -1) {
+                cuentas[idx] = { ...cuentas[idx], ...perfilUsuario };
+                guardarCuentas(cuentas);
+            }
+        }
+    }
+
+    dom.dueloVictoryModal.showModal();
+    reproducirSonidoDuelo("fanfare");
+}
+
+/* ==========================================================
+   SALÓN DE LA FAMA (HISTORIAL & CAMPEONES)
+   ========================================================== */
+function cargarHistorialDuelo() {
+    try {
+        const data = localStorage.getItem(DUELO_STORAGE_KEY);
+        return data ? JSON.parse(data) : [];
+    } catch {
+        return [];
+    }
+}
+
+function guardarHistorialDuelo(historial) {
+    try {
+        localStorage.setItem(DUELO_STORAGE_KEY, JSON.stringify(historial));
+    } catch {}
+}
+
+function renderSalonDeLaFama() {
+    const historial = cargarHistorialDuelo();
+
+    if (dom.famaMatchesBadge) {
+        dom.famaMatchesBadge.textContent = `${historial.length} ${historial.length === 1 ? "partida" : "partidas"}`;
+    }
+
+    if (dom.famaTotalMatchesCount) {
+        dom.famaTotalMatchesCount.textContent = String(historial.length);
+    }
+
+    // Calcular Tabla Acumulada
+    const statsJugadores = {};
+    let totalPuntos = 0;
+
+    historial.forEach(p => {
+        p.posiciones.forEach(pos => {
+            totalPuntos += pos.puntos;
+            if (!statsJugadores[pos.nombre]) {
+                statsJugadores[pos.nombre] = {
+                    nombre: pos.nombre,
+                    victorias: 0,
+                    platas: 0,
+                    bronces: 0,
+                    puntosTotales: 0,
+                    maxRachaHistorica: 0,
+                    totalRobos: 0
+                };
+            }
+            const s = statsJugadores[pos.nombre];
+            if (pos.rank === 1) s.victorias++;
+            else if (pos.rank === 2) s.platas++;
+            else if (pos.rank === 3) s.bronces++;
+
+            s.puntosTotales += pos.puntos;
+            if (pos.maxRacha > s.maxRachaHistorica) s.maxRachaHistorica = pos.maxRacha;
+            s.totalRobos += (pos.robosExitosos || 0);
+        });
+    });
+
+    if (dom.famaTotalPointsDistributed) {
+        dom.famaTotalPointsDistributed.textContent = String(totalPuntos);
+    }
+
+    // Ordenar campeones por victorias y puntos
+    const rankingCampeones = Object.values(statsJugadores).sort((a, b) => {
+        if (b.victorias !== a.victorias) return b.victorias - a.victorias;
+        return b.puntosTotales - a.puntosTotales;
+    });
+
+    if (dom.famaTopChampionName) {
+        dom.famaTopChampionName.textContent = rankingCampeones[0]
+            ? `${rankingCampeones[0].nombre} (${rankingCampeones[0].victorias} 👑)`
+            : "—";
+    }
+
+    // Renderizar cuerpo de la tabla
+    if (dom.famaLeaderboardBody) {
+        dom.famaLeaderboardBody.innerHTML = "";
+        if (rankingCampeones.length === 0) {
+            dom.famaLeaderboardBody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding: 2rem; color: var(--color-text-muted);">Aún no se han disputado duelos. ¡Iniciá uno para estrenar el medallero!</td></tr>`;
+        } else {
+            rankingCampeones.forEach((c, idx) => {
+                const tr = document.createElement("tr");
+                const medallas = ["🥇 1°", "🥈 2°", "🥉 3°"];
+                const puestoStr = medallas[idx] || `${idx + 1}°`;
+
+                tr.innerHTML = `
+                    <td><strong>${puestoStr}</strong></td>
+                    <td><strong>${c.nombre}</strong></td>
+                    <td style="color: #fbbf24; font-weight: 800;">${c.victorias}</td>
+                    <td>${c.platas}</td>
+                    <td>${c.bronces}</td>
+                    <td><strong>${c.puntosTotales}</strong></td>
+                    <td>${c.maxRachaHistorica > 1 ? c.maxRachaHistorica + " 🔥" : c.maxRachaHistorica}</td>
+                    <td>${c.totalRobos > 0 ? c.totalRobos + " ⚡" : c.totalRobos}</td>
+                `;
+                dom.famaLeaderboardBody.appendChild(tr);
+            });
+        }
+    }
+
+    // Renderizar tarjetas de partidas con efecto neón y corona
+    if (dom.famaMatchesGrid) {
+        dom.famaMatchesGrid.innerHTML = "";
+        if (historial.length === 0) {
+            dom.famaMatchesGrid.innerHTML = `<div class="panel" style="text-align: center; padding: 3rem; color: var(--color-text-muted);">No hay historial de partidas guardado.</div>`;
+            return;
+        }
+
+        historial.forEach(partida => {
+            const card = document.createElement("article");
+            card.className = "fama-match-card is-winner";
+
+            const fechaStr = new Date(partida.fecha).toLocaleDateString("es-AR", {
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit"
+            });
+
+            let tagsHtml = "";
+            if (partida.reyRacha && partida.reyRacha.racha > 1) {
+                tagsHtml += `<span class="fama-special-tag fama-special-tag--streak">🔥 Rey de la Racha: ${partida.reyRacha.nombre} (${partida.reyRacha.racha} seguidas)</span>`;
+            }
+            if (partida.ladronRelampago && partida.ladronRelampago.robos > 0) {
+                tagsHtml += `<span class="fama-special-tag fama-special-tag--thief">⚡ Ladrón Relámpago: ${partida.ladronRelampago.nombre} (${partida.ladronRelampago.robos} robos)</span>`;
+            }
+
+            let filasParticipantes = "";
+            partida.posiciones.forEach(pos => {
+                filasParticipantes += `
+                    <tr>
+                        <td><strong>${pos.rank}°</strong></td>
+                        <td>${pos.nombre}</td>
+                        <td><strong>${pos.puntos} pts</strong></td>
+                        <td>${pos.maxRacha > 0 ? pos.maxRacha + " 🔥" : "—"}</td>
+                        <td>${pos.robosExitosos > 0 ? pos.robosExitosos + " ⚡" : "—"}</td>
+                    </tr>
+                `;
+            });
+
+            card.innerHTML = `
+                <div class="fama-match-header">
+                    <div class="fama-winner-spotlight">
+                        <span class="fama-crown-icon" aria-hidden="true">👑</span>
+                        <div>
+                            <h3 class="fama-winner-title">Campeón: ${partida.ganador.nombre} (${partida.ganador.puntos} pts)</h3>
+                            <span class="fama-match-meta">Materia: <strong>${partida.listaNombre}</strong> • ${fechaStr}</span>
+                        </div>
+                    </div>
+                </div>
+
+                ${tagsHtml ? `<div class="fama-match-tags">${tagsHtml}</div>` : ""}
+
+                <details class="fama-details-toggle">
+                    <summary>Ver posiciones y puntajes completos de todos los integrantes</summary>
+                    <table class="fama-details-table">
+                        <thead>
+                            <tr>
+                                <th>Puesto</th>
+                                <th>Jugador</th>
+                                <th>Puntaje</th>
+                                <th>Racha</th>
+                                <th>Robos</th>
+                            </tr>
+                        </thead>
+                        <tbody>${filasParticipantes}</tbody>
+                    </table>
+                </details>
+
+                <div class="fama-card-actions">
+                    <button class="button button--secondary button--sm fama-copy-btn" data-id="${partida.id}" type="button">
+                        📸 Copiar Resumen (WhatsApp)
+                    </button>
+                    <button class="button button--ghost button--danger-text button--sm fama-del-btn" data-id="${partida.id}" type="button">
+                        🗑️ Eliminar
+                    </button>
+                </div>
+            `;
+
+            dom.famaMatchesGrid.appendChild(card);
+        });
+    }
+}
+
+function generarResumenWhatsApp(partida) {
+    const fecha = new Date(partida.fecha).toLocaleString("es-AR", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit"
+    });
+
+    let texto = `🏆 ¡RESULTADOS DUELO DE BOLILLERO - LUIBAÑEZ! ⚔️\n`;
+    texto += `📚 Materia: ${partida.listaNombre}\n`;
+    texto += `📅 Fecha: ${fecha}\n\n`;
+
+    partida.posiciones.forEach(p => {
+        let medalla = "🏅";
+        if (p.rank === 1) medalla = "👑 CAMPEÓN:";
+        else if (p.rank === 2) medalla = "🥈 2° Puesto:";
+        else if (p.rank === 3) medalla = "🥉 3° Puesto:";
+        else medalla = `${p.rank}°:`;
+
+        texto += `${medalla} ${p.nombre} (${p.puntos} pts)\n`;
+    });
+
+    texto += `\n`;
+    if (partida.reyRacha && partida.reyRacha.racha > 1) {
+        texto += `🔥 Rey de la Racha: ${partida.reyRacha.nombre} (${partida.reyRacha.racha} seguidas)\n`;
+    }
+    if (partida.ladronRelampago && partida.ladronRelampago.robos > 0) {
+        texto += `⚡ Ladrón Relámpago: ${partida.ladronRelampago.nombre} (${partida.ladronRelampago.robos} robos)\n`;
+    }
+
+    texto += `\n🚀 ¡Jugá tu duelo en https://luibanez.vercel.app! ✨`;
+    return texto;
+}
+
+function copiarResumenPartida(partidaId) {
+    const historial = cargarHistorialDuelo();
+    const partida = historial.find(p => p.id === partidaId);
+    if (!partida) return;
+
+    const texto = generarResumenWhatsApp(partida);
+    navigator.clipboard.writeText(texto).then(() => {
+        alert("¡Resumen de la partida copiado al portapapeles! Listo para pegar en WhatsApp 📲");
+    });
+}
+
+function eliminarPartidaHistorial(partidaId) {
+    if (!confirm("¿Deseás eliminar esta partida del historial del Salón de la Fama?")) return;
+    let historial = cargarHistorialDuelo();
+    historial = historial.filter(p => p.id !== partidaId);
+    guardarHistorialDuelo(historial);
+    renderSalonDeLaFama();
+}
+
+function borrarHistorialCompleto() {
+    if (!confirm("⚠️ ¿Estás seguro de que querés borrar TODO el historial del Salón de la Fama y reiniciar el medallero? Esta acción no se puede deshacer.")) return;
+    localStorage.removeItem(DUELO_STORAGE_KEY);
+    renderSalonDeLaFama();
+    alert("Historial del Salón de la Fama reiniciado con éxito.");
+}
+
+function reproducirSonidoDuelo(tipo) {
+    try {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass) return;
+        const ctx = pomodoroEstado.audioCtx || new AudioContextClass();
+        pomodoroEstado.audioCtx = ctx;
+        if (ctx.state === "suspended") ctx.resume();
+
+        const ahora = ctx.currentTime;
+        if (tipo === "fanfare") {
+            const notas = [523.25, 659.25, 783.99, 1046.50];
+            notas.forEach((freq, i) => {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = "triangle";
+                osc.frequency.setValueAtTime(freq, ahora + i * 0.1);
+                gain.gain.setValueAtTime(0.2, ahora + i * 0.1);
+                gain.gain.exponentialRampToValueAtTime(0.001, ahora + i * 0.1 + 0.25);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(ahora + i * 0.1);
+                osc.stop(ahora + i * 0.1 + 0.26);
+            });
+        } else if (tipo === "buzzer") {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = "sawtooth";
+            osc.frequency.setValueAtTime(220, ahora);
+            osc.frequency.linearRampToValueAtTime(160, ahora + 0.3);
+            gain.gain.setValueAtTime(0.25, ahora);
+            gain.gain.exponentialRampToValueAtTime(0.001, ahora + 0.35);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(ahora);
+            osc.stop(ahora + 0.36);
+        } else if (tipo === "chispazo") {
+            // Sonido de descarga eléctrica / chispazo áspero de cortocircuito
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = "sawtooth";
+            osc.frequency.setValueAtTime(180, ahora);
+            osc.frequency.exponentialRampToValueAtTime(45, ahora + 0.22);
+            gain.gain.setValueAtTime(0.3, ahora);
+            gain.gain.exponentialRampToValueAtTime(0.001, ahora + 0.25);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(ahora);
+            osc.stop(ahora + 0.26);
+        } else if (tipo === "explosion") {
+            // Sonido profundo y retumbante de explosión
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = "triangle";
+            osc.frequency.setValueAtTime(120, ahora);
+            osc.frequency.exponentialRampToValueAtTime(25, ahora + 0.85);
+            gain.gain.setValueAtTime(0.45, ahora);
+            gain.gain.exponentialRampToValueAtTime(0.001, ahora + 0.9);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(ahora);
+            osc.stop(ahora + 0.92);
+        } else if (tipo === "beep") {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = "sine";
+            osc.frequency.setValueAtTime(880, ahora);
+            gain.gain.setValueAtTime(0.18, ahora);
+            gain.gain.exponentialRampToValueAtTime(0.001, ahora + 0.15);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(ahora);
+            osc.stop(ahora + 0.16);
+        }
+    } catch {}
+}
+
+/* ==========================================================
+   SISTEMA DE AUDIO & MENSAJERÍA COMPATIBLE (GLOBAL)
+   ========================================================== */
+function reproducirSonido(tipo) {
+    try {
+        if (typeof reproducirSonidoDuelo === "function") {
+            if (tipo === "ruletaFin" || tipo === "victoria" || tipo === "fanfare") {
+                reproducirSonidoDuelo("fanfare");
+            } else if (tipo === "chispazo") {
+                reproducirSonidoDuelo("chispazo");
+            } else if (tipo === "explosion") {
+                reproducirSonidoDuelo("explosion");
+            } else if (tipo === "comodin" || tipo === "buzzer" || tipo === "error") {
+                reproducirSonidoDuelo("buzzer");
+            } else {
+                reproducirSonidoDuelo("beep");
+            }
+        }
+    } catch (e) {
+        console.warn("Audio warning:", e);
+    }
+}
+window.reproducirSonido = reproducirSonido;
+
+function enviarMensajeMQTT(data) {
+    try {
+        if (typeof publicarMensajeSala === "function") {
+            publicarMensajeSala(data);
+        }
+    } catch (e) {
+        console.warn("MQTT send warning:", e);
+    }
+}
+window.enviarMensajeMQTT = enviarMensajeMQTT;
+
+/* ==========================================================
+   MÓDULO GOOGLE GEMINI API & APUNTES PDF CLIENT-SIDE
+   ========================================================== */
+
+const APUNTES_STORAGE_KEY = "luibanez_apuntes_pdf_v1";
+
+const apuntesEstado = {
+    global: null,   // { nombre, paginas, palabras, texto }
+    bolillero: null,
+    bomba: null,
+    impostor: null,
+    memotest: null
+};
+
+/* ==========================================================
+   PERSISTENCIA ROBUSTA DE APUNTES CON INDEXEDDB (SIN LÍMITES)
+   ========================================================== */
+const IDB_DB_NAME = "LuibanezStorage";
+const IDB_STORE_NAME = "apuntes";
+
+function abrirIndexedDB() {
+    return new Promise((resolve, reject) => {
+        if (!window.indexedDB) {
+            return reject(new Error("IndexedDB no soportado en este navegador"));
+        }
+        const req = window.indexedDB.open(IDB_DB_NAME, 1);
+        req.onupgradeneeded = (e) => {
+            const db = e.target.result;
+            if (!db.objectStoreNames.contains(IDB_STORE_NAME)) {
+                db.createObjectStore(IDB_STORE_NAME);
+            }
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+    });
+}
+
+async function guardarApunteEnIDB(clave, valor) {
+    try {
+        const db = await abrirIndexedDB();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(IDB_STORE_NAME, "readwrite");
+            const store = tx.objectStore(IDB_STORE_NAME);
+            store.put(valor, clave);
+            tx.oncomplete = () => resolve(true);
+            tx.onerror = () => reject(tx.error);
+        });
+    } catch (err) {
+        console.warn("Error al guardar apunte en IndexedDB:", err);
+        return false;
+    }
+}
+
+async function obtenerApunteDeIDB(clave) {
+    try {
+        const db = await abrirIndexedDB();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(IDB_STORE_NAME, "readonly");
+            const store = tx.objectStore(IDB_STORE_NAME);
+            const req = store.get(clave);
+            req.onsuccess = () => resolve(req.result || null);
+            req.onerror = () => reject(tx.error);
+        });
+    } catch (err) {
+        console.warn("Error al leer apunte de IndexedDB:", err);
+        return null;
+    }
+}
+
+// Cargar apuntes persistidos desde IndexedDB (o fallback localStorage)
+async function cargarApuntesGuardados() {
+    try {
+        const idbData = await obtenerApunteDeIDB("apuntesEstado");
+        if (idbData && typeof idbData === "object") {
+            Object.assign(apuntesEstado, idbData);
+            actualizarUIIndicadoresPDF();
+            return;
+        }
+
+        const guardado = localStorage.getItem(APUNTES_STORAGE_KEY);
+        if (guardado) {
+            const data = JSON.parse(guardado);
+            Object.assign(apuntesEstado, data);
+            actualizarUIIndicadoresPDF();
+        }
+    } catch (e) {
+        console.warn("No se pudieron cargar los apuntes guardados:", e);
+    }
+}
+
+async function guardarApuntesEnStorage() {
+    // 1. Guardar en IndexedDB (soporta cientos de megas sin errores de cuota)
+    await guardarApunteEnIDB("apuntesEstado", apuntesEstado);
+
+    // 2. Guardar metadata liviana en localStorage
+    try {
+        const metadata = {};
+        for (const k in apuntesEstado) {
+            if (apuntesEstado[k]) {
+                metadata[k] = {
+                    nombre: apuntesEstado[k].nombre,
+                    paginas: apuntesEstado[k].paginas,
+                    palabras: apuntesEstado[k].palabras
+                };
+            } else {
+                metadata[k] = null;
+            }
+        }
+        localStorage.setItem(APUNTES_STORAGE_KEY + "_meta", JSON.stringify(metadata));
+    } catch (e) {
+        console.warn("No se pudo guardar metadata en localStorage:", e);
+    }
+}
+
+function actualizarUIIndicadoresPDF() {
+    const apunteActivo = apuntesEstado.global || apuntesEstado.bolillero || apuntesEstado.bomba;
+    
+    // 1. Centro Principal de Apuntes en Inicio (viewHome)
+    if (dom.mainPdfHubEmpty && dom.mainPdfHubActive) {
+        if (apunteActivo && apunteActivo.nombre) {
+            dom.mainPdfHubEmpty.classList.add("hidden");
+            dom.mainPdfHubActive.classList.remove("hidden");
+            if (dom.mainPdfFileName) dom.mainPdfFileName.textContent = apunteActivo.nombre;
+            if (dom.mainPdfFileStats) {
+                dom.mainPdfFileStats.textContent = `${apunteActivo.paginas || 1} páginas • ${apunteActivo.palabras || 0} palabras • Guardado en base de datos local`;
+            }
+        } else {
+            dom.mainPdfHubEmpty.classList.remove("hidden");
+            dom.mainPdfHubActive.classList.add("hidden");
+        }
+    }
+
+    // 2. Indicador Limpio en Encabezado del Bolillero
+    if (dom.bolilleroGlobalPdfBadge) {
+        if (apunteActivo && apunteActivo.nombre) {
+            dom.bolilleroGlobalPdfBadge.style.display = "inline-flex";
+            dom.bolilleroGlobalPdfBadge.classList.remove("hidden");
+            if (dom.bolilleroGlobalPdfName) dom.bolilleroGlobalPdfName.textContent = apunteActivo.nombre;
+        } else {
+            dom.bolilleroGlobalPdfBadge.style.display = "none";
+            dom.bolilleroGlobalPdfBadge.classList.add("hidden");
+        }
+    }
+
+    // 3. Barra de Apuntes en Juegos Educativos (Bomba, Impostor, Memotest)
+    if (dom.juegosApuntesStatus) {
+        if (apunteActivo) {
+            dom.juegosApuntesStatus.textContent = `📄 ${apunteActivo.nombre} (${apunteActivo.paginas} págs, ${apunteActivo.palabras} palabras)`;
+            dom.juegosApuntesStatus.classList.add("has-pdf");
+            if (dom.juegosRemovePdfBtn) dom.juegosRemovePdfBtn.classList.remove("hidden");
+        } else {
+            dom.juegosApuntesStatus.textContent = "Sin PDF cargado (usando banco temático estándar)";
+            dom.juegosApuntesStatus.classList.remove("has-pdf");
+            if (dom.juegosRemovePdfBtn) dom.juegosRemovePdfBtn.classList.add("hidden");
+        }
+    }
+
+    // 4. Badge en Tarjeta de Examen Oral del Bolillero
+    if (dom.bolilleroIASourceBadge) {
+        if (apunteActivo) {
+            dom.bolilleroIASourceBadge.style.display = "inline-block";
+            dom.bolilleroIASourceBadge.textContent = `📄 Basado en: ${apunteActivo.nombre}`;
+        } else {
+            dom.bolilleroIASourceBadge.style.display = "none";
+        }
+    }
+
+    // 5. Tarjeta en Estudiar Solo
+    if (dom.soloPdfCardDesc) {
+        if (apunteActivo) {
+            dom.soloPdfCardDesc.innerHTML = `<strong style="color: #34d399;">📄 Archivo activo:</strong> ${apunteActivo.nombre} (${apunteActivo.paginas} págs). Los juegos de la plataforma ya están usando este material para formular desafíos.`;
+        } else {
+            dom.soloPdfCardDesc.textContent = "Cargá el resumen o programa en PDF de tu materia. La IA de Google Gemini extraerá los conceptos y adaptará las preguntas de todos tus juegos automáticamente.";
+        }
+    }
+}
+
+// Extracción de texto Client-Side mediante Mozilla PDF.js
+async function procesarArchivoPDF(file) {
+    if (!file) return null;
+    const ext = file.name.split('.').pop().toLowerCase();
+
+    // Archivo de texto plano o markdown
+    if (ext === 'txt' || ext === 'md') {
+        const text = await file.text();
+        if (!text || !text.trim()) {
+            throw new Error("El archivo de texto seleccionado está vacío.");
+        }
+        return {
+            nombre: file.name,
+            paginas: 1,
+            palabras: text.trim().split(/\s+/).filter(Boolean).length,
+            texto: text.trim()
+        };
+    }
+
+    // Archivo PDF con PDF.js
+    if (typeof window.pdfjsLib === 'undefined') {
+        throw new Error("La biblioteca de lectura de PDF aún se está cargando. Por favor, aguardá un segundo y volvé a intentarlo.");
+    }
+
+    try {
+        if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        }
+
+        const arrayBuffer = await file.arrayBuffer();
+        const loadingTask = pdfjsLib.getDocument({
+            data: arrayBuffer,
+            cMapUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/cmaps/',
+            cMapPacked: true,
+            standardFontDataUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/standard_fonts/'
+        });
+
+        const pdf = await loadingTask.promise;
+        let fullText = "";
+
+        const maxPaginas = Math.min(pdf.numPages, 100);
+        for (let i = 1; i <= maxPaginas; i++) {
+            try {
+                const page = await pdf.getPage(i);
+                const content = await page.getTextContent();
+                const pageStr = content.items.map(item => item.str).join(" ");
+                if (pageStr.trim()) {
+                    fullText += `\n[PÁGINA ${i}]: ` + pageStr;
+                }
+            } catch (pageErr) {
+                console.warn(`Error al leer página ${i} del PDF:`, pageErr);
+            }
+        }
+
+        const textoLimpio = fullText.trim();
+        const palabrasTotal = textoLimpio ? textoLimpio.split(/\s+/).filter(Boolean).length : 0;
+
+        if (palabrasTotal < 10) {
+            throw new Error("No se pudo detectar texto legible en este PDF. Es probable que sea un documento escaneado (fotocopias o imágenes) sin capa de texto digital. Probá con un PDF digital o cargá un archivo .txt/.md con tus notas.");
+        }
+
+        return {
+            nombre: file.name,
+            paginas: pdf.numPages,
+            palabras: palabrasTotal,
+            texto: textoLimpio
+        };
+    } catch (err) {
+        console.error("Error al procesar PDF con PDF.js:", err);
+        throw new Error(err.message || "No se pudo extraer el texto del PDF. Asegurate de que no esté dañado ni protegido con contraseña.");
+    }
+}
+
+// Función Central Reutilizable para Consultar la Serverless Function de Gemini
+async function generarPreguntaIA({ materia, tema, tipoJuego = 'bolillero', contextoPDF = null, dificultad = 'universitario', cantidadTemas = 10, preguntasPrevias = [] }) {
+    // Si no se proveyó contexto explícito, buscar apunte cargado
+    if (!contextoPDF) {
+        const apunte = apuntesEstado[tipoJuego] || apuntesEstado.bolillero || apuntesEstado.global;
+        if (apunte && apunte.texto) {
+            contextoPDF = apunte.texto;
+        }
+    }
+
+    const payload = {
+        materia: materia || "General",
+        tema: tema || "Conceptos Principales",
+        tipoJuego,
+        contextoPDF: contextoPDF || "",
+        dificultad,
+        cantidadTemas,
+        preguntasPrevias
+    };
+
+    const resp = await fetch('/api/gemini', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+    });
+
+    if (!resp.ok) {
+        const errJson = await resp.json().catch(() => ({}));
+        throw new Error(errJson.error || `Error HTTP ${resp.status} en Gemini Gateway`);
+    }
+
+    const json = await resp.json();
+    return json.data;
+}
+
+// =========================================================
+// EXTRACCIÓN DE PALABRAS / CONCEPTOS CON IA PARA EL BOLILLERO
+// =========================================================
+function extraerConceptosHeuristicos(texto, count = 10) {
+    if (!texto || typeof texto !== "string") return [];
+    
+    const lineas = texto.split("\n").map(l => l.trim()).filter(l => l.length > 2);
+    const candidatos = [];
+    const vistos = new Set();
+
+    const bulletRegex = /^[\u2022\-\*\u2013\u2014\d+\.\)]\s*(.+)$/;
+    const defRegex = /^([A-ZÁÉÍÓÚÑ][^:\-—]{2,50})[:\-—]\s*(.+)$/;
+
+    // Barrido completo de todas las líneas del documento (sin break anticipado)
+    for (const linea of lineas) {
+        if (linea.toLowerCase().startsWith("página") || linea.toLowerCase().startsWith("page")) continue;
+
+        let concepto = null;
+        const defMatch = linea.match(defRegex);
+        if (defMatch && defMatch[1].trim().split(" ").length <= 5) {
+            concepto = defMatch[1].trim();
+        } else {
+            const bMatch = linea.match(bulletRegex);
+            if (bMatch) {
+                const contenido = bMatch[1].trim();
+                const palabras = contenido.split(" ");
+                if (palabras.length >= 1 && palabras.length <= 5 && contenido.length <= 50) {
+                    concepto = contenido.replace(/[.;:,]$/, "");
+                }
+            } else if (linea.length >= 4 && linea.length <= 45 && linea.split(" ").length <= 4) {
+                concepto = linea.replace(/[.;:,]$/, "");
+            }
+        }
+
+        if (concepto && concepto.length > 2) {
+            const norm = concepto.toLowerCase();
+            if (!vistos.has(norm)) {
+                vistos.add(norm);
+                candidatos.push(concepto);
+            }
+        }
+    }
+
+    // Si tenemos suficientes candidatos, muestreamos equitativamente a lo largo de TODO el documento (inicio, medio y fin)
+    let resultado = [];
+    if (candidatos.length <= count) {
+        resultado = [...candidatos];
+    } else {
+        const step = candidatos.length / count;
+        for (let i = 0; i < count; i++) {
+            const idx = Math.min(candidatos.length - 1, Math.floor(i * step));
+            resultado.push(candidatos[idx]);
+        }
+    }
+    
+    // Si aún faltan palabras para alcanzar 'count', buscamos palabras clave con frecuencia en todo el texto
+    if (resultado.length < count) {
+        const palabrasClave = texto
+            .replace(/[^\w\sáéíóúüñÁÉÍÓÚÜÑ]/g, " ")
+            .split(/\s+/)
+            .filter(w => w.length > 5 && !["además", "después", "durante", "entonces", "también", "porque", "mediante", "ejemplo", "cuando", "donde", "primero", "segundo"].includes(w.toLowerCase()));
+        
+        const freq = {};
+        palabrasClave.forEach(p => {
+            const cap = p.charAt(0).toUpperCase() + p.slice(1).toLowerCase();
+            freq[cap] = (freq[cap] || 0) + 1;
+        });
+
+        const ordenadas = Object.keys(freq).sort((a, b) => freq[b] - freq[a]);
+        for (const pal of ordenadas) {
+            if (!resultado.includes(pal)) {
+                resultado.push(pal);
+            }
+            if (resultado.length >= count) break;
+        }
+    }
+
+    return resultado.slice(0, count);
+}
+
+function abrirModalIaWordsBolillero() {
+    const apunte = apuntesEstado.bolillero || apuntesEstado.global;
+    if (!apunte || !apunte.texto) {
+        mostrarToast("⚠️ No tenés ningún PDF cargado. Cargalo primero desde el Inicio en el Centro de Apuntes.", "aviso");
+        return;
+    }
+
+    if (dom.iaWordsPdfName) {
+        dom.iaWordsPdfName.textContent = apunte.nombre || "Documento PDF";
+    }
+
+    const lista = obtenerListaSeleccionada();
+    if (dom.iaWordsCurrentListName) {
+        dom.iaWordsCurrentListName.textContent = lista ? lista.nombre : "Sin lista seleccionada";
+    }
+
+    if (dom.bolilleroIaWordsModal) {
+        if (typeof dom.bolilleroIaWordsModal.showModal === "function") {
+            dom.bolilleroIaWordsModal.showModal();
+        } else {
+            dom.bolilleroIaWordsModal.setAttribute("open", "");
+        }
+    }
+}
+
+async function procesarExtraccionPalabrasIA(e) {
+    if (e) e.preventDefault();
+
+    const apunte = apuntesEstado.bolillero || apuntesEstado.global;
+    if (!apunte || !apunte.texto) {
+        mostrarToast("⚠️ No hay un apunte PDF cargado en el sistema.", "error");
+        return;
+    }
+
+    const count = Math.min(50, Math.max(3, parseInt(dom.iaWordsCountInput?.value || 10, 10)));
+    const target = document.querySelector('input[name="iaWordsTarget"]:checked')?.value || "append";
+
+    if (dom.submitIaWordsBtn) dom.submitIaWordsBtn.disabled = true;
+    if (dom.submitIaWordsText) dom.submitIaWordsText.textContent = "⏳ Extrayendo con Gemini IA...";
+
+    try {
+        let palabras = [];
+        try {
+            const data = await generarPreguntaIA({
+                materia: apunte.nombre,
+                tema: "Conceptos Clave de Estudio",
+                tipoJuego: "temas_bolillero",
+                contextoPDF: apunte.texto,
+                cantidadTemas: count
+            });
+
+            if (data && Array.isArray(data.palabras) && data.palabras.length > 0) {
+                palabras = data.palabras;
+            } else if (data && Array.isArray(data) && data.length > 0) {
+                palabras = data;
+            }
+        } catch (apiErr) {
+            console.warn("Fallo al conectar con Gemini API para temas, aplicando fallback local:", apiErr);
+        }
+
+        // Si Gemini no devolvió suficientes o hubo fallo de red, usamos extractor heurístico
+        if (!palabras || palabras.length === 0) {
+            palabras = extraerConceptosHeuristicos(apunte.texto, count);
+        }
+
+        if (!palabras || palabras.length === 0) {
+            throw new Error("No se pudieron extraer conceptos legibles de este PDF.");
+        }
+
+        // Limitar a la cantidad pedida y formatear
+        palabras = palabras.slice(0, count);
+
+        const nuevosTemas = palabras.map(p => ({
+            id: crypto.randomUUID(),
+            titulo: String(p).trim().slice(0, 100)
+        }));
+
+        let listaActual = obtenerListaSeleccionada();
+
+        if (target === "new" || !listaActual) {
+            const nombreBase = apunte.nombre.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " ");
+            const nuevaListaId = crypto.randomUUID();
+            estado.listas.push({
+                id: nuevaListaId,
+                nombre: `${nombreBase} (${nuevosTemas.length} TEMAS)`.toUpperCase(),
+                temas: nuevosTemas
+            });
+            estado.listaSeleccionadaId = nuevaListaId;
+        } else if (target === "replace") {
+            listaActual.temas = nuevosTemas;
+        } else {
+            // append
+            listaActual.temas.push(...nuevosTemas);
+        }
+
+        actualizarInterfaz();
+        if (dom.bolilleroIaWordsModal) {
+            if (typeof dom.bolilleroIaWordsModal.close === "function") dom.bolilleroIaWordsModal.close();
+            else dom.bolilleroIaWordsModal.removeAttribute("open");
+        }
+        mostrarToast(`🎉 ¡${nuevosTemas.length} palabras extraídas de tu PDF con IA cargadas con éxito!`, "exito");
+    } catch (err) {
+        console.error("Error al extraer palabras con IA:", err);
+        mostrarToast(`❌ Error: ${err.message}`, "error");
+    } finally {
+        if (dom.submitIaWordsBtn) dom.submitIaWordsBtn.disabled = false;
+        if (dom.submitIaWordsText) dom.submitIaWordsText.textContent = "🚀 Extraer con IA";
+    }
+}
+
+// Manejador interactivo para la tarjeta de Pregunta IA en Bolillero
+let bolilleroIAPreguntaActiva = null;
+const historialPreguntasBolillero = {}; // Almacena preguntas generadas por tema para evitar repeticiones
+
+async function solicitarPreguntaIABolillero() {
+    const lista = obtenerListaSeleccionada();
+    const temaId = estado.ronda.ultimoTemaId;
+    const tema = lista?.temas.find(t => t.id === temaId);
+
+    const materiaNombre = lista ? lista.titulo : "Materia de Estudio";
+    const temaNombre = tema ? tema.titulo : "Tema Seleccionado";
+    const temaKey = (temaId || temaNombre).trim().toLowerCase();
+    const preguntasPrevias = historialPreguntasBolillero[temaKey] || [];
+
+    if (!dom.bolilleroIACard) return;
+
+    dom.bolilleroIACard.classList.remove("hidden");
+    if (dom.bolilleroIALoader) dom.bolilleroIALoader.classList.remove("hidden");
+    if (dom.bolilleroIAContent) dom.bolilleroIAContent.classList.add("hidden");
+    if (dom.bolilleroIAFeedback) dom.bolilleroIAFeedback.classList.add("hidden");
+
+    actualizarUIIndicadoresPDF();
+
+    try {
+        const data = await generarPreguntaIA({
+            materia: materiaNombre,
+            tema: temaNombre,
+            tipoJuego: 'bolillero',
+            preguntasPrevias
+        });
+
+        if (data && data.pregunta) {
+            if (!historialPreguntasBolillero[temaKey]) {
+                historialPreguntasBolillero[temaKey] = [];
+            }
+            historialPreguntasBolillero[temaKey].push(data.pregunta);
+            data.numeroPregunta = historialPreguntasBolillero[temaKey].length;
+        }
+
+        bolilleroIAPreguntaActiva = data;
+        renderPreguntaIABolillero(data);
+        if (preguntasPrevias.length > 0) {
+            mostrarToast(`✨ Pregunta #${data.numeroPregunta || (preguntasPrevias.length + 1)} sobre "${temaNombre}" (nuevo enfoque generado)`);
+        }
+    } catch (err) {
+        console.warn("Fallo al consultar Gemini para Bolillero, usando fallback procedimental:", err.message);
+        mostrarToast("⚠️ Gemini sin conexión directa: usando banco procedimental variado");
+
+        // Banco procedimental con múltiples ángulos para nunca repetir en fallback
+        const fallbacks = [
+            {
+                pregunta: `¿Cuál es el principio metodológico y práctico fundamental asociado a "${temaNombre}" en ${materiaNombre}?`,
+                opciones: [
+                    `El análisis riguroso de las variables operativas y modelos formales de ${temaNombre}.`,
+                    `La omisión de los supuestos teóricos iniciales sin validación metodológica.`,
+                    `La sustitución puramente aleatoria de parámetros experimentales del sistema.`,
+                    `La eliminación completa de las condiciones de contorno establecidas formalmente.`
+                ],
+                respuestaCorrecta: 0,
+                explicacion: `En "${temaNombre}", el análisis riguroso de las variables garantiza la precisión teórica y práctica en el examen oral.`
+            },
+            {
+                pregunta: `En un escenario de aplicación práctica o caso límite de "${temaNombre}", ¿qué criterio debe priorizarse?`,
+                opciones: [
+                    `La verificación de las restricciones de contorno y la consistencia dimensional de las variables.`,
+                    `La alteración arbitraria de las constantes fundamentales para simplificar el resultado.`,
+                    `El descarte de toda correlación teórica cuando se presentan discrepancias numéricas.`,
+                    `La adopción de supuestos incompatibles con el marco general de la disciplina académica.`
+                ],
+                respuestaCorrecta: 0,
+                explicacion: `En casos de aplicación práctica de "${temaNombre}", verificar las condiciones de validez y restricciones de contorno resulta imprescindible.`
+            },
+            {
+                pregunta: `Si se modifican las variables críticas o condiciones de entorno en "${temaNombre}", ¿cuál es el comportamiento esperado?`,
+                opciones: [
+                    `Una respuesta proporcional que restablece el equilibrio de acuerdo con los postulados teóricos.`,
+                    `Una anulación irreversible e instantánea de todas las propiedades intrínsecas del sistema.`,
+                    `Un cambio totalmente caótico e imprevisible que invalida las leyes conocidas de la materia.`,
+                    `La inversión espontánea de todos los signos algebraicos sin justificación física alguna.`
+                ],
+                respuestaCorrecta: 0,
+                explicacion: `De acuerdo a los modelos formales de "${temaNombre}", el sistema responde proporcionalmente preservando la coherencia de sus postulados.`
+            },
+            {
+                pregunta: `Al contrastar "${temaNombre}" con conceptos afines de ${materiaNombre}, ¿cuál es la distinción conceptual clave?`,
+                opciones: [
+                    `El dominio específico de aplicación y la hipótesis de partida sobre el estado del sistema.`,
+                    `La ausencia total de rigor matemático en uno de los modelos respecto al otro.`,
+                    `El uso exclusivo de términos empíricos sin ninguna base teórica demostrable.`,
+                    `La incompatibilidad mutua que impide combinarlos en un mismo problema académico.`
+                ],
+                respuestaCorrecta: 0,
+                explicacion: `La distinción esencial entre "${temaNombre}" y conceptos afines radica en su dominio de aplicación y los supuestos de partida del modelo.`
+            }
+        ];
+
+        const idxFallback = preguntasPrevias.length % fallbacks.length;
+        const fallback = fallbacks[idxFallback];
+
+        if (!historialPreguntasBolillero[temaKey]) {
+            historialPreguntasBolillero[temaKey] = [];
+        }
+        historialPreguntasBolillero[temaKey].push(fallback.pregunta);
+        fallback.numeroPregunta = historialPreguntasBolillero[temaKey].length;
+
+        bolilleroIAPreguntaActiva = fallback;
+        renderPreguntaIABolillero(fallback);
+    } finally {
+        if (dom.bolilleroIALoader) dom.bolilleroIALoader.classList.add("hidden");
+    }
+}
+
+function renderPreguntaIABolillero(data) {
+    if (!dom.bolilleroIAContent || !dom.bolilleroIAPregunta || !dom.bolilleroIAOpciones) return;
+
+    if (data.numeroPregunta && data.numeroPregunta > 1) {
+        dom.bolilleroIAPregunta.innerHTML = `<span class="badge badge--accent" style="margin-bottom: 0.5rem; display: inline-block;">Pregunta #${data.numeroPregunta} • Nuevo enfoque</span><br>${data.pregunta}`;
+    } else {
+        dom.bolilleroIAPregunta.textContent = data.pregunta;
+    }
+    dom.bolilleroIAOpciones.innerHTML = "";
+
+    const letras = ["A", "B", "C", "D"];
+
+    data.opciones.forEach((opcTexto, idx) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "ia-option-btn";
+        btn.innerHTML = `
+            <span class="option-letter">${letras[idx]}</span>
+            <span class="option-text">${opcTexto}</span>
+        `;
+
+        btn.addEventListener("click", () => {
+            const esCorrecta = (idx === data.respuestaCorrecta);
+            const todosLosBotones = dom.bolilleroIAOpciones.querySelectorAll(".ia-option-btn");
+            
+            todosLosBotones.forEach((b, bIdx) => {
+                b.disabled = true;
+                if (bIdx === data.respuestaCorrecta) {
+                    b.classList.add("is-correct");
+                } else if (b === btn && !esCorrecta) {
+                    b.classList.add("is-wrong");
+                }
+            });
+
+            if (dom.bolilleroIAFeedback) {
+                dom.bolilleroIAFeedback.classList.remove("hidden");
+                dom.bolilleroIAFeedback.className = `bolillero-ia-feedback ${esCorrecta ? '' : 'is-error'}`;
+                dom.bolilleroIAFeedback.innerHTML = `
+                    <div style="font-weight: 700; margin-bottom: 0.35rem; color: ${esCorrecta ? '#34d399' : '#f87171'};">
+                        ${esCorrecta ? '🎉 ¡Respuesta Correcta!' : '❌ Respuesta Incorrecta'}
+                    </div>
+                    <div>${data.explicacion}</div>
+                `;
+            }
+
+            if (esCorrecta) {
+                mostrarToast("🌟 ¡Excelente respuesta de examen oral!");
+            }
+        });
+
+        dom.bolilleroIAOpciones.appendChild(btn);
+    });
+
+    dom.bolilleroIAContent.classList.remove("hidden");
+}
+
+function mostrarOverlayCargandoJuegoIA(visible, tipoJuego = "juego") {
+    if (!dom.juegosIALoadingOverlay) return;
+    if (visible) {
+        const nombres = {
+            bomba: "Desactivá la Bomba",
+            impostor: "Caza al Impostor",
+            memotest: "Memotest Conectado",
+            triatlon: "Triatlón Académico"
+        };
+        const juegoNom = nombres[tipoJuego] || "Desafío Académico";
+        if (dom.juegosIALoadingTitle) {
+            dom.juegosIALoadingTitle.textContent = `✨ Generando ${juegoNom} con IA...`;
+        }
+        if (dom.juegosIALoadingDesc) {
+            dom.juegosIALoadingDesc.textContent = "Gemini está analizando los conceptos teóricos de tu PDF para armar las preguntas de la partida.";
+        }
+        dom.juegosIALoadingOverlay.classList.remove("hidden");
+    } else {
+        dom.juegosIALoadingOverlay.classList.add("hidden");
+    }
+}
+
+// Generador Dinámico de Desafío para Juegos Educativos (Bomba, Impostor, Memotest)
+async function enriquecerJuegoActualConIA(iniciarInmediato = true) {
+    const juego = juegosEduEstado.juegoActual;
+    const apunte = apuntesEstado[juego] || apuntesEstado.global;
+    const lista = estado.listas.find(l => l.id === juegosEduEstado.listaId) || estado.listas[0];
+    const tema = (juegosEduEstado.temas && juegosEduEstado.temas.length > 0)
+        ? (juegosEduEstado.temas[juegosEduEstado.temaIndice] || juegosEduEstado.temas[0])
+        : null;
+
+    const materiaNombre = apunte ? apunte.nombre.replace(/\.pdf$/i, '') : (lista ? (lista.titulo || lista.nombre) : "Materia");
+    const temaNombre = tema ? (tema.nombre || tema.titulo || "Conceptos Clave") : "Material de Estudio";
+
+    mostrarToast(`✨ Conectando con Gemini para desafío de ${juego.toUpperCase()}...`);
+
+    try {
+        const data = await generarPreguntaIA({
+            materia: materiaNombre,
+            tema: temaNombre,
+            tipoJuego: juego,
+            contextoPDF: apunte ? apunte.texto : null
+        });
+
+        if (juego === "bomba") {
+            if (tema) {
+                tema.bomba = {
+                    fase1: data.fase1,
+                    fase2: data.fase2,
+                    fase3: data.fase3
+                };
+            }
+            if (iniciarInmediato && tema) {
+                renderFase1Bomba(tema);
+            }
+            mostrarToast("💣 ¡Bomba actualizada con preguntas teóricas de tu PDF!");
+        } else if (juego === "impostor") {
+            const casos = (data.casos && Array.isArray(data.casos) && data.casos.length > 0)
+                ? data.casos
+                : (data.opciones ? [data] : []);
+
+            if (casos.length > 0) {
+                juegosEduEstado.impostor.casosPool = casos.map((c, i) => {
+                    const opts = Array.isArray(c.opciones) ? c.opciones : [];
+                    const rIdx = (c.respuestaCorrecta !== undefined && c.respuestaCorrecta >= 0 && c.respuestaCorrecta < opts.length)
+                        ? Number(c.respuestaCorrecta)
+                        : 0;
+                    const afirmacionImpostora = opts[rIdx] || "Postulado con error conceptual sutil";
+                    const verdaderas = opts.filter((_, idx) => idx !== rIdx);
+                    while (verdaderas.length < 3) {
+                        verdaderas.push(`Principio fundamentado #${verdaderas.length + 1} sobre ${c.subtema || temaNombre}`);
+                    }
+                    return {
+                        subtema: c.subtema || `Caso #${i + 1}`,
+                        pregunta: c.pregunta || `Identificá la afirmación FALSA sobre ${c.subtema || temaNombre}:`,
+                        afirmacionesVerdaderas: verdaderas.slice(0, 3),
+                        afirmacionImpostora: afirmacionImpostora,
+                        explicacionError: c.explicacion || "Contradicción conceptual detectada con los principios del tema."
+                    };
+                });
+                mostrarToast(`🕵️‍♂️ ¡Expediente de ${juegosEduEstado.impostor.casosPool.length} casos armado con tus apuntes!`);
+            }
+            if (iniciarInmediato) {
+                lanzarOlaImpostor();
+            }
+        } else if (juego === "memotest" && data.pares && Array.isArray(data.pares)) {
+            juegosEduEstado.temas = data.pares.map((p, idx) => ({
+                id: "ia_pair_" + idx,
+                nombre: p.concepto,
+                descripcion: p.definicion,
+                memotest: {
+                    concepto: p.concepto,
+                    definicionOFormula: p.definicion
+                }
+            }));
+            if (iniciarInmediato) {
+                iniciarMemotest(juegosEduEstado.modo);
+            }
+            mostrarToast("🧠 ¡Tablero de Memotest conectado con 6 conceptos del PDF!");
+        }
+    } catch (err) {
+        console.warn("Fallo al generar juego con IA:", err.message);
+        mostrarToast("⚠️ No se pudo generar con IA, usando datos temáticos existentes.");
+    }
+}
+
+
+/* ==========================================================
+   EVENTOS & LISTENERS
+   ========================================================== */
+function registrarEventos() {
+    /* Eventos Google Gemini & Carga de Apuntes PDF */
+    cargarApuntesGuardados();
+
+    // 0. Centro Principal de Apuntes (PDF Hub Global) en Inicio
+    const triggerMainPdfInput = () => {
+        if (dom.mainGlobalPdfInput) dom.mainGlobalPdfInput.click();
+    };
+    if (dom.mainUploadPdfBtn) dom.mainUploadPdfBtn.addEventListener("click", triggerMainPdfInput);
+    if (dom.mainChangePdfBtn) dom.mainChangePdfBtn.addEventListener("click", triggerMainPdfInput);
+
+    if (dom.mainGlobalPdfInput) {
+        dom.mainGlobalPdfInput.addEventListener("change", async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            mostrarToast("📑 Procesando material de estudio con PDF.js...");
+            try {
+                const res = await procesarArchivoPDF(file);
+                apuntesEstado.global = res;
+                apuntesEstado.bolillero = res;
+                apuntesEstado.bomba = res;
+                apuntesEstado.impostor = res;
+                apuntesEstado.memotest = res;
+                await guardarApuntesEnStorage();
+                actualizarUIIndicadoresPDF();
+                mostrarToast(`✅ Material conectado: ${res.nombre}. ¡Ya alimenta a todos tus juegos!`);
+            } catch (err) {
+                alert(err.message);
+            }
+        });
+    }
+
+    if (dom.mainRemovePdfBtn) {
+        dom.mainRemovePdfBtn.addEventListener("click", async () => {
+            apuntesEstado.global = null;
+            apuntesEstado.bolillero = null;
+            apuntesEstado.bomba = null;
+            apuntesEstado.impostor = null;
+            apuntesEstado.memotest = null;
+            await guardarApuntesEnStorage();
+            actualizarUIIndicadoresPDF();
+            mostrarToast("🗑️ Material de estudio desvinculado.");
+        });
+    }
+
+    // 1. Bolillero PDF Upload
+    if (dom.bolilleroUploadPdfBtn && dom.bolilleroPdfInput) {
+        dom.bolilleroUploadPdfBtn.addEventListener("click", () => dom.bolilleroPdfInput.click());
+        dom.bolilleroPdfInput.addEventListener("change", async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            mostrarToast("📑 Procesando apuntes PDF con PDF.js...");
+            try {
+                const res = await procesarArchivoPDF(file);
+                apuntesEstado.bolillero = res;
+                if (!apuntesEstado.global) apuntesEstado.global = res;
+                guardarApuntesEnStorage();
+                actualizarUIIndicadoresPDF();
+                mostrarToast(`✅ Apuntes cargados: ${res.nombre} (${res.paginas} págs)`);
+            } catch (err) {
+                alert(err.message);
+            }
+        });
+    }
+
+    // 2. Bolillero IA Question Buttons
+    if (dom.bolilleroIAGenerateBtn) {
+        dom.bolilleroIAGenerateBtn.addEventListener("click", solicitarPreguntaIABolillero);
+    }
+    if (dom.bolilleroIARetryBtn) {
+        dom.bolilleroIARetryBtn.addEventListener("click", solicitarPreguntaIABolillero);
+    }
+
+    // 3. Juegos Educativos PDF Bar (Bomba, Impostor, Memotest)
+    if (dom.juegosUploadPdfBtn && dom.juegosPdfInput) {
+        dom.juegosUploadPdfBtn.addEventListener("click", () => dom.juegosPdfInput.click());
+        dom.juegosPdfInput.addEventListener("change", async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            mostrarToast("📑 Procesando apuntes para el desafío...");
+            try {
+                const res = await procesarArchivoPDF(file);
+                const juegoActual = juegosEduEstado.juegoActual || "global";
+                apuntesEstado[juegoActual] = res;
+                apuntesEstado.global = res;
+                guardarApuntesEnStorage();
+                actualizarUIIndicadoresPDF();
+                mostrarToast(`✅ Apunte activo para ${juegoActual.toUpperCase()}: ${res.nombre}`);
+                enriquecerJuegoActualConIA();
+            } catch (err) {
+                alert(err.message);
+            }
+        });
+    }
+
+    if (dom.juegosRemovePdfBtn) {
+        dom.juegosRemovePdfBtn.addEventListener("click", () => {
+            const juegoActual = juegosEduEstado.juegoActual || "global";
+            apuntesEstado[juegoActual] = null;
+            apuntesEstado.global = null;
+            guardarApuntesEnStorage();
+            actualizarUIIndicadoresPDF();
+            mostrarToast("🗑️ Apuntes desvinculados.");
+        });
+    }
+
+    if (dom.juegosGenerateIABtn) {
+        dom.juegosGenerateIABtn.addEventListener("click", async () => {
+            mostrarOverlayCargandoJuegoIA(true, juegosEduEstado.juegoActual);
+            try {
+                await enriquecerJuegoActualConIA(true);
+            } finally {
+                mostrarOverlayCargandoJuegoIA(false);
+            }
+        });
+    }
+
+    // 4. Estudiar Solo - Tarjeta Global PDF
+    if (dom.soloUploadGlobalPdfBtn && dom.soloGlobalPdfInput) {
+        dom.soloUploadGlobalPdfBtn.addEventListener("click", () => dom.soloGlobalPdfInput.click());
+        dom.soloGlobalPdfInput.addEventListener("change", async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            mostrarToast("📑 Procesando material de estudio global...");
+            try {
+                const res = await procesarArchivoPDF(file);
+                apuntesEstado.global = res;
+                await guardarApuntesEnStorage();
+                actualizarUIIndicadoresPDF();
+                mostrarToast(`✅ Material global vinculado: ${res.nombre} (${res.paginas} págs)`);
+            } catch (err) {
+                alert(err.message);
+            }
+        });
+    }
+
+    /* Navegación Principal */
+    if (dom.navHomeBtn) dom.navHomeBtn.addEventListener("click", () => cambiarVista("home"));
+    if (dom.navSoloBtn) dom.navSoloBtn.addEventListener("click", () => cambiarVista("solo"));
+    if (dom.navJuntosBtn) dom.navJuntosBtn.addEventListener("click", () => {
+        mostrarToast("🔒 Acceso cerrado: El modo Estudiar Juntos no está disponible temporalmente.");
+    });
+    if (dom.navBolilleroBtn) dom.navBolilleroBtn.addEventListener("click", () => cambiarVista("bolillero"));
+    if (dom.navDueloBtn) dom.navDueloBtn.addEventListener("click", () => {
+        mostrarToast("🔒 Acceso cerrado: El modo Duelos Online no está disponible temporalmente.");
+    });
+    if (dom.navFamaBtn) dom.navFamaBtn.addEventListener("click", () => cambiarVista("fama"));
+    if (dom.brandLink) {
+        dom.brandLink.addEventListener("click", (e) => {
+            e.preventDefault();
+            cambiarVista("home");
+        });
+    }
+
+    // Atajo de teclado: Barra espaciadora para girar el Bolillero
+    window.addEventListener("keydown", (e) => {
+        if (e.code === "Space" || e.key === " ") {
+            if (estado.interfaz.vistaActual === "bolillero") {
+                const activeTag = document.activeElement ? document.activeElement.tagName.toLowerCase() : "";
+                if (activeTag === "input" || activeTag === "textarea" || (dom.listModal && dom.listModal.open) || (dom.topicModal && dom.topicModal.open)) {
+                    return;
+                }
+                e.preventDefault();
+                if (dom.spinButton && !dom.spinButton.disabled && !estado.interfaz.girando) {
+                    girarBolillero();
+                }
+            }
+        }
+    });
+
+    // Botones Hero y Portal Hub desde Inicio (viewHome)
+    if (dom.heroGoSoloBtn) dom.heroGoSoloBtn.addEventListener("click", () => cambiarVista("solo"));
+    if (dom.heroGoJuntosBtn) dom.heroGoJuntosBtn.addEventListener("click", () => {
+        mostrarToast("🔒 Acceso cerrado: El modo Estudiar Juntos no está disponible temporalmente.");
+    });
+    if (dom.homeGoToSoloBtn) dom.homeGoToSoloBtn.addEventListener("click", () => cambiarVista("solo"));
+    if (dom.homeGoToJuntosBtn) dom.homeGoToJuntosBtn.addEventListener("click", () => {
+        mostrarToast("🔒 Acceso cerrado: El modo Estudiar Juntos no está disponible temporalmente.");
+    });
+    if (dom.homeGoToFamaBtn) dom.homeGoToFamaBtn.addEventListener("click", () => cambiarVista("fama"));
+
+    // Botones Cuadrículas de Estudiar Solo (viewSolo)
+    if (dom.soloOpenBolilleroBtn) dom.soloOpenBolilleroBtn.addEventListener("click", () => cambiarVista("bolillero"));
+    if (dom.soloOpenBombaBtn) dom.soloOpenBombaBtn.addEventListener("click", () => abrirArenaJuego("bomba", "solo"));
+    if (dom.soloOpenImpostorBtn) dom.soloOpenImpostorBtn.addEventListener("click", () => abrirArenaJuego("impostor", "solo"));
+    if (dom.soloOpenMemotestBtn) dom.soloOpenMemotestBtn.addEventListener("click", () => abrirArenaJuego("memotest", "solo"));
+    if (dom.soloNewListShortcutBtn) dom.soloNewListShortcutBtn.addEventListener("click", () => {
+        cambiarVista("bolillero");
+        if (dom.listModal) dom.listModal.showModal();
+    });
+
+    // Botones Volver Atrás (Back buttons)
+    if (dom.backFromBolilleroBtn) dom.backFromBolilleroBtn.addEventListener("click", () => cambiarVista("solo"));
+    if (dom.backFromDueloBtn) dom.backFromDueloBtn.addEventListener("click", () => cambiarVista("juntos"));
+
+    // Botones Estudiar Juntos (viewJuntos) - Lobby Rápido y Modos
+    if (dom.juntosQuickCreateBtn) dom.juntosQuickCreateBtn.addEventListener("click", () => {
+        cambiarVista("duelo");
+        if (dom.dueloCreateRoomModal) dom.dueloCreateRoomModal.showModal();
+    });
+    if (dom.juntosQuickJoinBtn) dom.juntosQuickJoinBtn.addEventListener("click", () => {
+        cambiarVista("duelo");
+        const pinInput = document.getElementById("dueloJoinRoomInput");
+        if (pinInput) pinInput.focus();
+    });
+    if (dom.openDueloBolilleroCardBtn) dom.openDueloBolilleroCardBtn.addEventListener("click", () => {
+        cambiarVista("duelo");
+        if (dom.dueloOnlineGameSelect) dom.dueloOnlineGameSelect.value = "bolillero";
+    });
+    if (dom.openDueloBombaCardBtn) dom.openDueloBombaCardBtn.addEventListener("click", () => {
+        cambiarVista("duelo");
+        if (dom.dueloOnlineGameSelect) dom.dueloOnlineGameSelect.value = "bomba";
+    });
+    if (dom.openDueloImpostorCardBtn) dom.openDueloImpostorCardBtn.addEventListener("click", () => {
+        cambiarVista("duelo");
+        if (dom.dueloOnlineGameSelect) dom.dueloOnlineGameSelect.value = "impostor";
+    });
+    if (dom.openDueloMemotestCardBtn) dom.openDueloMemotestCardBtn.addEventListener("click", () => {
+        cambiarVista("duelo");
+        if (dom.dueloOnlineGameSelect) dom.dueloOnlineGameSelect.value = "memotest";
+    });
+    if (dom.openDueloTriatlonCardBtn) dom.openDueloTriatlonCardBtn.addEventListener("click", () => {
+        cambiarVista("duelo");
+        if (dom.dueloOnlineGameSelect) dom.dueloOnlineGameSelect.value = "triatlon";
+    });
+    if (dom.openCoopBombaBtn) dom.openCoopBombaBtn.addEventListener("click", () => {
+        cambiarVista("duelo");
+        if (dom.dueloOnlineGameSelect) dom.dueloOnlineGameSelect.value = "bomba";
+    });
+    if (dom.openCoopMemotestBtn) dom.openCoopMemotestBtn.addEventListener("click", () => {
+        cambiarVista("duelo");
+        if (dom.dueloOnlineGameSelect) dom.dueloOnlineGameSelect.value = "memotest";
+    });
+    if (dom.openCoopBolilleroBtn) dom.openCoopBolilleroBtn.addEventListener("click", () => {
+        cambiarVista("bolillero");
+    });
+
+    // Botones adicionales hacia el bolillero
+    dom.openBolilleroBtns.forEach(btn => {
+        btn.addEventListener("click", () => cambiarVista("bolillero"));
+    });
+    if (dom.heroEnterBolilleroBtn) {
+        dom.heroEnterBolilleroBtn.addEventListener("click", () => cambiarVista("bolillero"));
+    }
+
+    // Bolita 3D interactiva
+    if (dom.interactiveBall) {
+        dom.interactiveBall.addEventListener("click", () => {
+            dom.interactiveBall.classList.add("is-clicked");
+            setTimeout(() => {
+                dom.interactiveBall.classList.remove("is-clicked");
+                cambiarVista("bolillero");
+            }, 300);
+        });
+    }
+
+    // Botón abrir pomodoro desde tarjeta del Home
+    if (dom.openPomodoroFromCardBtn) {
+        dom.openPomodoroFromCardBtn.addEventListener("click", abrirTarjetaPomodoro);
+    }
+
+    // Tema Sol/Luna
+    if (dom.themeToggleBtn) {
+        dom.themeToggleBtn.addEventListener("click", alternarTema);
+    }
+
+    // Modo Rendimiento (Lite / Visual Pro)
+    if (dom.perfToggleBtn) {
+        dom.perfToggleBtn.addEventListener("click", alternarModoRendimiento);
+    }
+
+    // Dynamic Island
+    dom.pomodoroPill.addEventListener("click", toggleTarjetaPomodoro);
+
+    // Tarjeta Flotante
+    dom.pinPomodoroBtn.addEventListener("click", toggleFijarTarjeta);
+    dom.minimizePomodoroBtn.addEventListener("click", () => cerrarTarjetaPomodoro(true));
+
+    /* Bolillero y Listas */
+    dom.newListButton.addEventListener("click", () => dom.listModal.showModal());
+    dom.cancelListButton.addEventListener("click", () => dom.listModal.close());
+    dom.listForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        crearLista(dom.listNameInput.value);
+        dom.listForm.reset();
+        dom.listModal.close();
+    });
+
+    dom.addTopicButton.addEventListener("click", () => dom.topicModal.showModal());
+    dom.cancelTopicButton.addEventListener("click", () => dom.topicModal.close());
+    dom.topicForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        agregarTema(dom.topicInput.value);
+        dom.topicForm.reset();
+        dom.topicModal.close();
+    });
+
+    dom.listsContainer.addEventListener("click", (e) => {
+        const btn = e.target.closest(".list-item__button");
+        if (btn) {
+            estado.listaSeleccionadaId = btn.dataset.id;
+            reconstruirBolillero();
+            render();
+            return;
+        }
+        const del = e.target.closest(".delete-list");
+        if (del) {
+            const id = del.closest(".list-item").querySelector(".list-item__button").dataset.id;
+            eliminarLista(id);
+        }
+    });
+
+function seleccionarTemaManualBolillero(temaId, dispararIaInmediata = false) {
+    const lista = obtenerListaSeleccionada();
+    if (!lista) return;
+    const tema = lista.temas.find(t => t.id === temaId);
+    if (!tema) return;
+
+    // Resaltar tarjeta seleccionada en el grid
+    const allCards = dom.topicsGrid.querySelectorAll(".topic-card");
+    allCards.forEach(c => c.classList.remove("is-selected-card"));
+    const cardEl = dom.topicsGrid.querySelector(`.topic-card[data-id="${temaId}"]`);
+    if (cardEl) cardEl.classList.add("is-selected-card");
+
+    // Marcar como último tema seleccionado
+    estado.ronda.ultimoTemaId = temaId;
+    if (dom.rollingDisplay) dom.rollingDisplay.textContent = tema.titulo;
+    renderResultado();
+
+    // Desplazar a la sección de resultado / pregunta IA
+    if (dom.resultSection) {
+        dom.resultSection.classList.remove("hidden");
+        dom.resultSection.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+
+    if (dispararIaInmediata) {
+        mostrarToast(`✨ Generando pregunta con IA sobre "${tema.titulo}"...`);
+        solicitarPreguntaIABolillero();
+    } else {
+        mostrarToast(`🎯 Seleccionaste "${tema.titulo}". Podés generar una pregunta con IA abajo.`);
+    }
+}
+
+    dom.topicsGrid.addEventListener("click", (e) => {
+        const del = e.target.closest(".delete-topic");
+        if (del) {
+            const id = del.closest(".topic-card").dataset.id;
+            eliminarTema(id);
+            return;
+        }
+
+        const askIa = e.target.closest(".ask-topic-ia");
+        const card = e.target.closest(".topic-card");
+        if (card) {
+            const temaId = card.dataset.id;
+            seleccionarTemaManualBolillero(temaId, Boolean(askIa));
+        }
+    });
+
+    if (dom.spinButton) dom.spinButton.addEventListener("click", girarBolillero);
+    if (dom.drawAgainButton) dom.drawAgainButton.addEventListener("click", girarBolillero);
+    if (dom.restoreRoundButton) dom.restoreRoundButton.addEventListener("click", restaurarBolillero);
+
+    if (dom.importButton && dom.importFileInput) {
+        dom.importButton.addEventListener("click", () => dom.importFileInput.click());
+    }
+    if (dom.importFileInput) {
+        dom.importFileInput.addEventListener("change", manejarImportacionArchivo);
+    }
+
+    if (dom.bolilleroIaWordsBtn) {
+        dom.bolilleroIaWordsBtn.addEventListener("click", abrirModalIaWordsBolillero);
+    }
+    if (dom.closeIaWordsModalBtn) {
+        dom.closeIaWordsModalBtn.addEventListener("click", () => {
+            if (dom.bolilleroIaWordsModal) {
+                if (typeof dom.bolilleroIaWordsModal.close === "function") dom.bolilleroIaWordsModal.close();
+                else dom.bolilleroIaWordsModal.removeAttribute("open");
+            }
+        });
+    }
+    if (dom.cancelIaWordsModalBtn) {
+        dom.cancelIaWordsModalBtn.addEventListener("click", () => {
+            if (dom.bolilleroIaWordsModal) {
+                if (typeof dom.bolilleroIaWordsModal.close === "function") dom.bolilleroIaWordsModal.close();
+                else dom.bolilleroIaWordsModal.removeAttribute("open");
+            }
+        });
+    }
+    if (dom.iaWordsForm) {
+        dom.iaWordsForm.addEventListener("submit", procesarExtraccionPalabrasIA);
+    }
+
+    // Chips de selección rápida de cantidad
+    document.querySelectorAll(".ia-words-quick-chip").forEach(chip => {
+        chip.addEventListener("click", () => {
+            document.querySelectorAll(".ia-words-quick-chip").forEach(c => c.classList.remove("is-active"));
+            chip.classList.add("is-active");
+            const cnt = chip.dataset.count;
+            if (dom.iaWordsCountInput && cnt) {
+                dom.iaWordsCountInput.value = cnt;
+            }
+        });
+    });
+
+    if (dom.iaWordsCountInput) {
+        dom.iaWordsCountInput.addEventListener("input", (e) => {
+            const val = e.target.value;
+            document.querySelectorAll(".ia-words-quick-chip").forEach(chip => {
+                chip.classList.toggle("is-active", chip.dataset.count === val);
+            });
+        });
+    }
+
+    /* Pomodoro */
+    dom.modeStudyBtn.addEventListener("click", () => cambiarModoPomodoro("estudio"));
+    dom.modeShortBreakBtn.addEventListener("click", () => cambiarModoPomodoro("descanso-corto"));
+    dom.modeLongBreakBtn.addEventListener("click", () => cambiarModoPomodoro("descanso-largo"));
+
+    dom.pomodoroToggleBtn.addEventListener("click", togglePomodoro);
+    dom.pomodoroResetBtn.addEventListener("click", reiniciarPomodoro);
+    dom.pomodoroSkipBtn.addEventListener("click", siguienteFasePomodoro);
+
+    dom.pomodoroConfigButton.addEventListener("click", abrirModalPomodoro);
+    dom.cancelPomodoroButton.addEventListener("click", cerrarModalPomodoro);
+    dom.pomodoroForm.addEventListener("submit", guardarFormularioPomodoro);
+
+    dom.pomodoroModal.addEventListener("close", () => {
+        dom.pomodoroForm.reset();
+    });
+
+    
+    /* ==========================================================
+       MODO DUELO & SALÓN DE LA FAMA EVENTOS
+       ========================================================== */
+        // Cuenta y Autenticación con PIN
+    if (dom.dueloChangeAvatarBtn) dom.dueloChangeAvatarBtn.addEventListener("click", abrirSelectorAvatar);
+    if (dom.dueloAuthModalBtn) dom.dueloAuthModalBtn.addEventListener("click", () => abrirModalAuth("login"));
+    if (dom.dueloCreateAccountPromptBtn) dom.dueloCreateAccountPromptBtn.addEventListener("click", () => abrirModalAuth("register"));
+    if (dom.authModalCloseBtn) dom.authModalCloseBtn.addEventListener("click", () => dom.authAccountModal.close());
+    if (dom.authTabRegister) dom.authTabRegister.addEventListener("click", () => cambiarPestañaAuth("register"));
+    if (dom.authTabLogin) dom.authTabLogin.addEventListener("click", () => cambiarPestañaAuth("login"));
+    if (dom.authRegOpenAvatarPickerBtn) dom.authRegOpenAvatarPickerBtn.addEventListener("click", abrirSelectorAvatar);
+    if (dom.authContinueGuestBtn) dom.authContinueGuestBtn.addEventListener("click", () => {
+        cerrarSesionPerfil();
+        if (dom.authAccountModal) dom.authAccountModal.close();
+    });
+    if (dom.authSubmitRegisterBtn) {
+        dom.authSubmitRegisterBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            const apodo = dom.authRegApodo?.value;
+            const pin = dom.authRegPin?.value;
+            const email = dom.authRegEmail?.value;
+            crearOActualizarCuenta(apodo, perfilUsuario.avatar, perfilUsuario.tipoAvatar, perfilUsuario.fotoDataUrl, pin, email);
+        });
+    }
+    if (dom.authSubmitLoginBtn) {
+        dom.authSubmitLoginBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            const cuentaId = dom.authLoginSelect?.value;
+            const pin = dom.authLoginPin?.value;
+            if (!cuentaId) {
+                alert("Seleccioná una cuenta.");
+                return;
+            }
+            iniciarSesionConPin(cuentaId, pin);
+        });
+    }
+    if (dom.authForgotPinBtn) dom.authForgotPinBtn.addEventListener("click", recuperarPin);
+
+    // Selector de Avatares (Emojis & Foto)
+    if (dom.avatarModalCloseBtn) dom.avatarModalCloseBtn.addEventListener("click", () => dom.avatarPickerModal.close());
+    if (dom.avatarTabEmojis) {
+        dom.avatarTabEmojis.addEventListener("click", () => {
+            dom.avatarTabEmojis.classList.add("is-active");
+            dom.avatarTabPhoto.classList.remove("is-active");
+            dom.avatarPanelEmojis.classList.remove("hidden");
+            dom.avatarPanelPhoto.classList.add("hidden");
+        });
+    }
+    if (dom.avatarTabPhoto) {
+        dom.avatarTabPhoto.addEventListener("click", () => {
+            dom.avatarTabPhoto.classList.add("is-active");
+            dom.avatarTabEmojis.classList.remove("is-active");
+            dom.avatarPanelPhoto.classList.remove("hidden");
+            dom.avatarPanelEmojis.classList.add("hidden");
+        });
+    }
+    if (dom.avatarEmojiSearchInput) {
+        dom.avatarEmojiSearchInput.addEventListener("input", (e) => {
+            const activeCatPill = document.querySelector(".emoji-cat-pill.is-active");
+            const cat = activeCatPill ? activeCatPill.dataset.cat : "all";
+            renderCatalogoEmojis(cat, e.target.value);
+        });
+    }
+    const catPills = document.querySelectorAll(".emoji-cat-pill");
+    catPills.forEach(pill => {
+        pill.addEventListener("click", () => {
+            catPills.forEach(p => p.classList.remove("is-active"));
+            pill.classList.add("is-active");
+            renderCatalogoEmojis(pill.dataset.cat, dom.avatarEmojiSearchInput?.value || "");
+        });
+    });
+    if (dom.avatarCustomEmojiBtn) {
+        dom.avatarCustomEmojiBtn.addEventListener("click", () => {
+            const custom = dom.avatarCustomEmojiInput?.value?.trim();
+            if (custom) {
+                aplicarAvatarSeleccionado("emoji", custom, "");
+            }
+        });
+    }
+    if (dom.avatarCaptureCameraBtn) {
+        dom.avatarCaptureCameraBtn.addEventListener("click", () => {
+            if (dom.avatarFileInput) {
+                dom.avatarFileInput.setAttribute("capture", "user");
+                dom.avatarFileInput.click();
+            }
+        });
+    }
+    if (dom.avatarUploadGalleryBtn) {
+        dom.avatarUploadGalleryBtn.addEventListener("click", () => {
+            if (dom.avatarFileInput) {
+                dom.avatarFileInput.removeAttribute("capture");
+                dom.avatarFileInput.click();
+            }
+        });
+    }
+    if (dom.avatarFileInput) {
+        dom.avatarFileInput.addEventListener("change", (e) => {
+            if (e.target.files && e.target.files[0]) {
+                procesarFotoSubida(e.target.files[0]);
+            }
+        });
+    }
+    if (dom.avatarConfirmPhotoBtn) {
+        dom.avatarConfirmPhotoBtn.addEventListener("click", () => {
+            if (tempAvatarSeleccionado.dataUrl) {
+                aplicarAvatarSeleccionado("foto", "📷", tempAvatarSeleccionado.dataUrl);
+            }
+        });
+    }
+
+    // Modalidad Online vs Local
+    if (dom.dueloModeOnlineBtn) dom.dueloModeOnlineBtn.addEventListener("click", () => cambiarModoDueloLobby("online"));
+    if (dom.dueloModeLocalBtn) dom.dueloModeLocalBtn.addEventListener("click", () => cambiarModoDueloLobby("local"));
+
+    // Online Lobby Setup
+    if (dom.dueloOnlineHasPassword) {
+        dom.dueloOnlineHasPassword.addEventListener("change", () => {
+            if (dom.dueloOnlinePasswordRow) {
+                dom.dueloOnlinePasswordRow.classList.toggle("hidden", !dom.dueloOnlineHasPassword.checked);
+            }
+        });
+    }
+    if (dom.dueloCreateRoomBtn) dom.dueloCreateRoomBtn.addEventListener("click", crearSalaOnline);
+    if (dom.dueloJoinRoomBtn) {
+        dom.dueloJoinRoomBtn.addEventListener("click", () => {
+            unirseASalaOnline(dom.dueloJoinRoomCode?.value, dom.dueloJoinRoomPass?.value);
+        });
+    }
+    if (dom.dueloCopyLinkBtn) {
+        dom.dueloCopyLinkBtn.addEventListener("click", () => {
+            if (dom.dueloMagicLinkInput) {
+                navigator.clipboard.writeText(dom.dueloMagicLinkInput.value).then(() => {
+                    if (dom.dueloCopySuccessHint) {
+                        dom.dueloCopySuccessHint.style.display = "block";
+                        setTimeout(() => dom.dueloCopySuccessHint.style.display = "none", 3000);
+                    }
+                });
+            }
+        });
+    }
+    if (dom.dueloShareLinkBtn) {
+        dom.dueloShareLinkBtn.addEventListener("click", () => {
+            const url = dom.dueloMagicLinkInput?.value || window.location.href;
+            if (navigator.share) {
+                navigator.share({
+                    title: "Duelo de Bolillero Luibañez",
+                    text: `¡Unite a mi sala de estudio "${onlineDueloEstado.codigoSala}" en Luibañez!`,
+                    url
+                }).catch(() => {});
+            } else {
+                navigator.clipboard.writeText(url).then(() => {
+                    alert("¡Enlace copiado al portapapeles listo para compartir!");
+                });
+            }
+        });
+    }
+    if (dom.dueloLaunchOnlineMatchBtn) dom.dueloLaunchOnlineMatchBtn.addEventListener("click", iniciarCombateOnlineDesdeHost);
+    if (dom.dueloLeaveOnlineRoomBtn) dom.dueloLeaveOnlineRoomBtn.addEventListener("click", salirDeSalaOnline);
+
+    // Votación Individual Online
+    if (dom.dueloOnlineVote10Btn) dom.dueloOnlineVote10Btn.addEventListener("click", () => emitirVotoOnline(10));
+    if (dom.dueloOnlineVote5Btn) dom.dueloOnlineVote5Btn.addEventListener("click", () => emitirVotoOnline(5));
+    if (dom.dueloOnlineVote0Btn) dom.dueloOnlineVote0Btn.addEventListener("click", () => emitirVotoOnline(0));
+
+    // Robo Relámpago Online Pulsador
+    if (dom.dueloOnlineBuzzerTriggerBtn) dom.dueloOnlineBuzzerTriggerBtn.addEventListener("click", tocarPulsadorRoboOnline);
+
+    // Chat Multimedia
+    if (dom.dueloChatToggleBtn) dom.dueloChatToggleBtn.addEventListener("click", toggleVentanaChat);
+    if (dom.dueloChatCloseBtn) dom.dueloChatCloseBtn.addEventListener("click", toggleVentanaChat);
+    if (dom.dueloChatForm) {
+        dom.dueloChatForm.addEventListener("submit", (e) => {
+            e.preventDefault();
+            const val = dom.dueloChatTextInput?.value;
+            enviarMensajeChat(val);
+        });
+    }
+    if (dom.dueloChatPhotoBtn) {
+        dom.dueloChatPhotoBtn.addEventListener("click", () => {
+            if (dom.dueloChatPhotoInput) dom.dueloChatPhotoInput.click();
+        });
+    }
+    if (dom.dueloChatPhotoInput) {
+        dom.dueloChatPhotoInput.addEventListener("change", (e) => {
+            if (e.target.files && e.target.files[0]) {
+                const file = e.target.files[0];
+                const r = new FileReader();
+                r.onload = ev => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement("canvas");
+                        const maxW = 480;
+                        const scale = Math.min(1, maxW / img.width);
+                        canvas.width = img.width * scale;
+                        canvas.height = img.height * scale;
+                        const ctx = canvas.getContext("2d");
+                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        const compressed = canvas.toDataURL("image/jpeg", 0.68);
+                        enviarMensajeChat("", compressed, "");
+                    };
+                    img.src = ev.target.result;
+                };
+                r.readAsDataURL(file);
+            }
+        });
+    }
+    if (dom.dueloChatMicBtn) {
+        dom.dueloChatMicBtn.addEventListener("click", () => {
+            if (onlineDueloEstado.grabandoAudio) {
+                detenerYEnviarGrabacionVoz();
+            } else {
+                iniciarGrabacionVoz();
+            }
+        });
+    }
+    if (dom.dueloVoiceCancelBtn) {
+        dom.dueloVoiceCancelBtn.addEventListener("click", () => {
+            if (onlineDueloEstado.mediaRecorder && onlineDueloEstado.mediaRecorder.state !== "inactive") {
+                clearInterval(onlineDueloEstado.recIntervalId);
+                onlineDueloEstado.mediaRecorder.stop();
+                onlineDueloEstado.mediaRecorder.stream.getTracks().forEach(t => t.stop());
+                if (dom.dueloVoiceRecordingBar) dom.dueloVoiceRecordingBar.classList.add("hidden");
+                onlineDueloEstado.grabandoAudio = false;
+            }
+        });
+    }
+    if (dom.dueloVoiceSendBtn) {
+        dom.dueloVoiceSendBtn.addEventListener("click", detenerYEnviarGrabacionVoz);
+    }
+    const quickEmojiBtns = document.querySelectorAll(".chat-quick-emoji-btn");
+    quickEmojiBtns.forEach(btn => {
+        btn.addEventListener("click", () => {
+            enviarMensajeChat(btn.dataset.emoji);
+        });
+    });
+    if (dom.photoZoomCloseBtn) {
+        dom.photoZoomCloseBtn.addEventListener("click", () => {
+            if (dom.photoZoomModal) dom.photoZoomModal.close();
+        });
+    }
+
+
+    if (dom.navDueloBtn) dom.navDueloBtn.addEventListener("click", () => cambiarVista("duelo"));
+    if (dom.navFamaBtn) dom.navFamaBtn.addEventListener("click", () => cambiarVista("fama"));
+    if (dom.openDueloFromCardBtn) dom.openDueloFromCardBtn.addEventListener("click", () => cambiarVista("duelo"));
+    if (dom.openFamaFromCardBtn) dom.openFamaFromCardBtn.addEventListener("click", () => cambiarVista("fama"));
+
+    // Lobby Duelo
+    if (dom.dueloAddPlayerBtn) {
+        dom.dueloAddPlayerBtn.addEventListener("click", () => {
+            if (dom.dueloPlayerInput) agregarJugadorDuelo(dom.dueloPlayerInput.value);
+        });
+    }
+
+    if (dom.dueloPlayerInput) {
+        dom.dueloPlayerInput.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                agregarJugadorDuelo(dom.dueloPlayerInput.value);
+            }
+        });
+    }
+
+    if (dom.dueloPlayersChips) {
+        dom.dueloPlayersChips.addEventListener("click", (e) => {
+            const delBtn = e.target.closest(".duelo-player-chip__delete");
+            if (delBtn) {
+                const idx = parseInt(delBtn.dataset.idx, 10);
+                eliminarJugadorDuelo(idx);
+            }
+        });
+    }
+
+    if (dom.dueloListaSelect) {
+        dom.dueloListaSelect.addEventListener("change", () => {
+            dueloEstado.config.listaId = dom.dueloListaSelect.value;
+            const lista = estado.listas.find(l => l.id === dueloEstado.config.listaId);
+            if (dom.dueloListaHint && lista) {
+                dom.dueloListaHint.textContent = `${lista.temas.length} temas disponibles para la batalla.`;
+            }
+            guardarPreferenciasDuelo();
+        });
+    }
+
+    if (dom.dueloMinutosInput) dom.dueloMinutosInput.addEventListener("change", actualizarTiempoTurnoLobby);
+    if (dom.dueloSegundosInput) dom.dueloSegundosInput.addEventListener("change", actualizarTiempoTurnoLobby);
+
+    const presetPills = document.querySelectorAll(".preset-pill");
+    presetPills.forEach(pill => {
+        pill.addEventListener("click", () => {
+            presetPills.forEach(p => p.classList.remove("is-active"));
+            pill.classList.add("is-active");
+            const secs = parseInt(pill.dataset.seconds, 10);
+            if (dom.dueloMinutosInput) dom.dueloMinutosInput.value = Math.floor(secs / 60);
+            if (dom.dueloSegundosInput) dom.dueloSegundosInput.value = secs % 60;
+            actualizarTiempoTurnoLobby();
+        });
+    });
+
+    if (dom.dueloToggleAllComodinesBtn) {
+        dom.dueloToggleAllComodinesBtn.addEventListener("click", toggleTodosLosComodines);
+    }
+
+    if (dom.dueloComodinSocorro) {
+        dom.dueloComodinSocorro.addEventListener("change", () => {
+            dueloEstado.config.comodines.socorro = dom.dueloComodinSocorro.checked;
+            guardarPreferenciasDuelo();
+        });
+    }
+
+    if (dom.dueloComodinPista) {
+        dom.dueloComodinPista.addEventListener("change", () => {
+            dueloEstado.config.comodines.pista = dom.dueloComodinPista.checked;
+            guardarPreferenciasDuelo();
+        });
+    }
+
+    if (dom.dueloComodinPaso) {
+        dom.dueloComodinPaso.addEventListener("change", () => {
+            dueloEstado.config.comodines.pasoRebote = dom.dueloComodinPaso.checked;
+            guardarPreferenciasDuelo();
+        });
+    }
+
+    if (dom.dueloReglaRacha) {
+        dom.dueloReglaRacha.addEventListener("change", () => {
+            dueloEstado.config.reglas.rachaFuego = dom.dueloReglaRacha.checked;
+            guardarPreferenciasDuelo();
+        });
+    }
+
+    if (dom.dueloReglaRobo) {
+        dom.dueloReglaRobo.addEventListener("change", () => {
+            dueloEstado.config.reglas.roboRelampago = dom.dueloReglaRobo.checked;
+            guardarPreferenciasDuelo();
+        });
+    }
+
+    if (dom.dueloStartBtn) dom.dueloStartBtn.addEventListener("click", iniciarDueloPartida);
+    if (dom.dueloViewFamaFromLobbyBtn) dom.dueloViewFamaFromLobbyBtn.addEventListener("click", () => cambiarVista("fama"));
+
+    // Arena Duelo
+    if (dom.dueloSpinBtn) dom.dueloSpinBtn.addEventListener("click", girarDobleRuletaDuelo);
+    if (dom.dueloEndMatchBtn) {
+        dom.dueloEndMatchBtn.addEventListener("click", () => {
+            if (confirm("¿Estás seguro de que deseás finalizar el duelo ahora y ver el podio de campeones?")) {
+                finalizarDueloPartida(true);
+            }
+        });
+    }
+
+    if (dom.dueloTimerToggleBtn) dom.dueloTimerToggleBtn.addEventListener("click", toggleCronometroTurnoDuelo);
+    if (dom.dueloQuickScratchpadBtn) dom.dueloQuickScratchpadBtn.addEventListener("click", toggleTarjetaScratchpad);
+    if (dom.dueloQuickPomodoroBtn) dom.dueloQuickPomodoroBtn.addEventListener("click", abrirTarjetaPomodoro);
+
+    if (dom.dueloBtnSocorro) dom.dueloBtnSocorro.addEventListener("click", usarComodinSocorro);
+    if (dom.dueloBtnPista) dom.dueloBtnPista.addEventListener("click", usarComodinPista);
+    if (dom.dueloBtnPaso) dom.dueloBtnPaso.addEventListener("click", usarComodinPaso);
+
+    if (dom.dueloGradeImpecableBtn) dom.dueloGradeImpecableBtn.addEventListener("click", () => calificarTurnoDuelo("impecable"));
+    if (dom.dueloGradeAyudaBtn) dom.dueloGradeAyudaBtn.addEventListener("click", () => calificarTurnoDuelo("ayuda"));
+    if (dom.dueloGradePasoBtn) dom.dueloGradePasoBtn.addEventListener("click", () => calificarTurnoDuelo("paso"));
+
+    if (dom.dueloThiefSuccessBtn) dom.dueloThiefSuccessBtn.addEventListener("click", () => calificarRoboRelampago(true));
+    if (dom.dueloThiefFailBtn) dom.dueloThiefFailBtn.addEventListener("click", () => calificarRoboRelampago(false));
+
+    // Salón de la Fama
+    if (dom.famaPlayNewDueloBtn) dom.famaPlayNewDueloBtn.addEventListener("click", () => cambiarVista("duelo"));
+    if (dom.famaClearHistoryBtn) dom.famaClearHistoryBtn.addEventListener("click", borrarHistorialCompleto);
+
+    if (dom.famaMatchesGrid) {
+        dom.famaMatchesGrid.addEventListener("click", (e) => {
+            const copyBtn = e.target.closest(".fama-copy-btn");
+            if (copyBtn) {
+                copiarResumenPartida(copyBtn.dataset.id);
+                return;
+            }
+            const delBtn = e.target.closest(".fama-del-btn");
+            if (delBtn) {
+                eliminarPartidaHistorial(delBtn.dataset.id);
+            }
+        });
+    }
+
+    // Modales de Duelo
+    if (dom.victoryGoToFamaBtn) {
+        dom.victoryGoToFamaBtn.addEventListener("click", () => {
+            if (dom.dueloVictoryModal) dom.dueloVictoryModal.close();
+            cambiarVista("fama");
+        });
+    }
+
+    if (dom.victoryCloseBtn) {
+        dom.victoryCloseBtn.addEventListener("click", () => {
+            if (dom.dueloVictoryModal) dom.dueloVictoryModal.close();
+        });
+    }
+
+    if (dom.dueloCancelSocorroBtn) {
+        dom.dueloCancelSocorroBtn.addEventListener("click", () => {
+            if (dom.dueloSocorroModal) dom.dueloSocorroModal.close();
+        });
+    }
+
+    window.addEventListener("hashchange", () => {
+        const hash = window.location.hash.replace("#", "");
+        if (["bolillero", "duelo", "fama", "home"].includes(hash)) {
+            cambiarVista(hash);
+        }
+    });
+
+    window.addEventListener("storage", () => {
+        try {
+            cargarDatos();
+            reconstruirBolillero();
+            render();
+            cargarConfigPomodoro();
+            renderPomodoro();
+            actualizarDropdownListasDuelo();
+            renderSalonDeLaFama();
+        } catch (error) {
+            console.error(error);
+        }
+    });
+}
+
+function iniciarAplicacion() {
+    inicializarTema();
+    inicializarModoRendimiento();
+    inicializarRutas();
+    cargarDatos();
+    cargarPerfilUsuario();
+    reconstruirBolillero();
+    cargarConfigPomodoro();
+    render();
+    renderPomodoro();
+    inicializarTarjetaFlotante();
+    inicializarDueloLobby();
+    renderSalonDeLaFama();
+    inicializarDrawerMenu();
+    registrarEventos();
+
+    // Detección de link mágico de sala online (?room=XXXX o #duelo?room=XXXX)
+    const urlParams = new URLSearchParams(window.location.search);
+    const roomFromUrl = urlParams.get("room") || (window.location.hash.includes("room=") ? window.location.hash.split("room=")[1] : null);
+    if (roomFromUrl) {
+        cambiarVista("duelo");
+        cambiarModoDueloLobby("online");
+        if (dom.dueloJoinRoomCode) {
+            dom.dueloJoinRoomCode.value = roomFromUrl.toUpperCase();
+        }
+    }
+
+    // =========================================================
+    // REGISTRO Y GESTOR DE ACTUALIZACIÓN AUTOMÁTICA PWA
+    // =========================================================
+    if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+            let refreshing = false;
+            // Cuando un nuevo Service Worker toma el control, recargar automáticamente sin tocar Ctrl+F5
+            navigator.serviceWorker.addEventListener("controllerchange", () => {
+                if (!refreshing) {
+                    refreshing = true;
+                    console.log("[PWA] Nuevo Service Worker activado. Recargando automáticamente...");
+                    window.location.reload();
+                }
+            });
+
+            navigator.serviceWorker.register(`./sw.js?v=${APP_BUILD_VERSION}`, { updateViaCache: "none" })
+                .then(reg => {
+                    console.log("Service Worker Luibañez activo:", reg.scope);
+                    reg.update();
+
+                    if (reg.waiting) {
+                        reg.waiting.postMessage({ type: "SKIP_WAITING" });
+                    }
+
+                    reg.addEventListener("updatefound", () => {
+                        const newWorker = reg.installing;
+                        if (newWorker) {
+                            newWorker.addEventListener("statechange", () => {
+                                if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
+                                    console.log("[PWA] Nueva versión disponible. Activando inmediatamente...");
+                                    newWorker.postMessage({ type: "SKIP_WAITING" });
+                                }
+                            });
+                        }
+                    });
+                })
+                .catch(err => {
+                    console.warn("Fallo al registrar Service Worker:", err);
+                });
+        });
+
+        // Al cambiar de pestaña o volver a la app en celular/PC, verificar actualizaciones
+        document.addEventListener("visibilitychange", () => {
+            if (document.visibilityState === "visible") {
+                verificarActualizacionesDisponibles(true);
+                navigator.serviceWorker.getRegistration().then(reg => {
+                    if (reg) reg.update();
+                }).catch(() => {});
+            }
+        });
+
+        // Chequeo periódico en segundo plano cada 5 minutos
+        setInterval(() => {
+            verificarActualizacionesDisponibles(true);
+        }, 5 * 60 * 1000);
+    }
+
+    // Vincular botón manual de actualización rápida en el menú lateral
+    const btnForzarActualizar = document.getElementById("btnForzarActualizar");
+    if (btnForzarActualizar) {
+        btnForzarActualizar.addEventListener("click", () => {
+            forzarActualizacionCompleta(true);
+        });
+    }
+
+    // Vincular botones de Reglas y Cómo Jugar
+    if (dom.bolilleroRulesBtn) {
+        dom.bolilleroRulesBtn.addEventListener("click", () => abrirModalReglas("bolillero"));
+    }
+    if (dom.juegosRulesBtn) {
+        dom.juegosRulesBtn.addEventListener("click", () => abrirModalReglas(juegosEduEstado.juegoActual || "bomba"));
+    }
+    if (dom.soloRulesBtn) {
+        dom.soloRulesBtn.addEventListener("click", () => abrirModalReglas("solo"));
+    }
+    if (dom.pdfHubRulesBtn) {
+        dom.pdfHubRulesBtn.addEventListener("click", () => abrirModalReglas("apuntes"));
+    }
+    if (dom.rulesModalCloseBtn) {
+        dom.rulesModalCloseBtn.addEventListener("click", cerrarModalReglas);
+    }
+    if (dom.rulesModalUnderstoodBtn) {
+        dom.rulesModalUnderstoodBtn.addEventListener("click", cerrarModalReglas);
+    }
+    if (dom.rulesModal) {
+        dom.rulesModal.addEventListener("click", (e) => {
+            if (e.target === dom.rulesModal) cerrarModalReglas();
+        });
+        dom.rulesModal.addEventListener("cancel", (e) => {
+            e.preventDefault();
+            cerrarModalReglas();
+        });
+    }
+
+    // Chequeo de versión inmediato
+    verificarActualizacionesDisponibles(true);
+}
+
+// =========================================================
+// GESTOR DE VERSIONES Y ACTUALIZACIÓN AUTOMÁTICA
+// =========================================================
+const APP_BUILD_VERSION = "24.1";
+
+async function forzarActualizacionCompleta(mostrarNotificacion = true) {
+    if (mostrarNotificacion && typeof mostrarToast === "function") {
+        mostrarToast("🔄 Actualizando Luibañez a la última versión...", "info");
+    }
+
+    try {
+        if ("serviceWorker" in navigator) {
+            const registrations = await navigator.serviceWorker.getRegistrations();
+            for (const registration of registrations) {
+                await registration.unregister();
+            }
+        }
+
+        if ("caches" in window) {
+            const cacheNames = await caches.keys();
+            await Promise.all(cacheNames.map(name => caches.delete(name)));
+        }
+
+        setTimeout(() => {
+            const cleanUrl = window.location.href.split("?")[0] + "?_v=" + Date.now();
+            window.location.replace(cleanUrl);
+        }, 300);
+    } catch (err) {
+        console.warn("Error al forzar actualización:", err);
+        window.location.reload();
+    }
+}
+
+async function verificarActualizacionesDisponibles(silencioso = true) {
+    if (!navigator.onLine) return;
+
+    try {
+        const resp = await fetch(`./version.json?_t=${Date.now()}`, { cache: "no-store" });
+        if (resp.ok) {
+            const data = await resp.json();
+            if (data.version && data.version !== APP_BUILD_VERSION) {
+                console.log(`[Auto-Update] Nueva versión en servidor: ${data.version} (actual: ${APP_BUILD_VERSION}). Actualizando...`);
+                await forzarActualizacionCompleta(!silencioso);
+            }
+        }
+    } catch (err) {
+        // En offline continúa sin interrumpir
+    }
+}
+
+// =========================================================
+// SISTEMA DE REGLAS E INSTRUCCIONES RÁPIDAS DE JUEGOS
+// =========================================================
+const REGLAS_DATA = {
+    bolillero: {
+        icono: "🎲",
+        titulo: "Bolillero Individual",
+        subtitulo: "Simulador interactivo de exámenes orales",
+        objetivo: "Sortear o seleccionar temas de estudio para entrenar tu oratoria y responder preguntas teóricas simuladas por IA como en un examen final universitario.",
+        dinamica: [
+            "Podés sortear al azar o hacer clic directamente en cualquier tarjeta de la cuadrícula para seleccionarla manualmente.",
+            "Al tener un tema seleccionado, la IA de Gemini puede formularte una pregunta oral de examen para evaluar tus conceptos."
+        ],
+        botones: [
+            { badge: "GIRAR RULETA (Espacio)", desc: "Inicia el sorteo aleatorio con animación de desaceleración gradual." },
+            { badge: "👆 Clic en Tarjeta", desc: "Selecciona una palabra específica de la cuadrícula para estudiarla de inmediato." },
+            { badge: "✨ Preguntar con IA", desc: "Genera una pregunta oral con Google Gemini sobre el tema activo." },
+            { badge: "🤖 + IA Palabras", desc: "Analiza el PDF cargado de punta a punta y extrae automáticamente los conceptos que elijas." },
+            { badge: "📂 Importar / + Nueva", desc: "Permite importar archivos de texto (.txt) o crear nuevas listas temáticas." }
+        ],
+        tip: "Practicá explicando el tema en voz alta durante 2 minutos de corrido antes de consultar la pregunta con IA."
+    },
+    bomba: {
+        icono: "💣",
+        titulo: "Desactivá la Bomba",
+        subtitulo: "Desafío de tensión y precisión conceptual",
+        objetivo: "Desarmar el explosivo cortando el cable correcto en cada una de las 3 fases conceptuales antes de que el cronómetro llegue a 00:00.",
+        dinamica: [
+            "El artefacto tiene 3 fases: Fundamentos Teóricos, Deducción Lógica y Síntesis Maestra.",
+            "Tenés 90 segundos en total para completar las 3 fases.",
+            "Cada error genera un chispazo eléctrico ⚡ y te resta una vida/fase. Al tercer fallo, la bomba explota."
+        ],
+        botones: [
+            { badge: "✂️ Cables de Colores", desc: "Cada cable representa una respuesta teórica. Tocá el que creas que contiene la afirmación correcta." },
+            { badge: "💥 Detonación (2.5s)", desc: "Si explota, la pantalla tiembla 2.5s, guarda tus puntos en el Salón de la Fama y vuelve al menú." },
+            { badge: "🔄 Jugar de nuevo", desc: "Genera una nueva partida con preguntas y respuestas 100% inéditas y balanceadas desde el PDF." }
+        ],
+        tip: "Todas las respuestas tienen una longitud similar para evitar patrones obvios; leé con atención conceptual cada opción."
+    },
+    impostor: {
+        icono: "🕵️‍♂️",
+        titulo: "Caza al Impostor",
+        subtitulo: "Detección de falacias y errores teóricos",
+        objetivo: "Analizar el expediente y las 4 afirmaciones teóricas en pantalla para identificar y atrapar a la única afirmación falsa o impostora.",
+        dinamica: [
+            "3 de las afirmaciones son postulados o definiciones verdaderas del material de estudio, y 1 sola contiene un error conceptual infiltrado.",
+            "Ganás más puntos por responder con rapidez y por mantener una racha de casos resueltos sin fallar."
+        ],
+        botones: [
+            { badge: "⏱️ Tiempo (10s a 30s)", desc: "Configurá cuánto tiempo querés por ronda según la dificultad que prefieras antes de comenzar." },
+            { badge: "📋 Rondas (3 a 10)", desc: "Elegí la cantidad de casos que tendrá tu expediente de investigación." },
+            { badge: "🚀 Comenzar Investigación", desc: "Inicia la partida con el cronómetro sincronizado." },
+            { badge: "🃏 Tarjetas de Afirmación", desc: "Tocá la que consideres impostora para revelar insignias y la explicación pedagógica." }
+        ],
+        tip: "Desconfiá de términos absolutos como 'siempre', 'nunca' o de causas y efectos invertidos en las definiciones."
+    },
+    memotest: {
+        icono: "🧠",
+        titulo: "Memotest Conectado",
+        subtitulo: "Conexión de términos y definiciones",
+        objetivo: "Conectar pares conceptuales encontrando qué tarjeta de Término / Concepto corresponde a cada tarjeta de Definición en el menor tiempo e intentos posibles.",
+        dinamica: [
+            "Todas las cartas inician boca abajo en la cuadrícula.",
+            "Volteá 2 cartas por turno: si unís un concepto con su definición correcta, quedan unidas en verde permanentemente.",
+            "Completá todos los pares para registrar tu marca en el Salón de la Fama."
+        ],
+        botones: [
+            { badge: "🃏 Cartas Boca Abajo", desc: "Hacé clic para revelar su contenido conceptual." },
+            { badge: "⏱️ Cronómetro e Intentos", desc: "Miden tu memoria operativa para el cálculo del puntaje final." },
+            { badge: "🔄 Reiniciar", desc: "Vuelve a barajar los pares en nuevas posiciones aleatorias." }
+        ],
+        tip: "Fijate en las palabras clave del concepto para asociarlas rápidamente en cuanto leas las primeras líneas de la definición."
+    },
+    solo: {
+        icono: "👤",
+        titulo: "Modo Estudiar Solo",
+        subtitulo: "Entrenamiento individual a tu propio ritmo",
+        objetivo: "Acceder a las herramientas individuales de práctica para dominar tu materia: Bolillero de oral, Bomba teórica, Impostor y Memotest.",
+        dinamica: [
+            "Elegí el modo que mejor se adapte a tu objetivo del día: oratoria (Bolillero), agilidad conceptual (Bomba), pensamiento crítico (Impostor) o memoria y asociación (Memotest)."
+        ],
+        botones: [
+            { badge: "🎲 Abrir Bolillero", desc: "Simula el sorteo de temas de examen oral frente a tribunal." },
+            { badge: "💣 Practicar Bomba", desc: "Responde 3 fases teóricas bajo la presión del reloj." },
+            { badge: "🕵️‍♂️ Cazar Impostor", desc: "Descubrí cuál de las 4 opciones es falsa en cada caso." },
+            { badge: "🧠 Memotest Conectado", desc: "Asocia conceptos y definiciones en pares." }
+        ],
+        tip: "Cargá primero tu PDF en el Inicio para que todos los juegos usen el contenido exacto de tu cátedra."
+    },
+    apuntes: {
+        icono: "📚",
+        titulo: "Centro de Apuntes & IA",
+        subtitulo: "El corazón de contenido de Luibañez",
+        objetivo: "Cargar una sola vez el PDF de tu materia (resumen, programa o libro) para que la IA de Gemini alimente automáticamente todos los juegos.",
+        dinamica: [
+            "El archivo se procesa de manera privada y segura en tu navegador con PDF.js.",
+            "Gemini recorre el 100% de las páginas del apunte (inicio, medio y final) para extraer conceptos equitativos.",
+            "Una vez cargado, queda conectado y listo para usar en el Bolillero, la Bomba, el Impostor y el Memotest."
+        ],
+        botones: [
+            { badge: "📄 Cargar PDF", desc: "Sube tu archivo de apuntes (.pdf o .txt)." },
+            { badge: "🔄 Cambiar PDF", desc: "Reemplaza el material cuando pases a otra materia o unidad." },
+            { badge: "✕ Quitar Material", desc: "Vuelve al banco de preguntas base predeterminado." }
+        ],
+        tip: "Cuanto más estructurado esté tu apunte con subtítulos y definiciones, más ricas serán las preguntas generadas."
+    }
+};
+
+let reglaActualClave = "bolillero";
+let juegoPausadoPorReglas = null;
+
+function abrirModalReglas(gameKey) {
+    const data = REGLAS_DATA[gameKey] || REGLAS_DATA.bolillero;
+    reglaActualClave = gameKey;
+
+    if (dom.rulesModalIcon) dom.rulesModalIcon.textContent = data.icono;
+    if (dom.rulesModalTitle) dom.rulesModalTitle.textContent = `Reglas: ${data.titulo}`;
+    if (dom.rulesModalSubtitle) dom.rulesModalSubtitle.textContent = data.subtitulo;
+
+    if (dom.rulesModalBody) {
+        let dinamicaHtml = data.dinamica.map(d => `<li>${d}</li>`).join("");
+        let botonesHtml = data.botones.map(b => `
+            <li style="margin-bottom: 0.45rem;">
+                <span class="rules-btn-badge">${b.badge}</span>
+                <span style="margin-left: 0.35rem; color: #cbd5e1;">${b.desc}</span>
+            </li>
+        `).join("");
+
+        dom.rulesModalBody.innerHTML = `
+            <div class="rules-card rules-card--highlight">
+                <div class="rules-card__title">🎯 Objetivo</div>
+                <p style="margin: 0; color: #e2e8f0; line-height: 1.45;">${data.objetivo}</p>
+            </div>
+
+            <div class="rules-card">
+                <div class="rules-card__title">📜 ¿Cómo se juega?</div>
+                <ul class="rules-list">${dinamicaHtml}</ul>
+            </div>
+
+            <div class="rules-card">
+                <div class="rules-card__title">🎮 Botones y Controles Clave</div>
+                <ul class="rules-list" style="list-style: none; padding-left: 0;">${botonesHtml}</ul>
+            </div>
+
+            <div class="rules-card" style="background: rgba(245, 158, 11, 0.08); border-color: rgba(245, 158, 11, 0.25);">
+                <div class="rules-card__title" style="color: #fbbf24;">💡 Consejo Pro</div>
+                <p style="margin: 0; color: #fde68a; line-height: 1.45; font-size: 0.86rem;">${data.tip}</p>
+            </div>
+        `;
+    }
+
+    if (dom.rulesDontShowAgainCheckbox) {
+        dom.rulesDontShowAgainCheckbox.checked = localStorage.getItem("luibanez_rules_dont_show_" + gameKey) === "true";
+    }
+
+    // Pausar temporizador de la bomba si está activa en segundo plano
+    if (gameKey === "bomba" && juegosEduEstado.bomba && juegosEduEstado.bomba.activo && juegosEduEstado.bomba.timerId) {
+        clearInterval(juegosEduEstado.bomba.timerId);
+        juegoPausadoPorReglas = "bomba";
+    }
+
+    if (dom.rulesModal) {
+        if (typeof dom.rulesModal.showModal === "function") {
+            dom.rulesModal.showModal();
+        } else {
+            dom.rulesModal.setAttribute("open", "");
+        }
+    }
+}
+
+function cerrarModalReglas() {
+    if (dom.rulesDontShowAgainCheckbox && reglaActualClave) {
+        if (dom.rulesDontShowAgainCheckbox.checked) {
+            localStorage.setItem("luibanez_rules_dont_show_" + reglaActualClave, "true");
+        } else {
+            localStorage.removeItem("luibanez_rules_dont_show_" + reglaActualClave);
+        }
+    }
+
+    if (dom.rulesModal) {
+        if (typeof dom.rulesModal.close === "function") {
+            dom.rulesModal.close();
+        } else {
+            dom.rulesModal.removeAttribute("open");
+        }
+    }
+
+    // Reanudar temporizador si estaba pausado
+    if (juegoPausadoPorReglas === "bomba" && juegosEduEstado.bomba && juegosEduEstado.bomba.activo && juegosEduEstado.bomba.tiempoRestante > 0) {
+        juegosEduEstado.bomba.timerId = setInterval(() => {
+            juegosEduEstado.bomba.tiempoRestante--;
+            actualizarTimerBombaDisplay();
+            if (juegosEduEstado.bomba.tiempoRestante <= 0) {
+                clearInterval(juegosEduEstado.bomba.timerId);
+                detonarBomba("¡Se agotó el tiempo! La bomba explotó.");
+            }
+        }, 1000);
+    }
+    juegoPausadoPorReglas = null;
+}
+
+function comprobarYMostrarReglas(gameKey) {
+    if (localStorage.getItem("luibanez_rules_dont_show_" + gameKey) !== "true") {
+        setTimeout(() => {
+            abrirModalReglas(gameKey);
+        }, 300);
+    }
+}
+
+document.addEventListener("DOMContentLoaded", iniciarAplicacion);
+/* =========================================================
+   MÓDULO LUIBAÑEZ v5: PROMPT DE GEMINI IA & GENERADOR DE JUEGOS
+   ========================================================= */
+
+const GEMINI_MEGA_PROMPT = `Actúa como un profesor universitario experto y diseñador de contenido pedagógico para la plataforma educativa interactiva "Luibañez".
+A continuación te adjunto el PDF con los apuntes / unidad / materia de estudio.
+
+Tu tarea es analizar exhaustivamente el PDF adjunto y extraer todo el conocimiento en un bloque JSON válido, optimizado para alimentar el Bolillero y los 3 juegos educativos (Desactivá la Bomba, Caza al Impostor y Memotest Conectado).
+
+RESPONDE ÚNICAMENTE CON EL BLOQUE JSON SIGUIENTE (sin texto previo ni posterior, en formato JSON válido):
+
+{
+  "titulo": "Nombre de la Materia o Unidad",
+  "descripcion": "Resumen conciso del contenido del PDF",
+  "temas": [
+    {
+      "nombre": "Tema 1: Nombre del Concepto o Unidad",
+      "descripcion": "Explicación detallada del concepto para estudiar",
+      "bomba": {
+        "fase1": {
+          "pregunta": "¿Cuál es el principio teórico o postulado fundamental aplicable a este tema?",
+          "opciones": ["Principio rector verdadero", "Distractor conceptual 1", "Distractor conceptual 2", "Distractor conceptual 3"],
+          "respuestaCorrecta": 0,
+          "explicacion": "Explicación teórica del fundamento."
+        },
+        "fase2": {
+          "contexto": "Premisa analítica de causa-efecto o relación conceptual sobre el tema.",
+          "pregunta": "¿Qué deducción teórica se desprende según los fundamentos de la materia?",
+          "opciones": ["Deducción conceptual correcta", "Conclusión errónea 1", "Conclusión errónea 2", "Conclusión errónea 3"],
+          "respuestaCorrecta": 0,
+          "explicacion": "Explicación de la deducción conceptual."
+        },
+        "fase3": {
+          "desafioMaestro": "Clave Maestra de Síntesis: identifica la afirmación integradora definitiva sobre el tema.",
+          "pregunta": "¿Cuál es la síntesis conceptual que desactiva el detonador?",
+          "opciones": ["Síntesis integradora definitiva", "Aseveración falaz 1", "Aseveración falaz 2", "Aseveración falaz 3"],
+          "respuestaCorrecta": 0,
+          "explicacion": "Explicación de la síntesis maestra."
+        }
+      },
+      "impostor": {
+        "afirmacionesVerdaderas": [
+          "Afirmación o propiedad verdadera 1",
+          "Afirmación o propiedad verdadera 2",
+          "Afirmación o propiedad verdadera 3"
+        ],
+        "afirmacionImpostora": "Afirmación falsa con error sutil infiltrado",
+        "explicacionError": "Por qué es falsa"
+      },
+      "memotest": {
+        "concepto": "Concepto o Ley clave",
+        "definicionOFormula": "Definición o Fórmula exacta correspondiente"
+      }
+    }
+  ]
+}`;
+
+function copiarPromptGemini() {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(GEMINI_MEGA_PROMPT).then(() => {
+            mostrarToast("✨ ¡Prompt para Gemini copiado al portapapeles! Pegalo en gemini.google.com");
+        }).catch(() => {
+            mostrarToast("📋 Copiá el prompt desde la ventana");
+        });
+    }
+
+    if (dom.geminiPromptTextarea) {
+        dom.geminiPromptTextarea.value = GEMINI_MEGA_PROMPT;
+    }
+    if (dom.geminiPromptModal) {
+        if (typeof dom.geminiPromptModal.showModal === "function") {
+            dom.geminiPromptModal.showModal();
+        } else {
+            dom.geminiPromptModal.setAttribute("open", "true");
+        }
+    }
+}
+
+// Generador procedimental de datos educativos para cualquier lista simple que no tenga preguntas
+function asegurarDatosJuegoTema(tema, index) {
+    if (!tema) return null;
+    const nombre = tema.nombre || `Tema ${index + 1}`;
+    const desc = tema.descripcion || "Concepto clave del programa de estudio.";
+
+    // Bomba 100% Teórica
+    if (!tema.bomba) {
+        tema.bomba = {
+            fase1: {
+                pregunta: `¿Cuál es el principio teórico o postulado fundamental aplicable a "${nombre}"?`,
+                opciones: [
+                    `Principio rector: las propiedades esenciales de ${nombre} determinan su comportamiento sistémico.`,
+                    `Postulado contradictorio: las propiedades de ${nombre} operan de forma arbitraria sin leyes.`,
+                    `Hipótesis nula: los efectos de ${nombre} se anulan completamente en cualquier escenario.`,
+                    `Axioma invertido: los factores externos no guardan ninguna correlación con ${nombre}.`
+                ],
+                respuestaCorrecta: 0,
+                explicacion: `El principio rector establece las propiedades fundamentales de ${nombre}.`
+            },
+            fase2: {
+                contexto: `Premisa de análisis conceptual: considerando un escenario donde las condiciones de "${nombre}" se intensifican progresivamente.`,
+                pregunta: `¿Qué deducción teórica se desprende según los fundamentos de la materia?`,
+                opciones: [
+                    `Se produce una respuesta proporcional consistente con la ley de conservación del sistema.`,
+                    `Se genera un colapso súbito del sistema sin admitir regulación conceptual alguna.`,
+                    `La alteración observada resulta enteramente indiferente para el balance global del modelo.`,
+                    `Se invierten espontáneamente los principios rectores aceptados por la comunidad científica.`
+                ],
+                respuestaCorrecta: 0,
+                explicacion: `La respuesta proporcional mantiene la coherencia y equilibrio teórico del sistema.`
+            },
+            fase3: {
+                desafioMaestro: `Clave Maestra de Síntesis: para cortar el detonador principal, identifica la afirmación integradora definitiva sobre "${nombre}".`,
+                pregunta: `¿Cuál es la síntesis conceptual que desactiva el detonador?`,
+                opciones: [
+                    `La integración metodológica de ${nombre} unifica la teoría con la deducción rigurosa.`,
+                    `La síntesis teórica descarta por completo los axiomas validados en fases previas.`,
+                    `La conclusión analítica descarta la existencia de principios aplicables a este dominio.`,
+                    `El modelo conceptual carece de consistencia cuando se evalúa en condiciones operativas.`
+                ],
+                respuestaCorrecta: 0,
+                explicacion: `La integración metodológica valida el dominio completo del concepto y desactiva el detonador.`
+            }
+        };
+    }
+
+    // Impostor
+    if (!tema.impostor) {
+        tema.impostor = {
+            afirmacionesVerdaderas: [
+                `"${nombre}" es un concepto troncal que se relaciona directamente con los fundamentos de la materia.`,
+                `El análisis de "${nombre}" requiere considerar sus variables operativas y propiedades clave.`,
+                `La correcta aplicación de "${nombre}" optimiza la precisión en la resolución práctica.`
+            ],
+            afirmacionImpostora: `"${nombre}" carece de validez metodológica y nunca debe aplicarse en condiciones normales.`,
+            explicacionError: `Esta afirmación es un error conceptual: "${nombre}" es precisamente una herramienta central válida y fundamental.`
+        };
+    }
+
+    // Memotest
+    if (!tema.memotest) {
+        tema.memotest = {
+            concepto: nombre,
+            definicionOFormula: desc.length > 60 ? desc.slice(0, 57) + "..." : desc
+        };
+    }
+
+    return tema;
+}
+
+/* =========================================================
+   ESTADO GLOBAL DE LOS JUEGOS EDUCATIVOS
+   ========================================================= */
+const juegosEduEstado = {
+    juegoActual: null, // "bomba" | "impostor" | "memotest" | "triatlon"
+    modo: "solo", // "solo" | "versus" | "coop" | "desempate"
+    listaId: null,
+    temas: [],
+    temaIndice: 0,
+    triatlon: {
+        rondaActual: 1,
+        puntosTotal: 0,
+        scores: [0, 0, 0]
+    },
+    bomba: {
+        activo: false,
+        tiempoRestante: 90,
+        fase: 1,
+        fallos: 0,
+        timerId: null
+    },
+    impostor: {
+        activo: false,
+        ola: 1,
+        maxOlas: 5,
+        racha: 1,
+        puntaje: 0,
+        tiempoOla: 15,
+        tiempoRestanteMs: 15000,
+        timerId: null,
+        impostorIndex: 0,
+        casosPool: [],
+        comodines: {
+            pista5050: 1,
+            tiempoExtra: 1,
+            radarSocorro: 1
+        }
+    },
+    memotest: {
+        activo: false,
+        cartas: [],
+        primeraCarta: null,
+        bloqueado: false,
+        paresEncontrados: 0,
+        totalPares: 6,
+        movimientos: 0,
+        segundos: 0,
+        timerId: null
+    }
+};
+
+/* =========================================================
+   LANZADOR CENTRAL DE JUEGOS EDUCATIVOS
+   ========================================================= */
+async function abrirArenaJuego(tipoJuego, modo, listaId = null, forzarNuevas = false) {
+    juegosEduEstado.juegoActual = tipoJuego;
+    juegosEduEstado.modo = modo || "solo";
+    
+    // Lista de temas o fallback automático para usuarios nuevos y amigos
+    const apunteActivo = apuntesEstado[tipoJuego] || apuntesEstado.global;
+    let lista = estado.listas.find(l => l.id === listaId) || estado.listas[0];
+
+    // Si el usuario no tiene una lista en localStorage, creamos un banco temático base para que NUNCA lo mande al bolillero
+    if (!lista || !lista.temas || lista.temas.length === 0) {
+        const nombreMateria = (apunteActivo && apunteActivo.nombre) 
+            ? apunteActivo.nombre.replace(/\.pdf$/i, '') 
+            : "Materia de Estudio";
+        lista = {
+            id: "lista_auto_educativa",
+            titulo: nombreMateria,
+            nombre: nombreMateria,
+            temas: [
+                { id: "t1", nombre: "Fundamentos y Principios Clave", descripcion: "Bases teóricas y postulados esenciales." },
+                { id: "t2", nombre: "Modelos Analíticos y Relaciones", descripcion: "Estructuras conceptuales y propiedades generales." },
+                { id: "t3", nombre: "Condiciones de Borde y Restricciones", descripcion: "Casos límite y consideraciones metodológicas." },
+                { id: "t4", nombre: "Análisis Crítico y Demostraciones", descripcion: "Validación de postulados e implicaciones teóricas." },
+                { id: "t5", nombre: "Síntesis Conceptual y Criterios", descripcion: "Integración de variables y reglas fundamentales." }
+            ]
+        };
+    }
+
+    juegosEduEstado.listaId = lista.id;
+    juegosEduEstado.temas = lista.temas.map((t, idx) => asegurarDatosJuegoTema(t, idx));
+    juegosEduEstado.temaIndice = Math.floor(Math.random() * juegosEduEstado.temas.length);
+
+    // Si se fuerzan nuevas preguntas (reintento / replay), limpiar preguntas previas
+    if (forzarNuevas) {
+        const temaAct = juegosEduEstado.temas[juegosEduEstado.temaIndice];
+        if (temaAct) temaAct.bomba = null;
+        if (tipoJuego === "impostor") juegosEduEstado.impostor.casosPool = [];
+    }
+
+    // Actualizar Topbar
+    if (dom.juegosGameSubtitle) {
+        dom.juegosGameSubtitle.textContent = `Materia: ${lista.titulo || lista.nombre}`;
+    }
+    if (dom.juegosModeBadge) {
+        const modoLabels = {
+            solo: "👤 Práctica Solo",
+            versus: "⚔️ Versus Online",
+            coop: "🤝 Cooperativo Online",
+            desempate: "⚡ Desempate Relámpago"
+        };
+        dom.juegosModeBadge.textContent = modoLabels[juegosEduEstado.modo] || "👤 Solo";
+        dom.juegosModeBadge.className = `badge ${juegosEduEstado.modo === 'coop' ? 'badge--accent' : juegosEduEstado.modo === 'versus' ? 'badge--warning' : 'badge--success'}`;
+    }
+
+    // Ocultar todas las arenas
+    if (dom.arenaBomba) dom.arenaBomba.classList.add("hidden");
+    if (dom.arenaImpostor) dom.arenaImpostor.classList.add("hidden");
+    if (dom.arenaMemotest) dom.arenaMemotest.classList.add("hidden");
+    if (dom.triatlonProgressBar) dom.triatlonProgressBar.classList.add("hidden");
+
+    cambiarVista("juegos");
+
+    // Para Caza al Impostor: mostrar de inmediato el panel de configuración sin bloquear con overlay
+    if (tipoJuego === "impostor") {
+        iniciarImpostor(modo);
+        if (apunteActivo && apunteActivo.texto) {
+            enriquecerJuegoActualConIA(false).then(() => {
+                actualizarSetupImpostorUI();
+            }).catch(console.warn);
+        }
+        comprobarYMostrarReglas("impostor");
+        return;
+    }
+
+    // Para Bomba y otros juegos con PDF: mostrar overlay mientras Gemini genera preguntas
+    if (apunteActivo && apunteActivo.texto) {
+        mostrarOverlayCargandoJuegoIA(true, tipoJuego);
+        try {
+            await enriquecerJuegoActualConIA(false);
+        } catch (err) {
+            console.warn("Fallo al pregenerar con IA:", err);
+        } finally {
+            mostrarOverlayCargandoJuegoIA(false);
+        }
+    }
+
+    // Iniciar la arena del juego con el cronómetro comenzando sincronizado al 100%
+    if (tipoJuego === "triatlon") {
+        iniciarTriatlon(modo);
+    } else if (tipoJuego === "bomba") {
+        iniciarBomba(modo);
+    } else if (tipoJuego === "memotest") {
+        iniciarMemotest(modo);
+    }
+
+    comprobarYMostrarReglas(tipoJuego);
+}
+
+/* =========================================================
+   JUEGO 1: 💣 DESACTIVÁ LA BOMBA (100% TEÓRICA & CONCEPTUAL)
+   ========================================================= */
+function iniciarBomba(modo) {
+    if (!dom.arenaBomba) return;
+    dom.arenaBomba.classList.remove("hidden");
+    if (dom.juegosGameIcon) dom.juegosGameIcon.textContent = "💣";
+    if (dom.juegosGameTitle) dom.juegosGameTitle.textContent = "Desactivá la Bomba";
+
+    const b = juegosEduEstado.bomba;
+    b.activo = true;
+    b.tiempoRestante = modo === "coop" ? 120 : 90;
+    b.fase = 1;
+    b.fallos = 0;
+
+    clearInterval(b.timerId);
+
+    const tema = juegosEduEstado.temas[juegosEduEstado.temaIndice] || juegosEduEstado.temas[0];
+
+    // UI Wires & Reset de animaciones
+    const casing = document.querySelector(".bomba-casing");
+    if (casing) casing.classList.remove("bomba-defused-success");
+    if (dom.bombaLcdScreen) dom.bombaLcdScreen.classList.remove("bomba-glitching");
+    if (dom.bombaWireSlot1) dom.bombaWireSlot1.classList.remove("is-cut");
+    if (dom.bombaWireSlot2) dom.bombaWireSlot2.classList.remove("is-cut");
+    if (dom.bombaWireSlot3) dom.bombaWireSlot3.classList.remove("is-cut");
+    actualizarCablesBomba();
+
+    // UI LCD
+    if (dom.bombaFase1View) dom.bombaFase1View.classList.remove("hidden");
+    if (dom.bombaFase2View) dom.bombaFase2View.classList.add("hidden");
+    if (dom.bombaFase3View) dom.bombaFase3View.classList.add("hidden");
+    if (dom.bombaResultView) dom.bombaResultView.classList.add("hidden");
+
+    if (dom.arenaBomba) dom.arenaBomba.classList.remove("bomba-exploding");
+
+    renderFase1Bomba(tema);
+    actualizarTimerBombaDisplay();
+
+    b.timerId = setInterval(() => {
+        b.tiempoRestante--;
+        actualizarTimerBombaDisplay();
+        if (b.tiempoRestante <= 0) {
+            clearInterval(b.timerId);
+            detonarBomba("¡Se agotó el tiempo! La bomba explotó.");
+        }
+    }, 1000);
+}
+
+function actualizarTimerBombaDisplay() {
+    const tiempo = Math.max(0, juegosEduEstado.bomba.tiempoRestante);
+    const m = Math.floor(tiempo / 60);
+    const s = tiempo % 60;
+    if (dom.bombaMinutes) dom.bombaMinutes.textContent = String(m).padStart(2, "0");
+    if (dom.bombaSeconds) dom.bombaSeconds.textContent = String(s).padStart(2, "0");
+
+    // Reactividad de la mecha LED y reloj digital
+    if (dom.bombaPulseStrip) {
+        if (tiempo <= 10) {
+            dom.bombaPulseStrip.className = "bomba-pulse-strip is-critical";
+            if (dom.bombaTimerDisplay) {
+                dom.bombaTimerDisplay.classList.add("is-critical");
+                dom.bombaTimerDisplay.classList.remove("is-warning");
+            }
+        } else if (tiempo <= 30) {
+            dom.bombaPulseStrip.className = "bomba-pulse-strip is-warning";
+            if (dom.bombaTimerDisplay) {
+                dom.bombaTimerDisplay.classList.add("is-warning");
+                dom.bombaTimerDisplay.classList.remove("is-critical");
+            }
+        } else {
+            dom.bombaPulseStrip.className = "bomba-pulse-strip";
+            if (dom.bombaTimerDisplay) {
+                dom.bombaTimerDisplay.classList.remove("is-warning", "is-critical");
+            }
+        }
+    }
+}
+
+function actualizarCablesBomba() {
+    const b = juegosEduEstado.bomba;
+
+    // Corte físico interactivo en los cables
+    if (dom.bombaWireSlot1) {
+        if (b.fase > 1) dom.bombaWireSlot1.classList.add("is-cut");
+        else dom.bombaWireSlot1.classList.remove("is-cut");
+    }
+    if (dom.bombaWireSlot2) {
+        if (b.fase > 2) dom.bombaWireSlot2.classList.add("is-cut");
+        else dom.bombaWireSlot2.classList.remove("is-cut");
+    }
+    if (dom.bombaWireSlot3) {
+        if (b.fase > 3) dom.bombaWireSlot3.classList.add("is-cut");
+        else dom.bombaWireSlot3.classList.remove("is-cut");
+    }
+
+    if (dom.bombaWire1Status) {
+        dom.bombaWire1Status.textContent = b.fase > 1 ? "Cortado ✂️" : "Armado";
+        dom.bombaWire1Status.className = `bomba-wire-status badge ${b.fase > 1 ? 'badge--success stamp-badge' : 'badge--danger'}`;
+    }
+    if (dom.bombaWire2Status) {
+        dom.bombaWire2Status.textContent = b.fase > 2 ? "Cortado ✂️" : b.fase === 2 ? "Armado" : "Pendiente";
+        dom.bombaWire2Status.className = `bomba-wire-status badge ${b.fase > 2 ? 'badge--success stamp-badge' : b.fase === 2 ? 'badge--danger' : 'badge--warning'}`;
+    }
+    if (dom.bombaWire3Status) {
+        dom.bombaWire3Status.textContent = b.fase > 3 ? "Cortado ✂️" : b.fase === 3 ? "¡ACTIVO!" : "Bloqueado";
+        dom.bombaWire3Status.className = `bomba-wire-status badge ${b.fase > 3 ? 'badge--success stamp-badge' : b.fase === 3 ? 'badge--accent' : 'badge--warning'}`;
+    }
+}
+
+function dispararGlitchBomba() {
+    if (window.bolilleroPerfMode === "lite") return;
+    if (dom.bombaLcdScreen) {
+        dom.bombaLcdScreen.classList.remove("bomba-glitching");
+        void dom.bombaLcdScreen.offsetWidth; // Forzar reinicio de animación GPU
+        dom.bombaLcdScreen.classList.add("bomba-glitching");
+        setTimeout(() => {
+            if (dom.bombaLcdScreen) dom.bombaLcdScreen.classList.remove("bomba-glitching");
+        }, 320);
+    }
+}
+
+// Función para garantizar que ninguna opción destaque por ser más larga o corta que las demás
+function normalizarLongitudOpciones(opcionesArray) {
+    if (!Array.isArray(opcionesArray) || opcionesArray.length <= 1) return opcionesArray;
+
+    const dangles = ['de', 'del', 'la', 'el', 'los', 'las', 'que', 'en', 'y', 'e', 'a', 'con', 'por', 'para', 'su', 'sus', 'un', 'una', 'al', 'o', 'u', 'como', 'sobre', 'sin'];
+    
+    function cleanDangling(str) {
+        let words = str.trim().split(/\s+/).filter(Boolean);
+        while (words.length > 0 && dangles.includes(words[words.length - 1].toLowerCase())) {
+            words.pop();
+        }
+        return words.join(' ');
+    }
+
+    // 1. Limpieza inicial de paréntesis y signos finales
+    let cleaned = opcionesArray.map(txt => {
+        let s = String(txt || '').trim();
+        s = s.replace(/\s*\([^)]*\)/g, '');
+        return s.replace(/[.;:]$/, '').trim();
+    });
+
+    // 2. Conectores subordinados que suelen inflar la respuesta correcta
+    const conectores = [
+        ', lo que significa que', ', lo que significa', ', lo cual implica que', ', lo cual implica',
+        ', es decir que', ', debido a que', ', ya que', ', garantizando que',
+        ', resultando en', '; por ende', ', permitiendo que', ', permitiendo',
+        ', de modo que', ', de manera que', ', estableciendo que', ', puesto que',
+        ', dando lugar a', ', de forma que', ', actuando como', ', hasta alcanzar',
+        ', con el objetivo de', ', a efectos de', ', en tanto que', ', mientras que'
+    ];
+
+    cleaned = cleaned.map(s => {
+        for (const c of conectores) {
+            const idx = s.toLowerCase().indexOf(c);
+            if (idx !== -1) {
+                const parte = s.slice(0, idx).trim();
+                if (parte.split(/\s+/).filter(Boolean).length >= 7) {
+                    s = parte;
+                    break;
+                }
+            }
+        }
+        // Si aún tiene coma y supera 11 palabras, cortar en la primera coma si quedan >= 7 palabras
+        if (s.split(/\s+/).filter(Boolean).length > 11 && s.includes(',')) {
+            const antesComa = s.split(',')[0].trim();
+            if (antesComa.split(/\s+/).filter(Boolean).length >= 7) {
+                s = antesComa;
+            }
+        }
+        return cleanDangling(s);
+    });
+
+    // 3. Recortar cualquier opción que supere 12 palabras para que no delate la respuesta
+    cleaned = cleaned.map(s => {
+        const words = s.split(/\s+/).filter(Boolean);
+        if (words.length > 12) {
+            return cleanDangling(words.slice(0, 11).join(' '));
+        }
+        return s;
+    });
+
+    // 4. Si algunos distractores quedaron demasiado cortos (<= 6 palabras), expandir con marco académico
+    const wordCounts = cleaned.map(s => s.split(/\s+/).filter(Boolean).length);
+    const maxWords = Math.max(...wordCounts);
+
+    cleaned = cleaned.map(s => {
+        const words = s.split(/\s+/).filter(Boolean);
+        if (words.length < maxWords - 3 && words.length <= 6) {
+            if (/^[A-ZÁÉÍÓÚÑ]/i.test(s)) {
+                if (!s.toLowerCase().startsWith('se ') && !s.toLowerCase().startsWith('el ') && !s.toLowerCase().startsWith('la ') && !s.toLowerCase().startsWith('los ') && !s.toLowerCase().startsWith('las ')) {
+                    s = 'Se observa ' + s.charAt(0).toLowerCase() + s.slice(1) + ' en el sistema';
+                } else {
+                    s = s + ' en las condiciones del sistema';
+                }
+            }
+        }
+        return s.trim();
+    });
+
+    return cleaned;
+}
+
+function renderFase1Bomba(tema) {
+    if (!dom.bombaFase1Question || !dom.bombaFase1Options) return;
+    const f1 = (tema.bomba && tema.bomba.fase1) || {
+        pregunta: (tema.bomba && tema.bomba.preguntaFormula) || `¿Cuál es el principio teórico fundamental de "${tema.nombre}"?`,
+        opciones: [
+            (tema.bomba && tema.bomba.formulaCorrecta) || `Principio rector y postulado fundacional de ${tema.nombre}`,
+            `Axioma contradictorio que anula los postulados de ${tema.nombre}`,
+            `Hipótesis secundaria sin validación experimental en ${tema.nombre}`,
+            `Criterio operativo opuesto al modelo general de ${tema.nombre}`
+        ],
+        respuestaCorrecta: 0,
+        explicacion: "Principio teórico verificado."
+    };
+
+    dom.bombaFase1Question.textContent = f1.pregunta;
+
+    const idxCorrecto1 = Number(f1.respuestaCorrecta !== undefined ? f1.respuestaCorrecta : 0);
+    const opcionesNorm1 = normalizarLongitudOpciones(f1.opciones);
+    const opciones = opcionesNorm1.map((txt, idx) => ({
+        texto: txt,
+        correcta: idx === idxCorrecto1
+    })).sort(() => Math.random() - 0.5);
+
+    dom.bombaFase1Options.innerHTML = "";
+    opciones.forEach((opc) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "bomba-option-btn";
+        btn.textContent = opc.texto;
+        btn.addEventListener("click", () => {
+            const allBtns = dom.bombaFase1Options.querySelectorAll(".bomba-option-btn");
+            if (opc.correcta) {
+                allBtns.forEach(b => b.style.pointerEvents = "none");
+                btn.classList.add("is-correct");
+                reproducirSonido("ruletaFin");
+                mostrarToast("✂️ ¡Cable 1 cortado con éxito! Fundamento teórico verificado.");
+                juegosEduEstado.bomba.fase = 2;
+                actualizarCablesBomba();
+                setTimeout(() => {
+                    if (dom.bombaFase1View) dom.bombaFase1View.classList.add("hidden");
+                    if (dom.bombaFase2View) dom.bombaFase2View.classList.remove("hidden");
+                    renderFase2Bomba(tema);
+                    if (juegosEduEstado.modo === "coop" && onlineDueloEstado.conectado) {
+                        enviarMensajeMQTT({ tipo: "COOP_BOMBA_FASE", fase: 2 });
+                    }
+                }, 500);
+            } else {
+                btn.classList.add("is-wrong");
+                btn.style.pointerEvents = "none";
+                reproducirSonido("chispazo");
+                dispararGlitchBomba();
+                juegosEduEstado.bomba.fallos++;
+                juegosEduEstado.bomba.tiempoRestante = Math.max(5, juegosEduEstado.bomba.tiempoRestante - 15);
+                actualizarTimerBombaDisplay();
+                mostrarToast("💥 ¡Chispazo! Fundamento incorrecto (-15s)");
+                if (juegosEduEstado.bomba.fallos >= 3) {
+                    detonarBomba("Cometiste 3 errores fatales en los cables.");
+                }
+            }
+        });
+        dom.bombaFase1Options.appendChild(btn);
+    });
+}
+
+function renderFase2Bomba(tema) {
+    if (!dom.bombaFase2Question || !dom.bombaFase2Options) return;
+    const f2 = (tema.bomba && tema.bomba.fase2) || {
+        contexto: `Premisa analítica: intensificación de las variables conceptuales en "${tema.nombre}".`,
+        pregunta: `¿Qué deducción conceptual se deduce según los postulados de la materia?`,
+        opciones: [
+            `Respuesta proporcional y consistente con el equilibrio general del sistema`,
+            `Ruptura completa e instantánea de la coherencia en las variables del sistema`,
+            `Comportamiento enteramente aleatorio e impredecible sin correlación con la teoría`,
+            `Inversión total del marco metodológico adoptado originalmente por la disciplina`
+        ],
+        respuestaCorrecta: 0,
+        explicacion: "Deducción conceptual correcta."
+    };
+
+    if (dom.bombaFase2ProblemBox) {
+        dom.bombaFase2ProblemBox.innerHTML = `<strong>Premisa de Análisis:</strong> ${f2.contexto || ""}`;
+    }
+    dom.bombaFase2Question.textContent = f2.pregunta;
+
+    const idxCorrecto2 = Number(f2.respuestaCorrecta !== undefined ? f2.respuestaCorrecta : 0);
+    const opcionesNorm2 = normalizarLongitudOpciones(f2.opciones);
+    const opciones = opcionesNorm2.map((txt, idx) => ({
+        texto: txt,
+        correcta: idx === idxCorrecto2
+    })).sort(() => Math.random() - 0.5);
+
+    dom.bombaFase2Options.innerHTML = "";
+    opciones.forEach((opc) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "bomba-option-btn";
+        btn.textContent = opc.texto;
+        btn.addEventListener("click", () => {
+            const allBtns = dom.bombaFase2Options.querySelectorAll(".bomba-option-btn");
+            if (opc.correcta) {
+                allBtns.forEach(b => b.style.pointerEvents = "none");
+                btn.classList.add("is-correct");
+                reproducirSonido("ruletaFin");
+                mostrarToast("✂️ ¡Cable 2 cortado con éxito! Análisis conceptual validado.");
+                juegosEduEstado.bomba.fase = 3;
+                actualizarCablesBomba();
+                setTimeout(() => {
+                    if (dom.bombaFase2View) dom.bombaFase2View.classList.add("hidden");
+                    if (dom.bombaFase3View) dom.bombaFase3View.classList.remove("hidden");
+                    renderFase3Bomba(tema);
+                    if (juegosEduEstado.modo === "coop" && onlineDueloEstado.conectado) {
+                        enviarMensajeMQTT({ tipo: "COOP_BOMBA_FASE", fase: 3 });
+                    }
+                }, 500);
+            } else {
+                btn.classList.add("is-wrong");
+                btn.style.pointerEvents = "none";
+                reproducirSonido("chispazo");
+                dispararGlitchBomba();
+                juegosEduEstado.bomba.fallos++;
+                juegosEduEstado.bomba.tiempoRestante = Math.max(5, juegosEduEstado.bomba.tiempoRestante - 15);
+                actualizarTimerBombaDisplay();
+                mostrarToast("💥 ¡Error de análisis! (-15s)");
+                if (juegosEduEstado.bomba.fallos >= 3) {
+                    detonarBomba("3 deducciones erróneas detonaron la bomba.");
+                }
+            }
+        });
+        dom.bombaFase2Options.appendChild(btn);
+    });
+}
+
+function renderFase3Bomba(tema) {
+    if (!dom.bombaFase3Question || !dom.bombaFase3Options) return;
+    const f3 = (tema.bomba && tema.bomba.fase3) || {
+        desafioMaestro: `Desafío Maestro: identificación de la afirmación integradora definitiva sobre "${tema.nombre}".`,
+        pregunta: `¿Cuál es la síntesis conceptual que corta el detonador maestro?`,
+        opciones: [
+            `La integración metodológica unifica la teoría con la deducción rigurosa`,
+            `La síntesis exige descartar los axiomas fundamentales de las fases previas`,
+            `No existe correlación analítica verificable entre los componentes del sistema`,
+            `El marco analítico carece de consistencia formal en condiciones operativas`
+        ],
+        respuestaCorrecta: 0,
+        explicacion: "Síntesis integradora verificada."
+    };
+
+    if (dom.bombaFase3ProblemBox) {
+        dom.bombaFase3ProblemBox.innerHTML = `<strong>Desafío Maestro:</strong> ${f3.desafioMaestro || ""}`;
+    }
+    dom.bombaFase3Question.textContent = f3.pregunta;
+
+    const idxCorrecto3 = Number(f3.respuestaCorrecta !== undefined ? f3.respuestaCorrecta : 0);
+    const opcionesNorm3 = normalizarLongitudOpciones(f3.opciones);
+    const opciones = opcionesNorm3.map((txt, idx) => ({
+        texto: txt,
+        correcta: idx === idxCorrecto3
+    })).sort(() => Math.random() - 0.5);
+
+    dom.bombaFase3Options.innerHTML = "";
+    opciones.forEach((opc) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "bomba-option-btn";
+        btn.textContent = opc.texto;
+        btn.addEventListener("click", () => {
+            const allBtns = dom.bombaFase3Options.querySelectorAll(".bomba-option-btn");
+            if (opc.correcta) {
+                allBtns.forEach(b => b.style.pointerEvents = "none");
+                btn.classList.add("is-correct");
+                reproducirSonido("victoria");
+                juegosEduEstado.bomba.fase = 4;
+                actualizarCablesBomba();
+                mostrarToast("✂️ ¡CABLE MAESTRO CORTADO! Detonador desactivado.");
+                setTimeout(() => {
+                    desactivarBombaExito();
+                }, 500);
+            } else {
+                btn.classList.add("is-wrong");
+                btn.style.pointerEvents = "none";
+                reproducirSonido("chispazo");
+                dispararGlitchBomba();
+                juegosEduEstado.bomba.fallos++;
+                juegosEduEstado.bomba.tiempoRestante = Math.max(5, juegosEduEstado.bomba.tiempoRestante - 20);
+                actualizarTimerBombaDisplay();
+                mostrarToast("❌ ¡Síntesis errónea en cable maestro! (-20s)");
+                if (juegosEduEstado.bomba.fallos >= 3) {
+                    detonarBomba("3 fallos en el detonador maestro causaron la explosión.");
+                }
+            }
+        });
+        dom.bombaFase3Options.appendChild(btn);
+    });
+}
+
+function desactivarBombaExito() {
+    const b = juegosEduEstado.bomba;
+    clearInterval(b.timerId);
+
+    // Barrido holográfico de desactivación en Modo Visual Pro
+    if (window.bolilleroPerfMode !== "lite") {
+        const casing = document.querySelector(".bomba-casing");
+        if (casing) {
+            casing.classList.remove("bomba-defused-success");
+            void casing.offsetWidth;
+            casing.classList.add("bomba-defused-success");
+            setTimeout(() => {
+                if (casing) casing.classList.remove("bomba-defused-success");
+            }, 1000);
+        }
+    }
+
+    const puntos = 500 + Math.max(0, b.tiempoRestante) * 10 - b.fallos * 50;
+
+    if (dom.bombaFase1View) dom.bombaFase1View.classList.add("hidden");
+    if (dom.bombaFase2View) dom.bombaFase2View.classList.add("hidden");
+    if (dom.bombaFase3View) dom.bombaFase3View.classList.add("hidden");
+    if (dom.bombaResultView) dom.bombaResultView.classList.remove("hidden");
+
+    if (dom.bombaResultIcon) dom.bombaResultIcon.textContent = "🎉";
+    if (dom.bombaResultTitle) dom.bombaResultTitle.textContent = "¡BOMBA DESACTIVADA!";
+    if (dom.bombaResultDesc) dom.bombaResultDesc.textContent = `Excelente dominio teórico: completaste las 3 fases conceptuales.`;
+    if (dom.bombaResultStats) {
+        dom.bombaResultStats.innerHTML = `
+            <div class="fama-stats-cards" style="margin: 1rem 0;">
+                <div class="fama-stat-card"><span class="fama-stat-num">${puntos}</span><span class="fama-stat-label">Puntos Ganados</span></div>
+                <div class="fama-stat-card"><span class="fama-stat-num">${b.tiempoRestante}s</span><span class="fama-stat-label">Tiempo Sobrante</span></div>
+                <div class="fama-stat-card"><span class="fama-stat-num">${b.fallos}</span><span class="fama-stat-label">Errores</span></div>
+            </div>
+        `;
+    }
+
+    // Registrar en el Salón de la Fama Multiverso
+    registrarResultadoJuego("bomba", puntos, true);
+
+    if (juegosEduEstado.juegoActual === "triatlon") {
+        juegosEduEstado.triatlon.scores[0] = puntos;
+        juegosEduEstado.triatlon.puntosTotal += puntos;
+        setTimeout(() => avanzarRondaTriatlon(2), 2500);
+    }
+}
+
+function detonarBomba(motivo) {
+    const b = juegosEduEstado.bomba;
+    clearInterval(b.timerId);
+
+    reproducirSonido("explosion");
+    if (dom.arenaBomba) dom.arenaBomba.classList.add("bomba-exploding");
+
+    if (dom.bombaFase1View) dom.bombaFase1View.classList.add("hidden");
+    if (dom.bombaFase2View) dom.bombaFase2View.classList.add("hidden");
+    if (dom.bombaFase3View) dom.bombaFase3View.classList.add("hidden");
+    if (dom.bombaResultView) dom.bombaResultView.classList.remove("hidden");
+
+    if (dom.bombaResultIcon) dom.bombaResultIcon.textContent = "💥";
+    if (dom.bombaResultTitle) dom.bombaResultTitle.textContent = "¡BOOM! DETONACIÓN";
+    if (dom.bombaResultDesc) dom.bombaResultDesc.textContent = motivo || "La bomba detonó antes de ser desactivada.";
+
+    // Puntos obtenidos en base al progreso de cables alcanzado (mínimo 50, o 150 por fase)
+    const puntos = Math.max(50, (b.fase - 1) * 150);
+    if (dom.bombaResultStats) {
+        dom.bombaResultStats.innerHTML = `<p style="color: #f87171; font-weight: bold; font-size: 1.1rem;">💥 Puntos obtenidos: ${puntos} pts</p>`;
+    }
+
+    registrarResultadoJuego("bomba", puntos, false);
+
+    if (juegosEduEstado.juegoActual === "triatlon") {
+        juegosEduEstado.triatlon.scores[0] = puntos;
+        juegosEduEstado.triatlon.puntosTotal += puntos;
+        setTimeout(() => {
+            if (dom.arenaBomba) dom.arenaBomba.classList.remove("bomba-exploding");
+            avanzarRondaTriatlon(2);
+        }, 2500);
+    } else {
+        // Vibrar durante 2.5s, detener la vibración, regresar al menú principal y notificar
+        setTimeout(() => {
+            if (dom.arenaBomba) dom.arenaBomba.classList.remove("bomba-exploding");
+            cambiarVista("home");
+            mostrarToast(`💥 Partida finalizada: Se sumaron ${puntos} pts al Salón de la Fama.`);
+        }, 2500);
+    }
+}
+
+/* =========================================================
+   JUEGO 2: 🕵️‍♂️ CAZA AL IMPOSTOR
+   ========================================================= */
+function iniciarImpostor(modo) {
+    if (!dom.arenaImpostor) return;
+    dom.arenaImpostor.classList.remove("hidden");
+    if (dom.juegosGameIcon) dom.juegosGameIcon.textContent = "🕵️‍♂️";
+    if (dom.juegosGameTitle) dom.juegosGameTitle.textContent = "Caza al Impostor";
+
+    const imp = juegosEduEstado.impostor;
+    imp.activo = true;
+    imp.ola = 1;
+    imp.maxOlas = imp.maxOlas || 5;
+    imp.tiempoSeleccionado = imp.tiempoSeleccionado || 15;
+    imp.tiempoOla = imp.tiempoSeleccionado;
+    imp.racha = 1;
+    imp.puntaje = 0;
+
+    // Mostrar panel de configuración previa para elegir tiempo y cantidad de rondas
+    if (dom.impostorSetupPanel) dom.impostorSetupPanel.classList.remove("hidden");
+    if (dom.impostorActiveBoard) dom.impostorActiveBoard.classList.add("hidden");
+
+    actualizarSetupImpostorUI();
+}
+
+function actualizarSetupImpostorUI() {
+    const imp = juegosEduEstado.impostor;
+    if (dom.impostorTimeSelector) {
+        const timeBtns = dom.impostorTimeSelector.querySelectorAll(".impostor-pill-btn");
+        timeBtns.forEach(b => {
+            const t = Number(b.dataset.time);
+            b.classList.toggle("is-active", t === (imp.tiempoSeleccionado || 15));
+        });
+    }
+    if (dom.impostorRoundsSelector) {
+        const roundsBtns = dom.impostorRoundsSelector.querySelectorAll(".impostor-pill-btn");
+        roundsBtns.forEach(b => {
+            const r = Number(b.dataset.rounds);
+            b.classList.toggle("is-active", r === (imp.maxOlas || 5));
+        });
+    }
+    if (dom.impostorSetupStatusText) {
+        if (imp.casosPool && imp.casosPool.length > 0) {
+            dom.impostorSetupStatusText.textContent = `✅ Expediente preparado (${imp.casosPool.length} casos listos)`;
+        } else {
+            dom.impostorSetupStatusText.textContent = "⏳ Gemini analizando tu PDF y preparando los casos...";
+        }
+    }
+}
+
+function comenzarPartidaImpostor() {
+    const imp = juegosEduEstado.impostor;
+    if (dom.impostorSetupPanel) dom.impostorSetupPanel.classList.add("hidden");
+    if (dom.impostorActiveBoard) dom.impostorActiveBoard.classList.remove("hidden");
+
+    imp.ola = 1;
+    imp.racha = 1;
+    imp.puntaje = 0;
+    imp.tiempoOla = imp.tiempoSeleccionado || 15;
+
+    inicializarComodinesImpostor();
+    lanzarOlaImpostor();
+}
+
+/* =========================================================
+   COMODINES: 🃏 CAZA AL IMPOSTOR (MODO SOLO)
+   ========================================================= */
+function inicializarComodinesImpostor() {
+    const imp = juegosEduEstado.impostor;
+    imp.comodines = {
+        pista5050: 1,
+        tiempoExtra: 1,
+        radarSocorro: 1
+    };
+
+    if (dom.impostorComodinesTray) {
+        if (juegosEduEstado.modo === "solo") {
+            dom.impostorComodinesTray.classList.remove("hidden");
+        } else {
+            dom.impostorComodinesTray.classList.add("hidden");
+        }
+    }
+    actualizarComodinesImpostorUI();
+}
+
+function actualizarComodinesImpostorUI() {
+    const imp = juegosEduEstado.impostor;
+    if (!imp.comodines) return;
+
+    const feedbackAbierto = dom.impostorFeedbackBox && !dom.impostorFeedbackBox.classList.contains("hidden");
+    const botonesDeshabilitados = !imp.activo || feedbackAbierto;
+
+    if (dom.impostorCount5050) dom.impostorCount5050.textContent = imp.comodines.pista5050;
+    if (dom.impostorBtn5050) {
+        dom.impostorBtn5050.disabled = botonesDeshabilitados || imp.comodines.pista5050 <= 0;
+    }
+
+    if (dom.impostorCountTiempo) dom.impostorCountTiempo.textContent = imp.comodines.tiempoExtra;
+    if (dom.impostorBtnTiempo) {
+        dom.impostorBtnTiempo.disabled = botonesDeshabilitados || imp.comodines.tiempoExtra <= 0;
+    }
+
+    if (dom.impostorCountSocorro) dom.impostorCountSocorro.textContent = imp.comodines.radarSocorro;
+    if (dom.impostorBtnSocorro) {
+        dom.impostorBtnSocorro.disabled = botonesDeshabilitados || imp.comodines.radarSocorro <= 0;
+    }
+}
+
+function usarComodinImpostor5050() {
+    const imp = juegosEduEstado.impostor;
+    if (!imp.activo || !imp.comodines || imp.comodines.pista5050 <= 0) return;
+    if (dom.impostorFeedbackBox && !dom.impostorFeedbackBox.classList.contains("hidden")) return;
+    if (!dom.impostorCardsGrid) return;
+
+    const cards = Array.from(dom.impostorCardsGrid.querySelectorAll(".impostor-card"));
+    const inocentes = cards.filter(c => c._cardData && !c._cardData.esImpostor && !c.classList.contains("is-discarded-5050"));
+
+    if (inocentes.length < 2) {
+        mostrarToast("⚠️ No hay suficientes afirmaciones válidas para descartar.");
+        return;
+    }
+
+    inocentes.sort(() => Math.random() - 0.5);
+    const aDescartar = inocentes.slice(0, 2);
+    aDescartar.forEach(cardEl => {
+        cardEl.classList.add("is-discarded-5050");
+        cardEl.style.pointerEvents = "none";
+    });
+
+    imp.comodines.pista5050--;
+    actualizarComodinesImpostorUI();
+    reproducirSonido("comodin");
+    mostrarToast("💡 Pista 50/50: Se descartaron 2 opciones verdaderas.");
+}
+
+function usarComodinImpostorTiempo() {
+    const imp = juegosEduEstado.impostor;
+    if (!imp.activo || !imp.comodines || imp.comodines.tiempoExtra <= 0) return;
+    if (dom.impostorFeedbackBox && !dom.impostorFeedbackBox.classList.contains("hidden")) return;
+
+    imp.tiempoRestanteMs = (imp.tiempoRestanteMs || 0) + 15000;
+    imp.tiempoOla = (imp.tiempoOla || 15) + 15;
+    const ratio = Math.min(1, Math.max(0, imp.tiempoRestanteMs / (imp.tiempoOla * 1000)));
+    actualizarBarraTiempoImpostor(ratio);
+
+    imp.comodines.tiempoExtra--;
+    actualizarComodinesImpostorUI();
+    reproducirSonido("comodin");
+    mostrarToast("⏱️ +15s agregados al cronómetro de este caso.");
+}
+
+function usarComodinImpostorSocorro() {
+    const imp = juegosEduEstado.impostor;
+    if (!imp.activo || !imp.comodines || imp.comodines.radarSocorro <= 0) return;
+    if (dom.impostorFeedbackBox && !dom.impostorFeedbackBox.classList.contains("hidden")) return;
+    if (!dom.impostorCardsGrid) return;
+
+    const cards = Array.from(dom.impostorCardsGrid.querySelectorAll(".impostor-card"));
+    const impostorCard = cards.find(c => c._cardData && c._cardData.esImpostor);
+
+    if (impostorCard) {
+        impostorCard.classList.add("is-radar-detected");
+        imp.comodines.radarSocorro--;
+        actualizarComodinesImpostorUI();
+        reproducirSonido("victoria");
+        mostrarToast("🛟 ¡Radar activado! Se detectó la tarjeta con el error conceptual.");
+    }
+}
+
+function lanzarOlaImpostor() {
+    const imp = juegosEduEstado.impostor;
+    if (imp.ola > imp.maxOlas) {
+        finalizarImpostor();
+        return;
+    }
+
+    clearInterval(imp.timerId);
+    if (imp.autoAdvanceTimer) clearTimeout(imp.autoAdvanceTimer);
+    if (dom.impostorFeedbackBox) dom.impostorFeedbackBox.classList.add("hidden");
+
+    if (dom.impostorCaseNum) dom.impostorCaseNum.textContent = `${imp.ola} / ${imp.maxOlas}`;
+    if (dom.impostorStreakBadge) dom.impostorStreakBadge.textContent = `🔥 x${imp.racha}`;
+    if (dom.impostorScoreDisplay) dom.impostorScoreDisplay.textContent = imp.puntaje;
+
+    // Obtener datos del caso actual según casosPool de IA o fallback temático
+    let datos = null;
+    let subtemaNombre = "";
+    let preguntaTexto = "🕵️‍♂️ Una de estas 4 afirmaciones tiene un error conceptual infiltrado. ¡Encontrá al impostor antes de que termine el tiempo!";
+
+    if (imp.casosPool && imp.casosPool.length >= imp.ola) {
+        datos = imp.casosPool[imp.ola - 1];
+        subtemaNombre = datos.subtema || `Caso #${imp.ola}`;
+        if (datos.pregunta) preguntaTexto = datos.pregunta;
+    } else {
+        const tema = (juegosEduEstado.temas && juegosEduEstado.temas.length > 0)
+            ? juegosEduEstado.temas[(juegosEduEstado.temaIndice + imp.ola - 1) % juegosEduEstado.temas.length]
+            : null;
+        subtemaNombre = tema ? (tema.nombre || tema.titulo || `Caso #${imp.ola}`) : `Caso #${imp.ola}`;
+        datos = (tema && tema.impostor) ? tema.impostor : {
+            afirmacionesVerdaderas: [
+                `Propiedad clave verificada sobre el comportamiento teórico de ${subtemaNombre}`,
+                `Principio conceptual fundamentado que rige la estructura de ${subtemaNombre}`,
+                `Regla teórica universalmente admitida en los modelos de ${subtemaNombre}`
+            ],
+            afirmacionImpostora: `Postulado contradictorio que vulnera los fundamentos admitidos de ${subtemaNombre}`,
+            explicacionError: `Esta afirmación contradice los principios teóricos fundamentales de ${subtemaNombre}.`
+        };
+    }
+
+    // Blindaje total contra arrays vacíos o propiedades no definidas
+    const vArr = (datos && Array.isArray(datos.afirmacionesVerdaderas) && datos.afirmacionesVerdaderas.length >= 3)
+        ? datos.afirmacionesVerdaderas
+        : [
+            `Principio formalmente verificado en el estudio de ${subtemaNombre}`,
+            `Propiedad metodológica reconocida en las aplicaciones de ${subtemaNombre}`,
+            `Axioma consistente con los marcos teóricos de ${subtemaNombre}`
+        ];
+    const impTxt = (datos && datos.afirmacionImpostora)
+        ? datos.afirmacionImpostora
+        : `Postulado contradictorio que altera el fundamento de ${subtemaNombre}`;
+    const expTxt = (datos && datos.explicacionError)
+        ? datos.explicacionError
+        : `Esta afirmación contiene una contradicción conceptual con los fundamentos de ${subtemaNombre}.`;
+
+    if (dom.impostorTopicBadge) dom.impostorTopicBadge.textContent = subtemaNombre;
+    if (dom.impostorQuestionText) dom.impostorQuestionText.textContent = preguntaTexto;
+
+    // Actualizar comodines en UI al inicio de cada ola
+    actualizarComodinesImpostorUI();
+
+    const afirmacionesBase = [vArr[0], vArr[1], vArr[2], impTxt];
+    const afirmacionesNorm = normalizarLongitudOpciones(afirmacionesBase);
+
+    const cardsData = [
+        { texto: afirmacionesNorm[0], esImpostor: false },
+        { texto: afirmacionesNorm[1], esImpostor: false },
+        { texto: afirmacionesNorm[2], esImpostor: false },
+        { texto: afirmacionesNorm[3], esImpostor: true, explicacion: expTxt }
+    ].sort(() => Math.random() - 0.5);
+
+    if (dom.impostorCardsGrid) {
+        dom.impostorCardsGrid.innerHTML = "";
+        cardsData.forEach((c, idx) => {
+            const cardEl = document.createElement("div");
+            cardEl.className = "impostor-card";
+            cardEl.style.pointerEvents = "auto";
+            cardEl._cardData = c;
+            cardEl.innerHTML = `
+                <div class="impostor-card__num">Afirmación #${idx + 1}</div>
+                <div class="impostor-card__text">${c.texto}</div>
+            `;
+            cardEl.addEventListener("click", () => resolverClickImpostor(c, cardEl));
+            dom.impostorCardsGrid.appendChild(cardEl);
+        });
+    }
+
+    // Cronómetro de ola configurado según el tiempo elegido por el estudiante
+    imp.tiempoOla = imp.tiempoSeleccionado || 15;
+    imp.tiempoRestanteMs = imp.tiempoOla * 1000;
+    actualizarBarraTiempoImpostor(1);
+
+    const stepMs = 100;
+    imp.timerId = setInterval(() => {
+        imp.tiempoRestanteMs -= stepMs;
+        const ratio = Math.max(0, imp.tiempoRestanteMs / (imp.tiempoOla * 1000));
+        actualizarBarraTiempoImpostor(ratio);
+
+        if (imp.tiempoRestanteMs <= 0) {
+            clearInterval(imp.timerId);
+            tiempoAgotadoOlaImpostor();
+        }
+    }, stepMs);
+}
+
+function actualizarBarraTiempoImpostor(ratio) {
+    if (dom.impostorTimerBar) {
+        dom.impostorTimerBar.style.width = `${(ratio * 100).toFixed(1)}%`;
+    }
+}
+
+function resolverClickImpostor(cardData, cardEl) {
+    const imp = juegosEduEstado.impostor;
+    clearInterval(imp.timerId);
+
+    // Desactivar clics en tarjetas durante la resolución
+    const allCards = dom.impostorCardsGrid ? dom.impostorCardsGrid.querySelectorAll(".impostor-card") : [];
+    allCards.forEach(c => c.style.pointerEvents = "none");
+
+    // Revelar simultáneamente el estado de todas las tarjetas con badges pedagógicos
+    allCards.forEach((c) => {
+        const isThisImpostor = c._cardData && c._cardData.esImpostor;
+        if (isThisImpostor) {
+            c.classList.add("is-impostor-revealed");
+            const badge = document.createElement("span");
+            badge.className = "impostor-card__badge impostor-card__badge--impostor";
+            badge.textContent = "🚨 IMPOSTOR";
+            c.appendChild(badge);
+        } else {
+            c.classList.add("is-innocent-revealed");
+            const badge = document.createElement("span");
+            badge.className = "impostor-card__badge impostor-card__badge--valid";
+            badge.textContent = "✅ VERDADERA";
+            c.appendChild(badge);
+        }
+    });
+
+    if (cardData.esImpostor) {
+        cardEl.classList.add("is-caught");
+        reproducirSonido("victoria");
+        const ptsGanados = Math.round(200 * imp.racha);
+        imp.puntaje += ptsGanados;
+        imp.racha = Math.min(5, imp.racha + 1);
+        mostrarToast(`🎯 ¡IMPOSTOR ATRAPADO! +${ptsGanados} pts`);
+
+        if (dom.impostorFeedbackBox && dom.impostorFeedbackContent) {
+            dom.impostorFeedbackContent.innerHTML = `
+                <div style="font-weight: 700; font-size: 1.05rem; color: #4ade80;">🎯 ¡IMPOSTOR ATRAPADO! (+${ptsGanados} pts)</div>
+                <p style="margin: 0.35rem 0 0; font-size: 0.9rem; color: #cbd5e1; line-height: 1.45;">${cardData.explicacion || "Detectaste con precisión el error conceptual infiltrado."}</p>
+            `;
+            dom.impostorFeedbackBox.classList.remove("hidden");
+        }
+    } else {
+        cardEl.classList.add("is-innocent");
+        reproducirSonido("chispazo");
+        imp.racha = 1;
+        imp.puntaje = Math.max(0, imp.puntaje - 50);
+        mostrarToast("❌ ¡Inocente! Esa afirmación es verdadera (-50 pts)");
+
+        if (dom.impostorFeedbackBox && dom.impostorFeedbackContent) {
+            dom.impostorFeedbackContent.innerHTML = `
+                <div style="font-weight: 700; font-size: 1.05rem; color: #f87171;">❌ Esa afirmación era un postulado verdadero (-50 pts)</div>
+                <p style="margin: 0.35rem 0 0; font-size: 0.9rem; color: #cbd5e1; line-height: 1.45;">${cardData.explicacion || "El impostor estaba en la tarjeta destacada en rojo. Identificá afirmaciones que contradigan los axiomas de la materia."}</p>
+            `;
+            dom.impostorFeedbackBox.classList.remove("hidden");
+        }
+    }
+
+    if (dom.impostorScoreDisplay) dom.impostorScoreDisplay.textContent = imp.puntaje;
+    if (dom.impostorStreakBadge) dom.impostorStreakBadge.textContent = `🔥 x${imp.racha}`;
+
+    // Deshabilitar comodines durante la pantalla de feedback
+    actualizarComodinesImpostorUI();
+
+    // Scroll suave para que el feedback y el botón de siguiente caso se vean inmediatamente
+    if (dom.impostorFeedbackBox) {
+        dom.impostorFeedbackBox.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+
+    // Auto-avance fluido al siguiente caso tras 2.2s si no pulsa el botón
+    if (imp.autoAdvanceTimer) clearTimeout(imp.autoAdvanceTimer);
+    imp.autoAdvanceTimer = setTimeout(() => {
+        siguienteOlaImpostor();
+    }, 2200);
+}
+
+function tiempoAgotadoOlaImpostor() {
+    const imp = juegosEduEstado.impostor;
+    imp.racha = 1;
+    mostrarToast("⌛ ¡Tiempo agotado en este caso!");
+
+    if (dom.impostorFeedbackBox && dom.impostorFeedbackContent) {
+        dom.impostorFeedbackContent.innerHTML = `
+            <div style="font-weight: 700; font-size: 1.05rem; color: #f59e0b;">⌛ El tiempo expiró</div>
+            <p style="margin: 0.35rem 0 0; font-size: 0.9rem; color: #cbd5e1; line-height: 1.45;">Avanzando al siguiente caso del expediente...</p>
+        `;
+        dom.impostorFeedbackBox.classList.remove("hidden");
+    }
+
+    actualizarComodinesImpostorUI();
+
+    if (dom.impostorFeedbackBox) {
+        dom.impostorFeedbackBox.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+
+    if (imp.autoAdvanceTimer) clearTimeout(imp.autoAdvanceTimer);
+    imp.autoAdvanceTimer = setTimeout(() => {
+        siguienteOlaImpostor();
+    }, 2000);
+}
+
+function siguienteOlaImpostor() {
+    if (juegosEduEstado.impostor.autoAdvanceTimer) {
+        clearTimeout(juegosEduEstado.impostor.autoAdvanceTimer);
+    }
+    juegosEduEstado.impostor.ola++;
+    lanzarOlaImpostor();
+}
+
+function finalizarImpostor() {
+    const imp = juegosEduEstado.impostor;
+    imp.activo = false;
+    clearInterval(imp.timerId);
+    actualizarComodinesImpostorUI();
+
+    mostrarToast(`🏆 ¡CASO CERRADO! Puntaje final: ${imp.puntaje} pts`);
+    registrarResultadoJuego("impostor", imp.puntaje, imp.puntaje > 400);
+
+    if (juegosEduEstado.juegoActual === "triatlon") {
+        juegosEduEstado.triatlon.scores[1] = imp.puntaje;
+        juegosEduEstado.triatlon.puntosTotal += imp.puntaje;
+        setTimeout(() => avanzarRondaTriatlon(3), 2000);
+    } else {
+        setTimeout(() => cambiarVista("fama"), 1800);
+    }
+}
+
+/* =========================================================
+   JUEGO 3: 🧠 MEMOTEST CONECTADO
+   ========================================================= */
+function iniciarMemotest(modo) {
+    if (!dom.arenaMemotest) return;
+    dom.arenaMemotest.classList.remove("hidden");
+    if (dom.juegosGameIcon) dom.juegosGameIcon.textContent = "🧠";
+    if (dom.juegosGameTitle) dom.juegosGameTitle.textContent = "Memotest Conectado";
+
+    const mem = juegosEduEstado.memotest;
+    mem.activo = true;
+    mem.cartas = [];
+    mem.primeraCarta = null;
+    mem.bloqueado = false;
+    mem.paresEncontrados = 0;
+    mem.totalPares = Math.min(6, juegosEduEstado.temas.length);
+    mem.movimientos = 0;
+    mem.segundos = 0;
+
+    clearInterval(mem.timerId);
+
+    // Generar cartas
+    const temasElegidos = [...juegosEduEstado.temas].slice(0, mem.totalPares);
+    const cartasGeneradas = [];
+
+    temasElegidos.forEach((t, parId) => {
+        cartasGeneradas.push({
+            id: `par_${parId}_c`,
+            parId,
+            tipo: "concepto",
+            texto: t.memotest.concepto || t.nombre
+        });
+        cartasGeneradas.push({
+            id: `par_${parId}_f`,
+            parId,
+            tipo: "formula",
+            texto: t.memotest.definicionOFormula || t.descripcion
+        });
+    });
+
+    mem.cartas = cartasGeneradas.sort(() => Math.random() - 0.5);
+
+    renderTableroMemotest();
+
+    if (dom.memotestPairsCount) dom.memotestPairsCount.textContent = `0 / ${mem.totalPares}`;
+    if (dom.memotestMovesCount) dom.memotestMovesCount.textContent = "0";
+    if (dom.memotestTimerDisplay) dom.memotestTimerDisplay.textContent = "00:00";
+    if (dom.memotestScoreDisplay) dom.memotestScoreDisplay.textContent = "0";
+
+    mem.timerId = setInterval(() => {
+        mem.segundos++;
+        const m = Math.floor(mem.segundos / 60);
+        const s = mem.segundos % 60;
+        if (dom.memotestTimerDisplay) {
+            dom.memotestTimerDisplay.textContent = `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+        }
+    }, 1000);
+}
+
+function renderTableroMemotest() {
+    if (!dom.memotestGrid) return;
+    dom.memotestGrid.innerHTML = "";
+
+    juegosEduEstado.memotest.cartas.forEach((c) => {
+        const cardEl = document.createElement("div");
+        cardEl.className = `memotest-card memotest-card--${c.tipo}`;
+        cardEl.dataset.id = c.id;
+        cardEl.dataset.parId = c.parId;
+        cardEl.innerHTML = `
+            <div class="memotest-card__face-back">🧠</div>
+            <div class="memotest-card__face-front hidden">${c.texto}</div>
+        `;
+        cardEl.addEventListener("click", () => clickCartaMemotest(c, cardEl));
+        dom.memotestGrid.appendChild(cardEl);
+    });
+}
+
+function clickCartaMemotest(carta, cardEl) {
+    const mem = juegosEduEstado.memotest;
+    if (mem.bloqueado) return;
+    if (cardEl.classList.contains("is-matched") || cardEl.classList.contains("is-flipped")) return;
+
+    // Voltear carta
+    cardEl.classList.add("is-flipped");
+    const faceBack = cardEl.querySelector(".memotest-card__face-back");
+    const faceFront = cardEl.querySelector(".memotest-card__face-front");
+    if (faceBack) faceBack.classList.add("hidden");
+    if (faceFront) faceFront.classList.remove("hidden");
+
+    if (!mem.primeraCarta) {
+        mem.primeraCarta = { carta, cardEl };
+    } else {
+        mem.movimientos++;
+        if (dom.memotestMovesCount) dom.memotestMovesCount.textContent = mem.movimientos;
+
+        const primera = mem.primeraCarta;
+        if (primera.carta.parId === carta.parId && primera.carta.id !== carta.id) {
+            // ¡MATCH!
+            cardEl.classList.add("is-matched");
+            primera.cardEl.classList.add("is-matched");
+            mem.paresEncontrados++;
+            if (dom.memotestPairsCount) dom.memotestPairsCount.textContent = `${mem.paresEncontrados} / ${mem.totalPares}`;
+            mostrarToast("✨ ¡CONEXIÓN ESTABLECIDA! Concepto y Fórmula unidos.");
+
+            const pts = Math.max(100, 600 - mem.segundos * 5 - mem.movimientos * 10);
+            if (dom.memotestScoreDisplay) dom.memotestScoreDisplay.textContent = pts;
+
+            mem.primeraCarta = null;
+
+            if (mem.paresEncontrados >= mem.totalPares) {
+                finalizarMemotest(pts);
+            }
+        } else {
+            // No coinciden
+            mem.bloqueado = true;
+            setTimeout(() => {
+                cardEl.classList.remove("is-flipped");
+                primera.cardEl.classList.remove("is-flipped");
+                const b1 = primera.cardEl.querySelector(".memotest-card__face-back");
+                const f1 = primera.cardEl.querySelector(".memotest-card__face-front");
+                if (b1) b1.classList.remove("hidden");
+                if (f1) f1.classList.add("hidden");
+
+                if (faceBack) faceBack.classList.remove("hidden");
+                if (faceFront) faceFront.classList.add("hidden");
+
+                mem.primeraCarta = null;
+                mem.bloqueado = false;
+            }, 900);
+        }
+    }
+}
+
+function finalizarMemotest(pts) {
+    const mem = juegosEduEstado.memotest;
+    clearInterval(mem.timerId);
+
+    const puntosFinales = pts || 500;
+    mostrarToast(`🧠 ¡MEMOTEST COMPLETADO! Tiempo: ${mem.segundos}s - Puntos: ${puntosFinales}`);
+    registrarResultadoJuego("memotest", puntosFinales, true);
+
+    if (juegosEduEstado.juegoActual === "triatlon") {
+        juegosEduEstado.triatlon.scores[2] = puntosFinales;
+        juegosEduEstado.triatlon.puntosTotal += puntosFinales;
+        finalizarTriatlon();
+    } else {
+        setTimeout(() => cambiarVista("fama"), 1800);
+    }
+}
+
+/* =========================================================
+   🏅 MODO TRIATLÓN (3 RONDAS ENCADENADAS)
+   ========================================================= */
+function iniciarTriatlon(modo) {
+    if (dom.triatlonProgressBar) dom.triatlonProgressBar.classList.remove("hidden");
+    juegosEduEstado.triatlon.rondaActual = 1;
+    juegosEduEstado.triatlon.puntosTotal = 0;
+    juegosEduEstado.triatlon.scores = [0, 0, 0];
+
+    actualizarProgresoTriatlon(1);
+    iniciarBomba(modo);
+}
+
+function actualizarProgresoTriatlon(paso) {
+    [dom.triatlonStep1, dom.triatlonStep2, dom.triatlonStep3].forEach((el, idx) => {
+        if (el) el.classList.toggle("is-active", idx + 1 === paso);
+    });
+    if (dom.triatlonTotalScore) dom.triatlonTotalScore.textContent = juegosEduEstado.triatlon.puntosTotal;
+}
+
+function avanzarRondaTriatlon(paso) {
+    juegosEduEstado.triatlon.rondaActual = paso;
+    actualizarProgresoTriatlon(paso);
+
+    if (dom.arenaBomba) dom.arenaBomba.classList.add("hidden");
+    if (dom.arenaImpostor) dom.arenaImpostor.classList.add("hidden");
+    if (dom.arenaMemotest) dom.arenaMemotest.classList.add("hidden");
+
+    if (paso === 2) {
+        mostrarToast("🏅 Triatlón - Ronda 2: ¡Caza al Impostor!");
+        iniciarImpostor(juegosEduEstado.modo);
+    } else if (paso === 3) {
+        mostrarToast("🏅 Triatlón - Ronda 3: ¡Memotest Conectado!");
+        iniciarMemotest(juegosEduEstado.modo);
+    }
+}
+
+function finalizarTriatlon() {
+    const total = juegosEduEstado.triatlon.puntosTotal;
+    mostrarToast(`👑 ¡TRIATLÓN COMPLETADO! Puntos Totales: ${total}`);
+    registrarResultadoJuego("triatlon", total, true);
+    setTimeout(() => cambiarVista("fama"), 2000);
+}
+
+/* =========================================================
+   SALÓN DE LA FAMA MULTIVERSO & INSIGNIAS ESPECIALES
+   ========================================================= */
+const MULTIVERSE_STORAGE_KEY = "luibanez-multiverse-v1";
+
+function obtenerMultiversoHistorial() {
+    try {
+        return JSON.parse(localStorage.getItem(MULTIVERSE_STORAGE_KEY)) || {
+            partidas: [],
+            statsPorJuego: {
+                bolillero: { partidas: 0, victorias: 0, puntos: 0 },
+                bomba: { partidas: 0, victorias: 0, puntos: 0 },
+                impostor: { partidas: 0, victorias: 0, puntos: 0 },
+                memotest: { partidas: 0, victorias: 0, puntos: 0 },
+                triatlon: { partidas: 0, victorias: 0, puntos: 0 }
+            }
+        };
+    } catch {
+        return { partidas: [], statsPorJuego: {} };
+    }
+}
+
+function registrarResultadoJuego(tipoJuego, puntos, gano) {
+    const multiverso = obtenerMultiversoHistorial();
+    const usuario = perfilUsuario.activo ? perfilUsuario.perfil.apodo : "Invitado";
+
+    const partida = {
+        id: Date.now(),
+        juego: tipoJuego,
+        jugador: usuario,
+        puntos: puntos || 0,
+        gano: !!gano,
+        fecha: new Date().toLocaleDateString("es-AR")
+    };
+
+    multiverso.partidas.unshift(partida);
+
+    if (!multiverso.statsPorJuego[tipoJuego]) {
+        multiverso.statsPorJuego[tipoJuego] = { partidas: 0, victorias: 0, puntos: 0 };
+    }
+    multiverso.statsPorJuego[tipoJuego].partidas++;
+    if (gano) multiverso.statsPorJuego[tipoJuego].victorias++;
+    multiverso.statsPorJuego[tipoJuego].puntos += puntos;
+
+    localStorage.setItem(MULTIVERSE_STORAGE_KEY, JSON.stringify(multiverso));
+
+    // Si el usuario tiene cuenta, actualizar su perfil con insignias especiales
+    if (perfilUsuario.activo && perfilUsuario.perfil) {
+        if (!perfilUsuario.perfil.insignias) {
+            perfilUsuario.perfil.insignias = {};
+        }
+        if (gano) {
+            perfilUsuario.perfil.insignias[tipoJuego] = true;
+            perfilUsuario.perfil.victorias = (perfilUsuario.perfil.victorias || 0) + 1;
+        }
+        perfilUsuario.perfil.puntos = (perfilUsuario.perfil.puntos || 0) + puntos;
+        guardarCuentasEnStorage();
+        actualizarUIUsuarioActivo();
+    }
+
+    actualizarUIMultiversoFama("general");
+}
+
+function actualizarUIMultiversoFama(tabFiltro = "general") {
+    const multiverso = obtenerMultiversoHistorial();
+    const stats = multiverso.statsPorJuego;
+
+    // Métricas Generales Acumuladas
+    let totalPartidas = 0;
+    let totalVictorias = 0;
+    let totalPuntos = 0;
+
+    Object.values(stats).forEach(s => {
+        totalPartidas += s.partidas || 0;
+        totalVictorias += s.victorias || 0;
+        totalPuntos += s.puntos || 0;
+    });
+
+    if (dom.famaTotalMatchesCount) dom.famaTotalMatchesCount.textContent = totalPartidas;
+    if (dom.famaTotalPointsDistributed) dom.famaTotalPointsDistributed.textContent = totalPuntos;
+    if (dom.famaGlobalWinRate) {
+        const rate = totalPartidas > 0 ? Math.round((totalVictorias / totalPartidas) * 100) : 0;
+        dom.famaGlobalWinRate.textContent = `${rate}%`;
+    }
+
+    // Filtrar partidas según pestaña
+    const partidasFiltradas = tabFiltro === "general"
+        ? multiverso.partidas
+        : multiverso.partidas.filter(p => p.juego === tabFiltro);
+
+    // Actualizar badges en botones de pestañas
+    const tabBtns = document.querySelectorAll(".fama-tab-btn");
+    tabBtns.forEach(btn => {
+        btn.classList.toggle("is-active", btn.dataset.famaTab === tabFiltro);
+    });
+
+    // Actualizar tabla
+    renderTablaFamaMultiverso(partidasFiltradas, tabFiltro);
+}
+
+function renderTablaFamaMultiverso(partidas, tabFiltro) {
+    if (!dom.famaLeaderboardBody) return;
+    dom.famaLeaderboardBody.innerHTML = "";
+
+    // Agrupar por jugador
+    const jugadoresMap = {};
+    partidas.forEach(p => {
+        if (!jugadoresMap[p.jugador]) {
+            jugadoresMap[p.jugador] = { victorias: 0, puntos: 0, partidas: 0 };
+        }
+        jugadoresMap[p.jugador].partidas++;
+        if (p.gano) jugadoresMap[p.jugador].victorias++;
+        jugadoresMap[p.jugador].puntos += p.puntos;
+    });
+
+    const ranking = Object.entries(jugadoresMap)
+        .map(([nombre, s]) => ({ nombre, ...s }))
+        .sort((a, b) => b.victorias - a.victorias || b.puntos - a.puntos);
+
+    if (ranking.length > 0 && dom.famaTopChampionName) {
+        dom.famaTopChampionName.textContent = ranking[0].nombre;
+    }
+
+    if (ranking.length === 0) {
+        dom.famaLeaderboardBody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding: 2rem; color: #8e97a8;">No hay partidas registradas en esta modalidad. ¡Jugá tu primera partida!</td></tr>`;
+        return;
+    }
+
+    ranking.forEach((j, i) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td><strong>#${i + 1}</strong></td>
+            <td><strong>${j.nombre}</strong> ${i === 0 ? '👑' : ''}</td>
+            <td><span class="badge badge--success">${j.victorias}</span></td>
+            <td>${j.partidas - j.victorias}</td>
+            <td>0</td>
+            <td><strong>${j.puntos}</strong></td>
+            <td>🔥 x${Math.min(5, j.victorias + 1)}</td>
+            <td>${tabFiltro}</td>
+        `;
+        dom.famaLeaderboardBody.appendChild(tr);
+    });
+}
+
+// Render de avatar con marco evolutivo Y badges especiales
+function obtenerBadgesEspecialesHtml(insignias) {
+    if (!insignias) return "";
+    let badges = "";
+    if (insignias.bomba) badges += `<span class="avatar-badge-special badge-spec--bomba" title="Artificiero: Campeón de La Bomba">💣</span>`;
+    if (insignias.impostor) badges += `<span class="avatar-badge-special badge-spec--impostor" title="Detective: Campeón de Impostor">🕵️</span>`;
+    if (insignias.memotest) badges += `<span class="avatar-badge-special badge-spec--memotest" title="Sinapsis: Campeón de Memotest">🧠</span>`;
+    if (insignias.bolillero) badges += `<span class="avatar-badge-special badge-spec--bolillero" title="Maestro Bolillero">🎲</span>`;
+    if (insignias.triatlon) badges += `<span class="avatar-badge-special badge-spec--triatlon" title="Titán Triatleta">🏅</span>`;
+    return badges;
+}
+
+/* =========================================================
+   VINCULACIÓN DE EVENTOS PARA LOS NUEVOS MÓDULOS (v5)
+   ========================================================= */
+
+function registrarEventosModulosV5() {
+    // 1. Prompt para Gemini
+    const geminiBtns = [dom.copyGeminiPromptBtn, dom.drawerGeminiPromptBtn, dom.copyGeminiPromptInnerBtn];
+    geminiBtns.forEach(btn => {
+        if (btn) btn.addEventListener("click", copiarPromptGemini);
+    });
+
+    if (dom.closeGeminiPromptModalBtn) {
+        dom.closeGeminiPromptModalBtn.addEventListener("click", () => {
+            if (dom.geminiPromptModal) {
+                if (typeof dom.geminiPromptModal.close === "function") dom.geminiPromptModal.close();
+                else dom.geminiPromptModal.removeAttribute("open");
+            }
+        });
+    }
+    if (dom.closeGeminiPromptBottomBtn) {
+        dom.closeGeminiPromptBottomBtn.addEventListener("click", () => {
+            if (dom.geminiPromptModal) {
+                if (typeof dom.geminiPromptModal.close === "function") dom.geminiPromptModal.close();
+                else dom.geminiPromptModal.removeAttribute("open");
+            }
+        });
+    }
+
+    // 2. Tarjetas de Home Solo
+    const openSoloBomba = document.getElementById("openSoloBombaBtn");
+    if (openSoloBomba) openSoloBomba.addEventListener("click", () => abrirArenaJuego("bomba", "solo"));
+
+    const openSoloImpostor = document.getElementById("openSoloImpostorBtn");
+    if (openSoloImpostor) openSoloImpostor.addEventListener("click", () => abrirArenaJuego("impostor", "solo"));
+
+    const openSoloMemotest = document.getElementById("openSoloMemotestBtn");
+    if (openSoloMemotest) openSoloMemotest.addEventListener("click", () => abrirArenaJuego("memotest", "solo"));
+
+    // 3. Tarjetas de Home Duelo
+    const openDueloBolillero = document.getElementById("openDueloBolilleroCardBtn");
+    if (openDueloBolillero) {
+        openDueloBolillero.addEventListener("click", () => {
+            cambiarVista("duelo");
+            if (dom.dueloOnlineGameSelect) dom.dueloOnlineGameSelect.value = "bolillero";
+        });
+    }
+
+    const openDueloBomba = document.getElementById("openDueloBombaCardBtn");
+    if (openDueloBomba) {
+        openDueloBomba.addEventListener("click", () => {
+            cambiarVista("duelo");
+            if (dom.dueloOnlineGameSelect) dom.dueloOnlineGameSelect.value = "bomba";
+        });
+    }
+
+    const openDueloImpostor = document.getElementById("openDueloImpostorCardBtn");
+    if (openDueloImpostor) {
+        openDueloImpostor.addEventListener("click", () => {
+            cambiarVista("duelo");
+            if (dom.dueloOnlineGameSelect) dom.dueloOnlineGameSelect.value = "impostor";
+        });
+    }
+
+    const openDueloMemotest = document.getElementById("openDueloMemotestCardBtn");
+    if (openDueloMemotest) {
+        openDueloMemotest.addEventListener("click", () => {
+            cambiarVista("duelo");
+            if (dom.dueloOnlineGameSelect) dom.dueloOnlineGameSelect.value = "memotest";
+        });
+    }
+
+    const openDueloTriatlon = document.getElementById("openDueloTriatlonCardBtn");
+    if (openDueloTriatlon) {
+        openDueloTriatlon.addEventListener("click", () => {
+            cambiarVista("duelo");
+            if (dom.dueloOnlineGameSelect) dom.dueloOnlineGameSelect.value = "triatlon";
+        });
+    }
+
+    // 4. Botones del Drawer lateral Solo y Duelo
+    const drawerSoloBomba = document.getElementById("drawerNavSoloBomba");
+    if (drawerSoloBomba) {
+        drawerSoloBomba.addEventListener("click", () => {
+            abrirArenaJuego("bomba", "solo");
+            cerrarDrawerMenu();
+        });
+    }
+
+    const drawerSoloImpostor = document.getElementById("drawerNavSoloImpostor");
+    if (drawerSoloImpostor) {
+        drawerSoloImpostor.addEventListener("click", () => {
+            abrirArenaJuego("impostor", "solo");
+            cerrarDrawerMenu();
+        });
+    }
+
+    const drawerSoloMemotest = document.getElementById("drawerNavSoloMemotest");
+    if (drawerSoloMemotest) {
+        drawerSoloMemotest.addEventListener("click", () => {
+            abrirArenaJuego("memotest", "solo");
+            cerrarDrawerMenu();
+        });
+    }
+
+    const drawerOnlineBolillero = document.getElementById("drawerNavOnlineBolillero");
+    if (drawerOnlineBolillero) {
+        drawerOnlineBolillero.addEventListener("click", () => {
+            cambiarVista("duelo");
+            if (dom.dueloOnlineGameSelect) dom.dueloOnlineGameSelect.value = "bolillero";
+            cerrarDrawerMenu();
+        });
+    }
+
+    const drawerOnlineBomba = document.getElementById("drawerNavOnlineBomba");
+    if (drawerOnlineBomba) {
+        drawerOnlineBomba.addEventListener("click", () => {
+            cambiarVista("duelo");
+            if (dom.dueloOnlineGameSelect) dom.dueloOnlineGameSelect.value = "bomba";
+            cerrarDrawerMenu();
+        });
+    }
+
+    const drawerOnlineImpostor = document.getElementById("drawerNavOnlineImpostor");
+    if (drawerOnlineImpostor) {
+        drawerOnlineImpostor.addEventListener("click", () => {
+            cambiarVista("duelo");
+            if (dom.dueloOnlineGameSelect) dom.dueloOnlineGameSelect.value = "impostor";
+            cerrarDrawerMenu();
+        });
+    }
+
+    const drawerOnlineMemotest = document.getElementById("drawerNavOnlineMemotest");
+    if (drawerOnlineMemotest) {
+        drawerOnlineMemotest.addEventListener("click", () => {
+            cambiarVista("duelo");
+            if (dom.dueloOnlineGameSelect) dom.dueloOnlineGameSelect.value = "memotest";
+            cerrarDrawerMenu();
+        });
+    }
+
+    const drawerOnlineTriatlon = document.getElementById("drawerNavOnlineTriatlon");
+    if (drawerOnlineTriatlon) {
+        drawerOnlineTriatlon.addEventListener("click", () => {
+            cambiarVista("duelo");
+            if (dom.dueloOnlineGameSelect) dom.dueloOnlineGameSelect.value = "triatlon";
+            cerrarDrawerMenu();
+        });
+    }
+
+    // 5. Arena Controles
+    if (dom.juegosBackBtn) {
+        dom.juegosBackBtn.addEventListener("click", () => {
+            clearInterval(juegosEduEstado.bomba.timerId);
+            clearInterval(juegosEduEstado.impostor.timerId);
+            clearInterval(juegosEduEstado.memotest.timerId);
+            if (juegosEduEstado.modo === "duelo") {
+                cambiarVista("juntos");
+            } else {
+                cambiarVista("solo");
+            }
+        });
+    }
+
+    
+    if (dom.bombaPlayAgainBtn) {
+        dom.bombaPlayAgainBtn.addEventListener("click", async () => {
+            mostrarToast("🔄 Generando nuevas preguntas teóricas para la bomba...");
+            await abrirArenaJuego("bomba", juegosEduEstado.modo, null, true);
+        });
+    }
+    if (dom.bombaExitBtn) dom.bombaExitBtn.addEventListener("click", () => cambiarVista("home"));
+
+    // Controles de Configuración Previa de Caza al Impostor
+    if (dom.impostorTimeSelector) {
+        dom.impostorTimeSelector.addEventListener("click", (e) => {
+            const btn = e.target.closest(".impostor-pill-btn");
+            if (btn && btn.dataset.time) {
+                juegosEduEstado.impostor.tiempoSeleccionado = Number(btn.dataset.time);
+                actualizarSetupImpostorUI();
+            }
+        });
+    }
+    if (dom.impostorRoundsSelector) {
+        dom.impostorRoundsSelector.addEventListener("click", (e) => {
+            const btn = e.target.closest(".impostor-pill-btn");
+            if (btn && btn.dataset.rounds) {
+                juegosEduEstado.impostor.maxOlas = Number(btn.dataset.rounds);
+                actualizarSetupImpostorUI();
+            }
+        });
+    }
+    if (dom.impostorStartGameBtn) {
+        dom.impostorStartGameBtn.addEventListener("click", comenzarPartidaImpostor);
+    }
+
+    if (dom.impostorNextWaveBtn) dom.impostorNextWaveBtn.addEventListener("click", siguienteOlaImpostor);
+
+    // Comodines para Caza al Impostor (Modo Solo)
+    if (dom.impostorBtn5050) dom.impostorBtn5050.addEventListener("click", usarComodinImpostor5050);
+    if (dom.impostorBtnTiempo) dom.impostorBtnTiempo.addEventListener("click", usarComodinImpostorTiempo);
+    if (dom.impostorBtnSocorro) dom.impostorBtnSocorro.addEventListener("click", usarComodinImpostorSocorro);
+
+    // 6. Pestañas de Salón de la Fama
+    const famaTabBtns = document.querySelectorAll(".fama-tab-btn");
+    famaTabBtns.forEach(btn => {
+        btn.addEventListener("click", () => {
+            actualizarUIMultiversoFama(btn.dataset.famaTab);
+        });
+    });
+
+    // 7. Lanzamiento de partidas desde Duelo Online
+    if (dom.dueloLaunchOnlineMatchBtn) {
+        const originalLaunch = dom.dueloLaunchOnlineMatchBtn.onclick;
+        dom.dueloLaunchOnlineMatchBtn.addEventListener("click", () => {
+            const juego = dom.dueloOnlineGameSelect ? dom.dueloOnlineGameSelect.value : "bolillero";
+            const modo = dom.dueloOnlineModeSelect ? dom.dueloOnlineModeSelect.value : "versus";
+            const listaId = dom.dueloOnlineListaSelect ? dom.dueloOnlineListaSelect.value : null;
+
+            if (juego !== "bolillero") {
+                enviarMensajeMQTT({
+                    tipo: "START_EDU_GAME",
+                    juego,
+                    modo,
+                    listaId
+                });
+                abrirArenaJuego(juego, modo, listaId);
+            }
+        });
+    }
+}
+
+// Hook al inicializar la aplicación
+setTimeout(() => {
+    try {
+        registrarEventosModulosV5();
+        actualizarUIMultiversoFama("general");
+    } catch (e) {
+        console.warn("Auto-registro módulos v5:", e);
+    }
+}, 300);
+
+/* =========================================================
+   MÓDULO: ESTUDIAR SOLO, ESTUDIAR JUNTOS Y PIZARRÓN / NOTAS
+   ========================================================= */
+function irASeccionEstudio(idSeccion, navId) {
+    if (typeof cambiarVista === "function") {
+        cambiarVista("home");
+    }
+    setTimeout(() => {
+        const el = document.getElementById(idSeccion);
+        if (el) {
+            el.scrollIntoView({ behavior: "smooth", block: "start" });
+            el.classList.remove("section-highlight");
+            void el.offsetWidth; // trigger reflow
+            el.classList.add("section-highlight");
+            setTimeout(() => el.classList.remove("section-highlight"), 1500);
+        }
+    }, 80);
+
+    // Actualizar active state en navbars
+    document.querySelectorAll(".top-nav__links .nav-link, .drawer-nav .drawer-nav-item").forEach(btn => {
+        btn.classList.remove("is-active");
+    });
+    const activeNavBtn = document.getElementById(navId);
+    if (activeNavBtn) activeNavBtn.classList.add("is-active");
+}
+
+(function initSoloJuntosAndScratchpad() {
+    // 2. Botones Cooperativos en Estudiar Juntos
+    const openCoopBombaBtn = document.getElementById("openCoopBombaBtn");
+    if (openCoopBombaBtn) {
+        openCoopBombaBtn.addEventListener("click", () => {
+            if (typeof abrirArenaJuego === "function") {
+                abrirArenaJuego("bomba");
+            }
+        });
+    }
+
+    const openCoopMemotestBtn = document.getElementById("openCoopMemotestBtn");
+    if (openCoopMemotestBtn) {
+        openCoopMemotestBtn.addEventListener("click", () => {
+            if (typeof abrirArenaJuego === "function") {
+                abrirArenaJuego("memotest");
+            }
+        });
+    }
+
+    // 3. Pizarrón y Notas Flotante
+    const scratchpadCard = document.getElementById("scratchpadFloatingCard");
+    const scratchpadPill = document.getElementById("scratchpadPill");
+    const drawerScratchpadBtn = document.getElementById("drawerScratchpadBtn");
+    const pinScratchpadBtn = document.getElementById("pinScratchpadBtn");
+    const minimizeScratchpadBtn = document.getElementById("minimizeScratchpadBtn");
+    const scratchpadToggleModeBtn = document.getElementById("scratchpadToggleModeBtn");
+    const scratchpadModeBadge = document.getElementById("scratchpadModeBadge");
+    const scratchpadDrawToolbar = document.getElementById("scratchpadDrawToolbar");
+    const scratchpadCanvasWrap = document.getElementById("scratchpadCanvasWrap");
+    const scratchpadTextWrap = document.getElementById("scratchpadTextWrap");
+    const scratchpadCanvas = document.getElementById("scratchpadCanvas");
+    const scratchpadTextarea = document.getElementById("scratchpadTextarea");
+    const scratchpadPenBtn = document.getElementById("scratchpadPenBtn");
+    const scratchpadEraserBtn = document.getElementById("scratchpadEraserBtn");
+    const scratchpadClearBtn = document.getElementById("scratchpadClearBtn");
+    const scratchpadClearNotesBtn = document.getElementById("scratchpadClearNotesBtn");
+
+    if (!scratchpadCard) return;
+
+    let scratchState = {
+        isMinimized: true,
+        isPinned: false,
+        mode: "drawing",
+        tool: "pen",
+        color: "#ffffff",
+        penSize: 2.5,
+        eraserSize: 22
+    };
+
+    function abrirPizarron() {
+        scratchState.isMinimized = false;
+        scratchpadCard.classList.remove("is-minimized");
+        scratchpadCard.setAttribute("aria-hidden", "false");
+        if (scratchState.mode === "drawing") {
+            ajustarResolucionCanvas();
+        }
+    }
+
+    function cerrarPizarron() {
+        if (scratchState.isPinned) return;
+        scratchState.isMinimized = true;
+        scratchpadCard.classList.add("is-minimized");
+        scratchpadCard.setAttribute("aria-hidden", "true");
+    }
+
+    function togglePizarron() {
+        if (scratchpadCard.classList.contains("is-minimized")) {
+            abrirPizarron();
+        } else {
+            cerrarPizarron();
+        }
+    }
+
+    // Exponer globalmente para listeners externos
+    window.togglePizarron = togglePizarron;
+    window.abrirPizarron = abrirPizarron;
+    window.cerrarPizarron = cerrarPizarron;
+    window.toggleTarjetaScratchpad = togglePizarron;
+    window.abrirTarjetaScratchpad = abrirPizarron;
+
+    if (scratchpadPill) {
+        scratchpadPill.addEventListener("click", togglePizarron);
+    }
+    if (drawerScratchpadBtn) {
+        drawerScratchpadBtn.addEventListener("click", () => {
+            if (typeof cerrarMenuDrawer === "function") cerrarMenuDrawer();
+            abrirPizarron();
+        });
+    }
+    if (minimizeScratchpadBtn) {
+        minimizeScratchpadBtn.addEventListener("click", () => {
+            scratchState.isPinned = false;
+            if (pinScratchpadBtn) pinScratchpadBtn.classList.remove("is-pinned");
+            cerrarPizarron();
+        });
+    }
+    if (pinScratchpadBtn) {
+        pinScratchpadBtn.addEventListener("click", () => {
+            scratchState.isPinned = !scratchState.isPinned;
+            pinScratchpadBtn.classList.toggle("is-pinned", scratchState.isPinned);
+            pinScratchpadBtn.title = scratchState.isPinned ? "Desfijar de pantalla (📌)" : "Fijar en pantalla (📌)";
+        });
+    }
+
+    // Alternar entre Dibujo y Notas
+    if (scratchpadToggleModeBtn) {
+        scratchpadToggleModeBtn.addEventListener("click", () => {
+            if (scratchState.mode === "drawing") {
+                scratchState.mode = "notes";
+                scratchpadToggleModeBtn.textContent = "✏️ Pizarrón";
+                if (scratchpadModeBadge) {
+                    scratchpadModeBadge.textContent = "Notas";
+                    scratchpadModeBadge.className = "badge badge--accent";
+                }
+                if (scratchpadDrawToolbar) scratchpadDrawToolbar.style.display = "none";
+                if (scratchpadCanvasWrap) scratchpadCanvasWrap.classList.add("hidden");
+                if (scratchpadTextWrap) scratchpadTextWrap.classList.remove("hidden");
+                if (scratchpadTextarea) scratchpadTextarea.focus();
+            } else {
+                scratchState.mode = "drawing";
+                scratchpadToggleModeBtn.textContent = "📄 Notas";
+                if (scratchpadModeBadge) {
+                    scratchpadModeBadge.textContent = "Dibujo";
+                    scratchpadModeBadge.className = "badge badge--success";
+                }
+                if (scratchpadDrawToolbar) scratchpadDrawToolbar.style.display = "flex";
+                if (scratchpadCanvasWrap) scratchpadCanvasWrap.classList.remove("hidden");
+                if (scratchpadTextWrap) scratchpadTextWrap.classList.add("hidden");
+                ajustarResolucionCanvas();
+            }
+        });
+    }
+
+    // Persistencia de notas de texto
+    const STORAGE_KEY_NOTES = "luibanez-scratchpad-notes";
+    if (scratchpadTextarea) {
+        const savedNotes = localStorage.getItem(STORAGE_KEY_NOTES);
+        if (savedNotes) scratchpadTextarea.value = savedNotes;
+
+        scratchpadTextarea.addEventListener("input", () => {
+            localStorage.setItem(STORAGE_KEY_NOTES, scratchpadTextarea.value);
+        });
+    }
+    if (scratchpadClearNotesBtn && scratchpadTextarea) {
+        scratchpadClearNotesBtn.addEventListener("click", () => {
+            scratchpadTextarea.value = "";
+            localStorage.removeItem(STORAGE_KEY_NOTES);
+        });
+    }
+
+    // Motor de Dibujo Canvas (Pointer events)
+    if (scratchpadCanvas) {
+        const ctx = scratchpadCanvas.getContext("2d");
+        const STORAGE_KEY_DRAWING = "luibanez-scratchpad-drawing";
+        let isDrawing = false;
+        let lastX = 0;
+        let lastY = 0;
+
+        function ajustarResolucionCanvas() {
+            const rect = scratchpadCanvas.getBoundingClientRect();
+            if (rect.width > 0 && rect.height > 0) {
+                const tempCanvas = document.createElement("canvas");
+                tempCanvas.width = scratchpadCanvas.width;
+                tempCanvas.height = scratchpadCanvas.height;
+                const tempCtx = tempCanvas.getContext("2d");
+                tempCtx.drawImage(scratchpadCanvas, 0, 0);
+
+                scratchpadCanvas.width = Math.round(rect.width);
+                scratchpadCanvas.height = Math.round(rect.height);
+                ctx.lineCap = "round";
+                ctx.lineJoin = "round";
+
+                ctx.drawImage(tempCanvas, 0, 0, scratchpadCanvas.width, scratchpadCanvas.height);
+            }
+        }
+
+        const savedDrawing = localStorage.getItem(STORAGE_KEY_DRAWING);
+        if (savedDrawing) {
+            const img = new Image();
+            img.onload = () => {
+                ctx.drawImage(img, 0, 0, scratchpadCanvas.width, scratchpadCanvas.height);
+            };
+            img.src = savedDrawing;
+        }
+
+        function guardarDibujo() {
+            try {
+                localStorage.setItem(STORAGE_KEY_DRAWING, scratchpadCanvas.toDataURL("image/png"));
+            } catch(e) {}
+        }
+
+        function getPos(e) {
+            const rect = scratchpadCanvas.getBoundingClientRect();
+            const scaleX = scratchpadCanvas.width / rect.width;
+            const scaleY = scratchpadCanvas.height / rect.height;
+            return {
+                x: (e.clientX - rect.left) * scaleX,
+                y: (e.clientY - rect.top) * scaleY
+            };
+        }
+
+        scratchpadCanvas.addEventListener("pointerdown", (e) => {
+            scratchpadCanvas.setPointerCapture(e.pointerId);
+            isDrawing = true;
+            const pos = getPos(e);
+            lastX = pos.x;
+            lastY = pos.y;
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+            ctx.lineTo(lastX, lastY);
+            ctx.strokeStyle = scratchState.tool === "eraser" ? "#0d1117" : scratchState.color;
+            ctx.lineWidth = scratchState.tool === "eraser" ? scratchState.eraserSize : scratchState.penSize;
+            ctx.stroke();
+        });
+
+        scratchpadCanvas.addEventListener("pointermove", (e) => {
+            if (!isDrawing) return;
+            const pos = getPos(e);
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+            ctx.lineTo(pos.x, pos.y);
+            ctx.strokeStyle = scratchState.tool === "eraser" ? "#0d1117" : scratchState.color;
+            ctx.lineWidth = scratchState.tool === "eraser" ? scratchState.eraserSize : scratchState.penSize;
+            ctx.stroke();
+            lastX = pos.x;
+            lastY = pos.y;
+        });
+
+        const stopDrawing = () => {
+            if (isDrawing) {
+                isDrawing = false;
+                guardarDibujo();
+            }
+        };
+
+        scratchpadCanvas.addEventListener("pointerup", stopDrawing);
+        scratchpadCanvas.addEventListener("pointercancel", stopDrawing);
+
+        // Colores
+        document.querySelectorAll("#scratchpadDrawToolbar .color-dot").forEach(btn => {
+            btn.addEventListener("click", () => {
+                document.querySelectorAll("#scratchpadDrawToolbar .color-dot").forEach(d => d.classList.remove("is-active"));
+                btn.classList.add("is-active");
+                scratchState.color = btn.getAttribute("data-color") || "#ffffff";
+                scratchState.tool = "pen";
+                if (scratchpadPenBtn) scratchpadPenBtn.classList.add("is-active");
+                if (scratchpadEraserBtn) scratchpadEraserBtn.classList.remove("is-active");
+            });
+        });
+
+        // Lápiz
+        if (scratchpadPenBtn) {
+            scratchpadPenBtn.addEventListener("click", () => {
+                scratchState.tool = "pen";
+                scratchpadPenBtn.classList.add("is-active");
+                if (scratchpadEraserBtn) scratchpadEraserBtn.classList.remove("is-active");
+            });
+        }
+
+        // Goma
+        if (scratchpadEraserBtn) {
+            scratchpadEraserBtn.addEventListener("click", () => {
+                scratchState.tool = "eraser";
+                scratchpadEraserBtn.classList.add("is-active");
+                if (scratchpadPenBtn) scratchpadPenBtn.classList.remove("is-active");
+            });
+        }
+
+        // Limpiar
+        if (scratchpadClearBtn) {
+            scratchpadClearBtn.addEventListener("click", () => {
+                ctx.clearRect(0, 0, scratchpadCanvas.width, scratchpadCanvas.height);
+                localStorage.removeItem(STORAGE_KEY_DRAWING);
+            });
+        }
+    }
+
+    // Drag & Drop
+    const header = document.getElementById("scratchpadCardHeader");
+    if (header) {
+        let isDragging = false;
+        let startX, startY, initialLeft, initialTop;
+
+        header.addEventListener("pointerdown", (e) => {
+            if (e.target.closest("button")) return;
+            isDragging = true;
+            header.setPointerCapture(e.pointerId);
+            scratchpadCard.classList.add("is-dragging");
+
+            const rect = scratchpadCard.getBoundingClientRect();
+            startX = e.clientX;
+            startY = e.clientY;
+            initialLeft = rect.left;
+            initialTop = rect.top;
+
+            scratchpadCard.style.right = "auto";
+            scratchpadCard.style.left = initialLeft + "px";
+            scratchpadCard.style.top = initialTop + "px";
+        });
+
+        header.addEventListener("pointermove", (e) => {
+            if (!isDragging) return;
+            const dx = e.clientX - startX;
+            const dy = e.clientY - startY;
+
+            let newLeft = initialLeft + dx;
+            let newTop = initialTop + dy;
+
+            const maxLeft = window.innerWidth - scratchpadCard.offsetWidth - 10;
+            const maxTop = window.innerHeight - scratchpadCard.offsetHeight - 10;
+
+            newLeft = Math.max(10, Math.min(newLeft, maxLeft));
+            newTop = Math.max(10, Math.min(newTop, maxTop));
+
+            scratchpadCard.style.left = newLeft + "px";
+            scratchpadCard.style.top = newTop + "px";
+        });
+
+        const stopDrag = () => {
+            if (isDragging) {
+                isDragging = false;
+                scratchpadCard.classList.remove("is-dragging");
+            }
+        };
+
+        header.addEventListener("pointerup", stopDrag);
+        header.addEventListener("pointercancel", stopDrag);
+    }
+})();

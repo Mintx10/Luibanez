@@ -1,0 +1,2671 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="Luibañez - Plataforma Integral de Estudio con Bolillero Interactivo, Ruleta, Pomodoro y Pizarrón de Notas.">
+    <meta name="theme-color" content="#0f1117">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Luibañez">
+    <title>Luibañez | Plataforma Integral de Estudio</title>
+    
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    
+    <link rel="icon" type="image/svg+xml" href="icon.svg?v=24.3">
+    <link rel="apple-touch-icon" href="icon-192.png?v=24.3">
+    <link rel="manifest" href="manifest.json?v=24.3">
+    <link rel="stylesheet" href="style.css?v=24.3">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+</head>
+<body>
+
+<a href="#main-content" class="skip-link">Saltar al contenido principal</a>
+
+<!-- =========================================================
+     TOP NAVIGATION BAR (LUIBAÑEZ)
+     ========================================================= -->
+<header class="top-nav">
+    <div class="top-nav__brand">
+        <!-- Botón Menú Plegable (3 líneas ☰) para móviles y acceso rápido -->
+        <button id="menuToggleBtn" class="menu-toggle-btn" type="button" aria-label="Abrir menú de navegación" aria-expanded="false" aria-controls="drawerMenu">
+            <span class="menu-toggle-line"></span>
+            <span class="menu-toggle-line"></span>
+            <span class="menu-toggle-line"></span>
+        </button>
+
+        <a href="#home" id="brandLink" class="brand-logo" aria-label="Luibañez - Inicio">
+            <span class="brand-logo__icon" aria-hidden="true">✨</span>
+            <span class="brand-logo__text">Luibañez</span>
+        </a>
+        <nav class="top-nav__links" aria-label="Navegación principal">
+            <button id="navHomeBtn" class="nav-link is-active" type="button" data-view="home">
+                🏠 Inicio
+            </button>
+            <button id="navSoloBtn" class="nav-link" type="button" data-view="solo" title="Ir a Estudiar Solo">
+                👤 Estudiar Solo
+            </button>
+            <button id="navJuntosBtn" class="nav-link nav-link--locked" type="button" data-view="juntos" title="Estudiar Juntos (Próximamente)">
+                🔒 Estudiar Juntos
+            </button>
+            <button id="navFamaBtn" class="nav-link" type="button" data-view="fama">
+                🏆 Salón de la Fama
+            </button>
+        </nav>
+    </div>
+
+    <div class="top-nav__actions">
+        <!-- Alternador Sol / Luna -->
+        <button id="themeToggleBtn" class="theme-toggle-btn" type="button" aria-label="Cambiar a modo claro" title="Cambiar tema (Claro / Oscuro)">
+            <span id="themeToggleIcon" aria-hidden="true">☀️</span>
+        </button>
+
+        <!-- Alternador Modo Visual / Modo Lite -->
+        <button id="perfToggleBtn" class="theme-toggle-btn" type="button" aria-label="Alternar entre Efectos Visuales y Modo Lite" title="Efectos Visuales: Activados (Clic para Modo Lite)">
+            <span id="perfToggleIcon" aria-hidden="true">✨</span>
+        </button>
+
+        <!-- Píldora Pizarrón / Notas (📝) -->
+        <div id="scratchpadPill" class="nav-tool-pill scratchpad-pill" role="button" tabindex="0" aria-label="Abrir Pizarrón y Notas" title="Abrir Pizarrón y Notas (📝)">
+            <span class="nav-tool-pill__icon" aria-hidden="true">📝</span>
+            <span class="nav-tool-pill__text">Notas</span>
+        </div>
+
+        <!-- Dynamic Island Pomodoro Pill -->
+        <div id="pomodoroPill" class="dynamic-island" role="button" tabindex="0" aria-label="Abrir temporizador Pomodoro" title="Abrir cronómetro Pomodoro">
+            <span class="dynamic-island__indicator" aria-hidden="true"></span>
+            <span class="dynamic-island__icon" aria-hidden="true">⏱️</span>
+            <span id="pillTimer" class="dynamic-island__timer">25:00</span>
+            <span id="pillBadge" class="dynamic-island__badge">Estudio</span>
+        </div>
+    </div>
+</header>
+
+<!-- Backdrop para cerrar menú al hacer clic afuera -->
+<div id="drawerBackdrop" class="drawer-backdrop" aria-hidden="true"></div>
+
+<!-- Menú lateral plegable (Off-canvas Drawer) -->
+<aside id="drawerMenu" class="drawer-menu" aria-label="Menú lateral de Luibañez" aria-hidden="true">
+    <div class="drawer-menu__header">
+        <div class="drawer-menu__brand">
+            <span class="drawer-brand-icon" aria-hidden="true">✨</span>
+            <span class="drawer-brand-name">Luibañez</span>
+        </div>
+        <button id="drawerCloseBtn" class="drawer-close-btn icon-button" type="button" aria-label="Cerrar menú">
+            <span aria-hidden="true">✕</span>
+        </button>
+    </div>
+
+    <div class="drawer-menu__content">
+        <!-- Sección 1: Navegación de vistas -->
+        <!-- Sección 1: Navegación Principal -->
+        <div class="drawer-section">
+            <span class="drawer-section__label">Principal</span>
+            <nav class="drawer-nav" aria-label="Navegación principal en menú móvil">
+                <button id="drawerNavHome" class="drawer-nav-item is-active" type="button" data-view="home">
+                    <span class="drawer-nav-icon" aria-hidden="true">🏠</span>
+                    <span class="drawer-nav-text">Inicio</span>
+                </button>
+                <button id="drawerNavSolo" class="drawer-nav-item" type="button" data-view="solo">
+                    <span class="drawer-nav-icon" aria-hidden="true">👤</span>
+                    <span class="drawer-nav-text">Estudiar Solo</span>
+                </button>
+                <button id="drawerNavJuntos" class="drawer-nav-item drawer-nav-item--locked" type="button" data-view="juntos">
+                    <span class="drawer-nav-icon" aria-hidden="true">🔒</span>
+                    <span class="drawer-nav-text">Estudiar Juntos</span>
+                    <span class="badge badge--warning" style="margin-left: auto; font-size: 0.65rem; padding: 0.15rem 0.45rem;">Próximamente</span>
+                </button>
+                <button id="drawerNavFama" class="drawer-nav-item" type="button" data-view="fama">
+                    <span class="drawer-nav-icon" aria-hidden="true">🏆</span>
+                    <span class="drawer-nav-text">Salón de la Fama</span>
+                </button>
+            </nav>
+        </div>
+
+        <!-- Sección 2: 👤 MODO SOLO (Estudio Individual) -->
+        <div class="drawer-section drawer-section--solo">
+            <div class="drawer-section__header-badge">
+                <span class="drawer-section__label">👤 Modo Solo (Individual)</span>
+                <span class="badge badge--success">Práctica</span>
+            </div>
+            <nav class="drawer-nav" aria-label="Juegos en Modo Solo">
+                <button id="drawerNavBolillero" class="drawer-nav-item" type="button" data-view="bolillero">
+                    <span class="drawer-nav-icon" aria-hidden="true">🎲</span>
+                    <span class="drawer-nav-text">Bolillero Clásico</span>
+                </button>
+                <button id="drawerNavSoloBomba" class="drawer-nav-item" type="button" data-game="bomba" data-mode="solo">
+                    <span class="drawer-nav-icon" aria-hidden="true">💣</span>
+                    <span class="drawer-nav-text">Desactivá la Bomba</span>
+                </button>
+                <button id="drawerNavSoloImpostor" class="drawer-nav-item" type="button" data-game="impostor" data-mode="solo">
+                    <span class="drawer-nav-icon" aria-hidden="true">🕵️‍♂️</span>
+                    <span class="drawer-nav-text">Caza al Impostor</span>
+                </button>
+                <button id="drawerNavSoloMemotest" class="drawer-nav-item" type="button" data-game="memotest" data-mode="solo">
+                    <span class="drawer-nav-icon" aria-hidden="true">🧠</span>
+                    <span class="drawer-nav-text">Memotest Conectado</span>
+                </button>
+            </nav>
+        </div>
+
+        <!-- Sección 3: ⚔️ MODO DUELO (Multijugador Online) -->
+        <div class="drawer-section drawer-section--duelo">
+            <div class="drawer-section__header-badge">
+                <span class="drawer-section__label">⚔️ Modo Duelo (Online)</span>
+                <span class="badge badge--accent">Multijugador</span>
+            </div>
+            <nav class="drawer-nav" aria-label="Modos Duelo Multijugador">
+                <button id="drawerNavDuelo" class="drawer-nav-item" type="button" data-view="duelo">
+                    <span class="drawer-nav-icon" aria-hidden="true">🌐</span>
+                    <span class="drawer-nav-text">Lobby & Salas Online</span>
+                </button>
+                <button id="drawerNavOnlineBolillero" class="drawer-nav-item" type="button" data-game="bolillero" data-mode="duelo">
+                    <span class="drawer-nav-icon" aria-hidden="true">🎲</span>
+                    <span class="drawer-nav-text">Bolillero VS Online</span>
+                </button>
+                <button id="drawerNavOnlineBomba" class="drawer-nav-item" type="button" data-game="bomba" data-mode="duelo">
+                    <span class="drawer-nav-icon" aria-hidden="true">💣</span>
+                    <span class="drawer-nav-text">Bomba Online (VS/Co-op)</span>
+                </button>
+                <button id="drawerNavOnlineImpostor" class="drawer-nav-item" type="button" data-game="impostor" data-mode="duelo">
+                    <span class="drawer-nav-icon" aria-hidden="true">🕵️‍♂️</span>
+                    <span class="drawer-nav-text">Impostor Online</span>
+                </button>
+                <button id="drawerNavOnlineMemotest" class="drawer-nav-item" type="button" data-game="memotest" data-mode="duelo">
+                    <span class="drawer-nav-icon" aria-hidden="true">🧠</span>
+                    <span class="drawer-nav-text">Memotest Online</span>
+                </button>
+                <button id="drawerNavOnlineTriatlon" class="drawer-nav-item" type="button" data-game="triatlon" data-mode="duelo">
+                    <span class="drawer-nav-icon" aria-hidden="true">🏅</span>
+                    <span class="drawer-nav-text">Modo Triatlón (3 Rondas)</span>
+                </button>
+            </nav>
+        </div>
+
+        <!-- Sección 4: Herramientas Rápidas -->
+        <div class="drawer-section">
+            <span class="drawer-section__label">Herramientas Rápidas</span>
+            <div class="drawer-tools">
+                <button id="drawerThemeToggleBtn" class="drawer-tool-btn" type="button" aria-label="Cambiar tema">
+                    <span class="drawer-tool-icon" id="drawerThemeToggleIcon" aria-hidden="true">☀️</span>
+                    <span class="drawer-tool-text">Modo <span id="drawerThemeLabel">Claro</span></span>
+                </button>
+                <button id="drawerPerfToggleBtn" class="drawer-tool-btn" type="button" aria-label="Alternar rendimiento y animaciones">
+                    <span class="drawer-tool-icon" id="drawerPerfToggleIcon" aria-hidden="true">✨</span>
+                    <span class="drawer-tool-text">Efectos <span id="drawerPerfLabel">Activos</span></span>
+                </button>
+                <button id="drawerScratchpadBtn" class="drawer-tool-btn" type="button" aria-label="Abrir pizarrón y notas">
+                    <span class="drawer-tool-icon" aria-hidden="true">📝</span>
+                    <span class="drawer-tool-text">Pizarrón</span>
+                </button>
+            </div>
+
+            <!-- Mini-Widget Pomodoro en Drawer -->
+            <div class="drawer-pomodoro-card">
+                <div class="drawer-pomo-header">
+                    <div class="drawer-pomo-status">
+                        <span class="dynamic-island__indicator" id="drawerPomoIndicator" aria-hidden="true"></span>
+                        <span class="drawer-pomo-title">⏱️ Pomodoro</span>
+                    </div>
+                    <span class="badge badge--primary" id="drawerPomoBadge">Estudio</span>
+                </div>
+                <div class="drawer-pomo-time" id="drawerPomoTime">25:00</div>
+                <div class="drawer-pomo-actions">
+                    <button id="drawerPomoToggleBtn" class="button button--primary button--sm" type="button">Iniciar</button>
+                    <button id="drawerPomoOpenCardBtn" class="button button--secondary button--sm" type="button">Ver Reloj</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sección 3: Listas de Estudio Activas -->
+        <div class="drawer-section">
+            <div class="drawer-section__title-row">
+                <span class="drawer-section__label">Listas de Estudio</span>
+                <div style="display: flex; gap: 0.35rem;">
+                    <button id="drawerGeminiPromptBtn" class="button button--accent button--xs" type="button" title="Copiar Prompt para Gemini">✨ IA Prompt</button>
+                    <button id="drawerNewListBtn" class="button button--ghost button--xs" type="button">+ Nueva</button>
+                </div>
+            </div>
+            <ul id="drawerListsContainer" class="drawer-lists-list" aria-label="Listas de estudio en menú lateral">
+                <!-- Se puebla dinámicamente con script.js -->
+            </ul>
+        </div>
+
+        <!-- Versión y botón de actualización forzada -->
+        <div class="drawer-version-row" style="padding: 0.85rem 1rem; border-top: 1px solid var(--color-border); font-size: 0.75rem; color: var(--color-text-muted); display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02); margin-top: auto;">
+            <span>⚡ Luibañez <strong style="color: var(--color-text);">v24.3</strong></span>
+            <button id="btnForzarActualizar" class="button button--ghost button--xs" type="button" style="font-size: 0.72rem; padding: 0.2rem 0.55rem; border-radius: 999px; border: 1px solid var(--color-border);" title="Limpiar caché y recargar versión más reciente">🔄 Actualizar</button>
+        </div>
+    </div>
+</aside>
+
+<!-- =========================================================
+     VISTAS SPA (HOME & BOLILLERO)
+     ========================================================= -->
+<div class="app-views">
+
+    <!-- ==================== VISTA 1: HOME ==================== -->
+    <!-- ==================== VISTA 1: INICIO (HOME PORTAL) ==================== -->
+    <section id="viewHome" class="view view--active" aria-label="Página de inicio">
+        <div class="hero">
+            <div class="hero__badge">
+                <span>🚀 Plataforma Integral de Estudio Universitario</span>
+            </div>
+            
+            <h1 class="hero__title">
+                Maximizá tu rendimiento con <span class="gradient-text">Luibañez</span>
+            </h1>
+            
+            <p class="hero__subtitle">
+                Simulador de exámenes orales, entrenamientos individuales, desafíos cooperativos y competitivos en tiempo real con preguntas teóricas generadas por IA, Pomodoro y Pizarrón de notas.
+            </p>
+
+            <div class="hero__actions">
+                <button id="heroGoSoloBtn" class="button button--primary button--lg" type="button">
+                    👤 Entrar a Estudiar Solo
+                </button>
+                <button id="heroGoJuntosBtn" class="button button--secondary button--lg is-locked-btn" type="button" title="Próximamente disponible">
+                    🔒 Estudiar Juntos (Próximamente)
+                </button>
+            </div>
+        </div>
+
+        <!-- ==================== CENTRO PRINCIPAL DE MATERIAL DE ESTUDIO (PDF HUB) ==================== -->
+        <div class="main-pdf-hub-container" style="max-width: 1200px; margin: 2rem auto 0; padding: 0 1rem;">
+            <div class="main-pdf-hub-card">
+                <div class="main-pdf-hub-header">
+                    <div class="main-pdf-hub-icon">📚</div>
+                    <div class="main-pdf-hub-content">
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.25rem;">
+                            <div class="main-pdf-hub-badge" style="margin-bottom: 0;">
+                                <span class="pulse-dot"></span>
+                                <span>CENTRO DE APUNTES & IA UNIVERSITARIA</span>
+                            </div>
+                            <button id="pdfHubRulesBtn" class="rules-trigger-btn" type="button" title="¿Cómo funciona el Centro de Apuntes y la IA?">
+                                <span>❓</span><span>¿Cómo funciona?</span>
+                            </button>
+                        </div>
+                        <h2 class="main-pdf-hub-title">Material de Estudio Activo</h2>
+                        <p class="main-pdf-hub-desc">
+                            Cargá los apuntes o el libro de tu materia en PDF una sola vez. La IA de Gemini extraerá los conceptos clave para alimentar automáticamente al <strong>Bolillero de examen</strong>, <strong>Desactivá la Bomba</strong>, <strong>Caza al Impostor</strong> y <strong>Memotest Conectado</strong>.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Estado Vacío: Botón principal de carga -->
+                <div class="main-pdf-hub-body" id="mainPdfHubEmpty">
+                    <input type="file" id="mainGlobalPdfInput" accept=".pdf,.txt" class="hidden">
+                    <button id="mainUploadPdfBtn" class="button button--primary button--lg main-pdf-upload-btn" type="button">
+                        <span style="font-size: 1.25rem;">📄</span> Cargar Apuntes o Libro en PDF
+                    </button>
+                    <span class="main-pdf-hub-hint">
+                        🔒 Procesamiento privado y seguro con PDF.js en tu dispositivo. Guardado automático para futuras sesiones.
+                    </span>
+                </div>
+
+                <!-- Estado Activo: Archivo cargado que alimenta los juegos -->
+                <div class="main-pdf-hub-active hidden" id="mainPdfHubActive">
+                    <div class="main-pdf-file-details">
+                        <span class="main-pdf-file-icon">📑</span>
+                        <div class="main-pdf-file-text">
+                            <strong class="main-pdf-file-name" id="mainPdfFileName">apuntes.pdf</strong>
+                            <span class="main-pdf-file-stats" id="mainPdfFileStats">32 páginas • Guardado en base de datos local</span>
+                        </div>
+                        <span class="badge badge--success main-pdf-connected-badge">
+                            🟢 Conectado: Alimenta a todos los juegos
+                        </span>
+                    </div>
+                    <div class="main-pdf-hub-actions">
+                        <button id="mainChangePdfBtn" class="button button--secondary button--sm" type="button">
+                            🔄 Cambiar PDF
+                        </button>
+                        <button id="mainRemovePdfBtn" class="button button--ghost button--sm" type="button" style="color: #f87171;">
+                            ✕ Quitar Material
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Portal Hub: 3 Grandes Accesos Directos a las Páginas de la App -->
+        <div class="portal-hub-container" style="max-width: 1200px; margin: 2rem auto 0; padding: 0 1rem;">
+            <div class="modules-grid" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+                
+                <!-- Tarjeta Portal 1: Estudiar Solo -->
+                <article class="module-card module-card--active module-card--solo" style="border-color: rgba(56, 189, 248, 0.35); padding: 1.85rem;">
+                    <div class="module-card__header">
+                        <div class="module-card__icon module-card__icon--primary" style="font-size: 2rem;">👤</div>
+                        <span class="badge badge--success">Página Dedicada</span>
+                    </div>
+                    <h3 class="module-card__title" style="font-size: 1.45rem;">Estudiar Solo</h3>
+                    <p class="module-card__desc" style="font-size: 0.95rem; line-height: 1.5;">
+                        Tu espacio de entrenamiento individual con secciones modulares en cuadrículas: <strong>Bolillero Individual</strong>, <strong>Desactivá la Bomba</strong>, <strong>Caza al Impostor</strong> y <strong>Memotest Conectado</strong>.
+                    </p>
+                    <div class="module-card__actions" style="margin-top: auto; padding-top: 1rem;">
+                        <button id="homeGoToSoloBtn" class="button button--primary button--full" type="button">
+                            Entrar a Estudiar Solo ➜
+                        </button>
+                    </div>
+                </article>
+
+                <!-- Tarjeta Portal 2: Estudiar Juntos (Bloqueado con candado, cadenas y cartel de Próximamente) -->
+                <article class="module-card module-card--duel module-card--locked" style="position: relative; overflow: hidden; border-color: rgba(245, 158, 11, 0.45); padding: 1.85rem;">
+                    <div class="locked-chain-ribbon">
+                        <span>⛓️</span>
+                        <span>🔒 PRÓXIMAMENTE</span>
+                        <span>⛓️</span>
+                    </div>
+                    <div class="module-card__header">
+                        <div class="module-card__icon module-card__icon--duel" style="font-size: 2rem; position: relative;">
+                            ⚔️
+                            <span class="lock-mini-badge">🔒</span>
+                        </div>
+                        <span class="badge badge--warning" style="background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4);">
+                            🔒 En Construcción
+                        </span>
+                    </div>
+                    <h3 class="module-card__title" style="font-size: 1.45rem;">
+                        Estudiar Juntos <span style="font-size: 0.95rem; color: #fbbf24; font-weight: normal;">(Próximamente)</span>
+                    </h3>
+                    <p class="module-card__desc" style="font-size: 0.95rem; line-height: 1.5; color: var(--color-text-muted);">
+                        Salas sincrónicas entre celulares y PC con Link Mágico y PIN: modalidades <strong>Versus competitivo</strong> y <strong>Cooperativo en equipo</strong> (Bomba compartida, Memotest en equipo y Repaso grupal).
+                    </p>
+                    <div class="module-card__actions" style="margin-top: auto; padding-top: 1rem;">
+                        <button id="homeGoToJuntosBtn" class="button button--secondary button--full is-locked-btn" type="button" title="Próximamente disponible">
+                            🔒 Próximamente (En Construcción)
+                        </button>
+                    </div>
+                </article>
+
+                <!-- Tarjeta Portal 3: Salón de la Fama -->
+                <article class="module-card module-card--active module-card--triatlon" style="border-color: rgba(245, 158, 11, 0.35); padding: 1.85rem;">
+                    <div class="module-card__header">
+                        <div class="module-card__icon module-card__icon--triatlon" style="font-size: 2rem;">🏆</div>
+                        <span class="badge badge--gold">Estadísticas</span>
+                    </div>
+                    <h3 class="module-card__title" style="font-size: 1.45rem;">Salón de la Fama</h3>
+                    <p class="module-card__desc" style="font-size: 0.95rem; line-height: 1.5;">
+                        Historial de partidas, rankings multiverso de campeones, tasa de victorias de carrera y vitrina de medallas por materia.
+                    </p>
+                    <div class="module-card__actions" style="margin-top: auto; padding-top: 1rem;">
+                        <button id="homeGoToFamaBtn" class="button button--secondary button--full" type="button">
+                            Ver Salón de la Fama ➜
+                        </button>
+                    </div>
+                </article>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== VISTA 2: ESTUDIAR SOLO (PÁGINA DEDICADA CON CUADRÍCULAS) ==================== -->
+    <section id="viewSolo" class="view view--hidden" aria-label="Página de Estudiar Solo">
+        <div class="modules-hub" style="max-width: 1200px; margin: 0 auto; padding: 1rem 1rem 3rem;">
+            
+            <!-- Encabezado de la Página Solo -->
+            <div class="page-header" style="margin-bottom: 2rem; padding-bottom: 1.25rem; border-bottom: 1px solid var(--color-border);">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem;">
+                    <div class="hub-category-badge badge badge--success" style="margin-bottom: 0;">
+                        <span>👤 APARTADO SOLO — ESTUDIO Y PRÁCTICA INDIVIDUAL</span>
+                    </div>
+                    <button id="soloRulesBtn" class="rules-trigger-btn" type="button" title="Ver guía de modos de estudio">
+                        <span>❓</span><span>Guía de Modos</span>
+                    </button>
+                </div>
+                <h1 class="page-title" style="font-size: 2.2rem; font-weight: 800; color: #fff; margin: 0.25rem 0 0.5rem;">
+                    Entrená a tu ritmo
+                </h1>
+                <p class="page-subtitle" style="color: var(--color-text-muted); font-size: 1rem; max-width: 750px; line-height: 1.5;">
+                    Secciones organizadas en cuadrículas una al lado de la otra. Configurá tus listas de temas, cargá tus apuntes con IA y practicá desafíos teóricos y conceptuales.
+                </p>
+            </div>
+
+            <!-- Cuadrículas una al lado de la otra (CSS Grid Adaptable) -->
+            <div class="solo-grid modules-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.35rem;">
+                
+                <!-- Cuadrícula 1: Bolillero Individual (Sección Central) -->
+                <article class="module-card module-card--active module-card--solo" id="cardSoloBolillero" style="border-color: rgba(56, 189, 248, 0.45); background: linear-gradient(180deg, rgba(23, 26, 34, 0.95), rgba(15, 20, 30, 0.95));">
+                    <div class="module-card__header">
+                        <div class="module-card__icon module-card__icon--primary">🎲</div>
+                        <span class="badge badge--success">Sorteo Clásico</span>
+                    </div>
+                    <h3 class="module-card__title">Bolillero Individual</h3>
+                    <p class="module-card__desc">
+                        Sorteá temas de tus materias al azar con ruleta animada, desaceleración fluida, gestión de listas, importación y filtro automático de temas ya sorteados.
+                    </p>
+                    <div class="module-card__actions" style="margin-top: auto; padding-top: 1rem;">
+                        <button id="soloOpenBolilleroBtn" class="button button--primary button--full" type="button">
+                            Abrir Bolillero 🎲
+                        </button>
+                    </div>
+                </article>
+
+                <!-- Cuadrícula 2: Desactivá la Bomba (Solo) -->
+                <article class="module-card module-card--active module-card--solo" id="cardSoloBomba">
+                    <div class="module-card__header">
+                        <div class="module-card__icon module-card__icon--danger">💣</div>
+                        <span class="badge badge--danger">Bomba Solo</span>
+                    </div>
+                    <h3 class="module-card__title">Desactivá la Bomba</h3>
+                    <p class="module-card__desc">
+                        Cortá los cables resolviendo 3 fases conceptuales: fundamentos teóricos, deducción lógica y síntesis maestra antes de que el tiempo expire.
+                    </p>
+                    <div class="module-card__actions" style="margin-top: auto; padding-top: 1rem;">
+                        <button id="soloOpenBombaBtn" class="button button--secondary button--full" type="button">
+                            Practicar Bomba 💣
+                        </button>
+                    </div>
+                </article>
+
+                <!-- Cuadrícula 3: Caza al Impostor (Solo) -->
+                <article class="module-card module-card--active module-card--solo" id="cardSoloImpostor">
+                    <div class="module-card__header">
+                        <div class="module-card__icon module-card__icon--impostor">🕵️‍♂️</div>
+                        <span class="badge badge--warning">Reflejos & Conceptos</span>
+                    </div>
+                    <h3 class="module-card__title">Caza al Impostor</h3>
+                    <p class="module-card__desc">
+                        Tarjetas dinámicas con afirmaciones y fórmulas: detectá el error conceptual infiltrado antes de que termine el tiempo y sumá rachas 🔥.
+                    </p>
+                    <div class="module-card__actions" style="margin-top: auto; padding-top: 1rem;">
+                        <button id="soloOpenImpostorBtn" class="button button--secondary button--full" type="button">
+                            Cazar Impostor 🕵️‍♂️
+                        </button>
+                    </div>
+                </article>
+
+                <!-- Cuadrícula 4: Memotest Conectado (Solo) -->
+                <article class="module-card module-card--active module-card--solo" id="cardSoloMemotest">
+                    <div class="module-card__header">
+                        <div class="module-card__icon module-card__icon--memotest">🧠</div>
+                        <span class="badge badge--accent">Memoria & Fórmulas</span>
+                    </div>
+                    <h3 class="module-card__title">Memotest Conectado</h3>
+                    <p class="module-card__desc">
+                        Tablero interactivo contra reloj: conectá cada Concepto o Problema con su Fórmula o Definición matemática correspondiente.
+                    </p>
+                    <div class="module-card__actions" style="margin-top: auto; padding-top: 1rem;">
+                        <button id="soloOpenMemotestBtn" class="button button--primary button--full" type="button">
+                            Jugar Memotest 🧠
+                        </button>
+                    </div>
+                </article>
+
+                <!-- Cuadrícula 5: Centro de Apuntes & Documentos PDF (IA) -->
+                <article class="module-card module-card--active module-card--solo" id="cardSoloPDF" style="border-color: rgba(16, 185, 129, 0.45); background: linear-gradient(180deg, rgba(16, 185, 129, 0.05), rgba(15, 20, 30, 0.95));">
+                    <div class="module-card__header">
+                        <div class="module-card__icon" style="background: rgba(16, 185, 129, 0.15); color: #10b981;">📄</div>
+                        <span class="badge badge--success">Gemini PDF Hub</span>
+                    </div>
+                    <h3 class="module-card__title">Apuntes & Material PDF</h3>
+                    <p class="module-card__desc" id="soloPdfCardDesc">
+                        Cargá el resumen o programa en PDF de tu materia. La IA de Google Gemini extraerá los conceptos y adaptará las preguntas de todos tus juegos automáticamente.
+                    </p>
+                    <div class="module-card__actions" style="margin-top: auto; padding-top: 1rem;">
+                        <input type="file" id="soloGlobalPdfInput" accept=".pdf,.txt" class="hidden">
+                        <button id="soloUploadGlobalPdfBtn" class="button button--primary button--full" type="button" style="background: #10b981; border-color: #10b981;">
+                            📂 Cargar Apunte PDF
+                        </button>
+                    </div>
+                </article>
+
+                <!-- Cuadrícula 6: Sección Modular Próximamente -->
+                <article class="module-card module-card--solo" style="border: 2px dashed rgba(255, 255, 255, 0.15); background: rgba(255, 255, 255, 0.02); display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; min-height: 240px;">
+                    <div style="font-size: 2.2rem; margin-bottom: 0.5rem; opacity: 0.8;">✨</div>
+                    <h3 style="color: #fff; font-size: 1.15rem; margin-bottom: 0.35rem;">Arquitectura Modular</h3>
+                    <p style="color: var(--color-text-muted); font-size: 0.85rem; max-width: 240px; margin-bottom: 1rem;">
+                        A medida que agregues más secciones de estudio, se ordenarán automáticamente una al lado de la otra.
+                    </p>
+                    <button id="soloNewListShortcutBtn" class="button button--ghost button--sm" type="button">
+                        + Nueva Sección / Lista
+                    </button>
+                </article>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== VISTA 3: ESTUDIAR JUNTOS (PÁGINA DEDICADA VERSUS & COOPERATIVO) ==================== -->
+    <section id="viewJuntos" class="view view--hidden" aria-label="Página de Estudiar Juntos">
+        <div class="modules-hub" style="max-width: 1200px; margin: 0 auto; padding: 1rem 1rem 3rem;">
+            
+            <!-- Cartel de Próximamente con Cadenas y Candado -->
+            <div class="juntos-locked-notice">
+                <div class="juntos-locked-chains">⛓️ 🔒 ⛓️</div>
+                <h2 class="juntos-locked-title">MODO MULTIJUGADOR EN CONSTRUCCIÓN</h2>
+                <p class="juntos-locked-subtitle">Las salas sincrónicas online, Duelos versus y desafíos cooperativos estarán disponibles muy pronto en la próxima actualización.</p>
+                <span class="badge badge--warning" style="font-size: 0.85rem; padding: 0.4rem 0.85rem; font-weight: 700;">🚧 PRÓXIMAMENTE DISPONIBLE</span>
+            </div>
+
+            <!-- Encabezado de la Página Juntos -->
+            <div class="page-header" style="margin-bottom: 2rem; padding-bottom: 1.25rem; border-bottom: 1px solid var(--color-border); opacity: 0.85;">
+                <div class="hub-category-badge badge badge--accent" style="margin-bottom: 0.5rem;">
+                    <span>🤝 APARTADO ESTUDIAR JUNTOS — MULTIJUGADOR ONLINE EN VIVO</span>
+                </div>
+                <h1 class="page-title" style="font-size: 2.2rem; font-weight: 800; color: #fff; margin: 0.25rem 0 0.5rem;">
+                    Estudiar Juntos
+                </h1>
+                <p class="page-subtitle" style="color: var(--color-text-muted); font-size: 1rem; max-width: 750px; line-height: 1.5;">
+                    Salas sincronizadas en tiempo real entre celulares y PC con Link Mágico y código de sala. Elegí cómo jugar:
+                </p>
+
+                <!-- Barra rápida de Lobby / Acceso a Sala -->
+                <div class="juntos-quick-lobby-bar" style="display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 1.25rem; align-items: center;">
+                    <button id="juntosQuickCreateBtn" class="button button--primary" type="button">
+                        ➕ Crear Sala Online
+                    </button>
+                    <button id="juntosQuickJoinBtn" class="button button--secondary" type="button">
+                        🔑 Ingresar PIN (5 letras)
+                    </button>
+                </div>
+            </div>
+
+            <!-- SUBDIVISIÓN 1: MODO VERSUS (COMPETITIVO) -->
+            <div class="juntos-subdivision-header juntos-subdivision--versus" style="margin-bottom: 1.25rem;">
+                <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                    <span class="badge badge--accent" style="font-size: 0.9rem; padding: 0.35rem 0.75rem;">⚔️ MODO VERSUS (COMPETITIVO)</span>
+                    <span class="badge badge--dark">Puntajes & Rachas</span>
+                </div>
+                <h3 class="juntos-subdivision-title" style="margin-top: 0.35rem;">Competencia en Tiempo Real</h3>
+                <p class="juntos-subdivision-desc">
+                    Demostrá tu velocidad, respondé antes que tus compañeros y ganá puestos en el podio.
+                </p>
+            </div>
+
+            <div class="juntos-grid modules-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.35rem; margin-bottom: 2.5rem;">
+                <!-- Tarjeta Duelo 1: Bolillero VS Online -->
+                <article class="module-card module-card--active module-card--duel" id="cardDueloBolillero">
+                    <div class="module-card__header">
+                        <div class="module-card__icon module-card__icon--duel">🎲</div>
+                        <span class="badge badge--accent">Versus En Vivo</span>
+                    </div>
+                    <h3 class="module-card__title">Bolillero VS Online</h3>
+                    <p class="module-card__desc">
+                        Doble ruleta sincronizada (jugador + tema), cronómetro compartido, votación individual per-device y Robo Relámpago ⚡.
+                    </p>
+                    <button id="openDueloBolilleroCardBtn" class="button button--primary button--full" type="button">
+                        Entrar a Bolillero VS ⚔️
+                    </button>
+                </article>
+
+                <!-- Tarjeta Duelo 2: Bomba VS -->
+                <article class="module-card module-card--active module-card--duel" id="cardDueloBomba">
+                    <div class="module-card__header">
+                        <div class="module-card__icon module-card__icon--danger">💣</div>
+                        <span class="badge badge--danger">Bomba Versus</span>
+                    </div>
+                    <h3 class="module-card__title">La Bomba Versus</h3>
+                    <p class="module-card__desc">
+                        Competencia de velocidad pura: el primero que resuelve las fases teóricas y corta los 3 cables desactiva antes.
+                    </p>
+                    <button id="openDueloBombaCardBtn" class="button button--secondary button--full" type="button">
+                        Desactivar en Versus 💣
+                    </button>
+                </article>
+
+                <!-- Tarjeta Duelo 3: Impostor VS -->
+                <article class="module-card module-card--active module-card--duel" id="cardDueloImpostor">
+                    <div class="module-card__header">
+                        <div class="module-card__icon module-card__icon--impostor">🕵️‍♂️</div>
+                        <span class="badge badge--warning">Rachas en Vivo</span>
+                    </div>
+                    <h3 class="module-card__title">Caza al Impostor Versus</h3>
+                    <p class="module-card__desc">
+                        Olas simultáneas de tarjetas conceptuales. Detectá el error antes que tus rivales y robá multiplicadores en vivo.
+                    </p>
+                    <button id="openDueloImpostorCardBtn" class="button button--secondary button--full" type="button">
+                        Cazar en Versus 🕵️‍♂️
+                    </button>
+                </article>
+
+                <!-- Tarjeta Duelo 4: Memotest VS -->
+                <article class="module-card module-card--active module-card--duel" id="cardDueloMemotest">
+                    <div class="module-card__header">
+                        <div class="module-card__icon module-card__icon--memotest">🧠</div>
+                        <span class="badge badge--accent">Tablero VS</span>
+                    </div>
+                    <h3 class="module-card__title">Memotest Versus Online</h3>
+                    <p class="module-card__desc">
+                        Duelo de memoria y velocidad conceptual por turnos o simultáneo en un tablero interactivo contra reloj.
+                    </p>
+                    <button id="openDueloMemotestCardBtn" class="button button--secondary button--full" type="button">
+                        Memotest en Versus 🧠
+                    </button>
+                </article>
+
+                <!-- Tarjeta Duelo 5: Modo Triatlón -->
+                <article class="module-card module-card--active module-card--triatlon" id="cardDueloTriatlon">
+                    <div class="module-card__header">
+                        <div class="module-card__icon module-card__icon--triatlon">🏅</div>
+                        <span class="badge badge--gold">3 Rondas</span>
+                    </div>
+                    <h3 class="module-card__title">Modo Triatlón 🏆</h3>
+                    <p class="module-card__desc">
+                        El desafío definitivo: las 3 pruebas encadenadas (Bomba ➔ Impostor ➔ Memotest) con podio olímpico acumulado.
+                    </p>
+                    <button id="openDueloTriatlonCardBtn" class="button button--primary button--full" type="button">
+                        Jugar Triatlón 🏅
+                    </button>
+                </article>
+            </div>
+
+            <!-- SUBDIVISIÓN 2: MODO COOPERATIVO (EN EQUIPO) -->
+            <div class="juntos-subdivision-header juntos-subdivision--coop" style="margin-bottom: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--color-border);">
+                <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                    <span class="badge badge--success" style="font-size: 0.9rem; padding: 0.35rem 0.75rem;">🤝 MODO COOPERATIVO (EN EQUIPO)</span>
+                    <span class="badge badge--dark">Estudio Colaborativo</span>
+                </div>
+                <h3 class="juntos-subdivision-title" style="margin-top: 0.35rem;">Estudio Colaborativo en Equipo</h3>
+                <p class="juntos-subdivision-desc">
+                    Únanse para salvar la materia: compartan el maletín, debatan fórmulas y resuelvan desafíos juntos sin competir.
+                </p>
+            </div>
+
+            <div class="juntos-grid modules-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.35rem;">
+                <!-- Tarjeta Co-op 1: Bomba Cooperativa -->
+                <article class="module-card module-card--active module-card--solo" id="cardCoopBomba" style="border-color: rgba(16, 185, 129, 0.4);">
+                    <div class="module-card__header">
+                        <div class="module-card__icon" style="background: rgba(16, 185, 129, 0.15); color: #10b981;">🤝</div>
+                        <span class="badge badge--success">Equipo vs Tiempo</span>
+                    </div>
+                    <h3 class="module-card__title">Bomba Cooperativa</h3>
+                    <p class="module-card__desc">
+                        Todo el equipo comparte el mismo maletín, cables y cronómetro. Cada uno aporta su cálculo para desactivarla antes de que detone.
+                    </p>
+                    <button id="openCoopBombaBtn" class="button button--primary button--full" type="button" style="background: #10b981; border-color: #10b981;">
+                        Desactivar en Equipo 🤝
+                    </button>
+                </article>
+
+                <!-- Tarjeta Co-op 2: Memotest en Equipo -->
+                <article class="module-card module-card--active module-card--solo" id="cardCoopMemotest" style="border-color: rgba(16, 185, 129, 0.4);">
+                    <div class="module-card__header">
+                        <div class="module-card__icon" style="background: rgba(16, 185, 129, 0.15); color: #10b981;">🧠</div>
+                        <span class="badge badge--success">Mente Colectiva</span>
+                    </div>
+                    <h3 class="module-card__title">Memotest en Equipo</h3>
+                    <p class="module-card__desc">
+                        Tablero compartido donde el grupo debate las conexiones entre conceptos teóricos y fórmulas matemáticas para despejarlo juntos.
+                    </p>
+                    <button id="openCoopMemotestBtn" class="button button--secondary button--full" type="button">
+                        Memotest Colaborativo 🧠
+                    </button>
+                </article>
+
+                <!-- Tarjeta Co-op 3: Bolillero de Repaso Grupal -->
+                <article class="module-card module-card--active module-card--solo" id="cardCoopBolillero" style="border-color: rgba(16, 185, 129, 0.4);">
+                    <div class="module-card__header">
+                        <div class="module-card__icon" style="background: rgba(16, 185, 129, 0.15); color: #10b981;">📚</div>
+                        <span class="badge badge--success">Repaso Grupal</span>
+                    </div>
+                    <h3 class="module-card__title">Bolillero de Repaso Grupal</h3>
+                    <p class="module-card__desc">
+                        Sorteo colaborativo para mesas de estudio: definan quién expone el tema, quién profundiza los conceptos teóricos y quién toma apuntes en el pizarrón.
+                    </p>
+                    <button id="openCoopBolilleroBtn" class="button button--secondary button--full open-bolillero-btn" type="button">
+                        Repasar en Grupo 📚
+                    </button>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== VISTA 2: BOLILLERO ==================== -->
+    <section id="viewBolillero" class="view view--hidden" aria-label="Bolillero de estudio">
+        
+        <div class="app">
+            <!-- Sidebar -->
+            <aside class="sidebar" aria-label="Panel de listas">
+                <div class="sidebar__header">
+                    <h2 class="logo">
+                        <span aria-hidden="true">🎲</span>
+                        <span>Bolillero</span>
+                    </h2>
+                    <button id="newListButton" class="button button--primary button--full" type="button" aria-haspopup="dialog" aria-controls="listModal">
+                        + Nueva lista
+                    </button>
+                </div>
+                <div class="sidebar__content">
+                    <h3 class="section-title">Listas</h3>
+                    <nav aria-label="Listas de estudio">
+                        <ul id="listsContainer" class="lists__container"></ul>
+                    </nav>
+                </div>
+            </aside>
+
+            <!-- Contenido Principal del Bolillero -->
+            <main id="main-content" class="main" tabindex="-1">
+                <!-- Cabecera -->
+                <div style="margin-bottom: 0.85rem;">
+                    <button id="backFromBolilleroBtn" class="button button--ghost button--sm" type="button" style="font-weight: 600;">
+                        ⬅️ Volver a Estudiar Solo
+                    </button>
+                </div>
+                <header class="main__header">
+                    <div>
+                        <h2 id="currentListTitle" class="page-title">Sin lista seleccionada</h2>
+                        <p id="currentListDescription" class="page-subtitle">Creá una lista o importá un archivo para comenzar.</p>
+                    </div>
+                    <div class="header-actions" id="bolilleroActivePdfIndicator" style="display: flex; gap: 0.5rem; align-items: center;">
+                        <button id="bolilleroRulesBtn" class="rules-trigger-btn" type="button" title="Ver reglas y cómo funciona el Bolillero">
+                            <span>❓</span><span>Reglas</span>
+                        </button>
+                        <span class="badge badge--success hidden" id="bolilleroGlobalPdfBadge" style="display: none; align-items: center; gap: 0.4rem; padding: 0.4rem 0.85rem; font-size: 0.85rem;">
+                            📄 Material Activo: <strong id="bolilleroGlobalPdfName">apuntes.pdf</strong>
+                        </span>
+                    </div>
+                </header>
+
+                <!-- Panel de temas (Compacto) -->
+                <section class="panel" aria-labelledby="topics-title">
+                    <div class="panel__header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+                        <h3 id="topics-title" class="panel__title" style="margin: 0;">Temas de la lista</h3>
+                        <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+                            <!-- Botón Cargar Palabras con IA desde el PDF -->
+                            <button id="bolilleroIaWordsBtn" class="button button--accent button--sm" type="button" title="Extraer palabras y conceptos del PDF activo con IA">
+                                ✨ Cargar palabras con IA
+                            </button>
+                            <!-- Botón Importar Bloc de Notas / Archivo .txt -->
+                            <button id="importButton" class="button button--secondary button--sm" type="button" title="Importar temas desde bloc de notas (.txt) o .json">
+                                📁 Importar (.txt)
+                            </button>
+                            <input type="file" id="importFileInput" accept=".txt,.json" class="hidden">
+                            <!-- Botón Agregar Tema Manual -->
+                            <button id="addTopicButton" class="button button--secondary button--sm" type="button" aria-haspopup="dialog" aria-controls="topicModal">
+                                + Agregar tema
+                            </button>
+                        </div>
+                    </div>
+                    <ul id="topicsGrid" class="topics-grid" aria-label="Temas de estudio"></ul>
+                </section>
+
+                <!-- Bolillero con Ruleta Visual -->
+                <section class="draw-section" aria-labelledby="draw-title">
+                    <h3 id="draw-title" class="panel__title">Bolillero</h3>
+                    <div class="draw-machine">
+                        <div class="roulette-container">
+                            <div id="rollingDisplay" class="rolling-display" role="status" aria-live="polite" aria-atomic="true">
+                                —
+                            </div>
+                        </div>
+                        <button id="spinButton" class="spin-button" type="button" title="Presioná la barra espaciadora para girar">
+                            <span aria-hidden="true">🎰</span>
+                            <span>GIRAR RULETA</span>
+                        </button>
+                    </div>
+                </section>
+
+                <!-- Resultado -->
+                <section id="resultSection" class="result-section hidden" aria-labelledby="result-title" aria-live="polite">
+                    <h3 id="result-title" class="panel__title">Tema Seleccionado</h3>
+                    <article class="result-card">
+                        <h2 id="selectedTopic" class="result-card__title" role="status" aria-live="polite" aria-atomic="true">
+                            —
+                        </h2>
+                    </article>
+                    <div class="result-actions">
+                        <button id="drawAgainButton" class="button button--primary" type="button" title="Presioná la barra espaciadora para girar de nuevo">
+                            <span>Elegir otro</span>
+                        </button>
+                        <button id="restoreRoundButton" class="button button--secondary" type="button">
+                            Restaurar bolillero completo
+                        </button>
+                    </div>
+
+                    <!-- Tarjeta interactiva de Pregunta de Examen con IA (Gemini) -->
+                    <div id="bolilleroIACard" class="bolillero-ia-card hidden">
+                        <div class="bolillero-ia-header">
+                            <div class="bolillero-ia-badge-wrap">
+                                <span class="badge badge--accent">✨ EXAMEN ORAL CON IA</span>
+                                <span id="bolilleroIASourceBadge" class="badge badge--success" style="display: none;">📄 Basado en tus apuntes PDF</span>
+                            </div>
+                            <button id="bolilleroIAGenerateBtn" class="button button--accent button--sm" type="button">
+                                🤖 Generar Pregunta con IA
+                            </button>
+                        </div>
+                        <div id="bolilleroIALoader" class="bolillero-ia-loader hidden">
+                            <div class="ia-pulse-spinner"></div>
+                            <span id="bolilleroIALoaderText">Gemini está analizando tus apuntes y formulando una pregunta de examen...</span>
+                        </div>
+                        <div id="bolilleroIAContent" class="bolillero-ia-content hidden">
+                            <p id="bolilleroIAPregunta" class="bolillero-ia-pregunta"></p>
+                            <div id="bolilleroIAOpciones" class="bolillero-ia-opciones"></div>
+                            <div id="bolilleroIAFeedback" class="bolillero-ia-feedback hidden"></div>
+                            <div style="margin-top: 1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+                                <span style="font-size: 0.8rem; color: var(--color-text-muted);">💡 Respuestas validadas por Google Gemini</span>
+                                <button id="bolilleroIARetryBtn" class="button button--secondary button--sm" type="button">
+                                    🔄 Otra Pregunta sobre este tema
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+
+    </section>
+
+    <!-- ==================== VISTA 3: MODO DUELO ==================== -->
+    <section id="viewDuelo" class="view view--hidden" aria-label="Modo Duelo de Bolillero">
+        
+        <!-- Lobby Pre-Partida -->
+        <div id="dueloLobby" class="duelo-lobby-container">
+<div style="padding: 1rem 1rem 0;">
+                <button id="backFromDueloBtn" class="button button--ghost button--sm" type="button" style="font-weight: 600;">
+                    ⬅️ Volver a Estudiar Juntos
+                </button>
+            </div>
+            
+            <div class="duelo-header-hero">
+                <div class="hero__badge">
+                    <span>⚔️ Estudio Grupal Competitivo y Cooperativo</span>
+                </div>
+                <h1 class="duelo-title">Modo Duelo de Bolillero</h1>
+                <p class="duelo-subtitle">
+                    Competí y colaborá con tus compañeros en tiempo real desde distintos celulares o computadoras, o jugá en el mismo dispositivo.
+                </p>
+            </div>
+
+            <!-- Barra de Identidad del Jugador / Cuenta -->
+            <div class="duelo-user-card" id="dueloUserCard">
+                <div class="duelo-user-info">
+                    <div class="duelo-avatar-wrapper" id="dueloUserAvatarWrap">
+                        <div class="duelo-avatar-circle" id="dueloUserAvatarDisplay">👤</div>
+                    </div>
+                    <div class="duelo-user-details">
+                        <div class="duelo-user-name-row">
+                            <span class="duelo-user-name" id="dueloUserNameDisplay">Invitado</span>
+                            <span class="badge badge--warning" id="dueloUserRankBadge">Novato</span>
+                        </div>
+                        <span class="duelo-user-meta" id="dueloUserMetaDisplay">Modo Invitado (Sin PIN)</span>
+                    </div>
+                </div>
+                <div class="duelo-user-actions">
+                    <button id="dueloChangeAvatarBtn" class="button button--ghost button--xs" type="button" title="Elegir cualquier emoji o subir foto">
+                        🎨 Cambiar Avatar
+                    </button>
+                    <button id="dueloAuthModalBtn" class="button button--secondary button--xs" type="button">
+                        🔐 Mi Cuenta / PIN
+                    </button>
+                </div>
+            </div>
+
+            <!-- Alerta Brillante para Invitados -->
+            <div class="duelo-guest-alert" id="dueloGuestAlert">
+                <div class="duelo-guest-alert__icon">⚠️</div>
+                <div class="duelo-guest-alert__text">
+                    <strong>¡Atención, jugador invitado!</strong>
+                    <span>Para que tus victorias y puntos se guarden en el Salón de la Fama y desbloquear marcos evolutivos, creá tu cuenta con PIN.</span>
+                </div>
+                <button id="dueloCreateAccountPromptBtn" class="button button--accent button--xs" type="button">
+                    ✨ Crear Cuenta con PIN
+                </button>
+            </div>
+
+            <!-- Selector de Modo Duelo: Online Multijugador vs Local -->
+            <div class="duelo-mode-selector">
+                <button id="dueloModeOnlineBtn" class="duelo-mode-tab is-active" type="button">
+                    <span class="duelo-mode-tab__icon">🌐</span>
+                    <div class="duelo-mode-tab__text">
+                        <strong>Modo Duelo Online</strong>
+                        <span>Multijugador en simultáneo entre distintos celulares / PCs</span>
+                    </div>
+                </button>
+                <button id="dueloModeLocalBtn" class="duelo-mode-tab" type="button">
+                    <span class="duelo-mode-tab__icon">📱</span>
+                    <div class="duelo-mode-tab__text">
+                        <strong>Modo Local Compartido</strong>
+                        <span>Todos juegan desde este mismo dispositivo</span>
+                    </div>
+                </button>
+            </div>
+
+            <!-- ==================== SUB-PANEL: MODO DUELO ONLINE ==================== -->
+            <div id="dueloOnlinePanel" class="duelo-online-panel">
+                <!-- Vista Inicial: Crear o Unirse a una Sala -->
+                <div id="dueloOnlineSetupView" class="duelo-online-setup-grid">
+                    <!-- Tarjeta: Crear Sala Online -->
+                    <div class="panel duelo-lobby-card">
+                        <div class="panel__header">
+                            <h2 class="panel__title">👑 Crear Sala Online</h2>
+                            <span class="badge badge--accent">Host</span>
+                        </div>
+                        <p class="duelo-card-desc">Creá una sala, configurala a tu gusto y compartí el Link Mágico con tus amigos:</p>
+
+                        <div class="field">
+                            <label for="dueloOnlineGameSelect">🎮 Tipo de Desafío</label>
+                            <select id="dueloOnlineGameSelect" class="duelo-select">
+                                <option value="bolillero" selected>🎲 Bolillero VS Online</option>
+                                <option value="bomba">💣 Desactivá la Bomba</option>
+                                <option value="impostor">🕵️‍♂️ Caza al Impostor</option>
+                                <option value="memotest">🧠 Memotest Conectado</option>
+                                <option value="triatlon">🏅 Modo Triatlón (3 Rondas)</option>
+                            </select>
+                        </div>
+
+                        <div class="field">
+                            <label for="dueloOnlineModeSelect">🤝 Modalidad de Partida</label>
+                            <select id="dueloOnlineModeSelect" class="duelo-select">
+                                <option value="versus" selected>⚔️ Modo Versus (Todos contra todos)</option>
+                                <option value="coop">🤝 Modo Cooperativo (Equipo contra el reloj)</option>
+                            </select>
+                        </div>
+
+                        <div class="field-toggle" style="margin-bottom: 0.75rem;" id="dueloOnlineTiebreakerRow">
+                            <label class="toggle-label" for="dueloOnlineAutoTiebreaker">
+                                <input id="dueloOnlineAutoTiebreaker" type="checkbox" checked>
+                                <span>⚡ Ronda de Desempate Automática con Minijuego</span>
+                            </label>
+                        </div>
+
+                        <div class="field">
+                            <label for="dueloOnlineListaSelect">Materia / Lista de Estudio</label>
+                            <select id="dueloOnlineListaSelect" class="duelo-select">
+                                <!-- Opciones cargadas dinámicamente -->
+                            </select>
+                            <span class="duelo-field-hint" id="dueloOnlineListaHint">Cargando temas...</span>
+                        </div>
+
+                        <div class="field">
+                            <label for="dueloOnlineTimeSelect">Tiempo por Turno</label>
+                            <select id="dueloOnlineTimeSelect" class="duelo-select">
+                                <option value="30">30 segundos (Rápido)</option>
+                                <option value="45">45 segundos</option>
+                                <option value="60">1 minuto</option>
+                                <option value="90" selected>1 minuto 30 segundos (Recomendado)</option>
+                                <option value="120">2 minutos</option>
+                                <option value="180">3 minutos</option>
+                            </select>
+                        </div>
+
+                        <!-- Checkbox Contraseña Opcional -->
+                        <div class="field-toggle" style="margin-top: 0.75rem;">
+                            <label class="toggle-label" for="dueloOnlineHasPassword">
+                                <input id="dueloOnlineHasPassword" type="checkbox">
+                                <span>🔒 Proteger sala con Contraseña Opcional</span>
+                            </label>
+                        </div>
+                        <div id="dueloOnlinePasswordRow" class="field hidden" style="margin-top: 0.5rem;">
+                            <label for="dueloOnlineRoomPassword">Contraseña de la Sala</label>
+                            <input id="dueloOnlineRoomPassword" type="text" maxlength="20" placeholder="Ej: estudio2026" autocomplete="off">
+                        </div>
+
+                        <!-- Opciones de Comodines y Reglas para la Sala Online -->
+                        <div class="duelo-switches-list" style="margin-top: 1rem;">
+                            <label class="duelo-switch-row" for="dueloOnlineComodinSocorro">
+                                <input type="checkbox" id="dueloOnlineComodinSocorro" checked>
+                                <span class="duelo-switch-box" aria-hidden="true"></span>
+                                <div class="duelo-switch-info">
+                                    <strong>🤝 Socorro</strong>
+                                    <span>Pedir ayuda a un compañero por 5 pts cada uno.</span>
+                                </div>
+                            </label>
+                            <label class="duelo-switch-row" for="dueloOnlineComodinPista">
+                                <input type="checkbox" id="dueloOnlineComodinPista" checked>
+                                <span class="duelo-switch-box" aria-hidden="true"></span>
+                                <div class="duelo-switch-info">
+                                    <strong>💡 Pista clave</strong>
+                                    <span>15 segundos extra de consulta.</span>
+                                </div>
+                            </label>
+                            <label class="duelo-switch-row" for="dueloOnlineComodinPaso">
+                                <input type="checkbox" id="dueloOnlineComodinPaso" checked>
+                                <span class="duelo-switch-box" aria-hidden="true"></span>
+                                <div class="duelo-switch-info">
+                                    <strong>🔄 Paso y Rebote</strong>
+                                    <span>Cambia el tema sin penalización.</span>
+                                </div>
+                            </label>
+                            <label class="duelo-switch-row" for="dueloOnlineReglaRacha">
+                                <input type="checkbox" id="dueloOnlineReglaRacha" checked>
+                                <span class="duelo-switch-box" aria-hidden="true"></span>
+                                <div class="duelo-switch-info">
+                                    <strong>🔥 Racha de Fuego</strong>
+                                    <span>Puntaje doble (+20 pts) al hilvanar 2 impecables.</span>
+                                </div>
+                            </label>
+                            <label class="duelo-switch-row" for="dueloOnlineReglaRobo">
+                                <input type="checkbox" id="dueloOnlineReglaRobo" checked>
+                                <span class="duelo-switch-box" aria-hidden="true"></span>
+                                <div class="duelo-switch-info">
+                                    <strong>⚡ Robo Relámpago Online</strong>
+                                    <span>Pulsador en simultáneo si alguien saca 0 pts.</span>
+                                </div>
+                            </label>
+                        </div>
+
+                        <button id="dueloCreateRoomBtn" class="button button--primary button--full" type="button" style="margin-top: 1.25rem;">
+                            ✨ Crear Sala y Obtener Link
+                        </button>
+                    </div>
+
+                    <!-- Tarjeta: Unirse a Sala Online Existente -->
+                    <div class="panel duelo-lobby-card">
+                        <div class="panel__header">
+                            <h2 class="panel__title">🚪 Unirse a Sala</h2>
+                            <span class="badge badge--primary">Invitación</span>
+                        </div>
+                        <p class="duelo-card-desc">Ingresá el código o abrí el Link Mágico que te pasó el creador:</p>
+
+                        <div class="field">
+                            <label for="dueloJoinRoomCode">Código de Sala (5 letras)</label>
+                            <input id="dueloJoinRoomCode" type="text" maxlength="8" placeholder="Ej: LUIB7" style="text-transform: uppercase; font-family: monospace; font-size: 1.2rem; letter-spacing: 2px;" autocomplete="off">
+                        </div>
+
+                        <div class="field">
+                            <label for="dueloJoinRoomPass">Contraseña (si la sala la requiere)</label>
+                            <input id="dueloJoinRoomPass" type="password" maxlength="20" placeholder="Dejar vacío si no tiene clave" autocomplete="off">
+                        </div>
+
+                        <div class="duelo-join-player-preview">
+                            <span class="duelo-join-label">Te unirás como:</span>
+                            <div class="duelo-join-badge">
+                                <span id="dueloJoinAvatarPreview">👤</span>
+                                <strong id="dueloJoinNamePreview">Invitado</strong>
+                            </div>
+                        </div>
+
+                        <button id="dueloJoinRoomBtn" class="button button--secondary button--full" type="button" style="margin-top: 1.25rem;">
+                            🚀 Entrar a la Sala
+                        </button>
+
+                        <div class="duelo-online-tips">
+                            <span class="duelo-tip-icon">💡</span>
+                            <p><strong>Cero descargas ni registros externos:</strong> funciona directamente en el navegador de cualquier celular, tablet o computadora.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Vista de Sala de Espera Activa (Lobby en Vivo) -->
+                <div id="dueloOnlineWaitingRoom" class="duelo-waiting-room hidden">
+                    <div class="duelo-waiting-header">
+                        <div class="duelo-waiting-room-tag">
+                            <span class="duelo-waiting-pulse"></span>
+                            <span>SALA ONLINE EN VIVO</span>
+                        </div>
+                        <div class="duelo-waiting-code-display">
+                            <span class="duelo-code-label">CÓDIGO DE SALA:</span>
+                            <span class="duelo-code-value" id="dueloWaitingRoomCode">XXXXX</span>
+                        </div>
+                    </div>
+
+                    <!-- Enlaces Mágicos de Invitación -->
+                    <div class="duelo-magic-link-box">
+                        <div class="duelo-magic-link-input-wrap">
+                            <input id="dueloMagicLinkInput" type="text" readonly value="https://luibanez.vercel.app/?room=XXXXX">
+                            <button id="dueloCopyLinkBtn" class="button button--secondary button--sm" type="button">
+                                📋 Copiar Link Mágico
+                            </button>
+                            <button id="dueloShareLinkBtn" class="button button--primary button--sm" type="button">
+                                📲 Compartir
+                            </button>
+                        </div>
+                        <div class="duelo-magic-link-status" id="dueloCopySuccessHint" style="display: none;">
+                            ✅ ¡Enlace copiado al portapapeles! Pasáselo a tus compañeros.
+                        </div>
+                    </div>
+
+                    <!-- Lista de Jugadores Conectados en Tiempo Real -->
+                    <div class="duelo-waiting-players-section">
+                        <div class="duelo-section-header">
+                            <h3 class="duelo-subheading">👥 Jugadores en la Sala (<span id="dueloOnlineConnectedCount">1</span>)</h3>
+                            <span class="badge badge--success" id="dueloServerStatusBadge">🟢 Servidor Conectado</span>
+                        </div>
+                        <div class="duelo-online-players-grid" id="dueloOnlinePlayersGrid">
+                            <!-- Fichas de jugadores conectados en vivo generadas por JS -->
+                        </div>
+                    </div>
+
+                    <!-- Controles para Iniciar Partida (Host) o Esperar -->
+                    <div class="duelo-waiting-actions">
+                        <div id="dueloHostControlsArea" class="duelo-host-controls">
+                            <button id="dueloLaunchOnlineMatchBtn" class="button button--primary button--lg button--duel-launch" type="button">
+                                🚀 ¡COMENZAR DUELO ONLINE AHORA!
+                            </button>
+                            <span class="duelo-hint-text">El anfitrión inicia la partida para todos los participantes.</span>
+                        </div>
+                        <div id="dueloGuestWaitArea" class="duelo-guest-wait hidden">
+                            <div class="duelo-waiting-spinner"></div>
+                            <span>Esperando a que el anfitrión inicie el combate...</span>
+                        </div>
+                        <button id="dueloLeaveOnlineRoomBtn" class="button button--ghost" type="button">
+                            ✕ Salir de la Sala
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ==================== SUB-PANEL: MODO LOCAL (MISMO DISPOSITIVO) ==================== -->
+            <div id="dueloLocalPanel" class="duelo-local-panel hidden">
+                <div class="duelo-lobby-grid">
+                    <!-- Columna 1: Jugadores y Lista de Estudio Local -->
+                    <div class="panel duelo-lobby-card">
+                        <div class="panel__header">
+                            <h2 class="panel__title">👥 Jugadores de la Partida</h2>
+                            <span class="badge badge--primary" id="dueloPlayerCountBadge">2 jugadores</span>
+                        </div>
+
+                        <div class="field">
+                            <label for="dueloPlayerInput">Nombre del participante</label>
+                            <div class="duelo-input-group">
+                                <input id="dueloPlayerInput" type="text" maxlength="25" placeholder="Escribí un nombre (ej. Lucas)" autocomplete="off">
+                                <button id="dueloAddPlayerBtn" class="button button--secondary" type="button">+ Agregar</button>
+                            </div>
+                        </div>
+
+                        <!-- Lista de fichas de jugadores -->
+                        <div class="duelo-players-chips" id="dueloPlayersChips" aria-label="Participantes cargados">
+                            <!-- Generados dinámicamente -->
+                        </div>
+
+                        <div class="field" style="margin-top: 1.5rem;">
+                            <label for="dueloListaSelect">Materia / Lista de Estudio</label>
+                            <select id="dueloListaSelect" class="duelo-select">
+                                <!-- Opciones cargadas dinámicamente -->
+                            </select>
+                            <span class="duelo-field-hint" id="dueloListaHint">Cargando temas disponibles...</span>
+                        </div>
+                    </div>
+
+                    <!-- Columna 2: Tiempos, Comodines y Reglas Especiales Local -->
+                    <div class="panel duelo-lobby-card">
+                        <div class="panel__header">
+                            <h2 class="panel__title">⏱️ Tiempo de Turno Global</h2>
+                        </div>
+                        <p class="duelo-card-desc">Duración del cronómetro igual para todos los participantes:</p>
+                        
+                        <div class="duelo-time-selector">
+                            <div class="duelo-time-inputs">
+                                <div class="field field--compact">
+                                    <label for="dueloMinutosInput">Minutos</label>
+                                    <input id="dueloMinutosInput" type="number" min="0" max="15" value="1" class="duelo-time-num">
+                                </div>
+                                <span class="duelo-time-separator">:</span>
+                                <div class="field field--compact">
+                                    <label for="dueloSegundosInput">Segundos</label>
+                                    <input id="dueloSegundosInput" type="number" min="0" max="59" value="30" class="duelo-time-num">
+                                </div>
+                            </div>
+
+                            <!-- Presets rápidos -->
+                            <div class="duelo-presets">
+                                <button type="button" class="preset-pill" data-seconds="30">30s</button>
+                                <button type="button" class="preset-pill" data-seconds="45">45s</button>
+                                <button type="button" class="preset-pill" data-seconds="60">1m</button>
+                                <button type="button" class="preset-pill is-active" data-seconds="90">1m 30s</button>
+                                <button type="button" class="preset-pill" data-seconds="120">2m</button>
+                            </div>
+                        </div>
+
+                        <!-- Selector de Comodines -->
+                        <div class="duelo-comodines-section">
+                            <div class="duelo-section-header">
+                                <h3 class="duelo-subheading">🃏 Selector de Comodines (1 uso por jugador)</h3>
+                                <button id="dueloToggleAllComodinesBtn" class="button button--ghost button--xs" type="button">
+                                    Alternar todos
+                                </button>
+                            </div>
+
+                            <div class="duelo-switches-list">
+                                <label class="duelo-switch-row" for="dueloComodinSocorro">
+                                    <input type="checkbox" id="dueloComodinSocorro" checked>
+                                    <span class="duelo-switch-box" aria-hidden="true"></span>
+                                    <div class="duelo-switch-info">
+                                        <strong>🤝 Socorro</strong>
+                                        <span>Pedir ayuda a un compañero y resolver a medias por 5 pts cada uno.</span>
+                                    </div>
+                                </label>
+
+                                <label class="duelo-switch-row" for="dueloComodinPista">
+                                    <input type="checkbox" id="dueloComodinPista" checked>
+                                    <span class="duelo-switch-box" aria-hidden="true"></span>
+                                    <div class="duelo-switch-info">
+                                        <strong>💡 Pista clave</strong>
+                                        <span>Otorga 15 segundos extra para consultar apuntes o fórmulas.</span>
+                                    </div>
+                                </label>
+
+                                <label class="duelo-switch-row" for="dueloComodinPaso">
+                                    <input type="checkbox" id="dueloComodinPaso" checked>
+                                    <span class="duelo-switch-box" aria-hidden="true"></span>
+                                    <div class="duelo-switch-info">
+                                        <strong>🔄 Paso y Rebote</strong>
+                                        <span>Cambia el tema actual por otro disponible de la lista sin penalización.</span>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Reglas Especiales -->
+                        <div class="duelo-rules-section">
+                            <h3 class="duelo-subheading">⚡ Reglas Especiales</h3>
+                            <div class="duelo-switches-list">
+                                <label class="duelo-switch-row" for="dueloReglaRacha">
+                                    <input type="checkbox" id="dueloReglaRacha" checked>
+                                    <span class="duelo-switch-box" aria-hidden="true"></span>
+                                    <div class="duelo-switch-info">
+                                        <strong>🔥 Racha de Fuego</strong>
+                                        <span>2 respuestas impecables seguidas duplican el puntaje en el próximo turno (+20 pts).</span>
+                                    </div>
+                                </label>
+
+                                <label class="duelo-switch-row" for="dueloReglaRobo">
+                                    <input type="checkbox" id="dueloReglaRobo" checked>
+                                    <span class="duelo-switch-box" aria-hidden="true"></span>
+                                    <div class="duelo-switch-info">
+                                        <strong>⚡ Robo Relámpago</strong>
+                                        <span>Si el jugador saca 0 pts, los demás compiten con pulsador para robar puntos en la mitad del tiempo.</span>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Botones de Acción del Lobby Local -->
+                <div class="duelo-start-action">
+                    <button id="dueloStartBtn" class="button button--primary button--lg button--duel-launch" type="button">
+                        🚀 ¡INICIAR DUELO LOCAL!
+                    </button>
+                    <button id="dueloViewFamaFromLobbyBtn" class="button button--ghost" type="button">
+                        🏆 Ver Salón de la Fama
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Arena de Juego (En combate) -->
+        <div id="dueloArena" class="duelo-arena-container hidden">
+            <!-- Barra superior del combate -->
+            <header class="duelo-arena-bar">
+                <div class="duelo-bar-info">
+                    <span class="badge badge--accent">⚔️ Duelo en Curso</span>
+                    <span class="duelo-bar-list" id="dueloBarListName">Materia</span>
+                    <span class="duelo-bar-stats" id="dueloBarRemainingTopics">Temas restantes: 0</span>
+                </div>
+                <div class="duelo-bar-actions">
+                    <button id="dueloEndMatchBtn" class="button button--danger button--sm" type="button" title="Finalizar la partida y coronar al campeón">
+                        🏁 Finalizar Duelo
+                    </button>
+                </div>
+            </header>
+
+            <div class="duelo-arena-layout">
+                <!-- Columna Central: Doble Ruleta + Turno Activo -->
+                <div class="duelo-main-col">
+                    <!-- Sección Doble Ruleta Visual Simultánea -->
+                    <section class="duelo-roulette-section">
+                        <div class="duelo-dual-roulette-grid">
+                            <!-- Ruleta 1: Jugador Sorteado -->
+                            <div class="duelo-roulette-card">
+                                <span class="duelo-roulette-label">👤 JUGADOR AL FRENTE</span>
+                                <div id="dueloPlayerRoulette" class="duelo-roulette-display" role="status" aria-live="polite">
+                                    🎲 ¿Quién pasa?
+                                </div>
+                            </div>
+
+                            <!-- Ruleta 2: Tema Asignado -->
+                            <div class="duelo-roulette-card">
+                                <span class="duelo-roulette-label">📖 TEMA ASIGNADO</span>
+                                <div id="dueloTopicRoulette" class="duelo-roulette-display" role="status" aria-live="polite">
+                                    🎰 ¿Qué tema toca?
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Botón Girar Doble Ruleta -->
+                        <div class="duelo-spin-wrapper">
+                            <button id="dueloSpinBtn" class="spin-button duel-spin-button" type="button">
+                                <span aria-hidden="true">🎰</span>
+                                <span>GIRAR DOBLE RULETA</span>
+                            </button>
+                        </div>
+                    </section>
+
+                    <!-- Área de Turno en Juego (Visible al revelar sorteo) -->
+                    <section id="dueloTurnArea" class="duelo-turn-area hidden">
+                        <!-- Cabecera del turno con jugador y multiplicador de fuego -->
+                        <div class="duelo-turn-header" id="dueloTurnHeader">
+                            <div class="duelo-turn-player-box">
+                                <div class="duelo-turn-avatar" id="dueloTurnAvatar">👤</div>
+                                <div>
+                                    <h3 class="duelo-turn-player-name" id="dueloTurnPlayerName">Jugador</h3>
+                                    <div class="duelo-turn-streak-badge" id="dueloTurnStreakBadge">Sin racha</div>
+                                </div>
+                            </div>
+
+                            <!-- Widgets flotantes acceso directo -->
+                            <div class="duelo-quick-widgets">
+                                <button id="dueloQuickScratchpadBtn" class="button button--ghost button--xs" type="button" title="Abrir Pizarrón y Notas">
+                                    📝 Pizarrón
+                                </button>
+                                <button id="dueloQuickPomodoroBtn" class="button button--ghost button--xs" type="button" title="Abrir Reloj Pomodoro">
+                                    ⏱️ Reloj
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Tarjeta del tema a responder -->
+                        <article class="duelo-topic-active-card">
+                            <span class="duelo-topic-tag">Tema de examen sorteado:</span>
+                            <h2 id="dueloActiveTopicTitle" class="duelo-active-topic-title">—</h2>
+                        </article>
+
+                        <!-- Cronómetro de Turno -->
+                        <div class="duelo-timer-box">
+                            <div class="duelo-timer-top">
+                                <span class="duelo-timer-label">Tiempo de respuesta:</span>
+                                <div class="duelo-timer-digits" id="dueloTimerDigits">01:30</div>
+                                <button id="dueloTimerToggleBtn" class="icon-button" type="button" title="Pausar / Reanudar cronómetro">
+                                    ⏸
+                                </button>
+                            </div>
+                            <div class="duelo-timer-track">
+                                <div id="dueloTimerBar" class="duelo-timer-fill" style="width: 100%;"></div>
+                            </div>
+                        </div>
+
+                        <!-- Comodines Habilitados para este Jugador -->
+                        <div id="dueloComodinesTray" class="duelo-comodines-tray">
+                            <span class="duelo-comodines-title">Tus comodines disponibles:</span>
+                            <div class="duelo-comodines-buttons">
+                                <button id="dueloBtnSocorro" class="comodin-btn" type="button" title="Resolver a medias con otro por 5 pts cada uno">
+                                    🤝 Socorro
+                                </button>
+                                <button id="dueloBtnPista" class="comodin-btn" type="button" title="Obtener 15 seg para ver apuntes">
+                                    💡 Pista clave (+15s)
+                                </button>
+                                <button id="dueloBtnPaso" class="comodin-btn" type="button" title="Cambiar tema por otro sin penalización">
+                                    🔄 Paso y Rebote
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Calificación de la respuesta (Modo Local) -->
+                        <div class="duelo-eval-section" id="dueloLocalEvalSection">
+                            <span class="duelo-eval-title">Calificar respuesta del turno:</span>
+                            <div class="duelo-eval-buttons">
+                                <button id="dueloGradeImpecableBtn" class="duelo-grade-btn duelo-grade-btn--success" type="button">
+                                    <span class="duelo-grade-icon" aria-hidden="true">🟢</span>
+                                    <span class="duelo-grade-name">¡Impecable!</span>
+                                    <span class="duelo-grade-pts" id="dueloImpecablePtsLabel">+10 pts</span>
+                                </button>
+
+                                <button id="dueloGradeAyudaBtn" class="duelo-grade-btn duelo-grade-btn--warning" type="button">
+                                    <span class="duelo-grade-icon" aria-hidden="true">🟡</span>
+                                    <span class="duelo-grade-name">Con ayuda</span>
+                                    <span class="duelo-grade-pts">+5 pts</span>
+                                </button>
+
+                                <button id="dueloGradePasoBtn" class="duelo-grade-btn duelo-grade-btn--danger" type="button">
+                                    <span class="duelo-grade-icon" aria-hidden="true">🔴</span>
+                                    <span class="duelo-grade-name">A repasar / Paso</span>
+                                    <span class="duelo-grade-pts">0 pts</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Votación Individual por Dispositivo (Modo Online) -->
+                        <div id="dueloOnlineVoteBox" class="duelo-online-vote-box hidden">
+                            <div class="duelo-vote-header">
+                                <span class="duelo-vote-badge">🗳️ VOTACIÓN INDIVIDUAL EN VIVO</span>
+                                <h3 class="duelo-vote-title">Votá desde tu dispositivo la respuesta de <strong id="dueloVoteTargetPlayerName">Jugador</strong>:</h3>
+                            </div>
+                            <div class="duelo-eval-buttons duelo-online-eval-btns">
+                                <button id="dueloOnlineVote10Btn" class="duelo-grade-btn duelo-grade-btn--success" type="button">
+                                    <span class="duelo-grade-icon" aria-hidden="true">🟢</span>
+                                    <span class="duelo-grade-name">¡Impecable!</span>
+                                    <span class="duelo-grade-pts" id="dueloOnline10PtsLabel">+10 pts</span>
+                                </button>
+                                <button id="dueloOnlineVote5Btn" class="duelo-grade-btn duelo-grade-btn--warning" type="button">
+                                    <span class="duelo-grade-icon" aria-hidden="true">🟡</span>
+                                    <span class="duelo-grade-name">Con ayuda</span>
+                                    <span class="duelo-grade-pts">+5 pts</span>
+                                </button>
+                                <button id="dueloOnlineVote0Btn" class="duelo-grade-btn duelo-grade-btn--danger" type="button">
+                                    <span class="duelo-grade-icon" aria-hidden="true">🔴</span>
+                                    <span class="duelo-grade-name">A repasar / Paso</span>
+                                    <span class="duelo-grade-pts">0 pts</span>
+                                </button>
+                            </div>
+                            <div class="duelo-vote-tally-container">
+                                <span class="duelo-vote-tally-label">Votos recibidos en la sala:</span>
+                                <div id="dueloLiveVoteChips" class="duelo-live-vote-chips">
+                                    <!-- Ej: Juan: 🟢, Sofía: 🟢 -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Panel de Robo Relámpago Local -->
+                        <div id="dueloRoboBox" class="duelo-robo-box hidden">
+                            <div class="duelo-robo-header">
+                                <span class="duelo-robo-badge">⚡ ROBO RELÁMPAGO DISPONIBLE</span>
+                                <h3 class="duelo-robo-title">¡El primero que pulse su botón responde por los puntos!</h3>
+                            </div>
+
+                            <!-- Botones de pulsadores para los demás jugadores -->
+                            <div id="dueloBuzzerContainer" class="duelo-buzzers-grid">
+                                <!-- Generados dinámicamente -->
+                            </div>
+
+                            <!-- Vista del ladrón activo -->
+                            <div id="dueloThiefActiveArea" class="duelo-thief-area hidden">
+                                <div class="duelo-thief-title" id="dueloThiefTitle">⚡ ¡[Nombre] al ataque!</div>
+                                <div class="duelo-thief-timer" id="dueloThiefTimerDigits">00:45</div>
+                                <div class="duelo-thief-actions">
+                                    <button id="dueloThiefSuccessBtn" class="button button--primary" type="button">
+                                        🟢 ¡Robo Exitoso! (+10 pts)
+                                    </button>
+                                    <button id="dueloThiefFailBtn" class="button button--ghost" type="button">
+                                        🔴 Falló el robo (0 pts)
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Pulsador Online de Robo Relámpago (Overlay gigante para celulares y PCs) -->
+                        <div id="dueloOnlineRoboOverlay" class="duelo-online-robo-overlay hidden">
+                            <div class="duelo-online-robo-card">
+                                <div class="duelo-online-robo-icon">⚡</div>
+                                <h3 class="duelo-online-robo-title">¡ROBO RELÁMPAGO ONLINE!</h3>
+                                <p class="duelo-online-robo-desc">El turno anterior dio 0 pts. ¡El primero que presione el pulsador gana el derecho a responder a mitad de tiempo!</p>
+                                <button id="dueloOnlineBuzzerTriggerBtn" class="duelo-online-big-buzzer-btn" type="button">
+                                    ⚡ ¡TOCAR PRIMERO PARA ROBAR! ⚡
+                                </button>
+                                <div class="duelo-online-robo-status" id="dueloOnlineRoboStatus">
+                                    Esperando al más rápido...
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+
+                <!-- Columna Lateral: Marcador en Vivo (Leaderboard) -->
+                <aside class="duelo-side-col">
+                    <div class="panel duelo-scoreboard-panel">
+                        <div class="panel__header">
+                            <h3 class="panel__title">🏆 Marcador en Vivo</h3>
+                            <span class="badge badge--warning" id="dueloRoundCounterBadge">Ronda 1</span>
+                        </div>
+                        <div class="duelo-scoreboard-list" id="dueloScoreboardList">
+                            <!-- Generado dinámicamente -->
+                        </div>
+                    </div>
+
+                    <!-- Historial de turnos de la partida -->
+                    <div class="panel duelo-turn-log-panel">
+                        <h4 class="duelo-log-title">Registro de Turnos</h4>
+                        <ul class="duelo-turn-log" id="dueloTurnLog">
+                            <li class="duelo-log-empty">La partida está por comenzar...</li>
+                        </ul>
+                    </div>
+                </aside>
+            </div>
+
+            <!-- =========================================================
+                 CHAT EN VIVO MULTIMEDIA (TEXTO + EMOJIS + FOTOS + AUDIOS)
+                 ========================================================= -->
+            <div id="dueloChatDock" class="duelo-chat-dock">
+                <!-- Botón flotante para abrir/cerrar chat -->
+                <button id="dueloChatToggleBtn" class="duelo-chat-pill" type="button" aria-label="Abrir chat en vivo">
+                    <span class="duelo-chat-pill__icon" aria-hidden="true">💬</span>
+                    <span class="duelo-chat-pill__text">Chat en Vivo</span>
+                    <span id="dueloChatUnreadBadge" class="duelo-chat-unread-badge hidden">0</span>
+                </button>
+
+                <!-- Ventana emergente del Chat -->
+                <div id="dueloChatWindow" class="duelo-chat-window is-collapsed" aria-label="Ventana de chat en vivo">
+                    <div class="duelo-chat-header">
+                        <div class="duelo-chat-title">
+                            <span class="duelo-chat-title-icon">💬</span>
+                            <span>Chat de la Sala</span>
+                            <span class="duelo-chat-status-dot" title="Conectado"></span>
+                        </div>
+                        <button id="dueloChatCloseBtn" class="icon-button duelo-chat-close-btn" type="button" aria-label="Minimizar chat">
+                            <span aria-hidden="true">✕</span>
+                        </button>
+                    </div>
+
+                    <!-- Mensajes del chat -->
+                    <div class="duelo-chat-body" id="dueloChatMessages" role="log" aria-live="polite">
+                        <div class="duelo-chat-system-msg">
+                            🎉 ¡Bienvenidos al chat en vivo! Podés enviar mensajes, audios de voz, emojis y fotos de apuntes.
+                        </div>
+                    </div>
+
+                    <!-- Barra de grabación de nota de voz activa -->
+                    <div id="dueloVoiceRecordingBar" class="duelo-voice-rec-bar hidden">
+                        <div class="duelo-voice-rec-pulse"></div>
+                        <span class="duelo-voice-rec-text">Grabando audio...</span>
+                        <span class="duelo-voice-rec-timer" id="dueloVoiceRecTimer">00:00</span>
+                        <div class="duelo-voice-rec-actions">
+                            <button id="dueloVoiceCancelBtn" class="icon-button duelo-voice-btn--cancel" type="button" title="Cancelar audio">✕</button>
+                            <button id="dueloVoiceSendBtn" class="icon-button duelo-voice-btn--send" type="button" title="Enviar audio">✔</button>
+                        </div>
+                    </div>
+
+                    <!-- Reacciones rápidas de emojis -->
+                    <div class="duelo-chat-quick-emojis">
+                        <button type="button" class="chat-quick-emoji-btn" data-emoji="😂">😂</button>
+                        <button type="button" class="chat-quick-emoji-btn" data-emoji="🔥">🔥</button>
+                        <button type="button" class="chat-quick-emoji-btn" data-emoji="👏">👏</button>
+                        <button type="button" class="chat-quick-emoji-btn" data-emoji="💀">💀</button>
+                        <button type="button" class="chat-quick-emoji-btn" data-emoji="😱">😱</button>
+                        <button type="button" class="chat-quick-emoji-btn" data-emoji="🎯">🎯</button>
+                        <button type="button" class="chat-quick-emoji-btn" data-emoji="⏳">⏳</button>
+                        <button type="button" class="chat-quick-emoji-btn" data-emoji="👍">👍</button>
+                    </div>
+
+                    <!-- Fila de Entrada de Mensaje con Multimedia -->
+                    <form id="dueloChatForm" class="duelo-chat-input-row" onsubmit="return false;">
+                        <input type="file" id="dueloChatPhotoInput" accept="image/*" class="hidden">
+                        <button id="dueloChatPhotoBtn" class="icon-button duelo-chat-tool-btn" type="button" title="Enviar foto o apunte (Cámara / Galería)">
+                            📷
+                        </button>
+                        <button id="dueloChatMicBtn" class="icon-button duelo-chat-tool-btn" type="button" title="Grabar nota de voz (Audio)">
+                            🎙️
+                        </button>
+                        <input id="dueloChatTextInput" type="text" class="duelo-chat-text-input" placeholder="Mensaje..." maxlength="300" autocomplete="off">
+                        <button id="dueloChatSendBtn" class="button button--primary button--sm duelo-chat-send-btn" type="submit" title="Enviar mensaje">
+                            ➤
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+    </section>
+
+    
+    <!-- ==================== VISTA 4: JUEGOS EDUCATIVOS (SOLO Y DUELO) ==================== -->
+    <section id="viewJuegosEdu" class="view view--hidden" aria-label="Arena de Juegos Educativos">
+        <div class="juegos-edu-container">
+            
+            <!-- Barra de Apuntes y Material de Estudio (PDF / IA Gemini) -->
+            <div class="juegos-apuntes-bar" id="juegosApuntesBar">
+                <div class="juegos-apuntes-info">
+                    <span class="juegos-apuntes-icon">📄</span>
+                    <div class="juegos-apuntes-text-wrap">
+                        <span class="juegos-apuntes-label">Material de Estudio para este Desafío:</span>
+                        <span class="juegos-apuntes-status" id="juegosApuntesStatus">Sin PDF cargado (usando banco temático de la materia)</span>
+                    </div>
+                </div>
+                <div class="juegos-apuntes-actions">
+                    <input type="file" id="juegosPdfInput" accept=".pdf,.txt" class="hidden">
+                    <button id="juegosUploadPdfBtn" class="button button--secondary button--xs" type="button">
+                        📎 Cargar PDF
+                    </button>
+                    <button id="juegosGenerateIABtn" class="button button--accent button--xs" type="button" title="Generar desafío en tiempo real con Gemini basado en el PDF">
+                        ✨ Desafío IA (Gemini)
+                    </button>
+                    <button id="juegosRemovePdfBtn" class="button button--ghost button--xs hidden" type="button" title="Quitar PDF">
+                        ✕ Quitar
+                    </button>
+                </div>
+            </div>
+
+            <!-- Overlay de Carga Inteligente de IA (Sincronización de cronómetro) -->
+            <div id="juegosIALoadingOverlay" class="juegos-ia-loading-overlay hidden">
+                <div class="juegos-ia-loading-card">
+                    <div class="juegos-ia-loading-chain-icon">✨ 🧠 ✨</div>
+                    <h3 class="juegos-ia-loading-title" id="juegosIALoadingTitle">Generando Desafío con IA...</h3>
+                    <p class="juegos-ia-loading-desc" id="juegosIALoadingDesc">
+                        Gemini está analizando los conceptos teóricos de tu PDF para armar las preguntas de la partida.
+                    </p>
+                    <div class="juegos-ia-loading-bar-wrap">
+                        <div class="juegos-ia-loading-bar-fill"></div>
+                    </div>
+                    <span class="juegos-ia-loading-hint">⏱️ El cronómetro comenzará exactamente cuando las preguntas aparezcan en pantalla.</span>
+                </div>
+            </div>
+
+            <!-- Barra Superior del Juego -->
+            <header class="juegos-edu-topbar">
+                <div class="juegos-edu-topbar__left">
+                    <button id="juegosBackBtn" class="button button--ghost button--sm" type="button">
+                        ⬅ Volver
+                    </button>
+                    <div class="juegos-game-info">
+                        <span id="juegosGameIcon" class="juegos-game-icon">💣</span>
+                        <div>
+                            <h2 id="juegosGameTitle" class="juegos-game-title">Desactivá la Bomba</h2>
+                            <span id="juegosGameSubtitle" class="juegos-game-subtitle">Materia: Lista de Estudio</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="juegos-edu-topbar__right" style="display: flex; gap: 0.5rem; align-items: center;">
+                    <button id="juegosRulesBtn" class="rules-trigger-btn" type="button" title="Ver reglas y controles de este juego">
+                        <span>❓</span><span>Reglas</span>
+                    </button>
+                    <span id="juegosModeBadge" class="badge badge--success">👤 Práctica Solo</span>
+                    <span id="juegosDifficultyBadge" class="badge badge--warning">Normal</span>
+                </div>
+            </header>
+
+            <!-- Barra de Progreso del Modo Triatlón (solo visible en Triatlón) -->
+            <div id="triatlonProgressBar" class="triatlon-progress-bar hidden">
+                <div class="triatlon-step is-active" id="triatlonStep1">
+                    <span class="triatlon-step__num">1</span>
+                    <span class="triatlon-step__name">💣 Bomba</span>
+                </div>
+                <div class="triatlon-line"></div>
+                <div class="triatlon-step" id="triatlonStep2">
+                    <span class="triatlon-step__num">2</span>
+                    <span class="triatlon-step__name">🕵️‍♂️ Impostor</span>
+                </div>
+                <div class="triatlon-line"></div>
+                <div class="triatlon-step" id="triatlonStep3">
+                    <span class="triatlon-step__num">3</span>
+                    <span class="triatlon-step__name">🧠 Memotest</span>
+                </div>
+                <div class="triatlon-score-chip">
+                    <span>Puntos Triatlón:</span>
+                    <strong id="triatlonTotalScore">0</strong>
+                </div>
+            </div>
+
+            <!-- ==================== JUEGO 1: 💣 DESACTIVÁ LA BOMBA ==================== -->
+            <div id="arenaBomba" class="juego-arena hidden">
+                <div class="bomba-casing">
+                    <div class="bomba-casing__header">
+                        <div class="bomba-danger-stripe"></div>
+                        <div class="bomba-pulse-strip" id="bombaPulseStrip"></div>
+                        <div class="bomba-header-controls">
+                            <span class="bomba-status-light" id="bombaStatusLight"></span>
+                            <span class="bomba-serial-label">DEFUSE PROTOCOL: THEORETICAL 3-PHASE</span>
+                            <div class="bomba-timer-display" id="bombaTimerDisplay">
+                                <span id="bombaMinutes">01</span>:<span id="bombaSeconds">30</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bomba-casing__body">
+                        <!-- Fases de los cables -->
+                        <div class="bomba-wires-panel">
+                            <h4 class="bomba-panel-label">Cables de Desactivación</h4>
+                            <div class="bomba-wires-grid">
+                                <div class="bomba-wire-slot" id="bombaWireSlot1">
+                                    <div class="bomba-wire-graphic wire--red" id="bombaWireGraphic1">
+                                        <span class="wire-half wire-half--left"></span>
+                                        <span class="wire-spark"></span>
+                                        <span class="wire-half wire-half--right"></span>
+                                    </div>
+                                    <span class="bomba-wire-name">Cable 1: Fundamento Teórico</span>
+                                    <span class="bomba-wire-status badge badge--danger" id="bombaWire1Status">Armado</span>
+                                </div>
+                                <div class="bomba-wire-slot" id="bombaWireSlot2">
+                                    <div class="bomba-wire-graphic wire--blue" id="bombaWireGraphic2">
+                                        <span class="wire-half wire-half--left"></span>
+                                        <span class="wire-spark"></span>
+                                        <span class="wire-half wire-half--right"></span>
+                                    </div>
+                                    <span class="bomba-wire-name">Cable 2: Análisis & Concepto</span>
+                                    <span class="bomba-wire-status badge badge--warning" id="bombaWire2Status">Pendiente</span>
+                                </div>
+                                <div class="bomba-wire-slot" id="bombaWireSlot3">
+                                    <div class="bomba-wire-graphic wire--green" id="bombaWireGraphic3">
+                                        <span class="wire-half wire-half--left"></span>
+                                        <span class="wire-spark"></span>
+                                        <span class="wire-half wire-half--right"></span>
+                                    </div>
+                                    <span class="bomba-wire-name">Cable Maestro: Clave de Síntesis</span>
+                                    <span class="bomba-wire-status badge badge--warning" id="bombaWire3Status">Bloqueado</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Pantalla LCD Central Interactiva -->
+                        <div class="bomba-lcd-screen" id="bombaLcdScreen">
+                            <!-- Pantalla Fase 1: Fundamento Teórico -->
+                            <div id="bombaFase1View" class="bomba-phase-view">
+                                <span class="bomba-phase-tag">Fase 1 / 3: Fundamento Teórico Principal</span>
+                                <h3 class="bomba-lcd-question" id="bombaFase1Question">
+                                    ¿Cuál es el principio teórico o postulado fundamental aplicable a este tema?
+                                </h3>
+                                <div class="bomba-options-grid" id="bombaFase1Options">
+                                    <!-- Opciones cargadas dinámicamente -->
+                                </div>
+                            </div>
+
+                            <!-- Pantalla Fase 2: Análisis & Deducción Conceptual -->
+                            <div id="bombaFase2View" class="bomba-phase-view hidden">
+                                <span class="bomba-phase-tag">Fase 2 / 3: Análisis & Deducción Conceptual</span>
+                                <h3 class="bomba-lcd-question" id="bombaFase2Question">
+                                    Analizá la relación conceptual y seleccioná la conclusión correcta:
+                                </h3>
+                                <div class="bomba-theory-context" id="bombaFase2ProblemBox">
+                                    <!-- Premisa teórica -->
+                                </div>
+                                <div class="bomba-options-grid" id="bombaFase2Options">
+                                    <!-- Opciones conceptuales -->
+                                </div>
+                            </div>
+
+                            <!-- Pantalla Fase 3: Clave Maestra de Síntesis -->
+                            <div id="bombaFase3View" class="bomba-phase-view hidden">
+                                <span class="bomba-phase-tag">Fase 3 / 3: Clave Maestra de Síntesis (Corte del Detonador)</span>
+                                <h3 class="bomba-lcd-question" id="bombaFase3Question">
+                                    Resolvé el desafío maestro para cortar el detonador:
+                                </h3>
+                                <div class="bomba-theory-context" id="bombaFase3ProblemBox">
+                                    <!-- Desafío maestro -->
+                                </div>
+                                <div class="bomba-options-grid" id="bombaFase3Options">
+                                    <!-- Opciones de síntesis teórica -->
+                                </div>
+                            </div>
+
+                            <!-- Pantalla Fin de Partida (Desactivada o BOOM) -->
+                            <div id="bombaResultView" class="bomba-phase-view hidden">
+                                <div class="bomba-result-card" id="bombaResultCard">
+                                    <div class="bomba-result-icon" id="bombaResultIcon">🎉</div>
+                                    <h3 class="bomba-result-title" id="bombaResultTitle">¡BOMBA DESACTIVADA!</h3>
+                                    <p class="bomba-result-desc" id="bombaResultDesc">Completaste las 3 fases a tiempo.</p>
+                                    <div class="bomba-result-stats" id="bombaResultStats"></div>
+                                    <div class="bomba-result-actions">
+                                        <button id="bombaPlayAgainBtn" class="button button--primary" type="button">Jugar Otra Bomba 💣</button>
+                                        <button id="bombaExitBtn" class="button button--secondary" type="button">Salir al Menú</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ==================== JUEGO 2: 🕵️‍♂️ CAZA AL IMPOSTOR ==================== -->
+            <div id="arenaImpostor" class="juego-arena hidden">
+                <!-- Panel de Configuración Previa de Ronda -->
+                <div id="impostorSetupPanel" class="impostor-setup-panel">
+                    <div class="impostor-setup-card">
+                        <div class="impostor-setup-header">
+                            <span class="badge badge--accent">🕵️‍♂️ CONFIGURAR MISIÓN</span>
+                            <h2 class="impostor-setup-title">Caza al Impostor</h2>
+                            <p class="impostor-setup-desc">
+                                Ajustá el tiempo de respuesta y la cantidad de casos para esta partida mientras se preparan los casos con tus apuntes.
+                            </p>
+                        </div>
+
+                        <div class="impostor-config-group">
+                            <label class="impostor-config-label">⏱️ Tiempo por Pregunta:</label>
+                            <div class="impostor-pill-selector" id="impostorTimeSelector">
+                                <button type="button" class="impostor-pill-btn" data-time="10">10s (Rápido)</button>
+                                <button type="button" class="impostor-pill-btn is-active" data-time="15">15s (Estándar)</button>
+                                <button type="button" class="impostor-pill-btn" data-time="20">20s (Analítico)</button>
+                                <button type="button" class="impostor-pill-btn" data-time="30">30s (Sin Apuro)</button>
+                            </div>
+                        </div>
+
+                        <div class="impostor-config-group">
+                            <label class="impostor-config-label">📋 Cantidad de Rondas (Casos):</label>
+                            <div class="impostor-pill-selector" id="impostorRoundsSelector">
+                                <button type="button" class="impostor-pill-btn" data-rounds="3">3 Rondas</button>
+                                <button type="button" class="impostor-pill-btn is-active" data-rounds="5">5 Rondas</button>
+                                <button type="button" class="impostor-pill-btn" data-rounds="7">7 Rondas</button>
+                                <button type="button" class="impostor-pill-btn" data-rounds="10">10 Rondas</button>
+                            </div>
+                        </div>
+
+                        <div class="impostor-setup-status" id="impostorSetupStatus">
+                            <span class="impostor-status-dot"></span>
+                            <span id="impostorSetupStatusText">Preparando material temático...</span>
+                        </div>
+
+                        <button id="impostorStartGameBtn" class="button button--primary button--lg" style="width: 100%; justify-content: center; font-size: 1.05rem;" type="button">
+                            🚀 Comenzar Investigación
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Tablero Activo del Juego -->
+                <div id="impostorActiveBoard" class="impostor-active-board hidden">
+                    <div class="impostor-dashboard">
+                        <header class="impostor-hud">
+                            <div class="impostor-hud__stat">
+                                <span class="impostor-hud__label">Caso</span>
+                                <strong class="impostor-hud__value" id="impostorCaseNum">1 / 5</strong>
+                            </div>
+                            <div class="impostor-hud__stat">
+                                <span class="impostor-hud__label">Tiempo de Ola</span>
+                                <div class="impostor-timer-bar-wrap">
+                                    <div class="impostor-timer-bar" id="impostorTimerBar"></div>
+                                </div>
+                            </div>
+                            <div class="impostor-hud__stat">
+                                <span class="impostor-hud__label">Racha de Fuego</span>
+                                <span class="badge badge--warning" id="impostorStreakBadge">🔥 x1</span>
+                            </div>
+                            <div class="impostor-hud__stat">
+                                <span class="impostor-hud__label">Puntaje</span>
+                                <strong class="impostor-hud__value" id="impostorScoreDisplay">0</strong>
+                            </div>
+                        </header>
+
+                        <div class="impostor-prompt-area">
+                            <span class="badge badge--primary" id="impostorTopicBadge">Tema de Estudio</span>
+                            <h3 class="impostor-question-text" id="impostorQuestionText">
+                                🕵️‍♂️ Una de estas 4 afirmaciones tiene un error conceptual infiltrado. ¡Encontrá al impostor antes de que termine el tiempo!
+                            </h3>
+                        </div>
+
+                        <!-- Barra de 3 Comodines para Modo Solo -->
+                        <div class="impostor-comodines-tray" id="impostorComodinesTray">
+                            <span class="impostor-comodines-title">🃏 Comodines:</span>
+                            <div class="impostor-comodines-actions">
+                                <button id="impostorBtn5050" class="button button--secondary button--xs impostor-comodin-btn" type="button" title="Descarta 2 afirmaciones verdaderas">
+                                    💡 Pista 50/50 (<span id="impostorCount5050">1</span>)
+                                </button>
+                                <button id="impostorBtnTiempo" class="button button--secondary button--xs impostor-comodin-btn" type="button" title="Suma +15 segundos al cronómetro">
+                                    ⏱️ +15s Tiempo (<span id="impostorCountTiempo">1</span>)
+                                </button>
+                                <button id="impostorBtnSocorro" class="button button--secondary button--xs impostor-comodin-btn" type="button" title="El radar detecta la tarjeta con el error conceptual">
+                                    🛟 Radar Socorro (<span id="impostorCountSocorro">1</span>)
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="impostor-cards-grid" id="impostorCardsGrid">
+                            <!-- 4 tarjetas dinámicas -->
+                        </div>
+
+                        <div class="impostor-feedback-box hidden" id="impostorFeedbackBox">
+                            <div class="impostor-feedback-content" id="impostorFeedbackContent"></div>
+                            <button id="impostorNextWaveBtn" class="button button--primary button--sm" type="button">
+                                Siguiente Caso ➔
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ==================== JUEGO 3: 🧠 MEMOTEST CONECTADO ==================== -->
+            <div id="arenaMemotest" class="juego-arena hidden">
+                <div class="memotest-dashboard">
+                    <header class="memotest-hud">
+                        <div class="memotest-hud__stat">
+                            <span class="memotest-hud__label">Pares Conectados</span>
+                            <strong class="memotest-hud__value" id="memotestPairsCount">0 / 6</strong>
+                        </div>
+                        <div class="memotest-hud__stat">
+                            <span class="memotest-hud__label">Movimientos</span>
+                            <strong class="memotest-hud__value" id="memotestMovesCount">0</strong>
+                        </div>
+                        <div class="memotest-hud__stat">
+                            <span class="memotest-hud__label">Cronómetro</span>
+                            <strong class="memotest-hud__value" id="memotestTimerDisplay">00:00</strong>
+                        </div>
+                        <div class="memotest-hud__stat">
+                            <span class="memotest-hud__label">Puntaje</span>
+                            <strong class="memotest-hud__value" id="memotestScoreDisplay">0</strong>
+                        </div>
+                    </header>
+
+                    <div class="memotest-instructions">
+                        <span>💡 Hacé clic en una tarjeta de Concepto y luego en su Definición o Fórmula matemática para conectarlas con energía neón.</span>
+                    </div>
+
+                    <div class="memotest-grid" id="memotestGrid">
+                        <!-- Fichas interactivas cargadas dinámicamente -->
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- ==================== VISTA 5: SALÓN DE LA FAMA ==================== -->
+    <section id="viewFama" class="view view--hidden" aria-label="Salón de la Fama y Campeones">
+        
+        <div class="fama-container">
+            <div class="fama-hero">
+                <div class="hero__badge">
+                    <span>👑 Gloria & Estadísticas Históricas</span>
+                </div>
+                <h1 class="fama-title">🏆 Salón de la Fama</h1>
+                <p class="fama-subtitle">
+                    Historial completo de partidas disputadas, campeones coronados y tabla de medallistas acumulada de Luibañez.
+                </p>
+                <div class="fama-hero-actions">
+                    <button id="famaPlayNewDueloBtn" class="button button--primary" type="button">
+                        ⚔️ Jugar Nuevo Duelo
+                    </button>
+                    <button id="famaClearHistoryBtn" class="button button--ghost button--danger-text" type="button">
+                        🗑️ Borrar Todo el Historial
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tabla de Campeones Acumulada (Medallero Histórico) -->
+            <section class="panel fama-champions-panel">
+                <div class="panel__header">
+                    <div>
+                        <h2 class="panel__title">🥇 Tabla de Campeones Acumulada</h2>
+                        <p class="panel__subtitle">Puntaje histórico, victorias y podios acumulados de todos los duelistas</p>
+                    </div>
+                </div>
+
+                <div class="fama-multiverse-bar">
+                    <div class="fama-stats-cards">
+                        <div class="fama-stat-card">
+                            <span class="fama-stat-num" id="famaTotalMatchesCount">0</span>
+                            <span class="fama-stat-label">Partidas Jugadas</span>
+                        </div>
+                        <div class="fama-stat-card">
+                            <span class="fama-stat-num" id="famaTopChampionName">—</span>
+                            <span class="fama-stat-label">Rey Máximo 👑</span>
+                        </div>
+                        <div class="fama-stat-card">
+                            <span class="fama-stat-num" id="famaTotalPointsDistributed">0</span>
+                            <span class="fama-stat-label">Puntos Globales</span>
+                        </div>
+                        <div class="fama-stat-card">
+                            <span class="fama-stat-num" id="famaGlobalWinRate">0%</span>
+                            <span class="fama-stat-label">Victorias Carrera</span>
+                        </div>
+                    </div>
+
+                    <!-- Pestañas Multiverso del Salón de la Fama -->
+                    <div class="fama-tabs-nav" role="tablist" aria-label="Filtro de modalidades">
+                        <button class="fama-tab-btn is-active" type="button" data-fama-tab="general">👑 General</button>
+                        <button class="fama-tab-btn" type="button" data-fama-tab="bolillero">🎲 Bolillero VS</button>
+                        <button class="fama-tab-btn" type="button" data-fama-tab="bomba">💣 La Bomba</button>
+                        <button class="fama-tab-btn" type="button" data-fama-tab="impostor">🕵️‍♂️ Impostor</button>
+                        <button class="fama-tab-btn" type="button" data-fama-tab="memotest">🧠 Memotest</button>
+                        <button class="fama-tab-btn" type="button" data-fama-tab="triatlon">🏅 Triatlón</button>
+                    </div>
+                </div>
+
+                <div class="fama-table-wrapper">
+                    <table class="fama-table" id="famaLeaderboardTable">
+                        <thead>
+                            <tr>
+                                <th>Puesto</th>
+                                <th>Jugador</th>
+                                <th>🥇 Victorias</th>
+                                <th>🥈 Platas</th>
+                                <th>🥉 Bronces</th>
+                                <th>Pts Totales</th>
+                                <th>Racha Máx</th>
+                                <th>Robos</th>
+                            </tr>
+                        </thead>
+                        <tbody id="famaLeaderboardBody">
+                            <!-- Poblado dinámicamente -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Tarjetas de Partidas con Efecto Neón y Corona (👑) -->
+            <section class="fama-matches-section">
+                <div class="panel__header">
+                    <h2 class="panel__title">📜 Historial de Partidas Completadas</h2>
+                    <span class="badge" id="famaMatchesBadge">0 partidas</span>
+                </div>
+
+                <div class="fama-matches-grid" id="famaMatchesGrid">
+                    <!-- Tarjetas dinámicas con efecto neón y corona -->
+                </div>
+            </section>
+        </div>
+
+    </section>
+
+</div>
+
+<!-- =========================================================
+     TARJETA FLOTANTE CON TACHUELA (📌) Y DRAG & DROP (POMODORO)
+     ========================================================= -->
+<aside
+    id="pomodoroFloatingCard"
+    class="pomodoro-floating-card is-minimized"
+    role="region"
+    aria-label="Cronómetro Pomodoro Flotante"
+    aria-hidden="true">
+
+    <div class="floating-card__header" id="floatingCardHeader" title="Arrastrar para mover">
+        <div class="floating-card__drag-handle">
+            <span class="drag-grip" aria-hidden="true">⋮⋮</span>
+            <span class="floating-card__title">⏱️ Pomodoro</span>
+            <span id="floatingBadge" class="badge">Estudio</span>
+        </div>
+        <div class="floating-card__actions">
+            <button
+                id="pinPomodoroBtn"
+                class="icon-button floating-pin-btn"
+                type="button"
+                title="Fijar en pantalla (📌)"
+                aria-label="Fijar en pantalla">
+                <span aria-hidden="true">📌</span>
+            </button>
+            <button
+                id="pomodoroConfigButton"
+                class="icon-button"
+                type="button"
+                title="Configuración de tiempos"
+                aria-haspopup="dialog"
+                aria-controls="pomodoroModal"
+                aria-label="Configurar tiempos">
+                <span aria-hidden="true">⚙️</span>
+            </button>
+            <button
+                id="minimizePomodoroBtn"
+                class="icon-button floating-minimize-btn"
+                type="button"
+                title="Minimizar a píldora"
+                aria-label="Minimizar a píldora">
+                <span aria-hidden="true">✕</span>
+            </button>
+        </div>
+    </div>
+
+    <div class="floating-card__body">
+        <div class="pomodoro__modes" role="tablist" aria-label="Modos de temporizador">
+            <button id="modeStudyBtn" class="pomodoro__mode-btn is-active" type="button" role="tab" aria-selected="true">
+                📖 Estudio
+            </button>
+            <button id="modeShortBreakBtn" class="pomodoro__mode-btn" type="button" role="tab" aria-selected="false">
+                ☕ Corto
+            </button>
+            <button id="modeLongBreakBtn" class="pomodoro__mode-btn" type="button" role="tab" aria-selected="false">
+                🌴 Largo
+            </button>
+        </div>
+
+        <div class="pomodoro__display-wrapper">
+            <div id="pomodoroDisplay" class="pomodoro__display" role="timer" aria-live="polite" aria-atomic="true">
+                25:00
+            </div>
+            <div
+                class="pomodoro__progress-track"
+                role="progressbar"
+                aria-label="Progreso de la sesión"
+                aria-valuemin="0"
+                aria-valuemax="100"
+                aria-valuenow="100">
+                <div id="pomodoroProgressBar" class="pomodoro__progress-fill"></div>
+            </div>
+            <p id="pomodoroContext" class="pomodoro__context">
+                Listo para estudiar
+            </p>
+        </div>
+
+        <div class="pomodoro__controls">
+            <button id="pomodoroToggleBtn" class="button button--primary pomodoro__btn-main" type="button">
+                <span id="pomodoroToggleIcon" aria-hidden="true">▶</span>
+                <span id="pomodoroToggleText">Iniciar</span>
+            </button>
+            <button id="pomodoroResetBtn" class="button button--secondary" type="button">
+                <span aria-hidden="true">🔄</span>
+                <span>Reiniciar</span>
+            </button>
+            <button id="pomodoroSkipBtn" class="button button--ghost" type="button" title="Pasar a la siguiente fase">
+                <span aria-hidden="true">⏭</span>
+            </button>
+        </div>
+
+        <div class="pomodoro__stats">
+            <span class="pomodoro__stat">
+                Ciclos de estudio: <strong id="pomodoroCyclesCount">0</strong>
+            </span>
+        </div>
+    </div>
+</aside>
+
+<!-- =========================================================
+     MODALES
+     ========================================================= -->
+
+<!-- Modal Lista -->
+<dialog id="listModal" class="modal" aria-labelledby="listModalTitle">
+    <form id="listForm" class="modal__content" method="dialog" autocomplete="off">
+        <h2 id="listModalTitle" class="modal__title">Nueva lista</h2>
+        <div class="field">
+            <label for="listNameInput">Nombre de la lista</label>
+            <input id="listNameInput" name="listName" type="text" maxlength="80" autocomplete="off" required>
+        </div>
+        <div class="modal__actions">
+            <button id="cancelListButton" class="button button--ghost" type="button">Cancelar</button>
+            <button id="saveListButton" class="button button--primary" type="submit">Guardar</button>
+        </div>
+    </form>
+</dialog>
+
+<!-- Modal Tema -->
+<dialog id="topicModal" class="modal" aria-labelledby="topicModalTitle">
+    <form id="topicForm" class="modal__content" method="dialog" autocomplete="off">
+        <h2 id="topicModalTitle" class="modal__title">Nuevo tema</h2>
+        <div class="field">
+            <label for="topicInput">Tema</label>
+            <input id="topicInput" name="topic" type="text" maxlength="150" autocomplete="off" required>
+        </div>
+        <div class="modal__actions">
+            <button id="cancelTopicButton" class="button button--ghost" type="button">Cancelar</button>
+            <button id="saveTopicButton" class="button button--primary" type="submit">Guardar</button>
+        </div>
+    </form>
+</dialog>
+
+<!-- Modal: Extraer Palabras con IA desde PDF para Bolillero -->
+<dialog id="bolilleroIaWordsModal" class="modal" aria-labelledby="iaWordsModalTitle">
+    <div class="modal__content" style="max-width: 480px; width: 100%; padding: 1.75rem;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+            <div>
+                <span class="badge badge--accent" style="margin-bottom: 0.4rem; display: inline-block;">🤖 GEMINI IA</span>
+                <h3 id="iaWordsModalTitle" class="modal__title" style="font-size: 1.25rem; margin: 0;">Cargar Palabras desde tu PDF</h3>
+            </div>
+            <button id="closeIaWordsModalBtn" class="button button--ghost button--sm" type="button" aria-label="Cerrar modal" style="font-size: 1.2rem; padding: 0.2rem 0.5rem;">✕</button>
+        </div>
+        
+        <p class="modal__description" style="font-size: 0.88rem; color: var(--color-text-secondary); line-height: 1.5; margin-bottom: 1.25rem;">
+            La Inteligencia Artificial analizará el material de estudio de tu PDF y extraerá los conceptos clave para usarlos en el bolillero.
+        </p>
+
+        <!-- Indicador de PDF activo -->
+        <div id="iaWordsPdfStatus" style="background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.25); border-radius: var(--radius-md); padding: 0.75rem 1rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.75rem;">
+            <span style="font-size: 1.5rem;">📄</span>
+            <div style="flex: 1; min-width: 0;">
+                <div style="font-size: 0.75rem; color: #a5b4fc; font-weight: 700;">MATERIAL ACTIVO:</div>
+                <div id="iaWordsPdfName" style="font-weight: 600; color: #fff; font-size: 0.92rem; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">apuntes.pdf</div>
+            </div>
+        </div>
+
+        <form id="iaWordsForm" autocomplete="off">
+            <div class="form-group" style="margin-bottom: 1.25rem;">
+                <label for="iaWordsCountInput" class="form-label" style="display: block; font-weight: 600; margin-bottom: 0.4rem;">
+                    Cantidad de palabras / temas a extraer:
+                </label>
+                <div style="display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.6rem;">
+                    <input type="number" id="iaWordsCountInput" class="form-input" min="3" max="50" value="10" required style="width: 90px; text-align: center; font-size: 1.1rem; font-weight: 700; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-sm); color: #fff; padding: 0.35rem 0.5rem;">
+                    <span style="font-size: 0.85rem; color: var(--color-text-secondary);">conceptos (mín: 3, máx: 50)</span>
+                </div>
+                <!-- Chips de acceso rápido -->
+                <div style="display: flex; gap: 0.4rem; flex-wrap: wrap;">
+                    <button type="button" class="button button--ghost button--xs ia-words-quick-chip" data-count="5">5 temas</button>
+                    <button type="button" class="button button--ghost button--xs ia-words-quick-chip is-active" data-count="10">10 temas</button>
+                    <button type="button" class="button button--ghost button--xs ia-words-quick-chip" data-count="15">15 temas</button>
+                    <button type="button" class="button button--ghost button--xs ia-words-quick-chip" data-count="20">20 temas</button>
+                    <button type="button" class="button button--ghost button--xs ia-words-quick-chip" data-count="30">30 temas</button>
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 1.5rem;">
+                <label class="form-label" style="display: block; font-weight: 600; margin-bottom: 0.5rem;">
+                    ¿Dónde agregar las palabras extraídas?
+                </label>
+                <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                    <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; cursor: pointer;">
+                        <input type="radio" name="iaWordsTarget" value="append" checked>
+                        <span>Agregar a la lista actual (<strong id="iaWordsCurrentListName">Lista Activa</strong>)</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; cursor: pointer;">
+                        <input type="radio" name="iaWordsTarget" value="replace">
+                        <span>Reemplazar los temas de la lista actual</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; cursor: pointer;">
+                        <input type="radio" name="iaWordsTarget" value="new">
+                        <span>Crear una NUEVA lista con estas palabras</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="modal__actions" style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+                <button type="button" id="cancelIaWordsModalBtn" class="button button--secondary">Cancelar</button>
+                <button type="submit" id="submitIaWordsBtn" class="button button--primary" style="display: inline-flex; align-items: center; gap: 0.5rem;">
+                    <span id="submitIaWordsText">🚀 Extraer con IA</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</dialog>
+
+<!-- Modal Pomodoro -->
+<dialog id="pomodoroModal" class="modal" aria-labelledby="pomodoroModalTitle">
+    <form id="pomodoroForm" class="modal__content" method="dialog" autocomplete="off">
+        <h2 id="pomodoroModalTitle" class="modal__title">Configurar Temporizador</h2>
+        <div class="field">
+            <label for="studyDurationInput">Tiempo de estudio (minutos)</label>
+            <input id="studyDurationInput" name="studyDuration" type="number" min="1" max="180" value="25" required>
+        </div>
+        <div class="field">
+            <label for="shortBreakDurationInput">Descanso corto (minutos)</label>
+            <input id="shortBreakDurationInput" name="shortBreakDuration" type="number" min="1" max="60" value="5" required>
+        </div>
+        <div class="field">
+            <label for="longBreakDurationInput">Descanso largo (minutos)</label>
+            <input id="longBreakDurationInput" name="longBreakDuration" type="number" min="1" max="60" value="15" required>
+        </div>
+        <div class="field-toggle">
+            <label class="toggle-label" for="soundEnabledInput">
+                <input id="soundEnabledInput" name="soundEnabled" type="checkbox" checked>
+                <span>Alarma sonora al finalizar</span>
+            </label>
+        </div>
+        <div class="modal__actions">
+            <button id="cancelPomodoroButton" class="button button--ghost" type="button">Cancelar</button>
+            <button id="savePomodoroButton" class="button button--primary" type="submit">Guardar</button>
+        </div>
+    </form>
+</dialog>
+
+<!-- Modal de Victoria & Podio del Duelo -->
+<dialog id="dueloVictoryModal" class="modal duelo-victory-dialog" aria-labelledby="victoryModalTitle">
+    <div class="modal__content duelo-victory-card">
+        <div class="duelo-victory-confetti" aria-hidden="true">🎉 🎊 🏆 👑 ✨</div>
+        <h2 id="victoryModalTitle" class="duelo-victory-title">¡CAMPEÓN CORONADO!</h2>
+        <p class="duelo-victory-subtitle" id="victoryModalSubtitle">Duelo completado con éxito</p>
+
+        <!-- Podio Visual -->
+        <div class="duelo-podio" id="dueloPodioContainer">
+            <!-- 1°, 2°, 3° lugares generados dinámicamente -->
+        </div>
+
+        <!-- Menciones Especiales de la Partida -->
+        <div class="duelo-special-mentions" id="dueloSpecialMentions">
+            <!-- Rey de la Racha 🔥 y Ladrón Relámpago ⚡ -->
+        </div>
+
+        <div class="duelo-victory-actions">
+            <!-- Botón de Rescate al Historial para Invitados -->
+            <button id="victoryRegisterGuestBtn" class="button button--accent button--full hidden" type="button">
+                ⭐ Registrarme ahora y guardar mis puntos
+            </button>
+            <button id="victoryCopySummaryBtn" class="button button--secondary button--full" type="button">
+                📸 Copiar Resumen (WhatsApp)
+            </button>
+            <button id="victoryGoToFamaBtn" class="button button--primary button--full" type="button">
+                🏆 Ver en Salón de la Fama
+            </button>
+            <button id="victoryCloseBtn" class="button button--ghost button--full" type="button">
+                Cerrar
+            </button>
+        </div>
+    </div>
+</dialog>
+
+<!-- Modal Selección de Compañero (Comodín Socorro 🤝) -->
+<dialog id="dueloSocorroModal" class="modal" aria-labelledby="socorroModalTitle">
+    <div class="modal__content">
+        <h2 id="socorroModalTitle" class="modal__title">🤝 Pedir Socorro</h2>
+        <p class="modal__desc">Elegí qué compañero te ayudará a responder este tema. Si lo aprueban, ¡suman 5 pts cada uno!</p>
+        <div class="duelo-socorro-options" id="dueloSocorroOptions">
+            <!-- Botones de jugadores para elegir -->
+        </div>
+        <div class="modal__actions">
+            <button id="dueloCancelSocorroBtn" class="button button--ghost" type="button">Cancelar</button>
+        </div>
+    </div>
+</dialog>
+
+<!-- =========================================================
+     MODAL DE CUENTAS CON PIN & MODO INVITADO
+     ========================================================= -->
+<dialog id="authAccountModal" class="modal auth-dialog" aria-labelledby="authModalTitle">
+    <div class="modal__content auth-modal-card">
+        <div class="modal__header">
+            <h2 id="authModalTitle" class="modal__title">🔐 Tu Cuenta de Estudio</h2>
+            <button id="authModalCloseBtn" class="icon-button" type="button" aria-label="Cerrar modal">✕</button>
+        </div>
+
+        <!-- Pestañas Auth: Crear Cuenta vs Iniciar Sesión vs Modo Invitado -->
+        <div class="auth-tabs">
+            <button id="authTabRegister" class="auth-tab-btn is-active" type="button">✨ Crear Cuenta</button>
+            <button id="authTabLogin" class="auth-tab-btn" type="button">🔑 Iniciar Sesión</button>
+        </div>
+
+        <!-- Panel Crear Cuenta -->
+        <form id="authRegisterForm" class="auth-panel" autocomplete="off" onsubmit="return false;">
+            <p class="auth-desc">Guardá tus victorias en el Salón de la Fama y desbloqueá marcos evolutivos.</p>
+
+            <div class="field">
+                <label for="authRegApodo">Apodo o Nombre</label>
+                <input id="authRegApodo" type="text" maxlength="20" placeholder="Ej: Lucas" required autocomplete="off">
+            </div>
+
+            <!-- Selector de Avatar en Registro -->
+            <div class="field">
+                <label>Tu Avatar</label>
+                <div class="auth-avatar-selector-row">
+                    <div class="auth-avatar-preview" id="authRegAvatarPreview">🦁</div>
+                    <button id="authRegOpenAvatarPickerBtn" class="button button--secondary button--sm" type="button">
+                        🎨 Elegir Emoji o Foto
+                    </button>
+                </div>
+            </div>
+
+            <div class="field">
+                <label for="authRegPin">PIN de Seguridad (4 números)</label>
+                <input id="authRegPin" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="••••" required autocomplete="off">
+                <span class="duelo-field-hint">Usalo para identificarte en cualquier partida.</span>
+            </div>
+
+            <div class="field">
+                <label for="authRegEmail">Email de Recuperación (Opcional)</label>
+                <input id="authRegEmail" type="email" placeholder="tu@email.com (opcional para recuperar PIN)" autocomplete="off">
+            </div>
+
+            <div class="modal__actions">
+                <button id="authContinueGuestBtn" class="button button--ghost" type="button">
+                    Continuar como Invitado
+                </button>
+                <button id="authSubmitRegisterBtn" class="button button--primary" type="submit">
+                    ⭐ Registrar Mi Cuenta
+                </button>
+            </div>
+        </form>
+
+        <!-- Panel Iniciar Sesión con PIN -->
+        <form id="authLoginForm" class="auth-panel hidden" autocomplete="off" onsubmit="return false;">
+            <p class="auth-desc">Ingresá con tu cuenta guardada:</p>
+
+            <div class="field">
+                <label for="authLoginSelect">Elegir Cuenta Guardada</label>
+                <select id="authLoginSelect" class="duelo-select">
+                    <!-- Cuentas registradas cargadas dinámicamente -->
+                </select>
+            </div>
+
+            <div class="field">
+                <label for="authLoginPin">PIN de 4 dígitos</label>
+                <input id="authLoginPin" type="password" inputmode="numeric" maxlength="4" placeholder="••••" required autocomplete="off">
+            </div>
+
+            <div id="authLoginError" class="auth-error-msg hidden">
+                ❌ PIN incorrecto. Intentá nuevamente.
+            </div>
+
+            <div class="auth-recover-link-row">
+                <button id="authForgotPinBtn" class="button button--ghost button--xs" type="button">
+                    ¿Olvidaste tu PIN?
+                </button>
+            </div>
+
+            <div class="modal__actions">
+                <button id="authSubmitLoginBtn" class="button button--primary button--full" type="submit">
+                    🔑 Ingresar a Mi Cuenta
+                </button>
+            </div>
+        </form>
+    </div>
+</dialog>
+
+<!-- =========================================================
+     MODAL SELECTOR DE AVATARES TOTALES (EMOJIS + CÁMARA/GALERÍA)
+     ========================================================= -->
+<dialog id="avatarPickerModal" class="modal avatar-picker-dialog" aria-labelledby="avatarModalTitle">
+    <div class="modal__content avatar-picker-card">
+        <div class="modal__header">
+            <h2 id="avatarModalTitle" class="modal__title">🎨 Elegí tu Avatar</h2>
+            <button id="avatarModalCloseBtn" class="icon-button" type="button" aria-label="Cerrar selector">✕</button>
+        </div>
+
+        <!-- Pestañas Emojis vs Foto -->
+        <div class="avatar-tabs">
+            <button id="avatarTabEmojis" class="avatar-tab-btn is-active" type="button">😀 Emojis Completos</button>
+            <button id="avatarTabPhoto" class="avatar-tab-btn" type="button">📷 Cámara / Galería</button>
+        </div>
+
+        <!-- Panel 1: Emojis Totales con Buscador y Categorías -->
+        <div id="avatarPanelEmojis" class="avatar-tab-panel">
+            <div class="field">
+                <input id="avatarEmojiSearchInput" type="text" placeholder="🔍 Buscar emoji (ej: fuego, tigre, mate, mate, ninja, robot...)" autocomplete="off">
+            </div>
+
+            <!-- Categorías de emojis -->
+            <div class="avatar-emoji-categories" id="avatarEmojiCategoryPills">
+                <button class="emoji-cat-pill is-active" data-cat="all" type="button">Todos</button>
+                <button class="emoji-cat-pill" data-cat="faces" type="button">😀 Caritas</button>
+                <button class="emoji-cat-pill" data-cat="animals" type="button">🦁 Animales</button>
+                <button class="emoji-cat-pill" data-cat="food" type="button">🍕 Comida</button>
+                <button class="emoji-cat-pill" data-cat="sports" type="button">⚽ Hobbies</button>
+                <button class="emoji-cat-pill" data-cat="objects" type="button">💡 Objetos</button>
+                <button class="emoji-cat-pill" data-cat="symbols" type="button">✨ Símbolos</button>
+            </div>
+
+            <!-- Grilla interactiva de Emojis -->
+            <div class="avatar-emojis-grid" id="avatarEmojisGrid">
+                <!-- Emojis cargados dinámicamente -->
+            </div>
+
+            <!-- Opción de escribir cualquier emoji desde el teclado -->
+            <div class="avatar-custom-emoji-row">
+                <label for="avatarCustomEmojiInput">O escribí/pegá cualquier emoji directo:</label>
+                <div class="duelo-input-group">
+                    <input id="avatarCustomEmojiInput" type="text" maxlength="4" placeholder="🦄" style="font-size: 1.4rem; text-align: center;">
+                    <button id="avatarCustomEmojiBtn" class="button button--secondary button--sm" type="button">Usar este</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel 2: Subir o Sacar Foto (Cámara / Galería) -->
+        <div id="avatarPanelPhoto" class="avatar-tab-panel hidden">
+            <p class="avatar-photo-desc">Sacá una foto con tu cámara o elegí una imagen de tu galería. Se recortará en círculo automáticamente:</p>
+            
+            <input type="file" id="avatarFileInput" accept="image/*" class="hidden">
+            
+            <div class="avatar-photo-actions-row">
+                <button id="avatarCaptureCameraBtn" class="button button--secondary" type="button">
+                    📷 Abrir Cámara
+                </button>
+                <button id="avatarUploadGalleryBtn" class="button button--secondary" type="button">
+                    🖼️ Galería de Fotos
+                </button>
+            </div>
+
+            <!-- Vista previa circular recortada -->
+            <div class="avatar-crop-preview-wrap">
+                <div class="avatar-crop-circle" id="avatarCropCircle">
+                    <img id="avatarCropPreviewImg" src="" alt="Vista previa de foto" class="hidden">
+                    <span id="avatarCropPlaceholder">Sin foto seleccionada</span>
+                </div>
+                <!-- Canvas oculto para compresión -->
+                <canvas id="avatarCanvas" class="hidden" width="128" height="128"></canvas>
+            </div>
+
+            <div class="modal__actions">
+                <button id="avatarConfirmPhotoBtn" class="button button--primary button--full" type="button" disabled>
+                    ✔ Guardar Foto como Avatar
+                </button>
+            </div>
+        </div>
+    </div>
+</dialog>
+
+<!-- =========================================================
+     MODAL LIGHTBOX ZOOM DE FOTOS DEL CHAT
+     ========================================================= -->
+<dialog id="photoZoomModal" class="modal photo-zoom-dialog" aria-labelledby="photoZoomTitle">
+    <div class="modal__content photo-zoom-card">
+        <div class="photo-zoom-header">
+            <span id="photoZoomTitle" class="photo-zoom-title">📷 Foto de Apunte</span>
+            <button id="photoZoomCloseBtn" class="icon-button" type="button" aria-label="Cerrar imagen">✕</button>
+        </div>
+        <div class="photo-zoom-body">
+            <img id="photoZoomImg" src="" alt="Imagen ampliada en alta resolución">
+        </div>
+    </div>
+</dialog>
+
+<!-- =========================================================
+     TEMPLATES
+     ========================================================= -->
+<template id="listItemTemplate">
+    <li class="list-item">
+        <button class="list-item__button" type="button">
+            <span class="list-item__icon" aria-hidden="true">📚</span>
+            <span class="list-item__name"></span>
+        </button>
+        <div class="list-item__actions">
+            <button class="icon-button delete-list" type="button" aria-label="Eliminar lista"><span aria-hidden="true">🗑️</span></button>
+        </div>
+    </li>
+</template>
+
+<template id="topicCardTemplate">
+    <li class="topic-card" title="Hacé clic para seleccionar esta palabra y preguntar con IA">
+        <div class="topic-card__body">
+            <h4 class="topic-card__title"></h4>
+        </div>
+        <div class="topic-card__actions">
+            <button class="icon-button ask-topic-ia" type="button" title="Generar pregunta con IA sobre este tema" aria-label="Preguntar con IA"><span aria-hidden="true">✨</span></button>
+            <button class="icon-button delete-topic" type="button" aria-label="Eliminar tema"><span aria-hidden="true">🗑️</span></button>
+        </div>
+    </li>
+</template>
+
+<!-- =========================================================
+     MODAL DE REGLAS Y CONTROLES DE JUEGO (CÓMO FUNCIONA)
+     ========================================================= -->
+<dialog id="rulesModal" class="modal modal--rules" aria-labelledby="rulesModalTitle">
+    <div class="modal__content modal__content--rules">
+        <header class="rules-modal__header">
+            <div class="rules-modal__title-wrap">
+                <span id="rulesModalIcon" class="rules-modal__icon">🎮</span>
+                <div>
+                    <h3 id="rulesModalTitle" class="modal__title">Reglas del Juego</h3>
+                    <span id="rulesModalSubtitle" class="rules-modal__subtitle">Guía rápida de juego y controles</span>
+                </div>
+            </div>
+            <button id="rulesModalCloseBtn" class="icon-button" type="button" aria-label="Cerrar reglas" style="font-size: 1.1rem; line-height: 1;">✕</button>
+        </header>
+
+        <div id="rulesModalBody" class="rules-modal__body">
+            <!-- Se puebla dinámicamente con las reglas de cada juego -->
+        </div>
+
+        <footer class="rules-modal__footer">
+            <label class="rules-modal__dont-show-label">
+                <input type="checkbox" id="rulesDontShowAgainCheckbox">
+                <span>No volver a mostrar automáticamente en este juego</span>
+            </label>
+            <button id="rulesModalUnderstoodBtn" class="button button--primary button--sm" type="button">
+                ¡Entendido, a jugar! 🚀
+            </button>
+        </footer>
+    </div>
+</dialog>
+
+<script src="mqtt.min.js"></script>
+<script src="script.js?v=24.3" defer></script>
+
+<!-- =========================================================
+     MODAL DE PROMPT PARA GEMINI (CREAR JUEGOS DESDE PDF)
+     ========================================================= -->
+<dialog id="geminiPromptModal" class="modal" aria-labelledby="geminiPromptTitle">
+    <div class="modal__content modal__content--lg">
+        <header class="modal__header">
+            <h3 id="geminiPromptTitle" class="modal__title">🤖 Crear Juegos con IA desde mis PDFs</h3>
+            <button id="closeGeminiPromptModalBtn" class="modal__close icon-button" type="button" aria-label="Cerrar modal">✕</button>
+        </header>
+        <div class="modal__body">
+            <div class="gemini-instructions-steps">
+                <div class="gemini-step-card">
+                    <span class="gemini-step-badge">Paso 1</span>
+                    <p>Hacé clic en <strong>Copiar Prompt</strong> abajo.</p>
+                </div>
+                <div class="gemini-step-card">
+                    <span class="gemini-step-badge">Paso 2</span>
+                    <p>Abrí <strong><a href="https://gemini.google.com" target="_blank" rel="noopener">gemini.google.com</a></strong> y adjuntá el PDF de tu materia.</p>
+                </div>
+                <div class="gemini-step-card">
+                    <span class="gemini-step-badge">Paso 3</span>
+                    <p>Pegá el prompt en Gemini y guardá la respuesta como archivo <code>.json</code>.</p>
+                </div>
+                <div class="gemini-step-card">
+                    <span class="gemini-step-badge">Paso 4</span>
+                    <p>Hacé clic en <strong>📂 Importar temas</strong> en Luibañez ¡y jugá al instante!</p>
+                </div>
+            </div>
+
+            <div class="gemini-prompt-preview">
+                <label for="geminiPromptTextarea" class="gemini-preview-label">Texto del Prompt para Gemini:</label>
+                <textarea id="geminiPromptTextarea" class="gemini-prompt-box" readonly rows="7"></textarea>
+            </div>
+        </div>
+        <footer class="modal__footer">
+            <button id="copyGeminiPromptInnerBtn" class="button button--accent" type="button">
+                📋 Copiar Prompt al Portapapeles
+            </button>
+            <a href="https://gemini.google.com" target="_blank" rel="noopener" class="button button--secondary">
+                🚀 Abrir Gemini ↗
+            </a>
+            <button id="closeGeminiPromptBottomBtn" class="button button--ghost" type="button">
+                Cerrar
+            </button>
+        </footer>
+    </div>
+</dialog>
+
+
+<!-- =========================================================
+     TARJETA FLOTANTE: PIZARRÓN Y NOTAS (📝 SCRATCHPAD)
+     ========================================================= -->
+<aside
+    id="scratchpadFloatingCard"
+    class="floating-tool-card scratchpad-card is-minimized"
+    role="region"
+    aria-label="Pizarrón Flotante y Borrador de Apuntes"
+    aria-hidden="true">
+
+    <div class="floating-card__header" id="scratchpadCardHeader" title="Arrastrar para mover">
+        <div class="floating-card__drag-handle">
+            <span class="drag-grip" aria-hidden="true">⋮⋮</span>
+            <span class="floating-card__title">📝 Pizarrón & Notas</span>
+            <span id="scratchpadModeBadge" class="badge badge--success">Dibujo</span>
+        </div>
+        <div class="floating-card__actions">
+            <button id="scratchpadToggleModeBtn" class="button button--ghost button--xs" type="button" title="Alternar entre Dibujo y Notas de Texto">
+                📄 Notas
+            </button>
+            <button id="pinScratchpadBtn" class="icon-button floating-pin-btn" type="button" title="Fijar en pantalla (📌)" aria-label="Fijar en pantalla">
+                <span aria-hidden="true">📌</span>
+            </button>
+            <button id="minimizeScratchpadBtn" class="icon-button floating-minimize-btn" type="button" title="Minimizar pizarrón" aria-label="Minimizar">
+                <span aria-hidden="true">✕</span>
+            </button>
+        </div>
+    </div>
+
+    <div class="scratchpad-body" style="padding: 0.75rem;">
+        <!-- Barra de herramientas de dibujo -->
+        <div class="scratchpad-toolbar" id="scratchpadDrawToolbar" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; gap: 0.5rem;">
+            <div class="scratchpad-colors" style="display: flex; gap: 0.35rem;">
+                <button class="color-dot is-active" data-color="#ffffff" title="Blanco" style="width: 22px; height: 22px; border-radius: 50%; border: 2px solid #fff; background: #fff; cursor: pointer;"></button>
+                <button class="color-dot" data-color="#38bdf8" title="Celeste Neón" style="width: 22px; height: 22px; border-radius: 50%; border: 2px solid transparent; background: #38bdf8; cursor: pointer;"></button>
+                <button class="color-dot" data-color="#10b981" title="Verde Esmeralda" style="width: 22px; height: 22px; border-radius: 50%; border: 2px solid transparent; background: #10b981; cursor: pointer;"></button>
+                <button class="color-dot" data-color="#fbbf24" title="Amarillo" style="width: 22px; height: 22px; border-radius: 50%; border: 2px solid transparent; background: #fbbf24; cursor: pointer;"></button>
+                <button class="color-dot" data-color="#f87171" title="Rojo / Coral" style="width: 22px; height: 22px; border-radius: 50%; border: 2px solid transparent; background: #f87171; cursor: pointer;"></button>
+            </div>
+            <div class="scratchpad-tools" style="display: flex; gap: 0.3rem;">
+                <button id="scratchpadPenBtn" class="button button--ghost button--xs is-active" type="button" title="Lápiz de dibujo">✏️ Lápiz</button>
+                <button id="scratchpadEraserBtn" class="button button--ghost button--xs" type="button" title="Goma de borrar">🧹 Goma</button>
+                <button id="scratchpadClearBtn" class="button button--ghost button--xs" type="button" title="Borrar todo">🗑️ Limpiar</button>
+            </div>
+        </div>
+
+        <!-- Canvas interactivo de dibujo -->
+        <div class="scratchpad-canvas-wrap" id="scratchpadCanvasWrap" style="background: #0d1117; border-radius: var(--radius-md); overflow: hidden; border: 1px solid var(--color-border); touch-action: none; position: relative;">
+            <canvas id="scratchpadCanvas" width="360" height="240" style="display: block; width: 100%; height: 240px; cursor: crosshair; touch-action: none;"></canvas>
+        </div>
+
+        <!-- Modo Notas de Texto -->
+        <div class="scratchpad-text-wrap hidden" id="scratchpadTextWrap">
+            <textarea id="scratchpadTextarea" placeholder="Anotá fórmulas intermedias, pasos de cálculos, teoremas o ideas rápidas..." rows="10" style="width: 100%; background: #0d1117; border: 1px solid var(--color-border); border-radius: var(--radius-md); color: #fff; padding: 0.75rem; font-family: 'Courier New', monospace; font-size: 0.88rem; resize: none; box-sizing: border-box;"></textarea>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.35rem; font-size: 0.75rem; color: var(--color-text-muted);">
+                <span>💾 Guardado automático</span>
+                <button id="scratchpadClearNotesBtn" class="button button--ghost button--xs" type="button" style="font-size: 0.72rem; padding: 0.15rem 0.4rem;">Limpiar notas</button>
+            </div>
+        </div>
+    </div>
+</aside>
+
+</body>
+</html>
