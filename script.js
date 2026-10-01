@@ -6862,6 +6862,13 @@ function iniciarAplicacion() {
             forzarActualizacionCompleta(true);
         });
     }
+    const drawerVersionTag = document.getElementById("drawerVersionTag");
+    if (drawerVersionTag) {
+        drawerVersionTag.innerHTML = `⚡ Luibañez <strong style="color: var(--color-text);">v24.7</strong>`;
+        drawerVersionTag.addEventListener("click", () => {
+            forzarActualizacionCompleta(true);
+        });
+    }
 
     // Vincular botones de Reglas y Cómo Jugar
     if (dom.bolilleroRulesBtn) {
@@ -6899,7 +6906,7 @@ function iniciarAplicacion() {
 // =========================================================
 // GESTOR DE VERSIONES Y ACTUALIZACIÓN AUTOMÁTICA
 // =========================================================
-const APP_BUILD_VERSION = "24.1";
+const APP_BUILD_VERSION = "24.7";
 
 async function forzarActualizacionCompleta(mostrarNotificacion = true) {
     if (mostrarNotificacion && typeof mostrarToast === "function") {
