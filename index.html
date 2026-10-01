@@ -15,10 +15,10 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     
-    <link rel="icon" type="image/svg+xml" href="icon.svg?v=24.4">
-    <link rel="apple-touch-icon" href="icon-192.png?v=24.4">
-    <link rel="manifest" href="manifest.json?v=24.4">
-    <link rel="stylesheet" href="style.css?v=24.4">
+    <link rel="icon" type="image/svg+xml" href="icon.svg?v=24.5">
+    <link rel="apple-touch-icon" href="icon-192.png?v=24.5">
+    <link rel="manifest" href="manifest.json?v=24.5">
+    <link rel="stylesheet" href="style.css?v=24.5">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -240,7 +240,7 @@
 
         <!-- Versión y botón de actualización forzada -->
         <div class="drawer-version-row" style="padding: 0.85rem 1rem; border-top: 1px solid var(--color-border); font-size: 0.75rem; color: var(--color-text-muted); display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02); margin-top: auto;">
-            <span id="drawerVersionTag" style="cursor: pointer; user-select: none;" title="Versión de Luibañez">⚡ Luibañez <strong style="color: var(--color-text);">v24.4</strong></span>
+            <span id="drawerVersionTag" style="cursor: pointer; user-select: none;" title="Versión de Luibañez">⚡ Luibañez <strong style="color: var(--color-text);">v24.5</strong></span>
             <button id="btnForzarActualizar" class="button button--ghost button--xs" type="button" style="font-size: 0.72rem; padding: 0.2rem 0.55rem; border-radius: 999px; border: 1px solid var(--color-border);" title="Limpiar caché y recargar versión más reciente">🔄 Actualizar</button>
         </div>
     </div>
@@ -982,6 +982,16 @@
                             </label>
                         </div>
 
+                        <!-- Formato de Sala (Versus hasta 8 jugadores vs Cooperativo) -->
+                        <div class="field" style="margin-bottom: 0.85rem;">
+                            <label for="dueloOnlineModoSelect">Formato de Juego (Hasta 8 Jugadores)</label>
+                            <select id="dueloOnlineModoSelect" class="duelo-select">
+                                <option value="versus" selected>⚔️ Versus Competitivo (Podio, Rachas y Robos)</option>
+                                <option value="coop">🤝 Cooperativo en Equipo (Meta Compartida y Relevos)</option>
+                            </select>
+                            <span class="duelo-field-hint" id="dueloOnlineModoHint">Compitan entre todos con podio en vivo y robo relámpago.</span>
+                        </div>
+
                         <div class="field">
                             <label for="dueloOnlineListaSelect">Materia / Lista de Estudio</label>
                             <select id="dueloOnlineListaSelect" class="duelo-select">
@@ -1132,8 +1142,11 @@
                     <!-- Lista de Jugadores Conectados en Tiempo Real -->
                     <div class="duelo-waiting-players-section">
                         <div class="duelo-section-header">
-                            <h3 class="duelo-subheading">👥 Jugadores en la Sala (<span id="dueloOnlineConnectedCount">1</span>)</h3>
-                            <span class="badge badge--success" id="dueloServerStatusBadge">🟢 Servidor Conectado</span>
+                            <h3 class="duelo-subheading">👥 Jugadores en la Sala (<span id="dueloOnlineConnectedCount">1/8</span>)</h3>
+                            <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+                                <span id="dueloWaitingRoomModoBadge" class="badge badge--accent">⚔️ Versus (Hasta 8)</span>
+                                <span class="badge badge--success" id="dueloServerStatusBadge">🟢 Servidor Conectado</span>
+                            </div>
                         </div>
                         <div class="duelo-online-players-grid" id="dueloOnlinePlayersGrid">
                             <!-- Fichas de jugadores conectados en vivo generadas por JS -->
@@ -1314,6 +1327,25 @@
                 </div>
             </header>
 
+            <!-- Banner de Modo Cooperativo (Visible solo en Modo Coop) -->
+            <div id="dueloCoopBanner" class="duelo-coop-banner hidden">
+                <div class="duelo-coop-banner-left">
+                    <span class="badge badge--success">🤝 MODO COOPERATIVO EN EQUIPO</span>
+                    <div class="duelo-coop-lives-box">
+                        <span class="duelo-coop-lives-label">Vidas del Grupo:</span>
+                        <span id="dueloCoopLivesDisplay" class="duelo-coop-lives">❤️❤️❤️</span>
+                    </div>
+                </div>
+                <div class="duelo-coop-banner-right">
+                    <div class="duelo-coop-goal-header">
+                        <span>🎯 Meta del Equipo: <strong id="dueloCoopPointsDisplay">0</strong> / 100 pts</span>
+                    </div>
+                    <div class="duelo-coop-progress-track">
+                        <div id="dueloCoopProgressBar" class="duelo-coop-progress-fill" style="width: 0%;"></div>
+                    </div>
+                </div>
+            </div>
+
             <div class="duelo-arena-layout">
                 <!-- Columna Central: Doble Ruleta + Turno Activo -->
                 <div class="duelo-main-col">
@@ -1401,6 +1433,22 @@
                                 </button>
                                 <button id="dueloBtnPaso" class="comodin-btn" type="button" title="Cambiar tema por otro sin penalización">
                                     🔄 Paso y Rebote
+                                </button>
+                                <button id="dueloBtnRelevoCoop" class="comodin-btn button--coop hidden" type="button" title="Pedir relevo a un compañero si tenés dudas" style="background: rgba(16, 185, 129, 0.2); border-color: rgba(16, 185, 129, 0.5); color: #6ee7b7;">
+                                    🤝 Pedir Relevo
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Prompt de Solicitud de Relevo (Visible para los compañeros cuando el orador pide ayuda) -->
+                        <div id="dueloRelevoPromptBox" class="duelo-relevo-prompt-box hidden">
+                            <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap;">
+                                <div>
+                                    <strong id="dueloRelevoSenderName" style="color: #6ee7b7;">Compañero</strong> <span style="color: #cbd5e1;">solicitó relevo para este tema.</span>
+                                    <p style="margin: 0.2rem 0 0; font-size: 0.85rem; color: #94a3b8;">¿Te animás a tomar la posta y sumar los puntos para el equipo?</p>
+                                </div>
+                                <button id="dueloAcceptRelevoBtn" class="button button--success button--sm" type="button">
+                                    🙋‍♂️ ¡Tomo el Relevo!
                                 </button>
                             </div>
                         </div>
@@ -2571,7 +2619,7 @@
 </dialog>
 
 <script src="mqtt.min.js"></script>
-<script src="script.js?v=24.4" defer></script>
+<script src="script.js?v=24.5" defer></script>
 
 <!-- =========================================================
      MODAL DE PROMPT PARA GEMINI (CREAR JUEGOS DESDE PDF)

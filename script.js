@@ -38,6 +38,7 @@ const onlineDueloEstado = {
     clienteMqtt: null,
     esHost: false,
     modo: "online", // "online" | "local"
+    formatoModo: "versus", // "versus" | "coop"
     codigoSala: "",
     tienePassword: false,
     passwordSala: "",
@@ -99,6 +100,7 @@ const dueloEstado = {
         jugadores: ["Lucas", "Sofía"],
         listaId: null,
         tiempoTurnoSegundos: 90,
+        formatoModo: "versus", // "versus" | "coop"
         comodines: {
             socorro: true,
             pista: true,
@@ -113,6 +115,12 @@ const dueloEstado = {
         activa: false,
         rondaNumero: 1,
         turnoNumero: 0,
+        esCoop: false,
+        puntosEquipo: 0,
+        metaPuntosEquipo: 100,
+        vidasEquipo: 3,
+        relevoSolicitado: false,
+        relevoOradorOriginalId: null,
         jugadorActualId: null,
         temaActual: null,
         temasDisponibles: [],
@@ -410,6 +418,8 @@ const dom = {
 
     /* Duelo Setup Online & Sala de Espera */
     dueloOnlineSetupView: document.getElementById("dueloOnlineSetupView"),
+    dueloOnlineModoSelect: document.getElementById("dueloOnlineModoSelect"),
+    dueloOnlineModoHint: document.getElementById("dueloOnlineModoHint"),
     dueloOnlineListaSelect: document.getElementById("dueloOnlineListaSelect"),
     dueloOnlineListaHint: document.getElementById("dueloOnlineListaHint"),
     dueloOnlineTimeSelect: document.getElementById("dueloOnlineTimeSelect"),
@@ -429,6 +439,7 @@ const dom = {
     dueloJoinRoomBtn: document.getElementById("dueloJoinRoomBtn"),
     dueloOnlineWaitingRoom: document.getElementById("dueloOnlineWaitingRoom"),
     dueloWaitingRoomCode: document.getElementById("dueloWaitingRoomCode"),
+    dueloWaitingRoomModoBadge: document.getElementById("dueloWaitingRoomModoBadge"),
     dueloMagicLinkInput: document.getElementById("dueloMagicLinkInput"),
     dueloCopyLinkBtn: document.getElementById("dueloCopyLinkBtn"),
     dueloShareLinkBtn: document.getElementById("dueloShareLinkBtn"),
@@ -440,6 +451,16 @@ const dom = {
     dueloLaunchOnlineMatchBtn: document.getElementById("dueloLaunchOnlineMatchBtn"),
     dueloGuestWaitArea: document.getElementById("dueloGuestWaitArea"),
     dueloLeaveOnlineRoomBtn: document.getElementById("dueloLeaveOnlineRoomBtn"),
+
+    /* Duelo Coop Banner & Relevo */
+    dueloCoopBanner: document.getElementById("dueloCoopBanner"),
+    dueloCoopLivesDisplay: document.getElementById("dueloCoopLivesDisplay"),
+    dueloCoopPointsDisplay: document.getElementById("dueloCoopPointsDisplay"),
+    dueloCoopProgressBar: document.getElementById("dueloCoopProgressBar"),
+    dueloBtnRelevoCoop: document.getElementById("dueloBtnRelevoCoop"),
+    dueloRelevoPromptBox: document.getElementById("dueloRelevoPromptBox"),
+    dueloRelevoSenderName: document.getElementById("dueloRelevoSenderName"),
+    dueloAcceptRelevoBtn: document.getElementById("dueloAcceptRelevoBtn"),
 
     /* Duelo Lobby Local */
     dueloLobby: document.getElementById("dueloLobby"),
@@ -2530,14 +2551,17 @@ function crearSalaOnline() {
     const tiempo = dom.dueloOnlineTimeSelect ? parseInt(dom.dueloOnlineTimeSelect.value, 10) : 90;
     const tienePass = dom.dueloOnlineHasPassword ? dom.dueloOnlineHasPassword.checked : false;
     const pass = tienePass && dom.dueloOnlineRoomPassword ? dom.dueloOnlineRoomPassword.value.trim() : "";
+    const formatoModo = dom.dueloOnlineModoSelect ? dom.dueloOnlineModoSelect.value : "versus";
 
     const codigo = generarCodigoSala();
     onlineDueloEstado.esHost = true;
     onlineDueloEstado.codigoSala = codigo;
     onlineDueloEstado.tienePassword = tienePass;
     onlineDueloEstado.passwordSala = pass;
+    onlineDueloEstado.formatoModo = formatoModo;
 
     // Crear configuración de la sala
+    dueloEstado.config.formatoModo = formatoModo;
     dueloEstado.config.tiempoTurnoSegundos = tiempo;
     dueloEstado.config.listaId = listaId;
     dueloEstado.config.comodines.socorro = dom.dueloOnlineComodinSocorro ? dom.dueloOnlineComodinSocorro.checked : true;
@@ -2556,6 +2580,7 @@ function crearSalaOnline() {
         victorias: perfilUsuario.victorias || 0,
         rachaActual: 0,
         puntos: 0,
+        puntosAportados: 0,
         robosExitosos: 0,
         comodinesUsados: { socorro: false, pista: false, pasoRebote: false },
         esHost: true
@@ -2596,6 +2621,7 @@ function unirseASalaOnline(codigoIngresado, passIngresado = "") {
                     victorias: perfilUsuario.victorias || 0,
                     rachaActual: 0,
                     puntos: 0,
+                    puntosAportados: 0,
                     robosExitosos: 0,
                     comodinesUsados: { socorro: false, pista: false, pasoRebote: false },
                     esHost: false
@@ -2610,6 +2636,16 @@ function mostrarSalaDeEsperaOnline(codigo) {
     if (dom.dueloOnlineSetupView) dom.dueloOnlineSetupView.classList.add("hidden");
     if (dom.dueloOnlineWaitingRoom) dom.dueloOnlineWaitingRoom.classList.remove("hidden");
     if (dom.dueloWaitingRoomCode) dom.dueloWaitingRoomCode.textContent = codigo;
+
+    if (dom.dueloWaitingRoomModoBadge) {
+        if (onlineDueloEstado.formatoModo === "coop") {
+            dom.dueloWaitingRoomModoBadge.textContent = "🤝 Modo Cooperativo (Hasta 8)";
+            dom.dueloWaitingRoomModoBadge.className = "badge badge--success";
+        } else {
+            dom.dueloWaitingRoomModoBadge.textContent = "⚔️ Modo Versus (Hasta 8)";
+            dom.dueloWaitingRoomModoBadge.className = "badge badge--accent";
+        }
+    }
 
     const magicLink = `${window.location.origin}${window.location.pathname}?room=${codigo}`;
     if (dom.dueloMagicLinkInput) dom.dueloMagicLinkInput.value = magicLink;
@@ -2626,7 +2662,7 @@ function renderJugadoresSalaEspera() {
 
     const jugadores = onlineDueloEstado.jugadores || [];
     if (dom.dueloOnlineConnectedCount) {
-        dom.dueloOnlineConnectedCount.textContent = String(jugadores.length);
+        dom.dueloOnlineConnectedCount.textContent = `${jugadores.length}/8`;
     }
 
     jugadores.forEach(j => {
@@ -2634,7 +2670,7 @@ function renderJugadoresSalaEspera() {
         card.className = `duelo-online-player-chip ${j.esHost ? "is-host" : ""} ${j.id === perfilUsuario.id ? "is-self" : ""}`;
         card.innerHTML = `
             ${renderAvatarHTML(j, 0, false, 36)}
-            <span class="duelo-online-player-chip__name">${j.apodo}</span>
+            <span class="duelo-online-player-chip__name">${j.apodo || j.nombre}</span>
             ${j.esHost ? '<span class="duelo-online-player-chip__host-tag">HOST</span>' : ""}
         `;
         dom.dueloOnlinePlayersGrid.appendChild(card);
@@ -2664,9 +2700,16 @@ function procesarMensajeMqttSala(data) {
                 return;
             }
 
-            // Evitar duplicados
+            // Evitar duplicados y verificar límite de 8 jugadores
             const idx = onlineDueloEstado.jugadores.findIndex(j => j.id === data.jugador.id);
             if (idx === -1) {
+                if (onlineDueloEstado.jugadores.length >= 8) {
+                    publicarMensajeSala({
+                        tipo: "SALA_LLENA",
+                        targetJugadorId: data.jugador.id
+                    });
+                    return;
+                }
                 onlineDueloEstado.jugadores.push(data.jugador);
             } else {
                 onlineDueloEstado.jugadores[idx] = data.jugador;
@@ -2676,7 +2719,8 @@ function procesarMensajeMqttSala(data) {
             publicarMensajeSala({
                 tipo: "SINCRONIZAR_SALA",
                 jugadores: onlineDueloEstado.jugadores,
-                config: dueloEstado.config
+                config: dueloEstado.config,
+                formatoModo: onlineDueloEstado.formatoModo
             });
             renderJugadoresSalaEspera();
         }
@@ -2688,7 +2732,17 @@ function procesarMensajeMqttSala(data) {
         if (data.config) {
             dueloEstado.config = data.config;
         }
-        renderJugadoresSalaEspera();
+        if (data.formatoModo) {
+            onlineDueloEstado.formatoModo = data.formatoModo;
+            dueloEstado.config.formatoModo = data.formatoModo;
+        }
+        mostrarSalaDeEsperaOnline(onlineDueloEstado.codigoSala);
+    }
+
+    // Sala llena
+    if (data.tipo === "SALA_LLENA" && data.targetJugadorId === perfilUsuario.id) {
+        alert("⚠️ La sala ya alcanzó el cupo máximo de 8 jugadores.");
+        salirDeSalaOnline();
     }
 
     // 3. Rechazo de password
@@ -2702,9 +2756,14 @@ function procesarMensajeMqttSala(data) {
         dueloEstado.partida.activa = true;
         dueloEstado.partida.rondaNumero = 1;
         dueloEstado.partida.turnoNumero = 0;
-        dueloEstado.partida.jugadores = data.jugadores;
+        dueloEstado.partida.jugadores = (data.jugadores || []).map(j => ({ ...j, puntosAportados: 0 }));
         dueloEstado.partida.temasDisponibles = data.temasDisponibles;
         dueloEstado.partida.historialTurnos = [];
+        dueloEstado.partida.esCoop = (data.formatoModo || onlineDueloEstado.formatoModo) === "coop";
+        dueloEstado.partida.puntosEquipo = 0;
+        dueloEstado.partida.metaPuntosEquipo = 100;
+        dueloEstado.partida.vidasEquipo = 3;
+        dueloEstado.partida.relevoSolicitado = false;
 
         // Cambiar vista a la arena
         if (dom.dueloLobby) dom.dueloLobby.classList.add("hidden");
@@ -2714,6 +2773,35 @@ function procesarMensajeMqttSala(data) {
         // Si es modo online, mostrar votación online y ocultar botón girar si no es mi turno
         if (dom.dueloLocalEvalSection) dom.dueloLocalEvalSection.classList.add("hidden");
         if (dom.dueloOnlineVoteBox) dom.dueloOnlineVoteBox.classList.remove("hidden");
+    }
+
+    // Eventos Cooperativos
+    if (data.tipo === "COOP_PEDIR_RELEVO") {
+        dueloEstado.partida.relevoSolicitado = true;
+        dueloEstado.partida.relevoOradorOriginalId = data.senderId;
+        if (perfilUsuario.id !== data.senderId && dom.dueloRelevoPromptBox) {
+            dom.dueloRelevoPromptBox.classList.remove("hidden");
+            if (dom.dueloRelevoSenderName) dom.dueloRelevoSenderName.textContent = data.senderName;
+            reproducirSonidoDuelo("beep");
+        }
+    }
+
+    if (data.tipo === "COOP_TOMAR_RELEVO") {
+        if (dom.dueloRelevoPromptBox) dom.dueloRelevoPromptBox.classList.add("hidden");
+        dueloEstado.partida.relevoSolicitado = false;
+        agregarRegistroTurnoDuelo(`🤝 ¡${data.relevoNombre} tomó el relevo del tema! (+20s)`, 0);
+        if (dom.dueloTurnPlayerName) {
+            dom.dueloTurnPlayerName.textContent = `${dom.dueloTurnPlayerName.textContent} ➔ Relevo: ${data.relevoNombre}`;
+        }
+        dueloEstado.partida.tiempoRestante += 20;
+        actualizarCronometroTurnoDueloUI();
+        mostrarToast(`🤝 ¡${data.relevoNombre} tomó el relevo para responder!`);
+    }
+
+    if (data.tipo === "COOP_UPDATE_PUNTOS") {
+        dueloEstado.partida.puntosEquipo = data.puntosEquipo;
+        dueloEstado.partida.vidasEquipo = data.vidasEquipo;
+        actualizarMarcadorDueloUI();
     }
 
     // 5. Giro de la doble ruleta sincronizado
@@ -2791,7 +2879,8 @@ function iniciarCombateOnlineDesdeHost() {
     publicarMensajeSala({
         tipo: "INICIO_PARTIDA_ONLINE",
         jugadores: onlineDueloEstado.jugadores,
-        temasDisponibles
+        temasDisponibles,
+        formatoModo: onlineDueloEstado.formatoModo
     });
 }
 
@@ -3512,6 +3601,38 @@ function prepararTurnoActivoDuelo(jugador, tema) {
         dom.dueloImpecablePtsLabel.textContent = tieneRacha ? "+20 pts 🔥" : "+10 pts";
     }
 
+    // Control de Relevo en Modo Cooperativo
+    if (dom.dueloRelevoPromptBox) dom.dueloRelevoPromptBox.classList.add("hidden");
+    if (dom.dueloBtnRelevoCoop) {
+        if (partida.esCoop) {
+            dom.dueloBtnRelevoCoop.classList.remove("hidden");
+            // Solo lo puede pulsar el orador activo
+            dom.dueloBtnRelevoCoop.disabled = jugador.id !== perfilUsuario.id;
+        } else {
+            dom.dueloBtnRelevoCoop.classList.add("hidden");
+        }
+    }
+
+    // Configurar rótulos de votación si estamos en cooperativo
+    if (partida.esCoop) {
+        if (dom.dueloVoteTargetPlayerName) dom.dueloVoteTargetPlayerName.textContent = jugador.nombre || jugador.apodo;
+        if (dom.dueloOnline10PtsLabel) dom.dueloOnline10PtsLabel.textContent = "+15 pts Equipo";
+        const grade10Name = dom.dueloOnlineVote10Btn ? dom.dueloOnlineVote10Btn.querySelector(".duelo-grade-name") : null;
+        if (grade10Name) grade10Name.textContent = "¡Bien Explicado!";
+        const grade5Name = dom.dueloOnlineVote5Btn ? dom.dueloOnlineVote5Btn.querySelector(".duelo-grade-name") : null;
+        if (grade5Name) grade5Name.textContent = "Con Dudas";
+        const grade0Name = dom.dueloOnlineVote0Btn ? dom.dueloOnlineVote0Btn.querySelector(".duelo-grade-name") : null;
+        if (grade0Name) grade0Name.textContent = "-1 Vida (Repasar)";
+    } else {
+        if (dom.dueloOnline10PtsLabel) dom.dueloOnline10PtsLabel.textContent = "+10 pts";
+        const grade10Name = dom.dueloOnlineVote10Btn ? dom.dueloOnlineVote10Btn.querySelector(".duelo-grade-name") : null;
+        if (grade10Name) grade10Name.textContent = "¡Impecable!";
+        const grade5Name = dom.dueloOnlineVote5Btn ? dom.dueloOnlineVote5Btn.querySelector(".duelo-grade-name") : null;
+        if (grade5Name) grade5Name.textContent = "Con ayuda";
+        const grade0Name = dom.dueloOnlineVote0Btn ? dom.dueloOnlineVote0Btn.querySelector(".duelo-grade-name") : null;
+        if (grade0Name) grade0Name.textContent = "A repasar / Paso";
+    }
+
     // Comodines del jugador
     actualizarComodinesJugadorUI(jugador);
 
@@ -3697,6 +3818,53 @@ function calificarTurnoDuelo(tipo) {
 
     pausarCronometroTurnoDuelo();
 
+    // ==========================================
+    // LÓGICA COOPERATIVA EN EQUIPO
+    // ==========================================
+    if (partida.esCoop) {
+        if (tipo === "impecable") {
+            partida.puntosEquipo = (partida.puntosEquipo || 0) + 15;
+            jugador.puntosAportados = (jugador.puntosAportados || 0) + 15;
+            agregarRegistroTurnoDuelo(`🟢 ${jugador.nombre || jugador.apodo} explicó ¡Excelente! (+15 pts al Equipo)`, 15);
+            reproducirSonidoDuelo("fanfare");
+        } else if (tipo === "ayuda") {
+            partida.puntosEquipo = (partida.puntosEquipo || 0) + 8;
+            jugador.puntosAportados = (jugador.puntosAportados || 0) + 8;
+            agregarRegistroTurnoDuelo(`🟡 ${jugador.nombre || jugador.apodo} explicó con dudas (+8 pts al Equipo)`, 8);
+            reproducirSonidoDuelo("beep");
+        } else if (tipo === "paso") {
+            partida.vidasEquipo = Math.max(0, (partida.vidasEquipo !== undefined ? partida.vidasEquipo : 3) - 1);
+            agregarRegistroTurnoDuelo(`🔴 Tema no completado (-1 Vida del Equipo: quedan ${partida.vidasEquipo})`, 0);
+            reproducirSonidoDuelo("buzzer");
+        }
+
+        // Si es host en online, notificar actualización de puntos a todos
+        if (onlineDueloEstado.conectado && onlineDueloEstado.esHost) {
+            publicarMensajeSala({
+                tipo: "COOP_UPDATE_PUNTOS",
+                puntosEquipo: partida.puntosEquipo,
+                vidasEquipo: partida.vidasEquipo
+            });
+        }
+
+        actualizarMarcadorDueloUI();
+
+        // Verificar condición de fin cooperativo
+        if (partida.puntosEquipo >= (partida.metaPuntosEquipo || 100)) {
+            finalizarPartidaCooperativa(true);
+            return;
+        } else if (partida.vidasEquipo <= 0) {
+            finalizarPartidaCooperativa(false);
+            return;
+        }
+
+        avanzarSiguienteTemaDuelo();
+        return;
+    }
+
+    // ==========================================
+    // LÓGICA VERSUS (COMPETITIVA)
+    // ==========================================
     if (tipo === "impecable") {
         const rachaActiva = dueloEstado.config.reglas.rachaFuego && jugador.rachaActual >= 2;
         let pts = rachaActiva ? 20 : 10;
@@ -3859,37 +4027,100 @@ function avanzarSiguienteTemaDuelo() {
     if (dom.dueloTopicRoulette) dom.dueloTopicRoulette.textContent = "🎰 ¿Qué tema tocará?";
 }
 
+function finalizarPartidaCooperativa(victoria) {
+    const partida = dueloEstado.partida;
+    pausarCronometroTurnoDuelo();
+    partida.activa = false;
+
+    if (victoria) {
+        reproducirSonidoDuelo("fanfare");
+        mostrarToast("🎉 ¡EQUIPO TRIUNFADOR! Alcanzaron la meta de 100 puntos y aprobaron la materia.", "exito");
+        if (dom.dueloVictoryTitle) dom.dueloVictoryTitle.textContent = "🎓 ¡MATERIA APROBADA EN EQUIPO!";
+        if (dom.dueloVictoryDesc) dom.dueloVictoryDesc.textContent = `¡Felicitaciones! Entre todos acumularon ${partida.puntosEquipo} puntos cooperativos y superaron el examen colaborativo.`;
+    } else {
+        reproducirSonidoDuelo("buzzer");
+        mostrarToast("💔 Se agotaron las 3 vidas del equipo. ¡A repasar y volver a intentar!", "error");
+        if (dom.dueloVictoryTitle) dom.dueloVictoryTitle.textContent = "📚 MESA DE REPASO FINALIZADA";
+        if (dom.dueloVictoryDesc) dom.dueloVictoryDesc.textContent = `El equipo agotó sus 3 oportunidades de examen tras alcanzar ${partida.puntosEquipo} de 100 puntos. ¡Momento de debatir y volver a intentarlo!`;
+    }
+
+    if (dom.dueloVictoryModal) dom.dueloVictoryModal.showModal();
+}
+
 function actualizarMarcadorDueloUI() {
     const partida = dueloEstado.partida;
     if (!partida.activa || !dom.dueloScoreboardList) return;
 
     dom.dueloScoreboardList.innerHTML = "";
 
-    // Ordenar de mayor a menor puntaje
-    const ranking = [...partida.jugadores].sort((a, b) => b.puntos - a.puntos);
+    // Sincronizar banner cooperativo si corresponde
+    if (dom.dueloCoopBanner) {
+        if (partida.esCoop) {
+            dom.dueloCoopBanner.classList.remove("hidden");
+            if (dom.dueloCoopPointsDisplay) {
+                dom.dueloCoopPointsDisplay.textContent = String(partida.puntosEquipo || 0);
+            }
+            if (dom.dueloCoopProgressBar) {
+                const meta = partida.metaPuntosEquipo || 100;
+                const pct = Math.min(100, Math.round(((partida.puntosEquipo || 0) / meta) * 100));
+                dom.dueloCoopProgressBar.style.width = `${pct}%`;
+            }
+            if (dom.dueloCoopLivesDisplay) {
+                let vidasStr = "";
+                const v = partida.vidasEquipo !== undefined ? partida.vidasEquipo : 3;
+                for (let i = 0; i < v; i++) vidasStr += "❤️";
+                for (let i = v; i < 3; i++) vidasStr += "🖤";
+                dom.dueloCoopLivesDisplay.textContent = vidasStr || "💀 (Sin vidas)";
+            }
+        } else {
+            dom.dueloCoopBanner.classList.add("hidden");
+        }
+    }
 
-    ranking.forEach((j, i) => {
-        const item = document.createElement("div");
-        item.className = "duelo-scoreboard-item";
-        if (i === 0) item.classList.add("is-first");
+    if (partida.esCoop) {
+        // En cooperativo: ordenar por aporte individual al equipo
+        const ranking = [...partida.jugadores].sort((a, b) => (b.puntosAportados || 0) - (a.puntosAportados || 0));
+        ranking.forEach((j) => {
+            const item = document.createElement("div");
+            item.className = "duelo-scoreboard-item";
+            item.innerHTML = `
+                <div class="duelo-score-info">
+                    <span class="duelo-score-rank">🤝</span>
+                    <span>${j.avatar || "👤"}</span>
+                    <span class="duelo-score-name">${j.nombre || j.apodo}</span>
+                </div>
+                <span class="duelo-score-points" style="color: #6ee7b7;">+${j.puntosAportados || 0} pts</span>
+            `;
+            dom.dueloScoreboardList.appendChild(item);
+        });
+    } else {
+        // En versus: ordenar de mayor a menor puntaje con medallas para hasta 8 jugadores
+        const ranking = [...partida.jugadores].sort((a, b) => b.puntos - a.puntos);
+        ranking.forEach((j, i) => {
+            const item = document.createElement("div");
+            item.className = "duelo-scoreboard-item";
+            if (i === 0) item.classList.add("is-first");
 
-        const medallas = ["🥇", "🥈", "🥉"];
-        const rankStr = medallas[i] || `${i + 1}°`;
+            const medallas = ["🥇", "🥈", "🥉"];
+            const rankStr = medallas[i] || `${i + 1}°`;
 
-        item.innerHTML = `
-            <div class="duelo-score-info">
-                <span class="duelo-score-rank">${rankStr}</span>
-                <span>${j.avatar}</span>
-                <span class="duelo-score-name">${j.nombre}</span>
-                ${j.rachaActual >= 2 ? '<span title="Racha de fuego">🔥</span>' : ""}
-            </div>
-            <span class="duelo-score-points">${j.puntos} pts</span>
-        `;
-        dom.dueloScoreboardList.appendChild(item);
-    });
+            item.innerHTML = `
+                <div class="duelo-score-info">
+                    <span class="duelo-score-rank">${rankStr}</span>
+                    <span>${j.avatar || "👤"}</span>
+                    <span class="duelo-score-name">${j.nombre || j.apodo}</span>
+                    ${j.rachaActual >= 2 ? '<span title="Racha de fuego">🔥</span>' : ""}
+                </div>
+                <span class="duelo-score-points">${j.puntos} pts</span>
+            `;
+            dom.dueloScoreboardList.appendChild(item);
+        });
+    }
 
     if (dom.dueloRoundCounterBadge) {
-        dom.dueloRoundCounterBadge.textContent = `Ronda ${partida.rondaNumero}`;
+        dom.dueloRoundCounterBadge.textContent = partida.esCoop 
+            ? `Meta: 100 pts` 
+            : `Ronda ${partida.rondaNumero}`;
     }
 
     if (dom.dueloBarRemainingTopics) {
@@ -5401,7 +5632,11 @@ function registrarEventos() {
     });
     if (dom.openDueloBolilleroCardBtn) dom.openDueloBolilleroCardBtn.addEventListener("click", () => {
         cambiarVista("duelo");
-        if (dom.dueloOnlineGameSelect) dom.dueloOnlineGameSelect.value = "bolillero";
+        cambiarModoDueloLobby("online");
+        if (dom.dueloOnlineModoSelect) {
+            dom.dueloOnlineModoSelect.value = "versus";
+            dom.dueloOnlineModoSelect.dispatchEvent(new Event("change"));
+        }
     });
     if (dom.openDueloBombaCardBtn) dom.openDueloBombaCardBtn.addEventListener("click", () => {
         cambiarVista("duelo");
@@ -5428,7 +5663,12 @@ function registrarEventos() {
         if (dom.dueloOnlineGameSelect) dom.dueloOnlineGameSelect.value = "memotest";
     });
     if (dom.openCoopBolilleroBtn) dom.openCoopBolilleroBtn.addEventListener("click", () => {
-        cambiarVista("bolillero");
+        cambiarVista("duelo");
+        cambiarModoDueloLobby("online");
+        if (dom.dueloOnlineModoSelect) {
+            dom.dueloOnlineModoSelect.value = "coop";
+            dom.dueloOnlineModoSelect.dispatchEvent(new Event("change"));
+        }
     });
 
     // Botones adicionales hacia el bolillero
@@ -5784,6 +6024,44 @@ function seleccionarTemaManualBolillero(temaId, dispararIaInmediata = false) {
     }
     if (dom.dueloLaunchOnlineMatchBtn) dom.dueloLaunchOnlineMatchBtn.addEventListener("click", iniciarCombateOnlineDesdeHost);
     if (dom.dueloLeaveOnlineRoomBtn) dom.dueloLeaveOnlineRoomBtn.addEventListener("click", salirDeSalaOnline);
+
+    // Selector de Formato de Juego (Versus vs Cooperativo)
+    if (dom.dueloOnlineModoSelect) {
+        dom.dueloOnlineModoSelect.addEventListener("change", () => {
+            const val = dom.dueloOnlineModoSelect.value;
+            if (dom.dueloOnlineModoHint) {
+                if (val === "coop") {
+                    dom.dueloOnlineModoHint.textContent = "Colaboren en equipo para alcanzar 100 pts con 3 vidas compartidas y relevos de ayuda.";
+                } else {
+                    dom.dueloOnlineModoHint.textContent = "Compitan entre todos con podio en vivo y robo relámpago.";
+                }
+            }
+        });
+    }
+
+    // Acciones de Relevo en Modo Cooperativo
+    if (dom.dueloBtnRelevoCoop) {
+        dom.dueloBtnRelevoCoop.addEventListener("click", () => {
+            dom.dueloBtnRelevoCoop.disabled = true;
+            publicarMensajeSala({
+                tipo: "COOP_PEDIR_RELEVO",
+                senderId: perfilUsuario.id,
+                senderName: perfilUsuario.apodo
+            });
+            mostrarToast("🤝 ¡Pediste relevo al equipo! Esperando a que un compañero tome la posta...");
+        });
+    }
+
+    if (dom.dueloAcceptRelevoBtn) {
+        dom.dueloAcceptRelevoBtn.addEventListener("click", () => {
+            if (dom.dueloRelevoPromptBox) dom.dueloRelevoPromptBox.classList.add("hidden");
+            publicarMensajeSala({
+                tipo: "COOP_TOMAR_RELEVO",
+                relevoId: perfilUsuario.id,
+                relevoNombre: perfilUsuario.apodo
+            });
+        });
+    }
 
     // Votación Individual Online
     if (dom.dueloOnlineVote10Btn) dom.dueloOnlineVote10Btn.addEventListener("click", () => emitirVotoOnline(10));
