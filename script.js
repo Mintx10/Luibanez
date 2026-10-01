@@ -34,6 +34,7 @@ const perfilUsuario = {
 };
 
 const onlineDueloEstado = {
+    fuenteMaterial: "pdf",
     conectado: false,
     clienteMqtt: null,
     esHost: false,
@@ -2560,8 +2561,6 @@ function publicarMensajeSala(data) {
 
 function crearSalaOnline() {
     try {
-        const listaId = dom.dueloOnlineListaSelect ? dom.dueloOnlineListaSelect.value : estado.listaSeleccionadaId;
-        const tiempo = dom.dueloOnlineTimeSelect ? parseInt(dom.dueloOnlineTimeSelect.value, 10) : 90;
         const tienePass = dom.dueloOnlineHasPassword ? dom.dueloOnlineHasPassword.checked : false;
         const pass = tienePass && dom.dueloOnlineRoomPassword ? dom.dueloOnlineRoomPassword.value.trim() : "";
         const formatoModo = dom.dueloOnlineModoSelect ? dom.dueloOnlineModoSelect.value : (onlineDueloEstado.formatoModo || "versus");
@@ -2575,15 +2574,76 @@ function crearSalaOnline() {
         onlineDueloEstado.formatoModo = formatoModo;
         onlineDueloEstado.juegoSeleccionado = juego;
 
-        // Crear configuración de la sala
+        // Determinar tiempo y configuración coherente según el juego activo
+        let tiempo = 90;
+        dueloEstado.config.juego = juego;
         dueloEstado.config.formatoModo = formatoModo;
+
+        if (juego === "bomba") {
+            const timeSelect = document.getElementById("dueloBombaTimeSelect");
+            const maxFallosSelect = document.getElementById("dueloBombaMaxFallos");
+            const cortacablesCheck = document.getElementById("dueloBombaComodinCortacables");
+            const bonusCheck = document.getElementById("dueloBombaRoboBonus");
+            const vidasEscuadronCheck = document.getElementById("dueloBombaVidasEscuadron");
+
+            tiempo = timeSelect ? parseInt(timeSelect.value, 10) : 90;
+            dueloEstado.config.bomba = {
+                maxFallos: maxFallosSelect ? parseInt(maxFallosSelect.value, 10) : 2,
+                cortacables: cortacablesCheck ? cortacablesCheck.checked : true,
+                bonusPrimerDesactivador: bonusCheck ? bonusCheck.checked : true,
+                vidasEscuadron: vidasEscuadronCheck ? vidasEscuadronCheck.checked : true
+            };
+        } else if (juego === "bolillero") {
+            const timeSelect = document.getElementById("dueloBolilleroTimeSelect");
+            tiempo = timeSelect ? parseInt(timeSelect.value, 10) : 90;
+            dueloEstado.config.comodines.socorro = dom.dueloOnlineComodinSocorro ? dom.dueloOnlineComodinSocorro.checked : true;
+            dueloEstado.config.comodines.pista = dom.dueloOnlineComodinPista ? dom.dueloOnlineComodinPista.checked : true;
+            dueloEstado.config.comodines.pasoRebote = dom.dueloOnlineComodinPaso ? dom.dueloOnlineComodinPaso.checked : true;
+            dueloEstado.config.reglas.rachaFuego = dom.dueloOnlineReglaRacha ? dom.dueloOnlineReglaRacha.checked : true;
+            dueloEstado.config.reglas.roboRelampago = dom.dueloOnlineReglaRobo ? dom.dueloOnlineReglaRobo.checked : true;
+        } else if (juego === "impostor") {
+            const timeSelect = document.getElementById("dueloImpostorTimeSelect");
+            const casosSelect = document.getElementById("dueloImpostorCasosSelect");
+            const penalizacionCheck = document.getElementById("dueloImpostorPenalizacion");
+            const bonusVelozCheck = document.getElementById("dueloImpostorBonusVeloz");
+
+            tiempo = timeSelect ? parseInt(timeSelect.value, 10) : 45;
+            dueloEstado.config.impostor = {
+                casos: casosSelect ? parseInt(casosSelect.value, 10) : 5,
+                penalizacion: penalizacionCheck ? penalizacionCheck.checked : true,
+                bonusVeloz: bonusVelozCheck ? bonusVelozCheck.checked : true
+            };
+        } else if (juego === "memotest") {
+            const timeSelect = document.getElementById("dueloMemotestTimeSelect");
+            const paresSelect = document.getElementById("dueloMemotestParesSelect");
+            const vistazoCheck = document.getElementById("dueloMemotestVistazo");
+            const rachaTurnoCheck = document.getElementById("dueloMemotestRachaTurno");
+
+            tiempo = timeSelect ? parseInt(timeSelect.value, 10) : 90;
+            dueloEstado.config.memotest = {
+                pares: paresSelect ? parseInt(paresSelect.value, 10) : 6,
+                vistazo: vistazoCheck ? vistazoCheck.checked : true,
+                rachaTurno: rachaTurnoCheck ? rachaTurnoCheck.checked : true
+            };
+        } else if (juego === "triatlon") {
+            const timeSelect = document.getElementById("dueloTriatlonTimeSelect");
+            const multiCheck = document.getElementById("dueloTriatlonMultiplicador");
+
+            tiempo = timeSelect ? parseInt(timeSelect.value, 10) : 90;
+            dueloEstado.config.triatlon = {
+                tiempoEtapa: tiempo,
+                multiplicador: multiCheck ? multiCheck.checked : true
+            };
+        }
+
         dueloEstado.config.tiempoTurnoSegundos = tiempo;
+        dueloEstado.config.desempateAuto = dom.dueloOnlineAutoTiebreaker ? dom.dueloOnlineAutoTiebreaker.checked : true;
+
+        const apunte = apuntesEstado.global || apuntesEstado.bomba;
+        const listaId = (onlineDueloEstado.fuenteMaterial === "pdf" && apunte && apunte.texto)
+            ? "pdf_global"
+            : "default_estudio";
         dueloEstado.config.listaId = listaId;
-        dueloEstado.config.comodines.socorro = dom.dueloOnlineComodinSocorro ? dom.dueloOnlineComodinSocorro.checked : true;
-        dueloEstado.config.comodines.pista = dom.dueloOnlineComodinPista ? dom.dueloOnlineComodinPista.checked : true;
-        dueloEstado.config.comodines.pasoRebote = dom.dueloOnlineComodinPaso ? dom.dueloOnlineComodinPaso.checked : true;
-        dueloEstado.config.reglas.rachaFuego = dom.dueloOnlineReglaRacha ? dom.dueloOnlineReglaRacha.checked : true;
-        dueloEstado.config.reglas.roboRelampago = dom.dueloOnlineReglaRobo ? dom.dueloOnlineReglaRobo.checked : true;
 
         // Agregar anfitrión a la lista de jugadores (el host está listo por defecto)
         onlineDueloEstado.jugadores = [{
@@ -3974,29 +4034,77 @@ function actualizarDropdownListasDuelo() {
 
 function actualizarCardPdfEnCrearSala() {
     const apunte = apuntesEstado.global || apuntesEstado.bomba || apuntesEstado.bolillero;
-    const titleEl = document.getElementById("dueloPdfCardTitle");
-    const subEl = document.getElementById("dueloPdfCardSub");
-    const badgeEl = document.getElementById("dueloPdfCardBadge");
-    const uploadBtn = document.getElementById("dueloUploadPdfBtn");
-    const removeBtn = document.getElementById("dueloRemovePdfBtn");
 
-    if (!titleEl) return;
+    if (!onlineDueloEstado.fuenteMaterial) {
+        onlineDueloEstado.fuenteMaterial = (apunte && apunte.nombre) ? "pdf" : "general";
+    }
 
-    if (apunte && apunte.nombre) {
-        titleEl.textContent = `📄 ${apunte.nombre}`;
-        if (subEl) subEl.textContent = `${apunte.paginas || 1} págs • ${apunte.palabras || 0} palabras • Guardado y activo para la sala`;
-        if (badgeEl) {
-            badgeEl.style.display = "inline-flex";
-            badgeEl.textContent = "Conectado";
+    const chipPdf = document.getElementById("dueloChipPdf");
+    const chipGeneral = document.getElementById("dueloChipGeneral");
+    const panelPdf = document.getElementById("dueloMaterialPanelPdf");
+    const panelGeneral = document.getElementById("dueloMaterialPanelGeneral");
+    const loadedCard = document.getElementById("dueloPdfLoadedCard");
+    const emptyZone = document.getElementById("dueloPdfEmptyZone");
+    const inputHidden = document.getElementById("dueloOnlineListaSelect");
+
+    const esPdf = onlineDueloEstado.fuenteMaterial === "pdf";
+
+    if (chipPdf) chipPdf.classList.toggle("is-active", esPdf);
+    if (chipGeneral) chipGeneral.classList.toggle("is-active", !esPdf);
+    if (panelPdf) panelPdf.classList.toggle("hidden", !esPdf);
+    if (panelGeneral) panelGeneral.classList.toggle("hidden", esPdf);
+
+    if (esPdf) {
+        if (apunte && apunte.nombre) {
+            if (loadedCard) loadedCard.classList.remove("hidden");
+            if (emptyZone) emptyZone.classList.add("hidden");
+
+            const titleEl = document.getElementById("dueloPdfCardTitle");
+            const badgeEl = document.getElementById("dueloPdfCardBadge");
+            const paginasPill = document.getElementById("dueloPdfPaginasPill");
+            const palabrasPill = document.getElementById("dueloPdfPalabrasPill");
+            const uploadBtn = document.getElementById("dueloUploadPdfBtn");
+            const removeBtn = document.getElementById("dueloRemovePdfBtn");
+
+            if (titleEl) titleEl.textContent = `📄 ${apunte.nombre}`;
+            if (badgeEl) {
+                badgeEl.style.display = "inline-flex";
+                badgeEl.textContent = "Conectado a Todos los Juegos";
+            }
+            if (paginasPill) paginasPill.textContent = `📑 ${apunte.paginas || 1} págs`;
+            if (palabrasPill) palabrasPill.textContent = `🔤 ${apunte.palabras || 0} palabras`;
+            if (uploadBtn) uploadBtn.textContent = "📂 Cambiar PDF";
+            if (removeBtn) removeBtn.classList.remove("hidden");
+
+            if (inputHidden) inputHidden.value = "pdf_global";
+        } else {
+            if (loadedCard) loadedCard.classList.add("hidden");
+            if (emptyZone) emptyZone.classList.remove("hidden");
+            if (inputHidden) inputHidden.value = "default_estudio";
         }
-        if (uploadBtn) uploadBtn.textContent = "📂 Cambiar PDF";
-        if (removeBtn) removeBtn.classList.remove("hidden");
     } else {
-        titleEl.textContent = "Material PDF para la Sala";
-        if (subEl) subEl.textContent = "Cargá un apunte o libro PDF para que la sala juegue con preguntas reales de tu materia.";
-        if (badgeEl) badgeEl.style.display = "none";
-        if (uploadBtn) uploadBtn.textContent = "📂 Cargar Archivo PDF";
-        if (removeBtn) removeBtn.classList.add("hidden");
+        if (inputHidden) inputHidden.value = "default_estudio";
+    }
+}
+
+// Función global unificada para procesar y vincular PDF a nivel general en la app
+async function procesarYVincularPdfGlobal(file) {
+    if (!file) return;
+    mostrarToast("📑 Procesando nuevo material de estudio con PDF.js...");
+    try {
+        const res = await procesarArchivoPDF(file);
+        apuntesEstado.global = res;
+        apuntesEstado.bomba = res;
+        apuntesEstado.bolillero = res;
+        apuntesEstado.impostor = res;
+        apuntesEstado.memotest = res;
+        onlineDueloEstado.fuenteMaterial = "pdf";
+        await guardarApuntesEnStorage();
+        actualizarUIIndicadoresPDF();
+        actualizarCardPdfEnCrearSala();
+        mostrarToast(`✅ "${res.nombre}" vinculado para la sala y todos tus juegos!`);
+    } catch (err) {
+        alert(err.message);
     }
 }
 
@@ -6123,24 +6231,8 @@ function registrarEventos() {
     if (dueloPdfInput) {
         dueloPdfInput.addEventListener("change", async (e) => {
             const file = e.target.files[0];
-            if (!file) return;
-            mostrarToast("📑 Procesando nuevo material de estudio para la sala...");
-            try {
-                const res = await procesarArchivoPDF(file);
-                apuntesEstado.global = res;
-                apuntesEstado.bomba = res;
-                apuntesEstado.bolillero = res;
-                apuntesEstado.impostor = res;
-                apuntesEstado.memotest = res;
-                await guardarApuntesEnStorage();
-                actualizarUIIndicadoresPDF();
-                actualizarDropdownListasDuelo();
-                if (dom.dueloOnlineListaSelect) {
-                    dom.dueloOnlineListaSelect.value = "pdf_global";
-                }
-                mostrarToast(`✅ Archivo "${res.nombre}" vinculado a la sala. ¡Listo para jugar!`);
-            } catch (err) {
-                alert(err.message);
+            if (file) {
+                await procesarYVincularPdfGlobal(file);
             }
         });
     }
@@ -7152,7 +7244,7 @@ function iniciarAplicacion() {
     }
     const drawerVersionTag = document.getElementById("drawerVersionTag");
     if (drawerVersionTag) {
-        drawerVersionTag.innerHTML = `⚡ Luibañez <strong style="color: var(--color-text);">v24.8</strong>`;
+        drawerVersionTag.innerHTML = `⚡ Luibañez <strong style="color: var(--color-text);">v24.9</strong>`;
         drawerVersionTag.addEventListener("click", () => {
             forzarActualizacionCompleta(true);
         });
@@ -7194,7 +7286,7 @@ function iniciarAplicacion() {
 // =========================================================
 // GESTOR DE VERSIONES Y ACTUALIZACIÓN AUTOMÁTICA
 // =========================================================
-const APP_BUILD_VERSION = "24.8";
+const APP_BUILD_VERSION = "24.9";
 
 async function forzarActualizacionCompleta(mostrarNotificacion = true) {
     if (mostrarNotificacion && typeof mostrarToast === "function") {
@@ -9059,6 +9151,23 @@ function obtenerBadgesEspecialesHtml(insignias) {
    SALA MULTIJUGADOR V24.6: TABS, SELECCIÓN DE JUEGO Y FORMATO
    ========================================================= */
 
+function adaptarOpcionesSegunModo(formatoId, juegoId) {
+    const esCoop = formatoId === "coop";
+    const juego = juegoId || onlineDueloEstado.juegoSeleccionado || "bomba";
+
+    // En Cooperativo no hay desempate entre participantes
+    const tiebreakerRow = document.getElementById("dueloOnlineTiebreakerRow");
+    if (tiebreakerRow) {
+        tiebreakerRow.classList.toggle("hidden", esCoop);
+    }
+
+    // Reglas contextuales de Bomba según formato
+    const bombaVersusRow = document.getElementById("dueloBombaVersusRow");
+    const bombaCoopRow = document.getElementById("dueloBombaCoopRow");
+    if (bombaVersusRow) bombaVersusRow.classList.toggle("hidden", esCoop);
+    if (bombaCoopRow) bombaCoopRow.classList.toggle("hidden", !esCoop);
+}
+
 function seleccionarJuegoLobby(juegoId) {
     if (dom.dueloOnlineGameSelect) {
         dom.dueloOnlineGameSelect.value = juegoId;
@@ -9101,6 +9210,22 @@ function seleccionarJuegoLobby(juegoId) {
         dom.dueloLaunchOnlineMatchBtn.innerHTML = gameTitles[juegoId] || "🚀 ¡COMENZAR PARTIDA AHORA!";
     }
 
+    // Alternar visibilidad de los paneles de opciones específicos por juego
+    const panelesOpciones = {
+        bomba: document.getElementById("dueloOpcionesBomba"),
+        bolillero: document.getElementById("dueloOpcionesBolillero"),
+        impostor: document.getElementById("dueloOpcionesImpostor"),
+        memotest: document.getElementById("dueloOpcionesMemotest"),
+        triatlon: document.getElementById("dueloOpcionesTriatlon")
+    };
+    Object.entries(panelesOpciones).forEach(([id, panel]) => {
+        if (panel) {
+            panel.classList.toggle("hidden", id !== juegoId);
+        }
+    });
+
+    adaptarOpcionesSegunModo(onlineDueloEstado.formatoModo || "versus", juegoId);
+
     // Scroll suave y enfoque al Paso 2 (Modalidad)
     const step2 = document.getElementById("dueloStep2Modo");
     if (step2) {
@@ -9131,6 +9256,8 @@ function seleccionarFormatoLobby(formatoId) {
         modeTitle.textContent = formatoId === "coop" ? "🤝 Cooperativo en Equipo" : "⚔️ Versus Competitivo";
         modeTitle.className = formatoId === "coop" ? "badge badge--success" : "badge badge--accent";
     }
+
+    adaptarOpcionesSegunModo(formatoId, onlineDueloEstado.juegoSeleccionado);
 
     // Scroll suave y enfoque al Paso 3 (Opciones)
     const step3 = document.getElementById("dueloStep3Opciones");
@@ -9177,6 +9304,49 @@ function setupDueloLobbyTabs() {
             seleccionarFormatoLobby(card.dataset.mode);
         });
     });
+
+    // Chips de Selección de Fuente de Material (PDF vs General)
+    const chipPdf = document.getElementById("dueloChipPdf");
+    const chipGeneral = document.getElementById("dueloChipGeneral");
+    if (chipPdf) {
+        chipPdf.addEventListener("click", () => {
+            onlineDueloEstado.fuenteMaterial = "pdf";
+            actualizarCardPdfEnCrearSala();
+        });
+    }
+    if (chipGeneral) {
+        chipGeneral.addEventListener("click", () => {
+            onlineDueloEstado.fuenteMaterial = "general";
+            actualizarCardPdfEnCrearSala();
+        });
+    }
+
+    // Dropzone y Botones de Carga de PDF
+    const emptyUploadBtn = document.getElementById("dueloEmptyUploadPdfBtn");
+    const dropzone = document.getElementById("dueloPdfEmptyZone");
+    const fileInput = document.getElementById("dueloOnlinePdfInput");
+
+    if (emptyUploadBtn && fileInput) {
+        emptyUploadBtn.addEventListener("click", () => fileInput.click());
+    }
+
+    if (dropzone && fileInput) {
+        dropzone.addEventListener("dragover", (e) => {
+            e.preventDefault();
+            dropzone.classList.add("is-dragover");
+        });
+        dropzone.addEventListener("dragleave", () => {
+            dropzone.classList.remove("is-dragover");
+        });
+        dropzone.addEventListener("drop", async (e) => {
+            e.preventDefault();
+            dropzone.classList.remove("is-dragover");
+            const file = e.dataTransfer.files[0];
+            if (file) {
+                await procesarYVincularPdfGlobal(file);
+            }
+        });
+    }
 
     // Botón para que los invitados alternen su estado "Estoy Listo"
     const guestReadyBtn = document.getElementById("dueloGuestReadyBtn");

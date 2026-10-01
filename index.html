@@ -15,10 +15,10 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     
-    <link rel="icon" type="image/svg+xml" href="icon.svg?v=24.8">
-    <link rel="apple-touch-icon" href="icon-192.png?v=24.8">
-    <link rel="manifest" href="manifest.json?v=24.8">
-    <link rel="stylesheet" href="style.css?v=24.8">
+    <link rel="icon" type="image/svg+xml" href="icon.svg?v=24.9">
+    <link rel="apple-touch-icon" href="icon-192.png?v=24.9">
+    <link rel="manifest" href="manifest.json?v=24.9">
+    <link rel="stylesheet" href="style.css?v=24.9">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -239,7 +239,7 @@
 
         <!-- Versión y botón de actualización forzada -->
         <div class="drawer-version-row" style="padding: 0.85rem 1rem; border-top: 1px solid var(--color-border); font-size: 0.75rem; color: var(--color-text-muted); display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02); margin-top: auto;">
-            <span id="drawerVersionTag" style="cursor: pointer; user-select: none;" title="Versión de Luibañez">⚡ Luibañez <strong style="color: var(--color-text);">v24.8</strong></span>
+            <span id="drawerVersionTag" style="cursor: pointer; user-select: none;" title="Versión de Luibañez">⚡ Luibañez <strong style="color: var(--color-text);">v24.9</strong></span>
             <button id="btnForzarActualizar" class="button button--ghost button--xs" type="button" style="font-size: 0.72rem; padding: 0.2rem 0.55rem; border-radius: 999px; border: 1px solid var(--color-border);" title="Limpiar caché y recargar versión más reciente">🔄 Actualizar</button>
         </div>
     </div>
@@ -898,115 +898,397 @@
                                 </div>
                             </div>
 
-                            <div class="field-toggle" style="margin: 1rem 0 0.5rem;" id="dueloOnlineTiebreakerRow">
-                                <label class="toggle-label" for="dueloOnlineAutoTiebreaker">
-                                    <input id="dueloOnlineAutoTiebreaker" type="checkbox" checked>
-                                    <span>⚡ Ronda de Desempate Automática con Minijuego</span>
-                                </label>
-                            </div>
+                            <!-- ========================================================
+                                 CENTRO DE MATERIAL DE ESTUDIO (MODERNO SIN MENÚ VIEJO)
+                                 ======================================================== -->
+                            <div class="duelo-material-centerpiece" id="dueloMaterialCenterpiece" style="margin-top: 1.25rem;">
+                                <div class="duelo-material-header" style="margin-bottom: 0.65rem;">
+                                    <label class="duelo-field-label" style="font-weight: 700; color: #fff; font-size: 0.95rem; display: block;">
+                                        📚 Material de Estudio para la Partida
+                                    </label>
+                                    <span style="font-size: 0.8rem; color: var(--color-text-muted);">
+                                        Elegí el contenido que alimentará las preguntas y desafíos de toda la sala:
+                                    </span>
+                                </div>
 
-                            <!-- Selector y Vinculación de Material PDF para la Sala -->
-                            <div class="duelo-pdf-card-box" id="dueloPdfCardBox" style="margin-top: 1rem;">
-                                <div class="duelo-pdf-card-info">
-                                    <div class="duelo-pdf-card-icon" id="dueloPdfCardIcon">📄</div>
-                                    <div class="duelo-pdf-card-details">
-                                        <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
-                                            <strong id="dueloPdfCardTitle">Material PDF para la Sala</strong>
-                                            <span class="badge badge--success" id="dueloPdfCardBadge" style="display: none;">Conectado a la Sala</span>
+                                <!-- Chips de Selección de Fuente de Estudio -->
+                                <div class="duelo-material-chips" id="dueloMaterialChips">
+                                    <button type="button" class="duelo-material-chip is-active" id="dueloChipPdf" data-source="pdf">
+                                        <span class="chip-icon">📄</span>
+                                        <div class="chip-text">
+                                            <strong>Mi Documento PDF</strong>
+                                            <span class="chip-sub">Preguntas 100% reales de tu materia</span>
                                         </div>
-                                        <p id="dueloPdfCardSub" style="margin: 0.25rem 0 0; font-size: 0.8rem; color: var(--color-text-muted);">
-                                            Cargá un apunte o libro PDF para que la sala juegue con preguntas reales de tu materia.
-                                        </p>
-                                    </div>
-                                </div>
-                                <div class="duelo-pdf-card-actions">
-                                    <input type="file" id="dueloOnlinePdfInput" accept=".pdf,.txt,.md" style="display: none;">
-                                    <button type="button" class="button button--secondary button--sm" id="dueloUploadPdfBtn">
-                                        📂 Cargar / Cambiar PDF
+                                        <span class="chip-check" aria-hidden="true">✔</span>
                                     </button>
-                                    <button type="button" class="button button--ghost button--sm hidden" id="dueloRemovePdfBtn" title="Desvincular PDF y usar temario predeterminado">
-                                        🗑️
+
+                                    <button type="button" class="duelo-material-chip" id="dueloChipGeneral" data-source="general">
+                                        <span class="chip-icon">🎲</span>
+                                        <div class="chip-text">
+                                            <strong>Banco Temático Universitario</strong>
+                                            <span class="chip-sub">Partida rápida sin cargar archivo</span>
+                                        </div>
+                                        <span class="chip-check" aria-hidden="true">✔</span>
                                     </button>
                                 </div>
-                            </div>
 
-                            <!-- Materia y Tiempo -->
-                            <div class="duelo-setup-row" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; margin-top: 1rem;">
-                                <div class="field" style="margin-bottom: 0;">
-                                    <label for="dueloOnlineListaSelect">📚 Materia / Lista de Estudio</label>
-                                    <select id="dueloOnlineListaSelect" class="duelo-select">
-                                        <!-- Opciones cargadas dinámicamente -->
-                                    </select>
-                                    <span class="duelo-field-hint" id="dueloOnlineListaHint">Cargando temas...</span>
+                                <!-- Panel 1: Material PDF -->
+                                <div id="dueloMaterialPanelPdf" class="duelo-material-panel" style="margin-top: 0.85rem;">
+                                    <!-- Tarjeta Activa cuando hay PDF cargado -->
+                                    <div id="dueloPdfLoadedCard" class="duelo-pdf-card-box">
+                                        <div class="duelo-pdf-card-info">
+                                            <div class="duelo-pdf-card-icon" id="dueloPdfCardIcon">📄</div>
+                                            <div class="duelo-pdf-card-details">
+                                                <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                                                    <strong id="dueloPdfCardTitle">Material PDF para la Sala</strong>
+                                                    <span class="badge badge--success" id="dueloPdfCardBadge" style="display: none;">Conectado a Todos los Juegos</span>
+                                                </div>
+                                                <div class="duelo-pdf-meta-pills" id="dueloPdfMetaPills" style="display: flex; gap: 0.4rem; flex-wrap: wrap; margin-top: 0.35rem;">
+                                                    <span class="meta-pill" id="dueloPdfPaginasPill">📑 1 pág</span>
+                                                    <span class="meta-pill" id="dueloPdfPalabrasPill">🔤 0 palabras</span>
+                                                    <span class="meta-pill meta-pill--saved">💾 En memoria</span>
+                                                </div>
+                                                <p id="dueloPdfCardSub" style="margin: 0.35rem 0 0; font-size: 0.78rem; color: var(--color-text-muted);">
+                                                    Este archivo alimenta las preguntas teóricas de la Bomba, Bolillero, Impostor y Memotest.
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div class="duelo-pdf-card-actions">
+                                            <input type="file" id="dueloOnlinePdfInput" accept=".pdf,.txt,.md" style="display: none;">
+                                            <button type="button" class="button button--secondary button--sm" id="dueloUploadPdfBtn">
+                                                📂 Cambiar PDF
+                                            </button>
+                                            <button type="button" class="button button--ghost button--sm hidden" id="dueloRemovePdfBtn" title="Desvincular PDF y usar temario predeterminado">
+                                                🗑️
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Dropzone cuando no hay PDF cargado -->
+                                    <div id="dueloPdfEmptyZone" class="duelo-pdf-dropzone hidden">
+                                        <div class="dropzone-icon">📥</div>
+                                        <div class="dropzone-text">
+                                            <strong>Subí tu apunte, resumen o libro en PDF</strong>
+                                            <p>Las preguntas, cables y afirmaciones de la sala se formularán con el texto de tu documento.</p>
+                                        </div>
+                                        <button type="button" class="button button--primary button--sm" id="dueloEmptyUploadPdfBtn">
+                                            📂 Seleccionar Archivo PDF
+                                        </button>
+                                    </div>
                                 </div>
 
-                                <div class="field" style="margin-bottom: 0;">
-                                    <label for="dueloOnlineTimeSelect">⏱️ Tiempo de la Partida / Turno</label>
-                                    <select id="dueloOnlineTimeSelect" class="duelo-select">
-                                        <option value="30">30 segundos (Rápido)</option>
-                                        <option value="45">45 segundos</option>
-                                        <option value="60">1 minuto</option>
-                                        <option value="90" selected>1 minuto 30 segundos (Recomendado)</option>
-                                        <option value="120">2 minutos</option>
-                                        <option value="180">3 minutos</option>
-                                    </select>
+                                <!-- Panel 2: Banco Temático Universitario Rápido -->
+                                <div id="dueloMaterialPanelGeneral" class="duelo-material-panel hidden" style="margin-top: 0.85rem;">
+                                    <div class="duelo-general-card-box">
+                                        <div class="general-card-icon">🏛️</div>
+                                        <div class="general-card-details">
+                                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                                <strong>Temario General Universitario</strong>
+                                                <span class="badge badge--accent">Listo para Jugar</span>
+                                            </div>
+                                            <p style="margin: 0.25rem 0 0; font-size: 0.8rem; color: var(--color-text-muted);">
+                                                Desafíos instantáneos con conceptos de Teoría de Sistemas, Comunicación, Termodinámica, Arquitectura de Software y Algoritmos.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Input oculto de compatibilidad interna para scripts -->
+                                <input type="hidden" id="dueloOnlineListaSelect" value="pdf_global">
+                                <span class="duelo-field-hint" id="dueloOnlineListaHint" style="display: none;">Material listo</span>
+                            </div>
+
+                            <!-- ========================================================
+                                 PANELES DINÁMICOS DE REGLAS SEGÚN EL JUEGO SELECCIONADO
+                                 ======================================================== -->
+
+                            <!-- 💣 PANEL 1: REGLAS DE DESACTIVÁ LA BOMBA -->
+                            <div id="dueloOpcionesBomba" class="duelo-game-options-panel" style="margin-top: 1.5rem;">
+                                <div class="duelo-options-panel-header">
+                                    <span class="panel-icon">💣</span>
+                                    <div>
+                                        <strong>Reglas de Desactivá la Bomba</strong>
+                                        <span class="panel-subtitle">Ajustá el reloj detonador, la tensión de cables y las vidas</span>
+                                    </div>
+                                </div>
+
+                                <div class="duelo-setup-row" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 1rem; margin-top: 1rem;">
+                                    <div class="field" style="margin-bottom: 0;">
+                                        <label for="dueloBombaTimeSelect">⏱️ Tiempo del Reloj Crítico</label>
+                                        <select id="dueloBombaTimeSelect" class="duelo-select">
+                                            <option value="60">60 segundos (Presión Extrema)</option>
+                                            <option value="90" selected>90 segundos (Recomendado)</option>
+                                            <option value="120">2 minutos (Tranquilo)</option>
+                                            <option value="180">3 minutos (Extenso)</option>
+                                        </select>
+                                    </div>
+                                    <div class="field" style="margin-bottom: 0;">
+                                        <label for="dueloBombaMaxFallos">💥 Límite de Cables Fallidos</label>
+                                        <select id="dueloBombaMaxFallos" class="duelo-select">
+                                            <option value="1">1 fallo permitido (Muerte Súbita)</option>
+                                            <option value="2" selected>2 fallos permitidos (Estándar)</option>
+                                            <option value="3">3 fallos permitidos (Permisivo)</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="duelo-switches-list" style="margin-top: 1rem;">
+                                    <label class="duelo-switch-row" for="dueloBombaComodinCortacables">
+                                        <input type="checkbox" id="dueloBombaComodinCortacables" checked>
+                                        <span class="duelo-switch-box" aria-hidden="true"></span>
+                                        <div class="duelo-switch-info">
+                                            <strong>✂️ Comodín Cortacables (Pista Teórica)</strong>
+                                            <span>Descarta 1 cable / opción falsa para facilitar la fase.</span>
+                                        </div>
+                                    </label>
+
+                                    <!-- Switch Versus: Primer Desactivador -->
+                                    <label class="duelo-switch-row duelo-switch-versus-only" for="dueloBombaRoboBonus" id="dueloBombaVersusRow">
+                                        <input type="checkbox" id="dueloBombaRoboBonus" checked>
+                                        <span class="duelo-switch-box" aria-hidden="true"></span>
+                                        <div class="duelo-switch-info">
+                                            <strong>🏆 Bonus Primer Desactivador</strong>
+                                            <span>+30 pts extra para quien desactive la bomba en menor tiempo.</span>
+                                        </div>
+                                    </label>
+
+                                    <!-- Switch Coop: Vidas de Escuadrón -->
+                                    <label class="duelo-switch-row duelo-switch-coop-only hidden" for="dueloBombaVidasEscuadron" id="dueloBombaCoopRow">
+                                        <input type="checkbox" id="dueloBombaVidasEscuadron" checked>
+                                        <span class="duelo-switch-box" aria-hidden="true"></span>
+                                        <div class="duelo-switch-info">
+                                            <strong>🛡️ Vidas Compartidas de Escuadrón</strong>
+                                            <span>3 vidas grupales para todo el equipo antes de que el maletín detone.</span>
+                                        </div>
+                                    </label>
                                 </div>
                             </div>
 
-                            <!-- Checkbox Contraseña Opcional -->
-                            <div class="field-toggle" style="margin-top: 1rem;">
-                                <label class="toggle-label" for="dueloOnlineHasPassword">
-                                    <input id="dueloOnlineHasPassword" type="checkbox">
-                                    <span>🔒 Proteger sala con Contraseña Opcional</span>
-                                </label>
-                            </div>
-                            <div id="dueloOnlinePasswordRow" class="field hidden" style="margin-top: 0.5rem;">
-                                <label for="dueloOnlineRoomPassword">Contraseña de la Sala</label>
-                                <input id="dueloOnlineRoomPassword" type="text" maxlength="20" placeholder="Ej: estudio2026" autocomplete="off">
+                            <!-- 🎲 PANEL 2: REGLAS DE BOLILLERO ONLINE -->
+                            <div id="dueloOpcionesBolillero" class="duelo-game-options-panel hidden" style="margin-top: 1.5rem;">
+                                <div class="duelo-options-panel-header">
+                                    <span class="panel-icon">🎲</span>
+                                    <div>
+                                        <strong>Reglas del Bolillero Online</strong>
+                                        <span class="panel-subtitle">Sorteo de temas en vivo, turnos al azar y oratoria</span>
+                                    </div>
+                                </div>
+
+                                <div class="duelo-setup-row" style="margin-top: 1rem;">
+                                    <div class="field" style="margin-bottom: 0;">
+                                        <label for="dueloBolilleroTimeSelect">⏱️ Tiempo por Exposición / Turno</label>
+                                        <select id="dueloBolilleroTimeSelect" class="duelo-select">
+                                            <option value="60">1 minuto (Rápido)</option>
+                                            <option value="90" selected>1 minuto 30 seg (Recomendado)</option>
+                                            <option value="120">2 minutos (Examen oral)</option>
+                                            <option value="180">3 minutos (Desarrollo extenso)</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="duelo-switches-list" style="margin-top: 1rem;">
+                                    <label class="duelo-switch-row" for="dueloOnlineReglaRobo">
+                                        <input type="checkbox" id="dueloOnlineReglaRobo" checked>
+                                        <span class="duelo-switch-box" aria-hidden="true"></span>
+                                        <div class="duelo-switch-info">
+                                            <strong>⚡ Robo Relámpago Online</strong>
+                                            <span>Pulsador en simultáneo si el orador no responde o saca 0 pts.</span>
+                                        </div>
+                                    </label>
+
+                                    <label class="duelo-switch-row" for="dueloOnlineReglaRacha">
+                                        <input type="checkbox" id="dueloOnlineReglaRacha" checked>
+                                        <span class="duelo-switch-box" aria-hidden="true"></span>
+                                        <div class="duelo-switch-info">
+                                            <strong>🔥 Racha de Fuego</strong>
+                                            <span>Puntaje doble (+20 pts) al hilvanar 2 exposiciones impecables.</span>
+                                        </div>
+                                    </label>
+
+                                    <label class="duelo-switch-row" for="dueloOnlineComodinSocorro">
+                                        <input type="checkbox" id="dueloOnlineComodinSocorro" checked>
+                                        <span class="duelo-switch-box" aria-hidden="true"></span>
+                                        <div class="duelo-switch-info">
+                                            <strong>🤝 Comodín Socorro</strong>
+                                            <span>Pedir ayuda a un compañero por 5 pts cada uno.</span>
+                                        </div>
+                                    </label>
+
+                                    <label class="duelo-switch-row" for="dueloOnlineComodinPista">
+                                        <input type="checkbox" id="dueloOnlineComodinPista" checked>
+                                        <span class="duelo-switch-box" aria-hidden="true"></span>
+                                        <div class="duelo-switch-info">
+                                            <strong>💡 Pista Clave</strong>
+                                            <span>15 segundos extra de consulta para el turno activo.</span>
+                                        </div>
+                                    </label>
+
+                                    <label class="duelo-switch-row" for="dueloOnlineComodinPaso">
+                                        <input type="checkbox" id="dueloOnlineComodinPaso" checked>
+                                        <span class="duelo-switch-box" aria-hidden="true"></span>
+                                        <div class="duelo-switch-info">
+                                            <strong>🔄 Paso y Rebote</strong>
+                                            <span>Cambia la bolilla sorteada sin penalización de puntos.</span>
+                                        </div>
+                                    </label>
+                                </div>
                             </div>
 
-                            <!-- Opciones de Comodines y Reglas para la Sala Online -->
-                            <div class="duelo-switches-list" style="margin-top: 1rem;">
-                                <label class="duelo-switch-row" for="dueloOnlineComodinSocorro">
-                                    <input type="checkbox" id="dueloOnlineComodinSocorro" checked>
-                                    <span class="duelo-switch-box" aria-hidden="true"></span>
-                                    <div class="duelo-switch-info">
-                                        <strong>🤝 Socorro</strong>
-                                        <span>Pedir ayuda a un compañero por 5 pts cada uno.</span>
+                            <!-- 🕵️‍♂️ PANEL 3: REGLAS DE CAZA AL IMPOSTOR -->
+                            <div id="dueloOpcionesImpostor" class="duelo-game-options-panel hidden" style="margin-top: 1.5rem;">
+                                <div class="duelo-options-panel-header">
+                                    <span class="panel-icon">🕵️‍♂️</span>
+                                    <div>
+                                        <strong>Reglas de Caza al Impostor</strong>
+                                        <span class="panel-subtitle">Descubrí la afirmación tramposa infiltrada en el temario</span>
                                     </div>
-                                </label>
-                                <label class="duelo-switch-row" for="dueloOnlineComodinPista">
-                                    <input type="checkbox" id="dueloOnlineComodinPista" checked>
-                                    <span class="duelo-switch-box" aria-hidden="true"></span>
-                                    <div class="duelo-switch-info">
-                                        <strong>💡 Pista clave</strong>
-                                        <span>15 segundos extra de consulta.</span>
+                                </div>
+
+                                <div class="duelo-setup-row" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 1rem; margin-top: 1rem;">
+                                    <div class="field" style="margin-bottom: 0;">
+                                        <label for="dueloImpostorCasosSelect">🔢 Cantidad de Casos / Rondas</label>
+                                        <select id="dueloImpostorCasosSelect" class="duelo-select">
+                                            <option value="3">3 Rondas (Partida Express)</option>
+                                            <option value="5" selected>5 Rondas (Recomendado)</option>
+                                            <option value="7">7 Rondas (Competencia Completa)</option>
+                                        </select>
                                     </div>
-                                </label>
-                                <label class="duelo-switch-row" for="dueloOnlineComodinPaso">
-                                    <input type="checkbox" id="dueloOnlineComodinPaso" checked>
-                                    <span class="duelo-switch-box" aria-hidden="true"></span>
-                                    <div class="duelo-switch-info">
-                                        <strong>🔄 Paso y Rebote</strong>
-                                        <span>Cambia el tema sin penalización.</span>
+                                    <div class="field" style="margin-bottom: 0;">
+                                        <label for="dueloImpostorTimeSelect">⏱️ Tiempo por Caso</label>
+                                        <select id="dueloImpostorTimeSelect" class="duelo-select">
+                                            <option value="30">30 segundos (Rápido)</option>
+                                            <option value="45" selected>45 segundos (Estándar)</option>
+                                            <option value="60">60 segundos (Reflexivo)</option>
+                                        </select>
                                     </div>
-                                </label>
-                                <label class="duelo-switch-row" for="dueloOnlineReglaRacha">
-                                    <input type="checkbox" id="dueloOnlineReglaRacha" checked>
-                                    <span class="duelo-switch-box" aria-hidden="true"></span>
-                                    <div class="duelo-switch-info">
-                                        <strong>🔥 Racha de Fuego</strong>
-                                        <span>Puntaje doble (+20 pts) al hilvanar 2 impecables.</span>
+                                </div>
+
+                                <div class="duelo-switches-list" style="margin-top: 1rem;">
+                                    <label class="duelo-switch-row" for="dueloImpostorPenalizacion">
+                                        <input type="checkbox" id="dueloImpostorPenalizacion" checked>
+                                        <span class="duelo-switch-box" aria-hidden="true"></span>
+                                        <div class="duelo-switch-info">
+                                            <strong>🔍 Penalización por Falsa Acusación</strong>
+                                            <span>-5 pts si acusás un postulado verdadero por error.</span>
+                                        </div>
+                                    </label>
+
+                                    <label class="duelo-switch-row" for="dueloImpostorBonusVeloz">
+                                        <input type="checkbox" id="dueloImpostorBonusVeloz" checked>
+                                        <span class="duelo-switch-box" aria-hidden="true"></span>
+                                        <div class="duelo-switch-info">
+                                            <strong>⚡ Bonus de Detección Relámpago</strong>
+                                            <span>Puntos dobles al primer participante en descubrir la falacia.</span>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- 🧠 PANEL 4: REGLAS DE MEMOTEST TEÓRICO -->
+                            <div id="dueloOpcionesMemotest" class="duelo-game-options-panel hidden" style="margin-top: 1.5rem;">
+                                <div class="duelo-options-panel-header">
+                                    <span class="panel-icon">🧠</span>
+                                    <div>
+                                        <strong>Reglas de Memotest Teórico</strong>
+                                        <span class="panel-subtitle">Asociá axiomas, fórmulas y conceptos teóricos en parejas</span>
                                     </div>
-                                </label>
-                                <label class="duelo-switch-row" for="dueloOnlineReglaRobo">
-                                    <input type="checkbox" id="dueloOnlineReglaRobo" checked>
-                                    <span class="duelo-switch-box" aria-hidden="true"></span>
-                                    <div class="duelo-switch-info">
-                                        <strong>⚡ Robo Relámpago Online</strong>
-                                        <span>Pulsador en simultáneo si alguien saca 0 pts.</span>
+                                </div>
+
+                                <div class="duelo-setup-row" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 1rem; margin-top: 1rem;">
+                                    <div class="field" style="margin-bottom: 0;">
+                                        <label for="dueloMemotestParesSelect">🧩 Cantidad de Pares Teóricos</label>
+                                        <select id="dueloMemotestParesSelect" class="duelo-select">
+                                            <option value="6" selected>6 Pares (12 cartas - Rápido)</option>
+                                            <option value="8">8 Pares (16 cartas - Estándar)</option>
+                                            <option value="10">10 Pares (20 cartas - Desafío)</option>
+                                        </select>
                                     </div>
-                                </label>
+                                    <div class="field" style="margin-bottom: 0;">
+                                        <label for="dueloMemotestTimeSelect">⏱️ Tiempo Límite de Partida</label>
+                                        <select id="dueloMemotestTimeSelect" class="duelo-select">
+                                            <option value="60">1 minuto (Intenso)</option>
+                                            <option value="90" selected>1 minuto 30 seg (Recomendado)</option>
+                                            <option value="120">2 minutos (Tranquilo)</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="duelo-switches-list" style="margin-top: 1rem;">
+                                    <label class="duelo-switch-row" for="dueloMemotestVistazo">
+                                        <input type="checkbox" id="dueloMemotestVistazo" checked>
+                                        <span class="duelo-switch-box" aria-hidden="true"></span>
+                                        <div class="duelo-switch-info">
+                                            <strong>👁️ Vistazo Inicial de Memoria</strong>
+                                            <span>3 segundos con todas las cartas visibles antes de empezar.</span>
+                                        </div>
+                                    </label>
+
+                                    <label class="duelo-switch-row" for="dueloMemotestRachaTurno">
+                                        <input type="checkbox" id="dueloMemotestRachaTurno" checked>
+                                        <span class="duelo-switch-box" aria-hidden="true"></span>
+                                        <div class="duelo-switch-info">
+                                            <strong>🔄 Racha de Turno Continuo</strong>
+                                            <span>Al encontrar un par acertado, conservás el turno para destapar otro.</span>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- 🏅 PANEL 5: REGLAS DE TRIATLÓN ACADÉMICO -->
+                            <div id="dueloOpcionesTriatlon" class="duelo-game-options-panel hidden" style="margin-top: 1.5rem;">
+                                <div class="duelo-options-panel-header">
+                                    <span class="panel-icon">🏅</span>
+                                    <div>
+                                        <strong>Reglas del Triatlón Académico (3 Rondas)</strong>
+                                        <span class="panel-subtitle">Prueba combinada: Bomba + Impostor + Memotest con podio general</span>
+                                    </div>
+                                </div>
+
+                                <div class="duelo-setup-row" style="margin-top: 1rem;">
+                                    <div class="field" style="margin-bottom: 0;">
+                                        <label for="dueloTriatlonTimeSelect">⏱️ Tiempo por Etapa</label>
+                                        <select id="dueloTriatlonTimeSelect" class="duelo-select">
+                                            <option value="60">60 segundos por prueba (Rápido)</option>
+                                            <option value="90" selected>90 segundos por prueba (Recomendado)</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="duelo-switches-list" style="margin-top: 1rem;">
+                                    <label class="duelo-switch-row" for="dueloTriatlonMultiplicador">
+                                        <input type="checkbox" id="dueloTriatlonMultiplicador" checked>
+                                        <span class="duelo-switch-box" aria-hidden="true"></span>
+                                        <div class="duelo-switch-info">
+                                            <strong>🏆 Multiplicador Final x1.5</strong>
+                                            <span>La 3ra etapa otorga 1.5x de puntos para habilitar remontadas épicas.</span>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- ========================================================
+                                 OPCIONES COMUNES DE LA SALA (CLAVE & DESEMPATE)
+                                 ======================================================== -->
+                            <div class="duelo-common-room-options" style="margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--color-border);">
+                                <!-- Checkbox Desempate Automático (Solo en modo Versus) -->
+                                <div class="field-toggle" id="dueloOnlineTiebreakerRow" style="margin-bottom: 0.75rem;">
+                                    <label class="toggle-label" for="dueloOnlineAutoTiebreaker">
+                                        <input id="dueloOnlineAutoTiebreaker" type="checkbox" checked>
+                                        <span>⚡ Ronda de Desempate Automática con Minijuego</span>
+                                    </label>
+                                </div>
+
+                                <!-- Checkbox Contraseña Opcional -->
+                                <div class="field-toggle">
+                                    <label class="toggle-label" for="dueloOnlineHasPassword">
+                                        <input id="dueloOnlineHasPassword" type="checkbox">
+                                        <span>🔒 Proteger sala con Contraseña Opcional</span>
+                                    </label>
+                                </div>
+                                <div id="dueloOnlinePasswordRow" class="field hidden" style="margin-top: 0.5rem;">
+                                    <label for="dueloOnlineRoomPassword">Contraseña de la Sala</label>
+                                    <input id="dueloOnlineRoomPassword" type="text" maxlength="20" placeholder="Ej: estudio2026" autocomplete="off">
+                                </div>
                             </div>
 
                             <button id="dueloCreateRoomBtn" class="button button--primary button--full button--lg button--create-room-glow" type="button" style="margin-top: 1.5rem; font-size: 1.1rem; box-shadow: 0 4px 24px rgba(99, 102, 241, 0.45);">
@@ -2471,7 +2753,7 @@
 </dialog>
 
 <script src="mqtt.min.js"></script>
-<script src="script.js?v=24.8" defer></script>
+<script src="script.js?v=24.9" defer></script>
 
 <!-- =========================================================
      MODAL DE PROMPT PARA GEMINI (CREAR JUEGOS DESDE PDF)

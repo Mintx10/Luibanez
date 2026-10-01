@@ -7305,3 +7305,217 @@ body.modo-dev-activo .juntos-locked-notice {
 
 
 
+
+/* =========================================================
+   CENTRO DE MATERIAL DE ESTUDIO (MODERNO PASO 3)
+   ========================================================= */
+.duelo-material-centerpiece {
+    background: rgba(15, 23, 42, 0.45);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-lg);
+    padding: 1.15rem;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.duelo-material-chips {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+}
+
+.duelo-material-chip {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    background: rgba(30, 41, 59, 0.5);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.2s ease;
+    color: var(--color-text);
+    position: relative;
+}
+
+.duelo-material-chip:hover {
+    background: rgba(49, 65, 92, 0.6);
+    border-color: rgba(99, 102, 241, 0.4);
+    transform: translateY(-1px);
+}
+
+.duelo-material-chip.is-active {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.18) 0%, rgba(139, 92, 246, 0.12) 100%);
+    border-color: var(--color-primary);
+    box-shadow: 0 0 16px rgba(99, 102, 241, 0.25);
+}
+
+.duelo-material-chip .chip-icon {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.duelo-material-chip .chip-text {
+    flex: 1;
+    min-width: 0;
+}
+
+.duelo-material-chip .chip-text strong {
+    display: block;
+    color: #fff;
+    font-size: 0.88rem;
+    line-height: 1.25;
+}
+
+.duelo-material-chip .chip-text .chip-sub {
+    display: block;
+    font-size: 0.72rem;
+    color: var(--color-text-muted);
+    margin-top: 2px;
+}
+
+.duelo-material-chip .chip-check {
+    color: var(--color-primary);
+    font-weight: 800;
+    opacity: 0;
+    transform: scale(0.6);
+    transition: all 0.2s ease;
+}
+
+.duelo-material-chip.is-active .chip-check {
+    opacity: 1;
+    transform: scale(1);
+}
+
+/* Tarjeta de PDF Cargado */
+.duelo-pdf-meta-pills {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+    margin-top: 0.35rem;
+}
+
+.meta-pill {
+    font-size: 0.68rem;
+    padding: 2px 7px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    color: #cbd5e1;
+    font-weight: 500;
+}
+
+.meta-pill--saved {
+    background: rgba(16, 185, 129, 0.15);
+    color: #34d399;
+}
+
+/* Dropzone cuando no hay PDF */
+.duelo-pdf-dropzone {
+    border: 2px dashed rgba(99, 102, 241, 0.4);
+    border-radius: var(--radius-md);
+    background: rgba(30, 41, 59, 0.35);
+    padding: 1.5rem 1rem;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.65rem;
+    transition: all 0.25s ease;
+}
+
+.duelo-pdf-dropzone:hover,
+.duelo-pdf-dropzone.is-dragover {
+    border-color: var(--color-primary);
+    background: rgba(99, 102, 241, 0.1);
+}
+
+.duelo-pdf-dropzone .dropzone-icon {
+    font-size: 2.2rem;
+    line-height: 1;
+}
+
+.duelo-pdf-dropzone .dropzone-text strong {
+    color: #fff;
+    font-size: 0.95rem;
+    display: block;
+}
+
+.duelo-pdf-dropzone .dropzone-text p {
+    color: var(--color-text-muted);
+    font-size: 0.8rem;
+    max-width: 480px;
+    margin: 0.25rem auto 0;
+}
+
+/* Tarjeta General Rápida */
+.duelo-general-card-box {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: rgba(30, 41, 59, 0.55);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: 1rem 1.15rem;
+}
+
+.duelo-general-card-box .general-card-icon {
+    font-size: 2rem;
+    flex-shrink: 0;
+}
+
+.duelo-general-card-box .general-card-details {
+    flex: 1;
+    min-width: 0;
+}
+
+.duelo-general-card-box strong {
+    color: #fff;
+    font-size: 0.95rem;
+}
+
+/* Paneles de Opciones por Juego */
+.duelo-game-options-panel {
+    background: rgba(15, 23, 42, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem;
+    animation: duelFadeIn 0.25s ease;
+}
+
+.duelo-options-panel-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.duelo-options-panel-header .panel-icon {
+    font-size: 1.75rem;
+    line-height: 1;
+}
+
+.duelo-options-panel-header strong {
+    color: #fff;
+    font-size: 1rem;
+    display: block;
+}
+
+.duelo-options-panel-header .panel-subtitle {
+    font-size: 0.78rem;
+    color: var(--color-text-muted);
+    display: block;
+    margin-top: 2px;
+}
+
+@keyframes duelFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
