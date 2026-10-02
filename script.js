@@ -867,7 +867,7 @@ function cambiarVista(vista) {
     if (vistaDestino === "juntos") {
         if (!dueloEstado.partida.activa && !onlineDueloEstado.codigoSala) {
             actualizarDropdownListasDuelo();
-            renderPerfilUsuarioDuelo();
+            actualizarUIPerfilUsuario();
             if (dom.dueloOnlineSetupView) dom.dueloOnlineSetupView.classList.remove("hidden");
             if (dom.dueloOnlineWaitingRoom) dom.dueloOnlineWaitingRoom.classList.add("hidden");
         }
@@ -878,6 +878,10 @@ function cambiarVista(vista) {
     }
 
     window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function renderPerfilUsuarioDuelo() {
+    actualizarUIPerfilUsuario();
 }
 
 function inicializarRutas() {
@@ -1204,6 +1208,10 @@ function cerrarDrawerMenu() {
     }
 }
 
+function cerrarMenuDrawer() {
+    cerrarDrawerMenu();
+}
+
 function toggleDrawerMenu() {
     if (!dom.drawerMenu) return;
     if (dom.drawerMenu.classList.contains("is-open")) {
@@ -1258,6 +1266,14 @@ function actualizarDrawerListas() {
     });
 
     dom.drawerListsContainer.appendChild(fragment);
+}
+
+function seleccionarLista(id) {
+    if (!id) return;
+    estado.listaSeleccionadaId = id;
+    guardarDatos();
+    reconstruirBolillero();
+    render();
 }
 
 /* ==========================================================
@@ -7381,21 +7397,21 @@ function seleccionarTemaManualBolillero(temaId, dispararIaInmediata = false) {
 }
 
 function iniciarAplicacion() {
-    inicializarTema();
-    inicializarModoRendimiento();
-    inicializarModoDev();
-    inicializarRutas();
-    cargarDatos();
-    cargarPerfilUsuario();
-    reconstruirBolillero();
-    cargarConfigPomodoro();
-    render();
-    renderPomodoro();
-    inicializarTarjetaFlotante();
-    inicializarDueloLobby();
-    renderSalonDeLaFama();
-    inicializarDrawerMenu();
-    registrarEventos();
+    try { inicializarTema(); } catch (e) { console.error("Error tema:", e); }
+    try { inicializarModoRendimiento(); } catch (e) { console.error("Error rendimiento:", e); }
+    try { inicializarModoDev(); } catch (e) { console.error("Error modo dev:", e); }
+    try { cargarDatos(); } catch (e) { console.error("Error cargar datos:", e); }
+    try { cargarPerfilUsuario(); } catch (e) { console.error("Error cargar perfil:", e); }
+    try { reconstruirBolillero(); } catch (e) { console.error("Error reconstruir bolillero:", e); }
+    try { cargarConfigPomodoro(); } catch (e) { console.error("Error cargar pomodoro:", e); }
+    try { render(); } catch (e) { console.error("Error render:", e); }
+    try { renderPomodoro(); } catch (e) { console.error("Error render pomodoro:", e); }
+    try { inicializarTarjetaFlotante(); } catch (e) { console.error("Error tarjeta flotante:", e); }
+    try { inicializarDueloLobby(); } catch (e) { console.error("Error duelo lobby:", e); }
+    try { renderSalonDeLaFama(); } catch (e) { console.error("Error salon de la fama:", e); }
+    try { inicializarDrawerMenu(); } catch (e) { console.error("Error drawer menu:", e); }
+    try { registrarEventos(); } catch (e) { console.error("Error registrar eventos:", e); }
+    try { inicializarRutas(); } catch (e) { console.error("Error inicializar rutas:", e); }
 
     // Detección de link mágico de sala online (?room=XXXX o #duelo?room=XXXX)
     const urlParams = new URLSearchParams(window.location.search);
@@ -7474,7 +7490,7 @@ function iniciarAplicacion() {
     }
     const drawerVersionTag = document.getElementById("drawerVersionTag");
     if (drawerVersionTag) {
-        drawerVersionTag.innerHTML = `⚡ Luibañez <strong style="color: var(--color-text);">v25.1</strong>`;
+        drawerVersionTag.innerHTML = `⚡ Luibañez <strong style="color: var(--color-text);">v25.2</strong>`;
         drawerVersionTag.addEventListener("click", () => {
             forzarActualizacionCompleta(true);
         });
@@ -7516,7 +7532,7 @@ function iniciarAplicacion() {
 // =========================================================
 // GESTOR DE VERSIONES Y ACTUALIZACIÓN AUTOMÁTICA
 // =========================================================
-const APP_BUILD_VERSION = "25.1";
+const APP_BUILD_VERSION = "25.2";
 
 async function forzarActualizacionCompleta(mostrarNotificacion = true) {
     if (mostrarNotificacion && typeof mostrarToast === "function") {
@@ -9277,11 +9293,19 @@ function registrarResultadoJuego(tipoJuego, puntos, gano) {
             perfilUsuario.perfil.victorias = (perfilUsuario.perfil.victorias || 0) + 1;
         }
         perfilUsuario.perfil.puntos = (perfilUsuario.perfil.puntos || 0) + puntos;
-        guardarCuentasEnStorage();
-        actualizarUIUsuarioActivo();
+        guardarPerfilUsuario();
+        actualizarUIPerfilUsuario();
     }
 
     actualizarUIMultiversoFama("general");
+}
+
+function guardarCuentasEnStorage() {
+    guardarPerfilUsuario();
+}
+
+function actualizarUIUsuarioActivo() {
+    actualizarUIPerfilUsuario();
 }
 
 function actualizarUIMultiversoFama(tabFiltro = "general") {
