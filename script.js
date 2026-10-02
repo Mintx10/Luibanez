@@ -706,7 +706,112 @@ const dom = {
     bolilleroRulesBtn: document.getElementById("bolilleroRulesBtn"),
     juegosRulesBtn: document.getElementById("juegosRulesBtn"),
     soloRulesBtn: document.getElementById("soloRulesBtn"),
-    pdfHubRulesBtn: document.getElementById("pdfHubRulesBtn")
+    pdfHubRulesBtn: document.getElementById("pdfHubRulesBtn"),
+
+    /* MÓDULO LABORATORIO DE PRÁCTICAS */
+    viewLaboratorio: document.getElementById("viewLaboratorio"),
+    homeGoToLabBtn: document.getElementById("homeGoToLabBtn"),
+    drawerNavLaboratorio: document.getElementById("drawerNavLaboratorio"),
+    labCasoSelect: document.getElementById("labCasoSelect"),
+    labBtnGenerarCasoPdf: document.getElementById("labBtnGenerarCasoPdf"),
+    labBtnReiniciarCaso: document.getElementById("labBtnReiniciarCaso"),
+    labXpDisplay: document.getElementById("labXpDisplay"),
+    labTagMateria: document.getElementById("labMateriaBadge"),
+    labTagDificultad: document.getElementById("labTagDificultad"),
+    labTagTema: document.getElementById("labTagTema"),
+    labTituloCaso: document.getElementById("labTituloCaso"),
+    labNarrativaCaso: document.getElementById("labNarrativaCaso"),
+    labStepperCounter: document.getElementById("labStepperCounter"),
+    labStepperDots: document.getElementById("labStepperDots"),
+    labActiveCheckpointCard: document.getElementById("labActiveCheckpointCard"),
+    labCpNumeroBadge: document.getElementById("labCpNumeroBadge"),
+    labCpInstruccion: document.getElementById("labCpInstruccion"),
+    labBtnTogglePista: document.getElementById("labBtnTogglePista"),
+    labCpPistaBox: document.getElementById("labCpPistaBox"),
+    labCpPistaText: document.getElementById("labCpPistaText"),
+    labCpFormArea: document.getElementById("labCpFormArea"),
+    labBtnVerificarPaso: document.getElementById("labBtnVerificarPaso"),
+    labCpFeedbackBox: document.getElementById("labCpFeedbackBox"),
+    labCpFeedbackIcon: document.getElementById("labCpFeedbackIcon"),
+    labCpFeedbackTitle: document.getElementById("labCpFeedbackTitle"),
+    labCpFeedbackDesc: document.getElementById("labCpFeedbackDesc"),
+    labNextActionArea: document.getElementById("labNextActionArea"),
+    labBtnSiguientePaso: document.getElementById("labBtnSiguientePaso"),
+    labCompletedCard: document.getElementById("labCompletedCard"),
+    labCompletedDesc: document.getElementById("labCompletedDesc"),
+    labBtnSiguienteCasoModal: document.getElementById("labBtnSiguienteCasoModal"),
+
+    /* Tabs y Paneles del Laboratorio */
+    labTabBtnFreq: document.getElementById("labTabBtnFreq"),
+    labTabBtnProb: document.getElementById("labTabBtnProb"),
+    labTabBtnBayes: document.getElementById("labTabBtnBayes"),
+    labTabBtnScratch: document.getElementById("labTabBtnScratch"),
+    labWidgetFreq: document.getElementById("labWidgetFreq"),
+    labWidgetProb: document.getElementById("labWidgetProb"),
+    labWidgetBayes: document.getElementById("labWidgetBayes"),
+    labWidgetScratch: document.getElementById("labWidgetScratch"),
+
+    /* Grilla de Frecuencias */
+    labBtnAddRow: document.getElementById("labBtnAddRow"),
+    labBtnRemoveRow: document.getElementById("labBtnRemoveRow"),
+    labSelectColType: document.getElementById("labSelectColType"),
+    labBtnAddCol: document.getElementById("labBtnAddCol"),
+    labBtnClearTable: document.getElementById("labBtnClearTable"),
+    labBtnCopyTableToCheckpoint: document.getElementById("labBtnCopyTableToCheckpoint"),
+    labGridTableHead: document.getElementById("labGridTableHead"),
+    labGridTableBody: document.getElementById("labGridTableBody"),
+    labFootFiTotal: document.getElementById("labFootFiTotal"),
+    labFootXiFiTotal: document.getElementById("labFootXiFiTotal"),
+    labStatN: document.getElementById("labStatN"),
+    labStatMean: document.getElementById("labStatMean"),
+    labStatVar: document.getElementById("labStatVar"),
+    labStatStd: document.getElementById("labStatStd"),
+
+    /* Calculadora de Probabilidades & SVG Gauss */
+    labNormMean: document.getElementById("labNormMean"),
+    labNormStd: document.getElementById("labNormStd"),
+    labNormX: document.getElementById("labNormX"),
+    labNormTail: document.getElementById("labNormTail"),
+    labGaussSvg: document.getElementById("labGaussSvg"),
+    labNormZVal: document.getElementById("labNormZVal"),
+    labNormPVal: document.getElementById("labNormPVal"),
+    labBtnCopyNormToInput: document.getElementById("labBtnCopyNormToInput"),
+    labBinoN: document.getElementById("labBinoN"),
+    labBinoP: document.getElementById("labBinoP"),
+    labBinoK: document.getElementById("labBinoK"),
+    labBinoExactVal: document.getElementById("labBinoExactVal"),
+    labBinoLeVal: document.getElementById("labBinoLeVal"),
+    labBinoGeVal: document.getElementById("labBinoGeVal"),
+    labPoisLambda: document.getElementById("labPoisLambda"),
+    labPoisK: document.getElementById("labPoisK"),
+    labPoisExactVal: document.getElementById("labPoisExactVal"),
+    labPoisLeVal: document.getElementById("labPoisLeVal"),
+    labCalcScreen: document.getElementById("labCalcScreen"),
+
+    /* Matriz de Bayes */
+    labBayesEvAName: document.getElementById("labBayesEvAName"),
+    labBayesEvBName: document.getElementById("labBayesEvBName"),
+    labBayesThA: document.getElementById("labBayesThA"),
+    labBayesThNotA: document.getElementById("labBayesThNotA"),
+    labBayesThB: document.getElementById("labBayesThB"),
+    labBayesThNotB: document.getElementById("labBayesThNotB"),
+    labBayesCellAB: document.getElementById("labBayesCellAB"),
+    labBayesCellANotB: document.getElementById("labBayesCellANotB"),
+    labBayesCellNotAB: document.getElementById("labBayesCellNotAB"),
+    labBayesCellNotANotB: document.getElementById("labBayesCellNotANotB"),
+    labBayesTotalA: document.getElementById("labBayesTotalA"),
+    labBayesTotalNotA: document.getElementById("labBayesTotalNotA"),
+    labBayesTotalB: document.getElementById("labBayesTotalB"),
+    labBayesTotalNotB: document.getElementById("labBayesTotalNotB"),
+    labBayesGrandTotal: document.getElementById("labBayesGrandTotal"),
+    labBayesFormulaText: document.getElementById("labBayesFormulaText"),
+    labBayesResultVal: document.getElementById("labBayesResultVal"),
+
+    /* Pizarrón */
+    labScratchPenBtn: document.getElementById("labScratchPenBtn"),
+    labScratchEraserBtn: document.getElementById("labScratchEraserBtn"),
+    labScratchClearBtn: document.getElementById("labScratchClearBtn"),
+    labScratchCanvas: document.getElementById("labScratchCanvas")
 };
 
 /* ==========================================================
@@ -858,7 +963,7 @@ function inicializarModoDev() {
    ========================================================== */
 function cambiarVista(vista) {
     const rawTarget = (vista === "duelo" || vista === "juntos") ? "juntos" : vista;
-    const vistasValidas = ["home", "solo", "juntos", "bolillero", "fama", "juegos"];
+    const vistasValidas = ["home", "solo", "juntos", "bolillero", "fama", "juegos", "laboratorio"];
     const vistaDestino = vistasValidas.includes(rawTarget) ? rawTarget : "home";
 
     const vistas = [
@@ -867,7 +972,8 @@ function cambiarVista(vista) {
         { id: "juntos", domView: dom.viewDuelo },
         { id: "bolillero", domView: dom.viewBolillero },
         { id: "fama", domView: dom.viewFama },
-        { id: "juegos", domView: dom.viewJuegosEdu }
+        { id: "juegos", domView: dom.viewJuegosEdu },
+        { id: "laboratorio", domView: dom.viewLaboratorio }
     ];
 
     // 1. Alternar visibilidad de las vistas
@@ -890,6 +996,7 @@ function cambiarVista(vista) {
     const drawerNavMap = {
         home: dom.drawerNavHome,
         solo: dom.drawerNavSolo,
+        laboratorio: dom.drawerNavLaboratorio,
         juntos: dom.drawerNavJuntos,
         bolillero: dom.drawerNavBolillero,
         fama: dom.drawerNavFama
@@ -917,6 +1024,8 @@ function cambiarVista(vista) {
         renderSalonDeLaFama();
     } else if (vistaDestino === "bolillero") {
         comprobarYMostrarReglas("bolillero");
+    } else if (vistaDestino === "laboratorio") {
+        iniciarOReanudarLaboratorio();
     }
 
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -10954,3 +11063,1220 @@ function irASeccionEstudio(idSeccion, navId) {
         header.addEventListener("pointercancel", stopDrag);
     }
 })();
+
+/* ==========================================================
+   MÓDULO: LABORATORIO DE PRÁCTICAS & MESA DE TRABAJO NUMÉRICA
+   (Estadística, Probabilidades, Tablas y Resolución por Hitos)
+   ========================================================== */
+
+const laboratorioEstado = {
+    iniciado: false,
+    casoActualId: "caso_1",
+    casoActual: null,
+    pasoActualIndex: 0,
+    xpTotal: 0,
+    casosPersonalizados: {},
+    pistaAbierta: false,
+    tabActiva: "freq",
+    distribucionActiva: "normal",
+    scratchState: {
+        drawing: false,
+        lastX: 0,
+        lastY: 0,
+        color: "#38bdf8",
+        tool: "pen",
+        size: 2
+    },
+    tablaDatos: [
+        { xi: 20, fi: 8 },
+        { xi: 22, fi: 12 },
+        { xi: 25, fi: 15 },
+        { xi: 28, fi: 10 },
+        { xi: 32, fi: 5 }
+    ],
+    columnasActivas: ["xifi"] // xi y fi siempre son base
+};
+
+// ==========================================
+// CASOS DE ESTUDIO UNIVERSITARIOS OFFLINE
+// ==========================================
+const CASOS_ESTUDIO_DEFAULT = {
+    caso_1: {
+        id: "caso_1",
+        materia: "Estadística Descriptiva y Operaciones",
+        dificultad: "Intermedia",
+        tema: "Distribución de Frecuencias y Centralidad",
+        titulo: "Auditoría de Tiempos de Entrega Logística",
+        narrativa: "Una empresa de e-commerce y logística urbana midió los tiempos de entrega (en minutos) de una muestra de n = 50 envíos en horario pico. Los datos agrupados por tiempo promedio registrado (xi) y su frecuencia absoluta (fi) son:\n• 20 min: 8 envíos\n• 22 min: 12 envíos\n• 25 min: 15 envíos\n• 28 min: 10 envíos\n• 32 min: 5 envíos.\nTu misión como analista es volcar los datos en la tabla del panel derecho, computar los parámetros centrales y responder a los estándares del servicio.",
+        checkpoints: [
+            {
+                id: "cp_1_1",
+                numero: 1,
+                instruccion: "Construí la tabla de frecuencias en la grilla del panel derecho cargando los valores de xi y fi con la columna ponderada (xi · fi). Verificá que la muestra total sume n = 50 y la sumatoria Σ(xi · fi) sea correcta.",
+                tipo: "tabla",
+                tolerancia: 1,
+                solucion: {
+                    n: 50,
+                    sumXiFi: 1240
+                },
+                pista: "Multiplicá cada tiempo xi por su frecuencia fi: 20·8=160, 22·12=264, 25·15=375, 28·10=280, 32·5=160. La fila de totales Σ calculará la suma automáticamente.",
+                explicacion: "¡Impecable! La muestra suma exactamente n = 50 entregas y la sumatoria ponderada Σ(xi · fi) es 1240 minutos."
+            },
+            {
+                id: "cp_1_2",
+                numero: 2,
+                instruccion: "Calculá la Media Aritmética (x̄) en minutos y el Desvío Estándar Muestral (s) de la distribución.",
+                tipo: "campos_numericos",
+                campos: [
+                    { id: "input_media", label: "Media (x̄) en minutos:", esperado: 24.8, tolerancia: 0.15 },
+                    { id: "input_desvio", label: "Desvío Estándar Muestral (s):", esperado: 3.65, tolerancia: 0.3 }
+                ],
+                pista: "Media x̄ = Σ(xi · fi) / n = 1240 / 50 = 24.80. La varianza muestral es s² = [Σ(xi²·fi) - n·x̄²] / (n-1) ≈ 13.31, y el desvío es su raíz cuadrada.",
+                explicacion: "¡Cálculo exacto! La media de entrega es x̄ = 24.80 min con un desvío estándar muestral de s ≈ 3.65 min (coeficiente de variación moderado)."
+            },
+            {
+                id: "cp_1_3",
+                numero: 3,
+                instruccion: "¿Qué porcentaje de las entregas demoró estrictamente más de 25 minutos? Ingresá el porcentaje (ej: 30 para 30%).",
+                tipo: "valor_unico",
+                esperado: 30,
+                tolerancia: 0.5,
+                pista: "Sumá los envíos con tiempos mayores a 25 min: 28 min (10 envíos) + 32 min (5 envíos) = 15 envíos. Luego calculá (15 / 50) * 100.",
+                explicacion: "¡Excelente diagnóstico! El 30% de los pedidos (15 de 50) excedió el estándar de 25 minutos, lo que servirá para rediseñar las rutas."
+            }
+        ]
+    },
+    caso_2: {
+        id: "caso_2",
+        materia: "Inferencia Estadística y Calidad",
+        dificultad: "Avanzada",
+        tema: "Distribución Normal y Z-Score",
+        titulo: "Control de Tolerancias en Producción Industrial",
+        narrativa: "Una planta embotelladora automática calibró sus válvulas de llenado de forma que el volumen de líquido por envase sigue una distribución normal con media μ = 500 ml y desvío estándar σ = 10 ml: X ~ N(500, 10²). Las normas de control de calidad exigen que cualquier botella con menos de 480 ml sea rechazada de la línea.",
+        checkpoints: [
+            {
+                id: "cp_2_1",
+                numero: 1,
+                instruccion: "Estandarizá el valor crítico de descarte X = 480 ml calculando su puntaje Z = (X - μ) / σ.",
+                tipo: "campos_numericos",
+                campos: [
+                    { id: "input_z", label: "Puntaje Z estandarizado:", esperado: -2.0, tolerancia: 0.05 }
+                ],
+                pista: "Z = (480 - 500) / 10 = -20 / 10 = -2.00.",
+                explicacion: "Correcto: Z = -2.00. El límite de tolerancia se sitúa a 2 desvíos estándar por debajo de la media nominal de llenado."
+            },
+            {
+                id: "cp_2_2",
+                numero: 2,
+                instruccion: "Usá la pestaña 'Calculadora de Probabilidades' del panel derecho con la Campana Normal para calcular la probabilidad de que una botella sea defectuosa: P(X ≤ 480 ml). Ingresá el valor en decimal (ej: 0.0228).",
+                tipo: "valor_unico",
+                esperado: 0.0228,
+                tolerancia: 0.004,
+                pista: "Colocá Media=500, Desvío=10, X=480 y elegí 'P(X ≤ x) [Cola Izquierda]'. El gráfico SVG sombreará el área.",
+                explicacion: "¡Exacto! P(Z ≤ -2.0) = 0.0228. Solo el 2.28% de las botellas no cumple con la norma mínima de volumen."
+            },
+            {
+                id: "cp_2_3",
+                numero: 3,
+                instruccion: "¿Cuál es la probabilidad de que una botella se encuentre en el rango de tolerancia óptimo entre 485 ml y 515 ml: P(485 ≤ X ≤ 515)? Ingresá en decimal.",
+                tipo: "valor_unico",
+                esperado: 0.8664,
+                tolerancia: 0.015,
+                pista: "Z1 = (485-500)/10 = -1.5, Z2 = (515-500)/10 = 1.5. Podés seleccionar en la calculadora 'Bilateral' o restar P(Z ≤ 1.5) - P(Z ≤ -1.5).",
+                explicacion: "¡Magistral! P(-1.5 ≤ Z ≤ 1.5) = 0.9332 - 0.0668 = 0.8664. El 86.64% de la producción opera dentro del margen de máxima calidad."
+            }
+        ]
+    },
+    caso_3: {
+        id: "caso_3",
+        materia: "Teoría de Probabilidad y Decisión",
+        dificultad: "Avanzada",
+        tema: "Probabilidad Condicional y Teorema de Bayes",
+        titulo: "Detección de Fraude y Teorema de Bayes",
+        narrativa: "Un sistema financiero automatizado detecta fraudes en transacciones con tarjeta. La prevalencia de fraude en la red es del 1%: P(F) = 0.01. Cuando una operación es fraudulenta, el algoritmo dispara una alerta el 95% de las veces: P(A | F) = 0.95 (Sensibilidad). Si la operación es legítima, genera una falsa alarma el 5% de las veces: P(A | No F) = 0.05. En una simulación de 10.000 operaciones: 100 son fraudes y 9.900 son legítimas.",
+        checkpoints: [
+            {
+                id: "cp_3_1",
+                numero: 1,
+                instruccion: "Cargá la Matriz de Bayes en el panel derecho: ¿Cuántos fraudes disparan alerta (Verdaderos Positivos) y cuántas compras legítimas disparan falsa alarma (Falsos Positivos)?",
+                tipo: "campos_numericos",
+                campos: [
+                    { id: "input_vp", label: "Verdaderos Positivos (Fraude ∩ Alerta):", esperado: 95, tolerancia: 1 },
+                    { id: "input_fp", label: "Falsos Positivos (Legítimo ∩ Alerta):", esperado: 495, tolerancia: 2 }
+                ],
+                pista: "VP = 100 fraudes * 0.95 = 95. FP = 9900 legítimos * 0.05 = 495.",
+                explicacion: "¡Muy bien! 95 fraudes son interceptados y 495 compras de usuarios honestos disparan una advertencia falsa."
+            },
+            {
+                id: "cp_3_2",
+                numero: 2,
+                instruccion: "Calculá la probabilidad marginal total de que el sistema emita una alerta P(Alerta) = (VP + FP) / 10.000. Ingresá el valor en decimal.",
+                tipo: "valor_unico",
+                esperado: 0.059,
+                tolerancia: 0.003,
+                pista: "Total de alertas emitidas = 95 + 495 = 590. P(Alerta) = 590 / 10.000 = 0.059.",
+                explicacion: "Correcto: P(Alerta) = 0.059 (5.9% de todas las operaciones son marcadas para revisión)."
+            },
+            {
+                id: "cp_3_3",
+                numero: 3,
+                instruccion: "Aplicá el Teorema de Bayes: Si el sistema dispara una alerta, ¿cuál es la probabilidad real de que se trate efectivamente de un fraude: P(F | Alerta)? Ingresá en decimal (ej: 0.161).",
+                tipo: "valor_unico",
+                esperado: 0.161,
+                tolerancia: 0.012,
+                pista: "P(F | Alerta) = P(F ∩ Alerta) / P(Alerta) = 95 / 590 ≈ 0.161 (16.1%). Podés corroborarlo en el widget de Bayes.",
+                explicacion: "¡Paradoja del falso positivo resuelta! A pesar del 95% de sensibilidad, solo el 16.1% de las alertas corresponden a fraudes reales debido a la baja frecuencia base (1%)."
+            }
+        ]
+    }
+};
+
+// ==========================================
+// MOTOR MATEMÁTICO DE PROBABILIDAD (PURO JS)
+// ==========================================
+
+function labErf(x) {
+    // Aproximación de Abramowitz & Stegun 7.1.26 (error < 1.5e-7)
+    const a1 = 0.254829592, a2 = -0.284496736, a3 = 1.421413741, a4 = -1.453152027, a5 = 1.061405429;
+    const p = 0.3275911;
+    const sign = x < 0 ? -1 : 1;
+    x = Math.abs(x);
+    const t = 1.0 / (1.0 + p * x);
+    const y = 1.0 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * Math.exp(-x * x);
+    return sign * y;
+}
+
+function labNormalCDF(x, mu = 0, sigma = 1) {
+    if (sigma <= 0) sigma = 1e-6;
+    const z = (x - mu) / (sigma * Math.SQRT2);
+    return 0.5 * (1 + labErf(z));
+}
+
+function labFactorialLog(n) {
+    let sum = 0;
+    for (let i = 2; i <= n; i++) sum += Math.log(i);
+    return sum;
+}
+
+function labCombinatoria(n, k) {
+    if (k < 0 || k > n) return 0;
+    if (k === 0 || k === n) return 1;
+    return Math.round(Math.exp(labFactorialLog(n) - labFactorialLog(k) - labFactorialLog(n - k)));
+}
+
+function labBinomialPMF(n, p, k) {
+    if (k < 0 || k > n) return 0;
+    return labCombinatoria(n, k) * Math.pow(p, k) * Math.pow(1 - p, n - k);
+}
+
+function labPoissonPMF(lambda, k) {
+    if (k < 0 || lambda <= 0) return 0;
+    return Math.exp(-lambda + k * Math.log(lambda) - labFactorialLog(k));
+}
+
+// ==========================================
+// RENDERIZADOR SVG DE LA CAMPANA DE GAUSS
+// ==========================================
+
+function renderizarCampanaGaussSVG(mu, sigma, x, cola = "left") {
+    if (!dom.labGaussSvg) return;
+    if (sigma <= 0) sigma = 1e-4;
+
+    const width = 600;
+    const height = 180;
+    const padX = 40;
+    const padYBottom = 30;
+    const padYTop = 15;
+    const graphW = width - (padX * 2);
+    const graphH = height - padYBottom - padYTop;
+
+    const xMin = mu - (3.5 * sigma);
+    const xMax = mu + (3.5 * sigma);
+    const peakPdf = 1 / (sigma * Math.sqrt(2 * Math.PI));
+
+    function toSvgX(val) {
+        return padX + ((val - xMin) / (xMax - xMin)) * graphW;
+    }
+
+    function toSvgY(pdfVal) {
+        return height - padYBottom - (pdfVal / peakPdf) * graphH;
+    }
+
+    // Puntos de la curva
+    const numPoints = 120;
+    const points = [];
+    for (let i = 0; i <= numPoints; i++) {
+        const currX = xMin + (i / numPoints) * (xMax - xMin);
+        const z = (currX - mu) / sigma;
+        const pdf = (1 / (sigma * Math.sqrt(2 * Math.PI))) * Math.exp(-0.5 * z * z);
+        points.push({ x: toSvgX(currX), y: toSvgY(pdf), val: currX });
+    }
+
+    // Path de la línea de la campana
+    let pathD = `M ${points[0].x} ${points[0].y}`;
+    for (let i = 1; i < points.length; i++) {
+        pathD += ` L ${points[i].x} ${points[i].y}`;
+    }
+
+    // Polígono de área sombreada según cola seleccionada
+    let shadePoints = [];
+    const baselineY = height - padYBottom;
+
+    if (cola === "left") {
+        const sub = points.filter(p => p.val <= x);
+        if (sub.length > 0) {
+            shadePoints.push(`${sub[0].x},${baselineY}`);
+            sub.forEach(p => shadePoints.push(`${p.x},${p.y}`));
+            const lastX = toSvgX(Math.min(x, xMax));
+            const zAtX = (x - mu) / sigma;
+            const pdfAtX = (1 / (sigma * Math.sqrt(2 * Math.PI))) * Math.exp(-0.5 * zAtX * zAtX);
+            shadePoints.push(`${lastX},${toSvgY(pdfAtX)}`);
+            shadePoints.push(`${lastX},${baselineY}`);
+        }
+    } else if (cola === "right") {
+        const sub = points.filter(p => p.val >= x);
+        if (sub.length > 0) {
+            const firstX = toSvgX(Math.max(x, xMin));
+            const zAtX = (x - mu) / sigma;
+            const pdfAtX = (1 / (sigma * Math.sqrt(2 * Math.PI))) * Math.exp(-0.5 * zAtX * zAtX);
+            shadePoints.push(`${firstX},${baselineY}`);
+            shadePoints.push(`${firstX},${toSvgY(pdfAtX)}`);
+            sub.forEach(p => shadePoints.push(`${p.x},${p.y}`));
+            shadePoints.push(`${sub[sub.length - 1].x},${baselineY}`);
+        }
+    } else {
+        // Bilateral
+        const delta = Math.abs(x - mu);
+        const low = mu - delta;
+        const high = mu + delta;
+        const sub = points.filter(p => p.val >= low && p.val <= high);
+        if (sub.length > 0) {
+            shadePoints.push(`${toSvgX(low)},${baselineY}`);
+            sub.forEach(p => shadePoints.push(`${p.x},${p.y}`));
+            shadePoints.push(`${toSvgX(high)},${baselineY}`);
+        }
+    }
+
+    const shadePolygon = shadePoints.length > 0
+        ? `<polygon points="${shadePoints.join(" ")}" fill="rgba(56, 189, 248, 0.35)" />`
+        : "";
+
+    // Línea de la Media (μ)
+    const muSvgX = toSvgX(mu);
+    const meanLine = `
+        <line x1="${muSvgX}" y1="${padYTop}" x2="${muSvgX}" y2="${baselineY}" stroke="#34d399" stroke-dasharray="4 4" stroke-width="1.5" />
+        <text x="${muSvgX}" y="${baselineY + 18}" fill="#34d399" font-size="11" text-anchor="middle" font-weight="bold">μ=${mu}</text>
+    `;
+
+    // Línea de X
+    const xSvgX = Math.max(padX, Math.min(width - padX, toSvgX(x)));
+    const xLine = `
+        <line x1="${xSvgX}" y1="${padYTop + 10}" x2="${xSvgX}" y2="${baselineY}" stroke="#38bdf8" stroke-width="2" />
+        <circle cx="${xSvgX}" cy="${baselineY}" r="4" fill="#38bdf8" />
+        <text x="${xSvgX}" y="${baselineY + 20}" fill="#38bdf8" font-size="11" text-anchor="middle" font-weight="bold">X=${x}</text>
+    `;
+
+    dom.labGaussSvg.innerHTML = `
+        <defs>
+            <linearGradient id="gaussGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.8" />
+                <stop offset="100%" stop-color="#38bdf8" stop-opacity="0.1" />
+            </linearGradient>
+        </defs>
+        <!-- Eje Base X -->
+        <line x1="${padX}" y1="${baselineY}" x2="${width - padX}" y2="${baselineY}" stroke="rgba(255,255,255,0.2)" stroke-width="1" />
+        ${shadePolygon}
+        <!-- Trazo de la Campana -->
+        <path d="${pathD}" fill="none" stroke="#60a5fa" stroke-width="2.5" />
+        ${meanLine}
+        ${xLine}
+    `;
+}
+
+// ==========================================
+// CONTROLADOR DE LA TABLA DE FRECUENCIAS
+// ==========================================
+
+function inicializarGrillaFrecuencias() {
+    renderizarGrillaFrecuencias();
+}
+
+function renderizarGrillaFrecuencias() {
+    if (!dom.labGridTableBody || !dom.labGridTableHead) return;
+
+    // Encabezados
+    const cols = laboratorioEstado.columnasActivas;
+    let headHtml = `
+        <tr>
+            <th style="width: 35px;">#</th>
+            <th>xi (Variable)</th>
+            <th>fi (Frecuencia)</th>
+    `;
+    if (cols.includes("Fi")) headHtml += `<th>Fi (Acum.)</th>`;
+    if (cols.includes("hi")) headHtml += `<th>hi (Rel.)</th>`;
+    if (cols.includes("Hi")) headHtml += `<th>Hi (Rel. Acum.)</th>`;
+    if (cols.includes("xifi")) headHtml += `<th>xi · fi</th>`;
+    if (cols.includes("var")) headHtml += `<th>xi² · fi</th>`;
+    headHtml += `<th style="width: 40px;"></th></tr>`;
+    dom.labGridTableHead.innerHTML = headHtml;
+
+    // Filas del cuerpo
+    dom.labGridTableBody.innerHTML = "";
+    let nAcum = 0;
+    const nTotal = laboratorioEstado.tablaDatos.reduce((acc, r) => acc + (parseFloat(r.fi) || 0), 0);
+
+    laboratorioEstado.tablaDatos.forEach((fila, idx) => {
+        const xi = parseFloat(fila.xi) || 0;
+        const fi = parseFloat(fila.fi) || 0;
+        nAcum += fi;
+        const hi = nTotal > 0 ? (fi / nTotal) : 0;
+        const Hi = nTotal > 0 ? (nAcum / nTotal) : 0;
+        const xifi = xi * fi;
+        const x2fi = xi * xi * fi;
+
+        const tr = document.createElement("tr");
+        let rowHtml = `
+            <td style="color: #64748b; font-size: 0.78rem;">${idx + 1}</td>
+            <td><input type="number" class="lab-cell-input" data-idx="${idx}" data-field="xi" value="${fila.xi}" step="any"></td>
+            <td><input type="number" class="lab-cell-input" data-idx="${idx}" data-field="fi" value="${fila.fi}" step="any"></td>
+        `;
+        if (cols.includes("Fi")) rowHtml += `<td><span class="lab-calc-cell">${nAcum}</span></td>`;
+        if (cols.includes("hi")) rowHtml += `<td><span class="lab-calc-cell">${hi.toFixed(3)}</span></td>`;
+        if (cols.includes("Hi")) rowHtml += `<td><span class="lab-calc-cell">${Hi.toFixed(3)}</span></td>`;
+        if (cols.includes("xifi")) rowHtml += `<td><span class="lab-calc-cell">${xifi.toFixed(2)}</span></td>`;
+        if (cols.includes("var")) rowHtml += `<td><span class="lab-calc-cell">${x2fi.toFixed(2)}</span></td>`;
+
+        rowHtml += `<td><button class="button button--ghost button--xs lab-del-row-btn" data-idx="${idx}" style="color: #f87171; padding: 0.1rem 0.35rem;" type="button">✕</button></td>`;
+        tr.innerHTML = rowHtml;
+        dom.labGridTableBody.appendChild(tr);
+    });
+
+    // Delegación de inputs
+    dom.labGridTableBody.querySelectorAll(".lab-cell-input").forEach(input => {
+        input.addEventListener("input", (e) => {
+            const idx = parseInt(e.target.getAttribute("data-idx"));
+            const field = e.target.getAttribute("data-field");
+            if (laboratorioEstado.tablaDatos[idx]) {
+                laboratorioEstado.tablaDatos[idx][field] = parseFloat(e.target.value) || 0;
+                recalcularTotalesGrilla();
+            }
+        });
+    });
+
+    dom.labGridTableBody.querySelectorAll(".lab-del-row-btn").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+            const idx = parseInt(e.target.getAttribute("data-idx"));
+            quitarFilaGrilla(idx);
+        });
+    });
+
+    recalcularTotalesGrilla();
+}
+
+function recalcularTotalesGrilla() {
+    let n = 0;
+    let sumXiFi = 0;
+    let sumXi2Fi = 0;
+
+    laboratorioEstado.tablaDatos.forEach(r => {
+        const xi = parseFloat(r.xi) || 0;
+        const fi = parseFloat(r.fi) || 0;
+        n += fi;
+        sumXiFi += xi * fi;
+        sumXi2Fi += xi * xi * fi;
+    });
+
+    const mean = n > 0 ? (sumXiFi / n) : 0;
+    let variance = 0;
+    if (n > 1) {
+        variance = (sumXi2Fi - (n * mean * mean)) / (n - 1);
+        if (variance < 0) variance = 0;
+    }
+    const stdDev = Math.sqrt(variance);
+
+    if (dom.labFootFiTotal) dom.labFootFiTotal.textContent = String(n);
+    if (dom.labFootXiFiTotal) dom.labFootXiFiTotal.textContent = sumXiFi.toFixed(2);
+    if (dom.labStatN) dom.labStatN.textContent = String(n);
+    if (dom.labStatMean) dom.labStatMean.textContent = mean.toFixed(2);
+    if (dom.labStatVar) dom.labStatVar.textContent = variance.toFixed(2);
+    if (dom.labStatStd) dom.labStatStd.textContent = stdDev.toFixed(2);
+
+    return { n, sumXiFi, mean, variance, stdDev };
+}
+
+function agregarFilaGrilla() {
+    laboratorioEstado.tablaDatos.push({ xi: 0, fi: 0 });
+    renderizarGrillaFrecuencias();
+}
+
+function quitarFilaGrilla(idx) {
+    if (laboratorioEstado.tablaDatos.length <= 1) return;
+    laboratorioEstado.tablaDatos.splice(idx, 1);
+    renderizarGrillaFrecuencias();
+}
+
+function agregarColumnaGrilla(tipo) {
+    if (!laboratorioEstado.columnasActivas.includes(tipo)) {
+        laboratorioEstado.columnasActivas.push(tipo);
+        renderizarGrillaFrecuencias();
+    }
+}
+
+function limpiarGrillaFrecuencias() {
+    laboratorioEstado.tablaDatos = [
+        { xi: 0, fi: 0 },
+        { xi: 0, fi: 0 }
+    ];
+    renderizarGrillaFrecuencias();
+}
+
+function copiarTotalesAlCheckpointActivo() {
+    const stats = recalcularTotalesGrilla();
+    const cp = obtenerCheckpointActivo();
+    if (!cp) return;
+
+    if (cp.tipo === "tabla") {
+        mostrarFeedbackCheckpoint(true, `Valores importados de la tabla: Muestra total n = ${stats.n}, Suma Σ(xi·fi) = ${stats.sumXiFi.toFixed(2)}. ¡Procedé a verificar!`);
+    } else if (cp.tipo === "campos_numericos") {
+        const inputMedia = document.getElementById("input_media");
+        const inputDesvio = document.getElementById("input_desvio");
+        if (inputMedia) inputMedia.value = stats.mean.toFixed(2);
+        if (inputDesvio) inputDesvio.value = stats.stdDev.toFixed(2);
+        mostrarToast("📥 Medidas calculadas copiadas a los campos del checkpoint.", "exito");
+    }
+}
+
+// ==========================================
+// CONTROLADOR DE CALCULADORA DE PROBABILIDAD
+// ==========================================
+
+function actualizarCalculosNormalUI() {
+    const mu = parseFloat(dom.labNormMean?.value) || 0;
+    const std = parseFloat(dom.labNormStd?.value) || 1;
+    const x = parseFloat(dom.labNormX?.value) || 0;
+    const tail = dom.labNormTail?.value || "left";
+
+    const z = (x - mu) / std;
+    let prob = 0;
+
+    if (tail === "left") {
+        prob = labNormalCDF(x, mu, std);
+    } else if (tail === "right") {
+        prob = 1 - labNormalCDF(x, mu, std);
+    } else {
+        const delta = Math.abs(x - mu);
+        prob = labNormalCDF(mu + delta, mu, std) - labNormalCDF(mu - delta, mu, std);
+    }
+
+    if (dom.labNormZVal) dom.labNormZVal.textContent = z.toFixed(3);
+    if (dom.labNormPVal) {
+        dom.labNormPVal.textContent = `${prob.toFixed(4)} (${(prob * 100).toFixed(2)}%)`;
+    }
+
+    renderizarCampanaGaussSVG(mu, std, x, tail);
+}
+
+function actualizarCalculosBinomialUI() {
+    const n = parseInt(dom.labBinoN?.value) || 10;
+    const p = parseFloat(dom.labBinoP?.value) || 0.5;
+    const k = parseInt(dom.labBinoK?.value) || 0;
+
+    const exact = labBinomialPMF(n, p, k);
+    let le = 0;
+    for (let i = 0; i <= k; i++) le += labBinomialPMF(n, p, i);
+    const ge = 1 - (le - exact);
+
+    if (dom.labBinoExactVal) dom.labBinoExactVal.textContent = exact.toFixed(4);
+    if (dom.labBinoLeVal) dom.labBinoLeVal.textContent = le.toFixed(4);
+    if (dom.labBinoGeVal) dom.labBinoGeVal.textContent = ge.toFixed(4);
+}
+
+function actualizarCalculosPoissonUI() {
+    const lambda = parseFloat(dom.labPoisLambda?.value) || 3;
+    const k = parseInt(dom.labPoisK?.value) || 0;
+
+    const exact = labPoissonPMF(lambda, k);
+    let le = 0;
+    for (let i = 0; i <= k; i++) le += labPoissonPMF(lambda, i);
+
+    if (dom.labPoisExactVal) dom.labPoisExactVal.textContent = exact.toFixed(4);
+    if (dom.labPoisLeVal) dom.labPoisLeVal.textContent = le.toFixed(4);
+}
+
+function inicializarCalculadoraCientificaMini() {
+    if (!dom.labWidgetProb) return;
+    const keys = dom.labWidgetProb.querySelectorAll(".lab-ckey");
+    let expr = "";
+
+    keys.forEach(k => {
+        k.addEventListener("click", () => {
+            const key = k.getAttribute("data-key");
+            if (!dom.labCalcScreen) return;
+
+            if (key === "clear") {
+                expr = "";
+                dom.labCalcScreen.value = "0";
+            } else if (key === "del") {
+                expr = expr.slice(0, -1);
+                dom.labCalcScreen.value = expr || "0";
+            } else if (key === "=") {
+                try {
+                    const cleanExpr = expr.replace(/×/g, "*").replace(/÷/g, "/");
+                    const res = Function(`'use strict'; return (${cleanExpr})`)();
+                    dom.labCalcScreen.value = String(res);
+                    expr = String(res);
+                } catch (e) {
+                    dom.labCalcScreen.value = "Error";
+                    expr = "";
+                }
+            } else if (key === "sqrt") {
+                try {
+                    const val = parseFloat(expr || dom.labCalcScreen.value);
+                    const res = Math.sqrt(val);
+                    dom.labCalcScreen.value = String(res);
+                    expr = String(res);
+                } catch(e) {}
+            } else if (key === "pow") {
+                try {
+                    const val = parseFloat(expr || dom.labCalcScreen.value);
+                    const res = Math.pow(val, 2);
+                    dom.labCalcScreen.value = String(res);
+                    expr = String(res);
+                } catch(e) {}
+            } else {
+                if (expr === "0" && key !== ".") expr = "";
+                expr += key;
+                dom.labCalcScreen.value = expr;
+            }
+        });
+    });
+}
+
+// ==========================================
+// CONTROLADOR DE MATRIZ DE BAYES
+// ==========================================
+
+function recalcularMatrizBayes() {
+    const ab = parseFloat(dom.labBayesCellAB?.value) || 0;
+    const aNotB = parseFloat(dom.labBayesCellANotB?.value) || 0;
+    const notAB = parseFloat(dom.labBayesCellNotAB?.value) || 0;
+    const notANotB = parseFloat(dom.labBayesCellNotANotB?.value) || 0;
+
+    const totalA = ab + aNotB;
+    const totalNotA = notAB + notANotB;
+    const totalB = ab + notAB;
+    const totalNotB = aNotB + notANotB;
+    const grandTotal = totalA + totalNotA;
+
+    if (dom.labBayesTotalA) dom.labBayesTotalA.textContent = String(totalA);
+    if (dom.labBayesTotalNotA) dom.labBayesTotalNotA.textContent = String(totalNotA);
+    if (dom.labBayesTotalB) dom.labBayesTotalB.textContent = String(totalB);
+    if (dom.labBayesTotalNotB) dom.labBayesTotalNotB.textContent = String(totalNotB);
+    if (dom.labBayesGrandTotal) dom.labBayesGrandTotal.textContent = String(grandTotal);
+
+    const probCondicional = totalB > 0 ? (ab / totalB) : 0;
+    if (dom.labBayesFormulaText) {
+        dom.labBayesFormulaText.textContent = `P(A|B) = P(A ∩ B) / P(B) = ${ab} / ${totalB}`;
+    }
+    if (dom.labBayesResultVal) {
+        dom.labBayesResultVal.textContent = `${probCondicional.toFixed(4)} (${(probCondicional * 100).toFixed(2)}%)`;
+    }
+}
+
+// ==========================================
+// CONTROLADOR DEL PIZARRÓN SCRATCHPAD
+// ==========================================
+
+function inicializarScratchpadLab() {
+    const canvas = dom.labScratchCanvas;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    const st = laboratorioEstado.scratchState;
+
+    function resize() {
+        const rect = canvas.getBoundingClientRect();
+        if (rect.width > 0 && rect.height > 0) {
+            const temp = document.createElement("canvas");
+            temp.width = canvas.width;
+            temp.height = canvas.height;
+            const tCtx = temp.getContext("2d");
+            tCtx.drawImage(canvas, 0, 0);
+
+            canvas.width = Math.round(rect.width);
+            canvas.height = Math.round(rect.height);
+            ctx.lineCap = "round";
+            ctx.lineJoin = "round";
+            ctx.drawImage(temp, 0, 0, canvas.width, canvas.height);
+        }
+    }
+
+    function getCoords(e) {
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        return {
+            x: (e.clientX - rect.left) * scaleX,
+            y: (e.clientY - rect.top) * scaleY
+        };
+    }
+
+    canvas.addEventListener("pointerdown", (e) => {
+        canvas.setPointerCapture(e.pointerId);
+        st.drawing = true;
+        const p = getCoords(e);
+        st.lastX = p.x;
+        st.lastY = p.y;
+        ctx.beginPath();
+        ctx.moveTo(p.x, p.y);
+        ctx.lineTo(p.x, p.y);
+        ctx.strokeStyle = st.tool === "eraser" ? "#090d16" : st.color;
+        ctx.lineWidth = st.tool === "eraser" ? 14 : st.size;
+        ctx.stroke();
+    });
+
+    canvas.addEventListener("pointermove", (e) => {
+        if (!st.drawing) return;
+        const p = getCoords(e);
+        ctx.beginPath();
+        ctx.moveTo(st.lastX, st.lastY);
+        ctx.lineTo(p.x, p.y);
+        ctx.strokeStyle = st.tool === "eraser" ? "#090d16" : st.color;
+        ctx.lineWidth = st.tool === "eraser" ? 14 : st.size;
+        ctx.stroke();
+        st.lastX = p.x;
+        st.lastY = p.y;
+    });
+
+    const stop = () => { st.drawing = false; };
+    canvas.addEventListener("pointerup", stop);
+    canvas.addEventListener("pointercancel", stop);
+
+    if (dom.labScratchPenBtn) {
+        dom.labScratchPenBtn.addEventListener("click", () => {
+            st.tool = "pen";
+            dom.labScratchPenBtn.classList.add("is-active");
+            if (dom.labScratchEraserBtn) dom.labScratchEraserBtn.classList.remove("is-active");
+        });
+    }
+
+    if (dom.labScratchEraserBtn) {
+        dom.labScratchEraserBtn.addEventListener("click", () => {
+            st.tool = "eraser";
+            dom.labScratchEraserBtn.classList.add("is-active");
+            if (dom.labScratchPenBtn) dom.labScratchPenBtn.classList.remove("is-active");
+        });
+    }
+
+    if (dom.labScratchClearBtn) {
+        dom.labScratchClearBtn.addEventListener("click", () => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        });
+    }
+
+    // Color dots
+    if (dom.labWidgetScratch) {
+        dom.labWidgetScratch.querySelectorAll(".color-dot").forEach(dot => {
+            dot.addEventListener("click", () => {
+                dom.labWidgetScratch.querySelectorAll(".color-dot").forEach(d => d.classList.remove("is-active"));
+                dot.classList.add("is-active");
+                st.color = dot.getAttribute("data-color") || "#38bdf8";
+                st.tool = "pen";
+                if (dom.labScratchPenBtn) dom.labScratchPenBtn.classList.add("is-active");
+                if (dom.labScratchEraserBtn) dom.labScratchEraserBtn.classList.remove("is-active");
+            });
+        });
+    }
+
+    setTimeout(resize, 100);
+}
+
+// ==========================================
+// FLUJO DE CASOS DE ESTUDIO Y CHECKPOINTS
+// ==========================================
+
+function iniciarOReanudarLaboratorio() {
+    if (!laboratorioEstado.iniciado) {
+        laboratorioEstado.iniciado = true;
+        configurarEventosLaboratorio();
+        inicializarGrillaFrecuencias();
+        actualizarCalculosNormalUI();
+        actualizarCalculosBinomialUI();
+        actualizarCalculosPoissonUI();
+        inicializarCalculadoraCientificaMini();
+        recalcularMatrizBayes();
+        inicializarScratchpadLab();
+    }
+    cargarCasoLaboratorio(laboratorioEstado.casoActualId || "caso_1");
+}
+
+function cargarCasoLaboratorio(casoId) {
+    const caso = CASOS_ESTUDIO_DEFAULT[casoId] || laboratorioEstado.casosPersonalizados[casoId] || CASOS_ESTUDIO_DEFAULT.caso_1;
+    laboratorioEstado.casoActualId = caso.id;
+    laboratorioEstado.casoActual = caso;
+    laboratorioEstado.pasoActualIndex = 0;
+    laboratorioEstado.pistaAbierta = false;
+
+    // Sincronizar datos base según caso
+    if (caso.id === "caso_1") {
+        laboratorioEstado.tablaDatos = [
+            { xi: 20, fi: 8 },
+            { xi: 22, fi: 12 },
+            { xi: 25, fi: 15 },
+            { xi: 28, fi: 10 },
+            { xi: 32, fi: 5 }
+        ];
+        laboratorioEstado.columnasActivas = ["xifi"];
+    }
+
+    renderizarEncabezadoCaso();
+    renderizarStepperCaso();
+    renderizarCheckpointActivo();
+
+    if (dom.labCompletedCard) dom.labCompletedCard.classList.add("hidden");
+    if (dom.labActiveCheckpointCard) dom.labActiveCheckpointCard.classList.remove("hidden");
+    if (dom.labFeedbackBox) dom.labFeedbackBox.classList.add("hidden");
+    if (dom.labNextActionArea) dom.labNextActionArea.classList.add("hidden");
+}
+
+function renderizarEncabezadoCaso() {
+    const c = laboratorioEstado.casoActual;
+    if (!c) return;
+
+    if (dom.labTagMateria) dom.labTagMateria.textContent = c.materia || "Estadística y Probabilidad";
+    if (dom.labTagDificultad) dom.labTagDificultad.textContent = `Dificultad: ${c.dificultad || "Intermedia"}`;
+    if (dom.labTagTema) dom.labTagTema.textContent = c.tema || "Análisis Práctico";
+    if (dom.labTituloCaso) dom.labTituloCaso.textContent = c.titulo || "Caso de Estudio";
+    if (dom.labNarrativaCaso) dom.labNarrativaCaso.textContent = c.narrativa || "";
+}
+
+function renderizarStepperCaso() {
+    const c = laboratorioEstado.casoActual;
+    if (!c || !dom.labStepperDots) return;
+
+    const total = c.checkpoints.length;
+    const actual = laboratorioEstado.pasoActualIndex;
+
+    if (dom.labStepperCounter) {
+        dom.labStepperCounter.textContent = `Paso ${actual + 1} de ${total}`;
+    }
+
+    dom.labStepperDots.innerHTML = "";
+    c.checkpoints.forEach((cp, idx) => {
+        const dot = document.createElement("div");
+        dot.className = "lab-step-dot";
+        if (idx < actual) dot.classList.add("is-done");
+        else if (idx === actual) dot.classList.add("is-active");
+        dom.labStepperDots.appendChild(dot);
+    });
+}
+
+function obtenerCheckpointActivo() {
+    const c = laboratorioEstado.casoActual;
+    if (!c || !c.checkpoints) return null;
+    return c.checkpoints[laboratorioEstado.pasoActualIndex] || null;
+}
+
+function renderizarCheckpointActivo() {
+    const cp = obtenerCheckpointActivo();
+    if (!cp || !dom.labCpFormArea) return;
+
+    if (dom.labCpNumeroBadge) dom.labCpNumeroBadge.textContent = `Paso ${cp.numero}`;
+    if (dom.labCpInstruccion) dom.labCpInstruccion.textContent = cp.instruccion;
+    if (dom.labCpPistaText) dom.labCpPistaText.textContent = cp.pista || "Analizá los parámetros del problema.";
+    if (dom.labCpPistaBox) dom.labCpPistaBox.classList.add("hidden");
+
+    if (dom.labFeedbackBox) dom.labFeedbackBox.classList.add("hidden");
+    if (dom.labNextActionArea) dom.labNextActionArea.classList.add("hidden");
+    if (dom.labBtnVerificarPaso) dom.labBtnVerificarPaso.disabled = false;
+
+    // Renderizar inputs según el tipo de checkpoint
+    dom.labCpFormArea.innerHTML = "";
+
+    if (cp.tipo === "tabla") {
+        const wrap = document.createElement("div");
+        wrap.className = "lab-cp-input-group";
+        wrap.innerHTML = `
+            <p style="font-size: 0.88rem; color: #94a3b8; margin: 0 0 0.5rem;">
+                Completá las filas de la tabla en el panel derecho. Luego hacé clic en verificar para evaluar las sumatorias calculadas.
+            </p>
+            <button id="labCpBtnImportTable" class="button button--secondary button--sm button--full" type="button">
+                📥 Sincronizar Totales de la Tabla
+            </button>
+        `;
+        dom.labCpFormArea.appendChild(wrap);
+        const importBtn = wrap.querySelector("#labCpBtnImportTable");
+        if (importBtn) importBtn.addEventListener("click", copiarTotalesAlCheckpointActivo);
+
+    } else if (cp.tipo === "campos_numericos") {
+        cp.campos.forEach(campo => {
+            const group = document.createElement("div");
+            group.className = "lab-cp-input-group";
+            group.innerHTML = `
+                <label class="lab-cp-input-label" for="${campo.id}">${campo.label}</label>
+                <input type="number" id="${campo.id}" class="input input--sm lab-cp-input" placeholder="Ingresá valor numérico..." step="any">
+            `;
+            dom.labCpFormArea.appendChild(group);
+        });
+
+    } else if (cp.tipo === "valor_unico") {
+        const group = document.createElement("div");
+        group.className = "lab-cp-input-group";
+        group.innerHTML = `
+            <label class="lab-cp-input-label" for="labInputSingleVal">Resultado numérico:</label>
+            <input type="number" id="labInputSingleVal" class="input input--sm lab-cp-input" placeholder="Ej: 0.0228..." step="any">
+        `;
+        dom.labCpFormArea.appendChild(group);
+    }
+}
+
+function verificarCheckpointActivo() {
+    const cp = obtenerCheckpointActivo();
+    if (!cp) return;
+
+    let aprobado = true;
+    let mensajeError = "";
+
+    if (cp.tipo === "tabla") {
+        const stats = recalcularTotalesGrilla();
+        const tol = cp.tolerancia || 0.5;
+        if (Math.abs(stats.n - cp.solucion.n) > tol) {
+            aprobado = false;
+            mensajeError = `El tamaño de la muestra total (n = ${stats.n}) no coincide con el esperado (${cp.solucion.n}).`;
+        } else if (Math.abs(stats.sumXiFi - cp.solucion.sumXiFi) > (tol * 2)) {
+            aprobado = false;
+            mensajeError = `La sumatoria Σ(xi·fi) = ${stats.sumXiFi.toFixed(2)} no coincide con el valor esperado (${cp.solucion.sumXiFi}).`;
+        }
+
+    } else if (cp.tipo === "campos_numericos") {
+        for (const campo of cp.campos) {
+            const input = document.getElementById(campo.id);
+            const val = parseFloat(input?.value);
+            if (isNaN(val)) {
+                aprobado = false;
+                mensajeError = `Por favor, completá el campo "${campo.label}".`;
+                break;
+            }
+            const tol = campo.tolerancia || 0.05;
+            if (Math.abs(val - campo.esperado) > tol) {
+                aprobado = false;
+                mensajeError = `El valor ingresado en "${campo.label}" (${val}) difiere del esperado (${campo.esperado}).`;
+                break;
+            }
+        }
+
+    } else if (cp.tipo === "valor_unico") {
+        const input = document.getElementById("labInputSingleVal");
+        const val = parseFloat(input?.value);
+        if (isNaN(val)) {
+            aprobado = false;
+            mensajeError = "Por favor, ingresá tu resultado en el casillero.";
+        } else {
+            const tol = cp.tolerancia || 0.01;
+            if (Math.abs(val - cp.esperado) > tol) {
+                aprobado = false;
+                mensajeError = `El valor ingresado (${val}) está fuera del margen de tolerancia del valor exacto (${cp.esperado}).`;
+            }
+        }
+    }
+
+    if (aprobado) {
+        mostrarFeedbackCheckpoint(true, cp.explicacion);
+        laboratorioEstado.xpTotal += 35;
+        if (dom.labXpDisplay) dom.labXpDisplay.textContent = `${laboratorioEstado.xpTotal} XP`;
+        reproducirSonidoDuelo("fanfare");
+
+        if (dom.labBtnVerificarPaso) dom.labBtnVerificarPaso.disabled = true;
+        if (dom.labNextActionArea) dom.labNextActionArea.classList.remove("hidden");
+    } else {
+        mostrarFeedbackCheckpoint(false, mensajeError);
+        reproducirSonidoDuelo("buzzer");
+    }
+}
+
+function mostrarFeedbackCheckpoint(exito, texto) {
+    if (!dom.labCpFeedbackBox) return;
+    dom.labCpFeedbackBox.classList.remove("hidden", "is-success", "is-error");
+    dom.labCpFeedbackBox.classList.add(exito ? "is-success" : "is-error");
+
+    if (dom.labCpFeedbackIcon) dom.labCpFeedbackIcon.textContent = exito ? "🟢" : "🔴";
+    if (dom.labCpFeedbackTitle) dom.labCpFeedbackTitle.textContent = exito ? "¡Hito Completado con Éxito!" : "Revisión Requerida";
+    if (dom.labCpFeedbackDesc) dom.labCpFeedbackDesc.textContent = texto;
+}
+
+function avanzarSiguienteCheckpoint() {
+    const c = laboratorioEstado.casoActual;
+    if (!c) return;
+
+    laboratorioEstado.pasoActualIndex++;
+    if (laboratorioEstado.pasoActualIndex >= c.checkpoints.length) {
+        finalizarCasoLaboratorio();
+    } else {
+        renderizarStepperCaso();
+        renderizarCheckpointActivo();
+    }
+}
+
+function finalizarCasoLaboratorio() {
+    if (dom.labActiveCheckpointCard) dom.labActiveCheckpointCard.classList.add("hidden");
+    if (dom.labCompletedCard) dom.labCompletedCard.classList.remove("hidden");
+    laboratorioEstado.xpTotal += 50;
+    if (dom.labXpDisplay) dom.labXpDisplay.textContent = `${laboratorioEstado.xpTotal} XP`;
+
+    reproducirSonidoDuelo("fanfare");
+    mostrarToast("🎉 ¡Felicitaciones! Resolviste el caso de estudio con 100% de éxito.", "exito");
+}
+
+// ==========================================
+// GENERADOR DE CASOS CON GEMINI DESDE PDF
+// ==========================================
+
+async function generarCasoPracticoConGeminiDesdePdf() {
+    const apunte = apuntesEstado.global || apuntesEstado.bolillero;
+    if (!apunte || !apunte.texto) {
+        mostrarToast("⚠️ No tenés ningún PDF cargado. Cargá tus apuntes en el Centro de Apuntes del Inicio.", "aviso");
+        return;
+    }
+
+    mostrarToast("🤖 Diseñando caso práctico interactivo con Gemini a partir de tu PDF...", "info");
+
+    const prompt = `Actúa como profesor universitario de materias prácticas y analíticas (Estadística, Matemática o Finanzas).
+A partir del siguiente material de estudio, crea un Caso de Estudio Práctico interactivo para resolver paso a paso.
+Devuelve EXCLUSIVAMENTE un objeto JSON válido con la siguiente estructura exacta:
+{
+  "id": "caso_ia_${Date.now()}",
+  "materia": "Materia extraída del texto",
+  "dificultad": "Intermedia",
+  "tema": "Concepto central aplicado",
+  "titulo": "Título atractivo del caso (ej: Control de Calidad en...)",
+  "narrativa": "Planteo narrativo del problema con datos numéricos realistas y contexto profesional.",
+  "checkpoints": [
+    {
+      "numero": 1,
+      "instruccion": "Instrucción del primer hito...",
+      "tipo": "campos_numericos",
+      "campos": [
+        { "id": "cp_ia_1", "label": "Nombre del dato requerido:", "esperado": 25.5, "tolerancia": 0.5 }
+      ],
+      "pista": "Sugerencia teórica para resolver...",
+      "explicacion": "Explicación detallada de por qué el resultado es 25.5."
+    },
+    {
+      "numero": 2,
+      "instruccion": "Instrucción del segundo hito...",
+      "tipo": "valor_unico",
+      "esperado": 0.05,
+      "tolerancia": 0.01,
+      "pista": "Fórmula clave...",
+      "explicacion": "Explicación del cálculo final."
+    }
+  ]
+}
+
+MATERIAL DE ESTUDIO:
+${apunte.texto.slice(0, 4500)}`;
+
+    try {
+        if (typeof llamarGeminiAPI === "function") {
+            const respuesta = await llamarGeminiAPI(prompt);
+            const limpio = respuesta.replace(/```json/gi, "").replace(/```/g, "").trim();
+            const nuevoCaso = JSON.parse(limpio);
+            if (nuevoCaso && nuevoCaso.checkpoints && nuevoCaso.checkpoints.length > 0) {
+                laboratorioEstado.casosPersonalizados[nuevoCaso.id] = nuevoCaso;
+
+                // Agregar al select
+                if (dom.labCasoSelect) {
+                    const opt = document.createElement("option");
+                    opt.value = nuevoCaso.id;
+                    opt.textContent = `✨ ${nuevoCaso.titulo} (Generado por IA)`;
+                    dom.labCasoSelect.appendChild(opt);
+                    dom.labCasoSelect.value = nuevoCaso.id;
+                }
+
+                cargarCasoLaboratorio(nuevoCaso.id);
+                mostrarToast("✨ ¡Caso de estudio generado con éxito!", "exito");
+                return;
+            }
+        }
+    } catch (e) {
+        console.warn("Fallo generación IA caso:", e);
+    }
+
+    mostrarToast("⚠️ No se pudo generar con IA en este momento. Cargando caso modelo de respaldo.", "aviso");
+    cargarCasoLaboratorio("caso_2");
+}
+
+// ==========================================
+// CONFIGURACIÓN DE EVENT LISTENERS DEL LAB
+// ==========================================
+
+function configurarEventosLaboratorio() {
+    // Select de Casos
+    if (dom.labCasoSelect) {
+        dom.labCasoSelect.addEventListener("change", (e) => {
+            cargarCasoLaboratorio(e.target.value);
+        });
+    }
+
+    // Botones Header
+    if (dom.labBtnReiniciarCaso) {
+        dom.labBtnReiniciarCaso.addEventListener("click", () => {
+            cargarCasoLaboratorio(laboratorioEstado.casoActualId);
+            mostrarToast("🔄 Caso reiniciado.", "info");
+        });
+    }
+
+    if (dom.labBtnGenerarCasoPdf) {
+        dom.labBtnGenerarCasoPdf.addEventListener("click", generarCasoPracticoConGeminiDesdePdf);
+    }
+
+    // Acceso desde Home y Drawer
+    if (dom.homeGoToLabBtn) {
+        dom.homeGoToLabBtn.addEventListener("click", () => cambiarVista("laboratorio"));
+    }
+    if (dom.drawerNavLaboratorio) {
+        dom.drawerNavLaboratorio.addEventListener("click", () => {
+            cambiarVista("laboratorio");
+            cerrarDrawerLateral();
+        });
+    }
+
+    // Checkpoint Actions
+    if (dom.labBtnTogglePista) {
+        dom.labBtnTogglePista.addEventListener("click", () => {
+            laboratorioEstado.pistaAbierta = !laboratorioEstado.pistaAbierta;
+            if (dom.labCpPistaBox) dom.labCpPistaBox.classList.toggle("hidden", !laboratorioEstado.pistaAbierta);
+        });
+    }
+
+    if (dom.labBtnVerificarPaso) {
+        dom.labBtnVerificarPaso.addEventListener("click", verificarCheckpointActivo);
+    }
+
+    if (dom.labBtnSiguientePaso) {
+        dom.labBtnSiguientePaso.addEventListener("click", avanzarSiguienteCheckpoint);
+    }
+
+    if (dom.labBtnSiguienteCasoModal) {
+        dom.labBtnSiguienteCasoModal.addEventListener("click", () => {
+            const nextKey = laboratorioEstado.casoActualId === "caso_1" ? "caso_2" : laboratorioEstado.casoActualId === "caso_2" ? "caso_3" : "caso_1";
+            if (dom.labCasoSelect) dom.labCasoSelect.value = nextKey;
+            cargarCasoLaboratorio(nextKey);
+        });
+    }
+
+    // Pestañas de Herramientas
+    const tabBtns = [
+        { btn: dom.labTabBtnFreq, pane: dom.labWidgetFreq, id: "freq" },
+        { btn: dom.labTabBtnProb, pane: dom.labWidgetProb, id: "prob" },
+        { btn: dom.labTabBtnBayes, pane: dom.labWidgetBayes, id: "bayes" },
+        { btn: dom.labTabBtnScratch, pane: dom.labWidgetScratch, id: "scratch" }
+    ];
+
+    tabBtns.forEach(({ btn, pane, id }) => {
+        if (!btn || !pane) return;
+        btn.addEventListener("click", () => {
+            tabBtns.forEach(t => {
+                if (t.btn) t.btn.classList.remove("is-active");
+                if (t.pane) t.pane.classList.add("hidden");
+            });
+            btn.classList.add("is-active");
+            pane.classList.remove("hidden");
+            laboratorioEstado.tabActiva = id;
+
+            if (id === "scratch") {
+                inicializarScratchpadLab();
+            }
+        });
+    });
+
+    // Grilla de Frecuencias
+    if (dom.labBtnAddRow) dom.labBtnAddRow.addEventListener("click", agregarFilaGrilla);
+    if (dom.labBtnRemoveRow) dom.labBtnRemoveRow.addEventListener("click", () => quitarFilaGrilla(laboratorioEstado.tablaDatos.length - 1));
+    if (dom.labBtnAddCol) {
+        dom.labBtnAddCol.addEventListener("click", () => {
+            const tipo = dom.labSelectColType?.value || "xifi";
+            agregarColumnaGrilla(tipo);
+        });
+    }
+    if (dom.labBtnClearTable) dom.labBtnClearTable.addEventListener("click", limpiarGrillaFrecuencias);
+    if (dom.labBtnCopyTableToCheckpoint) dom.labBtnCopyTableToCheckpoint.addEventListener("click", copiarTotalesAlCheckpointActivo);
+
+    // Calculadora Normal inputs
+    [dom.labNormMean, dom.labNormStd, dom.labNormX, dom.labNormTail].forEach(elem => {
+        if (elem) elem.addEventListener("input", actualizarCalculosNormalUI);
+    });
+
+    if (dom.labBtnCopyNormToInput) {
+        dom.labBtnCopyNormToInput.addEventListener("click", () => {
+            const mu = parseFloat(dom.labNormMean?.value) || 0;
+            const std = parseFloat(dom.labNormStd?.value) || 1;
+            const x = parseFloat(dom.labNormX?.value) || 0;
+            const tail = dom.labNormTail?.value || "left";
+            let p = 0;
+            if (tail === "left") p = labNormalCDF(x, mu, std);
+            else if (tail === "right") p = 1 - labNormalCDF(x, mu, std);
+            else {
+                const delta = Math.abs(x - mu);
+                p = labNormalCDF(mu + delta, mu, std) - labNormalCDF(mu - delta, mu, std);
+            }
+            const singleInput = document.getElementById("labInputSingleVal");
+            if (singleInput) singleInput.value = p.toFixed(4);
+            mostrarToast("📥 Probabilidad copiada al casillero del checkpoint.", "exito");
+        });
+    }
+
+    // Subtabs Calculadora Probabilidades
+    if (dom.labWidgetProb) {
+        dom.labWidgetProb.querySelectorAll(".lab-subtab-btn").forEach(btn => {
+            btn.addEventListener("click", () => {
+                const target = btn.getAttribute("data-subtab");
+                dom.labWidgetProb.querySelectorAll(".lab-subtab-btn").forEach(b => b.classList.remove("is-active"));
+                btn.classList.add("is-active");
+
+                const subpanels = {
+                    normal: document.getElementById("labSubpanelNormal"),
+                    binomial: document.getElementById("labSubpanelBinomial"),
+                    poisson: document.getElementById("labSubpanelPoisson"),
+                    calc: document.getElementById("labSubpanelCalc")
+                };
+
+                Object.entries(subpanels).forEach(([k, p]) => {
+                    if (p) p.classList.toggle("hidden", k !== target);
+                });
+
+                if (target === "normal") actualizarCalculosNormalUI();
+            });
+        });
+    }
+
+    // Binomial inputs
+    [dom.labBinoN, dom.labBinoP, dom.labBinoK].forEach(elem => {
+        if (elem) elem.addEventListener("input", actualizarCalculosBinomialUI);
+    });
+
+    // Poisson inputs
+    [dom.labPoisLambda, dom.labPoisK].forEach(elem => {
+        if (elem) elem.addEventListener("input", actualizarCalculosPoissonUI);
+    });
+
+    // Bayes inputs
+    [dom.labBayesCellAB, dom.labBayesCellANotB, dom.labBayesCellNotAB, dom.labBayesCellNotANotB].forEach(elem => {
+        if (elem) elem.addEventListener("input", recalcularMatrizBayes);
+    });
+
+    if (dom.labBayesEvAName) {
+        dom.labBayesEvAName.addEventListener("input", (e) => {
+            const nom = e.target.value || "A";
+            if (dom.labBayesThA) dom.labBayesThA.textContent = nom;
+            if (dom.labBayesThNotA) dom.labBayesThNotA.textContent = `No ${nom}`;
+        });
+    }
+    if (dom.labBayesEvBName) {
+        dom.labBayesEvBName.addEventListener("input", (e) => {
+            const nom = e.target.value || "B";
+            if (dom.labBayesThB) dom.labBayesThB.textContent = nom;
+            if (dom.labBayesThNotB) dom.labBayesThNotB.textContent = `No ${nom}`;
+        });
+    }
+}
+

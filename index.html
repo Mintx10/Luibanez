@@ -15,10 +15,10 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     
-    <link rel="icon" type="image/svg+xml" href="icon.svg?v=25.4">
-    <link rel="apple-touch-icon" href="icon-192.png?v=25.4">
-    <link rel="manifest" href="manifest.json?v=25.4">
-    <link rel="stylesheet" href="style.css?v=25.4">
+    <link rel="icon" type="image/svg+xml" href="icon.svg?v=25.5">
+    <link rel="apple-touch-icon" href="icon-192.png?v=25.5">
+    <link rel="manifest" href="manifest.json?v=25.5">
+    <link rel="stylesheet" href="style.css?v=25.5">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -116,6 +116,11 @@
                 <button id="drawerNavSolo" class="drawer-nav-item" type="button" data-view="solo">
                     <span class="drawer-nav-icon" aria-hidden="true">👤</span>
                     <span class="drawer-nav-text">Estudiar Solo</span>
+                </button>
+                <button id="drawerNavLaboratorio" class="drawer-nav-item" type="button" data-view="laboratorio">
+                    <span class="drawer-nav-icon" aria-hidden="true">🔬</span>
+                    <span class="drawer-nav-text">Laboratorio Práctico</span>
+                    <span class="badge badge--success" style="font-size: 0.65rem; margin-left: auto;">¡Nuevo!</span>
                 </button>
                 <button id="drawerNavJuntos" class="drawer-nav-item" type="button" data-view="juntos">
                     <span class="drawer-nav-icon" aria-hidden="true">🤝</span>
@@ -225,7 +230,7 @@
 
         <!-- Versión y botón de actualización forzada -->
         <div class="drawer-version-row" style="padding: 0.85rem 1rem; border-top: 1px solid var(--color-border); font-size: 0.75rem; color: var(--color-text-muted); display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02); margin-top: auto;">
-            <span id="drawerVersionTag" style="cursor: pointer; user-select: none;" title="Versión de Luibañez">⚡ Luibañez <strong style="color: var(--color-text);">v25.4</strong></span>
+            <span id="drawerVersionTag" style="cursor: pointer; user-select: none;" title="Versión de Luibañez">⚡ Luibañez <strong style="color: var(--color-text);">v25.5</strong></span>
             <button id="btnForzarActualizar" class="button button--ghost button--xs" type="button" style="font-size: 0.72rem; padding: 0.2rem 0.55rem; border-radius: 999px; border: 1px solid var(--color-border);" title="Limpiar caché y recargar versión más reciente">🔄 Actualizar</button>
         </div>
     </div>
@@ -376,6 +381,23 @@
                     <div class="module-card__actions" style="margin-top: auto; padding-top: 1rem;">
                         <button id="homeGoToFamaBtn" class="button button--secondary button--full" type="button">
                             Ver Salón de la Fama ➜
+                        </button>
+                    </div>
+                </article>
+
+                <!-- Tarjeta Portal 4: Laboratorio de Prácticas -->
+                <article class="module-card module-card--active" style="border-color: rgba(16, 185, 129, 0.45); padding: 1.85rem; background: linear-gradient(145deg, rgba(15, 23, 42, 0.75), rgba(6, 78, 59, 0.2));">
+                    <div class="module-card__header">
+                        <div class="module-card__icon module-card__icon--primary" style="font-size: 2rem; background: rgba(16, 185, 129, 0.15); color: #34d399;">🔬</div>
+                        <span class="badge badge--success">¡Nuevo Módulo Práctico!</span>
+                    </div>
+                    <h3 class="module-card__title" style="font-size: 1.45rem;">Laboratorio de Prácticas</h3>
+                    <p class="module-card__desc" style="font-size: 0.95rem; line-height: 1.5;">
+                        Mesa de trabajo interactiva para materias numéricas: <strong>Casos de estudio paso a paso</strong>, <strong>Constructor de Tablas de Frecuencia</strong>, <strong>Calculadora de Probabilidades (Normal, Binomial, Poisson)</strong>, <strong>Matriz de Bayes</strong> y <strong>Pizarrón</strong>.
+                    </p>
+                    <div class="module-card__actions" style="margin-top: auto; padding-top: 1rem;">
+                        <button id="homeGoToLabBtn" class="button button--primary button--full" type="button" style="background: linear-gradient(135deg, #059669, #10b981);">
+                            🔬 Entrar al Laboratorio ➜
                         </button>
                     </div>
                 </article>
@@ -2263,6 +2285,496 @@
 
     </section>
 
+    <!-- ==================== VISTA 7: LABORATORIO DE PRÁCTICAS (MESA DE TRABAJO & ESTADÍSTICA) ==================== -->
+    <section id="viewLaboratorio" class="view view--hidden" aria-label="Laboratorio de Prácticas y Mesa de Trabajo">
+        <div class="lab-container">
+            
+            <!-- Encabezado del Laboratorio -->
+            <header class="lab-header">
+                <div class="lab-header-main">
+                    <div class="lab-header-badge-row">
+                        <span class="lab-header-badge">🔬 ENTORNO DE PRÁCTICA NUMÉRICA</span>
+                        <span class="badge badge--success" id="labMateriaBadge">Estadística y Probabilidad</span>
+                    </div>
+                    <h1 class="lab-header-title">Laboratorio de Prácticas</h1>
+                    <p class="lab-header-subtitle">
+                        Mesa de trabajo interactiva: resolvé casos de estudio reales paso a paso sin salir de la plataforma. Tabulá frecuencias, calculá probabilidades con la campana de Gauss interactiva y despejá fórmulas en el pizarrón.
+                    </p>
+                </div>
+                <div class="lab-header-controls">
+                    <div class="lab-select-wrapper">
+                        <label for="labCasoSelect" class="lab-control-label">Caso de Estudio:</label>
+                        <select id="labCasoSelect" class="input input--select lab-case-select">
+                            <option value="caso_1">Caso 1: Distribución de Frecuencias y Centralidad</option>
+                            <option value="caso_2">Caso 2: Control de Calidad y Distribución Normal</option>
+                            <option value="caso_3">Caso 3: Pruebas Diagnósticas y Teorema de Bayes</option>
+                        </select>
+                    </div>
+                    <div class="lab-header-buttons">
+                        <button id="labBtnGenerarCasoPdf" class="button button--secondary button--sm" type="button" title="Generar un caso práctico con Gemini a partir del PDF cargado">
+                            ✨ Crear Caso con IA
+                        </button>
+                        <button id="labBtnReiniciarCaso" class="button button--ghost button--sm" type="button" title="Reiniciar el caso actual a su estado inicial">
+                            🔄 Reiniciar
+                        </button>
+                    </div>
+                    <div class="lab-xp-badge" id="labXpBadge">
+                        <span>⭐</span>
+                        <span id="labXpDisplay">0 XP</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Layout Split-Screen (Mesa de Trabajo) -->
+            <div class="laboratorio-split">
+
+                <!-- COLUMNA IZQUIERDA: ENUNCIADO, STEPPER & CHECKPOINTS -->
+                <div class="lab-split-col lab-split-left" id="labPanelEnunciado">
+                    
+                    <!-- Tarjeta del Caso -->
+                    <article class="lab-case-card">
+                        <div class="lab-case-meta">
+                            <span class="badge badge--accent" id="labTagDificultad">Dificultad: Intermedia</span>
+                            <span class="lab-case-tag" id="labTagTema">Distribución de Probabilidad</span>
+                        </div>
+                        <h2 class="lab-case-title" id="labTituloCaso">Control de Calidad en Producción Industrial</h2>
+                        <div class="lab-case-body">
+                            <p class="lab-case-narrative" id="labNarrativaCaso">
+                                Cargando caso de estudio...
+                            </p>
+                        </div>
+                    </article>
+
+                    <!-- Stepper de Checkpoints / Hitos -->
+                    <div class="lab-stepper-box">
+                        <div class="lab-stepper-header">
+                            <strong class="lab-stepper-title">Progreso por Hitos</strong>
+                            <span class="lab-stepper-counter" id="labStepperCounter">Paso 1 de 3</span>
+                        </div>
+                        <div class="lab-stepper-dots" id="labStepperDots">
+                            <!-- Inyectado dinámicamente: dots o badges de paso -->
+                        </div>
+                    </div>
+
+                    <!-- Tarjeta del Checkpoint Activo -->
+                    <div class="lab-checkpoint-card" id="labActiveCheckpointCard">
+                        <div class="lab-checkpoint-header">
+                            <span class="lab-checkpoint-num-badge" id="labCpNumeroBadge">Paso 1</span>
+                            <h3 class="lab-checkpoint-title" id="labCpInstruccion">Construí la tabla de frecuencias</h3>
+                        </div>
+
+                        <!-- Caja de Pista Plegable -->
+                        <div class="lab-hint-container">
+                            <button id="labBtnTogglePista" class="button button--ghost button--xs lab-hint-toggle-btn" type="button">
+                                💡 Ver sugerencia / fórmula clave
+                            </button>
+                            <div class="lab-hint-box hidden" id="labCpPistaBox">
+                                <p id="labCpPistaText"></p>
+                            </div>
+                        </div>
+
+                        <!-- Formulario de Respuesta del Checkpoint -->
+                        <div class="lab-checkpoint-form" id="labCpFormArea">
+                            <!-- Inyectado dinámicamente según tipo de validación: campos numéricos o botón de importar de tabla -->
+                        </div>
+
+                        <!-- Botones de Acción del Checkpoint -->
+                        <div class="lab-checkpoint-actions">
+                            <button id="labBtnVerificarPaso" class="button button--primary button--full" type="button">
+                                ✅ Verificar Paso
+                            </button>
+                        </div>
+
+                        <!-- Caja de Retroalimentación en Vivo -->
+                        <div class="lab-feedback-box hidden" id="labCpFeedbackBox">
+                            <div class="lab-feedback-icon" id="labCpFeedbackIcon">🟢</div>
+                            <div class="lab-feedback-content">
+                                <strong class="lab-feedback-title" id="labCpFeedbackTitle">¡Cálculo Correcto!</strong>
+                                <p class="lab-feedback-desc" id="labCpFeedbackDesc"></p>
+                            </div>
+                        </div>
+
+                        <!-- Botón para avanzar tras verificar con éxito -->
+                        <div class="lab-next-action-area hidden" id="labNextActionArea">
+                            <button id="labBtnSiguientePaso" class="button button--success button--full" type="button">
+                                Continuar al Siguiente Hito ➜
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Tarjeta de Caso Completado (Oculta al inicio) -->
+                    <div class="lab-completed-card hidden" id="labCompletedCard">
+                        <div class="lab-completed-icon">🎓</div>
+                        <h3 class="lab-completed-title">¡Caso de Estudio Resuelto con Éxito!</h3>
+                        <p class="lab-completed-desc" id="labCompletedDesc">
+                            Completaste todos los hitos del caso de estudio de manera impecable.
+                        </p>
+                        <div class="lab-completed-rewards">
+                            <div class="lab-reward-chip">
+                                <span>⭐</span>
+                                <strong>+100 XP</strong>
+                                <small>Puntaje Práctico</small>
+                            </div>
+                            <div class="lab-reward-chip">
+                                <span>🎯</span>
+                                <strong>100%</strong>
+                                <small>Precisión Numérica</small>
+                            </div>
+                        </div>
+                        <div class="lab-completed-actions">
+                            <button id="labBtnSiguienteCasoModal" class="button button--primary" type="button">
+                                🚀 Explorar Siguiente Caso
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- COLUMNA DERECHA: PANEL DE HERRAMIENTAS INTERACTIVAS (WIDGETS) -->
+                <div class="lab-split-col lab-split-right" id="labPanelHerramientas">
+                    
+                    <!-- Barra de Pestañas de Herramientas -->
+                    <div class="lab-tabs-nav" role="tablist">
+                        <button id="labTabBtnFreq" class="lab-tab-btn is-active" type="button" role="tab" aria-selected="true" data-tab="freq">
+                            <span class="lab-tab-icon">📊</span>
+                            <span class="lab-tab-label">Tabla de Frecuencias</span>
+                        </button>
+                        <button id="labTabBtnProb" class="lab-tab-btn" type="button" role="tab" aria-selected="false" data-tab="prob">
+                            <span class="lab-tab-icon">🧮</span>
+                            <span class="lab-tab-label">Calculadora de Probabilidad</span>
+                        </button>
+                        <button id="labTabBtnBayes" class="lab-tab-btn" type="button" role="tab" aria-selected="false" data-tab="bayes">
+                            <span class="lab-tab-icon">🔲</span>
+                            <span class="lab-tab-label">Matriz de Bayes</span>
+                        </button>
+                        <button id="labTabBtnScratch" class="lab-tab-btn" type="button" role="tab" aria-selected="false" data-tab="scratch">
+                            <span class="lab-tab-icon">📝</span>
+                            <span class="lab-tab-label">Pizarrón</span>
+                        </button>
+                    </div>
+
+                    <!-- CONTENIDO DE LAS HERRAMIENTAS -->
+                    <div class="lab-tab-content-wrapper">
+
+                        <!-- WIDGET 1: CONSTRUCTOR DE TABLAS DE FRECUENCIA -->
+                        <div id="labWidgetFreq" class="lab-tab-pane is-active" role="tabpanel">
+                            <div class="lab-tool-toolbar">
+                                <div class="lab-tool-actions-left">
+                                    <button id="labBtnAddRow" class="button button--secondary button--xs" type="button">
+                                        ➕ Fila
+                                    </button>
+                                    <button id="labBtnRemoveRow" class="button button--ghost button--xs" type="button">
+                                        ➖ Fila
+                                    </button>
+                                    <div class="lab-col-adder">
+                                        <select id="labSelectColType" class="input input--select input--xs">
+                                            <option value="Fi">Fi (Frec. Acumulada)</option>
+                                            <option value="hi">hi (Frec. Relativa)</option>
+                                            <option value="Hi">Hi (Relativa Acum.)</option>
+                                            <option value="xifi" selected>xi · fi (Media)</option>
+                                            <option value="var">xi² · fi (Varianza)</option>
+                                        </select>
+                                        <button id="labBtnAddCol" class="button button--secondary button--xs" type="button">
+                                            ➕ Columna
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="lab-tool-actions-right">
+                                    <button id="labBtnClearTable" class="button button--ghost button--xs" type="button" style="color: #f87171;">
+                                        🗑️ Limpiar
+                                    </button>
+                                    <button id="labBtnCopyTableToCheckpoint" class="button button--primary button--xs" type="button">
+                                        📥 Enviar a Checkpoint
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Tabla Estilo Excel -->
+                            <div class="lab-table-container">
+                                <table class="lab-grid-table" id="labGridTable">
+                                    <thead id="labGridTableHead">
+                                        <tr>
+                                            <th style="width: 35px;">#</th>
+                                            <th>xi (Variable)</th>
+                                            <th>fi (Frecuencia)</th>
+                                            <th data-col="xifi">xi · fi</th>
+                                            <th style="width: 40px;"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="labGridTableBody">
+                                        <!-- Filas dinámicas editables -->
+                                    </tbody>
+                                    <tfoot id="labGridTableFoot">
+                                        <tr>
+                                            <td>Σ</td>
+                                            <td><strong>Totales:</strong></td>
+                                            <td id="labFootFiTotal">0</td>
+                                            <td id="labFootXiFiTotal" data-col="xifi">0</td>
+                                            <td></td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+
+                            <!-- Estadísticos Rápidos Calculados de la Tabla -->
+                            <div class="lab-table-stats-bar">
+                                <div class="lab-stat-item">
+                                    <span class="lab-stat-label">Muestra (n):</span>
+                                    <strong class="lab-stat-val" id="labStatN">0</strong>
+                                </div>
+                                <div class="lab-stat-item">
+                                    <span class="lab-stat-label">Media (x̄):</span>
+                                    <strong class="lab-stat-val" id="labStatMean">0.00</strong>
+                                </div>
+                                <div class="lab-stat-item">
+                                    <span class="lab-stat-label">Varianza (s²):</span>
+                                    <strong class="lab-stat-val" id="labStatVar">0.00</strong>
+                                </div>
+                                <div class="lab-stat-item">
+                                    <span class="lab-stat-label">Desvío (s):</span>
+                                    <strong class="lab-stat-val" id="labStatStd">0.00</strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- WIDGET 2: CALCULADORA DE PROBABILIDADES Y CIENTÍFICA -->
+                        <div id="labWidgetProb" class="lab-tab-pane hidden" role="tabpanel">
+                            <!-- Sub-navegación de distribuciones -->
+                            <div class="lab-subtabs-nav">
+                                <button class="lab-subtab-btn is-active" type="button" data-subtab="normal">🔔 Distribución Normal</button>
+                                <button class="lab-subtab-btn" type="button" data-subtab="binomial">🎲 Binomial</button>
+                                <button class="lab-subtab-btn" type="button" data-subtab="poisson">⏱️ Poisson</button>
+                                <button class="lab-subtab-btn" type="button" data-subtab="calc">🔢 Teclado Científico</button>
+                            </div>
+
+                            <!-- Sub-panel Distribución Normal -->
+                            <div id="labSubpanelNormal" class="lab-subpanel is-active">
+                                <div class="lab-calc-inputs-row">
+                                    <div class="lab-input-group">
+                                        <label for="labNormMean">Media (μ):</label>
+                                        <input type="number" id="labNormMean" class="input input--sm" value="0" step="any">
+                                    </div>
+                                    <div class="lab-input-group">
+                                        <label for="labNormStd">Desvío Estándar (σ):</label>
+                                        <input type="number" id="labNormStd" class="input input--sm" value="1" step="any" min="0.0001">
+                                    </div>
+                                    <div class="lab-input-group">
+                                        <label for="labNormX">Valor (X):</label>
+                                        <input type="number" id="labNormX" class="input input--sm" value="1.96" step="any">
+                                    </div>
+                                    <div class="lab-input-group">
+                                        <label for="labNormTail">Área / Probabilidad:</label>
+                                        <select id="labNormTail" class="input input--select input--sm">
+                                            <option value="left" selected>P(X ≤ x) [Cola Izquierda]</option>
+                                            <option value="right">P(X ≥ x) [Cola Derecha]</option>
+                                            <option value="two">P(-|x| ≤ X ≤ |x|) [Bilateral]</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- Gráfico SVG Interactivo de Campana de Gauss -->
+                                <div class="lab-gauss-container">
+                                    <svg id="labGaussSvg" class="lab-gauss-svg" viewBox="0 0 600 240" preserveAspectRatio="none">
+                                        <!-- Curva y sombreado SVG inyectado dinámicamente -->
+                                    </svg>
+                                </div>
+
+                                <!-- Resultados de la Distribución Normal -->
+                                <div class="lab-calc-result-box">
+                                    <div class="lab-res-item">
+                                        <span class="lab-res-label">Valor Estandarizado (Z):</span>
+                                        <strong class="lab-res-val" id="labNormZVal">1.960</strong>
+                                    </div>
+                                    <div class="lab-res-item">
+                                        <span class="lab-res-label">Probabilidad P:</span>
+                                        <strong class="lab-res-val lab-res-val--highlight" id="labNormPVal">0.9750 (97.50%)</strong>
+                                    </div>
+                                    <button id="labBtnCopyNormToInput" class="button button--secondary button--xs" type="button">
+                                        📥 Copiar P a Checkpoint
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Sub-panel Binomial -->
+                            <div id="labSubpanelBinomial" class="lab-subpanel hidden">
+                                <div class="lab-calc-inputs-row">
+                                    <div class="lab-input-group">
+                                        <label for="labBinoN">Ensayos (n):</label>
+                                        <input type="number" id="labBinoN" class="input input--sm" value="10" min="1" max="500">
+                                    </div>
+                                    <div class="lab-input-group">
+                                        <label for="labBinoP">Probabilidad de éxito (p):</label>
+                                        <input type="number" id="labBinoP" class="input input--sm" value="0.5" step="0.01" min="0" max="1">
+                                    </div>
+                                    <div class="lab-input-group">
+                                        <label for="labBinoK">Éxitos buscados (k):</label>
+                                        <input type="number" id="labBinoK" class="input input--sm" value="5" min="0">
+                                    </div>
+                                </div>
+                                <div class="lab-calc-result-box" style="margin-top: 1rem;">
+                                    <div class="lab-res-item">
+                                        <span class="lab-res-label">P(X = k) [Exacta]:</span>
+                                        <strong class="lab-res-val" id="labBinoExactVal">0.2461</strong>
+                                    </div>
+                                    <div class="lab-res-item">
+                                        <span class="lab-res-label">P(X ≤ k) [Acumulada]:</span>
+                                        <strong class="lab-res-val" id="labBinoLeVal">0.6230</strong>
+                                    </div>
+                                    <div class="lab-res-item">
+                                        <span class="lab-res-label">P(X ≥ k) [Mayor o igual]:</span>
+                                        <strong class="lab-res-val lab-res-val--highlight" id="labBinoGeVal">0.6230</strong>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Sub-panel Poisson -->
+                            <div id="labSubpanelPoisson" class="lab-subpanel hidden">
+                                <div class="lab-calc-inputs-row">
+                                    <div class="lab-input-group">
+                                        <label for="labPoisLambda">Tasa media (λ):</label>
+                                        <input type="number" id="labPoisLambda" class="input input--sm" value="3" step="0.1" min="0.001">
+                                    </div>
+                                    <div class="lab-input-group">
+                                        <label for="labPoisK">Ocurrencias (k):</label>
+                                        <input type="number" id="labPoisK" class="input input--sm" value="2" min="0">
+                                    </div>
+                                </div>
+                                <div class="lab-calc-result-box" style="margin-top: 1rem;">
+                                    <div class="lab-res-item">
+                                        <span class="lab-res-label">P(X = k):</span>
+                                        <strong class="lab-res-val" id="labPoisExactVal">0.2240</strong>
+                                    </div>
+                                    <div class="lab-res-item">
+                                        <span class="lab-res-label">P(X ≤ k):</span>
+                                        <strong class="lab-res-val" id="labPoisLeVal">0.4232</strong>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Sub-panel Calculadora Científica -->
+                            <div id="labSubpanelCalc" class="lab-subpanel hidden">
+                                <div class="lab-mini-calc">
+                                    <input type="text" id="labCalcScreen" class="lab-calc-screen" readonly value="0">
+                                    <div class="lab-calc-keys">
+                                        <button class="lab-ckey" data-key="clear">AC</button>
+                                        <button class="lab-ckey" data-key="del">⌫</button>
+                                        <button class="lab-ckey" data-key="sqrt">√</button>
+                                        <button class="lab-ckey" data-key="/">÷</button>
+
+                                        <button class="lab-ckey" data-key="7">7</button>
+                                        <button class="lab-ckey" data-key="8">8</button>
+                                        <button class="lab-ckey" data-key="9">9</button>
+                                        <button class="lab-ckey" data-key="*">×</button>
+
+                                        <button class="lab-ckey" data-key="4">4</button>
+                                        <button class="lab-ckey" data-key="5">5</button>
+                                        <button class="lab-ckey" data-key="6">6</button>
+                                        <button class="lab-ckey" data-key="-">-</button>
+
+                                        <button class="lab-ckey" data-key="1">1</button>
+                                        <button class="lab-ckey" data-key="2">2</button>
+                                        <button class="lab-ckey" data-key="3">3</button>
+                                        <button class="lab-ckey" data-key="+">+</button>
+
+                                        <button class="lab-ckey" data-key="0">0</button>
+                                        <button class="lab-ckey" data-key=".">.</button>
+                                        <button class="lab-ckey" data-key="pow">x²</button>
+                                        <button class="lab-ckey lab-ckey--equals" data-key="=">=</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- WIDGET 3: MATRIZ DE CONTINGENCIA Y TEOREMA DE BAYES -->
+                        <div id="labWidgetBayes" class="lab-tab-pane hidden" role="tabpanel">
+                            <div class="lab-bayes-config">
+                                <div class="lab-input-group">
+                                    <label for="labBayesEvAName">Evento A (Ej. Enfermo):</label>
+                                    <input type="text" id="labBayesEvAName" class="input input--sm" value="Enfermo (A)">
+                                </div>
+                                <div class="lab-input-group">
+                                    <label for="labBayesEvBName">Evento B (Ej. Test +):</label>
+                                    <input type="text" id="labBayesEvBName" class="input input--sm" value="Test Positivo (B)">
+                                </div>
+                            </div>
+
+                            <!-- Tabla 2x2 de Contingencia -->
+                            <div class="lab-table-container">
+                                <table class="lab-grid-table lab-bayes-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Estado / Test</th>
+                                            <th id="labBayesThB">B (Positivo)</th>
+                                            <th id="labBayesThNotB">No B (Negativo)</th>
+                                            <th>Total Marginal</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <th id="labBayesThA">A (Enfermo)</th>
+                                            <td><input type="number" id="labBayesCellAB" class="lab-cell-input" value="95" step="any"></td>
+                                            <td><input type="number" id="labBayesCellANotB" class="lab-cell-input" value="5" step="any"></td>
+                                            <td id="labBayesTotalA" class="lab-total-cell">100</td>
+                                        </tr>
+                                        <tr>
+                                            <th id="labBayesThNotA">No A (Sano)</th>
+                                            <td><input type="number" id="labBayesCellNotAB" class="lab-cell-input" value="45" step="any"></td>
+                                            <td><input type="number" id="labBayesCellNotANotB" class="lab-cell-input" value="855" step="any"></td>
+                                            <td id="labBayesTotalNotA" class="lab-total-cell">900</td>
+                                        </tr>
+                                    </tbody>
+                                    <tfoot>
+                                        <tr>
+                                            <th>Total:</th>
+                                            <td id="labBayesTotalB" class="lab-total-cell">140</td>
+                                            <td id="labBayesTotalNotB" class="lab-total-cell">860</td>
+                                            <td id="labBayesGrandTotal" class="lab-total-cell">1000</td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+
+                            <!-- Desglose de Probabilidad Condicional / Bayes -->
+                            <div class="lab-bayes-formula-box">
+                                <div class="lab-formula-line">
+                                    <span class="lab-f-title">Probabilidad Condicional P(A|B):</span>
+                                    <code class="lab-f-code" id="labBayesFormulaText">P(A|B) = P(A ∩ B) / P(B) = 95 / 140</code>
+                                </div>
+                                <div class="lab-res-item">
+                                    <span class="lab-res-label">P(A|B) [Valor predictivo]:</span>
+                                    <strong class="lab-res-val lab-res-val--highlight" id="labBayesResultVal">0.6786 (67.86%)</strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- WIDGET 4: PIZARRÓN SCRATCHPAD INTEGRADO -->
+                        <div id="labWidgetScratch" class="lab-tab-pane hidden" role="tabpanel">
+                            <div class="lab-scratch-toolbar">
+                                <button id="labScratchPenBtn" class="button button--secondary button--xs is-active" type="button">✏️ Lápiz</button>
+                                <button id="labScratchEraserBtn" class="button button--ghost button--xs" type="button">🧹 Goma</button>
+                                <div class="lab-scratch-colors">
+                                    <button class="color-dot is-active" data-color="#ffffff" style="background: #ffffff;" type="button"></button>
+                                    <button class="color-dot" data-color="#38bdf8" style="background: #38bdf8;" type="button"></button>
+                                    <button class="color-dot" data-color="#34d399" style="background: #34d399;" type="button"></button>
+                                    <button class="color-dot" data-color="#f59e0b" style="background: #f59e0b;" type="button"></button>
+                                </div>
+                                <button id="labScratchClearBtn" class="button button--ghost button--xs" type="button" style="margin-left: auto; color: #f87171;">
+                                    Limpiar
+                                </button>
+                            </div>
+                            <div class="lab-scratch-canvas-wrap">
+                                <canvas id="labScratchCanvas" width="600" height="400"></canvas>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </section>
+
 </div>
 
 <!-- =========================================================
@@ -2798,7 +3310,7 @@
 </dialog>
 
 <script src="mqtt.min.js"></script>
-<script src="script.js?v=25.4" defer></script>
+<script src="script.js?v=25.5" defer></script>
 
 <!-- =========================================================
      MODAL DE PROMPT PARA GEMINI (CREAR JUEGOS DESDE PDF)
