@@ -9356,3 +9356,46 @@ body.modo-dev-activo .juntos-locked-notice {
     color: var(--color-text-muted);
 }
 
+/* =========================================================
+   LABORATORIO V26: CHIPS DE ORDEN Y PROMPT PERSONALIZADO
+   ========================================================= */
+.lab-quick-chips {
+    display: flex;
+    gap: 0.45rem;
+    flex-wrap: wrap;
+    margin-top: 0.25rem;
+}
+
+.lab-order-chip {
+    background: rgba(56, 189, 248, 0.1);
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    color: #7dd3fc;
+    font-size: 0.78rem;
+    font-weight: 500;
+    padding: 0.3rem 0.65rem;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    user-select: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.lab-order-chip:hover {
+    background: rgba(56, 189, 248, 0.22);
+    border-color: #38bdf8;
+    color: #ffffff;
+    transform: translateY(-1px);
+}
+
+.lab-order-chip:active {
+    transform: scale(0.96);
+}
+
+.lab-order-chip.is-active {
+    background: #0284c7;
+    border-color: #38bdf8;
+    color: #ffffff;
+}
+

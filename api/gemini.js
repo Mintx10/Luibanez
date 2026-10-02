@@ -151,7 +151,8 @@ module.exports = async function handler(req, res) {
             tipoJuego = 'bolillero',
             contextoPDF = '',
             dificultad = 'universitario',
-            preguntasPrevias = []
+            preguntasPrevias = [],
+            instruccionUsuario = ''
         } = body;
 
         // Clave de API: prioridad a variable de entorno de Vercel, o fallback desde cabecera del cliente
@@ -308,6 +309,51 @@ Debes responder ÚNICAMENTE un objeto JSON con esta estructura exacta:
     "Concepto del inicio",
     "Concepto intermedio",
     "Concepto del final"
+  ]
+}`;
+        } else if (tipoJuego === 'laboratorio') {
+            let ordenEspecifica = "";
+            if (instruccionUsuario && typeof instruccionUsuario === 'string' && instruccionUsuario.trim().length > 0) {
+                ordenEspecifica = `
+ORDEN O PREFERENCIA EXPLÍCITA DEL ESTUDIANTE:
+"${instruccionUsuario.trim()}"
+DEBES PRIORIZAR Y CUMPLIR ESTA ORDEN Y GENERAR UN EJERCICIO EXACTAMENTE ENFOCADO EN LO QUE PIDE EL ESTUDIANTE (por ejemplo: si pide un ejercicio similar a un punto de la guía, o de una distribución particular, replicalo con datos numéricos realistas).`;
+            }
+
+            promptInstrucciones = `
+JUEGO: "LABORATORIO DE PRÁCTICAS NUMÉRICAS Y ANÁLISIS DE CASOS"
+TEMA DE ESTUDIO: "${tema}"
+NIVEL ACADÉMICO: ${dificultad}
+${ordenEspecifica}
+
+Tu misión es crear un ejercicio práctico y analítico completo con datos numéricos realistas y consistentes para que el estudiante resuelva deduciendo la tabla de frecuencias o utilizando las fórmulas de probabilidad.
+El ejercicio debe incluir:
+1. "titulo": Título claro y contextualizado del caso.
+2. "dificultad": "Inicial", "Intermedia" o "Avanzada".
+3. "narrativa": Enunciado detallado con contexto real (industria, medicina, logística, telecomunicaciones, finanzas, etc.) con TODOS los datos numéricos iniciales necesarios para resolver.
+4. "preguntas": Un array de exactamente 4 o 5 incisos consecutivos (letras "a", "b", "c", "d" y opcionalmente "e").
+   Para CADA inciso:
+   - "letra": "a", "b", "c", "d" o "e".
+   - "texto": Pregunta concisa del inciso (ej: "¿Cuál es la media aritmética (x̄)?", "¿Probabilidad de que fallen a lo sumo 2 solicitudes: P(X ≤ 2)?", etc.).
+   - "esperado": El valor numérico exacto de la respuesta correcta (tipo number, ej: 14.5, 0.2304, 35). NO incluyas letras ni unidades acá, solo el número.
+   - "tolerancia": Margen de error aceptable para redondeo (ej: 0.1 para valores grandes, 0.01 para probabilidades).
+   - "pista": Fórmula, sugerencia o paso clave para orientar si el estudiante se traba.
+   - "explicacion": Justificación y resolución paso a paso del resultado.
+
+Debes responder ÚNICAMENTE un objeto JSON con esta estructura exacta:
+{
+  "titulo": "Título del Caso",
+  "dificultad": "Intermedia",
+  "narrativa": "Enunciado del problema con todos los valores numéricos necesarios...",
+  "preguntas": [
+    {
+      "letra": "a",
+      "texto": "Pregunta del inciso a",
+      "esperado": 25.5,
+      "tolerancia": 0.1,
+      "pista": "Fórmula clave...",
+      "explicacion": "Paso a paso..."
+    }
   ]
 }`;
         } else {

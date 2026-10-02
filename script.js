@@ -754,6 +754,19 @@ const dom = {
     labLoadedPdfMeta: document.getElementById("labLoadedPdfMeta"),
     labBtnQuitarPdf: document.getElementById("labBtnQuitarPdf"),
     labTopicsGrid: document.getElementById("labTopicsGrid"),
+    labConfigOrderInput: document.getElementById("labConfigOrderInput"),
+
+    /* Modal de Orden & Prompt Personalizado para Ejercicios */
+    labPromptModal: document.getElementById("labPromptModal"),
+    closeLabPromptModalBtn: document.getElementById("closeLabPromptModalBtn"),
+    closeLabPromptModalBottomBtn: document.getElementById("closeLabPromptModalBottomBtn"),
+    labPromptModalTopicBadge: document.getElementById("labPromptModalTopicBadge"),
+    labPromptModalFileBadge: document.getElementById("labPromptModalFileBadge"),
+    labPromptModalChangeConfigBtn: document.getElementById("labPromptModalChangeConfigBtn"),
+    labPromptOrderInput: document.getElementById("labPromptOrderInput"),
+    labQuickChips: document.getElementById("labQuickChips"),
+    labBtnGenerarSorpresa: document.getElementById("labBtnGenerarSorpresa"),
+    labBtnEjecutarGeneracion: document.getElementById("labBtnEjecutarGeneracion"),
 
     /* Tabs y Paneles del Laboratorio */
     labTabBtnFreq: document.getElementById("labTabBtnFreq"),
@@ -6762,7 +6775,7 @@ async function procesarArchivoPDF(file) {
 }
 
 // Función Central Reutilizable para Consultar la Serverless Function de Gemini
-async function generarPreguntaIA({ materia, tema, tipoJuego = 'bolillero', contextoPDF = null, dificultad = 'universitario', cantidadTemas = 10, preguntasPrevias = [] }) {
+async function generarPreguntaIA({ materia, tema, tipoJuego = 'bolillero', contextoPDF = null, dificultad = 'universitario', cantidadTemas = 10, preguntasPrevias = [], instruccionUsuario = '' }) {
     // Si no se proveyó contexto explícito, buscar apunte cargado
     if (!contextoPDF) {
         const apunte = apuntesEstado[tipoJuego] || apuntesEstado.bolillero || apuntesEstado.global;
@@ -6778,7 +6791,8 @@ async function generarPreguntaIA({ materia, tema, tipoJuego = 'bolillero', conte
         contextoPDF: contextoPDF || "",
         dificultad,
         cantidadTemas,
-        preguntasPrevias
+        preguntasPrevias,
+        instruccionUsuario
     };
 
     const resp = await fetch('/api/gemini', {
@@ -6983,11 +6997,16 @@ const historialPreguntasBolillero = {}; // Almacena preguntas generadas por tema
 
 async function solicitarPreguntaIABolillero() {
     const lista = obtenerListaSeleccionada();
-    const temaId = estado.ronda.ultimoTemaId;
-    const tema = lista?.temas.find(t => t.id === temaId);
+    let temaId = estado.ronda.ultimoTemaId;
+    let tema = lista?.temas.find(t => t.id === temaId);
+    if (!tema && lista?.temas && lista.temas.length > 0) {
+        tema = lista.temas[Math.floor(Math.random() * lista.temas.length)];
+        temaId = tema.id;
+        estado.ronda.ultimoTemaId = tema.id;
+    }
 
     const materiaNombre = lista ? lista.titulo : "Materia de Estudio";
-    const temaNombre = tema ? tema.titulo : "Tema Seleccionado";
+    const temaNombre = tema ? tema.titulo : (laboratorioEstado.pdfNombre ? "Material de Estudio" : "Conceptos Fundamentales");
     const temaKey = (temaId || temaNombre).trim().toLowerCase();
     const preguntasPrevias = historialPreguntasBolillero[temaKey] || [];
 
@@ -8422,7 +8441,7 @@ function iniciarAplicacion() {
 // =========================================================
 // GESTOR DE VERSIONES Y ACTUALIZACIÓN AUTOMÁTICA
 // =========================================================
-const APP_BUILD_VERSION = "26.1";
+const APP_BUILD_VERSION = "26.2";
 
 async function forzarActualizacionCompleta(mostrarNotificacion = true) {
     if (mostrarNotificacion && typeof mostrarToast === "function") {
@@ -11110,6 +11129,7 @@ const laboratorioEstado = {
     pdfTexto: "",
     pdfNombre: "",
     pdfPaginas: 0,
+    instruccionUsuario: "",
     ejercicioActual: null,
     intentosPorPregunta: {},
     resueltasPorPregunta: {},
@@ -11898,6 +11918,98 @@ function cerrarModalConfigLab() {
     }
 }
 
+function abrirModalPromptLab() {
+    if (!dom.labPromptModal) {
+        generarEjercicioLaboratorio(true);
+        return;
+    }
+    const tema = laboratorioEstado.temaSeleccionado || "descriptiva";
+    if (dom.labPromptModalTopicBadge) dom.labPromptModalTopicBadge.textContent = obtenerEtiquetaTema(tema);
+    if (dom.labPromptModalFileBadge) {
+        if (laboratorioEstado.pdfNombre) {
+            dom.labPromptModalFileBadge.textContent = `📁 ${laboratorioEstado.pdfNombre}`;
+            dom.labPromptModalFileBadge.className = "badge badge--success";
+        } else {
+            dom.labPromptModalFileBadge.textContent = "📄 Sin archivo cargado";
+            dom.labPromptModalFileBadge.className = "badge badge--ghost";
+        }
+    }
+    if (dom.labPromptOrderInput) {
+        dom.labPromptOrderInput.value = laboratorioEstado.instruccionUsuario || "";
+    }
+    actualizarQuickChipsUI(tema);
+
+    if (typeof dom.labPromptModal.showModal === "function") {
+        try { dom.labPromptModal.showModal(); } catch { dom.labPromptModal.setAttribute("open", ""); }
+    } else {
+        dom.labPromptModal.setAttribute("open", "");
+    }
+    if (dom.labPromptOrderInput) dom.labPromptOrderInput.focus();
+}
+
+function cerrarModalPromptLab() {
+    if (dom.labPromptModal) {
+        if (typeof dom.labPromptModal.close === "function") {
+            try { dom.labPromptModal.close(); } catch { dom.labPromptModal.removeAttribute("open"); }
+        } else {
+            dom.labPromptModal.removeAttribute("open");
+        }
+    }
+}
+
+function actualizarQuickChipsUI(tema) {
+    if (!dom.labQuickChips) return;
+    dom.labQuickChips.innerHTML = "";
+
+    const chipsPorTema = {
+        discretas: [
+            "Distribución Poisson (llamadas por hora)",
+            "Distribución Binomial (control de calidad)",
+            "Probabilidad de que ocurra al menos 1 falla",
+            "Cálculo de valor esperado y varianza",
+            "Similar a los ejercicios de la diapositiva"
+        ],
+        normal: [
+            "Entre dos valores simétricos P(a ≤ X ≤ b)",
+            "Menor a un valor crítico (rechazo de lote)",
+            "Estandarización Z y cálculo de percentiles",
+            "Problema similar a la guía de cátedra"
+        ],
+        bayes: [
+            "Prueba médica y falsos positivos",
+            "Probabilidad condicional P(A|B)",
+            "Sensibilidad vs Especificidad con tabla 2x2",
+            "Similar a los ejercicios del apunte"
+        ],
+        descriptiva: [
+            "Tabla de frecuencias con 5 clases",
+            "Cálculo de Promedio, Mediana y Moda",
+            "Desvío estándar muestral y CV%",
+            "Problema práctico similar al material"
+        ],
+        integral: [
+            "Simulacro de examen final completo",
+            "Problema combinado: Tabla + Probabilidad",
+            "Evaluación práctica integral de cátedra"
+        ]
+    };
+
+    const chips = chipsPorTema[tema] || chipsPorTema.descriptiva;
+    chips.forEach(texto => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "lab-order-chip";
+        btn.textContent = texto;
+        btn.addEventListener("click", () => {
+            if (dom.labPromptOrderInput) {
+                dom.labPromptOrderInput.value = texto;
+                dom.labPromptOrderInput.focus();
+            }
+        });
+        dom.labQuickChips.appendChild(btn);
+    });
+}
+
 async function procesarArchivoLaboratorio(file) {
     if (!file) return;
     const nameLower = file.name.toLowerCase();
@@ -12047,7 +12159,7 @@ function obtenerEtiquetaTema(tema) {
         bayes: "🎲 Probabilidades & Bayes",
         normal: "🔔 Distribución Normal",
         discretas: "🎯 Discretas (Binomial/Poisson)",
-        integral: "🌐 Práctica Integral"
+        integral: "📝 Examen Completo / Práctica Integral"
     };
     return mapa[tema] || "Estadística y Probabilidad";
 }
@@ -12056,118 +12168,86 @@ function obtenerEtiquetaTema(tema) {
 // GENERADOR DE EJERCICIOS (IA + OFFLINE)
 // ------------------------------------------
 
-async function generarEjercicioLaboratorio(forzarNuevo = false) {
+async function generarEjercicioLaboratorio(forzarNuevo = false, ordenManual = null) {
     const tema = laboratorioEstado.temaSeleccionado || "descriptiva";
+    const orden = (typeof ordenManual === "string" ? ordenManual : laboratorioEstado.instruccionUsuario || "").trim();
 
     // Actualizar Badges de Cabecera
     if (dom.labActiveTopicBadge) dom.labActiveTopicBadge.textContent = obtenerEtiquetaTema(tema);
     if (dom.labTagTema) dom.labTagTema.textContent = obtenerEtiquetaTema(tema);
 
-    // Intentar primero con la API de Gemini si hay apunte y credencial
-    if (laboratorioEstado.pdfTexto && typeof llamarGeminiAPI === "function") {
-        mostrarToast("🤖 Gemini está creando tu ejercicio de estudio a partir del PDF...", "info");
-
-        const prompt = `Actúa como un profesor universitario de Estadística y Matemática Aplicada.
-Crea un ejercicio práctico analítico sobre el tema "${obtenerEtiquetaTema(tema)}" basado en los siguientes apuntes:
-"${laboratorioEstado.pdfTexto.slice(0, 3500)}"
-
-Devuelve EXCLUSIVAMENTE un objeto JSON válido con este formato:
-{
-  "titulo": "Título realista y contextualizado",
-  "dificultad": "Intermedia",
-  "narrativa": "Enunciado detallado con todos los datos numéricos necesarios para deducir la tabla o aplicar las fórmulas.",
-  "preguntas": [
-    {
-      "letra": "a",
-      "texto": "Pregunta del inciso a...",
-      "esperado": 25.5,
-      "tolerancia": 0.1,
-      "pista": "Fórmula o sugerencia clave...",
-      "explicacion": "Resolución paso a paso que justifique el valor 25.5."
-    },
-    {
-      "letra": "b",
-      "texto": "Pregunta del inciso b...",
-      "esperado": 3.2,
-      "tolerancia": 0.1,
-      "pista": "Sugerencia...",
-      "explicacion": "Explicación detallada."
-    },
-    {
-      "letra": "c",
-      "texto": "Pregunta del inciso c...",
-      "esperado": 0.95,
-      "tolerancia": 0.02,
-      "pista": "Sugerencia...",
-      "explicacion": "Explicación detallada."
-    },
-    {
-      "letra": "d",
-      "texto": "Pregunta del inciso d...",
-      "esperado": 12.8,
-      "tolerancia": 0.2,
-      "pista": "Sugerencia...",
-      "explicacion": "Explicación detallada."
-    }
-  ]
-}`;
-
+    // 1. Intentar con la API de Gemini mediante el endpoint /api/gemini
+    if (typeof generarPreguntaIA === "function") {
         try {
-            const resp = await llamarGeminiAPI(prompt);
-            const limpio = resp.replace(/```json/gi, "").replace(/```/g, "").trim();
-            const parsed = JSON.parse(limpio);
-            if (parsed && Array.isArray(parsed.preguntas) && parsed.preguntas.length >= 3) {
+            mostrarToast("🤖 Gemini está creando tu ejercicio de práctica...", "info");
+            const data = await generarPreguntaIA({
+                materia: "Estadística y Probabilidad",
+                tema: obtenerEtiquetaTema(tema),
+                tipoJuego: 'laboratorio',
+                contextoPDF: laboratorioEstado.pdfTexto || "",
+                instruccionUsuario: orden
+            });
+
+            if (data && Array.isArray(data.preguntas) && data.preguntas.length >= 3) {
                 laboratorioEstado.ejercicioActual = {
                     id: "ia_" + Date.now(),
                     tema: tema,
                     origen: "ia",
-                    titulo: parsed.titulo || "Ejercicio Práctico con IA",
-                    dificultad: parsed.dificultad || "Intermedia",
-                    narrativa: parsed.narrativa || "",
-                    preguntas: parsed.preguntas
+                    titulo: data.titulo || "Ejercicio Práctico con IA",
+                    dificultad: data.dificultad || "Intermedia",
+                    narrativa: data.narrativa || "",
+                    preguntas: data.preguntas.map(p => ({
+                        letra: p.letra || "a",
+                        texto: p.texto || "",
+                        esperado: Number(p.esperado),
+                        tolerancia: Number(p.tolerancia || 0.1),
+                        pista: p.pista || "Consultá las herramientas de la Mesa de Trabajo.",
+                        explicacion: p.explicacion || `El valor esperado es ${p.esperado}.`
+                    }))
                 };
                 renderizarEjercicioActual();
-                mostrarToast("✨ ¡Ejercicio generado con éxito por Gemini!", "exito");
+                mostrarToast("✨ ¡Ejercicio generado con éxito según tus preferencias!", "exito");
                 return;
             }
         } catch (e) {
-            console.warn("Fallo generación con Gemini, pasando a generador algorítmico:", e);
+            console.warn("Fallo o sin conexión directa a Gemini, usando generador procedimental inteligente:", e.message);
         }
     }
 
-    // Generador algorítmico procedimental offline con exactitud matemática
-    generarEjercicioProcedimental(tema);
+    // 2. Generador algorítmico procedimental offline con exactitud matemática y variación continua
+    generarEjercicioProcedimental(tema, orden);
 }
 
-function generarEjercicioProcedimental(tema) {
+function generarEjercicioProcedimental(tema, orden = "") {
     let ej = null;
     switch (tema) {
         case "bayes":
-            ej = generarEjercicioBayesProcedural();
+            ej = generarEjercicioBayesProcedural(orden);
             break;
         case "normal":
-            ej = generarEjercicioNormalProcedural();
+            ej = generarEjercicioNormalProcedural(orden);
             break;
         case "discretas":
-            ej = generarEjercicioDiscretasProcedural();
+            ej = generarEjercicioDiscretasProcedural(orden);
             break;
         case "integral":
-            ej = generarEjercicioIntegralProcedural();
+            ej = generarEjercicioIntegralProcedural(orden);
             break;
         case "descriptiva":
         default:
-            ej = generarEjercicioDescriptivaProcedural();
+            ej = generarEjercicioDescriptivaProcedural(orden);
             break;
     }
 
     laboratorioEstado.ejercicioActual = ej;
     renderizarEjercicioActual();
-    mostrarToast("🎲 Ejercicio práctico preparado en la mesa de trabajo.", "info");
+    const origenMsg = orden ? `🎯 Ejercicio generado a medida para: "${orden.slice(0, 35)}..."` : "🎲 Ejercicio práctico preparado en la mesa de trabajo.";
+    mostrarToast(origenMsg, "info");
 }
 
-// Generadores Procedimentales Temáticos:
+// Generadores Procedimentales Temáticos con Parámetros Aleatorios:
 
-function generarEjercicioDescriptivaProcedural() {
+function generarEjercicioDescriptivaProcedural(orden = "") {
     const contextos = [
         {
             sector: "Auditoría Logística y Tiempos de Entrega",
@@ -12192,13 +12272,18 @@ function generarEjercicioDescriptivaProcedural() {
             variable: "Cantidad de operaciones registradas",
             x: [40, 50, 60, 70, 80],
             f: [7, 12, 21, 15, 5]
+        },
+        {
+            sector: "Consumo Eléctrico de Equipos Industriales",
+            variable: "Potencia media demandada (kW)",
+            x: [15, 20, 25, 30, 40],
+            f: [9, 18, 24, 12, 5]
         }
     ];
 
     const ctx = contextos[Math.floor(Math.random() * contextos.length)];
-    // Multiplicador aleatorio para variar frecuencias
-    const mult = Math.floor(Math.random() * 2) + 1;
-    const f = ctx.f.map(val => val * mult);
+    const delta = Math.floor(Math.random() * 5) - 2; // variabilidad -2..+2
+    const f = ctx.f.map(val => Math.max(2, val + delta));
     const x = ctx.x;
 
     let N = 0;
@@ -12225,7 +12310,7 @@ function generarEjercicioDescriptivaProcedural() {
         }
     }
 
-    const narrativa = `En el marco del estudio de "${ctx.sector}", se recolectó una muestra aleatoria sobre la variable "${ctx.variable}".\nLos datos relevados y agrupados arrojaron los siguientes registros:\n` +
+    const narrativa = `En el marco del estudio de "${ctx.sector}", se recolectó una muestra aleatoria sobre la variable "${ctx.variable}".\nLos datos relevados arrojaron los siguientes registros:\n` +
         x.map((val, idx) => `• Valor xi = ${val} : Frecuencia fi = ${f[idx]}`).join("\n") +
         `\n\nTu tarea: Trasladá los valores a la Tabla de Frecuencias de la Mesa de Trabajo en el panel derecho deduciendo cada fila, comprobá los estadísticos calculados en la calculadora inferior y respondé a los incisos planteados:`;
 
@@ -12241,7 +12326,7 @@ function generarEjercicioDescriptivaProcedural() {
                 letra: "a",
                 texto: "¿Cuál es el tamaño total de la muestra analizada (N = Σ fi)?",
                 esperado: N,
-                tolerancia: 0.1,
+                tolerancia: 0,
                 pista: "Sumá todas las frecuencias absolutas fi: " + f.join(" + ") + " = " + N,
                 explicacion: `El tamaño total de la muestra se obtiene de la suma marginal: N = Σ fi = ${N}.`
             },
@@ -12251,7 +12336,7 @@ function generarEjercicioDescriptivaProcedural() {
                 esperado: media,
                 tolerancia: 0.1,
                 pista: `Multiplicá cada xi por su fi, sumalos y dividilos por N: x̄ = Σ(xi · fi) / N = ${sumXiFi} / ${N}`,
-                explicacion: `Media x̄ = Σ(xi·fi)/N = ${sumXiFi} / ${N} = ${media}. Podés corroborarlo en la tarjeta "Media" del panel inferior.`
+                explicacion: `Media x̄ = Σ(xi·fi)/N = ${sumXiFi} / ${N} = ${media}. Podés corroborarlo en la tarjeta "Promedio" del panel inferior.`
             },
             {
                 letra: "c",
@@ -12274,187 +12359,397 @@ function generarEjercicioDescriptivaProcedural() {
                 texto: "Determina el valor de la Mediana (Me) de esta serie:",
                 esperado: mediana,
                 tolerancia: 0.1,
-                pista: `Buscá en la columna acumulada Fi el primer valor que supere la mitad de la muestra (N/2 = ${(N / 2).toFixed(1)}).`,
+                pista: `Buscá en la columna acumulada Fi el primer valor que alcance o supere la mitad de la muestra (N/2 = ${(N / 2).toFixed(1)}).`,
                 explicacion: `La posición central N/2 = ${N / 2} queda comprendida en la clase con xi = ${mediana}. Por lo tanto, Me = ${mediana}.`
             }
         ]
     };
 }
 
-function generarEjercicioBayesProcedural() {
-    const total = 10000;
-    const pA = 0.02; // 2% prevalencia
-    const sens = 0.95; // 95% sensibilidad
-    const esp = 0.96; // 96% especificidad
-    const fA = 0.04; // 4% falsa alarma
+function generarEjercicioBayesProcedural(orden = "") {
+    const ordenLower = (orden || "").toLowerCase();
+    const casos = [
+        {
+            titulo: "Control Biométrico y Detección de Amenazas",
+            sujeto: "pasajeros analizados",
+            total: 10000,
+            pA: 0.02,
+            sens: 0.95,
+            esp: 0.96,
+            contexto: "Un sistema biométrico de seguridad aeroportuaria analiza a una población de n = 10.000 pasajeros.\nLa prevalencia de personas en lista de búsqueda es del 2%: P(Buscado) = 0.02 (200 de 10.000).\nCuando una persona está en búsqueda, el sensor dispara alarma con probabilidad del 95%: P(Alarma | Buscado) = 0.95.\nCuando una persona es un ciudadano normal (9.800 pasajeros), el sensor genera una falsa alarma el 4% de las veces: P(Alarma | Normal) = 0.04."
+        },
+        {
+            titulo: "Diagnóstico Clínico y Pruebas Serológicas",
+            sujeto: "pacientes testeados",
+            total: 10000,
+            pA: 0.03,
+            sens: 0.92,
+            esp: 0.95,
+            contexto: "Un laboratorio médico evalúa una prueba rápida para detectar una patología que afecta al 3% de la población: P(Enfermo) = 0.03 (300 de 10.000 pacientes).\nLa sensibilidad del test ante un portador es del 92%: P(+ | Enfermo) = 0.92.\nEn personas sanas (9.700 pacientes), la tasa de falsos positivos es del 5%: P(+ | Sano) = 0.05."
+        },
+        {
+            titulo: "Detección de Fraude en Transacciones Financieras",
+            sujeto: "transacciones bancarias",
+            total: 20000,
+            pA: 0.015,
+            sens: 0.94,
+            esp: 0.97,
+            contexto: "Un modelo de machine learning detecta transferencias fraudulentas en un banco con 20.000 operaciones diarias.\nLa tasa basal de fraude es del 1.5%: P(Fraude) = 0.015 (300 de 20.000).\nSi una transacción es fraudulenta, el algoritmo la marca como sospechosa el 94% de las veces: P(Alerta | Fraude) = 0.94.\nEn operaciones legítimas (19.700 transacciones), la tasa de falsa alarma es del 3%: P(Alerta | Legítima) = 0.03."
+        }
+    ];
 
-    const enf = Math.round(total * pA); // 200
-    const sanos = total - enf; // 9800
-    const VP = Math.round(enf * sens); // 190
-    const FP = Math.round(sanos * fA); // 392
-    const totalPositivos = VP + FP; // 582
-    const probTotalPos = Number((totalPositivos / total).toFixed(4));
+    const c = casos[Math.floor(Math.random() * casos.length)];
+    const enf = Math.round(c.total * c.pA);
+    const sanos = c.total - enf;
+    const fA = Number((1 - c.esp).toFixed(3));
+    const VP = Math.round(enf * c.sens);
+    const FP = Math.round(sanos * fA);
+    const totalPositivos = VP + FP;
+    const probTotalPos = Number((totalPositivos / c.total).toFixed(4));
     const posterior = Number((VP / totalPositivos).toFixed(4));
 
-    const narrativa = `Un sistema biométrico de seguridad aeroportuaria analiza a una población de n = 10.000 pasajeros.\nLa prevalencia de personas en lista de búsqueda es del 2%: P(Buscado) = 0.02 (es decir, 200 personas de 10.000).\nCuando una persona está en búsqueda, el sensor dispara una alarma con probabilidad del 95%: P(Alarma | Buscado) = 0.95.\nCuando una persona es un ciudadano común (9.800 pasajeros), el sensor genera una falsa alarma el 4% de las veces: P(Alarma | Normal) = 0.04.\n\nUtilizá la pestaña "Matriz de Bayes" en la Mesa de Trabajo para tabular la contingencia 2x2 y responder:`;
+    const narrativa = `${c.contexto}\n\nUtilizá la pestaña "Matriz de Bayes" en la Mesa de Trabajo para tabular la contingencia 2x2 y responder:`;
 
     return {
         id: "bayes_" + Date.now(),
         tema: "bayes",
         origen: "modelo",
-        titulo: "Control Biométrico de Seguridad y Teorema de Bayes",
+        titulo: c.titulo,
         dificultad: "Avanzada",
         narrativa: narrativa,
         preguntas: [
             {
                 letra: "a",
-                texto: "¿Cuántos pasajeros buscados activarán la alarma (Verdaderos Positivos VP)?",
+                texto: "¿Cuántos casos positivos verdaderos se detectarán con éxito (Verdaderos Positivos VP)?",
                 esperado: VP,
                 tolerancia: 1,
-                pista: "VP = Total buscados * Sensibilidad = 200 * 0.95",
-                explicacion: `VP = 200 * 0.95 = ${VP}. Son las detecciones correctas.`
+                pista: `VP = Total afectados * Sensibilidad = ${enf} * ${c.sens}`,
+                explicacion: `VP = ${enf} * ${c.sens} = ${VP}. Son las detecciones correctas.`
             },
             {
                 letra: "b",
-                texto: "¿Cuántos ciudadanos normales activarán una falsa alarma (Falsos Positivos FP)?",
+                texto: "¿Cuántos casos sanos/normales activarán una falsa alarma (Falsos Positivos FP)?",
                 esperado: FP,
                 tolerancia: 2,
-                pista: "FP = Total normales * Tasa falsa alarma = 9.800 * 0.04",
-                explicacion: `FP = 9.800 * 0.04 = ${FP} personas inocentes demoradas por error.`
+                pista: `FP = Total normales * Tasa falsa alarma = ${sanos} * ${fA}`,
+                explicacion: `FP = ${sanos} * ${fA} = ${FP} casos clasificados erróneamente.`
             },
             {
                 letra: "c",
-                texto: "Calculá la probabilidad marginal total de que el sensor dispare alarma: P(Alarma)",
+                texto: "Calculá la probabilidad marginal total de activación: P(Positivo):",
                 esperado: probTotalPos,
                 tolerancia: 0.005,
-                pista: "P(Alarma) = (VP + FP) / Total = (" + VP + " + " + FP + ") / 10.000",
-                explicacion: `P(Alarma) = ${totalPositivos} / 10.000 = ${probTotalPos}.`
+                pista: `P(Positivo) = (VP + FP) / Total = (${VP} + ${FP}) / ${c.total}`,
+                explicacion: `P(Positivo) = ${totalPositivos} / ${c.total} = ${probTotalPos}.`
             },
             {
                 letra: "d",
-                texto: "Aplicando el Teorema de Bayes, si el sensor suena, ¿cuál es la probabilidad real de que sea una persona buscada: P(Buscado | Alarma)?",
+                texto: "Aplicando el Teorema de Bayes, ¿cuál es la probabilidad real de que un caso positivo sea realmente afectado: P(Afectado | Positivo)?",
                 esperado: posterior,
                 tolerancia: 0.01,
-                pista: "Teorema de Bayes: P(Buscado | Alarma) = VP / (VP + FP) = " + VP + " / " + totalPositivos,
-                explicacion: `P(Buscado | Alarma) = ${VP} / ${totalPositivos} ≈ ${posterior} (${(posterior * 100).toFixed(1)}%). Esta es la conocida paradoja del falso positivo.`
+                pista: `Teorema de Bayes: P(A | +) = VP / (VP + FP) = ${VP} / ${totalPositivos}`,
+                explicacion: `P(A | +) = ${VP} / ${totalPositivos} ≈ ${posterior} (${(posterior * 100).toFixed(1)}%). Esta es la conocida paradoja del falso positivo.`
             }
         ]
     };
 }
 
-function generarEjercicioNormalProcedural() {
-    const mu = 500;
-    const sigma = 10;
-    const xCrit = 480;
-    const z1 = Number(((xCrit - mu) / sigma).toFixed(2)); // -2.00
-    const p1 = Number(labNormalCDF(xCrit, mu, sigma).toFixed(4)); // 0.0228
-    const pIntervalo = Number((labNormalCDF(515, mu, sigma) - labNormalCDF(485, mu, sigma)).toFixed(4)); // 0.8664
+function generarEjercicioNormalProcedural(orden = "") {
+    const ordenLower = (orden || "").toLowerCase();
+    const modelos = [
+        {
+            titulo: "Control de Tolerancias en Producción Industrial (Normal)",
+            mu: 500,
+            sigma: 10,
+            xCrit: 480,
+            xInf: 485,
+            xSup: 515,
+            narrativa: "Una planta embotelladora automática envasa gaseosas. El volumen por botella se distribuye normalmente con media μ = 500 ml y desvío estándar σ = 10 ml: X ~ N(500, 10²).\nPor regulaciones de control de calidad, toda botella que contenga menos de 480 ml es rechazada inmediatamente.\n\nUtilizá la pestaña 'Calculadora de Probabilidad' con la Campana de Gauss para verificar áreas y percentiles:"
+        },
+        {
+            titulo: "Resistencia Mecánica de Componentes de Aviación (Normal)",
+            mu: 250,
+            sigma: 12,
+            xCrit: 226,
+            xInf: 238,
+            xSup: 262,
+            narrativa: "Un laboratorio aeronáutico ensaya la resistencia a la tracción de pernos de titanio. La resistencia sigue una distribución normal con media μ = 250 MPa y desvío estándar σ = 12 MPa: X ~ N(250, 12²).\nPernos con resistencia inferior a 226 MPa no superan la norma técnica aeronáutica.\n\nUtilizá la Campana de Gauss de la Mesa de Trabajo para resolver:"
+        },
+        {
+            titulo: "Tiempos de Respuesta de Microservicios Cloud (Normal)",
+            mu: 150,
+            sigma: 20,
+            xCrit: 110,
+            xInf: 130,
+            xSup: 170,
+            narrativa: "En un centro de cómputo en la nube, el tiempo de latencia de una consulta a la base de datos se modela como normal con μ = 150 ms y σ = 20 ms: X ~ N(150, 20²).\nSe considera tiempo anómalo crítico cuando la respuesta toma menos de 110 ms o más de 170 ms.\n\nCalculá las probabilidades utilizando la calculadora gaussiana:"
+        }
+    ];
 
-    const narrativa = `Una planta embotelladora automática envasa gaseosas. El volumen por botella se distribuye normalmente con media μ = 500 ml y desvío estándar σ = 10 ml: X ~ N(500, 10²).\nPor regulaciones de lealtad comercial, toda botella que contenga menos de 480 ml es rechazada inmediatamente de la línea de comercialización.\n\nUtilizá la pestaña "Calculadora de Probabilidad" con la Campana de Gauss para verificar áreas y percentiles:`;
+    const m = modelos[Math.floor(Math.random() * modelos.length)];
+    const z1 = Number(((m.xCrit - m.mu) / m.sigma).toFixed(2));
+    const p1 = Number(labNormalCDF(m.xCrit, m.mu, m.sigma).toFixed(4));
+    const pIntervalo = Number((labNormalCDF(m.xSup, m.mu, m.sigma) - labNormalCDF(m.xInf, m.mu, m.sigma)).toFixed(4));
 
     return {
         id: "norm_" + Date.now(),
         tema: "normal",
         origen: "modelo",
-        titulo: "Control de Tolerancias en Producción Industrial (Normal)",
+        titulo: m.titulo,
         dificultad: "Intermedia",
-        narrativa: narrativa,
+        narrativa: m.narrativa,
         preguntas: [
             {
                 letra: "a",
-                texto: "Estandarizá el valor crítico X = 480 ml calculando su puntaje Z = (X - μ) / σ:",
+                texto: `Estandarizá el valor crítico X = ${m.xCrit} calculando su puntaje Z = (X - μ) / σ:`,
                 esperado: z1,
                 tolerancia: 0.05,
-                pista: "Z = (480 - 500) / 10 = -20 / 10",
-                explicacion: `Z = (480 - 500) / 10 = ${z1}. Está a 2 desvíos estándar por debajo de la media nominal.`
+                pista: `Z = (${m.xCrit} - ${m.mu}) / ${m.sigma}`,
+                explicacion: `Z = (${m.xCrit} - ${m.mu}) / ${m.sigma} = ${z1}.`
             },
             {
                 letra: "b",
-                texto: "¿Cuál es la probabilidad de que una botella sea rechazada: P(X ≤ 480 ml)?",
+                texto: `¿Cuál es la probabilidad de que una unidad sea rechazada: P(X ≤ ${m.xCrit})?`,
                 esperado: p1,
                 tolerancia: 0.005,
-                pista: "Ingresá Media=500, Desvío=10, X=480 con cola izquierda en la campana de Gauss.",
-                explicacion: `P(X ≤ 480) = P(Z ≤ -2) ≈ ${p1} (${(p1 * 100).toFixed(2)}% de rechazo).`
+                pista: `Ingresá Media=${m.mu}, Desvío=${m.sigma}, X=${m.xCrit} con cola izquierda en la campana de Gauss.`,
+                explicacion: `P(X ≤ ${m.xCrit}) = P(Z ≤ ${z1}) ≈ ${p1} (${(p1 * 100).toFixed(2)}%).`
             },
             {
                 letra: "c",
-                texto: "¿Cuál es la probabilidad de que una botella se encuentre en el rango óptimo entre 485 ml y 515 ml: P(485 ≤ X ≤ 515)?",
+                texto: `¿Cuál es la probabilidad de que una unidad se encuentre en el rango óptimo entre ${m.xInf} y ${m.xSup}: P(${m.xInf} ≤ X ≤ ${m.xSup})?`,
                 esperado: pIntervalo,
                 tolerancia: 0.015,
-                pista: "P(485 ≤ X ≤ 515) = P(X ≤ 515) - P(X ≤ 485). Usá la opción bilateral en la calculadora de probabilidad.",
-                explicacion: `Z1 = -1.5, Z2 = 1.5. Área = P(Z ≤ 1.5) - P(Z ≤ -1.5) = 0.9332 - 0.0668 = ${pIntervalo}.`
+                pista: `P(${m.xInf} ≤ X ≤ ${m.xSup}) = P(X ≤ ${m.xSup}) - P(X ≤ ${m.xInf}). Usá la opción bilateral en la calculadora.`,
+                explicacion: `Área bilateral = P(X ≤ ${m.xSup}) - P(X ≤ ${m.xInf}) ≈ ${pIntervalo}.`
             },
             {
                 letra: "d",
                 texto: "¿Cuál es el valor de la Media teórica (μ) de esta distribución?",
-                esperado: mu,
+                esperado: m.mu,
                 tolerancia: 0.1,
                 pista: "El parámetro de posición central dado en el enunciado.",
-                explicacion: `La media teórica nominal es μ = ${mu} ml.`
+                explicacion: `La media teórica nominal es μ = ${m.mu}.`
             }
         ]
     };
 }
 
-function generarEjercicioDiscretasProcedural() {
-    const n = 10;
-    const p = 0.2;
-    const media = Number((n * p).toFixed(2));
-    const k = 2;
-    const pExacta = Number(labBinomialPMF(n, p, k).toFixed(4));
-    let pAcum = 0;
-    for (let i = 0; i <= k; i++) pAcum += labBinomialPMF(n, p, i);
-    pAcum = Number(pAcum.toFixed(4));
-    const pAlMenosUno = Number((1 - labBinomialPMF(n, p, 0)).toFixed(4));
+function generarEjercicioDiscretasProcedural(orden = "") {
+    const ordenLower = (orden || "").toLowerCase();
+    const esPoisson = ordenLower.includes("poisson") || ordenLower.includes("tasa") || ordenLower.includes("llamada") || (!ordenLower.includes("binomial") && Math.random() > 0.5);
 
-    const narrativa = `Un servidor web recibe solicitudes que pueden fallar por sobrecarga con probabilidad constante p = 0.20 (20%).\nEn una prueba de estrés se envían n = 10 solicitudes independientes.\nLa variable aleatoria X representa el número de solicitudes fallidas: X ~ Binomial(n = 10, p = 0.20).\n\nUtilizá la pestaña "Calculadora de Probabilidad" (subpestaña Binomial) en la Mesa de Trabajo para resolver:`;
+    if (esPoisson) {
+        // Generador Poisson dinámico con factor aleatorio
+        const lambdas = [3, 4, 5, 6, 7];
+        const lam = lambdas[Math.floor(Math.random() * lambdas.length)];
+        const k = Math.min(3, Math.floor(lam * 0.7)) || 2;
+        
+        function fact(n) { return n <= 1 ? 1 : n * fact(n - 1); }
+        function pPois(l, x) { return (Math.exp(-l) * Math.pow(l, x)) / fact(x); }
+
+        const pExacta = Number(pPois(lam, k).toFixed(4));
+        let pAcum = 0;
+        for (let i = 0; i <= k; i++) pAcum += pPois(lam, i);
+        pAcum = Number(pAcum.toFixed(4));
+        const pAlMenosUno = Number((1 - pPois(lam, 0)).toFixed(4));
+
+        const contextosPoisson = [
+            `Un centro de soporte y atención técnica recibe llamadas de usuarios a razón de un promedio constante de λ = ${lam} incidentes por hora (proceso de Poisson).\nLa variable aleatoria X representa la cantidad de incidentes reportados en una hora: X ~ Poisson(λ = ${lam}).\nUtilizá la pestaña "Calculadora de Probabilidad" (subpestaña Poisson) en la Mesa de Trabajo para resolver:`,
+            `En el servidor de pasarela de pagos de una plataforma de comercio electrónico se registran solicitudes de autorización a una tasa media de λ = ${lam} transacciones por minuto: X ~ Poisson(λ = ${lam}).\nUtilizá la Mesa de Trabajo para calcular los parámetros y probabilidades solicitadas:`,
+            `Un nodo de comunicaciones de fibra óptica experimenta paquetes corruptos a una tasa media de λ = ${lam} eventos por minuto: X ~ Poisson(λ = ${lam}).\nResolvé los siguientes incisos con la calculadora:`
+        ];
+        const narrativa = contextosPoisson[Math.floor(Math.random() * contextosPoisson.length)];
+
+        return {
+            id: "pois_" + Date.now(),
+            tema: "discretas",
+            origen: "modelo",
+            titulo: `Análisis de Proceso de Poisson (Tasa Media λ = ${lam})`,
+            dificultad: "Intermedia",
+            narrativa: narrativa,
+            preguntas: [
+                {
+                    letra: "a",
+                    texto: `Determiná el Valor Esperado o media de eventos E(X) = λ:`,
+                    esperado: lam,
+                    tolerancia: 0.1,
+                    pista: "En una distribución de Poisson, el valor esperado y la varianza son iguales a la tasa media λ.",
+                    explicacion: `E(X) = λ = ${lam} eventos promedio por intervalo.`
+                },
+                {
+                    letra: "b",
+                    texto: `Calculá la probabilidad de registrar exactamente k = ${k} eventos: P(X = ${k}):`,
+                    esperado: pExacta,
+                    tolerancia: 0.008,
+                    pista: `Fórmula de Poisson: P(X=k) = (e^(-λ) * λ^k) / k! con λ=${lam} y k=${k}.`,
+                    explicacion: `P(X = ${k}) = (e^(-${lam}) * ${lam}^${k}) / ${k}! ≈ ${pExacta} (${(pExacta * 100).toFixed(2)}%).`
+                },
+                {
+                    letra: "c",
+                    texto: `Calculá la probabilidad acumulada de recibir a lo sumo ${k} eventos: P(X ≤ ${k}):`,
+                    esperado: pAcum,
+                    tolerancia: 0.015,
+                    pista: `Sumá las probabilidades puntuales desde 0 hasta ${k}: P(X ≤ ${k}) = Σ P(X = i).`,
+                    explicacion: `P(X ≤ ${k}) = ${pAcum}.`
+                },
+                {
+                    letra: "d",
+                    texto: `Calculá la probabilidad de que ocurra al menos 1 evento: P(X ≥ 1) = 1 - P(X = 0):`,
+                    esperado: pAlMenosUno,
+                    tolerancia: 0.01,
+                    pista: `Regla del complemento: 1 - e^(-λ) = 1 - e^(-${lam}).`,
+                    explicacion: `P(X ≥ 1) = 1 - e^(-${lam}) = 1 - ${(pPois(lam, 0)).toFixed(4)} = ${pAlMenosUno}.`
+                }
+            ]
+        };
+    } else {
+        // Generador Binomial dinámico con parámetros aleatorios
+        const nList = [8, 10, 12, 15];
+        const pList = [0.10, 0.15, 0.20, 0.25];
+        const n = nList[Math.floor(Math.random() * nList.length)];
+        const p = pList[Math.floor(Math.random() * pList.length)];
+        const media = Number((n * p).toFixed(2));
+        const k = 2;
+        const pExacta = Number(labBinomialPMF(n, p, k).toFixed(4));
+        let pAcum = 0;
+        for (let i = 0; i <= k; i++) pAcum += labBinomialPMF(n, p, i);
+        pAcum = Number(pAcum.toFixed(4));
+        const pAlMenosUno = Number((1 - labBinomialPMF(n, p, 0)).toFixed(4));
+
+        const contextosBinomial = [
+            `Una línea de montaje automatizada produce placas de circuitos impresos con una probabilidad de defecto constante de p = ${p} (${(p * 100).toFixed(0)}%).\nEn una auditoría de control de calidad se toma una muestra aleatoria de n = ${n} placas independientes.\nSea X: número de placas defectuosas: X ~ Binomial(n = ${n}, p = ${p}).\nUtilizá la calculadora binomial en la Mesa de Trabajo para resolver:`,
+            `Un servidor web recibe peticiones que pueden fallar por sobrecarga con probabilidad constante p = ${p} (${(p * 100).toFixed(0)}%).\nEn una prueba de estrés se envían n = ${n} solicitudes independientes: X ~ Binomial(n = ${n}, p = ${p}).\nUtilizá la calculadora de la Mesa de Trabajo para responder:`
+        ];
+        const narrativa = contextosBinomial[Math.floor(Math.random() * contextosBinomial.length)];
+
+        return {
+            id: "disc_" + Date.now(),
+            tema: "discretas",
+            origen: "modelo",
+            titulo: `Control de Procesos y Distribución Binomial (n = ${n}, p = ${p})`,
+            dificultad: "Intermedia",
+            narrativa: narrativa,
+            preguntas: [
+                {
+                    letra: "a",
+                    texto: `Calculá el Valor Esperado o media de éxitos/fallas E(X) = n · p:`,
+                    esperado: media,
+                    tolerancia: 0.1,
+                    pista: `E(X) = n * p = ${n} * ${p}`,
+                    explicacion: `El valor esperado es E(X) = ${n} * ${p} = ${media}.`
+                },
+                {
+                    letra: "b",
+                    texto: `Calculá la probabilidad de observar exactamente k = ${k} casos: P(X = ${k}):`,
+                    esperado: pExacta,
+                    tolerancia: 0.008,
+                    pista: `Fórmula Binomial: C(${n},${k}) * (${p})^${k} * (${(1 - p).toFixed(2)})^${n - k}.`,
+                    explicacion: `P(X = ${k}) ≈ ${pExacta} (${(pExacta * 100).toFixed(2)}%).`
+                },
+                {
+                    letra: "c",
+                    texto: `¿Cuál es la probabilidad de observar a lo sumo ${k} casos: P(X ≤ ${k})?`,
+                    esperado: pAcum,
+                    tolerancia: 0.015,
+                    pista: `Sumá las probabilidades acumuladas P(0) + ... + P(${k}).`,
+                    explicacion: `P(X ≤ ${k}) ≈ ${pAcum}.`
+                },
+                {
+                    letra: "d",
+                    texto: `Calculá la probabilidad de observar al menos 1 caso: P(X ≥ 1) = 1 - P(X = 0):`,
+                    esperado: pAlMenosUno,
+                    tolerancia: 0.01,
+                    pista: `1 - (1 - ${p})^${n}`,
+                    explicacion: `P(X ≥ 1) = 1 - ${(labBinomialPMF(n, p, 0)).toFixed(4)} = ${pAlMenosUno}.`
+                }
+            ]
+        };
+    }
+}
+
+function generarEjercicioIntegralProcedural(orden = "") {
+    const examenes = [
+        {
+            titulo: "Simulacro de Examen Final: Control de Calidad y Dispersión Muestral",
+            sector: "Industria Farmacéutica",
+            narrativa: `EXAMEN FINAL DE CÁTEDRA - CASO INTEGRADOR:\nUn laboratorio farmacéutico analiza el peso efectivo en miligramos (xi) de un lote de cápsulas de antibiótico.\nSe tomó una muestra representativa con los siguientes pesos y frecuencias observadas:\n- 490 mg: 8 cápsulas\n- 495 mg: 15 cápsulas\n- 500 mg: 25 cápsulas\n- 505 mg: 18 cápsulas\n- 510 mg: 4 cápsulas\n\nCargá estos valores (xi y fi) en la tabla de frecuencias de la Mesa de Trabajo y utilizá la calculadora estadística y probabilística para responder los incisos del examen:`,
+            x: [490, 495, 500, 505, 510],
+            f: [8, 15, 25, 18, 4]
+        },
+        {
+            titulo: "Simulacro de Examen Final: Auditoría de Tiempos y Rendimiento",
+            sector: "Telecomunicaciones y Redes",
+            narrativa: `EXAMEN FINAL DE CÁTEDRA - CASO INTEGRADOR:\nUna empresa de telecomunicaciones evalúa la latencia en milisegundos (xi) de paquetes de datos transmitidos por un enlace satelital.\nLos datos observados en una muestra de auditoría son:\n- 40 ms: 12 paquetes\n- 45 ms: 22 paquetes\n- 50 ms: 30 paquetes\n- 55 ms: 20 paquetes\n- 60 ms: 6 paquetes\n\nCargá estos valores en la tabla de la Mesa de Trabajo para obtener las sumatorias y responder los incisos del examen:`,
+            x: [40, 45, 50, 55, 60],
+            f: [12, 22, 30, 20, 6]
+        }
+    ];
+
+    const sel = examenes[Math.floor(Math.random() * examenes.length)];
+    let N = 0;
+    let sumXiFi = 0;
+    let sumXi2Fi = 0;
+    for (let i = 0; i < sel.x.length; i++) {
+        N += sel.f[i];
+        sumXiFi += sel.x[i] * sel.f[i];
+        sumXi2Fi += sel.x[i] * sel.x[i] * sel.f[i];
+    }
+    const media = Number((sumXiFi / N).toFixed(2));
+    const varianza = Number(((sumXi2Fi - N * media * media) / (N - 1)).toFixed(2));
+    const desvio = Number(Math.sqrt(varianza).toFixed(2));
+    const cv = Number(((desvio / media) * 100).toFixed(2));
 
     return {
-        id: "disc_" + Date.now(),
-        tema: "discretas",
+        id: "exam_" + Date.now(),
+        tema: "integral",
         origen: "modelo",
-        titulo: "Prueba de Estrés de Servidores (Distribución Binomial)",
-        dificultad: "Intermedia",
-        narrativa: narrativa,
+        titulo: sel.titulo,
+        dificultad: "Avanzada",
+        narrativa: sel.narrativa,
         preguntas: [
             {
                 letra: "a",
-                texto: "Calculá el Valor Esperado o media de solicitudes fallidas E(X) = n · p:",
-                esperado: media,
-                tolerancia: 0.1,
-                pista: "E(X) = n * p = 10 * 0.20",
-                explicacion: `El valor esperado es E(X) = 10 * 0.20 = ${media} fallas promedio.`
+                texto: "Determina el tamaño total de la muestra analizada (N = Σ fi):",
+                esperado: N,
+                tolerancia: 0,
+                pista: "Sumá todas las frecuencias absolutas observadas (fi).",
+                explicacion: `N = Σ fi = ${N}. Podés verificarlo en la tarjeta 'Tamaño (N)'.`
             },
             {
                 letra: "b",
-                texto: "Calculá la probabilidad de que fallen exactamente k = 2 solicitudes: P(X = 2)",
-                esperado: pExacta,
-                tolerancia: 0.008,
-                pista: "P(X = 2) = C(10,2) * (0.2)^2 * (0.8)^8. Consultá la calculadora binomial con n=10, p=0.2, k=2.",
-                explicacion: `P(X = 2) = 45 * 0.04 * 0.16777 ≈ ${pExacta} (${(pExacta * 100).toFixed(2)}%).`
+                texto: "Calculá la Media Aritmética o Promedio muestral (x̄):",
+                esperado: media,
+                tolerancia: 0.1,
+                pista: `x̄ = Σ(xi · fi) / N = ${sumXiFi} / ${N}`,
+                explicacion: `x̄ = ${sumXiFi} / ${N} = ${media}.`
             },
             {
                 letra: "c",
-                texto: "¿Cuál es la probabilidad de que fallen a lo sumo 2 solicitudes: P(X ≤ 2)?",
-                esperado: pAcum,
-                tolerancia: 0.015,
-                pista: "Sumá P(X=0) + P(X=1) + P(X=2) o leé la probabilidad acumulada en el widget.",
-                explicacion: `P(X ≤ 2) = P(0) + P(1) + P(2) ≈ ${pAcum}.`
+                texto: "Calculá el Desvío Estándar Muestral (s):",
+                esperado: desvio,
+                tolerancia: 0.15,
+                pista: `s = √(s²) = √${varianza}`,
+                explicacion: `s² = ${varianza} -> s = ${desvio}.`
             },
             {
                 letra: "d",
-                texto: "Calculá la probabilidad de que falle al menos una solicitud: P(X ≥ 1) = 1 - P(X = 0):",
-                esperado: pAlMenosUno,
-                tolerancia: 0.01,
-                pista: "Regla del complemento: 1 - (0.80)^10",
-                explicacion: `P(X ≥ 1) = 1 - (0.8)^10 = 1 - 0.1074 = ${pAlMenosUno}.`
+                texto: "¿Cuál es el Coeficiente de Variación porcentual (CV%)?",
+                esperado: cv,
+                tolerancia: 0.5,
+                pista: `CV = (s / x̄) * 100 = (${desvio} / ${media}) * 100`,
+                explicacion: `CV = ${cv}%. Un CV menor al 20% suele indicar una muestra homogénea.`
+            },
+            {
+                letra: "e",
+                texto: "Si se asume distribución Normal N(μ = x̄, σ = s), ¿qué porcentaje (%) de las observaciones se espera que caigan dentro de ±1 desvío estándar de la media?",
+                esperado: 68.3,
+                tolerancia: 1.0,
+                pista: "Propiedad de la regla empírica 68-95-99.7 de la campana de Gauss: P(μ - σ ≤ X ≤ μ + σ) ≈ 68.27%.",
+                explicacion: "Por la regla empírica de Gauss, el 68.3% del área bajo la curva normal estándar cae entre -1 y +1 desviaciones típicas."
             }
         ]
     };
-}
-
-function generarEjercicioIntegralProcedural() {
-    return generarEjercicioDescriptivaProcedural();
 }
 
 // ------------------------------------------
@@ -12737,20 +13032,59 @@ function configurarEventosLaboratorio() {
             if (checkedRadio) {
                 laboratorioEstado.temaSeleccionado = checkedRadio.value;
             }
+            if (dom.labConfigOrderInput) {
+                laboratorioEstado.instruccionUsuario = dom.labConfigOrderInput.value.trim();
+            }
             cerrarModalConfigLab();
-            generarEjercicioLaboratorio(true);
+            generarEjercicioLaboratorio(true, laboratorioEstado.instruccionUsuario);
         });
     }
 
-    // Botones Header
+    // Botón Unificado "Generar Ejercicio" (Abre modal de orden / personalización)
     if (dom.labBtnGenerarConIA) {
-        dom.labBtnGenerarConIA.addEventListener("click", () => generarEjercicioLaboratorio(true));
+        dom.labBtnGenerarConIA.addEventListener("click", () => {
+            abrirModalPromptLab();
+        });
     }
-    if (dom.labBtnGenerarOtro) {
-        dom.labBtnGenerarOtro.addEventListener("click", () => generarEjercicioLaboratorio(true));
+
+    // Modal de Orden & Prompt para Ejercicios
+    if (dom.closeLabPromptModalBtn) {
+        dom.closeLabPromptModalBtn.addEventListener("click", cerrarModalPromptLab);
     }
+    if (dom.closeLabPromptModalBottomBtn) {
+        dom.closeLabPromptModalBottomBtn.addEventListener("click", cerrarModalPromptLab);
+    }
+    if (dom.labPromptModalChangeConfigBtn) {
+        dom.labPromptModalChangeConfigBtn.addEventListener("click", () => {
+            cerrarModalPromptLab();
+            abrirModalConfigLab();
+        });
+    }
+    if (dom.labBtnEjecutarGeneracion) {
+        dom.labBtnEjecutarGeneracion.addEventListener("click", () => {
+            const orden = dom.labPromptOrderInput ? dom.labPromptOrderInput.value.trim() : "";
+            laboratorioEstado.instruccionUsuario = orden;
+            cerrarModalPromptLab();
+            generarEjercicioLaboratorio(true, orden);
+        });
+    }
+    if (dom.labBtnGenerarSorpresa) {
+        dom.labBtnGenerarSorpresa.addEventListener("click", () => {
+            cerrarModalPromptLab();
+            generarEjercicioLaboratorio(true, "");
+        });
+    }
+    if (dom.labPromptOrderInput) {
+        dom.labPromptOrderInput.addEventListener("keydown", (e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                if (dom.labBtnEjecutarGeneracion) dom.labBtnEjecutarGeneracion.click();
+            }
+        });
+    }
+
     if (dom.labBtnSiguienteCasoModal) {
-        dom.labBtnSiguienteCasoModal.addEventListener("click", () => generarEjercicioLaboratorio(true));
+        dom.labBtnSiguienteCasoModal.addEventListener("click", () => generarEjercicioLaboratorio(true, laboratorioEstado.instruccionUsuario));
     }
 
     // Copiar estadísticas a portapapeles desde el panel de 7 métricas
