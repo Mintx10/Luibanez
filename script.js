@@ -8421,7 +8421,7 @@ function iniciarAplicacion() {
 // =========================================================
 // GESTOR DE VERSIONES Y ACTUALIZACIÓN AUTOMÁTICA
 // =========================================================
-const APP_BUILD_VERSION = "25.7";
+const APP_BUILD_VERSION = "25.8";
 
 async function forzarActualizacionCompleta(mostrarNotificacion = true) {
     if (mostrarNotificacion && typeof mostrarToast === "function") {
@@ -11853,7 +11853,7 @@ function activarTabLaboratorio(tabId) {
     }
 }
 
-function cambiarVistaMovilLab(vista) {
+function cambiarVistaMovilLab(vista, scrollTarget = false) {
     if (!dom.laboratorioSplit) return;
     dom.laboratorioSplit.setAttribute("data-mobile-view", vista);
 
@@ -11876,7 +11876,12 @@ function cambiarVistaMovilLab(vista) {
         }
     }
 
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    if (scrollTarget) {
+        const target = vista === "enunciado" ? (dom.labActiveCheckpointCard || dom.labPanelEnunciado) : dom.labPanelHerramientas;
+        if (target) {
+            target.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        }
+    }
 }
 
 // ==========================================

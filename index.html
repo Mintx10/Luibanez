@@ -15,10 +15,10 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     
-    <link rel="icon" type="image/svg+xml" href="icon.svg?v=25.7">
-    <link rel="apple-touch-icon" href="icon-192.png?v=25.7">
-    <link rel="manifest" href="manifest.json?v=25.7">
-    <link rel="stylesheet" href="style.css?v=25.7">
+    <link rel="icon" type="image/svg+xml" href="icon.svg?v=25.8">
+    <link rel="apple-touch-icon" href="icon-192.png?v=25.8">
+    <link rel="manifest" href="manifest.json?v=25.8">
+    <link rel="stylesheet" href="style.css?v=25.8">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -233,7 +233,7 @@
 
         <!-- Versión y botón de actualización forzada -->
         <div class="drawer-version-row" style="padding: 0.85rem 1rem; border-top: 1px solid var(--color-border); font-size: 0.75rem; color: var(--color-text-muted); display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02); margin-top: auto;">
-            <span id="drawerVersionTag" style="cursor: pointer; user-select: none;" title="Versión de Luibañez">⚡ Luibañez <strong style="color: var(--color-text);">v25.7</strong></span>
+            <span id="drawerVersionTag" style="cursor: pointer; user-select: none;" title="Versión de Luibañez">⚡ Luibañez <strong style="color: var(--color-text);">v25.8</strong></span>
             <button id="btnForzarActualizar" class="button button--ghost button--xs" type="button" style="font-size: 0.72rem; padding: 0.2rem 0.55rem; border-radius: 999px; border: 1px solid var(--color-border);" title="Limpiar caché y recargar versión más reciente">🔄 Actualizar</button>
         </div>
     </div>
@@ -2685,31 +2685,31 @@
                             <div id="labSubpanelCalc" class="lab-subpanel hidden">
                                 <div class="lab-mini-calc">
                                     <input type="text" id="labCalcScreen" class="lab-calc-screen" readonly value="0">
-                                    <div class="lab-calc-keys">
-                                        <button class="lab-ckey" data-key="clear">AC</button>
-                                        <button class="lab-ckey" data-key="del">⌫</button>
-                                        <button class="lab-ckey" data-key="sqrt">√</button>
-                                        <button class="lab-ckey" data-key="/">÷</button>
+                                     <div class="lab-calc-keys">
+                                        <button class="lab-ckey" type="button" data-key="clear">AC</button>
+                                        <button class="lab-ckey" type="button" data-key="del">⌫</button>
+                                        <button class="lab-ckey" type="button" data-key="sqrt">√</button>
+                                        <button class="lab-ckey" type="button" data-key="/">÷</button>
 
-                                        <button class="lab-ckey" data-key="7">7</button>
-                                        <button class="lab-ckey" data-key="8">8</button>
-                                        <button class="lab-ckey" data-key="9">9</button>
-                                        <button class="lab-ckey" data-key="*">×</button>
+                                        <button class="lab-ckey" type="button" data-key="7">7</button>
+                                        <button class="lab-ckey" type="button" data-key="8">8</button>
+                                        <button class="lab-ckey" type="button" data-key="9">9</button>
+                                        <button class="lab-ckey" type="button" data-key="*">×</button>
 
-                                        <button class="lab-ckey" data-key="4">4</button>
-                                        <button class="lab-ckey" data-key="5">5</button>
-                                        <button class="lab-ckey" data-key="6">6</button>
-                                        <button class="lab-ckey" data-key="-">-</button>
+                                        <button class="lab-ckey" type="button" data-key="4">4</button>
+                                        <button class="lab-ckey" type="button" data-key="5">5</button>
+                                        <button class="lab-ckey" type="button" data-key="6">6</button>
+                                        <button class="lab-ckey" type="button" data-key="-">-</button>
 
-                                        <button class="lab-ckey" data-key="1">1</button>
-                                        <button class="lab-ckey" data-key="2">2</button>
-                                        <button class="lab-ckey" data-key="3">3</button>
-                                        <button class="lab-ckey" data-key="+">+</button>
+                                        <button class="lab-ckey" type="button" data-key="1">1</button>
+                                        <button class="lab-ckey" type="button" data-key="2">2</button>
+                                        <button class="lab-ckey" type="button" data-key="3">3</button>
+                                        <button class="lab-ckey" type="button" data-key="+">+</button>
 
-                                        <button class="lab-ckey" data-key="0">0</button>
-                                        <button class="lab-ckey" data-key=".">.</button>
-                                        <button class="lab-ckey" data-key="pow">x²</button>
-                                        <button class="lab-ckey lab-ckey--equals" data-key="=">=</button>
+                                        <button class="lab-ckey" type="button" data-key="0">0</button>
+                                        <button class="lab-ckey" type="button" data-key=".">.</button>
+                                        <button class="lab-ckey" type="button" data-key="pow">x²</button>
+                                        <button class="lab-ckey lab-ckey--equals" type="button" data-key="=">=</button>
                                     </div>
                                 </div>
                             </div>
@@ -3344,7 +3344,7 @@
 </dialog>
 
 <script src="mqtt.min.js"></script>
-<script src="script.js?v=25.7" defer></script>
+<script src="script.js?v=25.8" defer></script>
 
 <!-- =========================================================
      MODAL DE PROMPT PARA GEMINI (CREAR JUEGOS DESDE PDF)
