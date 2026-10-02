@@ -546,14 +546,30 @@ const dom = {
     dueloGradeAyudaBtn: document.getElementById("dueloGradeAyudaBtn"),
     dueloGradePasoBtn: document.getElementById("dueloGradePasoBtn"),
 
+    /* Fase, Roles y Controles del Turno */
+    dueloTurnPhaseBadge: document.getElementById("dueloTurnPhaseBadge"),
+    dueloActiveTopicDesc: document.getElementById("dueloActiveTopicDesc"),
+    dueloTurnRoleNotice: document.getElementById("dueloTurnRoleNotice"),
+    dueloRoleNoticeIcon: document.getElementById("dueloRoleNoticeIcon"),
+    dueloRoleNoticeText: document.getElementById("dueloRoleNoticeText"),
+    dueloOradorControlBar: document.getElementById("dueloOradorControlBar"),
+    dueloOradorFinishBtn: document.getElementById("dueloOradorFinishBtn"),
+    dueloOradorConcedeBtn: document.getElementById("dueloOradorConcedeBtn"),
+
     /* Votación Individual Online */
     dueloOnlineVoteBox: document.getElementById("dueloOnlineVoteBox"),
+    dueloOnlineVoteActions: document.getElementById("dueloOnlineVoteActions"),
+    dueloOradorWaitingVotesBox: document.getElementById("dueloOradorWaitingVotesBox"),
     dueloVoteTargetPlayerName: document.getElementById("dueloVoteTargetPlayerName"),
     dueloOnlineVote10Btn: document.getElementById("dueloOnlineVote10Btn"),
     dueloOnlineVote5Btn: document.getElementById("dueloOnlineVote5Btn"),
     dueloOnlineVote0Btn: document.getElementById("dueloOnlineVote0Btn"),
     dueloOnline10PtsLabel: document.getElementById("dueloOnline10PtsLabel"),
     dueloLiveVoteChips: document.getElementById("dueloLiveVoteChips"),
+    dueloVoteResultSummary: document.getElementById("dueloVoteResultSummary"),
+    dueloVoteResultText: document.getElementById("dueloVoteResultText"),
+    dueloHostNextSpinArea: document.getElementById("dueloHostNextSpinArea"),
+    dueloHostNextSpinBtn: document.getElementById("dueloHostNextSpinBtn"),
 
     /* Robo Relámpago Local & Online */
     dueloRoboBox: document.getElementById("dueloRoboBox"),
@@ -3549,6 +3565,23 @@ function procesarMensajeMqttSala(data) {
         actualizarCronometroTurnoDueloUI();
     }
 
+    // 6.1 Fin de Exposición Oral (Pasa a votación)
+    if (data.tipo === "FIN_EXPOSICION_ORAL") {
+        transicionarAVotacionDuelo(data.jugadorId);
+    }
+
+    // 6.2 Orador cede el turno voluntariamente (0 pts y Robo Relámpago inmediato)
+    if (data.tipo === "CEDER_TURNO_ORADOR") {
+        ejecutarCederTurnoOrador(data.jugadorId);
+    }
+
+    // 6.3 Avance a la siguiente ronda ordenado por el host
+    if (data.tipo === "AVANZAR_SIGUIENTE_RONDA") {
+        if (!onlineDueloEstado.esHost) {
+            avanzarSiguienteTemaDuelo();
+        }
+    }
+
     // 7. Voto emitido por un dispositivo
     if (data.tipo === "VOTO_EMITIDO") {
         if (data.votanteId !== perfilUsuario.id) {
@@ -3671,7 +3704,161 @@ function arrancarBolilleroOnlineCliente(data) {
     }
 
     if (dom.dueloLocalEvalSection) dom.dueloLocalEvalSection.classList.add("hidden");
-    if (dom.dueloOnlineVoteBox) dom.dueloOnlineVoteBox.classList.remove("hidden");
+    if (dom.dueloOnlineVoteBox) dom.dueloOnlineVoteBox.classList.add("hidden");
+}
+
+// Extractor inteligente de temas y ejes orales de examen para Bolillero
+function extraerEjesTematicosBolillero(texto, materiaNombre = "Materia de Estudio", count = 12) {
+    const fallbackTemas = [
+        {
+            titulo: "Evaluación de Inversiones y Métodos VAN / TIR",
+            guia: "Explicá cómo se evalúa la rentabilidad de un proyecto, la diferencia conceptual entre VAN y TIR, y cuándo se acepta o rechaza una inversión."
+        },
+        {
+            titulo: "Costos Fijos, Variables y Punto de Equilibrio",
+            guia: "Definí la clasificación de costos, margen de contribución unitario y cómo calcular el nivel de actividad que cubre los costos totales."
+        },
+        {
+            titulo: "Estados Contables y Principio de Partida Doble",
+            guia: "Desarrollá los componentes del Balance General y Estado de Resultados, y la ecuación patrimonial fundamental (Activo = Pasivo + PN)."
+        },
+        {
+            titulo: "Estructura del Sistema Financiero y Tasas de Interés",
+            guia: "Analizá el rol de la intermediación bancaria, política monetaria del BCRA y el impacto de la tasa activa y pasiva en la economía."
+        },
+        {
+            titulo: "Mercados Competitivos vs. Monopolio y Oligopolio",
+            guia: "Compará la fijación de precios, curvas de ingreso marginal, barreras a la entrada y eficiencia en la asignación de recursos."
+        },
+        {
+            titulo: "Inflación, Tipo de Cambio y Poder Adquisitivo",
+            guia: "Explicá las causas monetarias y estructurales del fenómeno inflacionario, su impacto en salarios reales y competitividad externa."
+        },
+        {
+            titulo: "Planificación Estratégica y Matriz FODA",
+            guia: "Detallá cómo diagnosticar fortalezas, debilidades, oportunidades y amenazas para formular ventajas competitivas sostenibles."
+        },
+        {
+            titulo: "Gestión del Capital de Trabajo y Ciclo Operativo",
+            guia: "Explicá la administración de créditos comerciales, rotación de inventarios y proveedores para garantizar solvencia y liquidez corriente."
+        },
+        {
+            titulo: "Sistemas de Información y Bases de Datos (ACID)",
+            guia: "Desarrollá el modelo relacional, normalización de tablas y los principios de atomicidad, consistencia, aislamiento y durabilidad."
+        },
+        {
+            titulo: "Contratos Comerciales y Responsabilidad Jurídica",
+            guia: "Explicá los elementos esenciales de un contrato válido, consecuencias del incumplimiento, caso fortuito y resarcimiento."
+        },
+        {
+            titulo: "Financiamiento Empresarial: Acciones vs. Deuda",
+            guia: "Analizá el costo medio ponderado de capital (WACC), el apalancamiento financiero y el equilibrio de riesgo de insolvencia."
+        },
+        {
+            titulo: "Comercio Internacional y Ventajas Comparativas",
+            guia: "Explicá el modelo de costos de oportunidad, aranceles, términos de intercambio y balanza de pagos."
+        }
+    ];
+
+    if (!texto || typeof texto !== "string" || texto.trim().length < 60) {
+        return fallbackTemas.slice(0, count).map((t, idx) => ({
+            id: `eje_fb_${idx + 1}`,
+            titulo: t.titulo,
+            palabra: t.titulo,
+            nombre: t.titulo,
+            guia: t.guia,
+            explicacion: t.guia
+        }));
+    }
+
+    const lineas = texto.split("\n").map(l => l.trim()).filter(l => l.length > 3);
+    const candidatos = [];
+    const vistos = new Set();
+
+    const unidadRegex = /^(?:Unidad|Bolilla|Eje|Capítulo|Módulo|Tema|Parte)\s*\d+[\s:\-–—]+(.+)$/i;
+    const numTituloRegex = /^[0-9]{1,2}[\.\)]\s+([A-ZÁÉÍÓÚÑ][\w\s,–—\-]{6,65})$/;
+    const defRegex = /^([A-ZÁÉÍÓÚÑ][A-Za-zÁÉÍÓÚáéíóúñÑ0-9\s\(\)\/]{4,50})[:–—]\s*(.{15,})$/;
+    const bulletRegex = /^[\u2022\-\*\u2013\u2014]\s*([A-ZÁÉÍÓÚÑ][\w\s,–—\-]{6,55})$/;
+
+    for (const linea of lineas) {
+        if (linea.toLowerCase().startsWith("página") || linea.toLowerCase().startsWith("page")) continue;
+        if (/^https?:\/\//i.test(linea)) continue;
+
+        let titulo = null;
+        let guia = null;
+
+        const uMatch = linea.match(unidadRegex);
+        if (uMatch && uMatch[1].trim().length >= 5) {
+            titulo = uMatch[1].trim().replace(/[.;:]$/, "");
+            guia = `Eje temático de examen extraído del programa. Desarrollá los conceptos principales de ${titulo}.`;
+        } else {
+            const numMatch = linea.match(numTituloRegex);
+            if (numMatch && numMatch[1].trim().length >= 6) {
+                titulo = numMatch[1].trim().replace(/[.;:]$/, "");
+                guia = `Explicá los fundamentos teóricos, alcances y aplicaciones prácticas de: ${titulo}.`;
+            } else {
+                const defMatch = linea.match(defRegex);
+                if (defMatch) {
+                    const concepto = defMatch[1].trim();
+                    const palabras = concepto.split(/\s+/);
+                    if (palabras.length >= 1 && palabras.length <= 6) {
+                        titulo = concepto;
+                        const primeraOracion = defMatch[2].split(/[.?!]/)[0].trim();
+                        guia = (primeraOracion.length > 20 && primeraOracion.length < 130)
+                            ? `Definición en material: "${primeraOracion}." Desarrollá sus implicancias.`
+                            : `Definí y explicá los aspectos clave de ${concepto} según el texto.`;
+                    }
+                } else {
+                    const bMatch = linea.match(bulletRegex);
+                    if (bMatch) {
+                        const contenido = bMatch[1].trim().replace(/[.;:]$/, "");
+                        const words = contenido.split(/\s+/);
+                        if (words.length >= 2 && words.length <= 6) {
+                            titulo = contenido;
+                            guia = `Desarrollá este concepto del material: ${contenido}.`;
+                        }
+                    }
+                }
+            }
+        }
+
+        if (titulo && titulo.length >= 4) {
+            titulo = titulo.replace(/^[\d\.\-\)\s]+/, "").trim();
+            const numPalabras = titulo.split(/\s+/).length;
+            if (numPalabras === 1 && titulo.length < 11) {
+                titulo = `Fundamentos y Análisis de ${titulo}`;
+            }
+
+            const claveNorm = titulo.toLowerCase();
+            if (!vistos.has(claveNorm) && titulo.length <= 65) {
+                vistos.add(claveNorm);
+                candidatos.push({
+                    titulo: titulo.charAt(0).toUpperCase() + titulo.slice(1),
+                    guia: guia || `Desarrollá los conceptos centrales y relaciones prácticas de: ${titulo}.`
+                });
+            }
+        }
+    }
+
+    if (candidatos.length < count) {
+        for (const fb of fallbackTemas) {
+            const claveFb = fb.titulo.toLowerCase();
+            if (!vistos.has(claveFb)) {
+                vistos.add(claveFb);
+                candidatos.push(fb);
+                if (candidatos.length >= count) break;
+            }
+        }
+    }
+
+    return candidatos.slice(0, count).map((item, idx) => ({
+        id: `eje_${idx + 1}_${Date.now()}`,
+        titulo: item.titulo,
+        palabra: item.titulo,
+        nombre: item.titulo,
+        guia: item.guia,
+        explicacion: item.guia
+    }));
 }
 
 async function iniciarCombateOnlineDesdeHost() {
@@ -3696,35 +3883,26 @@ async function iniciarCombateOnlineDesdeHost() {
     let temasDisponibles = [];
 
     if ((listaId === "pdf_global" || onlineDueloEstado.fuenteMaterial === "pdf") && apunte && apunte.texto) {
-        const conceptos = extraerConceptosHeuristicos(apunte.texto, 15);
-        if (conceptos.length > 0) {
-            temasDisponibles = conceptos.map((c, idx) => ({
-                id: `t_pdf_${idx + 1}`,
-                titulo: c,
-                palabra: c,
-                nombre: c,
-                explicacion: `Concepto clave extraído de ${apunte.nombre}`
-            }));
+        temasDisponibles = extraerEjesTematicosBolillero(apunte.texto, apunte.nombre, 15);
+    } else {
+        const lista = estado.listas.find(l => l.id === listaId) || estado.listas[0];
+        if (lista && lista.temas && lista.temas.length > 0) {
+            temasDisponibles = lista.temas.map(t => {
+                const nom = t.titulo || t.palabra || t.nombre || "Tema";
+                return {
+                    ...t,
+                    id: t.id || crypto.randomUUID(),
+                    titulo: nom,
+                    palabra: nom,
+                    nombre: nom,
+                    guia: t.descripcion || t.explicacion || `Desarrollá los conceptos principales, aplicaciones y relaciones de: ${nom}.`
+                };
+            });
         }
     }
 
     if (temasDisponibles.length === 0) {
-        const lista = estado.listas.find(l => l.id === listaId) || estado.listas[0];
-        temasDisponibles = (lista && lista.temas && lista.temas.length > 0)
-            ? lista.temas.map(t => {
-                const nom = t.titulo || t.palabra || t.nombre || "Tema";
-                return { ...t, titulo: nom, palabra: nom, nombre: nom };
-            })
-            : [
-                { id: "t1", titulo: "Teoría General de Sistemas", palabra: "Teoría General de Sistemas", nombre: "Teoría General de Sistemas", explicacion: "Enfoque holístico de sistemas interconectados." },
-                { id: "t2", titulo: "Axiomas de Comunicación", palabra: "Axiomas de Comunicación", nombre: "Axiomas de Comunicación", explicacion: "Principios de Paul Watzlawick sobre interacción." },
-                { id: "t3", titulo: "Leyes de la Termodinámica", palabra: "Leyes de la Termodinámica", nombre: "Leyes de la Termodinámica", explicacion: "Conservación de la energía y entropía." },
-                { id: "t4", titulo: "Principio de Indeterminación", palabra: "Principio de Indeterminación", nombre: "Principio de Indeterminación", explicacion: "Límite de precisión cuántica de Heisenberg." },
-                { id: "t5", titulo: "Estructuras de Datos", palabra: "Estructuras de Datos", nombre: "Estructuras de Datos", explicacion: "Organización y manipulación de datos en memoria." },
-                { id: "t6", titulo: "Recursión y Algoritmos", palabra: "Recursión y Algoritmos", nombre: "Recursión y Algoritmos", explicacion: "Resolución de problemas mediante subproblemas." },
-                { id: "t7", titulo: "Arquitectura de Software", palabra: "Arquitectura de Software", nombre: "Arquitectura de Software", explicacion: "Patrones y diseño de componentes de sistemas." },
-                { id: "t8", titulo: "Bases de Datos Relacionales", palabra: "Bases de Datos Relacionales", nombre: "Bases de Datos Relacionales", explicacion: "Modelo entidad-relación y álgebra relacional." }
-            ];
+        temasDisponibles = extraerEjesTematicosBolillero("", "General", 12);
     }
 
     const payload = {
@@ -4126,12 +4304,139 @@ async function ejecutarAnimacionRuletaSincronizada(jugadorGanador, temaGanador, 
     }, 450);
 }
 
+/* ==========================================================
+   TRANSICIÓN Y FASE DE VOTACIÓN / CALIFICACIÓN
+   ========================================================== */
+
+function transicionarAVotacionDuelo(jugadorId) {
+    const partida = dueloEstado.partida;
+    pausarCronometroTurnoDuelo();
+
+    if (dom.dueloTurnPhaseBadge) {
+        dom.dueloTurnPhaseBadge.textContent = "🗳️ Fase de Calificación";
+        dom.dueloTurnPhaseBadge.style.background = "rgba(99, 102, 241, 0.25)";
+        dom.dueloTurnPhaseBadge.style.color = "#a5b4fc";
+    }
+
+    // Ocultar controles del orador durante la calificación
+    if (dom.dueloOradorControlBar) dom.dueloOradorControlBar.classList.add("hidden");
+
+    const jugador = partida.jugadores.find(j => j.id === jugadorId);
+    const nomJugador = jugador ? (jugador.apodo || jugador.nombre) : "Jugador";
+    if (dom.dueloVoteTargetPlayerName) dom.dueloVoteTargetPlayerName.textContent = nomJugador;
+
+    // Resetear estados y chips de votación
+    onlineDueloEstado.votoEmitido = false;
+    onlineDueloEstado.votosRecibidos = {};
+    if (dom.dueloLiveVoteChips) dom.dueloLiveVoteChips.innerHTML = "";
+    if (dom.dueloVoteResultSummary) dom.dueloVoteResultSummary.classList.add("hidden");
+    if (dom.dueloHostNextSpinArea) dom.dueloHostNextSpinArea.classList.add("hidden");
+
+    [dom.dueloOnlineVote10Btn, dom.dueloOnlineVote5Btn, dom.dueloOnlineVote0Btn].forEach(b => {
+        if (b) {
+            b.disabled = false;
+            b.classList.remove("is-selected");
+        }
+    });
+
+    // En Modo Online: Revelar caja de votación
+    if (onlineDueloEstado.modo === "online" && onlineDueloEstado.codigoSala) {
+        if (dom.dueloOnlineVoteBox) dom.dueloOnlineVoteBox.classList.remove("hidden");
+        const soyOrador = (jugadorId === perfilUsuario.id);
+
+        if (soyOrador) {
+            // El orador espera las notas de sus compañeros
+            if (dom.dueloOnlineVoteActions) dom.dueloOnlineVoteActions.classList.add("hidden");
+            if (dom.dueloOradorWaitingVotesBox) dom.dueloOradorWaitingVotesBox.classList.remove("hidden");
+        } else {
+            // Los oyentes emiten su calificación
+            if (dom.dueloOnlineVoteActions) dom.dueloOnlineVoteActions.classList.remove("hidden");
+            if (dom.dueloOradorWaitingVotesBox) dom.dueloOradorWaitingVotesBox.classList.add("hidden");
+        }
+    } else {
+        // En Modo Local (un solo dispositivo)
+        if (dom.dueloLocalEvalSection) dom.dueloLocalEvalSection.classList.remove("hidden");
+    }
+}
+
+// Orador presiona "Terminé de Exponer"
+function finalizarExposicionOralDesdeOrador() {
+    const partida = dueloEstado.partida;
+    if (partida.jugadorActualId !== perfilUsuario.id) return;
+
+    pausarCronometroTurnoDuelo();
+    reproducirSonidoDuelo("fanfare");
+
+    if (onlineDueloEstado.modo === "online" && onlineDueloEstado.codigoSala) {
+        publicarMensajeSala({
+            tipo: "FIN_EXPOSICION_ORAL",
+            jugadorId: perfilUsuario.id
+        });
+    }
+    transicionarAVotacionDuelo(perfilUsuario.id);
+}
+
+// Orador presiona "No sé qué decir / Ceder Turno"
+function cederTurnoOradorDesdeOrador() {
+    const partida = dueloEstado.partida;
+    if (partida.jugadorActualId !== perfilUsuario.id) return;
+
+    const seguro = confirm("¿Querés ceder tu turno? Se registrarán 0 puntos y se habilitará el Robo Relámpago inmediato para tus rivales.");
+    if (!seguro) return;
+
+    pausarCronometroTurnoDuelo();
+    reproducirSonidoDuelo("buzzer");
+
+    if (onlineDueloEstado.modo === "online" && onlineDueloEstado.codigoSala) {
+        publicarMensajeSala({
+            tipo: "CEDER_TURNO_ORADOR",
+            jugadorId: perfilUsuario.id
+        });
+    }
+    ejecutarCederTurnoOrador(perfilUsuario.id);
+}
+
+// Ejecuta la cesión de turno (0 pts y disparo de Robo Relámpago)
+function ejecutarCederTurnoOrador(jugadorId) {
+    const partida = dueloEstado.partida;
+    pausarCronometroTurnoDuelo();
+
+    const jugador = partida.jugadores.find(j => j.id === jugadorId);
+    const nomJugador = jugador ? (jugador.apodo || jugador.nombre) : "El orador";
+
+    if (dom.dueloOradorControlBar) dom.dueloOradorControlBar.classList.add("hidden");
+    if (dom.dueloOnlineVoteBox) dom.dueloOnlineVoteBox.classList.add("hidden");
+    if (dom.dueloLocalEvalSection) dom.dueloLocalEvalSection.classList.add("hidden");
+
+    if (jugador) {
+        jugador.rachaActual = 0;
+    }
+    agregarRegistroTurnoDuelo(`🏳️ ${nomJugador} no supo qué responder y cedió su turno (0 pts)`, 0);
+
+    // Activar inmediatamente Robo Relámpago para los demás
+    const otrosJugadores = partida.jugadores.filter(j => j.id !== jugadorId);
+    if (dueloEstado.config.reglas.roboRelampago && otrosJugadores.length > 0) {
+        iniciarRoboRelampago(otrosJugadores);
+    } else {
+        avanzarSiguienteTemaDuelo();
+    }
+}
+
+// El Host pulsa "Siguiente Ronda / Sorteo" tras la votación
+function hostAvanzarSiguienteRondaDuelo() {
+    if (!onlineDueloEstado.esHost) return;
+    publicarMensajeSala({
+        tipo: "AVANZAR_SIGUIENTE_RONDA"
+    });
+    avanzarSiguienteTemaDuelo();
+}
+
 /* Votación Individual Online */
 function emitirVotoOnline(votoValor) {
     if (onlineDueloEstado.votoEmitido) return;
     onlineDueloEstado.votoEmitido = true;
 
-    // Deshabilitar botones de voto temporalmente
+    // Deshabilitar botones de voto temporalmente y marcar el seleccionado
     [dom.dueloOnlineVote10Btn, dom.dueloOnlineVote5Btn, dom.dueloOnlineVote0Btn].forEach(b => {
         if (b) b.disabled = true;
     });
@@ -4139,18 +4444,18 @@ function emitirVotoOnline(votoValor) {
     const payload = {
         tipo: "VOTO_EMITIDO",
         votanteId: perfilUsuario.id,
-        votanteNombre: perfilUsuario.apodo,
+        votanteNombre: perfilUsuario.apodo || perfilUsuario.nombre,
         voto: votoValor
     };
 
     publicarMensajeSala(payload);
-    procesarVotoOnlineRecibido(perfilUsuario.id, perfilUsuario.apodo, votoValor);
+    procesarVotoOnlineRecibido(perfilUsuario.id, perfilUsuario.apodo || perfilUsuario.nombre, votoValor);
 }
 
 function procesarVotoOnlineRecibido(votanteId, votanteNombre, voto) {
-    onlineDueloEstado.votosRecibidos[votanteId] = voto;
+    onlineDueloEstado.votosRecibidos[votanteId] = { nombre: votanteNombre, voto };
 
-    // Renderizar chips de votos en pantalla
+    // Renderizar chips de votos en pantalla de todos en tiempo real
     if (dom.dueloLiveVoteChips) {
         const chipId = `vote_chip_${votanteId}`;
         let chip = document.getElementById(chipId);
@@ -4160,31 +4465,31 @@ function procesarVotoOnlineRecibido(votanteId, votanteNombre, voto) {
             chip.className = "duelo-vote-chip";
             dom.dueloLiveVoteChips.appendChild(chip);
         }
-        const emojiVoto = voto === 10 ? "🟢 +10" : voto === 5 ? "🟡 +5" : "🔴 0";
-        chip.textContent = `${votanteNombre}: ${emojiVoto}`;
+        const emojiVoto = voto === 10 ? "🟢 +10 pts (Impecable)" : voto === 5 ? "🟡 +5 pts (Con ayuda)" : "🔴 0 pts (A repasar)";
+        chip.innerHTML = `<strong>${votanteNombre}:</strong> ${emojiVoto}`;
     }
 
-    // Si es el host, verificar si todos votaron
+    // Si es el host, verificar si todos los votantes esperados ya votaron
     if (onlineDueloEstado.esHost) {
-        const totalJugadores = dueloEstado.partida.jugadores.length;
+        const otrosJugadores = dueloEstado.partida.jugadores.filter(j => j.id !== dueloEstado.partida.jugadorActualId);
+        const totalVotantesEsperados = Math.max(1, otrosJugadores.length);
         const totalVotos = Object.keys(onlineDueloEstado.votosRecibidos).length;
 
-        // Si ya votó la mayoría de los rivales (o pasaron 10s), computar
-        if (totalVotos >= Math.max(1, totalJugadores - 1)) {
+        if (totalVotos >= totalVotantesEsperados) {
             computarResultadoVotacionOnline();
         }
     }
 }
 
 function computarResultadoVotacionOnline() {
-    const votos = Object.values(onlineDueloEstado.votosRecibidos);
-    if (votos.length === 0) return;
+    const votosObj = Object.values(onlineDueloEstado.votosRecibidos);
+    if (votosObj.length === 0) return;
 
-    // Ponderación de voto mayoritario
     let count10 = 0, count5 = 0, count0 = 0;
-    votos.forEach(v => {
-        if (v === 10) count10++;
-        else if (v === 5) count5++;
+    votosObj.forEach(v => {
+        const val = typeof v === "object" ? v.voto : v;
+        if (val === 10) count10++;
+        else if (val === 5) count5++;
         else count0++;
     });
 
@@ -4197,7 +4502,10 @@ function computarResultadoVotacionOnline() {
 
     const payload = {
         tipo: "RESULTADO_VOTACION",
-        decision
+        decision,
+        count10,
+        count5,
+        count0
     };
 
     publicarMensajeSala(payload);
@@ -4205,16 +4513,29 @@ function computarResultadoVotacionOnline() {
 }
 
 function aplicarResultadoVotacionOnline(data) {
-    // Resetear estado de votación
-    onlineDueloEstado.votoEmitido = false;
-    onlineDueloEstado.votosRecibidos = {};
-    if (dom.dueloLiveVoteChips) dom.dueloLiveVoteChips.innerHTML = "";
-    [dom.dueloOnlineVote10Btn, dom.dueloOnlineVote5Btn, dom.dueloOnlineVote0Btn].forEach(b => {
-        if (b) b.disabled = false;
-    });
+    const partida = dueloEstado.partida;
+    const jugador = partida.jugadores.find(j => j.id === partida.jugadorActualId);
+    const nomJugador = jugador ? (jugador.apodo || jugador.nombre) : "El orador";
 
-    // Calificar turno con la decisión consensuada
-    calificarTurnoDuelo(data.decision);
+    let textoResumen = "";
+    if (data.decision === "impecable") {
+        textoResumen = `🟢 Consenso de la sala: ¡Exposición Impecable! (+10 pts para ${nomJugador})`;
+    } else if (data.decision === "ayuda") {
+        textoResumen = `🟡 Consenso de la sala: Explicó con dudas/ayuda (+5 pts para ${nomJugador})`;
+    } else {
+        textoResumen = `🔴 Consenso de la sala: No completó el tema (0 pts para ${nomJugador}). ¡Se activa Robo Relámpago!`;
+    }
+
+    if (dom.dueloVoteResultText) dom.dueloVoteResultText.textContent = textoResumen;
+    if (dom.dueloVoteResultSummary) dom.dueloVoteResultSummary.classList.remove("hidden");
+
+    // Si es host y no es paso, habilitar botón de sorteo siguiente
+    if (onlineDueloEstado.esHost && data.decision !== "paso") {
+        if (dom.dueloHostNextSpinArea) dom.dueloHostNextSpinArea.classList.remove("hidden");
+    }
+
+    // Calificar turno con la decisión consensuada (diferir avance para ver resultados)
+    calificarTurnoDuelo(data.decision, true);
 }
 
 /* Robo Relámpago Online */
@@ -4873,6 +5194,52 @@ function prepararTurnoActivoDuelo(jugador, tema) {
     if (dom.dueloTurnPlayerName) dom.dueloTurnPlayerName.textContent = jugador.apodo || jugador.nombre || "Jugador";
     if (dom.dueloActiveTopicTitle) dom.dueloActiveTopicTitle.textContent = (tema && (tema.titulo || tema.palabra || tema.nombre)) ? (tema.titulo || tema.palabra || tema.nombre) : "Tema Asignado";
 
+    // Descripción / Guía del Eje Temático
+    if (dom.dueloActiveTopicDesc) {
+        dom.dueloActiveTopicDesc.textContent = (tema && (tema.guia || tema.explicacion))
+            ? (tema.guia || tema.explicacion)
+            : "Desarrollá los conceptos principales, aplicaciones y relaciones de este tema oralmente.";
+    }
+
+    // Badge de Fase: Exposición Oral en Vivo
+    if (dom.dueloTurnPhaseBadge) {
+        dom.dueloTurnPhaseBadge.textContent = "🎙️ Exposición en Vivo";
+        dom.dueloTurnPhaseBadge.style.background = "rgba(16, 185, 129, 0.2)";
+        dom.dueloTurnPhaseBadge.style.color = "#6ee7b7";
+    }
+
+    // Indicador Dinámico de Rol: Orador vs Oyente
+    const soyOrador = (jugador.id === perfilUsuario.id);
+    if (dom.dueloTurnRoleNotice) {
+        dom.dueloTurnRoleNotice.classList.remove("hidden");
+        if (soyOrador) {
+            dom.dueloTurnRoleNotice.className = "duelo-turn-role-notice is-speaker";
+            if (dom.dueloRoleNoticeIcon) dom.dueloRoleNoticeIcon.textContent = "🎙️";
+            if (dom.dueloRoleNoticeText) dom.dueloRoleNoticeText.innerHTML = "<strong>¡Es tu turno de exponer!</strong> Tenés el micrófono: explicá el tema a tus compañeros hasta terminar el tiempo o pulsar terminar.";
+        } else {
+            dom.dueloTurnRoleNotice.className = "duelo-turn-role-notice is-listener";
+            if (dom.dueloRoleNoticeIcon) dom.dueloRoleNoticeIcon.textContent = "👂";
+            const nomOrador = jugador.apodo || jugador.nombre || "Jugador";
+            if (dom.dueloRoleNoticeText) dom.dueloRoleNoticeText.innerHTML = `<strong>Escuchando a ${nomOrador}...</strong> Prestá atención para calificar su exposición cuando termine o intentar robar si pasa.`;
+        }
+    }
+
+    // Barra de control del orador (Terminé / No sé qué decir)
+    if (dom.dueloOradorControlBar) {
+        if (soyOrador) {
+            dom.dueloOradorControlBar.classList.remove("hidden");
+        } else {
+            dom.dueloOradorControlBar.classList.add("hidden");
+        }
+    }
+
+    // Ocultar cajas de votación y evaluación durante la exposición (aparecen solo al final)
+    if (dom.dueloOnlineVoteBox) dom.dueloOnlineVoteBox.classList.add("hidden");
+    if (dom.dueloLocalEvalSection) dom.dueloLocalEvalSection.classList.add("hidden");
+    if (dom.dueloVoteResultSummary) dom.dueloVoteResultSummary.classList.add("hidden");
+    if (dom.dueloHostNextSpinArea) dom.dueloHostNextSpinArea.classList.add("hidden");
+    if (dom.dueloLiveVoteChips) dom.dueloLiveVoteChips.innerHTML = "";
+
     // Racha de Fuego
     const tieneRacha = dueloEstado.config.reglas.rachaFuego && jugador.rachaActual >= 2;
     if (dom.dueloTurnStreakBadge) {
@@ -4898,7 +5265,7 @@ function prepararTurnoActivoDuelo(jugador, tema) {
         if (partida.esCoop) {
             dom.dueloBtnRelevoCoop.classList.remove("hidden");
             // Solo lo puede pulsar el orador activo
-            dom.dueloBtnRelevoCoop.disabled = jugador.id !== perfilUsuario.id;
+            dom.dueloBtnRelevoCoop.disabled = !soyOrador;
         } else {
             dom.dueloBtnRelevoCoop.classList.add("hidden");
         }
@@ -4915,6 +5282,7 @@ function prepararTurnoActivoDuelo(jugador, tema) {
         const grade0Name = dom.dueloOnlineVote0Btn ? dom.dueloOnlineVote0Btn.querySelector(".duelo-grade-name") : null;
         if (grade0Name) grade0Name.textContent = "-1 Vida (Repasar)";
     } else {
+        if (dom.dueloVoteTargetPlayerName) dom.dueloVoteTargetPlayerName.textContent = jugador.nombre || jugador.apodo;
         if (dom.dueloOnline10PtsLabel) dom.dueloOnline10PtsLabel.textContent = "+10 pts";
         const grade10Name = dom.dueloOnlineVote10Btn ? dom.dueloOnlineVote10Btn.querySelector(".duelo-grade-name") : null;
         if (grade10Name) grade10Name.textContent = "¡Impecable!";
@@ -4976,6 +5344,19 @@ function iniciarCronometroTurnoDuelo() {
             actualizarCronometroTurnoDueloUI();
             pausarCronometroTurnoDuelo();
             reproducirSonidoDuelo("buzzer");
+            
+            // Tiempo agotado: pasar a fase de calificación / votación
+            if (onlineDueloEstado.modo === "online" && onlineDueloEstado.codigoSala) {
+                if (onlineDueloEstado.esHost) {
+                    publicarMensajeSala({
+                        tipo: "FIN_EXPOSICION_ORAL",
+                        jugadorId: partida.jugadorActualId
+                    });
+                    transicionarAVotacionDuelo(partida.jugadorActualId);
+                }
+            } else {
+                transicionarAVotacionDuelo(partida.jugadorActualId);
+            }
         }
     }, 1000);
 }
@@ -5103,7 +5484,7 @@ function usarComodinPaso() {
 }
 
 /* Calificación de Turno & Robo Relámpago */
-function calificarTurnoDuelo(tipo) {
+function calificarTurnoDuelo(tipo, diferirAvanzar = false) {
     const partida = dueloEstado.partida;
     const jugador = partida.jugadores.find(j => j.id === partida.jugadorActualId);
     if (!jugador) return;
@@ -5152,7 +5533,9 @@ function calificarTurnoDuelo(tipo) {
             return;
         }
 
-        avanzarSiguienteTemaDuelo();
+        if (!diferirAvanzar) {
+            avanzarSiguienteTemaDuelo();
+        }
         return;
     }
 
@@ -5184,7 +5567,10 @@ function calificarTurnoDuelo(tipo) {
             }
         }
 
-        avanzarSiguienteTemaDuelo();
+        actualizarMarcadorDueloUI();
+        if (!diferirAvanzar) {
+            avanzarSiguienteTemaDuelo();
+        }
     } else if (tipo === "ayuda") {
         if (partida.comodinActivo === "socorro" && partida.jugadorSocorroId) {
             const comp = partida.jugadores.find(j => j.id === partida.jugadorSocorroId);
@@ -5199,17 +5585,23 @@ function calificarTurnoDuelo(tipo) {
             reproducirSonidoDuelo("beep");
         }
 
-        avanzarSiguienteTemaDuelo();
+        actualizarMarcadorDueloUI();
+        if (!diferirAvanzar) {
+            avanzarSiguienteTemaDuelo();
+        }
     } else if (tipo === "paso") {
         jugador.rachaActual = 0;
         agregarRegistroTurnoDuelo(`🔴 ${nomJugador} pasó / no supo el tema (0 pts)`, 0);
+        actualizarMarcadorDueloUI();
 
         // Comprobar si se activa el Robo Relámpago
         const otrosJugadores = partida.jugadores.filter(j => j.id !== jugador.id);
         if (dueloEstado.config.reglas.roboRelampago && otrosJugadores.length > 0) {
             iniciarRoboRelampago(otrosJugadores);
         } else {
-            avanzarSiguienteTemaDuelo();
+            if (!diferirAvanzar) {
+                avanzarSiguienteTemaDuelo();
+            }
         }
     }
 }
@@ -6334,23 +6726,12 @@ function extraerConceptosHeuristicos(texto, count = 10) {
         }
     }
     
-    // Si aún faltan palabras para alcanzar 'count', buscamos palabras clave con frecuencia en todo el texto
+    // Si aún faltan palabras para alcanzar 'count', usamos los ejes temáticos sustantivos
     if (resultado.length < count) {
-        const palabrasClave = texto
-            .replace(/[^\w\sáéíóúüñÁÉÍÓÚÜÑ]/g, " ")
-            .split(/\s+/)
-            .filter(w => w.length > 5 && !["además", "después", "durante", "entonces", "también", "porque", "mediante", "ejemplo", "cuando", "donde", "primero", "segundo"].includes(w.toLowerCase()));
-        
-        const freq = {};
-        palabrasClave.forEach(p => {
-            const cap = p.charAt(0).toUpperCase() + p.slice(1).toLowerCase();
-            freq[cap] = (freq[cap] || 0) + 1;
-        });
-
-        const ordenadas = Object.keys(freq).sort((a, b) => freq[b] - freq[a]);
-        for (const pal of ordenadas) {
-            if (!resultado.includes(pal)) {
-                resultado.push(pal);
+        const ejes = extraerEjesTematicosBolillero(texto, "Apunte", count);
+        for (const e of ejes) {
+            if (!resultado.includes(e.titulo)) {
+                resultado.push(e.titulo);
             }
             if (resultado.length >= count) break;
         }
@@ -7481,10 +7862,17 @@ function seleccionarTemaManualBolillero(temaId, dispararIaInmediata = false) {
         });
     }
 
+    // Controles del Orador (Terminar turno / Ceder turno)
+    if (dom.dueloOradorFinishBtn) dom.dueloOradorFinishBtn.addEventListener("click", finalizarExposicionOralDesdeOrador);
+    if (dom.dueloOradorConcedeBtn) dom.dueloOradorConcedeBtn.addEventListener("click", cederTurnoOradorDesdeOrador);
+
     // Votación Individual Online
     if (dom.dueloOnlineVote10Btn) dom.dueloOnlineVote10Btn.addEventListener("click", () => emitirVotoOnline(10));
     if (dom.dueloOnlineVote5Btn) dom.dueloOnlineVote5Btn.addEventListener("click", () => emitirVotoOnline(5));
     if (dom.dueloOnlineVote0Btn) dom.dueloOnlineVote0Btn.addEventListener("click", () => emitirVotoOnline(0));
+
+    // Botón Host para Siguiente Ronda de Sorteo tras Votación
+    if (dom.dueloHostNextSpinBtn) dom.dueloHostNextSpinBtn.addEventListener("click", hostAvanzarSiguienteRondaDuelo);
 
     // Robo Relámpago Online Pulsador
     if (dom.dueloOnlineBuzzerTriggerBtn) dom.dueloOnlineBuzzerTriggerBtn.addEventListener("click", tocarPulsadorRoboOnline);

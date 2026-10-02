@@ -15,10 +15,10 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     
-    <link rel="icon" type="image/svg+xml" href="icon.svg?v=25.3">
-    <link rel="apple-touch-icon" href="icon-192.png?v=25.3">
-    <link rel="manifest" href="manifest.json?v=25.3">
-    <link rel="stylesheet" href="style.css?v=25.3">
+    <link rel="icon" type="image/svg+xml" href="icon.svg?v=25.4">
+    <link rel="apple-touch-icon" href="icon-192.png?v=25.4">
+    <link rel="manifest" href="manifest.json?v=25.4">
+    <link rel="stylesheet" href="style.css?v=25.4">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -225,7 +225,7 @@
 
         <!-- Versión y botón de actualización forzada -->
         <div class="drawer-version-row" style="padding: 0.85rem 1rem; border-top: 1px solid var(--color-border); font-size: 0.75rem; color: var(--color-text-muted); display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02); margin-top: auto;">
-            <span id="drawerVersionTag" style="cursor: pointer; user-select: none;" title="Versión de Luibañez">⚡ Luibañez <strong style="color: var(--color-text);">v25.3</strong></span>
+            <span id="drawerVersionTag" style="cursor: pointer; user-select: none;" title="Versión de Luibañez">⚡ Luibañez <strong style="color: var(--color-text);">v25.4</strong></span>
             <button id="btnForzarActualizar" class="button button--ghost button--xs" type="button" style="font-size: 0.72rem; padding: 0.2rem 0.55rem; border-radius: 999px; border: 1px solid var(--color-border);" title="Limpiar caché y recargar versión más reciente">🔄 Actualizar</button>
         </div>
     </div>
@@ -1525,7 +1525,10 @@
                                 <div class="duelo-turn-avatar" id="dueloTurnAvatar">👤</div>
                                 <div>
                                     <h3 class="duelo-turn-player-name" id="dueloTurnPlayerName">Jugador</h3>
-                                    <div class="duelo-turn-streak-badge" id="dueloTurnStreakBadge">Sin racha</div>
+                                    <div style="display: flex; gap: 0.4rem; align-items: center; flex-wrap: wrap; margin-top: 0.2rem;">
+                                        <div class="duelo-turn-streak-badge" id="dueloTurnStreakBadge">Sin racha</div>
+                                        <span class="badge badge--accent" id="dueloTurnPhaseBadge">🎙️ Exposición en Vivo</span>
+                                    </div>
                                 </div>
                             </div>
 
@@ -1540,16 +1543,36 @@
                             </div>
                         </div>
 
-                        <!-- Tarjeta del tema a responder -->
+                        <!-- Tarjeta del tema a responder con consigna orientadora -->
                         <article class="duelo-topic-active-card">
-                            <span class="duelo-topic-tag">Tema de examen sorteado:</span>
+                            <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                                <span class="duelo-topic-tag" id="dueloTopicBadge">🎯 TEMA ASIGNADO PARA EXPOSICIÓN ORAL</span>
+                                <span class="badge badge--success" id="dueloTopicSourceBadge" style="font-size: 0.72rem;">📄 Del Material Activo</span>
+                            </div>
                             <h2 id="dueloActiveTopicTitle" class="duelo-active-topic-title">—</h2>
+                            <p id="dueloActiveTopicDesc" class="duelo-active-topic-desc">Desarrollá el concepto, sus características clave y un ejemplo práctico según el material de estudio.</p>
                         </article>
 
+                        <!-- Indicador visual claro de qué debe hacer cada usuario en este momento -->
+                        <div id="dueloTurnRoleNotice" class="duelo-turn-role-notice is-listener">
+                            <span class="role-notice-icon" id="dueloRoleNoticeIcon">👂</span>
+                            <span class="role-notice-text" id="dueloRoleNoticeText">Escuchando la exposición...</span>
+                        </div>
+
+                        <!-- Botones de Acción exclusivos del Orador para controlar su turno -->
+                        <div id="dueloOradorControlBar" class="duelo-orador-control-bar hidden">
+                            <button id="dueloOradorFinishBtn" class="button button--success button--md" type="button" style="font-weight: 700; flex: 1; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);">
+                                🏁 Terminé de Exponer (Pedir Calificación)
+                            </button>
+                            <button id="dueloOradorConcedeBtn" class="button button--danger button--md" type="button" style="font-weight: 700; flex: 1;">
+                                🏳️ No sé qué decir (Ceder Turno / Robo)
+                            </button>
+                        </div>
+
                         <!-- Cronómetro de Turno -->
-                        <div class="duelo-timer-box">
+                        <div class="duelo-timer-box" id="dueloTimerContainer">
                             <div class="duelo-timer-top">
-                                <span class="duelo-timer-label">Tiempo de respuesta:</span>
+                                <span class="duelo-timer-label" id="dueloTimerLabel">Tiempo de exposición:</span>
                                 <div class="duelo-timer-digits" id="dueloTimerDigits">01:30</div>
                                 <button id="dueloTimerToggleBtn" class="icon-button" type="button" title="Pausar / Reanudar cronómetro">
                                     ⏸
@@ -1593,7 +1616,7 @@
                         </div>
 
                         <!-- Calificación de la respuesta (Modo Local) -->
-                        <div class="duelo-eval-section" id="dueloLocalEvalSection">
+                        <div class="duelo-eval-section hidden" id="dueloLocalEvalSection">
                             <span class="duelo-eval-title">Calificar respuesta del turno:</span>
                             <div class="duelo-eval-buttons">
                                 <button id="dueloGradeImpecableBtn" class="duelo-grade-btn duelo-grade-btn--success" type="button">
@@ -1618,31 +1641,53 @@
 
                         <!-- Votación Individual por Dispositivo (Modo Online) -->
                         <div id="dueloOnlineVoteBox" class="duelo-online-vote-box hidden">
-                            <div class="duelo-vote-header">
-                                <span class="duelo-vote-badge">🗳️ VOTACIÓN INDIVIDUAL EN VIVO</span>
-                                <h3 class="duelo-vote-title">Votá desde tu dispositivo la respuesta de <strong id="dueloVoteTargetPlayerName">Jugador</strong>:</h3>
+                            <!-- Bloque para los Compañeros Votantes -->
+                            <div id="dueloOnlineVoteActions">
+                                <div class="duelo-vote-header">
+                                    <span class="duelo-vote-badge">🗳️ FASE DE CALIFICACIÓN EN VIVO</span>
+                                    <h3 class="duelo-vote-title">Votá desde tu dispositivo la respuesta de <strong id="dueloVoteTargetPlayerName">Jugador</strong>:</h3>
+                                </div>
+                                <div class="duelo-eval-buttons duelo-online-eval-btns">
+                                    <button id="dueloOnlineVote10Btn" class="duelo-grade-btn duelo-grade-btn--success" type="button">
+                                        <span class="duelo-grade-icon" aria-hidden="true">🟢</span>
+                                        <span class="duelo-grade-name">¡Impecable!</span>
+                                        <span class="duelo-grade-pts" id="dueloOnline10PtsLabel">+10 pts</span>
+                                    </button>
+                                    <button id="dueloOnlineVote5Btn" class="duelo-grade-btn duelo-grade-btn--warning" type="button">
+                                        <span class="duelo-grade-icon" aria-hidden="true">🟡</span>
+                                        <span class="duelo-grade-name">Con ayuda</span>
+                                        <span class="duelo-grade-pts">+5 pts</span>
+                                    </button>
+                                    <button id="dueloOnlineVote0Btn" class="duelo-grade-btn duelo-grade-btn--danger" type="button">
+                                        <span class="duelo-grade-icon" aria-hidden="true">🔴</span>
+                                        <span class="duelo-grade-name">A repasar / Paso</span>
+                                        <span class="duelo-grade-pts">0 pts</span>
+                                    </button>
+                                </div>
                             </div>
-                            <div class="duelo-eval-buttons duelo-online-eval-btns">
-                                <button id="dueloOnlineVote10Btn" class="duelo-grade-btn duelo-grade-btn--success" type="button">
-                                    <span class="duelo-grade-icon" aria-hidden="true">🟢</span>
-                                    <span class="duelo-grade-name">¡Impecable!</span>
-                                    <span class="duelo-grade-pts" id="dueloOnline10PtsLabel">+10 pts</span>
-                                </button>
-                                <button id="dueloOnlineVote5Btn" class="duelo-grade-btn duelo-grade-btn--warning" type="button">
-                                    <span class="duelo-grade-icon" aria-hidden="true">🟡</span>
-                                    <span class="duelo-grade-name">Con ayuda</span>
-                                    <span class="duelo-grade-pts">+5 pts</span>
-                                </button>
-                                <button id="dueloOnlineVote0Btn" class="duelo-grade-btn duelo-grade-btn--danger" type="button">
-                                    <span class="duelo-grade-icon" aria-hidden="true">🔴</span>
-                                    <span class="duelo-grade-name">A repasar / Paso</span>
-                                    <span class="duelo-grade-pts">0 pts</span>
-                                </button>
+
+                            <!-- Bloque que ve el Orador mientras sus compañeros votan -->
+                            <div id="dueloOradorWaitingVotesBox" class="duelo-orador-waiting-votes hidden">
+                                <span style="font-size: 2rem;">⏳</span>
+                                <strong>Tus compañeros están calificando tu exposición...</strong>
+                                <span style="font-size: 0.85rem; color: #94a3b8;">Los votos de cada uno se verán reflejados aquí abajo en tiempo real.</span>
                             </div>
+
+                            <!-- Desglose transparente en tiempo real de los votos recibidos -->
                             <div class="duelo-vote-tally-container">
-                                <span class="duelo-vote-tally-label">Votos recibidos en la sala:</span>
+                                <span class="duelo-vote-tally-label">Calificaciones de la sala:</span>
                                 <div id="dueloLiveVoteChips" class="duelo-live-vote-chips">
-                                    <!-- Ej: Juan: 🟢, Sofía: 🟢 -->
+                                    <!-- Ej: Lucas: 🟢 +10 pts, Sofía: 🟡 +5 pts -->
+                                </div>
+                            </div>
+
+                            <!-- Resumen del consenso final tras votar -->
+                            <div id="dueloVoteResultSummary" class="duelo-vote-result-summary hidden" style="margin-top: 1rem; padding: 0.85rem; border-radius: 10px; background: rgba(30, 41, 59, 0.8); text-align: center;">
+                                <strong id="dueloVoteResultText" style="color: #6ee7b7; font-size: 1.05rem;"></strong>
+                                <div id="dueloHostNextSpinArea" style="margin-top: 0.75rem;" class="hidden">
+                                    <button id="dueloHostNextSpinBtn" class="button button--primary button--sm" type="button">
+                                        🎲 Siguiente Ronda / Sorteo
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -2753,7 +2798,7 @@
 </dialog>
 
 <script src="mqtt.min.js"></script>
-<script src="script.js?v=25.3" defer></script>
+<script src="script.js?v=25.4" defer></script>
 
 <!-- =========================================================
      MODAL DE PROMPT PARA GEMINI (CREAR JUEGOS DESDE PDF)
