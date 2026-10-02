@@ -15,10 +15,10 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     
-    <link rel="icon" type="image/svg+xml" href="icon.svg?v=25.6">
-    <link rel="apple-touch-icon" href="icon-192.png?v=25.6">
-    <link rel="manifest" href="manifest.json?v=25.6">
-    <link rel="stylesheet" href="style.css?v=25.6">
+    <link rel="icon" type="image/svg+xml" href="icon.svg?v=25.7">
+    <link rel="apple-touch-icon" href="icon-192.png?v=25.7">
+    <link rel="manifest" href="manifest.json?v=25.7">
+    <link rel="stylesheet" href="style.css?v=25.7">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -233,7 +233,7 @@
 
         <!-- Versión y botón de actualización forzada -->
         <div class="drawer-version-row" style="padding: 0.85rem 1rem; border-top: 1px solid var(--color-border); font-size: 0.75rem; color: var(--color-text-muted); display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02); margin-top: auto;">
-            <span id="drawerVersionTag" style="cursor: pointer; user-select: none;" title="Versión de Luibañez">⚡ Luibañez <strong style="color: var(--color-text);">v25.6</strong></span>
+            <span id="drawerVersionTag" style="cursor: pointer; user-select: none;" title="Versión de Luibañez">⚡ Luibañez <strong style="color: var(--color-text);">v25.7</strong></span>
             <button id="btnForzarActualizar" class="button button--ghost button--xs" type="button" style="font-size: 0.72rem; padding: 0.2rem 0.55rem; border-radius: 999px; border: 1px solid var(--color-border);" title="Limpiar caché y recargar versión más reciente">🔄 Actualizar</button>
         </div>
     </div>
@@ -2345,8 +2345,18 @@
                 </div>
             </header>
 
+            <!-- Conmutador de Vistas para Móviles (Enunciado / Mesa de Trabajo) -->
+            <div class="lab-mobile-switcher" id="labMobileSwitcher" role="tablist" aria-label="Modo de vista móvil">
+                <button id="labMobileBtnEnunciado" class="lab-mobile-switcher-btn is-active" type="button" role="tab" aria-selected="true" data-target-view="enunciado">
+                    📋 Enunciado & Hitos
+                </button>
+                <button id="labMobileBtnHerramientas" class="lab-mobile-switcher-btn" type="button" role="tab" aria-selected="false" data-target-view="herramientas">
+                    🛠️ Mesa de Trabajo
+                </button>
+            </div>
+
             <!-- Layout Split-Screen (Mesa de Trabajo) -->
-            <div class="laboratorio-split">
+            <div class="laboratorio-split" id="laboratorioSplit" data-mobile-view="enunciado">
 
                 <!-- COLUMNA IZQUIERDA: ENUNCIADO, STEPPER & CHECKPOINTS -->
                 <div class="lab-split-col lab-split-left" id="labPanelEnunciado">
@@ -2790,7 +2800,11 @@
                     </div>
                 </div>
 
-            </div>
+            <!-- Botón flotante móvil para saltar rápidamente entre Enunciado y Mesa de Trabajo -->
+            <button id="labMobileFloatToggleBtn" class="lab-mobile-float-pill" type="button" aria-label="Cambiar entre Enunciado y Mesa de Trabajo">
+                <span id="labMobileFloatIcon">🛠️</span>
+                <span id="labMobileFloatText">Mesa de Trabajo</span>
+            </button>
 
         </div>
     </section>
@@ -3330,7 +3344,7 @@
 </dialog>
 
 <script src="mqtt.min.js"></script>
-<script src="script.js?v=25.6" defer></script>
+<script src="script.js?v=25.7" defer></script>
 
 <!-- =========================================================
      MODAL DE PROMPT PARA GEMINI (CREAR JUEGOS DESDE PDF)

@@ -715,6 +715,13 @@ const dom = {
     homeCardLaboratorio: document.getElementById("homeCardLaboratorio"),
     soloOpenLabBtn: document.getElementById("soloOpenLabBtn"),
     drawerNavLaboratorio: document.getElementById("drawerNavLaboratorio"),
+    labMobileSwitcher: document.getElementById("labMobileSwitcher"),
+    labMobileBtnEnunciado: document.getElementById("labMobileBtnEnunciado"),
+    labMobileBtnHerramientas: document.getElementById("labMobileBtnHerramientas"),
+    laboratorioSplit: document.getElementById("laboratorioSplit"),
+    labMobileFloatToggleBtn: document.getElementById("labMobileFloatToggleBtn"),
+    labMobileFloatIcon: document.getElementById("labMobileFloatIcon"),
+    labMobileFloatText: document.getElementById("labMobileFloatText"),
     labCasoSelect: document.getElementById("labCasoSelect"),
     labBtnGenerarCasoPdf: document.getElementById("labBtnGenerarCasoPdf"),
     labBtnReiniciarCaso: document.getElementById("labBtnReiniciarCaso"),
@@ -8372,7 +8379,7 @@ function iniciarAplicacion() {
     }
     const drawerVersionTag = document.getElementById("drawerVersionTag");
     if (drawerVersionTag) {
-        drawerVersionTag.innerHTML = `⚡ Luibañez <strong style="color: var(--color-text);">v25.2</strong>`;
+        drawerVersionTag.innerHTML = `⚡ Luibañez <strong style="color: var(--color-text);">v${APP_BUILD_VERSION}</strong>`;
         drawerVersionTag.addEventListener("click", () => {
             forzarActualizacionCompleta(true);
         });
@@ -8414,7 +8421,7 @@ function iniciarAplicacion() {
 // =========================================================
 // GESTOR DE VERSIONES Y ACTUALIZACIÓN AUTOMÁTICA
 // =========================================================
-const APP_BUILD_VERSION = "25.2";
+const APP_BUILD_VERSION = "25.7";
 
 async function forzarActualizacionCompleta(mostrarNotificacion = true) {
     if (mostrarNotificacion && typeof mostrarToast === "function") {
@@ -11571,6 +11578,10 @@ function copiarTotalesAlCheckpointActivo() {
         if (inputDesvio) inputDesvio.value = stats.stdDev.toFixed(2);
         mostrarToast("📥 Medidas calculadas copiadas a los campos del checkpoint.", "exito");
     }
+
+    if (window.innerWidth <= 980 && typeof cambiarVistaMovilLab === "function") {
+        cambiarVistaMovilLab("enunciado");
+    }
 }
 
 // ==========================================
@@ -11818,6 +11829,57 @@ function inicializarScratchpadLab() {
 }
 
 // ==========================================
+// CONTROLADORES DE INTERFAZ Y VISTA MÓVIL
+// ==========================================
+
+function activarTabLaboratorio(tabId) {
+    const tabBtns = [
+        { btn: dom.labTabBtnFreq, pane: dom.labWidgetFreq, id: "freq" },
+        { btn: dom.labTabBtnProb, pane: dom.labWidgetProb, id: "prob" },
+        { btn: dom.labTabBtnBayes, pane: dom.labWidgetBayes, id: "bayes" },
+        { btn: dom.labTabBtnScratch, pane: dom.labWidgetScratch, id: "scratch" }
+    ];
+
+    tabBtns.forEach(t => {
+        const matches = t.id === tabId;
+        if (t.btn) t.btn.classList.toggle("is-active", matches);
+        if (t.pane) t.pane.classList.toggle("hidden", !matches);
+    });
+
+    laboratorioEstado.tabActiva = tabId;
+
+    if (tabId === "scratch") {
+        inicializarScratchpadLab();
+    }
+}
+
+function cambiarVistaMovilLab(vista) {
+    if (!dom.laboratorioSplit) return;
+    dom.laboratorioSplit.setAttribute("data-mobile-view", vista);
+
+    if (dom.labMobileBtnEnunciado) {
+        dom.labMobileBtnEnunciado.classList.toggle("is-active", vista === "enunciado");
+        dom.labMobileBtnEnunciado.setAttribute("aria-selected", vista === "enunciado" ? "true" : "false");
+    }
+    if (dom.labMobileBtnHerramientas) {
+        dom.labMobileBtnHerramientas.classList.toggle("is-active", vista === "herramientas");
+        dom.labMobileBtnHerramientas.setAttribute("aria-selected", vista === "herramientas" ? "true" : "false");
+    }
+
+    if (dom.labMobileFloatIcon && dom.labMobileFloatText) {
+        if (vista === "enunciado") {
+            dom.labMobileFloatIcon.textContent = "🛠️";
+            dom.labMobileFloatText.textContent = "Mesa de Trabajo";
+        } else {
+            dom.labMobileFloatIcon.textContent = "📋";
+            dom.labMobileFloatText.textContent = "Ver Enunciado";
+        }
+    }
+
+    window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+// ==========================================
 // FLUJO DE CASOS DE ESTUDIO Y CHECKPOINTS
 // ==========================================
 
@@ -11833,6 +11895,7 @@ function iniciarOReanudarLaboratorio() {
         recalcularMatrizBayes();
         inicializarScratchpadLab();
     }
+    cambiarVistaMovilLab("enunciado");
     cargarCasoLaboratorio(laboratorioEstado.casoActualId || "caso_1");
 }
 
@@ -11924,15 +11987,25 @@ function renderizarCheckpointActivo() {
         wrap.className = "lab-cp-input-group";
         wrap.innerHTML = `
             <p style="font-size: 0.88rem; color: #94a3b8; margin: 0 0 0.5rem;">
-                Completá las filas de la tabla en el panel derecho. Luego hacé clic en verificar para evaluar las sumatorias calculadas.
+                Completá las filas de la tabla en la Mesa de Trabajo. Luego hacé clic en sincronizar para evaluar las sumatorias.
             </p>
-            <button id="labCpBtnImportTable" class="button button--secondary button--sm button--full" type="button">
-                📥 Sincronizar Totales de la Tabla
-            </button>
+            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                <button id="labCpBtnOpenToolMobile" class="button button--secondary button--sm" type="button" style="flex: 1 1 130px;">
+                    🛠️ Abrir Tabla
+                </button>
+                <button id="labCpBtnImportTable" class="button button--primary button--sm" type="button" style="flex: 1 1 130px;">
+                    📥 Sincronizar Totales
+                </button>
+            </div>
         `;
         dom.labCpFormArea.appendChild(wrap);
         const importBtn = wrap.querySelector("#labCpBtnImportTable");
         if (importBtn) importBtn.addEventListener("click", copiarTotalesAlCheckpointActivo);
+        const openToolBtn = wrap.querySelector("#labCpBtnOpenToolMobile");
+        if (openToolBtn) openToolBtn.addEventListener("click", () => {
+            activarTabLaboratorio("freq");
+            cambiarVistaMovilLab("herramientas");
+        });
 
     } else if (cp.tipo === "campos_numericos") {
         cp.campos.forEach(campo => {
@@ -11945,6 +12018,17 @@ function renderizarCheckpointActivo() {
             dom.labCpFormArea.appendChild(group);
         });
 
+        const shortcutBtn = document.createElement("button");
+        shortcutBtn.className = "button button--ghost button--xs button--full";
+        shortcutBtn.type = "button";
+        shortcutBtn.style.cssText = "margin-top: 0.4rem; color: #38bdf8; border: 1px dashed rgba(56, 189, 248, 0.4);";
+        shortcutBtn.innerHTML = "🛠️ Abrir Calculadora en Mesa de Trabajo ➜";
+        shortcutBtn.addEventListener("click", () => {
+            activarTabLaboratorio("prob");
+            cambiarVistaMovilLab("herramientas");
+        });
+        dom.labCpFormArea.appendChild(shortcutBtn);
+
     } else if (cp.tipo === "valor_unico") {
         const group = document.createElement("div");
         group.className = "lab-cp-input-group";
@@ -11953,6 +12037,18 @@ function renderizarCheckpointActivo() {
             <input type="number" id="labInputSingleVal" class="input input--sm lab-cp-input" placeholder="Ej: 0.0228..." step="any">
         `;
         dom.labCpFormArea.appendChild(group);
+
+        const shortcutBtn = document.createElement("button");
+        shortcutBtn.className = "button button--ghost button--xs button--full";
+        shortcutBtn.type = "button";
+        shortcutBtn.style.cssText = "margin-top: 0.4rem; color: #38bdf8; border: 1px dashed rgba(56, 189, 248, 0.4);";
+        shortcutBtn.innerHTML = "🛠️ Abrir Calculadora / Herramientas ➜";
+        shortcutBtn.addEventListener("click", () => {
+            const sugg = laboratorioEstado.casoActualId === "caso_3" ? "bayes" : "prob";
+            activarTabLaboratorio(sugg);
+            cambiarVistaMovilLab("herramientas");
+        });
+        dom.labCpFormArea.appendChild(shortcutBtn);
     }
 }
 
@@ -12180,29 +12276,31 @@ function configurarEventosLaboratorio() {
         });
     }
 
+    // Conmutador Móvil de Vistas (Enunciado / Herramientas)
+    if (dom.labMobileBtnEnunciado) {
+        dom.labMobileBtnEnunciado.addEventListener("click", () => cambiarVistaMovilLab("enunciado"));
+    }
+    if (dom.labMobileBtnHerramientas) {
+        dom.labMobileBtnHerramientas.addEventListener("click", () => cambiarVistaMovilLab("herramientas"));
+    }
+    if (dom.labMobileFloatToggleBtn) {
+        dom.labMobileFloatToggleBtn.addEventListener("click", () => {
+            const actual = dom.laboratorioSplit?.getAttribute("data-mobile-view") || "enunciado";
+            cambiarVistaMovilLab(actual === "enunciado" ? "herramientas" : "enunciado");
+        });
+    }
+
     // Pestañas de Herramientas
     const tabBtns = [
-        { btn: dom.labTabBtnFreq, pane: dom.labWidgetFreq, id: "freq" },
-        { btn: dom.labTabBtnProb, pane: dom.labWidgetProb, id: "prob" },
-        { btn: dom.labTabBtnBayes, pane: dom.labWidgetBayes, id: "bayes" },
-        { btn: dom.labTabBtnScratch, pane: dom.labWidgetScratch, id: "scratch" }
+        { btn: dom.labTabBtnFreq, id: "freq" },
+        { btn: dom.labTabBtnProb, id: "prob" },
+        { btn: dom.labTabBtnBayes, id: "bayes" },
+        { btn: dom.labTabBtnScratch, id: "scratch" }
     ];
 
-    tabBtns.forEach(({ btn, pane, id }) => {
-        if (!btn || !pane) return;
-        btn.addEventListener("click", () => {
-            tabBtns.forEach(t => {
-                if (t.btn) t.btn.classList.remove("is-active");
-                if (t.pane) t.pane.classList.add("hidden");
-            });
-            btn.classList.add("is-active");
-            pane.classList.remove("hidden");
-            laboratorioEstado.tabActiva = id;
-
-            if (id === "scratch") {
-                inicializarScratchpadLab();
-            }
-        });
+    tabBtns.forEach(({ btn, id }) => {
+        if (!btn) return;
+        btn.addEventListener("click", () => activarTabLaboratorio(id));
     });
 
     // Grilla de Frecuencias
