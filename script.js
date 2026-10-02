@@ -734,6 +734,7 @@ const dom = {
     labTagOrigenPdf: document.getElementById("labTagOrigenPdf"),
     labTituloCaso: document.getElementById("labTituloCaso"),
     labNarrativaCaso: document.getElementById("labNarrativaCaso"),
+    labDatosCasoContainer: document.getElementById("labDatosCasoContainer"),
     labQuestionsProgress: document.getElementById("labQuestionsProgress"),
     labQuestionsList: document.getElementById("labQuestionsList"),
     labCompletedCard: document.getElementById("labCompletedCard"),
@@ -8458,7 +8459,7 @@ function iniciarAplicacion() {
 // =========================================================
 // GESTOR DE VERSIONES Y ACTUALIZACIÓN AUTOMÁTICA
 // =========================================================
-const APP_BUILD_VERSION = "26.4";
+const APP_BUILD_VERSION = "26.5";
 
 async function forzarActualizacionCompleta(mostrarNotificacion = true) {
     const btnActualizar = document.getElementById("btnForzarActualizar");
@@ -11166,6 +11167,7 @@ function irASeccionEstudio(idSeccion, navId) {
 const laboratorioEstado = {
     iniciado: false,
     temaSeleccionado: "descriptiva", // "descriptiva" | "bayes" | "normal" | "discretas" | "integral"
+    dificultad: "intermedio", // "facil" | "intermedio" | "dificil" | "extremo"
     pdfTexto: "",
     pdfNombre: "",
     pdfPaginas: 0,
@@ -11925,6 +11927,7 @@ function iniciarOReanudarLaboratorio() {
         inicializarCalculadoraCientificaMini();
         recalcularMatrizBayes();
         inicializarScratchpadLab();
+        sincronizarSelectoresDificultadLab();
     }
     cambiarVistaMovilLab("enunciado");
 
@@ -11939,6 +11942,7 @@ function iniciarOReanudarLaboratorio() {
 // ------------------------------------------
 
 function abrirModalConfigLab() {
+    if (typeof sincronizarSelectoresDificultadLab === "function") sincronizarSelectoresDificultadLab();
     if (dom.labConfigModal) {
         if (typeof dom.labConfigModal.showModal === "function") {
             try { dom.labConfigModal.showModal(); } catch { dom.labConfigModal.setAttribute("open", ""); }
@@ -11963,6 +11967,7 @@ function abrirModalPromptLab() {
         generarEjercicioLaboratorio(true);
         return;
     }
+    if (typeof sincronizarSelectoresDificultadLab === "function") sincronizarSelectoresDificultadLab();
     const tema = laboratorioEstado.temaSeleccionado || "descriptiva";
     if (dom.labPromptModalTopicBadge) dom.labPromptModalTopicBadge.textContent = obtenerEtiquetaTema(tema);
     if (dom.labPromptModalFileBadge) {
@@ -12225,6 +12230,7 @@ async function generarEjercicioLaboratorio(forzarNuevo = false, ordenManual = nu
                 tema: obtenerEtiquetaTema(tema),
                 tipoJuego: 'laboratorio',
                 contextoPDF: laboratorioEstado.pdfTexto || "",
+                dificultad: laboratorioEstado.dificultad || "intermedio",
                 instruccionUsuario: orden
             });
 
@@ -12234,8 +12240,11 @@ async function generarEjercicioLaboratorio(forzarNuevo = false, ordenManual = nu
                     tema: tema,
                     origen: "ia",
                     titulo: data.titulo || "Ejercicio Práctico con IA",
-                    dificultad: data.dificultad || "Intermedia",
-                    narrativa: data.narrativa || "",
+                    dificultad: data.dificultad || laboratorioEstado.dificultad || "Intermedia",
+                    enunciado: data.enunciado || "",
+                    datos: data.datos || "",
+                    datos_tipo: data.datos_tipo || "auto",
+                    narrativa: data.narrativa || data.enunciado || "",
                     preguntas: data.preguntas.map(p => ({
                         letra: p.letra || "a",
                         texto: p.texto || "",
@@ -12350,17 +12359,19 @@ function generarEjercicioDescriptivaProcedural(orden = "") {
         }
     }
 
-    const narrativa = `En el marco del estudio de "${ctx.sector}", se recolectó una muestra aleatoria sobre la variable "${ctx.variable}".\nLos datos relevados arrojaron los siguientes registros:\n` +
-        x.map((val, idx) => `• Valor xi = ${val} : Frecuencia fi = ${f[idx]}`).join("\n") +
-        `\n\nTu tarea: Trasladá los valores a la Tabla de Frecuencias de la Mesa de Trabajo en el panel derecho deduciendo cada fila, comprobá los estadísticos calculados en la calculadora inferior y respondé a los incisos planteados:`;
+    const enunciado = `Se recolectó una muestra de ${ctx.sector.toLowerCase()} para evaluar la distribución de ${ctx.variable.toLowerCase()}:`;
+    const datosStr = x.map((val, idx) => `• Valor xi = ${val} : Frecuencia fi = ${f[idx]}`).join("\n");
 
     return {
         id: "desc_" + Date.now(),
         tema: "descriptiva",
         origen: "modelo",
         titulo: ctx.sector,
-        dificultad: "Intermedia",
-        narrativa: narrativa,
+        dificultad: laboratorioEstado.dificultad || "Intermedia",
+        enunciado: enunciado,
+        datos: datosStr,
+        datos_tipo: "tabla",
+        narrativa: `${enunciado}\n\n${datosStr}`,
         preguntas: [
             {
                 letra: "a",
@@ -12448,15 +12459,19 @@ function generarEjercicioBayesProcedural(orden = "") {
     const probTotalPos = Number((totalPositivos / c.total).toFixed(4));
     const posterior = Number((VP / totalPositivos).toFixed(4));
 
-    const narrativa = `${c.contexto}\n\nUtilizá la pestaña "Matriz de Bayes" en la Mesa de Trabajo para tabular la contingencia 2x2 y responder:`;
+    const enunciado = `Un sistema de análisis de ${c.sujeto} evalúa una población de N = ${c.total.toLocaleString()} casos bajo los siguientes antecedentes de fiabilidad:`;
+    const datosStr = `Prevalencia basal P(A) = ${(c.pA * 100).toFixed(1)}%\nSensibilidad del sensor P(Alerta | A) = ${(c.sens * 100).toFixed(1)}%\nTasa de Falsos Positivos P(Alerta | Normal) = ${(fA * 100).toFixed(1)}%`;
 
     return {
         id: "bayes_" + Date.now(),
         tema: "bayes",
         origen: "modelo",
         titulo: c.titulo,
-        dificultad: "Avanzada",
-        narrativa: narrativa,
+        dificultad: laboratorioEstado.dificultad || "Intermedia",
+        enunciado: enunciado,
+        datos: datosStr,
+        datos_tipo: "parametros",
+        narrativa: `${enunciado}\n\n${datosStr}`,
         preguntas: [
             {
                 letra: "a",
@@ -12531,13 +12546,19 @@ function generarEjercicioNormalProcedural(orden = "") {
     const p1 = Number(labNormalCDF(m.xCrit, m.mu, m.sigma).toFixed(4));
     const pIntervalo = Number((labNormalCDF(m.xSup, m.mu, m.sigma) - labNormalCDF(m.xInf, m.mu, m.sigma)).toFixed(4));
 
+    const enunciado = `El proceso continuo de ${m.titulo.toLowerCase()} sigue una distribución normal modelada como X ~ N(μ, σ²):`;
+    const datosStr = `Media del proceso (μ) = ${m.mu}\nDesvío estándar (σ) = ${m.sigma}\nValor crítico de corte (X) = ${m.xCrit}`;
+
     return {
         id: "norm_" + Date.now(),
         tema: "normal",
         origen: "modelo",
         titulo: m.titulo,
-        dificultad: "Intermedia",
-        narrativa: m.narrativa,
+        dificultad: laboratorioEstado.dificultad || "Intermedia",
+        enunciado: enunciado,
+        datos: datosStr,
+        datos_tipo: "parametros",
+        narrativa: `${enunciado}\n\n${datosStr}`,
         preguntas: [
             {
                 letra: "a",
@@ -12594,20 +12615,19 @@ function generarEjercicioDiscretasProcedural(orden = "") {
         pAcum = Number(pAcum.toFixed(4));
         const pAlMenosUno = Number((1 - pPois(lam, 0)).toFixed(4));
 
-        const contextosPoisson = [
-            `Un centro de soporte y atención técnica recibe llamadas de usuarios a razón de un promedio constante de λ = ${lam} incidentes por hora (proceso de Poisson).\nLa variable aleatoria X representa la cantidad de incidentes reportados en una hora: X ~ Poisson(λ = ${lam}).\nUtilizá la pestaña "Calculadora de Probabilidad" (subpestaña Poisson) en la Mesa de Trabajo para resolver:`,
-            `En el servidor de pasarela de pagos de una plataforma de comercio electrónico se registran solicitudes de autorización a una tasa media de λ = ${lam} transacciones por minuto: X ~ Poisson(λ = ${lam}).\nUtilizá la Mesa de Trabajo para calcular los parámetros y probabilidades solicitadas:`,
-            `Un nodo de comunicaciones de fibra óptica experimenta paquetes corruptos a una tasa media de λ = ${lam} eventos por minuto: X ~ Poisson(λ = ${lam}).\nResolvé los siguientes incisos con la calculadora:`
-        ];
-        const narrativa = contextosPoisson[Math.floor(Math.random() * contextosPoisson.length)];
+        const enunciadoPois = `El flujo de eventos en el sistema se modela como un proceso estocástico continuo de Poisson:`;
+        const datosPois = `Tasa promedio observada (λ) = ${lam} eventos / intervalo`;
 
         return {
             id: "pois_" + Date.now(),
             tema: "discretas",
             origen: "modelo",
             titulo: `Análisis de Proceso de Poisson (Tasa Media λ = ${lam})`,
-            dificultad: "Intermedia",
-            narrativa: narrativa,
+            dificultad: laboratorioEstado.dificultad || "Intermedia",
+            enunciado: enunciadoPois,
+            datos: datosPois,
+            datos_tipo: "parametros",
+            narrativa: `${enunciadoPois}\n\n${datosPois}`,
             preguntas: [
                 {
                     letra: "a",
@@ -12657,19 +12677,19 @@ function generarEjercicioDiscretasProcedural(orden = "") {
         pAcum = Number(pAcum.toFixed(4));
         const pAlMenosUno = Number((1 - labBinomialPMF(n, p, 0)).toFixed(4));
 
-        const contextosBinomial = [
-            `Una línea de montaje automatizada produce placas de circuitos impresos con una probabilidad de defecto constante de p = ${p} (${(p * 100).toFixed(0)}%).\nEn una auditoría de control de calidad se toma una muestra aleatoria de n = ${n} placas independientes.\nSea X: número de placas defectuosas: X ~ Binomial(n = ${n}, p = ${p}).\nUtilizá la calculadora binomial en la Mesa de Trabajo para resolver:`,
-            `Un servidor web recibe peticiones que pueden fallar por sobrecarga con probabilidad constante p = ${p} (${(p * 100).toFixed(0)}%).\nEn una prueba de estrés se envían n = ${n} solicitudes independientes: X ~ Binomial(n = ${n}, p = ${p}).\nUtilizá la calculadora de la Mesa de Trabajo para responder:`
-        ];
-        const narrativa = contextosBinomial[Math.floor(Math.random() * contextosBinomial.length)];
+        const enunciadoBinom = `Un control de calidad analiza una serie de ensayos independientes con probabilidad fija de defecto:`;
+        const datosBinom = `Número de ensayos analizados (n) = ${n}\nProbabilidad elemental de defecto (p) = ${p}`;
 
         return {
             id: "disc_" + Date.now(),
             tema: "discretas",
             origen: "modelo",
             titulo: `Control de Procesos y Distribución Binomial (n = ${n}, p = ${p})`,
-            dificultad: "Intermedia",
-            narrativa: narrativa,
+            dificultad: laboratorioEstado.dificultad || "Intermedia",
+            enunciado: enunciadoBinom,
+            datos: datosBinom,
+            datos_tipo: "parametros",
+            narrativa: `${enunciadoBinom}\n\n${datosBinom}`,
             preguntas: [
                 {
                     letra: "a",
@@ -12740,13 +12760,19 @@ function generarEjercicioIntegralProcedural(orden = "") {
     const desvio = Number(Math.sqrt(varianza).toFixed(2));
     const cv = Number(((desvio / media) * 100).toFixed(2));
 
+    const enunciado = `Simulacro de Examen Final de Cátedra: análisis de control en ${sel.sector}:`;
+    const datosStr = sel.x.map((val, idx) => `• Valor xi = ${val} : Frecuencia fi = ${sel.f[idx]}`).join("\n");
+
     return {
         id: "exam_" + Date.now(),
         tema: "integral",
         origen: "modelo",
         titulo: sel.titulo,
-        dificultad: "Avanzada",
-        narrativa: sel.narrativa,
+        dificultad: laboratorioEstado.dificultad || "Intermedia",
+        enunciado: enunciado,
+        datos: datosStr,
+        datos_tipo: "tabla",
+        narrativa: `${enunciado}\n\n${datosStr}`,
         preguntas: [
             {
                 letra: "a",
@@ -12793,6 +12819,154 @@ function generarEjercicioIntegralProcedural(orden = "") {
 }
 
 // ------------------------------------------
+// SELECTORES DE DIFICULTAD Y FORMATEO DE DATOS
+// ------------------------------------------
+
+function sincronizarSelectoresDificultadLab() {
+    const diff = (laboratorioEstado.dificultad || "intermedio").toLowerCase();
+    const selectors = [
+        document.getElementById("labConfigDifficultySelector"),
+        document.getElementById("labPromptDifficultySelector")
+    ];
+
+    selectors.forEach(sel => {
+        if (!sel) return;
+        sel.querySelectorAll(".lab-diff-btn").forEach(btn => {
+            const btnDiff = btn.dataset.diff;
+            if (btnDiff === diff) {
+                btn.classList.add("is-active");
+            } else {
+                btn.classList.remove("is-active");
+            }
+
+            if (!btn.dataset.wired) {
+                btn.dataset.wired = "true";
+                btn.addEventListener("click", () => {
+                    laboratorioEstado.dificultad = btnDiff;
+                    sincronizarSelectoresDificultadLab();
+                });
+            }
+        });
+    });
+}
+
+function formatearBloqueDatosLab(datos, tipo = "auto") {
+    if (!datos) return "";
+
+    // Si ya viene como HTML formateado
+    if (typeof datos === "string" && (datos.includes("<div") || datos.includes("<table") || datos.includes("<ul"))) {
+        return `<div class="lab-case-data-box">${datos}</div>`;
+    }
+
+    let headerBadge = "Datos de Estudio";
+    let bodyHtml = "";
+
+    // 1. Detección de Tabla (si tiene formato x | P(x) o pares xi = ... : fi = ...)
+    if (tipo === "tabla" || (typeof datos === "string" && (datos.includes("|") || datos.includes("xi =") || datos.includes("xi:")))) {
+        headerBadge = "Tabla de Datos / Distribución";
+        bodyHtml = construirTablaDatosLabHtml(datos);
+    } 
+    // 2. Detección de Parámetros (probabilidades, medias, tasas)
+    else if (tipo === "parametros" || (typeof datos === "string" && (datos.includes("P(") || datos.includes("μ") || datos.includes("mu") || datos.includes("σ") || datos.includes("lambda") || datos.includes("λ")))) {
+        headerBadge = "Parámetros del Problema";
+        const lineas = typeof datos === "string" ? datos.split(/\n|\;/).map(l => l.trim()).filter(Boolean) : [];
+        bodyHtml = `
+            <div class="lab-data-params-list">
+                ${lineas.map(lin => {
+                    const partes = lin.split(/[:=]/);
+                    if (partes.length >= 2) {
+                        return `<div class="lab-data-param-item"><span class="lab-data-param-symbol">${partes[0].trim()}:</span> <span>${partes.slice(1).join("=").trim()}</span></div>`;
+                    }
+                    return `<div class="lab-data-param-item">${lin}</div>`;
+                }).join("")}
+            </div>
+        `;
+    }
+    // 3. Muestra de Datos / Lista de Números
+    else {
+        headerBadge = "Muestra Observada";
+        const nums = Array.isArray(datos) ? datos : String(datos).match(/-?\d+(\.\d+)?/g);
+        if (nums && nums.length >= 3) {
+            bodyHtml = `
+                <div style="font-size: 0.8rem; color: var(--color-text-muted); margin-bottom: 0.35rem;">
+                    Valores registrados (n = ${nums.length}):
+                </div>
+                <div class="lab-data-chips">
+                    ${nums.map(n => `<span class="lab-data-chip">${n}</span>`).join("")}
+                </div>
+            `;
+        } else {
+            bodyHtml = `<div class="lab-case-data-content" style="white-space: pre-line;">${datos}</div>`;
+        }
+    }
+
+    return `
+        <div class="lab-case-data-box">
+            <div class="lab-case-data-header">
+                <span>📋 Información y Datos del Caso</span>
+                <span class="lab-case-data-header-badge">${headerBadge}</span>
+            </div>
+            ${bodyHtml}
+        </div>
+    `;
+}
+
+function construirTablaDatosLabHtml(datos) {
+    if (typeof datos !== "string") return `<div class="lab-case-data-content">${datos}</div>`;
+
+    const lineas = datos.split("\n").map(l => l.trim()).filter(Boolean);
+    
+    // Formato con viñetas: "• Valor xi = 18 : Frecuencia fi = 6"
+    if (lineas.some(l => l.includes("xi =") && l.includes("fi ="))) {
+        const rows = [];
+        lineas.forEach(l => {
+            const m = l.match(/xi\s*=\s*([0-9\.\-]+)\s*:\s*fi\s*=\s*([0-9\.\-]+)/i);
+            if (m) rows.push({ x: m[1], f: m[2] });
+        });
+        if (rows.length > 0) {
+            return `
+                <div class="lab-data-table-wrapper">
+                    <table class="lab-data-table">
+                        <thead>
+                            <tr>
+                                <th>Valor Variable (xi)</th>
+                                <th>Frecuencia Absoluta (fi)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${rows.map(r => `<tr><td>${r.x}</td><td>${r.f}</td></tr>`).join("")}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+    }
+
+    // Formato con pipes markdown "|"
+    if (lineas.some(l => l.includes("|"))) {
+        const parsed = lineas.filter(l => !l.match(/^[\s\-\|\:]+$/)).map(l => l.split("|").map(c => c.trim()).filter(Boolean));
+        if (parsed.length >= 2) {
+            const header = parsed[0];
+            const bodyRows = parsed.slice(1);
+            return `
+                <div class="lab-data-table-wrapper">
+                    <table class="lab-data-table">
+                        <thead>
+                            <tr>${header.map(h => `<th>${h}</th>`).join("")}</tr>
+                        </thead>
+                        <tbody>
+                            ${bodyRows.map(row => `<tr>${row.map(c => `<td>${c}</td>`).join("")}</tr>`).join("")}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+    }
+
+    return `<div class="lab-case-data-content" style="white-space: pre-line;">${datos}</div>`;
+}
+
+// ------------------------------------------
 // RENDERIZADO DEL ENUNCIADO Y LAS PREGUNTAS
 // ------------------------------------------
 
@@ -12802,9 +12976,53 @@ function renderizarEjercicioActual() {
 
     // Encabezado del caso
     if (dom.labTituloCaso) dom.labTituloCaso.textContent = ej.titulo || "Caso Práctico de Estudio";
-    if (dom.labTagDificultad) dom.labTagDificultad.textContent = `Dificultad: ${ej.dificultad || "Intermedia"}`;
+    
+    // Tag de Dificultad con icono y color
+    const dLower = (ej.dificultad || laboratorioEstado.dificultad || "intermedio").toLowerCase();
+    let diffIcon = "🟡";
+    let diffNombre = "Intermedia";
+    if (dLower.includes("facil")) {
+        diffIcon = "🟢";
+        diffNombre = "Fácil";
+    } else if (dLower.includes("dificil")) {
+        diffIcon = "🔴";
+        diffNombre = "Difícil";
+    } else if (dLower.includes("extremo")) {
+        diffIcon = "⚡";
+        diffNombre = "Extrema";
+    }
+    if (dom.labTagDificultad) dom.labTagDificultad.textContent = `${diffIcon} Dificultad: ${diffNombre}`;
     if (dom.labTagTema) dom.labTagTema.textContent = obtenerEtiquetaTema(ej.tema);
-    if (dom.labNarrativaCaso) dom.labNarrativaCaso.textContent = ej.narrativa || "";
+
+    // Enunciado corto + Bloque estructurado de datos destacados
+    let textoEnunciado = ej.enunciado || "";
+    let contenidoDatos = ej.datos || ej.datosHtml || "";
+
+    if (!textoEnunciado && ej.narrativa) {
+        // Extraer si vino como texto único
+        const matchSplit = ej.narrativa.split(/\n\n|\n(?=[A-Z0-9\-\*\•]|Muestra|Datos|Valores|P\(|x\s*\|)/i);
+        if (matchSplit.length > 1) {
+            textoEnunciado = matchSplit[0].trim();
+            contenidoDatos = matchSplit.slice(1).join("\n\n").trim();
+        } else {
+            textoEnunciado = ej.narrativa;
+        }
+    }
+
+    if (dom.labNarrativaCaso) {
+        dom.labNarrativaCaso.textContent = textoEnunciado || "Analizá la información provista y resolvé los incisos planteados:";
+    }
+
+    const containerDatos = dom.labDatosCasoContainer || document.getElementById("labDatosCasoContainer");
+    if (containerDatos) {
+        if (contenidoDatos) {
+            containerDatos.classList.remove("hidden");
+            containerDatos.innerHTML = formatearBloqueDatosLab(contenidoDatos, ej.datos_tipo);
+        } else {
+            containerDatos.classList.add("hidden");
+            containerDatos.innerHTML = "";
+        }
+    }
 
     // Resetear estados de preguntas
     laboratorioEstado.intentosPorPregunta = {};

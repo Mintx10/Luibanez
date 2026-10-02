@@ -320,21 +320,37 @@ ORDEN O PREFERENCIA EXPLÍCITA DEL ESTUDIANTE:
 DEBES PRIORIZAR Y CUMPLIR ESTA ORDEN Y GENERAR UN EJERCICIO EXACTAMENTE ENFOCADO EN LO QUE PIDE EL ESTUDIANTE (por ejemplo: si pide un ejercicio similar a un punto de la guía, o de una distribución particular, replicalo con datos numéricos realistas).`;
             }
 
+            const nivelDificultad = (dificultad || "intermedio").toLowerCase();
+            let instruccionDificultad = "";
+            if (nivelDificultad.includes("facil")) {
+                instruccionDificultad = `NIVEL DE DIFICULTAD: FÁCIL (Conceptos directos, datos con números amigables y redondos, cálculos guiados, 3 o 4 incisos). Si hay apuntes o ejercicios en el archivo provisto, basate en los casos iniciales o introductorios.`;
+            } else if (nivelDificultad.includes("dificil")) {
+                instruccionDificultad = `NIVEL DE DIFICULTAD: DIFÍCIL (Nivel avanzado de parcial universitario, requiere combinar conceptos, probabilidad condicional o justificación de dispersión/representatividad, 4 o 5 incisos). Si hay archivo provisto, basate en los ejercicios más desafiantes o integradores.`;
+            } else if (nivelDificultad.includes("extremo")) {
+                instruccionDificultad = `NIVEL DE DIFICULTAD: EXTREMO (Nivel examen final riguroso o parcial exigente de cátedra, casos con datos atípicos, trampas conceptuales y toma de decisiones probabilísticas críticas). Exigí el máximo rigor analítico del documento provisto.`;
+            } else {
+                instruccionDificultad = `NIVEL DE DIFICULTAD: INTERMEDIO (PREDETERMINADO - Nivel estándar de examen parcial universitario). Calibrá la complejidad basándote fielmente en la dificultad promedio de los ejercicios del archivo PDF/PPT provisto.`;
+            }
+
             promptInstrucciones = `
 JUEGO: "LABORATORIO DE PRÁCTICAS NUMÉRICAS Y ANÁLISIS DE CASOS"
 TEMA DE ESTUDIO: "${tema}"
-NIVEL ACADÉMICO: ${dificultad}
+${instruccionDificultad}
 ${ordenEspecifica}
 
-Tu misión es crear un ejercicio práctico y analítico completo con datos numéricos realistas y consistentes para que el estudiante resuelva deduciendo la tabla de frecuencias o utilizando las fórmulas de probabilidad.
-El ejercicio debe incluir:
-1. "titulo": Título claro y contextualizado del caso.
-2. "dificultad": "Inicial", "Intermedia" o "Avanzada".
-3. "narrativa": Enunciado detallado con contexto real (industria, medicina, logística, telecomunicaciones, finanzas, etc.) con TODOS los datos numéricos iniciales necesarios para resolver.
-4. "preguntas": Un array de exactamente 4 o 5 incisos consecutivos (letras "a", "b", "c", "d" y opcionalmente "e").
+REGLA ESTRICTA DE ESTRUCTURA UNIVERSITARIA (ANTI-ENUNCIADOS GORDOS Y AMONTONADOS):
+Los estudiantes necesitan enunciados cortos, directos y con los datos perfectamente claros y separados:
+1. "enunciado": Debe ser CORTO y DIRECTO (máximo 1 o 2 oraciones concisas que presenten el caso real: empresa, hospital, control de calidad, etc.). NUNCA amontones datos o números adentro de un párrafo largo.
+2. "datos": Bloque estructurado y limpio con la información numérica. Debe presentarse de forma clara según el caso:
+   - Muestra de datos: "Muestra observada (n=10): 4.2, 5.4, 5.8, 6.2, 6.7, 7.7, 7.7, 8.5, 9.3, 10.0"
+   - Tabla de distribución de probabilidades: "x: 0, 1, 2, 3, 4 | P(x): 0.15, 0.17, 0.23, 0.25, 0.20"
+   - Tabla de contingencia o categorías: "Puesto / Personas: Propietario (1), Gerentes (4), Obreros (12)..."
+   - Parámetros clave: "n = 12 ensayos, p = 0.25" o "P(A) = 0.65, P(Defecto|A) = 0.02, P(Defecto|B) = 0.05"
+3. "datos_tipo": "lista" (si son números/muestra), "tabla" (si es distribución o contingencia) o "parametros" (si son probabilidades/constantes).
+4. "preguntas": Un array de exactamente 3 a 5 incisos consecutivos (letras "a", "b", "c", "d" y opcionalmente "e").
    Para CADA inciso:
    - "letra": "a", "b", "c", "d" o "e".
-   - "texto": Pregunta concisa del inciso (ej: "¿Cuál es la media aritmética (x̄)?", "¿Probabilidad de que fallen a lo sumo 2 solicitudes: P(X ≤ 2)?", etc.).
+   - "texto": Pregunta concisa del inciso (ej: "¿Cuál es la media aritmética (x̄)?", "¿Cuál es la probabilidad de que fallen a lo sumo 2 solicitudes: P(X ≤ 2)?", etc.).
    - "esperado": El valor numérico exacto de la respuesta correcta (tipo number, ej: 14.5, 0.2304, 35). NO incluyas letras ni unidades acá, solo el número.
    - "tolerancia": Margen de error aceptable para redondeo (ej: 0.1 para valores grandes, 0.01 para probabilidades).
    - "pista": Fórmula, sugerencia o paso clave para orientar si el estudiante se traba.
@@ -343,16 +359,18 @@ El ejercicio debe incluir:
 Debes responder ÚNICAMENTE un objeto JSON con esta estructura exacta:
 {
   "titulo": "Título del Caso",
-  "dificultad": "Intermedia",
-  "narrativa": "Enunciado del problema con todos los valores numéricos necesarios...",
+  "dificultad": "${nivelDificultad}",
+  "enunciado": "Una empresa manufacturera registra los errores por turno en su línea de montaje para evaluar la estabilidad del proceso:",
+  "datos": "Cantidad de errores (x): 0, 1, 2, 3, 4\\nProbabilidades P(x): 0.15, 0.17, 0.23, 0.25, 0.20",
+  "datos_tipo": "tabla",
   "preguntas": [
     {
       "letra": "a",
-      "texto": "Pregunta del inciso a",
-      "esperado": 25.5,
-      "tolerancia": 0.1,
-      "pista": "Fórmula clave...",
-      "explicacion": "Paso a paso..."
+      "texto": "Calcular el número medio esperado de errores E(x)",
+      "esperado": 2.18,
+      "tolerancia": 0.05,
+      "pista": "Calculá la sumatoria Σ [x · P(x)].",
+      "explicacion": "E(x) = (0)(0.15) + (1)(0.17) + (2)(0.23) + (3)(0.25) + (4)(0.20) = 2.18 errores."
     }
   ]
 }`;

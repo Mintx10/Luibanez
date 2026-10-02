@@ -15,10 +15,10 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     
-    <link rel="icon" type="image/svg+xml" href="icon.svg?v=26.4">
-    <link rel="apple-touch-icon" href="icon-192.png?v=26.4">
-    <link rel="manifest" href="manifest.json?v=26.4">
-    <link rel="stylesheet" href="style.css?v=26.4">
+    <link rel="icon" type="image/svg+xml" href="icon.svg?v=26.5">
+    <link rel="apple-touch-icon" href="icon-192.png?v=26.5">
+    <link rel="manifest" href="manifest.json?v=26.5">
+    <link rel="stylesheet" href="style.css?v=26.5">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -234,7 +234,7 @@
 
         <!-- Versión y botón de actualización forzada -->
         <div class="drawer-version-row" style="padding: 0.85rem 1rem; border-top: 1px solid var(--color-border); font-size: 0.75rem; color: var(--color-text-muted); display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02); margin-top: auto;">
-            <span id="drawerVersionTag" style="cursor: pointer; user-select: none;" title="Versión de Luibañez">⚡ Luibañez <strong style="color: var(--color-text);">v26.4</strong></span>
+            <span id="drawerVersionTag" style="cursor: pointer; user-select: none;" title="Versión de Luibañez">⚡ Luibañez <strong style="color: var(--color-text);">v26.5</strong></span>
             <button id="btnForzarActualizar" class="button button--ghost button--xs" type="button" style="font-size: 0.72rem; padding: 0.25rem 0.65rem; border-radius: 999px; border: 1px solid var(--color-border); cursor: pointer;" title="Limpiar caché y recargar versión más reciente">🔄 Actualizar</button>
         </div>
     </div>
@@ -2370,6 +2370,8 @@
                             <p class="lab-case-narrative" id="labNarrativaCaso">
                                 Cargando ejercicio de estadística...
                             </p>
+                            <!-- Bloque estructurado de datos destacados (sin amontonar texto) -->
+                            <div class="lab-case-data-container hidden" id="labDatosCasoContainer"></div>
                         </div>
                     </article>
 
@@ -3351,7 +3353,7 @@
 </dialog>
 
 <script src="mqtt.min.js"></script>
-<script src="script.js?v=26.4" defer></script>
+<script src="script.js?v=26.5" defer></script>
 
 <!-- =========================================================
      MODAL DE PROMPT PARA GEMINI (CREAR JUEGOS DESDE PDF)
@@ -3444,6 +3446,28 @@
                     </div>
                     <div class="lab-gdocs-hint">
                         💡 <strong>¿Google Docs o Slides?</strong> Descargalo como <em>.docx</em> o <em>PDF</em> y subilo acá directamente.
+                    </div>
+                </div>
+
+                <!-- Selector de Dificultad para el examen o práctica -->
+                <div class="lab-difficulty-section">
+                    <label class="section-title lab-section-label">
+                        <span>⚙️ Nivel de Dificultad:</span>
+                        <span style="font-size: 0.72rem; color: var(--color-text-muted); font-weight: normal;">Se calibra con tu archivo</span>
+                    </label>
+                    <div class="lab-difficulty-selector" id="labConfigDifficultySelector">
+                        <button type="button" class="lab-diff-btn" data-diff="facil">
+                            <span class="diff-dot diff-dot--facil"></span> Fácil
+                        </button>
+                        <button type="button" class="lab-diff-btn is-active" data-diff="intermedio">
+                            <span class="diff-dot diff-dot--intermedio"></span> Intermedio
+                        </button>
+                        <button type="button" class="lab-diff-btn" data-diff="dificil">
+                            <span class="diff-dot diff-dot--dificil"></span> Difícil
+                        </button>
+                        <button type="button" class="lab-diff-btn" data-diff="extremo">
+                            <span class="diff-dot diff-dot--extremo"></span> Extremo
+                        </button>
                     </div>
                 </div>
 
@@ -3542,6 +3566,28 @@
                 <span class="badge badge--accent" id="labPromptModalTopicBadge">📊 Estadística Descriptiva</span>
                 <span class="badge badge--success" id="labPromptModalFileBadge">📄 Sin archivo</span>
                 <button type="button" id="labPromptModalChangeConfigBtn" class="button button--ghost button--xs" style="margin-left: auto; font-size: 0.74rem;">Cambiar tema / archivo ⚙️</button>
+            </div>
+
+            <!-- Selector de Dificultad para el Ejercicio con IA -->
+            <div class="lab-prompt-difficulty-group">
+                <label class="section-title lab-section-label" style="margin-bottom: 0.35rem; display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem;">
+                    <span>🎯 Nivel de Dificultad:</span>
+                    <span style="font-size: 0.72rem; color: var(--color-text-muted); font-weight: normal;">Basado en tu apunte/PDF</span>
+                </label>
+                <div class="lab-difficulty-selector" id="labPromptDifficultySelector">
+                    <button type="button" class="lab-diff-btn" data-diff="facil">
+                        <span class="diff-dot diff-dot--facil"></span> Fácil
+                    </button>
+                    <button type="button" class="lab-diff-btn is-active" data-diff="intermedio">
+                        <span class="diff-dot diff-dot--intermedio"></span> Intermedio
+                    </button>
+                    <button type="button" class="lab-diff-btn" data-diff="dificil">
+                        <span class="diff-dot diff-dot--dificil"></span> Difícil
+                    </button>
+                    <button type="button" class="lab-diff-btn" data-diff="extremo">
+                        <span class="diff-dot diff-dot--extremo"></span> Extremo
+                    </button>
+                </div>
             </div>
 
             <!-- Caja de Orden / Instrucción personalizada -->
