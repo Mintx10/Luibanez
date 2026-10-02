@@ -3179,26 +3179,7 @@ function procesarMensajeMqttSala(data) {
 
     // 4. Iniciar Partida Online
     if (data.tipo === "INICIO_PARTIDA_ONLINE") {
-        dueloEstado.partida.activa = true;
-        dueloEstado.partida.rondaNumero = 1;
-        dueloEstado.partida.turnoNumero = 0;
-        dueloEstado.partida.jugadores = (data.jugadores || []).map(j => ({ ...j, puntosAportados: 0 }));
-        dueloEstado.partida.temasDisponibles = data.temasDisponibles;
-        dueloEstado.partida.historialTurnos = [];
-        dueloEstado.partida.esCoop = (data.formatoModo || onlineDueloEstado.formatoModo) === "coop";
-        dueloEstado.partida.puntosEquipo = 0;
-        dueloEstado.partida.metaPuntosEquipo = 100;
-        dueloEstado.partida.vidasEquipo = 3;
-        dueloEstado.partida.relevoSolicitado = false;
-
-        // Cambiar vista a la arena
-        if (dom.dueloLobby) dom.dueloLobby.classList.add("hidden");
-        if (dom.dueloArena) dom.dueloArena.classList.remove("hidden");
-        actualizarMarcadorDueloUI();
-
-        // Si es modo online, mostrar votación online y ocultar botón girar si no es mi turno
-        if (dom.dueloLocalEvalSection) dom.dueloLocalEvalSection.classList.add("hidden");
-        if (dom.dueloOnlineVoteBox) dom.dueloOnlineVoteBox.classList.remove("hidden");
+        arrancarBolilleroOnlineCliente(data);
     }
 
     // Eventos Cooperativos
@@ -3243,12 +3224,16 @@ function procesarMensajeMqttSala(data) {
 
     // 7. Voto emitido por un dispositivo
     if (data.tipo === "VOTO_EMITIDO") {
-        procesarVotoOnlineRecibido(data.votanteId, data.votanteNombre, data.voto);
+        if (data.votanteId !== perfilUsuario.id) {
+            procesarVotoOnlineRecibido(data.votanteId, data.votanteNombre, data.voto);
+        }
     }
 
     // 8. Resultado oficial de la votación
     if (data.tipo === "RESULTADO_VOTACION") {
-        aplicarResultadoVotacionOnline(data);
+        if (!onlineDueloEstado.esHost) {
+            aplicarResultadoVotacionOnline(data);
+        }
     }
 
     // 9. Robo Relámpago activado
@@ -3261,6 +3246,23 @@ function procesarMensajeMqttSala(data) {
         atribuirRoboRelampagoOnline(data.ladronId, data.ladronNombre);
     }
 
+    // 10.1 Calificación sincronizada de robo relámpago
+    if (data.tipo === "ROBO_CALIFICADO") {
+        if (!onlineDueloEstado.esHost) {
+            const partida = dueloEstado.partida;
+            const ladron = partida.jugadores.find(j => j.id === data.ladronId);
+            if (ladron) {
+                ladron.puntos = data.puntos;
+                ladron.robosExitosos = data.robosExitosos;
+            }
+            if (dom.dueloRoboBox) dom.dueloRoboBox.classList.add("hidden");
+            if (dom.dueloOnlineRoboOverlay) dom.dueloOnlineRoboOverlay.classList.add("hidden");
+            partida.robo.activo = false;
+            actualizarMarcadorDueloUI();
+            avanzarSiguienteTemaDuelo();
+        }
+    }
+
     // 11. Chat Mensaje Multimedia
     if (data.tipo === "CHAT_MSG") {
         recibirMensajeChatEnVivo(data.msg);
@@ -3268,7 +3270,9 @@ function procesarMensajeMqttSala(data) {
 
     // 12. Fin de Partida
     if (data.tipo === "FIN_PARTIDA_ONLINE") {
-        finalizarDueloPartida(false, data.campeones, data.partidaGuardada);
+        if (!onlineDueloEstado.esHost && data.partidaGuardada) {
+            mostrarModalVictoriaDuelo(data.partidaGuardada);
+        }
     }
 }
 
@@ -3287,6 +3291,60 @@ function salirDeSalaOnline() {
     if (dom.dueloOnlineSetupView) dom.dueloOnlineSetupView.classList.remove("hidden");
 }
 
+function arrancarBolilleroOnlineCliente(data) {
+    dueloEstado.partida.activa = true;
+    dueloEstado.partida.rondaNumero = 1;
+    dueloEstado.partida.turnoNumero = 0;
+    dueloEstado.partida.jugadores = (data.jugadores || []).map(j => ({
+        ...j,
+        nombre: j.nombre || j.apodo || "Jugador",
+        apodo: j.apodo || j.nombre || "Jugador",
+        puntos: j.puntos || 0,
+        puntosAportados: 0,
+        rachaActual: 0,
+        maxRacha: 0,
+        robosExitosos: 0,
+        comodinesUsados: j.comodinesUsados || { socorro: false, pista: false, pasoRebote: false }
+    }));
+    dueloEstado.partida.temasDisponibles = (data.temasDisponibles || []).map(t => {
+        const nom = t.titulo || t.palabra || t.nombre || "Tema de Estudio";
+        return {
+            ...t,
+            titulo: nom,
+            palabra: nom,
+            nombre: nom
+        };
+    });
+    dueloEstado.partida.historialTurnos = [];
+    dueloEstado.partida.esCoop = (data.formatoModo || onlineDueloEstado.formatoModo) === "coop";
+    dueloEstado.partida.puntosEquipo = 0;
+    dueloEstado.partida.metaPuntosEquipo = 100;
+    dueloEstado.partida.vidasEquipo = 3;
+    dueloEstado.partida.relevoSolicitado = false;
+
+    // Cambiar vista a la arena de combate
+    cambiarVista("duelo");
+    if (dom.dueloOnlineWaitingRoom) dom.dueloOnlineWaitingRoom.classList.add("hidden");
+    if (dom.dueloOnlineSetupView) dom.dueloOnlineSetupView.classList.add("hidden");
+    if (dom.dueloLobby) dom.dueloLobby.classList.add("hidden");
+    if (dom.dueloArena) dom.dueloArena.classList.remove("hidden");
+    actualizarMarcadorDueloUI();
+
+    // Configurar botón girar ruletas según rol
+    if (dom.dueloSpinBtn) {
+        if (onlineDueloEstado.esHost) {
+            dom.dueloSpinBtn.disabled = false;
+            dom.dueloSpinBtn.innerHTML = '<span>🎰</span><span>GIRAR DOBLE RULETA</span>';
+        } else {
+            dom.dueloSpinBtn.disabled = true;
+            dom.dueloSpinBtn.innerHTML = '<span>⏳</span><span>Esperando que el anfitrión gire la ruleta...</span>';
+        }
+    }
+
+    if (dom.dueloLocalEvalSection) dom.dueloLocalEvalSection.classList.add("hidden");
+    if (dom.dueloOnlineVoteBox) dom.dueloOnlineVoteBox.classList.remove("hidden");
+}
+
 async function iniciarCombateOnlineDesdeHost() {
     if (!onlineDueloEstado.esHost) return;
     if (onlineDueloEstado.jugadores.length < 1) {
@@ -3294,7 +3352,7 @@ async function iniciarCombateOnlineDesdeHost() {
         return;
     }
 
-    const juego = dom.dueloOnlineGameSelect ? dom.dueloOnlineGameSelect.value : "bomba";
+    const juego = onlineDueloEstado.juegoSeleccionado || (dom.dueloOnlineGameSelect ? dom.dueloOnlineGameSelect.value : "bomba");
 
     // Si el desafío elegido es "Desactivá la Bomba":
     if (juego === "bomba") {
@@ -3307,12 +3365,14 @@ async function iniciarCombateOnlineDesdeHost() {
     const apunte = apuntesEstado.global || apuntesEstado.bolillero;
     let temasDisponibles = [];
 
-    if (listaId === "pdf_global" && apunte && apunte.texto) {
+    if ((listaId === "pdf_global" || onlineDueloEstado.fuenteMaterial === "pdf") && apunte && apunte.texto) {
         const conceptos = extraerConceptosHeuristicos(apunte.texto, 15);
         if (conceptos.length > 0) {
             temasDisponibles = conceptos.map((c, idx) => ({
                 id: `t_pdf_${idx + 1}`,
+                titulo: c,
                 palabra: c,
+                nombre: c,
                 explicacion: `Concepto clave extraído de ${apunte.nombre}`
             }));
         }
@@ -3321,25 +3381,31 @@ async function iniciarCombateOnlineDesdeHost() {
     if (temasDisponibles.length === 0) {
         const lista = estado.listas.find(l => l.id === listaId) || estado.listas[0];
         temasDisponibles = (lista && lista.temas && lista.temas.length > 0)
-            ? [...lista.temas]
+            ? lista.temas.map(t => {
+                const nom = t.titulo || t.palabra || t.nombre || "Tema";
+                return { ...t, titulo: nom, palabra: nom, nombre: nom };
+            })
             : [
-                { id: "t1", palabra: "Teoría General de Sistemas", explicacion: "Enfoque holístico de sistemas interconectados." },
-                { id: "t2", palabra: "Axiomas de Comunicación", explicacion: "Principios de Paul Watzlawick sobre interacción." },
-                { id: "t3", palabra: "Leyes de la Termodinámica", explicacion: "Conservación de la energía y entropía." },
-                { id: "t4", palabra: "Principio de Indeterminación", explicacion: "Límite de precisión cuántica de Heisenberg." },
-                { id: "t5", palabra: "Estructuras de Datos", explicacion: "Organización y manipulación de datos en memoria." },
-                { id: "t6", palabra: "Recursión y Algoritmos", explicacion: "Resolución de problemas mediante subproblemas." },
-                { id: "t7", palabra: "Arquitectura de Software", explicacion: "Patrones y diseño de componentes de sistemas." },
-                { id: "t8", palabra: "Bases de Datos Relacionales", explicacion: "Modelo entidad-relación y álgebra relacional." }
+                { id: "t1", titulo: "Teoría General de Sistemas", palabra: "Teoría General de Sistemas", nombre: "Teoría General de Sistemas", explicacion: "Enfoque holístico de sistemas interconectados." },
+                { id: "t2", titulo: "Axiomas de Comunicación", palabra: "Axiomas de Comunicación", nombre: "Axiomas de Comunicación", explicacion: "Principios de Paul Watzlawick sobre interacción." },
+                { id: "t3", titulo: "Leyes de la Termodinámica", palabra: "Leyes de la Termodinámica", nombre: "Leyes de la Termodinámica", explicacion: "Conservación de la energía y entropía." },
+                { id: "t4", titulo: "Principio de Indeterminación", palabra: "Principio de Indeterminación", nombre: "Principio de Indeterminación", explicacion: "Límite de precisión cuántica de Heisenberg." },
+                { id: "t5", titulo: "Estructuras de Datos", palabra: "Estructuras de Datos", nombre: "Estructuras de Datos", explicacion: "Organización y manipulación de datos en memoria." },
+                { id: "t6", titulo: "Recursión y Algoritmos", palabra: "Recursión y Algoritmos", nombre: "Recursión y Algoritmos", explicacion: "Resolución de problemas mediante subproblemas." },
+                { id: "t7", titulo: "Arquitectura de Software", palabra: "Arquitectura de Software", nombre: "Arquitectura de Software", explicacion: "Patrones y diseño de componentes de sistemas." },
+                { id: "t8", titulo: "Bases de Datos Relacionales", palabra: "Bases de Datos Relacionales", nombre: "Bases de Datos Relacionales", explicacion: "Modelo entidad-relación y álgebra relacional." }
             ];
     }
 
-    publicarMensajeSala({
+    const payload = {
         tipo: "INICIO_PARTIDA_ONLINE",
         jugadores: onlineDueloEstado.jugadores,
         temasDisponibles,
         formatoModo: onlineDueloEstado.formatoModo
-    });
+    };
+
+    publicarMensajeSala(payload);
+    arrancarBolilleroOnlineCliente(payload);
 }
 
 // Extractor inteligente de oraciones y conceptos reales de PDF para Bomba (Fallback Offline / Sin Gemini)
@@ -3649,18 +3715,24 @@ async function girarDobleRuletaOnline() {
     const jugadorGanador = partida.jugadores[Math.floor(Math.random() * partida.jugadores.length)];
     const temaGanador = partida.temasDisponibles[Math.floor(Math.random() * partida.temasDisponibles.length)];
 
-    publicarMensajeSala({
+    const payload = {
         tipo: "RULETA_GIRAR",
         jugadorGanador,
         temaGanador,
         duracion: 3000
-    });
+    };
+
+    publicarMensajeSala(payload);
+    ejecutarAnimacionRuletaSincronizada(jugadorGanador, temaGanador, 3000);
 }
 
 async function ejecutarAnimacionRuletaSincronizada(jugadorGanador, temaGanador, duracion = 3000) {
     const partida = dueloEstado.partida;
+    if (partida.girando && partida._animandoRuleta) return;
     partida.girando = true;
+    partida._animandoRuleta = true;
 
+    if (dom.dueloSpinBtn) dom.dueloSpinBtn.disabled = true;
     if (dom.dueloTurnArea) dom.dueloTurnArea.classList.add("hidden");
     if (dom.dueloRoboBox) dom.dueloRoboBox.classList.add("hidden");
     if (dom.dueloPlayerRoulette) {
@@ -3680,27 +3752,46 @@ async function ejecutarAnimacionRuletaSincronizada(jugadorGanador, temaGanador, 
         const randJ = partida.jugadores[Math.floor(Math.random() * partida.jugadores.length)];
         const randT = partida.temasDisponibles[Math.floor(Math.random() * partida.temasDisponibles.length)];
 
-        if (dom.dueloPlayerRoulette) dom.dueloPlayerRoulette.textContent = `${randJ.avatar || "👤"} ${randJ.apodo || randJ.nombre}`;
-        if (dom.dueloTopicRoulette && randT) dom.dueloTopicRoulette.textContent = randT.titulo;
+        if (dom.dueloPlayerRoulette && randJ) {
+            dom.dueloPlayerRoulette.textContent = `${randJ.avatar || "👤"} ${randJ.apodo || randJ.nombre || "Jugador"}`;
+        }
+        if (dom.dueloTopicRoulette && randT) {
+            dom.dueloTopicRoulette.textContent = randT.titulo || randT.palabra || randT.nombre || "Tema";
+        }
 
         const progreso = transcurrido / duracion;
         intervalo = 50 + (progreso * progreso * 300);
         await new Promise(r => setTimeout(r, intervalo));
     }
 
+    const ganadorNombre = jugadorGanador.apodo || jugadorGanador.nombre || "Jugador";
+    const temaTitulo = temaGanador.titulo || temaGanador.palabra || temaGanador.nombre || "Tema Asignado";
+
     if (dom.dueloPlayerRoulette) {
-        dom.dueloPlayerRoulette.textContent = `${jugadorGanador.avatar || "👤"} ${jugadorGanador.apodo || jugadorGanador.nombre}`;
+        dom.dueloPlayerRoulette.textContent = `${jugadorGanador.avatar || "👤"} ${ganadorNombre}`;
         dom.dueloPlayerRoulette.className = "duelo-roulette-display is-winner";
     }
     if (dom.dueloTopicRoulette) {
-        dom.dueloTopicRoulette.textContent = temaGanador.titulo;
+        dom.dueloTopicRoulette.textContent = temaTitulo;
         dom.dueloTopicRoulette.className = "duelo-roulette-display is-winner";
     }
+
+    // Fijar el turno y tema activo exactamente
+    partida.jugadorActualId = jugadorGanador.id;
+    partida.temaActual = {
+        ...temaGanador,
+        titulo: temaTitulo,
+        palabra: temaTitulo,
+        nombre: temaTitulo
+    };
+    partida.turnoNumero++;
+    partida.rondaNumero = Math.floor((partida.turnoNumero - 1) / Math.max(1, partida.jugadores.length)) + 1;
+    partida._animandoRuleta = false;
 
     reproducirSonidoDuelo("beep");
 
     setTimeout(() => {
-        prepararTurnoActivoDuelo(jugadorGanador, temaGanador);
+        prepararTurnoActivoDuelo(jugadorGanador, partida.temaActual);
         partida.girando = false;
     }, 450);
 }
@@ -3715,12 +3806,15 @@ function emitirVotoOnline(votoValor) {
         if (b) b.disabled = true;
     });
 
-    publicarMensajeSala({
+    const payload = {
         tipo: "VOTO_EMITIDO",
         votanteId: perfilUsuario.id,
         votanteNombre: perfilUsuario.apodo,
         voto: votoValor
-    });
+    };
+
+    publicarMensajeSala(payload);
+    procesarVotoOnlineRecibido(perfilUsuario.id, perfilUsuario.apodo, votoValor);
 }
 
 function procesarVotoOnlineRecibido(votanteId, votanteNombre, voto) {
@@ -3771,10 +3865,13 @@ function computarResultadoVotacionOnline() {
         decision = "ayuda";
     }
 
-    publicarMensajeSala({
+    const payload = {
         tipo: "RESULTADO_VOTACION",
         decision
-    });
+    };
+
+    publicarMensajeSala(payload);
+    aplicarResultadoVotacionOnline(payload);
 }
 
 function aplicarResultadoVotacionOnline(data) {
@@ -3820,7 +3917,7 @@ function atribuirRoboRelampagoOnline(ladronId, ladronNombre) {
         dom.dueloOnlineRoboOverlay.classList.add("hidden");
     }
     // Activar al ladrón en la partida
-    activarLadronDuelo(ladronId);
+    pulsarRoboRelampago(ladronId);
 }
 
 /* ==========================================================
@@ -4388,30 +4485,42 @@ async function girarDobleRuletaDuelo() {
 
         // Ruleta de jugador
         const jRandom = partida.jugadores[Math.floor(Math.random() * partida.jugadores.length)];
-        if (dom.dueloPlayerRoulette) dom.dueloPlayerRoulette.textContent = `${jRandom.avatar} ${jRandom.nombre}`;
+        if (dom.dueloPlayerRoulette && jRandom) {
+            dom.dueloPlayerRoulette.textContent = `${jRandom.avatar || "👤"} ${jRandom.apodo || jRandom.nombre || "Jugador"}`;
+        }
 
         // Ruleta de tema
         const tRandom = partida.temasDisponibles[Math.floor(Math.random() * partida.temasDisponibles.length)];
-        if (dom.dueloTopicRoulette) dom.dueloTopicRoulette.textContent = tRandom.titulo;
+        if (dom.dueloTopicRoulette && tRandom) {
+            dom.dueloTopicRoulette.textContent = tRandom.titulo || tRandom.palabra || tRandom.nombre || "Tema";
+        }
 
         const progreso = transcurrido / duracion;
         intervalo = 50 + (progreso * progreso * 280);
         await new Promise(r => setTimeout(r, intervalo));
     }
 
+    const gNombre = jugadorGanador.apodo || jugadorGanador.nombre || "Jugador";
+    const gTitulo = temaGanador.titulo || temaGanador.palabra || temaGanador.nombre || "Tema Asignado";
+
     // Fijar ganadores del sorteo
     partida.jugadorActualId = jugadorGanador.id;
-    partida.temaActual = temaGanador;
+    partida.temaActual = {
+        ...temaGanador,
+        titulo: gTitulo,
+        palabra: gTitulo,
+        nombre: gTitulo
+    };
     partida.turnoNumero++;
-    partida.rondaNumero = Math.floor((partida.turnoNumero - 1) / partida.jugadores.length) + 1;
+    partida.rondaNumero = Math.floor((partida.turnoNumero - 1) / Math.max(1, partida.jugadores.length)) + 1;
 
     if (dom.dueloPlayerRoulette) {
-        dom.dueloPlayerRoulette.textContent = `${jugadorGanador.avatar} ${jugadorGanador.nombre}`;
+        dom.dueloPlayerRoulette.textContent = `${jugadorGanador.avatar || "👤"} ${gNombre}`;
         dom.dueloPlayerRoulette.className = "duelo-roulette-display is-winner";
     }
 
     if (dom.dueloTopicRoulette) {
-        dom.dueloTopicRoulette.textContent = temaGanador.titulo;
+        dom.dueloTopicRoulette.textContent = gTitulo;
         dom.dueloTopicRoulette.className = "duelo-roulette-display is-winner";
     }
 
@@ -4419,7 +4528,7 @@ async function girarDobleRuletaDuelo() {
 
     // Activar Turn Area
     setTimeout(() => {
-        prepararTurnoActivoDuelo(jugadorGanador, temaGanador);
+        prepararTurnoActivoDuelo(jugadorGanador, partida.temaActual);
         partida.girando = false;
     }, 450);
 }
@@ -4430,9 +4539,9 @@ function prepararTurnoActivoDuelo(jugador, tema) {
     partida.jugadorSocorroId = null;
 
     if (dom.dueloTurnArea) dom.dueloTurnArea.classList.remove("hidden");
-    if (dom.dueloTurnAvatar) dom.dueloTurnAvatar.textContent = jugador.avatar;
-    if (dom.dueloTurnPlayerName) dom.dueloTurnPlayerName.textContent = jugador.nombre;
-    if (dom.dueloActiveTopicTitle) dom.dueloActiveTopicTitle.textContent = tema.titulo;
+    if (dom.dueloTurnAvatar) dom.dueloTurnAvatar.textContent = jugador.avatar || "👤";
+    if (dom.dueloTurnPlayerName) dom.dueloTurnPlayerName.textContent = jugador.apodo || jugador.nombre || "Jugador";
+    if (dom.dueloActiveTopicTitle) dom.dueloActiveTopicTitle.textContent = (tema && (tema.titulo || tema.palabra || tema.nombre)) ? (tema.titulo || tema.palabra || tema.nombre) : "Tema Asignado";
 
     // Racha de Fuego
     const tieneRacha = dueloEstado.config.reglas.rachaFuego && jugador.rachaActual >= 2;
@@ -4495,24 +4604,25 @@ function prepararTurnoActivoDuelo(jugador, tema) {
 }
 
 function actualizarComodinesJugadorUI(jugador) {
-    const comodinesConfig = dueloEstado.config.comodines;
+    const comodinesConfig = dueloEstado.config.comodines || {};
+    const usados = (jugador && jugador.comodinesUsados) ? jugador.comodinesUsados : {};
 
     if (dom.dueloBtnSocorro) {
         dom.dueloBtnSocorro.style.display = comodinesConfig.socorro ? "inline-flex" : "none";
-        dom.dueloBtnSocorro.disabled = jugador.comodinesUsados.socorro;
-        dom.dueloBtnSocorro.classList.toggle("is-used", jugador.comodinesUsados.socorro);
+        dom.dueloBtnSocorro.disabled = !!usados.socorro;
+        dom.dueloBtnSocorro.classList.toggle("is-used", !!usados.socorro);
     }
 
     if (dom.dueloBtnPista) {
         dom.dueloBtnPista.style.display = comodinesConfig.pista ? "inline-flex" : "none";
-        dom.dueloBtnPista.disabled = jugador.comodinesUsados.pista;
-        dom.dueloBtnPista.classList.toggle("is-used", jugador.comodinesUsados.pista);
+        dom.dueloBtnPista.disabled = !!usados.pista;
+        dom.dueloBtnPista.classList.toggle("is-used", !!usados.pista);
     }
 
     if (dom.dueloBtnPaso) {
         dom.dueloBtnPaso.style.display = comodinesConfig.pasoRebote ? "inline-flex" : "none";
-        dom.dueloBtnPaso.disabled = jugador.comodinesUsados.pasoRebote;
-        dom.dueloBtnPaso.classList.toggle("is-used", jugador.comodinesUsados.pasoRebote);
+        dom.dueloBtnPaso.disabled = !!usados.pasoRebote;
+        dom.dueloBtnPaso.classList.toggle("is-used", !!usados.pasoRebote);
     }
 }
 
@@ -4670,6 +4780,8 @@ function calificarTurnoDuelo(tipo) {
 
     pausarCronometroTurnoDuelo();
 
+    const nomJugador = jugador.apodo || jugador.nombre || "Jugador";
+
     // ==========================================
     // LÓGICA COOPERATIVA EN EQUIPO
     // ==========================================
@@ -4677,12 +4789,12 @@ function calificarTurnoDuelo(tipo) {
         if (tipo === "impecable") {
             partida.puntosEquipo = (partida.puntosEquipo || 0) + 15;
             jugador.puntosAportados = (jugador.puntosAportados || 0) + 15;
-            agregarRegistroTurnoDuelo(`🟢 ${jugador.nombre || jugador.apodo} explicó ¡Excelente! (+15 pts al Equipo)`, 15);
+            agregarRegistroTurnoDuelo(`🟢 ${nomJugador} explicó ¡Excelente! (+15 pts al Equipo)`, 15);
             reproducirSonidoDuelo("fanfare");
         } else if (tipo === "ayuda") {
             partida.puntosEquipo = (partida.puntosEquipo || 0) + 8;
             jugador.puntosAportados = (jugador.puntosAportados || 0) + 8;
-            agregarRegistroTurnoDuelo(`🟡 ${jugador.nombre || jugador.apodo} explicó con dudas (+8 pts al Equipo)`, 8);
+            agregarRegistroTurnoDuelo(`🟡 ${nomJugador} explicó con dudas (+8 pts al Equipo)`, 8);
             reproducirSonidoDuelo("beep");
         } else if (tipo === "paso") {
             partida.vidasEquipo = Math.max(0, (partida.vidasEquipo !== undefined ? partida.vidasEquipo : 3) - 1);
@@ -4723,9 +4835,10 @@ function calificarTurnoDuelo(tipo) {
 
         if (partida.comodinActivo === "socorro" && partida.jugadorSocorroId) {
             const comp = partida.jugadores.find(j => j.id === partida.jugadorSocorroId);
+            const nomComp = comp ? (comp.apodo || comp.nombre || "compañero") : "compañero";
             jugador.puntos += 5;
             if (comp) comp.puntos += 5;
-            agregarRegistroTurnoDuelo(`🤝 ${jugador.nombre} y ${comp ? comp.nombre : "compañero"} resolvieron con Socorro (+5 pts c/u)`, 5);
+            agregarRegistroTurnoDuelo(`🤝 ${nomJugador} y ${nomComp} resolvieron con Socorro (+5 pts c/u)`, 5);
         } else {
             jugador.puntos += pts;
             jugador.rachaActual++;
@@ -4733,10 +4846,10 @@ function calificarTurnoDuelo(tipo) {
                 jugador.maxRacha = jugador.rachaActual;
             }
             if (rachaActiva) {
-                agregarRegistroTurnoDuelo(`🔥 ¡IMPECABLE DOBLE! ${jugador.nombre} sumó +20 pts con Racha de Fuego`, 20);
+                agregarRegistroTurnoDuelo(`🔥 ¡IMPECABLE DOBLE! ${nomJugador} sumó +20 pts con Racha de Fuego`, 20);
                 reproducirSonidoDuelo("fanfare");
             } else {
-                agregarRegistroTurnoDuelo(`🟢 ${jugador.nombre} respondió ¡Impecable! (+10 pts)`, 10);
+                agregarRegistroTurnoDuelo(`🟢 ${nomJugador} respondió ¡Impecable! (+10 pts)`, 10);
                 reproducirSonidoDuelo("fanfare");
             }
         }
@@ -4745,20 +4858,21 @@ function calificarTurnoDuelo(tipo) {
     } else if (tipo === "ayuda") {
         if (partida.comodinActivo === "socorro" && partida.jugadorSocorroId) {
             const comp = partida.jugadores.find(j => j.id === partida.jugadorSocorroId);
+            const nomComp = comp ? (comp.apodo || comp.nombre || "compañero") : "compañero";
             jugador.puntos += 5;
             if (comp) comp.puntos += 5;
-            agregarRegistroTurnoDuelo(`🤝 ${jugador.nombre} y ${comp ? comp.nombre : "compañero"} con Socorro (+5 pts c/u)`, 5);
+            agregarRegistroTurnoDuelo(`🤝 ${nomJugador} y ${nomComp} con Socorro (+5 pts c/u)`, 5);
         } else {
             jugador.puntos += 5;
             jugador.rachaActual = 0;
-            agregarRegistroTurnoDuelo(`🟡 ${jugador.nombre} respondió con ayuda (+5 pts)`, 5);
+            agregarRegistroTurnoDuelo(`🟡 ${nomJugador} respondió con ayuda (+5 pts)`, 5);
             reproducirSonidoDuelo("beep");
         }
 
         avanzarSiguienteTemaDuelo();
     } else if (tipo === "paso") {
         jugador.rachaActual = 0;
-        agregarRegistroTurnoDuelo(`🔴 ${jugador.nombre} pasó / no supo el tema (0 pts)`, 0);
+        agregarRegistroTurnoDuelo(`🔴 ${nomJugador} pasó / no supo el tema (0 pts)`, 0);
 
         // Comprobar si se activa el Robo Relámpago
         const otrosJugadores = partida.jugadores.filter(j => j.id !== jugador.id);
@@ -4775,6 +4889,17 @@ function iniciarRoboRelampago(otrosJugadores) {
     partida.robo.activo = true;
     partida.robo.ladronId = null;
 
+    if (onlineDueloEstado.modo === "online" && onlineDueloEstado.codigoSala) {
+        if (onlineDueloEstado.esHost) {
+            publicarMensajeSala({
+                tipo: "ROBO_DISPONIBLE",
+                tema: partida.temaActual
+            });
+        }
+        activarRoboRelampagoOnlinePantalla(partida.temaActual);
+        return;
+    }
+
     if (!dom.dueloRoboBox || !dom.dueloBuzzerContainer) return;
 
     dom.dueloRoboBox.classList.remove("hidden");
@@ -4786,7 +4911,7 @@ function iniciarRoboRelampago(otrosJugadores) {
         const btn = document.createElement("button");
         btn.className = "duelo-buzzer-btn";
         btn.type = "button";
-        btn.textContent = `⚡ ¡Yo robo! — ${j.nombre}`;
+        btn.textContent = `⚡ ¡Yo robo! — ${j.apodo || j.nombre || "Jugador"}`;
         btn.onclick = () => pulsarRoboRelampago(j.id);
         dom.dueloBuzzerContainer.appendChild(btn);
     });
@@ -4800,10 +4925,11 @@ function pulsarRoboRelampago(ladronId) {
     if (!ladron) return;
 
     partida.robo.ladronId = ladronId;
+    const nomLadron = ladron.apodo || ladron.nombre || "Jugador";
 
     if (dom.dueloBuzzerContainer) dom.dueloBuzzerContainer.classList.add("hidden");
     if (dom.dueloThiefActiveArea) dom.dueloThiefActiveArea.classList.remove("hidden");
-    if (dom.dueloThiefTitle) dom.dueloThiefTitle.textContent = `⚡ ¡${ladron.nombre} pulsa el Robo Relámpago!`;
+    if (dom.dueloThiefTitle) dom.dueloThiefTitle.textContent = `⚡ ¡${nomLadron} pulsa el Robo Relámpago!`;
 
     // Tiempo rápido: la mitad del turno global
     partida.robo.tiempoRestante = Math.max(10, Math.floor(dueloEstado.config.tiempoTurnoSegundos / 2));
@@ -4840,19 +4966,32 @@ function calificarRoboRelampago(exito) {
     }
 
     const ladron = partida.jugadores.find(j => j.id === partida.robo.ladronId);
+    const nomLadron = ladron ? (ladron.apodo || ladron.nombre || "Jugador") : "Jugador";
 
     if (exito && ladron) {
         ladron.puntos += 10;
         ladron.robosExitosos++;
-        agregarRegistroTurnoDuelo(`⚡ ¡Robo Relámpago exitoso de ${ladron.nombre}! (+10 pts)`, 10);
+        agregarRegistroTurnoDuelo(`⚡ ¡Robo Relámpago exitoso de ${nomLadron}! (+10 pts)`, 10);
         reproducirSonidoDuelo("fanfare");
     } else if (ladron) {
-        agregarRegistroTurnoDuelo(`⚡ Robo fallido de ${ladron.nombre} (0 pts)`, 0);
+        agregarRegistroTurnoDuelo(`⚡ Robo fallido de ${nomLadron} (0 pts)`, 0);
         reproducirSonidoDuelo("buzzer");
     }
 
     if (dom.dueloRoboBox) dom.dueloRoboBox.classList.add("hidden");
+    if (dom.dueloOnlineRoboOverlay) dom.dueloOnlineRoboOverlay.classList.add("hidden");
     partida.robo.activo = false;
+
+    if (onlineDueloEstado.modo === "online" && onlineDueloEstado.codigoSala && onlineDueloEstado.esHost) {
+        publicarMensajeSala({
+            tipo: "ROBO_CALIFICADO",
+            ladronId: partida.robo.ladronId,
+            exito,
+            puntos: ladron ? ladron.puntos : 0,
+            robosExitosos: ladron ? ladron.robosExitosos : 0
+        });
+    }
+
     avanzarSiguienteTemaDuelo();
 }
 
@@ -4868,6 +5007,7 @@ function avanzarSiguienteTemaDuelo() {
 
     if (dom.dueloTurnArea) dom.dueloTurnArea.classList.add("hidden");
     if (dom.dueloRoboBox) dom.dueloRoboBox.classList.add("hidden");
+    if (dom.dueloOnlineRoboOverlay) dom.dueloOnlineRoboOverlay.classList.add("hidden");
 
     if (partida.temasDisponibles.length === 0) {
         alert("🎉 ¡Se sortearon todos los temas de la materia! Fin del duelo.");
@@ -4877,6 +5017,22 @@ function avanzarSiguienteTemaDuelo() {
 
     if (dom.dueloPlayerRoulette) dom.dueloPlayerRoulette.textContent = "🎲 ¿Quién es el siguiente?";
     if (dom.dueloTopicRoulette) dom.dueloTopicRoulette.textContent = "🎰 ¿Qué tema tocará?";
+
+    // Reactivar botón de giro según rol
+    if (dom.dueloSpinBtn) {
+        if (onlineDueloEstado.modo === "online") {
+            if (onlineDueloEstado.esHost) {
+                dom.dueloSpinBtn.disabled = false;
+                dom.dueloSpinBtn.innerHTML = '<span>🎲</span><span>GIRAR DOBLE RULETA</span>';
+            } else {
+                dom.dueloSpinBtn.disabled = true;
+                dom.dueloSpinBtn.innerHTML = '<span>⏳</span><span>Esperando que el anfitrión gire la ruleta...</span>';
+            }
+        } else {
+            dom.dueloSpinBtn.disabled = false;
+            dom.dueloSpinBtn.innerHTML = '<span>🎲</span><span>GIRAR DOBLE RULETA</span>';
+        }
+    }
 }
 
 function finalizarPartidaCooperativa(victoria) {
@@ -5019,20 +5175,20 @@ function finalizarDueloPartida(forzar = false) {
         listaNombre: nombreLista,
         totalTurnos: partida.turnoNumero,
         ganador: {
-            nombre: ganador ? ganador.nombre : "Sin campeón",
+            nombre: ganador ? (ganador.apodo || ganador.nombre || "Sin campeón") : "Sin campeón",
             puntos: ganador ? ganador.puntos : 0
         },
         reyRacha: {
-            nombre: reyRacha ? reyRacha.nombre : "—",
+            nombre: reyRacha ? (reyRacha.apodo || reyRacha.nombre || "—") : "—",
             racha: reyRacha ? reyRacha.maxRacha : 0
         },
         ladronRelampago: {
-            nombre: ladron ? ladron.nombre : "—",
+            nombre: ladron ? (ladron.apodo || ladron.nombre || "—") : "—",
             robos: ladron ? ladron.robosExitosos : 0
         },
         posiciones: ranking.map((j, i) => ({
             rank: i + 1,
-            nombre: j.nombre,
+            nombre: j.apodo || j.nombre || "Jugador",
             puntos: j.puntos,
             maxRacha: j.maxRacha,
             robosExitosos: j.robosExitosos
@@ -5042,6 +5198,13 @@ function finalizarDueloPartida(forzar = false) {
     const historial = cargarHistorialDuelo();
     historial.unshift(partidaGuardada);
     guardarHistorialDuelo(historial);
+
+    if (onlineDueloEstado.modo === "online" && onlineDueloEstado.codigoSala && onlineDueloEstado.esHost) {
+        publicarMensajeSala({
+            tipo: "FIN_PARTIDA_ONLINE",
+            partidaGuardada
+        });
+    }
 
     // Mostrar Modal de Victoria
     mostrarModalVictoriaDuelo(partidaGuardada);
@@ -7311,7 +7474,7 @@ function iniciarAplicacion() {
     }
     const drawerVersionTag = document.getElementById("drawerVersionTag");
     if (drawerVersionTag) {
-        drawerVersionTag.innerHTML = `⚡ Luibañez <strong style="color: var(--color-text);">v25.0</strong>`;
+        drawerVersionTag.innerHTML = `⚡ Luibañez <strong style="color: var(--color-text);">v25.1</strong>`;
         drawerVersionTag.addEventListener("click", () => {
             forzarActualizacionCompleta(true);
         });
@@ -7353,7 +7516,7 @@ function iniciarAplicacion() {
 // =========================================================
 // GESTOR DE VERSIONES Y ACTUALIZACIÓN AUTOMÁTICA
 // =========================================================
-const APP_BUILD_VERSION = "25.0";
+const APP_BUILD_VERSION = "25.1";
 
 async function forzarActualizacionCompleta(mostrarNotificacion = true) {
     if (mostrarNotificacion && typeof mostrarToast === "function") {
