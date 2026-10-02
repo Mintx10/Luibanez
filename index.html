@@ -15,15 +15,16 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     
-    <link rel="icon" type="image/svg+xml" href="icon.svg?v=26.0">
-    <link rel="apple-touch-icon" href="icon-192.png?v=26.0">
-    <link rel="manifest" href="manifest.json?v=26.0">
-    <link rel="stylesheet" href="style.css?v=26.0">
+    <link rel="icon" type="image/svg+xml" href="icon.svg?v=26.1">
+    <link rel="apple-touch-icon" href="icon-192.png?v=26.1">
+    <link rel="manifest" href="manifest.json?v=26.1">
+    <link rel="stylesheet" href="style.css?v=26.1">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="jszip.min.js"></script>
 </head>
 <body>
 
@@ -233,7 +234,7 @@
 
         <!-- Versión y botón de actualización forzada -->
         <div class="drawer-version-row" style="padding: 0.85rem 1rem; border-top: 1px solid var(--color-border); font-size: 0.75rem; color: var(--color-text-muted); display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02); margin-top: auto;">
-            <span id="drawerVersionTag" style="cursor: pointer; user-select: none;" title="Versión de Luibañez">⚡ Luibañez <strong style="color: var(--color-text);">v26.0</strong></span>
+            <span id="drawerVersionTag" style="cursor: pointer; user-select: none;" title="Versión de Luibañez">⚡ Luibañez <strong style="color: var(--color-text);">v26.1</strong></span>
             <button id="btnForzarActualizar" class="button button--ghost button--xs" type="button" style="font-size: 0.72rem; padding: 0.2rem 0.55rem; border-radius: 999px; border: 1px solid var(--color-border);" title="Limpiar caché y recargar versión más reciente">🔄 Actualizar</button>
         </div>
     </div>
@@ -2324,11 +2325,11 @@
                 <div class="lab-header-controls">
                     <div class="lab-badges-wrapper" style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;">
                         <span class="badge badge--accent" id="labActiveTopicBadge">📊 Estadística Descriptiva</span>
-                        <span class="badge badge--success hidden" id="labActivePdfBadge">📄 Sin PDF cargado</span>
+                        <span class="badge badge--success hidden" id="labActivePdfBadge">📄 Sin archivo cargado</span>
                     </div>
                     <div class="lab-header-buttons">
-                        <button id="labBtnAbrirConfigModal" class="button button--secondary button--sm" type="button" title="Cargar un nuevo PDF o cambiar el tema de estudio">
-                            ⚙️ Cargar PDF / Tema
+                        <button id="labBtnAbrirConfigModal" class="button button--secondary button--sm" type="button" title="Cargar archivo (PDF, Word, PPTX, Texto) o cambiar tema de estudio">
+                            ⚙️ Cargar Archivo / Tema
                         </button>
                         <button id="labBtnGenerarConIA" class="button button--primary button--sm" type="button" style="background: linear-gradient(135deg, #059669, #10b981);" title="Generar ejercicio analítico con IA a partir del PDF o tema">
                             ✨ Generar Ejercicio con IA
@@ -2365,7 +2366,7 @@
                         <div class="lab-case-meta">
                             <span class="badge badge--accent" id="labTagDificultad">Dificultad: Intermedia</span>
                             <span class="lab-case-tag" id="labTagTema">Estadística Descriptiva</span>
-                            <span class="badge badge--success hidden" id="labTagOrigenPdf">📄 Basado en tu PDF</span>
+                            <span class="badge badge--success hidden" id="labTagOrigenPdf">📄 Basado en tu archivo</span>
                         </div>
                         <h2 class="lab-case-title" id="labTituloCaso">Distribución de Frecuencias y Centralidad</h2>
                         <div class="lab-case-body">
@@ -2518,43 +2519,7 @@
                                         <strong class="lab-stat-value" id="labStatN">0</strong>
                                         <span class="lab-stat-formula">Σ fi</span>
                                     </div>
-                                    <!-- 2. Promedio / Media -->
-                                    <div class="lab-stat-card">
-                                        <div class="lab-stat-card-top">
-                                            <span class="lab-stat-name">Media (x̄)</span>
-                                            <button type="button" class="lab-copy-stat-btn" data-target="labStatMean" title="Copiar Media">📋</button>
-                                        </div>
-                                        <strong class="lab-stat-value" id="labStatMean">0.00</strong>
-                                        <span class="lab-stat-formula">Σ(xi·fi) / N</span>
-                                    </div>
-                                    <!-- 3. Varianza Muestral -->
-                                    <div class="lab-stat-card">
-                                        <div class="lab-stat-card-top">
-                                            <span class="lab-stat-name">Varianza (s²)</span>
-                                            <button type="button" class="lab-copy-stat-btn" data-target="labStatVar" title="Copiar Varianza">📋</button>
-                                        </div>
-                                        <strong class="lab-stat-value" id="labStatVar">0.00</strong>
-                                        <span class="lab-stat-formula">s² muestral</span>
-                                    </div>
-                                    <!-- 4. Desvío Estándar -->
-                                    <div class="lab-stat-card">
-                                        <div class="lab-stat-card-top">
-                                            <span class="lab-stat-name">Desvío (s)</span>
-                                            <button type="button" class="lab-copy-stat-btn" data-target="labStatStd" title="Copiar Desvío">📋</button>
-                                        </div>
-                                        <strong class="lab-stat-value" id="labStatStd">0.00</strong>
-                                        <span class="lab-stat-formula">√s²</span>
-                                    </div>
-                                    <!-- 5. Coeficiente de Variación -->
-                                    <div class="lab-stat-card">
-                                        <div class="lab-stat-card-top">
-                                            <span class="lab-stat-name">Coef. Var. (CV)</span>
-                                            <button type="button" class="lab-copy-stat-btn" data-target="labStatCV" title="Copiar CV">📋</button>
-                                        </div>
-                                        <strong class="lab-stat-value" id="labStatCV">0.00%</strong>
-                                        <span class="lab-stat-formula">(s / x̄) · 100</span>
-                                    </div>
-                                    <!-- 6. Moda -->
+                                    <!-- 2. Moda (Mo) -->
                                     <div class="lab-stat-card">
                                         <div class="lab-stat-card-top">
                                             <span class="lab-stat-name">Moda (Mo)</span>
@@ -2563,7 +2528,7 @@
                                         <strong class="lab-stat-value" id="labStatMode">-</strong>
                                         <span class="lab-stat-formula">Mayor fi</span>
                                     </div>
-                                    <!-- 7. Mediana -->
+                                    <!-- 3. Mediana (Me) -->
                                     <div class="lab-stat-card">
                                         <div class="lab-stat-card-top">
                                             <span class="lab-stat-name">Mediana (Me)</span>
@@ -2571,6 +2536,42 @@
                                         </div>
                                         <strong class="lab-stat-value" id="labStatMedian">-</strong>
                                         <span class="lab-stat-formula">Posición 50%</span>
+                                    </div>
+                                    <!-- 4. Promedio / Media (x̄) -->
+                                    <div class="lab-stat-card">
+                                        <div class="lab-stat-card-top">
+                                            <span class="lab-stat-name">Promedio (x̄)</span>
+                                            <button type="button" class="lab-copy-stat-btn" data-target="labStatMean" title="Copiar Promedio">📋</button>
+                                        </div>
+                                        <strong class="lab-stat-value" id="labStatMean">0.00</strong>
+                                        <span class="lab-stat-formula">Σ(xi·fi) / N</span>
+                                    </div>
+                                    <!-- 5. Desvío Estándar (s) -->
+                                    <div class="lab-stat-card">
+                                        <div class="lab-stat-card-top">
+                                            <span class="lab-stat-name">Desvío Estándar (s)</span>
+                                            <button type="button" class="lab-copy-stat-btn" data-target="labStatStd" title="Copiar Desvío">📋</button>
+                                        </div>
+                                        <strong class="lab-stat-value" id="labStatStd">0.00</strong>
+                                        <span class="lab-stat-formula">√s²</span>
+                                    </div>
+                                    <!-- 6. Coeficiente de Variación (CV) -->
+                                    <div class="lab-stat-card">
+                                        <div class="lab-stat-card-top">
+                                            <span class="lab-stat-name">Coef. Var. (CV)</span>
+                                            <button type="button" class="lab-copy-stat-btn" data-target="labStatCV" title="Copiar CV">📋</button>
+                                        </div>
+                                        <strong class="lab-stat-value" id="labStatCV">0.00%</strong>
+                                        <span class="lab-stat-formula">(s / x̄) · 100</span>
+                                    </div>
+                                    <!-- 7. Varianza Muestral (s²) -->
+                                    <div class="lab-stat-card">
+                                        <div class="lab-stat-card-top">
+                                            <span class="lab-stat-name">Varianza (s²)</span>
+                                            <button type="button" class="lab-copy-stat-btn" data-target="labStatVar" title="Copiar Varianza">📋</button>
+                                        </div>
+                                        <strong class="lab-stat-value" id="labStatVar">0.00</strong>
+                                        <span class="lab-stat-formula">s² muestral</span>
                                     </div>
                                 </div>
                             </div>
@@ -3353,7 +3354,7 @@
 </dialog>
 
 <script src="mqtt.min.js"></script>
-<script src="script.js?v=26.0" defer></script>
+<script src="script.js?v=26.1" defer></script>
 
 <!-- =========================================================
      MODAL DE PROMPT PARA GEMINI (CREAR JUEGOS DESDE PDF)
@@ -3409,22 +3410,25 @@
 <dialog id="labConfigModal" class="modal" aria-labelledby="labConfigModalTitle">
     <div class="modal__content modal__content--md lab-config-modal-content">
         <header class="modal__header">
-            <h3 id="labConfigModalTitle" class="modal__title">🔬 Laboratorio de Estadística: Cargar PDF & Temario</h3>
+            <h3 id="labConfigModalTitle" class="modal__title">🔬 Laboratorio de Estadística: Cargar Archivos & Temario</h3>
             <button id="closeLabConfigModalBtn" class="modal__close icon-button" type="button" aria-label="Cerrar modal">✕</button>
         </header>
         <div class="modal__body" style="display: flex; flex-direction: column; gap: 1.25rem;">
-            <!-- Área de carga de PDF con gran botón + -->
+            <!-- Área de carga de Archivos (PDF, Word, PPTX, Texto, Google Docs) -->
             <div class="lab-upload-section">
-                <label class="section-title" style="margin-bottom: 0.5rem; display: block;">📄 Cargar Apunte o Guía en PDF (Opcional):</label>
-                <input type="file" id="labPdfFileInput" accept=".pdf" class="hidden">
-                <div class="lab-upload-dropzone" id="labUploadDropzone" tabindex="0" role="button" aria-label="Cargar archivo PDF">
+                <label class="section-title" style="margin-bottom: 0.5rem; display: block;">📂 Cargar Material de Estudio (PDF, Word, PowerPoint, Texto):</label>
+                <input type="file" id="labPdfFileInput" accept=".pdf,.docx,.pptx,.txt,.md,.csv" class="hidden">
+                <div class="lab-upload-dropzone" id="labUploadDropzone" tabindex="0" role="button" aria-label="Cargar archivo de estudio">
                     <div class="lab-upload-plus-circle" id="labUploadPlusCircle">➕</div>
-                    <strong class="lab-upload-title" id="labUploadTitle">Subir PDF de Estadística</strong>
+                    <strong class="lab-upload-title" id="labUploadTitle">Subir Material de Estudio</strong>
                     <p class="lab-upload-hint" id="labUploadHint">
-                        Hacé clic o arrastrá acá el PDF de tu cátedra (apuntes, fórmulas o ejercicios). La IA lo analizará para crear casos contextualizados.
+                        Hacé clic o arrastrá acá archivos en <strong>PDF, Word (.docx), PowerPoint (.pptx)</strong> o <strong>Texto (.txt)</strong>. La IA extraerá los datos para generar tus ejercicios.
                     </p>
+                    <div class="lab-gdocs-hint" style="font-size: 0.78rem; color: #38bdf8; background: rgba(56, 189, 248, 0.1); border: 1px dashed rgba(56, 189, 248, 0.35); border-radius: 6px; padding: 0.45rem 0.75rem; margin-top: 0.4rem; text-align: left; line-height: 1.4;">
+                        💡 <strong>¿Usás Google Docs o Presentaciones?</strong> Andá en Google Docs a <em>Archivo &gt; Descargar &gt; Documento de Word (.docx) o PDF</em> y subilo acá directamente.
+                    </div>
                     <div class="lab-loaded-pdf-info hidden" id="labLoadedPdfInfo">
-                        <span class="lab-loaded-pdf-icon">📄</span>
+                        <span class="lab-loaded-pdf-icon" id="labLoadedPdfIcon">📄</span>
                         <div class="lab-loaded-pdf-text">
                             <strong id="labLoadedPdfName">apuntes.pdf</strong>
                             <span id="labLoadedPdfMeta">Listo para procesar</span>

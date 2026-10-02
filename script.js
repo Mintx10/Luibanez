@@ -749,6 +749,7 @@ const dom = {
     labUploadDropzone: document.getElementById("labUploadDropzone"),
     labPdfFileInput: document.getElementById("labPdfFileInput"),
     labLoadedPdfInfo: document.getElementById("labLoadedPdfInfo"),
+    labLoadedPdfIcon: document.getElementById("labLoadedPdfIcon"),
     labLoadedPdfName: document.getElementById("labLoadedPdfName"),
     labLoadedPdfMeta: document.getElementById("labLoadedPdfMeta"),
     labBtnQuitarPdf: document.getElementById("labBtnQuitarPdf"),
@@ -8421,7 +8422,7 @@ function iniciarAplicacion() {
 // =========================================================
 // GESTOR DE VERSIONES Y ACTUALIZACIÓN AUTOMÁTICA
 // =========================================================
-const APP_BUILD_VERSION = "26.0";
+const APP_BUILD_VERSION = "26.1";
 
 async function forzarActualizacionCompleta(mostrarNotificacion = true) {
     if (mostrarNotificacion && typeof mostrarToast === "function") {
@@ -11897,56 +11898,133 @@ function cerrarModalConfigLab() {
     }
 }
 
-async function procesarPdfLaboratorio(file) {
+async function procesarArchivoLaboratorio(file) {
     if (!file) return;
-    if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
-        mostrarToast("⚠️ El archivo seleccionado debe ser un PDF.", "aviso");
+    const nameLower = file.name.toLowerCase();
+    const esPdf = file.type === "application/pdf" || nameLower.endsWith(".pdf");
+    const esDocx = nameLower.endsWith(".docx");
+    const esPptx = nameLower.endsWith(".pptx");
+    const esTxt = nameLower.endsWith(".txt") || nameLower.endsWith(".md") || nameLower.endsWith(".csv") || file.type.startsWith("text/");
+
+    if (!esPdf && !esDocx && !esPptx && !esTxt) {
+        mostrarToast("⚠️ Formato no compatible. Por favor subí archivos en PDF, Word (.docx), PowerPoint (.pptx) o Texto (.txt).", "aviso");
         return;
     }
 
-    mostrarToast("📄 Analizando PDF con IA...", "info");
+    let fileIcon = "📄";
+    let fileTypeLabel = "Archivo";
+    if (esPdf) { fileIcon = "📄"; fileTypeLabel = "PDF"; }
+    else if (esDocx) { fileIcon = "📘"; fileTypeLabel = "Word (.docx)"; }
+    else if (esPptx) { fileIcon = "📙"; fileTypeLabel = "PowerPoint (.pptx)"; }
+    else if (esTxt) { fileIcon = "📝"; fileTypeLabel = "Texto"; }
+
+    mostrarToast(`${fileIcon} Analizando ${fileTypeLabel} con IA...`, "info");
 
     try {
-        if (typeof pdfjsLib === "undefined") {
-            throw new Error("Librería PDF no disponible");
+        let textoCompleto = "";
+        let metaDetalle = "";
+
+        if (esPdf) {
+            if (typeof pdfjsLib === "undefined") {
+                throw new Error("Librería PDF no disponible");
+            }
+            const arrayBuffer = await file.arrayBuffer();
+            const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+            const maxPaginas = Math.min(pdf.numPages, 25);
+            for (let i = 1; i <= maxPaginas; i++) {
+                const page = await pdf.getPage(i);
+                const content = await page.getTextContent();
+                const textPage = content.items.map(item => item.str).join(" ");
+                textoCompleto += `\n--- PÁGINA ${i} ---\n` + textPage;
+            }
+            metaDetalle = `${pdf.numPages} páginas leídas con éxito`;
+            laboratorioEstado.pdfPaginas = pdf.numPages;
+        } else if (esDocx) {
+            if (typeof JSZip === "undefined") {
+                throw new Error("Librería JSZip no disponible");
+            }
+            const arrayBuffer = await file.arrayBuffer();
+            const zip = await JSZip.loadAsync(arrayBuffer);
+            const docFile = zip.file("word/document.xml");
+            if (!docFile) throw new Error("No se encontró el texto principal en el archivo .docx");
+            const docXml = await docFile.async("string");
+            const parser = new DOMParser();
+            const xmlDoc = parser.parseFromString(docXml, "text/xml");
+            const nodes = xmlDoc.getElementsByTagName("w:t");
+            const words = [];
+            for (let i = 0; i < nodes.length; i++) {
+                if (nodes[i].textContent) words.push(nodes[i].textContent);
+            }
+            textoCompleto = words.join(" ");
+            metaDetalle = `${words.length} fragmentos de texto extraídos`;
+            laboratorioEstado.pdfPaginas = Math.ceil(words.length / 300) || 1;
+        } else if (esPptx) {
+            if (typeof JSZip === "undefined") {
+                throw new Error("Librería JSZip no disponible");
+            }
+            const arrayBuffer = await file.arrayBuffer();
+            const zip = await JSZip.loadAsync(arrayBuffer);
+            const slideNames = Object.keys(zip.files).filter(k => /^ppt\/slides\/slide\d+\.xml$/.test(k));
+            slideNames.sort((a, b) => {
+                const na = parseInt((a.match(/\d+/) || [0])[0], 10);
+                const nb = parseInt((b.match(/\d+/) || [0])[0], 10);
+                return na - nb;
+            });
+            if (slideNames.length === 0) throw new Error("No se encontraron diapositivas en la presentación .pptx");
+            const parser = new DOMParser();
+            let diapositivasTexto = [];
+            for (let i = 0; i < slideNames.length; i++) {
+                const xmlStr = await zip.file(slideNames[i]).async("string");
+                const xmlDoc = parser.parseFromString(xmlStr, "text/xml");
+                const textNodes = xmlDoc.getElementsByTagName("a:t");
+                let slideText = [];
+                for (let j = 0; j < textNodes.length; j++) {
+                    if (textNodes[j].textContent) slideText.push(textNodes[j].textContent);
+                }
+                diapositivasTexto.push(`\n--- DIAPOSITIVA ${i + 1} ---\n` + slideText.join(" "));
+            }
+            textoCompleto = diapositivasTexto.join("\n");
+            metaDetalle = `${slideNames.length} diapositivas procesadas`;
+            laboratorioEstado.pdfPaginas = slideNames.length;
+        } else if (esTxt) {
+            textoCompleto = await file.text();
+            const lines = textoCompleto.split("\n").filter(l => l.trim().length > 0);
+            metaDetalle = `${lines.length} líneas de texto extraídas`;
+            laboratorioEstado.pdfPaginas = Math.ceil(lines.length / 40) || 1;
         }
 
-        const arrayBuffer = await file.arrayBuffer();
-        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-        let textoCompleto = "";
-        const maxPaginas = Math.min(pdf.numPages, 20);
-
-        for (let i = 1; i <= maxPaginas; i++) {
-            const page = await pdf.getPage(i);
-            const content = await page.getTextContent();
-            const textPage = content.items.map(item => item.str).join(" ");
-            textoCompleto += `\n--- PÁGINA ${i} ---\n` + textPage;
+        if (!textoCompleto.trim()) {
+            throw new Error("El archivo no contenía texto legible.");
         }
 
         laboratorioEstado.pdfTexto = textoCompleto.trim();
         laboratorioEstado.pdfNombre = file.name;
-        laboratorioEstado.pdfPaginas = pdf.numPages;
 
         // Actualizar UI del Modal
         if (dom.labLoadedPdfInfo) dom.labLoadedPdfInfo.classList.remove("hidden");
+        if (dom.labLoadedPdfIcon) dom.labLoadedPdfIcon.textContent = fileIcon;
         if (dom.labLoadedPdfName) dom.labLoadedPdfName.textContent = file.name;
-        if (dom.labLoadedPdfMeta) dom.labLoadedPdfMeta.textContent = `${pdf.numPages} páginas leídas con éxito`;
-        if (dom.labUploadTitle) dom.labUploadTitle.textContent = "PDF cargado con éxito";
+        if (dom.labLoadedPdfMeta) dom.labLoadedPdfMeta.textContent = metaDetalle;
+        if (dom.labUploadTitle) dom.labUploadTitle.textContent = `${fileTypeLabel} cargado con éxito`;
         if (dom.labUploadHint) dom.labUploadHint.textContent = "Hacé clic en 'Cargar y Preparar Laboratorio' para comenzar.";
 
         // Actualizar Badge en el header del laboratorio
         if (dom.labActivePdfBadge) {
-            dom.labActivePdfBadge.textContent = `📄 ${file.name}`;
+            dom.labActivePdfBadge.textContent = `${fileIcon} ${file.name}`;
             dom.labActivePdfBadge.classList.remove("hidden");
         }
-        if (dom.labTagOrigenPdf) dom.labTagOrigenPdf.classList.remove("hidden");
+        if (dom.labTagOrigenPdf) {
+            dom.labTagOrigenPdf.textContent = `${fileIcon} Basado en tu archivo`;
+            dom.labTagOrigenPdf.classList.remove("hidden");
+        }
 
-        mostrarToast(`✅ PDF "${file.name}" leído correctamente.`, "exito");
+        mostrarToast(`✅ ${fileTypeLabel} "${file.name}" leído correctamente.`, "exito");
     } catch (err) {
-        console.error("Error al procesar PDF en Laboratorio:", err);
-        mostrarToast("⚠️ No se pudo extraer el texto del PDF. Se utilizará el generador estadístico estándar.", "aviso");
+        console.error("Error al procesar archivo en Laboratorio:", err);
+        mostrarToast("⚠️ No se pudo extraer el texto del archivo. Se utilizará el generador estadístico estándar.", "aviso");
     }
 }
+const procesarPdfLaboratorio = procesarArchivoLaboratorio;
 
 function limpiarPdfLaboratorio() {
     laboratorioEstado.pdfTexto = "";
@@ -11955,12 +12033,12 @@ function limpiarPdfLaboratorio() {
 
     if (dom.labPdfFileInput) dom.labPdfFileInput.value = "";
     if (dom.labLoadedPdfInfo) dom.labLoadedPdfInfo.classList.add("hidden");
-    if (dom.labUploadTitle) dom.labUploadTitle.textContent = "Subir PDF de Estadística";
-    if (dom.labUploadHint) dom.labUploadHint.textContent = "Hacé clic o arrastrá acá el PDF de tu cátedra (apuntes, fórmulas o ejercicios).";
+    if (dom.labUploadTitle) dom.labUploadTitle.textContent = "Subir Material de Estudio";
+    if (dom.labUploadHint) dom.labUploadHint.textContent = "Hacé clic o arrastrá acá archivos en PDF, Word (.docx), PowerPoint (.pptx) o Texto (.txt).";
     if (dom.labActivePdfBadge) dom.labActivePdfBadge.classList.add("hidden");
     if (dom.labTagOrigenPdf) dom.labTagOrigenPdf.classList.add("hidden");
 
-    mostrarToast("🗑️ PDF removido del Laboratorio.", "info");
+    mostrarToast("🗑️ Archivo removido del Laboratorio.", "info");
 }
 
 function obtenerEtiquetaTema(tema) {

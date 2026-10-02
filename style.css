@@ -8143,9 +8143,18 @@ body.modo-dev-activo .juntos-locked-notice {
 
     .lab-header {
         flex-direction: column;
-        gap: 0.65rem;
-        margin-bottom: 0.65rem;
-        padding-bottom: 0.65rem;
+        justify-content: flex-start;
+        align-items: stretch;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+        padding-bottom: 0.5rem;
+    }
+
+    .lab-header-main {
+        flex: 0 0 auto !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
     }
 
     .lab-header-title {
@@ -8154,13 +8163,16 @@ body.modo-dev-activo .juntos-locked-notice {
     }
 
     .lab-header-subtitle {
-        display: none;
+        display: none !important;
     }
 
     .lab-header-controls {
+        flex: 0 0 auto !important;
+        width: 100% !important;
         flex-direction: column;
         align-items: stretch;
         gap: 0.5rem;
+        margin-top: 0.2rem;
     }
 
     .lab-header-buttons {
