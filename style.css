@@ -8938,43 +8938,181 @@ body.modo-dev-activo .juntos-locked-notice {
    LABORATORIO V26: MODAL DE CONFIGURACIÓN & CARGA DE PDF
    ========================================================= */
 
+/* =========================================================
+   MODAL DE CONFIGURACIÓN INICIAL: LABORATORIO DE ESTADÍSTICA
+   ========================================================= */
+
+#labConfigModal.lab-config-dialog,
+.modal.lab-config-dialog {
+    width: min(95vw, 980px);
+    max-width: 980px;
+    max-height: 94vh;
+    border-radius: var(--radius-lg);
+    background: #0b1329;
+    border: 1.5px solid rgba(56, 189, 248, 0.3);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
+    color: #f8fafc;
+    overflow: hidden;
+}
+
+#labPromptModal {
+    width: min(92vw, 620px);
+    max-width: 620px;
+    border-radius: var(--radius-lg);
+    background: #0b1329;
+    border: 1.5px solid rgba(56, 189, 248, 0.3);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
+    color: #f8fafc;
+}
+
 .lab-config-modal-content {
-    max-width: 680px;
-    width: 95%;
+    max-width: 100%;
+    width: 100%;
+    padding: 1.25rem 1.5rem;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    max-height: 94vh;
+}
+
+.lab-config-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding-bottom: 0.75rem;
+    width: 100%;
+}
+
+.lab-config-header-text {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.lab-config-header-icon {
+    font-size: 1.6rem;
+    line-height: 1;
+}
+
+.lab-config-header-text .modal__title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0;
+}
+
+.lab-config-subtitle {
+    font-size: 0.78rem;
+    color: var(--color-text-muted);
+    margin: 0.15rem 0 0 0;
+}
+
+.lab-section-label {
+    margin-bottom: 0.45rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #f1f5f9;
+}
+
+.lab-formats-pill {
+    font-size: 0.7rem;
+    color: #38bdf8;
+    background: rgba(56, 189, 248, 0.12);
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+    font-weight: 500;
+}
+
+/* Grilla en PC (Desktop / Laptop >= 820px): 2 Columnas sin scroll */
+@media (min-width: 820px) {
+    .lab-config-modal-body {
+        display: grid !important;
+        grid-template-columns: 1fr 1.25fr;
+        gap: 1.25rem;
+        align-items: start;
+        overflow-y: visible;
+    }
+
+    .lab-config-col {
+        display: flex;
+        flex-direction: column;
+        gap: 0.85rem;
+    }
+
+    .lab-topics-grid {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.6rem;
+    }
+
+    .lab-topic-option--wide {
+        grid-column: 1 / -1;
+    }
+}
+
+/* En móviles (< 820px) */
+@media (max-width: 819px) {
+    .lab-config-modal-content {
+        overflow-y: auto;
+        padding: 1rem;
+    }
+
+    .lab-config-modal-body {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .lab-config-col {
+        display: flex;
+        flex-direction: column;
+        gap: 0.85rem;
+    }
+
+    .lab-topics-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 0.55rem;
+    }
 }
 
 .lab-upload-dropzone {
     border: 2px dashed rgba(56, 189, 248, 0.4);
     background: rgba(15, 23, 42, 0.6);
-    border-radius: var(--radius-lg);
-    padding: 1.5rem 1.25rem;
+    border-radius: var(--radius-md);
+    padding: 0.9rem 1rem;
     text-align: center;
     cursor: pointer;
     transition: all 0.25s ease;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.35rem;
 }
 
 .lab-upload-dropzone:hover,
 .lab-upload-dropzone.is-dragover {
     border-color: #38bdf8;
-    background: rgba(56, 189, 248, 0.08);
-    box-shadow: 0 0 15px rgba(56, 189, 248, 0.2);
+    background: rgba(56, 189, 248, 0.1);
+    box-shadow: 0 0 15px rgba(56, 189, 248, 0.25);
 }
 
 .lab-upload-plus-circle {
-    width: 52px;
-    height: 52px;
+    width: 42px;
+    height: 42px;
     border-radius: 50%;
     background: linear-gradient(135deg, #0284c7, #0ea5e9);
     color: #ffffff;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.6rem;
-    box-shadow: 0 4px 14px rgba(2, 132, 199, 0.4);
+    font-size: 1.3rem;
+    box-shadow: 0 4px 12px rgba(2, 132, 199, 0.35);
     transition: transform 0.2s ease;
 }
 
@@ -8983,16 +9121,28 @@ body.modo-dev-activo .juntos-locked-notice {
 }
 
 .lab-upload-title {
-    font-size: 1.05rem;
+    font-size: 0.95rem;
     color: #f8fafc;
 }
 
 .lab-upload-hint {
-    font-size: 0.82rem;
+    font-size: 0.78rem;
     color: var(--color-text-muted);
-    max-width: 480px;
+    max-width: 360px;
     margin: 0;
-    line-height: 1.45;
+    line-height: 1.35;
+}
+
+.lab-gdocs-hint {
+    font-size: 0.74rem;
+    color: #38bdf8;
+    background: rgba(56, 189, 248, 0.08);
+    border: 1px dashed rgba(56, 189, 248, 0.3);
+    border-radius: 6px;
+    padding: 0.4rem 0.65rem;
+    margin-top: 0.4rem;
+    text-align: left;
+    line-height: 1.35;
 }
 
 .lab-loaded-pdf-info {
@@ -9002,87 +9152,117 @@ body.modo-dev-activo .juntos-locked-notice {
     gap: 0.75rem;
     background: rgba(16, 185, 129, 0.12);
     border: 1px solid rgba(16, 185, 129, 0.35);
-    padding: 0.65rem 0.9rem;
+    padding: 0.55rem 0.85rem;
     border-radius: var(--radius-md);
     text-align: left;
-    margin-top: 0.5rem;
+    margin-top: 0.4rem;
 }
 
 .lab-loaded-pdf-icon {
-    font-size: 1.5rem;
+    font-size: 1.4rem;
 }
 
 .lab-loaded-pdf-text {
     display: flex;
     flex-direction: column;
-    gap: 0.15rem;
+    gap: 0.1rem;
 }
 
 .lab-loaded-pdf-text strong {
     color: #34d399;
-    font-size: 0.9rem;
+    font-size: 0.88rem;
 }
 
 .lab-loaded-pdf-text span {
     color: var(--color-text-muted);
-    font-size: 0.75rem;
+    font-size: 0.72rem;
 }
 
-/* Opciones de tema de Estadística */
-.lab-topics-grid {
+.lab-config-textarea {
+    width: 100%;
+    box-sizing: border-box;
+    background: rgba(15, 23, 42, 0.7);
+    border: 1.5px solid rgba(56, 189, 248, 0.25);
+    border-radius: 8px;
+    color: #fff;
+    padding: 0.55rem 0.75rem;
+    font-size: 0.84rem;
+    line-height: 1.35;
+    resize: none;
+    font-family: inherit;
+}
+
+.lab-config-textarea:focus {
+    outline: none;
+    border-color: #38bdf8;
+    box-shadow: 0 0 8px rgba(56, 189, 248, 0.25);
+}
+
+/* Opciones de tema de Estadística (Tarjetas estilo Grid) */
+.lab-topic-option {
     display: flex;
     flex-direction: column;
-    gap: 0.6rem;
-}
-
-.lab-topic-option {
-    display: block;
+    justify-content: center;
     cursor: pointer;
     border: 1.5px solid rgba(255, 255, 255, 0.08);
-    background: rgba(15, 23, 42, 0.5);
+    background: rgba(15, 23, 42, 0.6);
     border-radius: var(--radius-md);
-    padding: 0.75rem 1rem;
+    padding: 0.65rem 0.8rem;
     transition: all 0.2s ease;
+    user-select: none;
 }
 
 .lab-topic-option:hover {
     border-color: rgba(56, 189, 248, 0.4);
-    background: rgba(255, 255, 255, 0.03);
+    background: rgba(30, 41, 59, 0.7);
+    transform: translateY(-1px);
 }
 
 .lab-topic-option.is-selected {
     border-color: #38bdf8;
     background: rgba(56, 189, 248, 0.12);
-    box-shadow: 0 0 12px rgba(56, 189, 248, 0.18);
+    box-shadow: 0 0 12px rgba(56, 189, 248, 0.22);
 }
 
 .lab-topic-card-body {
     display: flex;
     align-items: flex-start;
-    gap: 0.85rem;
+    gap: 0.65rem;
 }
 
 .lab-topic-icon {
-    font-size: 1.5rem;
+    font-size: 1.35rem;
     line-height: 1;
-    margin-top: 0.15rem;
+    margin-top: 0.1rem;
+    flex-shrink: 0;
 }
 
 .lab-topic-info {
     display: flex;
     flex-direction: column;
-    gap: 0.2rem;
+    gap: 0.15rem;
 }
 
 .lab-topic-info strong {
-    font-size: 0.95rem;
+    font-size: 0.86rem;
     color: #f8fafc;
+    line-height: 1.25;
 }
 
 .lab-topic-info span {
-    font-size: 0.8rem;
+    font-size: 0.73rem;
     color: var(--color-text-muted);
-    line-height: 1.35;
+    line-height: 1.3;
+}
+
+.lab-config-footer {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 0.75rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    padding-top: 0.75rem;
+    margin-top: 0.25rem;
 }
 
 /* =========================================================

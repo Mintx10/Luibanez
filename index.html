@@ -15,10 +15,10 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     
-    <link rel="icon" type="image/svg+xml" href="icon.svg?v=26.3">
-    <link rel="apple-touch-icon" href="icon-192.png?v=26.3">
-    <link rel="manifest" href="manifest.json?v=26.3">
-    <link rel="stylesheet" href="style.css?v=26.3">
+    <link rel="icon" type="image/svg+xml" href="icon.svg?v=26.4">
+    <link rel="apple-touch-icon" href="icon-192.png?v=26.4">
+    <link rel="manifest" href="manifest.json?v=26.4">
+    <link rel="stylesheet" href="style.css?v=26.4">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -234,7 +234,7 @@
 
         <!-- Versión y botón de actualización forzada -->
         <div class="drawer-version-row" style="padding: 0.85rem 1rem; border-top: 1px solid var(--color-border); font-size: 0.75rem; color: var(--color-text-muted); display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02); margin-top: auto;">
-            <span id="drawerVersionTag" style="cursor: pointer; user-select: none;" title="Versión de Luibañez">⚡ Luibañez <strong style="color: var(--color-text);">v26.3</strong></span>
+            <span id="drawerVersionTag" style="cursor: pointer; user-select: none;" title="Versión de Luibañez">⚡ Luibañez <strong style="color: var(--color-text);">v26.4</strong></span>
             <button id="btnForzarActualizar" class="button button--ghost button--xs" type="button" style="font-size: 0.72rem; padding: 0.25rem 0.65rem; border-radius: 999px; border: 1px solid var(--color-border); cursor: pointer;" title="Limpiar caché y recargar versión más reciente">🔄 Actualizar</button>
         </div>
     </div>
@@ -3351,7 +3351,7 @@
 </dialog>
 
 <script src="mqtt.min.js"></script>
-<script src="script.js?v=26.3" defer></script>
+<script src="script.js?v=26.4" defer></script>
 
 <!-- =========================================================
      MODAL DE PROMPT PARA GEMINI (CREAR JUEGOS DESDE PDF)
@@ -3404,102 +3404,122 @@
 <!-- =========================================================
      MODAL DE CONFIGURACIÓN INICIAL: LABORATORIO DE ESTADÍSTICA
      ========================================================= -->
-<dialog id="labConfigModal" class="modal" aria-labelledby="labConfigModalTitle">
-    <div class="modal__content modal__content--md lab-config-modal-content">
-        <header class="modal__header">
-            <h3 id="labConfigModalTitle" class="modal__title">🔬 Laboratorio de Estadística: Cargar Archivos & Temario</h3>
+<dialog id="labConfigModal" class="modal lab-config-dialog" aria-labelledby="labConfigModalTitle">
+    <div class="modal__content lab-config-modal-content">
+        <header class="modal__header lab-config-header">
+            <div class="lab-config-header-text">
+                <span class="lab-config-header-icon">🔬</span>
+                <div>
+                    <h3 id="labConfigModalTitle" class="modal__title">Laboratorio de Estadística</h3>
+                    <p class="lab-config-subtitle">Cargá tu material de estudio y seleccioná el tema a entrenar</p>
+                </div>
+            </div>
             <button id="closeLabConfigModalBtn" class="modal__close icon-button" type="button" aria-label="Cerrar modal">✕</button>
         </header>
-        <div class="modal__body" style="display: flex; flex-direction: column; gap: 1.25rem;">
-            <!-- Área de carga de Archivos (PDF, Word, PPTX, Texto, Google Docs) -->
-            <div class="lab-upload-section">
-                <label class="section-title" style="margin-bottom: 0.5rem; display: block;">📂 Cargar Material de Estudio (PDF, Word, PowerPoint, Texto):</label>
-                <input type="file" id="labPdfFileInput" accept=".pdf,.docx,.pptx,.txt,.md,.csv" class="hidden">
-                <div class="lab-upload-dropzone" id="labUploadDropzone" tabindex="0" role="button" aria-label="Cargar archivo de estudio">
-                    <div class="lab-upload-plus-circle" id="labUploadPlusCircle">➕</div>
-                    <strong class="lab-upload-title" id="labUploadTitle">Subir Material de Estudio</strong>
-                    <p class="lab-upload-hint" id="labUploadHint">
-                        Hacé clic o arrastrá acá archivos en <strong>PDF, Word (.docx), PowerPoint (.pptx)</strong> o <strong>Texto (.txt)</strong>. La IA extraerá los datos para generar tus ejercicios.
-                    </p>
-                    <div class="lab-gdocs-hint" style="font-size: 0.78rem; color: #38bdf8; background: rgba(56, 189, 248, 0.1); border: 1px dashed rgba(56, 189, 248, 0.35); border-radius: 6px; padding: 0.45rem 0.75rem; margin-top: 0.4rem; text-align: left; line-height: 1.4;">
-                        💡 <strong>¿Usás Google Docs o Presentaciones?</strong> Andá en Google Docs a <em>Archivo &gt; Descargar &gt; Documento de Word (.docx) o PDF</em> y subilo acá directamente.
-                    </div>
-                    <div class="lab-loaded-pdf-info hidden" id="labLoadedPdfInfo">
-                        <span class="lab-loaded-pdf-icon" id="labLoadedPdfIcon">📄</span>
-                        <div class="lab-loaded-pdf-text">
-                            <strong id="labLoadedPdfName">apuntes.pdf</strong>
-                            <span id="labLoadedPdfMeta">Listo para procesar</span>
+
+        <div class="modal__body lab-config-modal-body">
+            <!-- COLUMNA IZQUIERDA: Material de Estudio + Orden para la IA -->
+            <div class="lab-config-col lab-config-col--upload">
+                <!-- Dropzone de Archivo -->
+                <div class="lab-upload-section">
+                    <label class="section-title lab-section-label">
+                        <span>📂 Material de Estudio</span>
+                        <span class="lab-formats-pill">PDF • Word • PPTX • TXT</span>
+                    </label>
+                    <input type="file" id="labPdfFileInput" accept=".pdf,.docx,.pptx,.txt,.md,.csv" class="hidden">
+                    <div class="lab-upload-dropzone" id="labUploadDropzone" tabindex="0" role="button" aria-label="Cargar archivo de estudio">
+                        <div class="lab-upload-plus-circle" id="labUploadPlusCircle">➕</div>
+                        <strong class="lab-upload-title" id="labUploadTitle">Subir Material de Estudio</strong>
+                        <p class="lab-upload-hint" id="labUploadHint">
+                            Hacé clic o arrastrá tus apuntes, guías prácticas o diapositivas.
+                        </p>
+                        <div class="lab-loaded-pdf-info hidden" id="labLoadedPdfInfo">
+                            <span class="lab-loaded-pdf-icon" id="labLoadedPdfIcon">📄</span>
+                            <div class="lab-loaded-pdf-text">
+                                <strong id="labLoadedPdfName">apuntes.pdf</strong>
+                                <span id="labLoadedPdfMeta">Listo para procesar</span>
+                            </div>
+                            <button type="button" class="button button--ghost button--xs" id="labBtnQuitarPdf" style="color: #f87171; margin-left: auto;">✕ Quitar</button>
                         </div>
-                        <button type="button" class="button button--ghost button--xs" id="labBtnQuitarPdf" style="color: #f87171; margin-left: auto;">✕ Quitar</button>
                     </div>
+                    <div class="lab-gdocs-hint">
+                        💡 <strong>¿Google Docs o Slides?</strong> Descargalo como <em>.docx</em> o <em>PDF</em> y subilo acá directamente.
+                    </div>
+                </div>
+
+                <!-- Orden opcional para la IA -->
+                <div class="lab-order-section">
+                    <label for="labConfigOrderInput" class="section-title lab-section-label">✍️ Orden o ejercicio puntual (Opcional):</label>
+                    <textarea id="labConfigOrderInput" rows="2" class="lab-config-textarea" placeholder="Ej: 'Hacé uno similar al ejercicio 4 de la guía', 'Enfocate en varianza y percentiles'..."></textarea>
                 </div>
             </div>
 
-            <!-- Opciones personalizables de tema de Estadística -->
-            <div class="lab-topics-section">
-                <label class="section-title" style="margin-bottom: 0.5rem; display: block;">🎯 Seleccioná qué rama de Estadística querés practicar:</label>
+            <!-- COLUMNA DERECHA: Rama de Estadística (Grilla visual de tarjetas compactas) -->
+            <div class="lab-config-col lab-config-col--topics">
+                <label class="section-title lab-section-label">🎯 ¿Qué rama de Estadística querés practicar?</label>
                 <div class="lab-topics-grid" id="labTopicsGrid">
+                    <!-- Tarjeta 1: Descriptiva -->
                     <label class="lab-topic-option is-selected" data-topic="descriptiva">
                         <input type="radio" name="labTopicRadio" value="descriptiva" checked class="hidden">
                         <div class="lab-topic-card-body">
                             <span class="lab-topic-icon">📊</span>
                             <div class="lab-topic-info">
                                 <strong>Estadística Descriptiva</strong>
-                                <span>Tabla de frecuencias, Media (x̄), Mediana (Me), Moda (Mo), Varianza (s²), Desvío (s) y Coeficiente de Variación (CV).</span>
+                                <span>Frecuencias, Media (x̄), Mediana, Moda, Varianza, Desvío y CV.</span>
                             </div>
                         </div>
                     </label>
+                    <!-- Tarjeta 2: Bayes -->
                     <label class="lab-topic-option" data-topic="bayes">
                         <input type="radio" name="labTopicRadio" value="bayes" class="hidden">
                         <div class="lab-topic-card-body">
                             <span class="lab-topic-icon">🎲</span>
                             <div class="lab-topic-info">
-                                <strong>Probabilidades & Teorema de Bayes</strong>
-                                <span>Probabilidad condicional, intersecciones, tablas de contingencia 2x2, falsos positivos y teorema de Bayes.</span>
+                                <strong>Probabilidades & Bayes</strong>
+                                <span>Condicional, tablas 2×2, falsos positivos y Teorema de Bayes.</span>
                             </div>
                         </div>
                     </label>
+                    <!-- Tarjeta 3: Normal -->
                     <label class="lab-topic-option" data-topic="normal">
                         <input type="radio" name="labTopicRadio" value="normal" class="hidden">
                         <div class="lab-topic-card-body">
                             <span class="lab-topic-icon">🔔</span>
                             <div class="lab-topic-info">
                                 <strong>Distribución Normal</strong>
-                                <span>Campana de Gauss, estandarización Z, probabilidades bajo la curva P(X ≤ x) y percentiles críticos.</span>
+                                <span>Campana de Gauss, estandarización Z y cálculo P(X ≤ x).</span>
                             </div>
                         </div>
                     </label>
+                    <!-- Tarjeta 4: Discretas -->
                     <label class="lab-topic-option" data-topic="discretas">
                         <input type="radio" name="labTopicRadio" value="discretas" class="hidden">
                         <div class="lab-topic-card-body">
                             <span class="lab-topic-icon">🎯</span>
                             <div class="lab-topic-info">
-                                <strong>Distribuciones Discretas (Binomial & Poisson)</strong>
-                                <span>Ensayos Bernoulli (n, p), número de éxitos k, tasas medias λ y cálculo de probabilidades puntuales y acumuladas.</span>
+                                <strong>Binomial & Poisson</strong>
+                                <span>Ensayos (n, p), tasa media λ y probabilidades acumuladas.</span>
                             </div>
                         </div>
                     </label>
-                    <label class="lab-topic-option" data-topic="integral">
+                    <!-- Tarjeta 5: Práctica Integral (ocupa ambas columnas en la grilla) -->
+                    <label class="lab-topic-option lab-topic-option--wide" data-topic="integral">
                         <input type="radio" name="labTopicRadio" value="integral" class="hidden">
                         <div class="lab-topic-card-body">
                             <span class="lab-topic-icon">🌐</span>
                             <div class="lab-topic-info">
                                 <strong>Práctica Integral / Examen Completo</strong>
-                                <span>Casos combinados con tabulación de datos, cálculo de dispersión y toma de decisiones probabilísticas.</span>
+                                <span>Casos combinados con tabulación de datos, dispersión y probabilidades.</span>
                             </div>
                         </div>
                     </label>
                 </div>
             </div>
-            <!-- Orden o preferencia de ejercicios para la IA -->
-            <div class="lab-order-section">
-                <label for="labConfigOrderInput" class="section-title" style="margin-bottom: 0.4rem; display: block;">✍️ Orden o tipo de ejercicio que querés practicar (Opcional):</label>
-                <textarea id="labConfigOrderInput" rows="2" style="width: 100%; box-sizing: border-box; background: rgba(15, 23, 42, 0.7); border: 1.5px solid rgba(56, 189, 248, 0.3); border-radius: 8px; color: #fff; padding: 0.6rem 0.8rem; font-size: 0.88rem; line-height: 1.4;" placeholder="Ej: 'Quiero un ejercicio similar al punto 3 de la guía', 'Haceme uno de Poisson de llamadas', 'Enfocate en varianza y percentiles'..."></textarea>
-            </div>
         </div>
-        <footer class="modal__footer" style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+
+        <footer class="modal__footer lab-config-footer">
             <button id="closeLabConfigModalBottomBtn" class="button button--ghost" type="button">Cancelar</button>
-            <button id="labBtnCargarConfig" class="button button--primary" type="button" style="background: linear-gradient(135deg, #059669, #10b981);">
+            <button id="labBtnCargarConfig" class="button button--primary" type="button" style="background: linear-gradient(135deg, #059669, #10b981); font-weight: 600; padding: 0.65rem 1.4rem;">
                 🚀 Cargar y Preparar Laboratorio
             </button>
         </footer>

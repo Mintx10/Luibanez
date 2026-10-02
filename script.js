@@ -8458,7 +8458,7 @@ function iniciarAplicacion() {
 // =========================================================
 // GESTOR DE VERSIONES Y ACTUALIZACIÓN AUTOMÁTICA
 // =========================================================
-const APP_BUILD_VERSION = "26.3";
+const APP_BUILD_VERSION = "26.4";
 
 async function forzarActualizacionCompleta(mostrarNotificacion = true) {
     const btnActualizar = document.getElementById("btnForzarActualizar");
@@ -13014,6 +13014,15 @@ function configurarEventosLaboratorio() {
     }
     if (dom.closeLabConfigModalBottomBtn) {
         dom.closeLabConfigModalBottomBtn.addEventListener("click", cerrarModalConfigLab);
+    }
+    if (dom.labConfigModal) {
+        dom.labConfigModal.addEventListener("click", (e) => {
+            if (e.target === dom.labConfigModal) cerrarModalConfigLab();
+        });
+        dom.labConfigModal.addEventListener("cancel", (e) => {
+            e.preventDefault();
+            cerrarModalConfigLab();
+        });
     }
 
     // Carga de archivo PDF con Drag & Drop y Click
