@@ -15,10 +15,10 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     
-    <link rel="icon" type="image/svg+xml" href="icon.svg?v=25.8">
-    <link rel="apple-touch-icon" href="icon-192.png?v=25.8">
-    <link rel="manifest" href="manifest.json?v=25.8">
-    <link rel="stylesheet" href="style.css?v=25.8">
+    <link rel="icon" type="image/svg+xml" href="icon.svg?v=26.0">
+    <link rel="apple-touch-icon" href="icon-192.png?v=26.0">
+    <link rel="manifest" href="manifest.json?v=26.0">
+    <link rel="stylesheet" href="style.css?v=26.0">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -233,7 +233,7 @@
 
         <!-- Versión y botón de actualización forzada -->
         <div class="drawer-version-row" style="padding: 0.85rem 1rem; border-top: 1px solid var(--color-border); font-size: 0.75rem; color: var(--color-text-muted); display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02); margin-top: auto;">
-            <span id="drawerVersionTag" style="cursor: pointer; user-select: none;" title="Versión de Luibañez">⚡ Luibañez <strong style="color: var(--color-text);">v25.8</strong></span>
+            <span id="drawerVersionTag" style="cursor: pointer; user-select: none;" title="Versión de Luibañez">⚡ Luibañez <strong style="color: var(--color-text);">v26.0</strong></span>
             <button id="btnForzarActualizar" class="button button--ghost button--xs" type="button" style="font-size: 0.72rem; padding: 0.2rem 0.55rem; border-radius: 999px; border: 1px solid var(--color-border);" title="Limpiar caché y recargar versión más reciente">🔄 Actualizar</button>
         </div>
     </div>
@@ -2322,20 +2322,19 @@
                     </p>
                 </div>
                 <div class="lab-header-controls">
-                    <div class="lab-select-wrapper">
-                        <label for="labCasoSelect" class="lab-control-label">Caso de Estudio:</label>
-                        <select id="labCasoSelect" class="input input--select lab-case-select">
-                            <option value="caso_1">Caso 1: Distribución de Frecuencias y Centralidad</option>
-                            <option value="caso_2">Caso 2: Control de Calidad y Distribución Normal</option>
-                            <option value="caso_3">Caso 3: Pruebas Diagnósticas y Teorema de Bayes</option>
-                        </select>
+                    <div class="lab-badges-wrapper" style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;">
+                        <span class="badge badge--accent" id="labActiveTopicBadge">📊 Estadística Descriptiva</span>
+                        <span class="badge badge--success hidden" id="labActivePdfBadge">📄 Sin PDF cargado</span>
                     </div>
                     <div class="lab-header-buttons">
-                        <button id="labBtnGenerarCasoPdf" class="button button--secondary button--sm" type="button" title="Generar un caso práctico con Gemini a partir del PDF cargado">
-                            ✨ Crear Caso con IA
+                        <button id="labBtnAbrirConfigModal" class="button button--secondary button--sm" type="button" title="Cargar un nuevo PDF o cambiar el tema de estudio">
+                            ⚙️ Cargar PDF / Tema
                         </button>
-                        <button id="labBtnReiniciarCaso" class="button button--ghost button--sm" type="button" title="Reiniciar el caso actual a su estado inicial">
-                            🔄 Reiniciar
+                        <button id="labBtnGenerarConIA" class="button button--primary button--sm" type="button" style="background: linear-gradient(135deg, #059669, #10b981);" title="Generar ejercicio analítico con IA a partir del PDF o tema">
+                            ✨ Generar Ejercicio con IA
+                        </button>
+                        <button id="labBtnGenerarOtro" class="button button--ghost button--sm" type="button" title="Generar una variante diferente del ejercicio">
+                            🎲 Generar Otro
                         </button>
                     </div>
                     <div class="lab-xp-badge" id="labXpBadge">
@@ -2348,101 +2347,56 @@
             <!-- Conmutador de Vistas para Móviles (Enunciado / Mesa de Trabajo) -->
             <div class="lab-mobile-switcher" id="labMobileSwitcher" role="tablist" aria-label="Modo de vista móvil">
                 <button id="labMobileBtnEnunciado" class="lab-mobile-switcher-btn is-active" type="button" role="tab" aria-selected="true" data-target-view="enunciado">
-                    📋 Enunciado & Hitos
+                    📋 Enunciado & Preguntas
                 </button>
                 <button id="labMobileBtnHerramientas" class="lab-mobile-switcher-btn" type="button" role="tab" aria-selected="false" data-target-view="herramientas">
-                    🛠️ Mesa de Trabajo
+                    🛠️ Mesa de Trabajo & Tabla
                 </button>
             </div>
 
             <!-- Layout Split-Screen (Mesa de Trabajo) -->
             <div class="laboratorio-split" id="laboratorioSplit" data-mobile-view="enunciado">
 
-                <!-- COLUMNA IZQUIERDA: ENUNCIADO, STEPPER & CHECKPOINTS -->
+                <!-- COLUMNA IZQUIERDA: ENUNCIADO Y PREGUNTAS INTERACTIVAS -->
                 <div class="lab-split-col lab-split-left" id="labPanelEnunciado">
                     
-                    <!-- Tarjeta del Caso -->
+                    <!-- Tarjeta del Enunciado del Ejercicio -->
                     <article class="lab-case-card">
                         <div class="lab-case-meta">
                             <span class="badge badge--accent" id="labTagDificultad">Dificultad: Intermedia</span>
-                            <span class="lab-case-tag" id="labTagTema">Distribución de Probabilidad</span>
+                            <span class="lab-case-tag" id="labTagTema">Estadística Descriptiva</span>
+                            <span class="badge badge--success hidden" id="labTagOrigenPdf">📄 Basado en tu PDF</span>
                         </div>
-                        <h2 class="lab-case-title" id="labTituloCaso">Control de Calidad en Producción Industrial</h2>
+                        <h2 class="lab-case-title" id="labTituloCaso">Distribución de Frecuencias y Centralidad</h2>
                         <div class="lab-case-body">
                             <p class="lab-case-narrative" id="labNarrativaCaso">
-                                Cargando caso de estudio...
+                                Cargando ejercicio de estadística...
                             </p>
                         </div>
                     </article>
 
-                    <!-- Stepper de Checkpoints / Hitos -->
-                    <div class="lab-stepper-box">
-                        <div class="lab-stepper-header">
-                            <strong class="lab-stepper-title">Progreso por Hitos</strong>
-                            <span class="lab-stepper-counter" id="labStepperCounter">Paso 1 de 3</span>
+                    <!-- Contenedor Dinámico de Preguntas (a, b, c, d, e) -->
+                    <div class="lab-questions-wrapper">
+                        <div class="lab-questions-header">
+                            <h3 class="lab-questions-title">📝 Incisos a Resolver:</h3>
+                            <span class="lab-questions-progress" id="labQuestionsProgress">0 de 4 resueltos</span>
                         </div>
-                        <div class="lab-stepper-dots" id="labStepperDots">
-                            <!-- Inyectado dinámicamente: dots o badges de paso -->
-                        </div>
-                    </div>
-
-                    <!-- Tarjeta del Checkpoint Activo -->
-                    <div class="lab-checkpoint-card" id="labActiveCheckpointCard">
-                        <div class="lab-checkpoint-header">
-                            <span class="lab-checkpoint-num-badge" id="labCpNumeroBadge">Paso 1</span>
-                            <h3 class="lab-checkpoint-title" id="labCpInstruccion">Construí la tabla de frecuencias</h3>
-                        </div>
-
-                        <!-- Caja de Pista Plegable -->
-                        <div class="lab-hint-container">
-                            <button id="labBtnTogglePista" class="button button--ghost button--xs lab-hint-toggle-btn" type="button">
-                                💡 Ver sugerencia / fórmula clave
-                            </button>
-                            <div class="lab-hint-box hidden" id="labCpPistaBox">
-                                <p id="labCpPistaText"></p>
-                            </div>
-                        </div>
-
-                        <!-- Formulario de Respuesta del Checkpoint -->
-                        <div class="lab-checkpoint-form" id="labCpFormArea">
-                            <!-- Inyectado dinámicamente según tipo de validación: campos numéricos o botón de importar de tabla -->
-                        </div>
-
-                        <!-- Botones de Acción del Checkpoint -->
-                        <div class="lab-checkpoint-actions">
-                            <button id="labBtnVerificarPaso" class="button button--primary button--full" type="button">
-                                ✅ Verificar Paso
-                            </button>
-                        </div>
-
-                        <!-- Caja de Retroalimentación en Vivo -->
-                        <div class="lab-feedback-box hidden" id="labCpFeedbackBox">
-                            <div class="lab-feedback-icon" id="labCpFeedbackIcon">🟢</div>
-                            <div class="lab-feedback-content">
-                                <strong class="lab-feedback-title" id="labCpFeedbackTitle">¡Cálculo Correcto!</strong>
-                                <p class="lab-feedback-desc" id="labCpFeedbackDesc"></p>
-                            </div>
-                        </div>
-
-                        <!-- Botón para avanzar tras verificar con éxito -->
-                        <div class="lab-next-action-area hidden" id="labNextActionArea">
-                            <button id="labBtnSiguientePaso" class="button button--success button--full" type="button">
-                                Continuar al Siguiente Hito ➜
-                            </button>
+                        <div class="lab-questions-list" id="labQuestionsList">
+                            <!-- Inyectado dinámicamente con incisos a), b), c), d), e) -->
                         </div>
                     </div>
 
-                    <!-- Tarjeta de Caso Completado (Oculta al inicio) -->
+                    <!-- Tarjeta de Ejercicio Completado (Oculta al inicio) -->
                     <div class="lab-completed-card hidden" id="labCompletedCard">
-                        <div class="lab-completed-icon">🎓</div>
-                        <h3 class="lab-completed-title">¡Caso de Estudio Resuelto con Éxito!</h3>
+                        <div class="lab-completed-icon">🎉</div>
+                        <h3 class="lab-completed-title">¡Ejercicio Resuelto con Éxito!</h3>
                         <p class="lab-completed-desc" id="labCompletedDesc">
-                            Completaste todos los hitos del caso de estudio de manera impecable.
+                            Completaste todos los incisos con precisión matemática.
                         </p>
                         <div class="lab-completed-rewards">
                             <div class="lab-reward-chip">
                                 <span>⭐</span>
-                                <strong>+100 XP</strong>
+                                <strong id="labCompletedXpReward">+100 XP</strong>
                                 <small>Puntaje Práctico</small>
                             </div>
                             <div class="lab-reward-chip">
@@ -2452,8 +2406,8 @@
                             </div>
                         </div>
                         <div class="lab-completed-actions">
-                            <button id="labBtnSiguienteCasoModal" class="button button--primary" type="button">
-                                🚀 Explorar Siguiente Caso
+                            <button id="labBtnSiguienteCasoModal" class="button button--primary" type="button" style="background: linear-gradient(135deg, #059669, #10b981);">
+                                🎲 Generar Siguiente Ejercicio
                             </button>
                         </div>
                     </div>
@@ -2502,19 +2456,19 @@
                                             <option value="hi">hi (Frec. Relativa)</option>
                                             <option value="Hi">Hi (Relativa Acum.)</option>
                                             <option value="xifi" selected>xi · fi (Media)</option>
-                                            <option value="var">xi² · fi (Varianza)</option>
+                                            <option value="var" selected>xi² · fi (Varianza)</option>
                                         </select>
                                         <button id="labBtnAddCol" class="button button--secondary button--xs" type="button">
                                             ➕ Columna
+                                        </button>
+                                        <button id="labBtnRemoveCol" class="button button--ghost button--xs" type="button" title="Quitar columna seleccionada">
+                                            ➖ Columna
                                         </button>
                                     </div>
                                 </div>
                                 <div class="lab-tool-actions-right">
                                     <button id="labBtnClearTable" class="button button--ghost button--xs" type="button" style="color: #f87171;">
                                         🗑️ Limpiar
-                                    </button>
-                                    <button id="labBtnCopyTableToCheckpoint" class="button button--primary button--xs" type="button">
-                                        📥 Enviar a Checkpoint
                                     </button>
                                 </div>
                             </div>
@@ -2528,6 +2482,7 @@
                                             <th>xi (Variable)</th>
                                             <th>fi (Frecuencia)</th>
                                             <th data-col="xifi">xi · fi</th>
+                                            <th data-col="var">xi² · fi</th>
                                             <th style="width: 40px;"></th>
                                         </tr>
                                     </thead>
@@ -2539,30 +2494,84 @@
                                             <td>Σ</td>
                                             <td><strong>Totales:</strong></td>
                                             <td id="labFootFiTotal">0</td>
-                                            <td id="labFootXiFiTotal" data-col="xifi">0</td>
+                                            <td id="labFootXiFiTotal" data-col="xifi">0.00</td>
+                                            <td id="labFootXi2FiTotal" data-col="var">0.00</td>
                                             <td></td>
                                         </tr>
                                     </tfoot>
                                 </table>
                             </div>
 
-                            <!-- Estadísticos Rápidos Calculados de la Tabla -->
-                            <div class="lab-table-stats-bar">
-                                <div class="lab-stat-item">
-                                    <span class="lab-stat-label">Muestra (n):</span>
-                                    <strong class="lab-stat-val" id="labStatN">0</strong>
+                            <!-- Calculadora Estadística: Estadísticos Clave Calculados en Vivo -->
+                            <div class="lab-stats-calc-panel" id="labStatsCalcPanel">
+                                <div class="lab-stats-panel-header">
+                                    <span class="lab-stats-panel-title">🧮 Calculadora Estadística de la Muestra</span>
+                                    <span class="lab-stats-panel-hint">Cálculos automáticos en vivo según xi y fi</span>
                                 </div>
-                                <div class="lab-stat-item">
-                                    <span class="lab-stat-label">Media (x̄):</span>
-                                    <strong class="lab-stat-val" id="labStatMean">0.00</strong>
-                                </div>
-                                <div class="lab-stat-item">
-                                    <span class="lab-stat-label">Varianza (s²):</span>
-                                    <strong class="lab-stat-val" id="labStatVar">0.00</strong>
-                                </div>
-                                <div class="lab-stat-item">
-                                    <span class="lab-stat-label">Desvío (s):</span>
-                                    <strong class="lab-stat-val" id="labStatStd">0.00</strong>
+                                <div class="lab-stats-grid">
+                                    <!-- 1. Tamaño Muestra N -->
+                                    <div class="lab-stat-card">
+                                        <div class="lab-stat-card-top">
+                                            <span class="lab-stat-name">Tamaño (N)</span>
+                                            <button type="button" class="lab-copy-stat-btn" data-target="labStatN" title="Copiar N">📋</button>
+                                        </div>
+                                        <strong class="lab-stat-value" id="labStatN">0</strong>
+                                        <span class="lab-stat-formula">Σ fi</span>
+                                    </div>
+                                    <!-- 2. Promedio / Media -->
+                                    <div class="lab-stat-card">
+                                        <div class="lab-stat-card-top">
+                                            <span class="lab-stat-name">Media (x̄)</span>
+                                            <button type="button" class="lab-copy-stat-btn" data-target="labStatMean" title="Copiar Media">📋</button>
+                                        </div>
+                                        <strong class="lab-stat-value" id="labStatMean">0.00</strong>
+                                        <span class="lab-stat-formula">Σ(xi·fi) / N</span>
+                                    </div>
+                                    <!-- 3. Varianza Muestral -->
+                                    <div class="lab-stat-card">
+                                        <div class="lab-stat-card-top">
+                                            <span class="lab-stat-name">Varianza (s²)</span>
+                                            <button type="button" class="lab-copy-stat-btn" data-target="labStatVar" title="Copiar Varianza">📋</button>
+                                        </div>
+                                        <strong class="lab-stat-value" id="labStatVar">0.00</strong>
+                                        <span class="lab-stat-formula">s² muestral</span>
+                                    </div>
+                                    <!-- 4. Desvío Estándar -->
+                                    <div class="lab-stat-card">
+                                        <div class="lab-stat-card-top">
+                                            <span class="lab-stat-name">Desvío (s)</span>
+                                            <button type="button" class="lab-copy-stat-btn" data-target="labStatStd" title="Copiar Desvío">📋</button>
+                                        </div>
+                                        <strong class="lab-stat-value" id="labStatStd">0.00</strong>
+                                        <span class="lab-stat-formula">√s²</span>
+                                    </div>
+                                    <!-- 5. Coeficiente de Variación -->
+                                    <div class="lab-stat-card">
+                                        <div class="lab-stat-card-top">
+                                            <span class="lab-stat-name">Coef. Var. (CV)</span>
+                                            <button type="button" class="lab-copy-stat-btn" data-target="labStatCV" title="Copiar CV">📋</button>
+                                        </div>
+                                        <strong class="lab-stat-value" id="labStatCV">0.00%</strong>
+                                        <span class="lab-stat-formula">(s / x̄) · 100</span>
+                                    </div>
+                                    <!-- 6. Moda -->
+                                    <div class="lab-stat-card">
+                                        <div class="lab-stat-card-top">
+                                            <span class="lab-stat-name">Moda (Mo)</span>
+                                            <button type="button" class="lab-copy-stat-btn" data-target="labStatMode" title="Copiar Moda">📋</button>
+                                        </div>
+                                        <strong class="lab-stat-value" id="labStatMode">-</strong>
+                                        <span class="lab-stat-formula">Mayor fi</span>
+                                    </div>
+                                    <!-- 7. Mediana -->
+                                    <div class="lab-stat-card">
+                                        <div class="lab-stat-card-top">
+                                            <span class="lab-stat-name">Mediana (Me)</span>
+                                            <button type="button" class="lab-copy-stat-btn" data-target="labStatMedian" title="Copiar Mediana">📋</button>
+                                        </div>
+                                        <strong class="lab-stat-value" id="labStatMedian">-</strong>
+                                        <span class="lab-stat-formula">Posición 50%</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -3344,7 +3353,7 @@
 </dialog>
 
 <script src="mqtt.min.js"></script>
-<script src="script.js?v=25.8" defer></script>
+<script src="script.js?v=26.0" defer></script>
 
 <!-- =========================================================
      MODAL DE PROMPT PARA GEMINI (CREAR JUEGOS DESDE PDF)
@@ -3393,6 +3402,104 @@
         </footer>
     </div>
 </dialog>
+
+<!-- =========================================================
+     MODAL DE CONFIGURACIÓN INICIAL: LABORATORIO DE ESTADÍSTICA
+     ========================================================= -->
+<dialog id="labConfigModal" class="modal" aria-labelledby="labConfigModalTitle">
+    <div class="modal__content modal__content--md lab-config-modal-content">
+        <header class="modal__header">
+            <h3 id="labConfigModalTitle" class="modal__title">🔬 Laboratorio de Estadística: Cargar PDF & Temario</h3>
+            <button id="closeLabConfigModalBtn" class="modal__close icon-button" type="button" aria-label="Cerrar modal">✕</button>
+        </header>
+        <div class="modal__body" style="display: flex; flex-direction: column; gap: 1.25rem;">
+            <!-- Área de carga de PDF con gran botón + -->
+            <div class="lab-upload-section">
+                <label class="section-title" style="margin-bottom: 0.5rem; display: block;">📄 Cargar Apunte o Guía en PDF (Opcional):</label>
+                <input type="file" id="labPdfFileInput" accept=".pdf" class="hidden">
+                <div class="lab-upload-dropzone" id="labUploadDropzone" tabindex="0" role="button" aria-label="Cargar archivo PDF">
+                    <div class="lab-upload-plus-circle" id="labUploadPlusCircle">➕</div>
+                    <strong class="lab-upload-title" id="labUploadTitle">Subir PDF de Estadística</strong>
+                    <p class="lab-upload-hint" id="labUploadHint">
+                        Hacé clic o arrastrá acá el PDF de tu cátedra (apuntes, fórmulas o ejercicios). La IA lo analizará para crear casos contextualizados.
+                    </p>
+                    <div class="lab-loaded-pdf-info hidden" id="labLoadedPdfInfo">
+                        <span class="lab-loaded-pdf-icon">📄</span>
+                        <div class="lab-loaded-pdf-text">
+                            <strong id="labLoadedPdfName">apuntes.pdf</strong>
+                            <span id="labLoadedPdfMeta">Listo para procesar</span>
+                        </div>
+                        <button type="button" class="button button--ghost button--xs" id="labBtnQuitarPdf" style="color: #f87171; margin-left: auto;">✕ Quitar</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Opciones personalizables de tema de Estadística -->
+            <div class="lab-topics-section">
+                <label class="section-title" style="margin-bottom: 0.5rem; display: block;">🎯 Seleccioná qué rama de Estadística querés practicar:</label>
+                <div class="lab-topics-grid" id="labTopicsGrid">
+                    <label class="lab-topic-option is-selected" data-topic="descriptiva">
+                        <input type="radio" name="labTopicRadio" value="descriptiva" checked class="hidden">
+                        <div class="lab-topic-card-body">
+                            <span class="lab-topic-icon">📊</span>
+                            <div class="lab-topic-info">
+                                <strong>Estadística Descriptiva</strong>
+                                <span>Tabla de frecuencias, Media (x̄), Mediana (Me), Moda (Mo), Varianza (s²), Desvío (s) y Coeficiente de Variación (CV).</span>
+                            </div>
+                        </div>
+                    </label>
+                    <label class="lab-topic-option" data-topic="bayes">
+                        <input type="radio" name="labTopicRadio" value="bayes" class="hidden">
+                        <div class="lab-topic-card-body">
+                            <span class="lab-topic-icon">🎲</span>
+                            <div class="lab-topic-info">
+                                <strong>Probabilidades & Teorema de Bayes</strong>
+                                <span>Probabilidad condicional, intersecciones, tablas de contingencia 2x2, falsos positivos y teorema de Bayes.</span>
+                            </div>
+                        </div>
+                    </label>
+                    <label class="lab-topic-option" data-topic="normal">
+                        <input type="radio" name="labTopicRadio" value="normal" class="hidden">
+                        <div class="lab-topic-card-body">
+                            <span class="lab-topic-icon">🔔</span>
+                            <div class="lab-topic-info">
+                                <strong>Distribución Normal</strong>
+                                <span>Campana de Gauss, estandarización Z, probabilidades bajo la curva P(X ≤ x) y percentiles críticos.</span>
+                            </div>
+                        </div>
+                    </label>
+                    <label class="lab-topic-option" data-topic="discretas">
+                        <input type="radio" name="labTopicRadio" value="discretas" class="hidden">
+                        <div class="lab-topic-card-body">
+                            <span class="lab-topic-icon">🎯</span>
+                            <div class="lab-topic-info">
+                                <strong>Distribuciones Discretas (Binomial & Poisson)</strong>
+                                <span>Ensayos Bernoulli (n, p), número de éxitos k, tasas medias λ y cálculo de probabilidades puntuales y acumuladas.</span>
+                            </div>
+                        </div>
+                    </label>
+                    <label class="lab-topic-option" data-topic="integral">
+                        <input type="radio" name="labTopicRadio" value="integral" class="hidden">
+                        <div class="lab-topic-card-body">
+                            <span class="lab-topic-icon">🌐</span>
+                            <div class="lab-topic-info">
+                                <strong>Práctica Integral / Examen Completo</strong>
+                                <span>Casos combinados con tabulación de datos, cálculo de dispersión y toma de decisiones probabilísticas.</span>
+                            </div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+        </div>
+        <footer class="modal__footer" style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+            <button id="closeLabConfigModalBottomBtn" class="button button--ghost" type="button">Cancelar</button>
+            <button id="labBtnCargarConfig" class="button button--primary" type="button" style="background: linear-gradient(135deg, #059669, #10b981);">
+                🚀 Cargar y Preparar Laboratorio
+            </button>
+        </footer>
+    </div>
+</dialog>
+
 
 
 <!-- =========================================================

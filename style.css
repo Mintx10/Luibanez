@@ -8916,3 +8916,431 @@ body.modo-dev-activo .juntos-locked-notice {
     height: 100%;
     display: block;
 }
+
+/* =========================================================
+   LABORATORIO V26: MODAL DE CONFIGURACIÓN & CARGA DE PDF
+   ========================================================= */
+
+.lab-config-modal-content {
+    max-width: 680px;
+    width: 95%;
+}
+
+.lab-upload-dropzone {
+    border: 2px dashed rgba(56, 189, 248, 0.4);
+    background: rgba(15, 23, 42, 0.6);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem 1.25rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.lab-upload-dropzone:hover,
+.lab-upload-dropzone.is-dragover {
+    border-color: #38bdf8;
+    background: rgba(56, 189, 248, 0.08);
+    box-shadow: 0 0 15px rgba(56, 189, 248, 0.2);
+}
+
+.lab-upload-plus-circle {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #0284c7, #0ea5e9);
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.6rem;
+    box-shadow: 0 4px 14px rgba(2, 132, 199, 0.4);
+    transition: transform 0.2s ease;
+}
+
+.lab-upload-dropzone:hover .lab-upload-plus-circle {
+    transform: scale(1.08);
+}
+
+.lab-upload-title {
+    font-size: 1.05rem;
+    color: #f8fafc;
+}
+
+.lab-upload-hint {
+    font-size: 0.82rem;
+    color: var(--color-text-muted);
+    max-width: 480px;
+    margin: 0;
+    line-height: 1.45;
+}
+
+.lab-loaded-pdf-info {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: rgba(16, 185, 129, 0.12);
+    border: 1px solid rgba(16, 185, 129, 0.35);
+    padding: 0.65rem 0.9rem;
+    border-radius: var(--radius-md);
+    text-align: left;
+    margin-top: 0.5rem;
+}
+
+.lab-loaded-pdf-icon {
+    font-size: 1.5rem;
+}
+
+.lab-loaded-pdf-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+.lab-loaded-pdf-text strong {
+    color: #34d399;
+    font-size: 0.9rem;
+}
+
+.lab-loaded-pdf-text span {
+    color: var(--color-text-muted);
+    font-size: 0.75rem;
+}
+
+/* Opciones de tema de Estadística */
+.lab-topics-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.lab-topic-option {
+    display: block;
+    cursor: pointer;
+    border: 1.5px solid rgba(255, 255, 255, 0.08);
+    background: rgba(15, 23, 42, 0.5);
+    border-radius: var(--radius-md);
+    padding: 0.75rem 1rem;
+    transition: all 0.2s ease;
+}
+
+.lab-topic-option:hover {
+    border-color: rgba(56, 189, 248, 0.4);
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.lab-topic-option.is-selected {
+    border-color: #38bdf8;
+    background: rgba(56, 189, 248, 0.12);
+    box-shadow: 0 0 12px rgba(56, 189, 248, 0.18);
+}
+
+.lab-topic-card-body {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.85rem;
+}
+
+.lab-topic-icon {
+    font-size: 1.5rem;
+    line-height: 1;
+    margin-top: 0.15rem;
+}
+
+.lab-topic-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.lab-topic-info strong {
+    font-size: 0.95rem;
+    color: #f8fafc;
+}
+
+.lab-topic-info span {
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+    line-height: 1.35;
+}
+
+/* =========================================================
+   LABORATORIO V26: INCISOS INTERACTIVOS (a, b, c, d, e)
+   ========================================================= */
+
+.lab-questions-wrapper {
+    background: linear-gradient(145deg, rgba(30, 41, 59, 0.85), rgba(15, 23, 42, 0.95));
+    border: 1.5px solid rgba(56, 189, 248, 0.3);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem;
+    box-shadow: 0 4px 25px rgba(0, 0, 0, 0.25);
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.lab-questions-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding-bottom: 0.65rem;
+}
+
+.lab-questions-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #fff;
+    margin: 0;
+}
+
+.lab-questions-progress {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #38bdf8;
+    background: rgba(56, 189, 248, 0.12);
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+}
+
+.lab-questions-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.95rem;
+}
+
+.lab-question-item {
+    background: rgba(15, 23, 42, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-md);
+    padding: 0.95rem 1.05rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.lab-question-item.is-correct {
+    border-color: #10b981;
+    background: rgba(16, 185, 129, 0.08);
+}
+
+.lab-question-item.is-error {
+    border-color: #f87171;
+}
+
+.lab-q-prompt-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+}
+
+.lab-q-letter-badge {
+    background: #38bdf8;
+    color: #0f172a;
+    font-weight: 800;
+    font-size: 0.82rem;
+    padding: 0.2rem 0.55rem;
+    border-radius: 6px;
+    flex-shrink: 0;
+}
+
+.lab-question-item.is-correct .lab-q-letter-badge {
+    background: #10b981;
+    color: #ffffff;
+}
+
+.lab-q-text {
+    font-size: 0.92rem;
+    color: #f1f5f9;
+    line-height: 1.45;
+    margin: 0;
+}
+
+.lab-q-action-row {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+}
+
+.lab-q-input {
+    flex: 1 1 140px;
+    max-width: 220px;
+    font-size: 0.95rem;
+    padding: 0.45rem 0.65rem;
+    background: rgba(15, 23, 42, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #fff;
+    border-radius: 6px;
+}
+
+.lab-q-verify-btn {
+    flex: 0 0 auto;
+}
+
+.lab-q-status-badge {
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.lab-q-status-badge.is-correct {
+    color: #34d399;
+}
+
+.lab-q-status-badge.is-wrong {
+    color: #f87171;
+}
+
+/* Caja especial del 3er intento fallido */
+.lab-3rd-attempt-box {
+    background: rgba(245, 158, 11, 0.12);
+    border: 1px solid rgba(245, 158, 11, 0.4);
+    border-radius: var(--radius-md);
+    padding: 0.75rem 0.9rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+    animation: fadeIn 0.25s ease;
+}
+
+.lab-3rd-attempt-prompt {
+    font-size: 0.84rem;
+    font-weight: 600;
+    color: #fbbf24;
+    margin: 0;
+}
+
+.lab-3rd-attempt-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.lab-q-reveal-box {
+    background: rgba(15, 23, 42, 0.85);
+    border: 1px dashed rgba(56, 189, 248, 0.35);
+    border-radius: var(--radius-md);
+    padding: 0.75rem 0.9rem;
+    font-size: 0.85rem;
+    line-height: 1.45;
+    color: #cbd5e1;
+    animation: fadeIn 0.2s ease;
+}
+
+.lab-q-reveal-box strong {
+    color: #38bdf8;
+    display: block;
+    margin-bottom: 0.25rem;
+}
+
+/* =========================================================
+   LABORATORIO V26: CALCULADORA ESTADÍSTICA (7 MÉTRICAS EN VIVO)
+   ========================================================= */
+
+.lab-stats-calc-panel {
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid rgba(56, 189, 248, 0.25);
+    border-radius: var(--radius-lg);
+    padding: 1rem 1.15rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+}
+
+.lab-stats-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+    padding-bottom: 0.5rem;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+
+.lab-stats-panel-title {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #f1f5f9;
+}
+
+.lab-stats-panel-hint {
+    font-size: 0.75rem;
+    color: #94a3b8;
+}
+
+.lab-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(115px, 1fr));
+    gap: 0.65rem;
+}
+
+.lab-stat-card {
+    background: rgba(15, 23, 42, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-md);
+    padding: 0.55rem 0.65rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    transition: all 0.2s ease;
+}
+
+.lab-stat-card:hover {
+    border-color: rgba(56, 189, 248, 0.4);
+    background: rgba(56, 189, 248, 0.05);
+}
+
+.lab-stat-card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.lab-stat-name {
+    font-size: 0.73rem;
+    font-weight: 600;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
+.lab-copy-stat-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 0.78rem;
+    padding: 0.1rem 0.2rem;
+    opacity: 0.65;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.lab-copy-stat-btn:hover {
+    opacity: 1;
+    transform: scale(1.15);
+}
+
+.lab-copy-stat-btn:active {
+    transform: scale(0.95);
+}
+
+.lab-stat-value {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #34d399;
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.lab-stat-formula {
+    font-size: 0.68rem;
+    color: var(--color-text-muted);
+}
+
