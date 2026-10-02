@@ -15,10 +15,10 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     
-    <link rel="icon" type="image/svg+xml" href="icon.svg?v=25.2">
-    <link rel="apple-touch-icon" href="icon-192.png?v=25.2">
-    <link rel="manifest" href="manifest.json?v=25.2">
-    <link rel="stylesheet" href="style.css?v=25.2">
+    <link rel="icon" type="image/svg+xml" href="icon.svg?v=25.3">
+    <link rel="apple-touch-icon" href="icon-192.png?v=25.3">
+    <link rel="manifest" href="manifest.json?v=25.3">
+    <link rel="stylesheet" href="style.css?v=25.3">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -225,7 +225,7 @@
 
         <!-- Versión y botón de actualización forzada -->
         <div class="drawer-version-row" style="padding: 0.85rem 1rem; border-top: 1px solid var(--color-border); font-size: 0.75rem; color: var(--color-text-muted); display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02); margin-top: auto;">
-            <span id="drawerVersionTag" style="cursor: pointer; user-select: none;" title="Versión de Luibañez">⚡ Luibañez <strong style="color: var(--color-text);">v25.2</strong></span>
+            <span id="drawerVersionTag" style="cursor: pointer; user-select: none;" title="Versión de Luibañez">⚡ Luibañez <strong style="color: var(--color-text);">v25.3</strong></span>
             <button id="btnForzarActualizar" class="button button--ghost button--xs" type="button" style="font-size: 0.72rem; padding: 0.2rem 0.55rem; border-radius: 999px; border: 1px solid var(--color-border);" title="Limpiar caché y recargar versión más reciente">🔄 Actualizar</button>
         </div>
     </div>
@@ -705,35 +705,62 @@
 
             <!-- ==================== SUB-PANEL: SALA ONLINE MULTIJUGADOR ==================== -->
             <div id="dueloOnlinePanel" class="duelo-online-panel">
-                <!-- Pestañas de Vista: Crear Sala vs Unirse -->
-                <div class="duelo-online-view-tabs" id="dueloOnlineViewTabs">
-                    <button type="button" class="duelo-online-view-tab is-active" id="dueloTabHostBtn" data-tab="host">
-                        <span class="duelo-tab-icon">👑</span>
-                        <div class="duelo-tab-text">
-                            <strong class="duelo-tab-title">Crear Sala</strong>
-                            <span class="duelo-tab-sub">Configurar partida</span>
+                <!-- EXPLORADOR DE LOBBIES EN VIVO (MATCHMAKING MULTIJUGADOR) -->
+                <div id="dueloLobbyBrowser" class="duelo-lobby-browser">
+                    <!-- Barra de Acciones y Contadores -->
+                    <div class="duelo-browser-top-bar">
+                        <div class="duelo-browser-actions">
+                            <button id="dueloOpenCreateModalBtn" class="button button--primary button--md" type="button">
+                                <span>➕</span> <strong>Crear Sala</strong>
+                            </button>
+                            <button id="dueloOpenPinModalBtn" class="button button--secondary button--md" type="button">
+                                <span>🔑</span> <strong>Unirse con Código</strong>
+                            </button>
                         </div>
-                    </button>
-                    <button type="button" class="duelo-online-view-tab" id="dueloTabJoinBtn" data-tab="join">
-                        <span class="duelo-tab-icon">🚪</span>
-                        <div class="duelo-tab-text">
-                            <strong class="duelo-tab-title">Unirse a Sala</strong>
-                            <span class="duelo-tab-sub">Con PIN de 5 letras</span>
+                        <div class="duelo-browser-live-indicator">
+                            <span class="live-dot"></span>
+                            <span id="dueloLobbiesCountText"><strong id="dueloLobbiesCount">0</strong> Salas Activas</span>
                         </div>
-                    </button>
+                    </div>
+
+                    <!-- Filtros por Juego -->
+                    <div class="duelo-browser-filters" id="dueloBrowserFilters">
+                        <button type="button" class="filter-pill is-active" data-filter="todas">Todas</button>
+                        <button type="button" class="filter-pill" data-filter="bomba">💣 Bomba</button>
+                        <button type="button" class="filter-pill" data-filter="bolillero">🎲 Bolillero</button>
+                        <button type="button" class="filter-pill" data-filter="impostor">🕵️ Impostor</button>
+                        <button type="button" class="filter-pill" data-filter="memotest">🧠 Memotest</button>
+                        <button type="button" class="filter-pill" data-filter="triatlon">🏅 Triatlón</button>
+                    </div>
+
+                    <!-- Grilla de Salas Públicas en Vivo -->
+                    <div id="dueloPublicLobbiesGrid" class="duelo-lobbies-grid">
+                        <!-- Se puebla dinámicamente en tiempo real con las salas activas -->
+                    </div>
+
+                    <!-- Estado Vacío cuando no hay salas -->
+                    <div id="dueloLobbiesEmptyState" class="duelo-lobbies-empty-state hidden">
+                        <div class="empty-state-icon">👥</div>
+                        <h3 class="empty-state-title">No hay salas activas en este momento</h3>
+                        <p class="empty-state-desc">¡Sé el primero en crear una sala y empezá a estudiar con tus compañeros!</p>
+                        <button type="button" id="dueloEmptyCreateBtn" class="button button--primary button--md" style="margin-top: 1rem;">
+                            ➕ Crear Sala
+                        </button>
+                    </div>
                 </div>
 
-                <!-- Vista Inicial: Crear o Unirse a una Sala -->
-                <div id="dueloOnlineSetupView" class="duelo-online-setup-grid">
-                    <!-- Tarjeta: Crear Sala Online con Flujo Secuencial -->
-                    <div class="panel duelo-lobby-card duelo-lobby-card--host is-active" id="dueloLobbyCardHost">
-                        <div class="panel__header">
-                            <div style="display: flex; align-items: center; gap: 0.5rem;">
-                                <span style="font-size: 1.5rem;">👑</span>
-                                <h2 class="panel__title">Crear Sala Online</h2>
-                            </div>
-                            <span class="badge badge--accent">Host</span>
+                <!-- Modal Flotante: Crear Sala Online Multijugador -->
+                <dialog id="dueloCreateRoomModal" class="modal duelo-create-modal" aria-labelledby="dueloCreateModalTitle">
+                    <div class="modal__header" style="padding-bottom: 0.75rem; border-bottom: 1px solid var(--color-border); margin-bottom: 1rem;">
+                        <div style="display: flex; align-items: center; gap: 0.6rem;">
+                            <span style="font-size: 1.5rem;">👑</span>
+                            <h2 class="modal__title" id="dueloCreateModalTitle">Crear Sala Multijugador</h2>
                         </div>
+                        <button type="button" id="dueloCloseCreateModalBtn" class="icon-button" aria-label="Cerrar modal">✕</button>
+                    </div>
+
+                    <!-- Configuración y Pasos -->
+                    <div class="duelo-lobby-card--host is-active" id="dueloLobbyCardHost">
                         <p class="duelo-card-desc">Completá los pasos para configurar el desafío y abrir la sala de espera:</p>
 
                         <!-- ==================== PASO 1: ELEGÍ EL JUEGO ==================== -->
@@ -1272,51 +1299,63 @@
                                 </div>
                             </div>
 
+                            <div class="field" style="margin-top: 1.25rem;">
+                                <label for="dueloCreateRoomName" style="font-weight: 700; color: #fff;">🏷️ Nombre de la Sala</label>
+                                <input id="dueloCreateRoomName" type="text" placeholder="Ej: La Bomba del Profe" maxlength="30" value="Sala de Repaso">
+                            </div>
+
+                            <div class="field" style="margin-top: 0.75rem;">
+                                <label class="duelo-switch-row" for="dueloCreateRoomIsPublic">
+                                    <input type="checkbox" id="dueloCreateRoomIsPublic" checked>
+                                    <span class="duelo-switch-box" aria-hidden="true"></span>
+                                    <div class="duelo-switch-info">
+                                        <strong>🌐 Sala Pública (Aparece en Cartelera de Lobbies)</strong>
+                                        <span>Cualquier compañero podrá ver la sala y entrar directamente. Desmarcala para sala privada (solo con PIN o link).</span>
+                                    </div>
+                                </label>
+                            </div>
+
                             <button id="dueloCreateRoomBtn" class="button button--primary button--full button--lg button--create-room-glow" type="button" style="margin-top: 1.5rem; font-size: 1.1rem; box-shadow: 0 4px 24px rgba(99, 102, 241, 0.45);">
                                 ✨ Crear Sala y Abrir Lobby Online
                             </button>
                         </div>
                     </div>
+                </dialog>
 
-                    <!-- Tarjeta: Unirse a Sala Online Existente -->
-                    <div class="panel duelo-lobby-card duelo-lobby-card--join" id="dueloLobbyCardJoin">
-                        <div class="panel__header">
-                            <div style="display: flex; align-items: center; gap: 0.5rem;">
-                                <span style="font-size: 1.5rem;">🚪</span>
-                                <h2 class="panel__title">Unirse a Sala</h2>
-                            </div>
-                            <span class="badge badge--primary">Invitación</span>
+                <!-- Modal Flotante: Unirse con Código PIN -->
+                <dialog id="dueloJoinByPinModal" class="modal duelo-pin-modal" aria-labelledby="dueloJoinPinModalTitle">
+                    <div class="modal__header" style="padding-bottom: 0.75rem; border-bottom: 1px solid var(--color-border); margin-bottom: 1rem;">
+                        <div style="display: flex; align-items: center; gap: 0.6rem;">
+                            <span style="font-size: 1.5rem;">🔑</span>
+                            <h2 class="modal__title" id="dueloJoinPinModalTitle">Unirse con Código PIN</h2>
                         </div>
-                        <p class="duelo-card-desc">Ingresá el PIN de 5 letras que te pasaron o abrí el Link Mágico directo en tu navegador:</p>
+                        <button type="button" id="dueloClosePinModalBtn" class="icon-button" aria-label="Cerrar modal">✕</button>
+                    </div>
 
-                        <div class="field" style="margin-bottom: 1.25rem;">
-                            <label for="dueloJoinRoomCode" style="font-weight: 700; color: #fff;">Código PIN de Sala (5 letras)</label>
-                            <input id="dueloJoinRoomCode" class="duelo-join-code-input" type="text" maxlength="8" placeholder="LUIB7" autocomplete="off" autocorrect="off" autocapitalize="characters">
-                        </div>
+                    <p class="duelo-card-desc">Ingresá el PIN de 5 letras que te pasaron o abrí el Link Mágico directo en tu navegador:</p>
 
-                        <div class="field">
-                            <label for="dueloJoinRoomPass">Contraseña (si la sala la requiere)</label>
-                            <input id="dueloJoinRoomPass" type="password" maxlength="20" placeholder="Dejar vacío si no tiene clave" autocomplete="off">
-                        </div>
+                    <div class="field" style="margin-bottom: 1.25rem;">
+                        <label for="dueloJoinRoomCode" style="font-weight: 700; color: #fff;">Código PIN de Sala (5 letras)</label>
+                        <input id="dueloJoinRoomCode" class="duelo-join-code-input" type="text" maxlength="8" placeholder="LUIB7" autocomplete="off" autocorrect="off" autocapitalize="characters" style="text-transform: uppercase; font-family: monospace; font-size: 1.6rem; text-align: center; letter-spacing: 0.25em; font-weight: 800;">
+                    </div>
 
-                        <div class="duelo-join-player-preview">
-                            <span class="duelo-join-label">Te unirás como:</span>
-                            <div class="duelo-join-badge">
-                                <span id="dueloJoinAvatarPreview" style="font-size: 1.4rem;">👤</span>
-                                <strong id="dueloJoinNamePreview" style="font-size: 1.05rem;">Invitado</strong>
-                            </div>
-                        </div>
+                    <div class="field">
+                        <label for="dueloJoinRoomPass">Contraseña (si la sala la requiere)</label>
+                        <input id="dueloJoinRoomPass" type="password" maxlength="20" placeholder="Dejar vacío si no tiene clave" autocomplete="off">
+                    </div>
 
-                        <button id="dueloJoinRoomBtn" class="button button--secondary button--full button--lg" type="button" style="margin-top: 1.5rem; font-size: 1.05rem;">
-                            🚀 Entrar a la Sala
-                        </button>
-
-                        <div class="duelo-online-tips">
-                            <span class="duelo-tip-icon">💡</span>
-                            <p><strong>Cero descargas ni registros externos:</strong> funciona directamente en el navegador de cualquier celular, tablet o computadora.</p>
+                    <div class="duelo-join-player-preview" style="margin-top: 1rem;">
+                        <span class="duelo-join-label">Te unirás como:</span>
+                        <div class="duelo-join-badge">
+                            <span id="dueloJoinAvatarPreview" style="font-size: 1.4rem;">👤</span>
+                            <strong id="dueloJoinNamePreview" style="font-size: 1.05rem;">Invitado</strong>
                         </div>
                     </div>
-                </div>
+
+                    <button id="dueloJoinRoomBtn" class="button button--secondary button--full button--lg" type="button" style="margin-top: 1.5rem; font-size: 1.05rem;">
+                        🚀 Entrar a la Sala
+                    </button>
+                </dialog>
 
                 <!-- ==================== LOBBY SQUARE / SALA DE ESPERA TEMÁTICA ==================== -->
                 <div id="dueloOnlineWaitingRoom" class="duelo-waiting-room-wrapper hidden">
@@ -2714,7 +2753,7 @@
 </dialog>
 
 <script src="mqtt.min.js"></script>
-<script src="script.js?v=25.2" defer></script>
+<script src="script.js?v=25.3" defer></script>
 
 <!-- =========================================================
      MODAL DE PROMPT PARA GEMINI (CREAR JUEGOS DESDE PDF)

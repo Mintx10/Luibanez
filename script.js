@@ -13,6 +13,7 @@ const DUELO_PREFS_KEY = "luibanez-duelo-prefs";
 const ACCOUNTS_STORAGE_KEY = "luibanez_cuentas_v2";
 const ACTIVE_USER_STORAGE_KEY = "luibanez_perfil_activo_v2";
 const MQTT_BROKER_URL = "wss://broker.emqx.io:8084/mqtt";
+const LOBBY_DISCOVERY_TOPIC = "luibanez/lobbies/discover";
 
 /* ==========================================================
    ESTADO GLOBAL
@@ -41,6 +42,8 @@ const onlineDueloEstado = {
     modo: "online", // "online" | "local"
     formatoModo: "versus", // "versus" | "coop"
     codigoSala: "",
+    nombreSala: "Sala de Repaso",
+    esPublica: true,
     tienePassword: false,
     passwordSala: "",
     jugadores: [],
@@ -57,6 +60,14 @@ const onlineDueloEstado = {
     votosRecibidos: {},
     roboOnlineActivo: false,
     primerRoboReclamado: false
+};
+
+const lobbyBrowserState = {
+    activeLobbies: new Map(), // roomId -> lobbyData
+    filtroJuego: "todas",
+    intervaloBeacon: null,
+    intervaloLimpieza: null,
+    suscrito: false
 };
 
 const estado = {
@@ -427,8 +438,22 @@ const dom = {
     dueloOnlinePanel: document.getElementById("dueloOnlinePanel"),
     dueloLocalPanel: document.getElementById("dueloLocalPanel"),
 
-    /* Duelo Setup Online & Sala de Espera */
-    dueloOnlineSetupView: document.getElementById("dueloOnlineSetupView"),
+    /* Duelo Setup Online & Explorador de Lobbies */
+    dueloOnlineSetupView: document.getElementById("dueloLobbyBrowser") || document.getElementById("dueloOnlineSetupView"),
+    dueloLobbyBrowser: document.getElementById("dueloLobbyBrowser"),
+    dueloOpenCreateModalBtn: document.getElementById("dueloOpenCreateModalBtn"),
+    dueloOpenPinModalBtn: document.getElementById("dueloOpenPinModalBtn"),
+    dueloCreateRoomModal: document.getElementById("dueloCreateRoomModal"),
+    dueloCloseCreateModalBtn: document.getElementById("dueloCloseCreateModalBtn"),
+    dueloJoinByPinModal: document.getElementById("dueloJoinByPinModal"),
+    dueloClosePinModalBtn: document.getElementById("dueloClosePinModalBtn"),
+    dueloLobbiesCount: document.getElementById("dueloLobbiesCount"),
+    dueloBrowserFilters: document.getElementById("dueloBrowserFilters"),
+    dueloPublicLobbiesGrid: document.getElementById("dueloPublicLobbiesGrid"),
+    dueloLobbiesEmptyState: document.getElementById("dueloLobbiesEmptyState"),
+    dueloEmptyCreateBtn: document.getElementById("dueloEmptyCreateBtn"),
+    dueloCreateRoomName: document.getElementById("dueloCreateRoomName"),
+    dueloCreateRoomIsPublic: document.getElementById("dueloCreateRoomIsPublic"),
     dueloOnlineModoSelect: document.getElementById("dueloOnlineModoSelect"),
     dueloOnlineModoHint: document.getElementById("dueloOnlineModoHint"),
     dueloOnlineListaSelect: document.getElementById("dueloOnlineListaSelect"),
@@ -870,6 +895,7 @@ function cambiarVista(vista) {
             actualizarUIPerfilUsuario();
             if (dom.dueloOnlineSetupView) dom.dueloOnlineSetupView.classList.remove("hidden");
             if (dom.dueloOnlineWaitingRoom) dom.dueloOnlineWaitingRoom.classList.add("hidden");
+            iniciarDiscoveryLobbiesOnline();
         }
     } else if (vistaDestino === "fama") {
         renderSalonDeLaFama();
@@ -2604,6 +2630,14 @@ function conectarMqttSiEsNecesario(callback) {
                 dom.dueloServerStatusBadge.textContent = "🟢 Servidor Conectado";
                 dom.dueloServerStatusBadge.className = "badge badge--success";
             }
+            if (!lobbyBrowserState.suscrito) {
+                onlineDueloEstado.clienteMqtt.subscribe(LOBBY_DISCOVERY_TOPIC, (err) => {
+                    if (!err) {
+                        lobbyBrowserState.suscrito = true;
+                        publicarMensajeDiscovery({ tipo: "LOBBY_DISCOVERY_PING" });
+                    }
+                });
+            }
             if (callback) callback();
         });
 
@@ -2625,7 +2659,11 @@ function conectarMqttSiEsNecesario(callback) {
         onlineDueloEstado.clienteMqtt.on("message", (topic, message) => {
             try {
                 const data = JSON.parse(message.toString());
-                procesarMensajeMqttSala(data);
+                if (topic === LOBBY_DISCOVERY_TOPIC) {
+                    procesarMensajeDiscoveryLobby(data);
+                } else {
+                    procesarMensajeMqttSala(data);
+                }
             } catch (e) {
                 console.error("Error al procesar mensaje MQTT:", e);
             }
@@ -2642,16 +2680,274 @@ function publicarMensajeSala(data) {
     onlineDueloEstado.clienteMqtt.publish(topic, JSON.stringify(data), { qos: 0 });
 }
 
+function escapeHtml(str) {
+    if (!str) return "";
+    return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+function iniciarDiscoveryLobbiesOnline() {
+    conectarMqttSiEsNecesario(() => {
+        if (onlineDueloEstado.clienteMqtt && !lobbyBrowserState.suscrito) {
+            onlineDueloEstado.clienteMqtt.subscribe(LOBBY_DISCOVERY_TOPIC, (err) => {
+                if (!err) {
+                    lobbyBrowserState.suscrito = true;
+                    publicarMensajeDiscovery({ tipo: "LOBBY_DISCOVERY_PING" });
+                }
+            });
+        }
+    });
+
+    if (!lobbyBrowserState.intervaloLimpieza) {
+        lobbyBrowserState.intervaloLimpieza = setInterval(purgarLobbiesExpirados, 2500);
+    }
+    renderizarLobbyBrowser();
+}
+
+function publicarMensajeDiscovery(data) {
+    if (!onlineDueloEstado.clienteMqtt) return;
+    try {
+        onlineDueloEstado.clienteMqtt.publish(LOBBY_DISCOVERY_TOPIC, JSON.stringify(data), { qos: 0 });
+    } catch (e) {
+        console.warn("Error al emitir mensaje discovery MQTT:", e);
+    }
+}
+
+function iniciarBroadcastingSalaPublica() {
+    detenerBroadcastingSalaPublica();
+    if (!onlineDueloEstado.esHost || !onlineDueloEstado.esPublica || !onlineDueloEstado.codigoSala) return;
+
+    const emitirBeacon = () => {
+        if (!onlineDueloEstado.esHost || !onlineDueloEstado.codigoSala) {
+            detenerBroadcastingSalaPublica();
+            return;
+        }
+        const apunte = apuntesEstado.global || apuntesEstado.bomba || apuntesEstado.bolillero;
+        const nombreMaterial = (onlineDueloEstado.fuenteMaterial === "pdf" && apunte && apunte.nombre)
+            ? apunte.nombre
+            : "General Universitario";
+
+        publicarMensajeDiscovery({
+            tipo: "LOBBY_HEARTBEAT",
+            id: onlineDueloEstado.codigoSala,
+            nombre: onlineDueloEstado.nombreSala || "Sala de Repaso",
+            juego: onlineDueloEstado.juegoSeleccionado || "bomba",
+            formatoModo: onlineDueloEstado.formatoModo || "versus",
+            material: nombreMaterial,
+            esPublica: true,
+            requierePass: !!onlineDueloEstado.tienePassword,
+            host: {
+                id: perfilUsuario.id,
+                apodo: perfilUsuario.apodo,
+                avatar: perfilUsuario.avatar
+            },
+            jugadoresCount: onlineDueloEstado.jugadores.length,
+            maxJugadores: 8,
+            jugadoresAvatares: onlineDueloEstado.jugadores.map(j => ({
+                apodo: j.apodo,
+                avatar: j.avatar,
+                esHost: !!j.esHost
+            })),
+            timestamp: Date.now()
+        });
+    };
+
+    emitirBeacon();
+    lobbyBrowserState.intervaloBeacon = setInterval(emitirBeacon, 3500);
+}
+
+function detenerBroadcastingSalaPublica() {
+    if (lobbyBrowserState.intervaloBeacon) {
+        clearInterval(lobbyBrowserState.intervaloBeacon);
+        lobbyBrowserState.intervaloBeacon = null;
+    }
+    if (onlineDueloEstado.esHost && onlineDueloEstado.codigoSala) {
+        publicarMensajeDiscovery({
+            tipo: "LOBBY_CLOSED",
+            id: onlineDueloEstado.codigoSala
+        });
+    }
+}
+
+function procesarMensajeDiscoveryLobby(data) {
+    if (!data || !data.tipo) return;
+
+    if (data.tipo === "LOBBY_DISCOVERY_PING") {
+        if (onlineDueloEstado.esHost && onlineDueloEstado.esPublica && onlineDueloEstado.codigoSala) {
+            iniciarBroadcastingSalaPublica();
+        }
+        return;
+    }
+
+    if (data.tipo === "LOBBY_CLOSED") {
+        if (data.id && lobbyBrowserState.activeLobbies.has(data.id)) {
+            lobbyBrowserState.activeLobbies.delete(data.id);
+            renderizarLobbyBrowser();
+        }
+        return;
+    }
+
+    if (data.tipo === "LOBBY_HEARTBEAT" && data.id) {
+        lobbyBrowserState.activeLobbies.set(data.id, {
+            ...data,
+            lastSeen: Date.now()
+        });
+        renderizarLobbyBrowser();
+    }
+}
+
+function purgarLobbiesExpirados() {
+    const ahora = Date.now();
+    let huboCambios = false;
+    for (const [id, lobby] of lobbyBrowserState.activeLobbies.entries()) {
+        if (ahora - lobby.lastSeen > 8500) {
+            lobbyBrowserState.activeLobbies.delete(id);
+            huboCambios = true;
+        }
+    }
+    if (huboCambios) {
+        renderizarLobbyBrowser();
+    }
+}
+
+function renderizarLobbyBrowser() {
+    if (!dom.dueloPublicLobbiesGrid) return;
+
+    const lobbies = Array.from(lobbyBrowserState.activeLobbies.values());
+    const filtro = lobbyBrowserState.filtroJuego;
+
+    const filtradas = lobbies.filter(l => {
+        if (filtro === "todas") return true;
+        return l.juego === filtro;
+    });
+
+    if (dom.dueloLobbiesCount) {
+        dom.dueloLobbiesCount.textContent = filtradas.length;
+    }
+
+    if (filtradas.length === 0) {
+        dom.dueloPublicLobbiesGrid.innerHTML = "";
+        if (dom.dueloLobbiesEmptyState) {
+            dom.dueloLobbiesEmptyState.classList.remove("hidden");
+        }
+        return;
+    }
+
+    if (dom.dueloLobbiesEmptyState) {
+        dom.dueloLobbiesEmptyState.classList.add("hidden");
+    }
+
+    const metaJuegos = {
+        bomba: { icon: "💣", title: "Desactivá la Bomba", cardClass: "lobby-card--bomba" },
+        bolillero: { icon: "🎲", title: "Bolillero de Estudio", cardClass: "lobby-card--bolillero" },
+        impostor: { icon: "🕵️‍♂️", title: "Caza al Impostor", cardClass: "lobby-card--impostor" },
+        memotest: { icon: "🧠", title: "Memotest Teórico", cardClass: "lobby-card--memotest" },
+        triatlon: { icon: "🏅", title: "Triatlón Académico", cardClass: "lobby-card--triatlon" }
+    };
+
+    dom.dueloPublicLobbiesGrid.innerHTML = filtradas.map(lobby => {
+        const meta = metaJuegos[lobby.juego] || metaJuegos.bomba;
+        const esCoop = lobby.formatoModo === "coop";
+        const modeBadge = esCoop
+            ? `<span class="badge badge--success" style="font-size: 0.72rem; padding: 2px 7px;">🤝 Coop</span>`
+            : `<span class="badge badge--accent" style="font-size: 0.72rem; padding: 2px 7px;">⚔️ Versus</span>`;
+        const lockBadge = lobby.requierePass
+            ? `<span title="Protegida con contraseña" style="font-size: 0.85rem;">🔒</span>`
+            : "";
+
+        const jugadores = lobby.jugadoresAvatares || [];
+        const maxSlots = 8;
+        let slotsHtml = "";
+        for (let i = 0; i < maxSlots; i++) {
+            if (i < jugadores.length) {
+                const j = jugadores[i];
+                const isHost = j.esHost || (i === 0);
+                slotsHtml += `<div class="slot-avatar ${isHost ? 'is-host' : ''}" title="${escapeHtml(j.apodo || 'Jugador')}">${j.avatar || (isHost ? '👑' : '👤')}</div>`;
+            } else {
+                slotsHtml += `<div class="slot-empty" title="Lugar libre">+</div>`;
+            }
+        }
+
+        const isFull = (lobby.jugadoresCount || jugadores.length) >= 8;
+        const enterButton = isFull
+            ? `<button type="button" class="lobby-card-enter-btn" disabled>🈵 Sala Llena</button>`
+            : `<button type="button" class="lobby-card-enter-btn" onclick="entrarALobbyDesdeCartelera('${escapeHtml(lobby.id)}', ${lobby.requierePass ? 'true' : 'false'})">🚀 Entrar a la Sala</button>`;
+
+        const hostName = escapeHtml(lobby.host?.apodo || "Anfitrión");
+        const hostAvatar = lobby.host?.avatar || "👑";
+        const roomName = escapeHtml(lobby.nombre || "Sala de Estudio");
+        const materialName = escapeHtml(lobby.material || "General");
+
+        return `
+            <div class="lobby-card ${meta.cardClass}" data-room-id="${escapeHtml(lobby.id)}">
+                <div class="lobby-card-header">
+                    <div class="lobby-card-game-badge">
+                        <span>${meta.icon}</span>
+                        <span>${meta.title}</span>
+                    </div>
+                    <div class="lobby-card-header-tags">
+                        ${modeBadge}
+                        ${lockBadge}
+                    </div>
+                </div>
+
+                <div class="lobby-card-body">
+                    <h3 class="lobby-room-title">${roomName}</h3>
+                    <div class="lobby-host-info">
+                        <span>${hostAvatar}</span>
+                        <span>Anfitrión: <strong>${hostName}</strong></span>
+                    </div>
+                    <div class="lobby-material-badge">
+                        <span>📚</span>
+                        <span>${materialName}</span>
+                    </div>
+                </div>
+
+                <div class="lobby-slots-container">
+                    <div class="lobby-slots-top">
+                        <span>Jugadores</span>
+                        <span class="lobby-slots-count">${lobby.jugadoresCount || jugadores.length} / 8</span>
+                    </div>
+                    <div class="lobby-slots-row">
+                        ${slotsHtml}
+                    </div>
+                </div>
+
+                <div class="lobby-card-footer">
+                    ${enterButton}
+                </div>
+            </div>
+        `;
+    }).join("");
+}
+
+window.entrarALobbyDesdeCartelera = function(roomId, requierePass) {
+    let pass = "";
+    if (requierePass) {
+        pass = prompt("Esta sala requiere contraseña. Ingresala para entrar:") || "";
+        if (!pass) return;
+    }
+    unirseASalaOnline(roomId, pass);
+};
+
 function crearSalaOnline() {
     try {
         const tienePass = dom.dueloOnlineHasPassword ? dom.dueloOnlineHasPassword.checked : false;
         const pass = tienePass && dom.dueloOnlineRoomPassword ? dom.dueloOnlineRoomPassword.value.trim() : "";
         const formatoModo = dom.dueloOnlineModoSelect ? dom.dueloOnlineModoSelect.value : (onlineDueloEstado.formatoModo || "versus");
         const juego = dom.dueloOnlineGameSelect ? dom.dueloOnlineGameSelect.value : (onlineDueloEstado.juegoSeleccionado || "bomba");
+        const nombreSala = dom.dueloCreateRoomName ? dom.dueloCreateRoomName.value.trim() : "Sala de Repaso";
+        const esPublica = dom.dueloCreateRoomIsPublic ? dom.dueloCreateRoomIsPublic.checked : true;
 
         const codigo = generarCodigoSala();
         onlineDueloEstado.esHost = true;
         onlineDueloEstado.codigoSala = codigo;
+        onlineDueloEstado.nombreSala = nombreSala || "Sala de Repaso";
+        onlineDueloEstado.esPublica = esPublica;
         onlineDueloEstado.tienePassword = tienePass;
         onlineDueloEstado.passwordSala = pass;
         onlineDueloEstado.formatoModo = formatoModo;
@@ -2745,8 +3041,18 @@ function crearSalaOnline() {
             listo: true
         }];
 
+        // Cerrar modal flotante si estaba abierto
+        if (dom.dueloCreateRoomModal && typeof dom.dueloCreateRoomModal.close === "function") {
+            try { dom.dueloCreateRoomModal.close(); } catch (_) {}
+        }
+
         // Mostrar DE INMEDIATO el Lobby Cuadrado con el fondo temático
         mostrarSalaDeEsperaOnline(codigo);
+
+        // Si la sala es pública, arrancar emisión de beacons para matchmaking
+        if (esPublica) {
+            iniciarBroadcastingSalaPublica();
+        }
 
         // Suscribirse a MQTT en paralelo
         conectarMqttSiEsNecesario(() => {
@@ -2768,6 +3074,11 @@ function unirseASalaOnline(codigoIngresado, passIngresado = "") {
     if (!codigo || codigo.length < 3) {
         alert("Ingresá un código de sala válido.");
         return;
+    }
+
+    // Cerrar modal de PIN si estaba abierto
+    if (dom.dueloJoinByPinModal && typeof dom.dueloJoinByPinModal.close === "function") {
+        try { dom.dueloJoinByPinModal.close(); } catch (_) {}
     }
 
     onlineDueloEstado.esHost = false;
@@ -3293,6 +3604,7 @@ function procesarMensajeMqttSala(data) {
 }
 
 function salirDeSalaOnline() {
+    detenerBroadcastingSalaPublica();
     if (onlineDueloEstado.clienteMqtt && onlineDueloEstado.codigoSala) {
         publicarMensajeSala({
             tipo: "SALIDA_JUGADOR",
@@ -3305,6 +3617,7 @@ function salirDeSalaOnline() {
     onlineDueloEstado.jugadores = [];
     if (dom.dueloOnlineWaitingRoom) dom.dueloOnlineWaitingRoom.classList.add("hidden");
     if (dom.dueloOnlineSetupView) dom.dueloOnlineSetupView.classList.remove("hidden");
+    iniciarDiscoveryLobbiesOnline();
 }
 
 function arrancarBolilleroOnlineCliente(data) {
@@ -3363,6 +3676,7 @@ function arrancarBolilleroOnlineCliente(data) {
 
 async function iniciarCombateOnlineDesdeHost() {
     if (!onlineDueloEstado.esHost) return;
+    detenerBroadcastingSalaPublica();
     if (onlineDueloEstado.jugadores.length < 1) {
         alert("Se necesita al menos 1 jugador para iniciar la partida.");
         return;
@@ -6671,67 +6985,58 @@ function registrarEventos() {
         cambiarVista("duelo");
         if (dom.dueloCreateRoomModal) dom.dueloCreateRoomModal.showModal();
     });
-    if (dom.juntosQuickCreateBtn) dom.juntosQuickCreateBtn.addEventListener("click", () => {
-        cambiarVista("duelo");
-        cambiarModoDueloLobby("online");
-        const tabHost = document.getElementById("dueloTabHostBtn");
-        if (tabHost) tabHost.click();
-    });
     if (dom.juntosQuickJoinBtn) dom.juntosQuickJoinBtn.addEventListener("click", () => {
         cambiarVista("duelo");
-        cambiarModoDueloLobby("online");
-        const tabJoin = document.getElementById("dueloTabJoinBtn");
-        if (tabJoin) tabJoin.click();
-        const pinInput = document.getElementById("dueloJoinRoomCode");
-        if (pinInput) pinInput.focus();
+        if (dom.dueloJoinByPinModal) dom.dueloJoinByPinModal.showModal();
+        if (dom.dueloJoinRoomCode) dom.dueloJoinRoomCode.focus();
     });
     if (dom.openDueloBolilleroCardBtn) dom.openDueloBolilleroCardBtn.addEventListener("click", () => {
         cambiarVista("duelo");
-        cambiarModoDueloLobby("online");
         seleccionarJuegoLobby("bolillero");
         seleccionarFormatoLobby("versus");
+        if (dom.dueloCreateRoomModal) dom.dueloCreateRoomModal.showModal();
     });
     if (dom.openDueloBombaCardBtn) dom.openDueloBombaCardBtn.addEventListener("click", () => {
         cambiarVista("duelo");
-        cambiarModoDueloLobby("online");
         seleccionarJuegoLobby("bomba");
         seleccionarFormatoLobby("versus");
+        if (dom.dueloCreateRoomModal) dom.dueloCreateRoomModal.showModal();
     });
     if (dom.openDueloImpostorCardBtn) dom.openDueloImpostorCardBtn.addEventListener("click", () => {
         cambiarVista("duelo");
-        cambiarModoDueloLobby("online");
         seleccionarJuegoLobby("impostor");
         seleccionarFormatoLobby("versus");
+        if (dom.dueloCreateRoomModal) dom.dueloCreateRoomModal.showModal();
     });
     if (dom.openDueloMemotestCardBtn) dom.openDueloMemotestCardBtn.addEventListener("click", () => {
         cambiarVista("duelo");
-        cambiarModoDueloLobby("online");
         seleccionarJuegoLobby("memotest");
         seleccionarFormatoLobby("versus");
+        if (dom.dueloCreateRoomModal) dom.dueloCreateRoomModal.showModal();
     });
     if (dom.openDueloTriatlonCardBtn) dom.openDueloTriatlonCardBtn.addEventListener("click", () => {
         cambiarVista("duelo");
-        cambiarModoDueloLobby("online");
         seleccionarJuegoLobby("triatlon");
         seleccionarFormatoLobby("versus");
+        if (dom.dueloCreateRoomModal) dom.dueloCreateRoomModal.showModal();
     });
     if (dom.openCoopBombaBtn) dom.openCoopBombaBtn.addEventListener("click", () => {
         cambiarVista("duelo");
-        cambiarModoDueloLobby("online");
         seleccionarJuegoLobby("bomba");
         seleccionarFormatoLobby("coop");
+        if (dom.dueloCreateRoomModal) dom.dueloCreateRoomModal.showModal();
     });
     if (dom.openCoopMemotestBtn) dom.openCoopMemotestBtn.addEventListener("click", () => {
         cambiarVista("duelo");
-        cambiarModoDueloLobby("online");
         seleccionarJuegoLobby("memotest");
         seleccionarFormatoLobby("coop");
+        if (dom.dueloCreateRoomModal) dom.dueloCreateRoomModal.showModal();
     });
     if (dom.openCoopBolilleroBtn) dom.openCoopBolilleroBtn.addEventListener("click", () => {
         cambiarVista("duelo");
-        cambiarModoDueloLobby("online");
         seleccionarJuegoLobby("bolillero");
         seleccionarFormatoLobby("coop");
+        if (dom.dueloCreateRoomModal) dom.dueloCreateRoomModal.showModal();
     });
 
     // Botones adicionales hacia el bolillero
@@ -7042,6 +7347,56 @@ function seleccionarTemaManualBolillero(temaId, dispararIaInmediata = false) {
     // Modalidad Online vs Local
     if (dom.dueloModeOnlineBtn) dom.dueloModeOnlineBtn.addEventListener("click", () => cambiarModoDueloLobby("online"));
     if (dom.dueloModeLocalBtn) dom.dueloModeLocalBtn.addEventListener("click", () => cambiarModoDueloLobby("local"));
+
+    // Explorador de Lobbies y Modales Flotantes
+    if (dom.dueloOpenCreateModalBtn) {
+        dom.dueloOpenCreateModalBtn.addEventListener("click", () => {
+            if (dom.dueloCreateRoomModal) dom.dueloCreateRoomModal.showModal();
+        });
+    }
+    if (dom.dueloEmptyCreateBtn) {
+        dom.dueloEmptyCreateBtn.addEventListener("click", () => {
+            if (dom.dueloCreateRoomModal) dom.dueloCreateRoomModal.showModal();
+        });
+    }
+    if (dom.dueloCloseCreateModalBtn) {
+        dom.dueloCloseCreateModalBtn.addEventListener("click", () => {
+            if (dom.dueloCreateRoomModal) dom.dueloCreateRoomModal.close();
+        });
+    }
+    if (dom.dueloOpenPinModalBtn) {
+        dom.dueloOpenPinModalBtn.addEventListener("click", () => {
+            if (dom.dueloJoinByPinModal) dom.dueloJoinByPinModal.showModal();
+            if (dom.dueloJoinRoomCode) dom.dueloJoinRoomCode.focus();
+        });
+    }
+    if (dom.dueloClosePinModalBtn) {
+        dom.dueloClosePinModalBtn.addEventListener("click", () => {
+            if (dom.dueloJoinByPinModal) dom.dueloJoinByPinModal.close();
+        });
+    }
+
+    [dom.dueloCreateRoomModal, dom.dueloJoinByPinModal].forEach(modal => {
+        if (!modal) return;
+        modal.addEventListener("click", (e) => {
+            if (e.target === modal) {
+                modal.close();
+            }
+        });
+    });
+
+    if (dom.dueloBrowserFilters) {
+        dom.dueloBrowserFilters.addEventListener("click", (e) => {
+            const pill = e.target.closest(".filter-pill");
+            if (!pill) return;
+            const filter = pill.dataset.filter || "todas";
+            lobbyBrowserState.filtroJuego = filter;
+            dom.dueloBrowserFilters.querySelectorAll(".filter-pill").forEach(p => {
+                p.classList.toggle("is-active", p === pill);
+            });
+            renderizarLobbyBrowser();
+        });
+    }
 
     // Online Lobby Setup
     if (dom.dueloOnlineHasPassword) {
@@ -7421,6 +7776,9 @@ function iniciarAplicacion() {
         cambiarModoDueloLobby("online");
         if (dom.dueloJoinRoomCode) {
             dom.dueloJoinRoomCode.value = roomFromUrl.toUpperCase();
+        }
+        if (dom.dueloJoinByPinModal) {
+            dom.dueloJoinByPinModal.showModal();
         }
     }
 

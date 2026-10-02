@@ -3548,90 +3548,391 @@ input:focus {
    PANEL ONLINE & SALA DE ESPERA EN VIVO (REDESIGN V24.6)
    ========================================================= */
 
-/* Switcher de Pestañas en Móvil (Crear vs Unirse) */
-.duelo-online-view-tabs {
-    display: none;
-    grid-template-columns: 1fr 1fr;
-    gap: 0.65rem;
-    margin-bottom: 1.25rem;
-    background: rgba(15, 23, 42, 0.6);
-    padding: 0.35rem;
-    border-radius: 14px;
+/* =========================================================
+   EXPLORADOR DE LOBBIES EN VIVO (MATCHMAKING MULTIJUGADOR)
+   ========================================================= */
+
+.duelo-lobby-browser {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    margin-top: 0.5rem;
+}
+
+.duelo-browser-top-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    background: rgba(15, 23, 42, 0.7);
     border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    backdrop-filter: blur(8px);
 }
 
-@media (max-width: 860px) {
-    .duelo-online-view-tabs {
-        display: grid;
-    }
+.duelo-browser-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
 }
 
-.duelo-online-view-tab {
+.duelo-browser-live-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    background: rgba(16, 185, 129, 0.08);
+    border: 1px solid rgba(16, 185, 129, 0.25);
+    padding: 0.4rem 0.85rem;
+    border-radius: 9999px;
+}
+
+@keyframes livePulse {
+    0% { transform: scale(0.92); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+    70% { transform: scale(1); box-shadow: 0 0 0 7px rgba(16, 185, 129, 0); }
+    100% { transform: scale(0.92); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+.live-dot {
+    width: 9px;
+    height: 9px;
+    background: #10b981;
+    border-radius: 50%;
+    display: inline-block;
+    animation: livePulse 2s infinite;
+}
+
+/* Filtros por Juego */
+.duelo-browser-filters {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    overflow-x: auto;
+    padding: 0.75rem 0.25rem 0.25rem;
+    scrollbar-width: none;
+}
+
+.duelo-browser-filters::-webkit-scrollbar {
+    display: none;
+}
+
+.filter-pill {
+    padding: 0.45rem 0.95rem;
+    border-radius: 9999px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    background: rgba(30, 41, 59, 0.6);
+    border: 1px solid var(--color-border);
+    color: var(--color-text-muted);
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    white-space: nowrap;
+    user-select: none;
+}
+
+.filter-pill:hover {
+    color: #fff;
+    border-color: rgba(99, 102, 241, 0.45);
+    background: rgba(30, 41, 59, 0.85);
+}
+
+.filter-pill.is-active {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.25), rgba(168, 85, 247, 0.25));
+    border-color: #6366f1;
+    color: #fff;
+    box-shadow: 0 0 14px rgba(99, 102, 241, 0.35);
+}
+
+/* Grilla de Lobbies */
+.duelo-lobbies-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.25rem;
+    margin-top: 1rem;
+}
+
+/* Tarjeta de Lobby en Vivo */
+.lobby-card {
+    background: rgba(15, 23, 42, 0.85);
+    border: 1.5px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s ease, border-color 0.2s ease;
+    backdrop-filter: blur(10px);
+    position: relative;
+}
+
+.lobby-card:hover {
+    transform: translateY(-3px);
+}
+
+/* Temas de color para cada juego */
+.lobby-card--bomba {
+    border-color: rgba(239, 68, 68, 0.4);
+}
+.lobby-card--bomba:hover {
+    border-color: #ef4444;
+    box-shadow: 0 10px 30px rgba(239, 68, 68, 0.22);
+}
+
+.lobby-card--bolillero {
+    border-color: rgba(168, 85, 247, 0.4);
+}
+.lobby-card--bolillero:hover {
+    border-color: #a855f7;
+    box-shadow: 0 10px 30px rgba(168, 85, 247, 0.22);
+}
+
+.lobby-card--impostor {
+    border-color: rgba(6, 182, 212, 0.4);
+}
+.lobby-card--impostor:hover {
+    border-color: #06b6d4;
+    box-shadow: 0 10px 30px rgba(6, 182, 212, 0.22);
+}
+
+.lobby-card--memotest {
+    border-color: rgba(236, 72, 153, 0.4);
+}
+.lobby-card--memotest:hover {
+    border-color: #ec4899;
+    box-shadow: 0 10px 30px rgba(236, 72, 153, 0.22);
+}
+
+.lobby-card--triatlon {
+    border-color: rgba(234, 179, 8, 0.4);
+}
+.lobby-card--triatlon:hover {
+    border-color: #eab308;
+    box-shadow: 0 10px 30px rgba(234, 179, 8, 0.22);
+}
+
+.lobby-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.lobby-card-game-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #fff;
+}
+
+.lobby-card-header-tags {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.lobby-card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+}
+
+.lobby-room-title {
+    font-size: 1.12rem;
+    font-weight: 800;
+    color: #fff;
+    line-height: 1.25;
+    margin: 0;
+    word-break: break-word;
+}
+
+.lobby-host-info {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.82rem;
+    color: var(--color-text-secondary);
+}
+
+.lobby-material-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.75rem;
+    padding: 0.2rem 0.55rem;
+    border-radius: 6px;
+    background: rgba(30, 41, 59, 0.7);
+    color: var(--color-text-muted);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    width: fit-content;
+}
+
+/* Slots de Jugadores (8 slots circulares) */
+.lobby-slots-container {
+    background: rgba(10, 15, 29, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 0.65rem 0.85rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+}
+
+.lobby-slots-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.78rem;
+    color: var(--color-text-muted);
+}
+
+.lobby-slots-count {
+    font-weight: 700;
+    color: #38bdf8;
+}
+
+.lobby-slots-row {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+}
+
+.slot-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #0f172a;
+    border: 1.5px solid #38bdf8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    position: relative;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.slot-avatar.is-host {
+    border-color: #eab308;
+    box-shadow: 0 0 8px rgba(234, 179, 8, 0.35);
+}
+
+.slot-empty {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1.5px dashed rgba(255, 255, 255, 0.18);
+    background: rgba(255, 255, 255, 0.02);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255, 255, 255, 0.25);
+    font-size: 0.75rem;
+    font-weight: bold;
+}
+
+/* Botón Entrar a la Sala */
+.lobby-card-enter-btn {
+    width: 100%;
+    padding: 0.65rem 1rem;
+    border-radius: 10px;
+    border: none;
+    font-size: 0.92rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: #ffffff;
+    cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    padding: 0.75rem 0.5rem;
-    border: 1px solid transparent;
-    border-radius: 10px;
-    background: transparent;
-    color: var(--color-text-muted);
-    cursor: pointer;
-    transition: all 0.22s ease;
-    text-align: left;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
 }
 
-.duelo-online-view-tab .duelo-tab-icon {
-    font-size: 1.25rem;
+.lobby-card-enter-btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.45);
+    background: linear-gradient(135deg, #34d399, #059669);
 }
 
-.duelo-online-view-tab .duelo-tab-text {
+.lobby-card-enter-btn:disabled {
+    background: rgba(55, 65, 81, 0.6);
+    color: rgba(255, 255, 255, 0.4);
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+/* Estado Vacío de Lobbies */
+.duelo-lobbies-empty-state {
+    text-align: center;
+    padding: 3.5rem 1.5rem;
+    background: rgba(15, 23, 42, 0.5);
+    border: 1.5px dashed rgba(255, 255, 255, 0.15);
+    border-radius: 18px;
+    margin-top: 1.25rem;
     display: flex;
     flex-direction: column;
+    align-items: center;
+    justify-content: center;
 }
 
-.duelo-online-view-tab .duelo-tab-title {
-    font-size: 0.88rem;
+.duelo-lobbies-empty-state.hidden {
+    display: none !important;
+}
+
+.empty-state-icon {
+    font-size: 3.2rem;
+    margin-bottom: 0.75rem;
+    opacity: 0.85;
+}
+
+.empty-state-title {
+    font-size: 1.25rem;
     font-weight: 700;
-    color: var(--color-text);
-}
-
-.duelo-online-view-tab .duelo-tab-sub {
-    font-size: 0.72rem;
-    color: var(--color-text-muted);
-}
-
-.duelo-online-view-tab.is-active {
-    background: linear-gradient(135deg, rgba(99, 102, 241, 0.22), rgba(168, 85, 247, 0.22));
-    border-color: rgba(99, 102, 241, 0.5);
     color: #fff;
-    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.2);
+    margin: 0;
 }
 
-.duelo-online-view-tab.is-active .duelo-tab-title {
-    color: #818cf8;
+.empty-state-desc {
+    font-size: 0.9rem;
+    color: var(--color-text-muted);
+    max-width: 440px;
+    margin: 0.5rem 0 1.25rem;
+    line-height: 1.45;
+}
+
+/* Modales Flotantes de Sala */
+.duelo-create-modal {
+    width: min(94vw, 760px);
+    max-height: 90vh;
+    overflow-y: auto;
+    background: #0d1527;
+    border: 1.5px solid rgba(99, 102, 241, 0.35);
+    border-radius: var(--radius-xl);
+    padding: 1.5rem;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.8), 0 0 40px rgba(99, 102, 241, 0.2);
+}
+
+.duelo-pin-modal {
+    width: min(94vw, 460px);
+    background: #0d1527;
+    border: 1.5px solid rgba(56, 189, 248, 0.35);
+    border-radius: var(--radius-xl);
+    padding: 1.5rem;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.8), 0 0 40px rgba(56, 189, 248, 0.2);
 }
 
 /* Contenedor del lobby online: ancho completo como Estudiar Solo */
 .duelo-online-setup-grid {
     display: block;
     width: 100%;
-}
-
-.duelo-online-setup-grid .duelo-lobby-card {
-    display: none;
-    width: 100%;
-}
-
-.duelo-online-setup-grid .duelo-lobby-card.is-active {
-    display: block;
-    width: 100%;
-    animation: fadeInTab 0.22s ease-out;
-}
-
-.duelo-online-setup-grid .duelo-lobby-card--join.is-active {
-    max-width: 680px;
-    margin: 0 auto;
 }
 
 /* 🎮 Cuadrícula de Selección de Juego */
