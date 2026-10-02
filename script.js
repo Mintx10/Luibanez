@@ -295,6 +295,7 @@ const dom = {
     /* Navegación y Vistas */
     navHomeBtn: document.getElementById("navHomeBtn"),
     navSoloBtn: document.getElementById("navSoloBtn"),
+    navLabBtn: document.getElementById("navLabBtn"),
     navJuntosBtn: document.getElementById("navJuntosBtn"),
     navBolilleroBtn: document.getElementById("navBolilleroBtn"),
     navDueloBtn: document.getElementById("navDueloBtn"),
@@ -711,6 +712,8 @@ const dom = {
     /* MÓDULO LABORATORIO DE PRÁCTICAS */
     viewLaboratorio: document.getElementById("viewLaboratorio"),
     homeGoToLabBtn: document.getElementById("homeGoToLabBtn"),
+    homeCardLaboratorio: document.getElementById("homeCardLaboratorio"),
+    soloOpenLabBtn: document.getElementById("soloOpenLabBtn"),
     drawerNavLaboratorio: document.getElementById("drawerNavLaboratorio"),
     labCasoSelect: document.getElementById("labCasoSelect"),
     labBtnGenerarCasoPdf: document.getElementById("labBtnGenerarCasoPdf"),
@@ -987,6 +990,7 @@ function cambiarVista(vista) {
     // 2. Sincronizar botones de la barra superior (Navbar)
     if (dom.navHomeBtn) dom.navHomeBtn.classList.toggle("is-active", vistaDestino === "home");
     if (dom.navSoloBtn) dom.navSoloBtn.classList.toggle("is-active", vistaDestino === "solo" || vistaDestino === "bolillero");
+    if (dom.navLabBtn) dom.navLabBtn.classList.toggle("is-active", vistaDestino === "laboratorio");
     if (dom.navJuntosBtn) dom.navJuntosBtn.classList.toggle("is-active", vistaDestino === "juntos");
     if (dom.navBolilleroBtn) dom.navBolilleroBtn.classList.toggle("is-active", vistaDestino === "bolillero");
     if (dom.navDueloBtn) dom.navDueloBtn.classList.toggle("is-active", vistaDestino === "juntos");
@@ -1038,7 +1042,7 @@ function renderPerfilUsuarioDuelo() {
 function inicializarRutas() {
     const hash = window.location.hash.replace("#", "");
     const normalized = (hash === "duelo" || hash === "juntos") ? "juntos" : hash;
-    if (["solo", "juntos", "bolillero", "fama", "home"].includes(normalized)) {
+    if (["solo", "juntos", "bolillero", "fama", "home", "laboratorio"].includes(normalized)) {
         cambiarVista(normalized);
     } else {
         cambiarVista("home");
@@ -1180,6 +1184,12 @@ function inicializarDrawerMenu() {
     if (dom.drawerNavSolo) {
         dom.drawerNavSolo.addEventListener("click", () => {
             cambiarVista("solo");
+            cerrarDrawerMenu();
+        });
+    }
+    if (dom.drawerNavLaboratorio) {
+        dom.drawerNavLaboratorio.addEventListener("click", () => {
+            cambiarVista("laboratorio");
             cerrarDrawerMenu();
         });
     }
@@ -7414,6 +7424,7 @@ function registrarEventos() {
     /* Navegación Principal */
     if (dom.navHomeBtn) dom.navHomeBtn.addEventListener("click", () => cambiarVista("home"));
     if (dom.navSoloBtn) dom.navSoloBtn.addEventListener("click", () => cambiarVista("solo"));
+    if (dom.navLabBtn) dom.navLabBtn.addEventListener("click", () => cambiarVista("laboratorio"));
     if (dom.navJuntosBtn) dom.navJuntosBtn.addEventListener("click", () => cambiarVista("juntos"));
     if (dom.navBolilleroBtn) dom.navBolilleroBtn.addEventListener("click", () => cambiarVista("bolillero"));
     if (dom.navDueloBtn) dom.navDueloBtn.addEventListener("click", () => cambiarVista("duelo"));
@@ -7447,6 +7458,14 @@ function registrarEventos() {
     if (dom.homeGoToSoloBtn) dom.homeGoToSoloBtn.addEventListener("click", () => cambiarVista("solo"));
     if (dom.homeGoToJuntosBtn) dom.homeGoToJuntosBtn.addEventListener("click", () => cambiarVista("juntos"));
     if (dom.homeGoToFamaBtn) dom.homeGoToFamaBtn.addEventListener("click", () => cambiarVista("fama"));
+    if (dom.homeGoToLabBtn) dom.homeGoToLabBtn.addEventListener("click", () => cambiarVista("laboratorio"));
+    if (dom.homeCardLaboratorio) {
+        dom.homeCardLaboratorio.addEventListener("click", (e) => {
+            // Prevenir doble disparo si se clickea el botón directamente
+            if (e.target.closest("#homeGoToLabBtn")) return;
+            cambiarVista("laboratorio");
+        });
+    }
 
     // Botón de salir de Modo Desarrollador dentro de viewJuntos
     const btnSalirModoDev = document.getElementById("btnSalirModoDev");
@@ -7461,6 +7480,14 @@ function registrarEventos() {
     if (dom.soloOpenBombaBtn) dom.soloOpenBombaBtn.addEventListener("click", () => abrirArenaJuego("bomba", "solo"));
     if (dom.soloOpenImpostorBtn) dom.soloOpenImpostorBtn.addEventListener("click", () => abrirArenaJuego("impostor", "solo"));
     if (dom.soloOpenMemotestBtn) dom.soloOpenMemotestBtn.addEventListener("click", () => abrirArenaJuego("memotest", "solo"));
+    if (dom.soloOpenLabBtn) dom.soloOpenLabBtn.addEventListener("click", () => cambiarVista("laboratorio"));
+    const cardSoloLab = document.getElementById("cardSoloLab");
+    if (cardSoloLab) {
+        cardSoloLab.addEventListener("click", (e) => {
+            if (e.target.closest("#soloOpenLabBtn")) return;
+            cambiarVista("laboratorio");
+        });
+    }
     if (dom.soloNewListShortcutBtn) dom.soloNewListShortcutBtn.addEventListener("click", () => {
         cambiarVista("bolillero");
         if (dom.listModal) dom.listModal.showModal();
@@ -12127,17 +12154,6 @@ function configurarEventosLaboratorio() {
 
     if (dom.labBtnGenerarCasoPdf) {
         dom.labBtnGenerarCasoPdf.addEventListener("click", generarCasoPracticoConGeminiDesdePdf);
-    }
-
-    // Acceso desde Home y Drawer
-    if (dom.homeGoToLabBtn) {
-        dom.homeGoToLabBtn.addEventListener("click", () => cambiarVista("laboratorio"));
-    }
-    if (dom.drawerNavLaboratorio) {
-        dom.drawerNavLaboratorio.addEventListener("click", () => {
-            cambiarVista("laboratorio");
-            cerrarDrawerLateral();
-        });
     }
 
     // Checkpoint Actions

@@ -1,9 +1,9 @@
-const CACHE_NAME = "luibanez-cache-v25.5";
+const CACHE_NAME = "luibanez-cache-v25.6";
 const STATIC_ASSETS = [
     "./",
     "./index.html",
-    "./style.css?v=25.5",
-    "./script.js?v=25.5",
+    "./style.css?v=25.6",
+    "./script.js?v=25.6",
     "./version.json",
     "./mqtt.min.js",
     "./manifest.json",

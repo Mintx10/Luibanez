@@ -15,10 +15,10 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     
-    <link rel="icon" type="image/svg+xml" href="icon.svg?v=25.5">
-    <link rel="apple-touch-icon" href="icon-192.png?v=25.5">
-    <link rel="manifest" href="manifest.json?v=25.5">
-    <link rel="stylesheet" href="style.css?v=25.5">
+    <link rel="icon" type="image/svg+xml" href="icon.svg?v=25.6">
+    <link rel="apple-touch-icon" href="icon-192.png?v=25.6">
+    <link rel="manifest" href="manifest.json?v=25.6">
+    <link rel="stylesheet" href="style.css?v=25.6">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -51,6 +51,9 @@
             </button>
             <button id="navSoloBtn" class="nav-link" type="button" data-view="solo" title="Ir a Estudiar Solo">
                 👤 Estudiar Solo
+            </button>
+            <button id="navLabBtn" class="nav-link" type="button" data-view="laboratorio" title="Ir al Laboratorio de Prácticas">
+                🔬 Laboratorio
             </button>
             <button id="navJuntosBtn" class="nav-link" type="button" data-view="juntos" title="Ir a Estudiar Juntos">
                 🤝 Estudiar Juntos
@@ -230,7 +233,7 @@
 
         <!-- Versión y botón de actualización forzada -->
         <div class="drawer-version-row" style="padding: 0.85rem 1rem; border-top: 1px solid var(--color-border); font-size: 0.75rem; color: var(--color-text-muted); display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02); margin-top: auto;">
-            <span id="drawerVersionTag" style="cursor: pointer; user-select: none;" title="Versión de Luibañez">⚡ Luibañez <strong style="color: var(--color-text);">v25.5</strong></span>
+            <span id="drawerVersionTag" style="cursor: pointer; user-select: none;" title="Versión de Luibañez">⚡ Luibañez <strong style="color: var(--color-text);">v25.6</strong></span>
             <button id="btnForzarActualizar" class="button button--ghost button--xs" type="button" style="font-size: 0.72rem; padding: 0.2rem 0.55rem; border-radius: 999px; border: 1px solid var(--color-border);" title="Limpiar caché y recargar versión más reciente">🔄 Actualizar</button>
         </div>
     </div>
@@ -386,7 +389,7 @@
                 </article>
 
                 <!-- Tarjeta Portal 4: Laboratorio de Prácticas -->
-                <article class="module-card module-card--active" style="border-color: rgba(16, 185, 129, 0.45); padding: 1.85rem; background: linear-gradient(145deg, rgba(15, 23, 42, 0.75), rgba(6, 78, 59, 0.2));">
+                <article id="homeCardLaboratorio" class="module-card module-card--active" style="border-color: rgba(16, 185, 129, 0.45); padding: 1.85rem; background: linear-gradient(145deg, rgba(15, 23, 42, 0.75), rgba(6, 78, 59, 0.2)); cursor: pointer;">
                     <div class="module-card__header">
                         <div class="module-card__icon module-card__icon--primary" style="font-size: 2rem; background: rgba(16, 185, 129, 0.15); color: #34d399;">🔬</div>
                         <span class="badge badge--success">¡Nuevo Módulo Práctico!</span>
@@ -517,7 +520,24 @@
                     </div>
                 </article>
 
-                <!-- Cuadrícula 6: Sección Modular Próximamente -->
+                <!-- Cuadrícula 6: Laboratorio de Prácticas -->
+                <article class="module-card module-card--active module-card--solo" id="cardSoloLab" style="border-color: rgba(16, 185, 129, 0.45); background: linear-gradient(180deg, rgba(16, 185, 129, 0.08), rgba(15, 20, 30, 0.95)); cursor: pointer;">
+                    <div class="module-card__header">
+                        <div class="module-card__icon" style="background: rgba(16, 185, 129, 0.15); color: #34d399;">🔬</div>
+                        <span class="badge badge--success">Estadística & Práctica</span>
+                    </div>
+                    <h3 class="module-card__title">Laboratorio Numérico</h3>
+                    <p class="module-card__desc">
+                        Mesa de trabajo interactiva con resolución por hitos, constructor de tablas de frecuencia, calculadora con campana de Gauss dinámica y matriz de Bayes.
+                    </p>
+                    <div class="module-card__actions" style="margin-top: auto; padding-top: 1rem;">
+                        <button id="soloOpenLabBtn" class="button button--primary button--full" type="button" style="background: linear-gradient(135deg, #059669, #10b981);">
+                            Abrir Laboratorio 🔬
+                        </button>
+                    </div>
+                </article>
+
+                <!-- Cuadrícula 7: Sección Modular Próximamente -->
                 <article class="module-card module-card--solo" style="border: 2px dashed rgba(255, 255, 255, 0.15); background: rgba(255, 255, 255, 0.02); display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; min-height: 240px;">
                     <div style="font-size: 2.2rem; margin-bottom: 0.5rem; opacity: 0.8;">✨</div>
                     <h3 style="color: #fff; font-size: 1.15rem; margin-bottom: 0.35rem;">Arquitectura Modular</h3>
@@ -3310,7 +3330,7 @@
 </dialog>
 
 <script src="mqtt.min.js"></script>
-<script src="script.js?v=25.5" defer></script>
+<script src="script.js?v=25.6" defer></script>
 
 <!-- =========================================================
      MODAL DE PROMPT PARA GEMINI (CREAR JUEGOS DESDE PDF)
