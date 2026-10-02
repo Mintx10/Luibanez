@@ -1343,13 +1343,30 @@ function inicializarDrawerMenu() {
 
     actualizarDrawerListas();
 
+    // Botón manual de actualización rápida en el menú lateral
+    const btnForzarActualizar = document.getElementById("btnForzarActualizar");
+    if (btnForzarActualizar) {
+        btnForzarActualizar.addEventListener("click", (e) => {
+            e.stopPropagation();
+            forzarActualizacionCompleta(true);
+        });
+    }
+    const drawerVersionTag = document.getElementById("drawerVersionTag");
+    if (drawerVersionTag) {
+        drawerVersionTag.innerHTML = `⚡ Luibañez <strong style="color: var(--color-text);">v${APP_BUILD_VERSION}</strong>`;
+        drawerVersionTag.addEventListener("click", (e) => {
+            e.stopPropagation();
+            forzarActualizacionCompleta(true);
+        });
+    }
+
     // Easter Egg / Acceso Secreto Desarrollador (5 toques en la versión para Lucas)
     let versionClickCount = 0;
     let versionClickTimer = null;
     const versionRow = document.querySelector(".drawer-version-row");
     if (versionRow) {
         versionRow.addEventListener("click", (e) => {
-            if (e.target && e.target.id === "btnForzarActualizar") return;
+            if (e.target && (e.target.id === "btnForzarActualizar" || e.target.closest("#btnForzarActualizar") || e.target.id === "drawerVersionTag" || e.target.closest("#drawerVersionTag"))) return;
             versionClickCount++;
             clearTimeout(versionClickTimer);
             versionClickTimer = setTimeout(() => { versionClickCount = 0; }, 2500);
@@ -8441,30 +8458,53 @@ function iniciarAplicacion() {
 // =========================================================
 // GESTOR DE VERSIONES Y ACTUALIZACIÓN AUTOMÁTICA
 // =========================================================
-const APP_BUILD_VERSION = "26.2";
+const APP_BUILD_VERSION = "26.3";
 
 async function forzarActualizacionCompleta(mostrarNotificacion = true) {
+    const btnActualizar = document.getElementById("btnForzarActualizar");
+    if (btnActualizar) {
+        btnActualizar.disabled = true;
+        btnActualizar.style.opacity = "0.75";
+        btnActualizar.style.pointerEvents = "none";
+        btnActualizar.innerHTML = `<span style="display:inline-block; animation: spin 0.8s linear infinite;">🔄</span> Actualizando...`;
+    }
+
     if (mostrarNotificacion && typeof mostrarToast === "function") {
-        mostrarToast("🔄 Actualizando Luibañez a la última versión...", "info");
+        mostrarToast("🔄 Limpiando caché y descargando última versión...", "info");
     }
 
     try {
         if ("serviceWorker" in navigator) {
-            const registrations = await navigator.serviceWorker.getRegistrations();
+            const registrations = await Promise.race([
+                navigator.serviceWorker.getRegistrations(),
+                new Promise(resolve => setTimeout(() => resolve([]), 800))
+            ]);
             for (const registration of registrations) {
-                await registration.unregister();
+                try {
+                    await registration.unregister();
+                } catch (_) {}
             }
         }
 
         if ("caches" in window) {
-            const cacheNames = await caches.keys();
-            await Promise.all(cacheNames.map(name => caches.delete(name)));
+            const cacheNames = await Promise.race([
+                caches.keys(),
+                new Promise(resolve => setTimeout(() => resolve([]), 800))
+            ]);
+            await Promise.all(cacheNames.map(name => caches.delete(name).catch(() => {})));
         }
 
+        // Construir la URL garantizando que el parámetro _reload quede en la URL base antes de cualquier hash
+        const url = new URL(window.location.href);
+        url.searchParams.set("_reload", Date.now().toString());
+
         setTimeout(() => {
-            const cleanUrl = window.location.href.split("?")[0] + "?_v=" + Date.now();
-            window.location.replace(cleanUrl);
-        }, 300);
+            window.location.href = url.toString();
+            // Fallback de seguridad si no inició la navegación inmediatamente
+            setTimeout(() => {
+                window.location.reload();
+            }, 300);
+        }, 200);
     } catch (err) {
         console.warn("Error al forzar actualización:", err);
         window.location.reload();
