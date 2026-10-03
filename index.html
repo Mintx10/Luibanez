@@ -15,10 +15,10 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     
-    <link rel="icon" type="image/svg+xml" href="icon.svg?v=26.5">
-    <link rel="apple-touch-icon" href="icon-192.png?v=26.5">
-    <link rel="manifest" href="manifest.json?v=26.5">
-    <link rel="stylesheet" href="style.css?v=26.5">
+    <link rel="icon" type="image/svg+xml" href="icon.svg?v=26.6">
+    <link rel="apple-touch-icon" href="icon-192.png?v=26.6">
+    <link rel="manifest" href="manifest.json?v=26.6">
+    <link rel="stylesheet" href="style.css?v=26.6">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -2786,26 +2786,6 @@
                             </div>
                         </div>
 
-                        <!-- WIDGET 4: PIZARRÓN SCRATCHPAD INTEGRADO -->
-                        <div id="labWidgetScratch" class="lab-tab-pane hidden" role="tabpanel">
-                            <div class="lab-scratch-toolbar">
-                                <button id="labScratchPenBtn" class="button button--secondary button--xs is-active" type="button">✏️ Lápiz</button>
-                                <button id="labScratchEraserBtn" class="button button--ghost button--xs" type="button">🧹 Goma</button>
-                                <div class="lab-scratch-colors">
-                                    <button class="color-dot is-active" data-color="#ffffff" style="background: #ffffff;" type="button"></button>
-                                    <button class="color-dot" data-color="#38bdf8" style="background: #38bdf8;" type="button"></button>
-                                    <button class="color-dot" data-color="#34d399" style="background: #34d399;" type="button"></button>
-                                    <button class="color-dot" data-color="#f59e0b" style="background: #f59e0b;" type="button"></button>
-                                </div>
-                                <button id="labScratchClearBtn" class="button button--ghost button--xs" type="button" style="margin-left: auto; color: #f87171;">
-                                    Limpiar
-                                </button>
-                            </div>
-                            <div class="lab-scratch-canvas-wrap">
-                                <canvas id="labScratchCanvas" width="600" height="400"></canvas>
-                            </div>
-                        </div>
-
                     </div>
                 </div>
 
@@ -2817,6 +2797,84 @@
 
         </div>
     </section>
+
+    <!-- =========================================================
+         PIZARRÓN CIENTÍFICO FLOTANTE Y ARRASTRABLE (CUADRICULADO + REGLA + IA)
+         ========================================================= -->
+    <aside id="labFloatingWhiteboard" class="lab-floating-whiteboard hidden" role="region" aria-label="Pizarrón Científico Flotante">
+        <div class="lab-whiteboard-header" id="labWhiteboardHeader" title="Arrastrar para mover">
+            <div class="lab-whiteboard-drag-handle">
+                <span class="drag-grip" aria-hidden="true">⋮⋮</span>
+                <span class="lab-whiteboard-title">📝 Pizarrón Cuadriculado</span>
+                <span class="badge badge--subtle">📐 Precisión & IA</span>
+            </div>
+            <div class="lab-whiteboard-actions">
+                <button id="labWhiteboardMinBtn" class="icon-button" type="button" title="Minimizar / Restaurar" aria-label="Minimizar">_</button>
+                <button id="labWhiteboardCloseBtn" class="icon-button" type="button" title="Cerrar pizarrón" aria-label="Cerrar">✕</button>
+            </div>
+        </div>
+
+        <div class="lab-whiteboard-body" id="labWhiteboardBody">
+            <!-- Barra de herramientas superior -->
+            <div class="lab-scratch-toolbar">
+                <div class="lab-scratch-tools-group">
+                    <button id="labScratchPenBtn" class="button button--secondary button--xs is-active" type="button" title="Lápiz de dibujo libre">✏️ Lápiz</button>
+                    <button id="labScratchRulerBtn" class="button button--ghost button--xs" type="button" title="Modo Regla: trazá líneas rectas perfectas">📏 Regla</button>
+                    <button id="labScratchEraserBtn" class="button button--ghost button--xs" type="button" title="Goma de borrar">🧹 Goma</button>
+                </div>
+                <div class="lab-scratch-separator"></div>
+                <div class="lab-scratch-colors">
+                    <button class="color-dot is-active" data-color="#ffffff" style="background: #ffffff;" type="button" title="Blanco"></button>
+                    <button class="color-dot" data-color="#38bdf8" style="background: #38bdf8;" type="button" title="Celeste"></button>
+                    <button class="color-dot" data-color="#34d399" style="background: #34d399;" type="button" title="Verde"></button>
+                    <button class="color-dot" data-color="#fbbf24" style="background: #fbbf24;" type="button" title="Amarillo"></button>
+                    <button class="color-dot" data-color="#f472b6" style="background: #f472b6;" type="button" title="Rosa"></button>
+                </div>
+                <div class="lab-scratch-stroke-sizes">
+                    <button class="stroke-dot stroke-dot--sm is-active" data-size="2" type="button" title="Trazo fino (2px)"></button>
+                    <button class="stroke-dot stroke-dot--md" data-size="4" type="button" title="Trazo medio (4px)"></button>
+                    <button class="stroke-dot stroke-dot--lg" data-size="8" type="button" title="Trazo grueso (8px)"></button>
+                </div>
+                <div class="lab-scratch-actions-right">
+                    <button id="labScratchUndoBtn" class="button button--ghost button--xs" type="button" title="Deshacer último trazo (Ctrl+Z)">
+                        ↩️ Atrás
+                    </button>
+                    <button id="labScratchClearBtn" class="button button--ghost button--xs" type="button" style="color: #f87171;" title="Borrar todo el pizarrón">
+                        🗑️ Borrar todo
+                    </button>
+                    <button id="labScratchAiCleanBtn" class="button button--primary button--xs lab-ai-clean-btn" type="button" title="Detectar y emprolijar fórmulas o números desprolijos con IA">
+                        ✨ Emprolijar con IA
+                    </button>
+                </div>
+            </div>
+
+            <!-- Lienzo Cuadriculado -->
+            <div class="lab-scratch-canvas-wrap" id="labScratchCanvasWrap">
+                <canvas id="labScratchCanvas" width="680" height="380"></canvas>
+                <!-- Overlay de Análisis IA -->
+                <div id="labAiCleanOverlay" class="lab-ai-clean-overlay hidden">
+                    <div class="lab-ai-clean-spinner"></div>
+                    <span id="labAiCleanText">✨ Analizando escritura y emprolijando fórmulas con IA...</span>
+                </div>
+            </div>
+
+            <!-- Fórmulas Reconocidas & Emprolijadas -->
+            <div id="labWhiteboardAiResult" class="lab-whiteboard-ai-result hidden">
+                <div class="lab-ai-result-header">
+                    <div class="lab-ai-result-title-row">
+                        <span class="lab-ai-result-title">📐 Fórmulas Reconocidas y Emprolijadas</span>
+                        <span class="badge badge--success" id="labAiResultBadge">Detectado</span>
+                    </div>
+                    <div class="lab-ai-result-actions">
+                        <button id="labAiCopyAllBtn" class="button button--ghost button--xs" type="button" title="Copiar fórmulas limpias">📋 Copiar Todo</button>
+                        <button id="labAiCleanSpaceBtn" class="button button--secondary button--xs" type="button" title="Limpiar pizarrón para tener más espacio">🧹 Liberar Espacio</button>
+                        <button id="labAiResultCloseBtn" class="icon-button" type="button" title="Cerrar resultados">✕</button>
+                    </div>
+                </div>
+                <div id="labAiResultContent" class="lab-ai-result-content"></div>
+            </div>
+        </div>
+    </aside>
 
 </div>
 
@@ -3353,7 +3411,7 @@
 </dialog>
 
 <script src="mqtt.min.js"></script>
-<script src="script.js?v=26.5" defer></script>
+<script src="script.js?v=26.6" defer></script>
 
 <!-- =========================================================
      MODAL DE PROMPT PARA GEMINI (CREAR JUEGOS DESDE PDF)

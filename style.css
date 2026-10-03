@@ -8901,37 +8901,391 @@ body.modo-dev-activo .juntos-locked-notice {
 }
 
 /* Pizarrón Scratchpad Integrado */
+/* =========================================================
+   PIZARRÓN CIENTÍFICO FLOTANTE Y ARRASTRABLE (CUADRICULADO + REGLA + IA)
+   ========================================================= */
+
+@keyframes whiteboardPop {
+    from {
+        opacity: 0;
+        transform: scale(0.96) translateY(12px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.lab-floating-whiteboard {
+    position: fixed;
+    top: 100px;
+    right: 30px;
+    width: min(720px, 94vw);
+    max-height: 88vh;
+    background: rgba(11, 19, 43, 0.96);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border: 1.5px solid rgba(56, 189, 248, 0.35);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 20px 48px rgba(0, 0, 0, 0.75), 0 0 24px rgba(56, 189, 248, 0.18);
+    display: flex;
+    flex-direction: column;
+    z-index: 10050;
+    overflow: hidden;
+    animation: whiteboardPop 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    touch-action: none;
+}
+
+.lab-floating-whiteboard.is-minimized {
+    width: auto !important;
+    height: auto !important;
+    max-height: none !important;
+    top: auto !important;
+    bottom: 24px !important;
+    right: 24px !important;
+    left: auto !important;
+    border-radius: 999px;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.6), 0 0 16px rgba(56, 189, 248, 0.3);
+}
+
+.lab-floating-whiteboard.is-minimized .lab-whiteboard-body {
+    display: none !important;
+}
+
+.lab-floating-whiteboard.is-minimized .lab-whiteboard-header {
+    border-bottom: none;
+    padding: 0.5rem 0.9rem;
+    border-radius: 999px;
+}
+
+/* Header Arrastrable */
+.lab-whiteboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(15, 23, 42, 0.95);
+    border-bottom: 1px solid rgba(56, 189, 248, 0.2);
+    padding: 0.6rem 0.9rem;
+    cursor: grab;
+    user-select: none;
+    -webkit-user-select: none;
+    gap: 0.5rem;
+}
+
+.lab-whiteboard-header:active {
+    cursor: grabbing;
+}
+
+.lab-whiteboard-drag-handle {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    flex: 1;
+    min-width: 0;
+}
+
+.lab-whiteboard-title {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #f8fafc;
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+}
+
+.lab-whiteboard-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.lab-whiteboard-actions .icon-button {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.82rem;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #cbd5e1;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.lab-whiteboard-actions .icon-button:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: #ffffff;
+}
+
+#labWhiteboardCloseBtn:hover {
+    background: rgba(239, 68, 68, 0.25);
+    border-color: #ef4444;
+    color: #fca5a5;
+}
+
+/* Cuerpo del Pizarrón */
+.lab-whiteboard-body {
+    display: flex;
+    flex-direction: column;
+    padding: 0.65rem;
+    gap: 0.55rem;
+    overflow-y: auto;
+    max-height: calc(88vh - 46px);
+}
+
+/* Barra de herramientas */
 .lab-scratch-toolbar {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    background: rgba(15, 23, 42, 0.75);
-    border: 1px solid var(--color-border);
-    padding: 0.5rem 0.85rem;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    background: rgba(15, 23, 42, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 0.45rem 0.65rem;
     border-radius: var(--radius-md);
+}
+
+.lab-scratch-tools-group {
+    display: flex;
+    gap: 0.25rem;
+}
+
+.lab-scratch-separator {
+    width: 1px;
+    height: 20px;
+    background: rgba(255, 255, 255, 0.12);
+    margin: 0 0.15rem;
 }
 
 .lab-scratch-colors {
     display: flex;
-    gap: 0.4rem;
-    margin-left: 0.5rem;
+    align-items: center;
+    gap: 0.35rem;
 }
 
+.lab-scratch-colors .color-dot {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+.lab-scratch-colors .color-dot:hover {
+    transform: scale(1.2);
+}
+
+.lab-scratch-colors .color-dot.is-active {
+    border-color: #ffffff;
+    box-shadow: 0 0 6px currentColor;
+    transform: scale(1.15);
+}
+
+.lab-scratch-stroke-sizes {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-left: 0.15rem;
+}
+
+.stroke-dot {
+    border-radius: 50%;
+    background: #94a3b8;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    transition: all 0.15s ease;
+}
+
+.stroke-dot--sm { width: 7px; height: 7px; }
+.stroke-dot--md { width: 11px; height: 11px; }
+.stroke-dot--lg { width: 15px; height: 15px; }
+
+.stroke-dot:hover {
+    background: #e2e8f0;
+    transform: scale(1.2);
+}
+
+.stroke-dot.is-active {
+    background: #38bdf8;
+    box-shadow: 0 0 6px #38bdf8;
+}
+
+.lab-scratch-actions-right {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-left: auto;
+}
+
+.lab-ai-clean-btn {
+    background: linear-gradient(135deg, #0284c7, #9333ea) !important;
+    border: 1px solid rgba(168, 85, 247, 0.5) !important;
+    box-shadow: 0 0 10px rgba(168, 85, 247, 0.3);
+    font-weight: 700 !important;
+    letter-spacing: 0.01em;
+}
+
+.lab-ai-clean-btn:hover {
+    box-shadow: 0 0 16px rgba(168, 85, 247, 0.55);
+    transform: translateY(-1px);
+}
+
+/* Lienzo Cuadriculado Profesional */
 .lab-scratch-canvas-wrap {
     width: 100%;
-    height: 420px;
-    background: #090d16;
-    border: 1.5px dashed rgba(255, 255, 255, 0.15);
+    height: 380px;
+    background-color: #080f22;
+    /* Cuadrícula milimetrada / de ingeniería */
+    background-image: 
+        linear-gradient(rgba(56, 189, 248, 0.18) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(56, 189, 248, 0.18) 1px, transparent 1px),
+        linear-gradient(rgba(56, 189, 248, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(56, 189, 248, 0.05) 1px, transparent 1px);
+    background-size: 24px 24px, 24px 24px, 6px 6px, 6px 6px;
+    background-position: -1px -1px;
+    border: 1.5px solid rgba(56, 189, 248, 0.3);
     border-radius: var(--radius-md);
     overflow: hidden;
     position: relative;
     cursor: crosshair;
+    box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.5);
+}
+
+.lab-scratch-canvas-wrap.is-ruler-mode {
+    cursor: cell;
 }
 
 .lab-scratch-canvas-wrap canvas {
     width: 100%;
     height: 100%;
     display: block;
+}
+
+/* Overlay de IA en Pizarrón */
+.lab-ai-clean-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(11, 19, 43, 0.85);
+    backdrop-filter: blur(4px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.85rem;
+    z-index: 10;
+    color: #f8fafc;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.lab-ai-clean-spinner {
+    width: 38px;
+    height: 38px;
+    border: 3px solid rgba(56, 189, 248, 0.2);
+    border-top-color: #38bdf8;
+    border-right-color: #a855f7;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+/* Drawer / Tarjeta de Fórmulas Reconocidas */
+.lab-whiteboard-ai-result {
+    background: rgba(15, 23, 42, 0.95);
+    border: 1px solid rgba(56, 189, 248, 0.35);
+    border-radius: var(--radius-md);
+    padding: 0.75rem 0.85rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+    animation: fadeIn 0.2s ease;
+}
+
+.lab-ai-result-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding-bottom: 0.45rem;
+}
+
+.lab-ai-result-title-row {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.lab-ai-result-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #38bdf8;
+}
+
+.lab-ai-result-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.lab-ai-result-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.lab-ai-formula-item {
+    background: rgba(30, 41, 59, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-left: 3px solid #38bdf8;
+    border-radius: var(--radius-sm);
+    padding: 0.5rem 0.65rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.lab-ai-formula-item-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.lab-ai-formula-title {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #fbbf24;
+}
+
+.lab-ai-formula-math {
+    font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #34d399;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 0.35rem 0.55rem;
+    border-radius: var(--radius-xs);
+    overflow-x: auto;
+}
+
+.lab-ai-formula-exp {
+    font-size: 0.73rem;
+    color: #94a3b8;
+    line-height: 1.35;
+}
+
+.lab-tab-pill-badge {
+    font-size: 0.62rem;
+    padding: 0.1rem 0.35rem;
+    border-radius: 999px;
+    background: rgba(56, 189, 248, 0.2);
+    color: #38bdf8;
+    border: 1px solid rgba(56, 189, 248, 0.35);
+    margin-left: 0.2rem;
 }
 
 /* =========================================================
@@ -9263,9 +9617,30 @@ body.modo-dev-activo .juntos-locked-notice {
     border-top: 1px solid rgba(255, 255, 255, 0.08);
     padding-top: 0.75rem;
     margin-top: 0.25rem;
+}
+
 /* =========================================================
    SELECTOR DE DIFICULTAD (FÁCIL, INTERMEDIO, DIFÍCIL, EXTREMO)
+   CON MARCO BRILLANTE Y ANIMACIÓN PULSANTE
    ========================================================= */
+
+@keyframes labDiffGlowPulse {
+    0% {
+        box-shadow: 0 0 6px var(--diff-glow, rgba(56, 189, 248, 0.5)), 0 0 12px var(--diff-glow, rgba(56, 189, 248, 0.3)), inset 0 0 6px var(--diff-glow, rgba(56, 189, 248, 0.2));
+        border-color: var(--diff-border, #38bdf8);
+        transform: scale(1);
+    }
+    50% {
+        box-shadow: 0 0 14px var(--diff-glow, rgba(56, 189, 248, 0.85)), 0 0 22px var(--diff-glow, rgba(56, 189, 248, 0.5)), inset 0 0 10px var(--diff-glow, rgba(56, 189, 248, 0.35));
+        border-color: var(--diff-border-bright, #7dd3fc);
+        transform: scale(1.02);
+    }
+    100% {
+        box-shadow: 0 0 6px var(--diff-glow, rgba(56, 189, 248, 0.5)), 0 0 12px var(--diff-glow, rgba(56, 189, 248, 0.3)), inset 0 0 6px var(--diff-glow, rgba(56, 189, 248, 0.2));
+        border-color: var(--diff-border, #38bdf8);
+        transform: scale(1);
+    }
+}
 
 .lab-difficulty-section,
 .lab-prompt-difficulty-group {
@@ -9285,6 +9660,7 @@ body.modo-dev-activo .juntos-locked-notice {
 }
 
 .lab-diff-btn {
+    position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -9303,36 +9679,45 @@ body.modo-dev-activo .juntos-locked-notice {
 }
 
 .lab-diff-btn:hover {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(255, 255, 255, 0.06);
     color: #ffffff;
 }
 
+.lab-diff-btn.is-active {
+    font-weight: 700;
+    animation: labDiffGlowPulse 1.8s infinite ease-in-out;
+}
+
 .lab-diff-btn.is-active[data-diff="facil"] {
-    background: rgba(16, 185, 129, 0.18);
-    border-color: #10b981;
+    --diff-glow: rgba(16, 185, 129, 0.75);
+    --diff-border: #10b981;
+    --diff-border-bright: #34d399;
+    background: rgba(16, 185, 129, 0.2);
     color: #34d399;
-    box-shadow: 0 0 10px rgba(16, 185, 129, 0.25);
 }
 
 .lab-diff-btn.is-active[data-diff="intermedio"] {
-    background: rgba(245, 158, 11, 0.18);
-    border-color: #f59e0b;
+    --diff-glow: rgba(245, 158, 11, 0.75);
+    --diff-border: #f59e0b;
+    --diff-border-bright: #fbbf24;
+    background: rgba(245, 158, 11, 0.2);
     color: #fbbf24;
-    box-shadow: 0 0 10px rgba(245, 158, 11, 0.25);
 }
 
 .lab-diff-btn.is-active[data-diff="dificil"] {
-    background: rgba(239, 68, 68, 0.18);
-    border-color: #ef4444;
+    --diff-glow: rgba(239, 68, 68, 0.75);
+    --diff-border: #ef4444;
+    --diff-border-bright: #f87171;
+    background: rgba(239, 68, 68, 0.2);
     color: #f87171;
-    box-shadow: 0 0 10px rgba(239, 68, 68, 0.25);
 }
 
 .lab-diff-btn.is-active[data-diff="extremo"] {
+    --diff-glow: rgba(168, 85, 247, 0.85);
+    --diff-border: #a855f7;
+    --diff-border-bright: #c084fc;
     background: rgba(168, 85, 247, 0.22);
-    border-color: #a855f7;
     color: #c084fc;
-    box-shadow: 0 0 12px rgba(168, 85, 247, 0.35);
 }
 
 .diff-dot {
@@ -9646,30 +10031,35 @@ body.modo-dev-activo .juntos-locked-notice {
    ========================================================= */
 
 .lab-stats-calc-panel {
-    background: rgba(15, 23, 42, 0.8);
+    background: rgba(15, 23, 42, 0.85);
     border: 1px solid rgba(56, 189, 248, 0.25);
     border-radius: var(--radius-lg);
     padding: 1rem 1.15rem;
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
-    margin-top: 0.75rem;
+    margin-top: 0.85rem;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .lab-stats-panel-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
-    padding-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding-bottom: 0.55rem;
     flex-wrap: wrap;
     gap: 0.4rem;
 }
 
 .lab-stats-panel-title {
-    font-size: 0.9rem;
+    font-size: 0.92rem;
     font-weight: 700;
     color: #f1f5f9;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
 }
 
 .lab-stats-panel-hint {
@@ -9679,53 +10069,88 @@ body.modo-dev-activo .juntos-locked-notice {
 
 .lab-stats-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(115px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
     gap: 0.65rem;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .lab-stat-card {
-    background: rgba(15, 23, 42, 0.7);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid rgba(56, 189, 248, 0.2);
     border-radius: var(--radius-md);
-    padding: 0.55rem 0.65rem;
+    padding: 0.65rem 0.75rem;
     display: flex;
     flex-direction: column;
-    gap: 0.2rem;
+    justify-content: space-between;
+    min-height: 85px;
+    gap: 0.25rem;
     transition: all 0.2s ease;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+    position: relative;
+    overflow: hidden;
+}
+
+.lab-stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.4), transparent);
+    opacity: 0;
+    transition: opacity 0.2s ease;
 }
 
 .lab-stat-card:hover {
-    border-color: rgba(56, 189, 248, 0.4);
-    background: rgba(56, 189, 248, 0.05);
+    border-color: rgba(56, 189, 248, 0.5);
+    background: rgba(56, 189, 248, 0.06);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
+}
+
+.lab-stat-card:hover::before {
+    opacity: 1;
 }
 
 .lab-stat-card-top {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 0.35rem;
 }
 
 .lab-stat-name {
     font-size: 0.73rem;
-    font-weight: 600;
+    font-weight: 700;
     color: #94a3b8;
     text-transform: uppercase;
-    letter-spacing: 0.02em;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .lab-copy-stat-btn {
-    background: transparent;
-    border: none;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-sm);
     cursor: pointer;
-    font-size: 0.78rem;
-    padding: 0.1rem 0.2rem;
-    opacity: 0.65;
-    transition: opacity 0.15s ease, transform 0.15s ease;
+    font-size: 0.75rem;
+    padding: 0.15rem 0.3rem;
+    color: #94a3b8;
+    opacity: 0.7;
+    transition: all 0.15s ease;
+    flex-shrink: 0;
 }
 
 .lab-copy-stat-btn:hover {
     opacity: 1;
-    transform: scale(1.15);
+    background: rgba(56, 189, 248, 0.15);
+    border-color: rgba(56, 189, 248, 0.4);
+    color: #38bdf8;
+    transform: scale(1.1);
 }
 
 .lab-copy-stat-btn:active {
@@ -9733,18 +10158,23 @@ body.modo-dev-activo .juntos-locked-notice {
 }
 
 .lab-stat-value {
-    font-size: 1.15rem;
+    font-size: 1.25rem;
     font-weight: 800;
     color: #34d399;
-    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    line-height: 1.2;
+    margin: 0.15rem 0;
 }
 
 .lab-stat-formula {
     font-size: 0.68rem;
     color: var(--color-text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 /* =========================================================

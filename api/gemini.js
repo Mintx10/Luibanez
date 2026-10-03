@@ -374,6 +374,30 @@ Debes responder ÚNICAMENTE un objeto JSON con esta estructura exacta:
     }
   ]
 }`;
+        } else if (tipoJuego === 'pizarron_ocr') {
+            promptInstrucciones = `
+JUEGO / ASISTENTE: "RECONOCIMIENTO Y EMPROLIJADO DE FÓRMULAS MANUSCRITAS EN PIZARRÓN"
+El estudiante dibujó a mano cálculos, números, anotaciones o fórmulas en el pizarrón cuadriculado (imagen adjunta).
+Muchas veces la letra es desprolija, grande o se queda sin espacio al hacer cuentas.
+Tu objetivo es actuar como un docente tutor con vista de lince:
+1. Inspeccioná la imagen del pizarrón e identificá cada fórmula, cuenta o expresión que escribió el estudiante.
+2. Emprolijala: Convertí la escritura desprolija en fórmulas matemáticas limpias (LaTeX y texto claro).
+3. Si hay una cuenta aritmética o algebraica incompleta o con dudas, resolvela y entregá el resultado exacto.
+4. Si reconoció estadísticos clave (como N, media x̄, desvío s, varianza s², moda Mo, mediana Me, probabilidades, etc.), especificá el valor calculado.
+
+Debes responder ÚNICAMENTE un objeto JSON con esta estructura exacta:
+{
+  "formulas": [
+    {
+      "titulo": "Nombre de la fórmula u operación detectada (ej: Media muestral, Varianza, Suma)",
+      "manuscrito": "Lectura literal aproximada de lo escrito a mano",
+      "latex": "Expresión limpia en LaTeX (ej: \\bar{x} = \\frac{120}{10} = 12.0)",
+      "resultado": "12.0",
+      "explicacion": "Breve explicación didáctica del cálculo o significado"
+    }
+  ],
+  "consejo": "Consejo breve y alentador sobre el cálculo realizado"
+}`;
         } else {
             // Bolillero / Examen Oral / Trivia general
             const angulosPedagogicos = [
@@ -450,13 +474,26 @@ IMPORTANTE: Basá tus preguntas, fórmulas, afirmaciones, bolillas y explicacion
 
         const promptFinal = `${systemPrompt}\n\n${promptContextoPDF}\n\n${promptInstrucciones}`;
 
-        // 3. Llamar a la API de Google Gemini con rotación de modelos ante alta demanda o 503
-        const candidateModels = [
-            'gemini-2.5-flash-lite',
-            'gemini-flash-lite-latest',
-            'gemini-2.5-flash',
-            'gemini-flash-latest'
-        ];
+        const parts = [];
+        if (body.imagenBase64) {
+            const cleanBase64 = String(body.imagenBase64).replace(/^data:image\/\w+;base64,/, '');
+            parts.push({
+                inline_data: {
+                    mime_type: "image/png",
+                    data: cleanBase64
+                }
+            });
+        }
+        parts.push({ text: promptFinal });
+
+        const candidateModels = tipoJuego === 'pizarron_ocr'
+            ? ['gemini-2.5-flash', 'gemini-flash-latest', 'gemini-2.5-flash-lite']
+            : [
+                'gemini-2.5-flash-lite',
+                'gemini-flash-lite-latest',
+                'gemini-2.5-flash',
+                'gemini-flash-latest'
+            ];
 
         let geminiRes = null;
         let lastErrorText = "";
@@ -469,10 +506,10 @@ IMPORTANTE: Basá tus preguntas, fórmulas, afirmaciones, bolillas y explicacion
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        contents: [{ parts: [{ text: promptFinal }] }],
+                        contents: [{ parts }],
                         generationConfig: {
                             responseMimeType: "application/json",
-                            temperature: tipoJuego === 'bolillero' ? 0.85 : 0.6
+                            temperature: tipoJuego === 'bolillero' ? 0.85 : 0.4
                         }
                     })
                 });

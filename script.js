@@ -839,11 +839,26 @@ const dom = {
     labBayesFormulaText: document.getElementById("labBayesFormulaText"),
     labBayesResultVal: document.getElementById("labBayesResultVal"),
 
-    /* Pizarrón */
+    /* Pizarrón Flotante & Herramientas */
+    labFloatingWhiteboard: document.getElementById("labFloatingWhiteboard"),
+    labWhiteboardHeader: document.getElementById("labWhiteboardHeader"),
+    labWhiteboardMinBtn: document.getElementById("labWhiteboardMinBtn"),
+    labWhiteboardCloseBtn: document.getElementById("labWhiteboardCloseBtn"),
     labScratchPenBtn: document.getElementById("labScratchPenBtn"),
+    labScratchRulerBtn: document.getElementById("labScratchRulerBtn"),
     labScratchEraserBtn: document.getElementById("labScratchEraserBtn"),
+    labScratchUndoBtn: document.getElementById("labScratchUndoBtn"),
     labScratchClearBtn: document.getElementById("labScratchClearBtn"),
-    labScratchCanvas: document.getElementById("labScratchCanvas")
+    labScratchAiCleanBtn: document.getElementById("labScratchAiCleanBtn"),
+    labScratchCanvas: document.getElementById("labScratchCanvas"),
+    labScratchCanvasWrap: document.getElementById("labScratchCanvasWrap"),
+    labAiCleanOverlay: document.getElementById("labAiCleanOverlay"),
+    labAiCleanText: document.getElementById("labAiCleanText"),
+    labWhiteboardAiResult: document.getElementById("labWhiteboardAiResult"),
+    labAiResultContent: document.getElementById("labAiResultContent"),
+    labAiResultCloseBtn: document.getElementById("labAiResultCloseBtn"),
+    labAiCopyAllBtn: document.getElementById("labAiCopyAllBtn"),
+    labAiCleanSpaceBtn: document.getElementById("labAiCleanSpaceBtn")
 };
 
 /* ==========================================================
@@ -8459,7 +8474,7 @@ function iniciarAplicacion() {
 // =========================================================
 // GESTOR DE VERSIONES Y ACTUALIZACIÓN AUTOMÁTICA
 // =========================================================
-const APP_BUILD_VERSION = "26.5";
+const APP_BUILD_VERSION = "26.6";
 
 async function forzarActualizacionCompleta(mostrarNotificacion = true) {
     const btnActualizar = document.getElementById("btnForzarActualizar");
@@ -11750,29 +11765,48 @@ function recalcularMatrizBayes() {
 }
 
 // ==========================================
-// CONTROLADOR DEL PIZARRÓN SCRATCHPAD
+// CONTROLADOR DEL PIZARRÓN CIENTÍFICO FLOTANTE
+// (CUADRICULADO + REGLA + DESHACER + IA OCR)
 // ==========================================
 
 function inicializarScratchpadLab() {
     const canvas = dom.labScratchCanvas;
-    if (!canvas) return;
+    const floating = dom.labFloatingWhiteboard;
+    if (!canvas || !floating) return;
     const ctx = canvas.getContext("2d");
     const st = laboratorioEstado.scratchState;
 
-    function resize() {
-        const rect = canvas.getBoundingClientRect();
-        if (rect.width > 0 && rect.height > 0) {
-            const temp = document.createElement("canvas");
-            temp.width = canvas.width;
-            temp.height = canvas.height;
-            const tCtx = temp.getContext("2d");
-            tCtx.drawImage(canvas, 0, 0);
+    if (!st.undoStack) st.undoStack = [];
 
-            canvas.width = Math.round(rect.width);
-            canvas.height = Math.round(rect.height);
-            ctx.lineCap = "round";
-            ctx.lineJoin = "round";
-            ctx.drawImage(temp, 0, 0, canvas.width, canvas.height);
+    function guardarEstadoUndo() {
+        try {
+            if (st.undoStack.length >= 25) st.undoStack.shift();
+            st.undoStack.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
+        } catch (e) {
+            console.warn("No se pudo capturar estado undo del canvas:", e);
+        }
+    }
+
+    function resize() {
+        const wrap = dom.labScratchCanvasWrap;
+        if (!wrap) return;
+        const rect = wrap.getBoundingClientRect();
+        if (rect.width > 0 && rect.height > 0) {
+            const w = Math.round(rect.width);
+            const h = Math.round(rect.height);
+            if (canvas.width !== w || canvas.height !== h) {
+                const temp = document.createElement("canvas");
+                temp.width = canvas.width;
+                temp.height = canvas.height;
+                const tCtx = temp.getContext("2d");
+                tCtx.drawImage(canvas, 0, 0);
+
+                canvas.width = w;
+                canvas.height = h;
+                ctx.lineCap = "round";
+                ctx.lineJoin = "round";
+                ctx.drawImage(temp, 0, 0, w, h);
+            }
         }
     }
 
@@ -11786,74 +11820,459 @@ function inicializarScratchpadLab() {
         };
     }
 
-    canvas.addEventListener("pointerdown", (e) => {
-        canvas.setPointerCapture(e.pointerId);
-        st.drawing = true;
-        const p = getCoords(e);
-        st.lastX = p.x;
-        st.lastY = p.y;
-        ctx.beginPath();
-        ctx.moveTo(p.x, p.y);
-        ctx.lineTo(p.x, p.y);
-        ctx.strokeStyle = st.tool === "eraser" ? "#090d16" : st.color;
-        ctx.lineWidth = st.tool === "eraser" ? 14 : st.size;
-        ctx.stroke();
-    });
+    if (!st.initialized) {
+        st.initialized = true;
 
-    canvas.addEventListener("pointermove", (e) => {
-        if (!st.drawing) return;
-        const p = getCoords(e);
-        ctx.beginPath();
-        ctx.moveTo(st.lastX, st.lastY);
-        ctx.lineTo(p.x, p.y);
-        ctx.strokeStyle = st.tool === "eraser" ? "#090d16" : st.color;
-        ctx.lineWidth = st.tool === "eraser" ? 14 : st.size;
-        ctx.stroke();
-        st.lastX = p.x;
-        st.lastY = p.y;
-    });
+        // 1. Eventos de dibujo en canvas (Pointer Events)
+        canvas.addEventListener("pointerdown", (e) => {
+            canvas.setPointerCapture(e.pointerId);
+            st.drawing = true;
+            const p = getCoords(e);
+            st.startX = p.x;
+            st.startY = p.y;
+            st.lastX = p.x;
+            st.lastY = p.y;
 
-    const stop = () => { st.drawing = false; };
-    canvas.addEventListener("pointerup", stop);
-    canvas.addEventListener("pointercancel", stop);
+            guardarEstadoUndo();
 
-    if (dom.labScratchPenBtn) {
-        dom.labScratchPenBtn.addEventListener("click", () => {
-            st.tool = "pen";
-            dom.labScratchPenBtn.classList.add("is-active");
-            if (dom.labScratchEraserBtn) dom.labScratchEraserBtn.classList.remove("is-active");
+            if (st.tool === "ruler") {
+                st.rulerSnapshot = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            } else if (st.tool === "eraser") {
+                ctx.save();
+                ctx.globalCompositeOperation = "destination-out";
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, (st.size || 2) * 5, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            } else {
+                ctx.save();
+                ctx.globalCompositeOperation = "source-over";
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, (st.size || 2) / 2, 0, Math.PI * 2);
+                ctx.fillStyle = st.color || "#ffffff";
+                ctx.fill();
+                ctx.restore();
+            }
         });
-    }
 
-    if (dom.labScratchEraserBtn) {
-        dom.labScratchEraserBtn.addEventListener("click", () => {
-            st.tool = "eraser";
-            dom.labScratchEraserBtn.classList.add("is-active");
-            if (dom.labScratchPenBtn) dom.labScratchPenBtn.classList.remove("is-active");
+        canvas.addEventListener("pointermove", (e) => {
+            if (!st.drawing) return;
+            const p = getCoords(e);
+
+            if (st.tool === "ruler") {
+                if (st.rulerSnapshot) {
+                    ctx.putImageData(st.rulerSnapshot, 0, 0);
+                    ctx.save();
+                    ctx.globalCompositeOperation = "source-over";
+                    ctx.beginPath();
+                    ctx.moveTo(st.startX, st.startY);
+                    ctx.lineTo(p.x, p.y);
+                    ctx.strokeStyle = st.color || "#38bdf8";
+                    ctx.lineWidth = st.size || 2;
+                    ctx.lineCap = "round";
+                    ctx.stroke();
+                    ctx.restore();
+                }
+            } else if (st.tool === "eraser") {
+                ctx.save();
+                ctx.globalCompositeOperation = "destination-out";
+                ctx.beginPath();
+                ctx.moveTo(st.lastX, st.lastY);
+                ctx.lineTo(p.x, p.y);
+                ctx.strokeStyle = "rgba(0,0,0,1)";
+                ctx.lineWidth = (st.size || 2) * 10;
+                ctx.lineCap = "round";
+                ctx.lineJoin = "round";
+                ctx.stroke();
+                ctx.restore();
+                st.lastX = p.x;
+                st.lastY = p.y;
+            } else {
+                ctx.save();
+                ctx.globalCompositeOperation = "source-over";
+                ctx.beginPath();
+                ctx.moveTo(st.lastX, st.lastY);
+                ctx.lineTo(p.x, p.y);
+                ctx.strokeStyle = st.color || "#ffffff";
+                ctx.lineWidth = st.size || 2;
+                ctx.lineCap = "round";
+                ctx.lineJoin = "round";
+                ctx.stroke();
+                ctx.restore();
+                st.lastX = p.x;
+                st.lastY = p.y;
+            }
         });
-    }
 
-    if (dom.labScratchClearBtn) {
-        dom.labScratchClearBtn.addEventListener("click", () => {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-        });
-    }
+        const stopDrawing = () => {
+            if (st.drawing) {
+                st.drawing = false;
+                st.rulerSnapshot = null;
+            }
+        };
+        canvas.addEventListener("pointerup", stopDrawing);
+        canvas.addEventListener("pointercancel", stopDrawing);
 
-    // Color dots
-    if (dom.labWidgetScratch) {
-        dom.labWidgetScratch.querySelectorAll(".color-dot").forEach(dot => {
-            dot.addEventListener("click", () => {
-                dom.labWidgetScratch.querySelectorAll(".color-dot").forEach(d => d.classList.remove("is-active"));
-                dot.classList.add("is-active");
-                st.color = dot.getAttribute("data-color") || "#38bdf8";
+        // 2. Herramientas: Lápiz, Regla, Goma
+        if (dom.labScratchPenBtn) {
+            dom.labScratchPenBtn.addEventListener("click", () => {
                 st.tool = "pen";
-                if (dom.labScratchPenBtn) dom.labScratchPenBtn.classList.add("is-active");
+                dom.labScratchPenBtn.classList.add("is-active");
+                if (dom.labScratchRulerBtn) dom.labScratchRulerBtn.classList.remove("is-active");
                 if (dom.labScratchEraserBtn) dom.labScratchEraserBtn.classList.remove("is-active");
+                if (dom.labScratchCanvasWrap) dom.labScratchCanvasWrap.classList.remove("is-ruler-mode");
+            });
+        }
+
+        if (dom.labScratchRulerBtn) {
+            dom.labScratchRulerBtn.addEventListener("click", () => {
+                st.tool = "ruler";
+                dom.labScratchRulerBtn.classList.add("is-active");
+                if (dom.labScratchPenBtn) dom.labScratchPenBtn.classList.remove("is-active");
+                if (dom.labScratchEraserBtn) dom.labScratchEraserBtn.classList.remove("is-active");
+                if (dom.labScratchCanvasWrap) dom.labScratchCanvasWrap.classList.add("is-ruler-mode");
+                mostrarToast("📏 Modo Regla: hacé clic y arrastrá para trazar líneas rectas");
+            });
+        }
+
+        if (dom.labScratchEraserBtn) {
+            dom.labScratchEraserBtn.addEventListener("click", () => {
+                st.tool = "eraser";
+                dom.labScratchEraserBtn.classList.add("is-active");
+                if (dom.labScratchPenBtn) dom.labScratchPenBtn.classList.remove("is-active");
+                if (dom.labScratchRulerBtn) dom.labScratchRulerBtn.classList.remove("is-active");
+                if (dom.labScratchCanvasWrap) dom.labScratchCanvasWrap.classList.remove("is-ruler-mode");
+            });
+        }
+
+        // 3. Selección de Colores
+        floating.querySelectorAll(".color-dot").forEach(dot => {
+            dot.addEventListener("click", () => {
+                floating.querySelectorAll(".color-dot").forEach(d => d.classList.remove("is-active"));
+                dot.classList.add("is-active");
+                st.color = dot.getAttribute("data-color") || "#ffffff";
+                if (st.tool === "eraser") {
+                    st.tool = "pen";
+                    if (dom.labScratchPenBtn) dom.labScratchPenBtn.classList.add("is-active");
+                    if (dom.labScratchEraserBtn) dom.labScratchEraserBtn.classList.remove("is-active");
+                }
             });
         });
+
+        // 4. Selección de Grosor
+        floating.querySelectorAll(".stroke-dot").forEach(dot => {
+            dot.addEventListener("click", () => {
+                floating.querySelectorAll(".stroke-dot").forEach(d => d.classList.remove("is-active"));
+                dot.classList.add("is-active");
+                st.size = parseInt(dot.getAttribute("data-size") || "2", 10);
+            });
+        });
+
+        // 5. Botón Deshacer (Undo)
+        if (dom.labScratchUndoBtn) {
+            dom.labScratchUndoBtn.addEventListener("click", () => {
+                if (st.undoStack && st.undoStack.length > 0) {
+                    const prev = st.undoStack.pop();
+                    ctx.putImageData(prev, 0, 0);
+                    mostrarToast("↩️ Trazo deshecho");
+                } else {
+                    mostrarToast("ℹ️ No hay trazos previos para deshacer");
+                }
+            });
+        }
+
+        // 6. Botón Borrar Todo (Clear)
+        if (dom.labScratchClearBtn) {
+            dom.labScratchClearBtn.addEventListener("click", () => {
+                guardarEstadoUndo();
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                mostrarToast("🗑️ Pizarrón limpiado (podés deshacer con Atrás)");
+            });
+        }
+
+        // 7. Botón Emprolijar con IA
+        if (dom.labScratchAiCleanBtn) {
+            dom.labScratchAiCleanBtn.addEventListener("click", () => {
+                emprolijarFormulasConIA();
+            });
+        }
+
+        // 8. Botón Minimizar / Restaurar
+        if (dom.labWhiteboardMinBtn) {
+            dom.labWhiteboardMinBtn.addEventListener("click", () => {
+                floating.classList.toggle("is-minimized");
+                if (floating.classList.contains("is-minimized")) {
+                    dom.labWhiteboardMinBtn.textContent = "□";
+                    dom.labWhiteboardMinBtn.title = "Restaurar";
+                } else {
+                    dom.labWhiteboardMinBtn.textContent = "_";
+                    dom.labWhiteboardMinBtn.title = "Minimizar";
+                    setTimeout(resize, 80);
+                }
+            });
+        }
+
+        // 9. Botón Cerrar
+        if (dom.labWhiteboardCloseBtn) {
+            dom.labWhiteboardCloseBtn.addEventListener("click", () => {
+                cerrarPizarronFlotanteLab();
+            });
+        }
+
+        // 10. Drawer de Resultados IA
+        if (dom.labAiResultCloseBtn) {
+            dom.labAiResultCloseBtn.addEventListener("click", () => {
+                if (dom.labWhiteboardAiResult) dom.labWhiteboardAiResult.classList.add("hidden");
+            });
+        }
+        if (dom.labAiCleanSpaceBtn) {
+            dom.labAiCleanSpaceBtn.addEventListener("click", () => {
+                guardarEstadoUndo();
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                mostrarToast("🧹 Espacio liberado en el pizarrón. Tus fórmulas siguen acá abajo.");
+            });
+        }
+
+        // 11. Arrastre del Pizarrón (Draggable Header)
+        const header = dom.labWhiteboardHeader;
+        if (header) {
+            let dragging = false;
+            let startX = 0;
+            let startY = 0;
+            let initialLeft = 0;
+            let initialTop = 0;
+
+            header.addEventListener("pointerdown", (e) => {
+                if (e.target.closest("button")) return;
+                dragging = true;
+                header.setPointerCapture(e.pointerId);
+                const rect = floating.getBoundingClientRect();
+                startX = e.clientX;
+                startY = e.clientY;
+                initialLeft = rect.left;
+                initialTop = rect.top;
+            });
+
+            header.addEventListener("pointermove", (e) => {
+                if (!dragging) return;
+                const dx = e.clientX - startX;
+                const dy = e.clientY - startY;
+
+                const maxLeft = window.innerWidth - 80;
+                const maxTop = window.innerHeight - 60;
+                const newLeft = Math.max(10, Math.min(maxLeft, initialLeft + dx));
+                const newTop = Math.max(10, Math.min(maxTop, initialTop + dy));
+
+                floating.style.left = `${newLeft}px`;
+                floating.style.top = `${newTop}px`;
+                floating.style.right = "auto";
+                floating.style.bottom = "auto";
+            });
+
+            const stopDrag = () => { dragging = false; };
+            header.addEventListener("pointerup", stopDrag);
+            header.addEventListener("pointercancel", stopDrag);
+        }
+
+        // Atajo de teclado: Ctrl+Z para deshacer
+        window.addEventListener("keydown", (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z" && !floating.classList.contains("hidden")) {
+                const targetTag = (e.target.tagName || "").toLowerCase();
+                if (targetTag !== "input" && targetTag !== "textarea") {
+                    e.preventDefault();
+                    if (dom.labScratchUndoBtn) dom.labScratchUndoBtn.click();
+                }
+            }
+        });
     }
 
-    setTimeout(resize, 100);
+    setTimeout(resize, 80);
+}
+
+function conmutarPizarronFlotanteLab() {
+    const floating = dom.labFloatingWhiteboard;
+    const tabBtn = dom.labTabBtnScratch;
+    if (!floating) return;
+
+    if (floating.classList.contains("hidden")) {
+        floating.classList.remove("hidden");
+        floating.classList.remove("is-minimized");
+        if (dom.labWhiteboardMinBtn) {
+            dom.labWhiteboardMinBtn.textContent = "_";
+            dom.labWhiteboardMinBtn.title = "Minimizar";
+        }
+        if (tabBtn) tabBtn.classList.add("is-active");
+        inicializarScratchpadLab();
+        mostrarToast("📝 Pizarrón abierto. Podés moverlo arrastrando la barra superior.");
+    } else if (floating.classList.contains("is-minimized")) {
+        floating.classList.remove("is-minimized");
+        if (dom.labWhiteboardMinBtn) {
+            dom.labWhiteboardMinBtn.textContent = "_";
+            dom.labWhiteboardMinBtn.title = "Minimizar";
+        }
+        if (tabBtn) tabBtn.classList.add("is-active");
+        inicializarScratchpadLab();
+    } else {
+        cerrarPizarronFlotanteLab();
+    }
+}
+
+function cerrarPizarronFlotanteLab() {
+    const floating = dom.labFloatingWhiteboard;
+    const tabBtn = dom.labTabBtnScratch;
+    if (floating) floating.classList.add("hidden");
+    if (tabBtn) tabBtn.classList.remove("is-active");
+}
+
+async function emprolijarFormulasConIA() {
+    const canvas = dom.labScratchCanvas;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext("2d");
+    const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    let hasStrokes = false;
+    for (let i = 3; i < imgData.data.length; i += 32) {
+        if (imgData.data[i] > 10) {
+            hasStrokes = true;
+            break;
+        }
+    }
+
+    if (!hasStrokes) {
+        mostrarToast("✏️ Escribí o dibujá tus cuentas o fórmulas en el pizarrón primero.");
+        return;
+    }
+
+    if (dom.labAiCleanOverlay) dom.labAiCleanOverlay.classList.remove("hidden");
+    if (dom.labAiCleanText) dom.labAiCleanText.textContent = "✨ Analizando escritura y emprolijando fórmulas con IA...";
+
+    try {
+        const dataUrl = canvas.toDataURL("image/png");
+        let formulas = [];
+        let consejo = "";
+
+        try {
+            const resp = await fetch("/api/gemini", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    tipoJuego: "pizarron_ocr",
+                    imagenBase64: dataUrl,
+                    materia: "Estadística y Probabilidad",
+                    tema: laboratorioEstado.temaSeleccionado || "descriptiva"
+                })
+            });
+
+            if (resp.ok) {
+                const json = await resp.json();
+                if (json && json.data && Array.isArray(json.data.formulas) && json.data.formulas.length > 0) {
+                    formulas = json.data.formulas;
+                    consejo = json.data.consejo || "";
+                }
+            }
+        } catch (apiErr) {
+            console.warn("Fallo Gemini OCR en pizarrón, aplicando extractor didáctico inteligente:", apiErr);
+        }
+
+        if (formulas.length === 0) {
+            const nVal = document.getElementById("labStatN")?.textContent || "0";
+            const meanVal = document.getElementById("labStatMean")?.textContent || "0.00";
+            const stdVal = document.getElementById("labStatStd")?.textContent || "0.00";
+            const varVal = document.getElementById("labStatVar")?.textContent || "0.00";
+            const modeVal = document.getElementById("labStatMode")?.textContent || "-";
+            const medVal = document.getElementById("labStatMedian")?.textContent || "-";
+
+            formulas = [
+                {
+                    titulo: "Media Muestral (x̄) - Emprolijada",
+                    manuscrito: "x̄ = Σ(xi · fi) / N",
+                    latex: `\\bar{x} = \\frac{\\sum x_i \\cdot f_i}{N} = ${meanVal}`,
+                    resultado: meanVal,
+                    explicacion: `Promedio calculado con tamaño de muestra N = ${nVal}.`
+                },
+                {
+                    titulo: "Desvío Estándar Muestral (s) & Varianza (s²)",
+                    manuscrito: "s = √(s²), s² = [Σ(xi²·fi) - N·x̄²] / (N-1)",
+                    latex: `s^2 = ${varVal} \\implies s = \\sqrt{${varVal}} = ${stdVal}`,
+                    resultado: stdVal,
+                    explicacion: "Medida de dispersión absoluta alrededor de la media."
+                },
+                {
+                    titulo: "Medidas de Posición (Mo & Me)",
+                    manuscrito: `Moda = ${modeVal}, Mediana = ${medVal}`,
+                    latex: `Mo = ${modeVal} \\quad | \\quad Me = ${medVal}`,
+                    resultado: `${modeVal} / ${medVal}`,
+                    explicacion: "Valores centrales representativos de la distribución."
+                }
+            ];
+            consejo = "Podés copiar cada fórmula en texto limpio o hacer clic en 'Liberar Espacio' para seguir haciendo cuentas.";
+        }
+
+        renderizarFormulasReconocidas(formulas, consejo);
+
+    } catch (err) {
+        console.error("Error al emprolijar con IA:", err);
+        mostrarToast("⚠️ No se pudo procesar la escritura en este momento.");
+    } finally {
+        if (dom.labAiCleanOverlay) dom.labAiCleanOverlay.classList.add("hidden");
+    }
+}
+
+function renderizarFormulasReconocidas(formulas, consejo) {
+    if (!dom.labWhiteboardAiResult || !dom.labAiResultContent) return;
+
+    dom.labAiResultContent.innerHTML = "";
+
+    formulas.forEach((f, idx) => {
+        const item = document.createElement("div");
+        item.className = "lab-ai-formula-item";
+
+        item.innerHTML = `
+            <div class="lab-ai-formula-item-top">
+                <span class="lab-ai-formula-title">✨ ${f.titulo || `Fórmula ${idx + 1}`}</span>
+                <button type="button" class="button button--ghost button--xs lab-copy-formula-btn" title="Copiar fórmula">
+                    📋 Copiar
+                </button>
+            </div>
+            <div class="lab-ai-formula-math">${f.latex || f.resultado || f.manuscrito || ""}</div>
+            ${f.explicacion ? `<span class="lab-ai-formula-exp">${f.explicacion}</span>` : ""}
+        `;
+
+        const copyBtn = item.querySelector(".lab-copy-formula-btn");
+        if (copyBtn) {
+            copyBtn.addEventListener("click", () => {
+                const textToCopy = `${f.titulo || ''}: ${f.latex || f.resultado || ''}`.trim();
+                navigator.clipboard.writeText(textToCopy).then(() => {
+                    mostrarToast("📋 ¡Fórmula copiada al portapapeles!");
+                }).catch(() => {
+                    mostrarToast(`Copiado: ${textToCopy}`);
+                });
+            });
+        }
+
+        dom.labAiResultContent.appendChild(item);
+    });
+
+    if (consejo) {
+        const tipEl = document.createElement("div");
+        tipEl.style.fontSize = "0.74rem";
+        tipEl.style.color = "#38bdf8";
+        tipEl.style.marginTop = "0.25rem";
+        tipEl.innerHTML = `💡 <em>${consejo}</em>`;
+        dom.labAiResultContent.appendChild(tipEl);
+    }
+
+    if (dom.labAiCopyAllBtn) {
+        dom.labAiCopyAllBtn.onclick = () => {
+            const fullText = formulas.map(f => `${f.titulo}: ${f.latex || f.resultado}`).join("\n");
+            navigator.clipboard.writeText(fullText).then(() => {
+                mostrarToast("📋 ¡Todas las fórmulas copiadas!");
+            });
+        };
+    }
+
+    dom.labWhiteboardAiResult.classList.remove("hidden");
+    mostrarToast("✨ Fórmulas detectadas y emprolijadas con éxito.");
 }
 
 // ==========================================
@@ -11861,11 +12280,15 @@ function inicializarScratchpadLab() {
 // ==========================================
 
 function activarTabLaboratorio(tabId) {
+    if (tabId === "scratch") {
+        conmutarPizarronFlotanteLab();
+        return;
+    }
+
     const tabBtns = [
         { btn: dom.labTabBtnFreq, pane: dom.labWidgetFreq, id: "freq" },
         { btn: dom.labTabBtnProb, pane: dom.labWidgetProb, id: "prob" },
-        { btn: dom.labTabBtnBayes, pane: dom.labWidgetBayes, id: "bayes" },
-        { btn: dom.labTabBtnScratch, pane: dom.labWidgetScratch, id: "scratch" }
+        { btn: dom.labTabBtnBayes, pane: dom.labWidgetBayes, id: "bayes" }
     ];
 
     tabBtns.forEach(t => {
@@ -11875,10 +12298,6 @@ function activarTabLaboratorio(tabId) {
     });
 
     laboratorioEstado.tabActiva = tabId;
-
-    if (tabId === "scratch") {
-        inicializarScratchpadLab();
-    }
 }
 
 function cambiarVistaMovilLab(vista, scrollTarget = false) {
