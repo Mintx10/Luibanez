@@ -15,10 +15,10 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     
-    <link rel="icon" type="image/svg+xml" href="icon.svg?v=27.0">
-    <link rel="apple-touch-icon" href="icon-192.png?v=27.0">
-    <link rel="manifest" href="manifest.json?v=27.0">
-    <link rel="stylesheet" href="style.css?v=27.0">
+    <link rel="icon" type="image/svg+xml" href="icon.svg?v=27.1">
+    <link rel="apple-touch-icon" href="icon-192.png?v=27.1">
+    <link rel="manifest" href="manifest.json?v=27.1">
+    <link rel="stylesheet" href="style.css?v=27.1">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -2411,6 +2411,82 @@
 
     </section>
 
+    <!-- ==================== VISTA: SALA DE PODIO & RESULTADOS MULTIJUGADOR / ONLINE ==================== -->
+    <section id="viewPodioOnline" class="view view--hidden" aria-label="Sala de Podio y Resultados de Partida Online">
+        <div class="podio-online-container">
+            <!-- Cabecera de Celebración -->
+            <header class="podio-online-header">
+                <div class="podio-header-crown" aria-hidden="true">👑</div>
+                <h1 class="podio-online-title" id="podioOnlineTitle">SALA DE RESULTADOS & PODIO</h1>
+                <p class="podio-online-subtitle" id="podioOnlineSubtitle">Partida completada con éxito</p>
+                
+                <div class="podio-badges-row">
+                    <span class="podio-badge podio-badge--game" id="podioBadgeGame">🎮 Duelo</span>
+                    <span class="podio-badge podio-badge--materia" id="podioBadgeMateria">📚 Materia</span>
+                    <span class="podio-badge podio-badge--sala" id="podioBadgeSala">🔑 PIN: —</span>
+                    <span class="podio-badge podio-badge--mode" id="podioBadgeMode">⚔️ Versus</span>
+                </div>
+            </header>
+
+            <!-- Escenario 3D del Podio de Campeones -->
+            <div class="podio-stage-wrapper">
+                <div class="podio-3d-stage" id="podio3DStage">
+                    <!-- 2° Lugar (Plata), 1° Lugar (Oro con Corona), 3° Lugar (Bronce) generados dinámicamente -->
+                </div>
+            </div>
+
+            <!-- Menciones Especiales de Honor -->
+            <div class="podio-honors-section" id="podioHonorsSection">
+                <!-- Rey de la Racha 🔥, Ladrón Relámpago ⚡, Ojo Clínico 🎯, etc. -->
+            </div>
+
+            <!-- Tabla Detallada de Rendimiento de Todos los Jugadores -->
+            <section class="podio-table-section panel">
+                <div class="panel__header">
+                    <div>
+                        <h2 class="panel__title">📊 Rendimiento & Estadísticas de los Jugadores</h2>
+                        <p class="panel__subtitle">Detalle completo de puntajes, efectividad, tiempos y aportes</p>
+                    </div>
+                    <span class="badge badge--accent" id="podioPlayersCountBadge">0 jugadores</span>
+                </div>
+                <div class="table-container podio-table-wrapper">
+                    <table class="table podio-table" id="podioStatsTable">
+                        <thead>
+                            <tr>
+                                <th>Puesto</th>
+                                <th>Jugador</th>
+                                <th>Puntos</th>
+                                <th>Aciertos</th>
+                                <th>Efectividad</th>
+                                <th>Tiempo</th>
+                                <th>Detalles</th>
+                            </tr>
+                        </thead>
+                        <tbody id="podioStatsTableBody">
+                            <!-- Filas dinámicas -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Barra de Acciones del Podio -->
+            <div class="podio-actions-bar">
+                <button id="podioBtnVolverLobby" class="button button--primary button--lg" type="button">
+                    🔄 Volver al Lobby (Jugar Otra)
+                </button>
+                <button id="podioBtnVolverMenu" class="button button--secondary button--lg" type="button">
+                    🏠 Volver al Menú Principal
+                </button>
+                <button id="podioBtnCompartirWsp" class="button button--accent" type="button">
+                    📲 Compartir en WhatsApp
+                </button>
+                <button id="podioBtnSalondeLaFama" class="button button--ghost" type="button">
+                    🏆 Ver en Salón de la Fama
+                </button>
+            </div>
+        </div>
+    </section>
+
     <!-- ==================== VISTA 7: LABORATORIO DE PRÁCTICAS (MESA DE TRABAJO & ESTADÍSTICA) ==================== -->
     <section id="viewLaboratorio" class="view view--hidden" aria-label="Laboratorio de Prácticas y Mesa de Trabajo">
         <div class="lab-container">
@@ -3246,10 +3322,18 @@
             <button id="victoryRegisterGuestBtn" class="button button--accent button--full hidden" type="button">
                 ⭐ Registrarme ahora y guardar mis puntos
             </button>
-            <button id="victoryCopySummaryBtn" class="button button--secondary button--full" type="button">
+            <div class="duelo-victory-main-btns" style="display: flex; gap: 0.5rem; width: 100%;">
+                <button id="victoryReturnLobbyBtn" class="button button--primary button--full" type="button">
+                    🔄 Volver al Lobby
+                </button>
+                <button id="victoryReturnHomeBtn" class="button button--secondary button--full" type="button">
+                    🏠 Menú Principal
+                </button>
+            </div>
+            <button id="victoryCopySummaryBtn" class="button button--ghost button--full" type="button">
                 📸 Copiar Resumen (WhatsApp)
             </button>
-            <button id="victoryGoToFamaBtn" class="button button--primary button--full" type="button">
+            <button id="victoryGoToFamaBtn" class="button button--ghost button--full" type="button">
                 🏆 Ver en Salón de la Fama
             </button>
             <button id="victoryCloseBtn" class="button button--ghost button--full" type="button">
@@ -3522,7 +3606,7 @@
 </dialog>
 
 <script src="mqtt.min.js"></script>
-<script src="script.js?v=27.0" defer></script>
+<script src="script.js?v=27.1" defer></script>
 
 <!-- =========================================================
      MODAL DE PROMPT PARA GEMINI (CREAR JUEGOS DESDE PDF)

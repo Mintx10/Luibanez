@@ -644,12 +644,31 @@ const dom = {
     dueloPodioContainer: document.getElementById("dueloPodioContainer"),
     dueloSpecialMentions: document.getElementById("dueloSpecialMentions"),
     victoryRegisterGuestBtn: document.getElementById("victoryRegisterGuestBtn"),
+    victoryReturnLobbyBtn: document.getElementById("victoryReturnLobbyBtn"),
+    victoryReturnHomeBtn: document.getElementById("victoryReturnHomeBtn"),
     victoryCopySummaryBtn: document.getElementById("victoryCopySummaryBtn"),
     victoryGoToFamaBtn: document.getElementById("victoryGoToFamaBtn"),
     victoryCloseBtn: document.getElementById("victoryCloseBtn"),
     dueloSocorroModal: document.getElementById("dueloSocorroModal"),
     dueloSocorroOptions: document.getElementById("dueloSocorroOptions"),
     dueloCancelSocorroBtn: document.getElementById("dueloCancelSocorroBtn"),
+
+    /* Sala de Podio & Resultados Online */
+    viewPodioOnline: document.getElementById("viewPodioOnline"),
+    podioOnlineTitle: document.getElementById("podioOnlineTitle"),
+    podioOnlineSubtitle: document.getElementById("podioOnlineSubtitle"),
+    podioBadgeGame: document.getElementById("podioBadgeGame"),
+    podioBadgeMateria: document.getElementById("podioBadgeMateria"),
+    podioBadgeSala: document.getElementById("podioBadgeSala"),
+    podioBadgeMode: document.getElementById("podioBadgeMode"),
+    podio3DStage: document.getElementById("podio3DStage"),
+    podioHonorsSection: document.getElementById("podioHonorsSection"),
+    podioPlayersCountBadge: document.getElementById("podioPlayersCountBadge"),
+    podioStatsTableBody: document.getElementById("podioStatsTableBody"),
+    podioBtnVolverLobby: document.getElementById("podioBtnVolverLobby"),
+    podioBtnVolverMenu: document.getElementById("podioBtnVolverMenu"),
+    podioBtnCompartirWsp: document.getElementById("podioBtnCompartirWsp"),
+    podioBtnSalondeLaFama: document.getElementById("podioBtnSalondeLaFama"),
 
     /* Modal Cuentas & PIN */
     authAccountModal: document.getElementById("authAccountModal"),
@@ -1135,7 +1154,7 @@ function inicializarModoDev() {
    ========================================================== */
 function cambiarVista(vista) {
     const rawTarget = (vista === "duelo" || vista === "juntos") ? "juntos" : vista;
-    const vistasValidas = ["home", "solo", "juntos", "bolillero", "fama", "juegos", "laboratorio"];
+    const vistasValidas = ["home", "solo", "juntos", "bolillero", "fama", "juegos", "laboratorio", "podio"];
     const vistaDestino = vistasValidas.includes(rawTarget) ? rawTarget : "home";
 
     const vistas = [
@@ -1145,7 +1164,8 @@ function cambiarVista(vista) {
         { id: "bolillero", domView: dom.viewBolillero },
         { id: "fama", domView: dom.viewFama },
         { id: "juegos", domView: dom.viewJuegosEdu },
-        { id: "laboratorio", domView: dom.viewLaboratorio }
+        { id: "laboratorio", domView: dom.viewLaboratorio },
+        { id: "podio", domView: dom.viewPodioOnline }
     ];
 
     // 1. Alternar visibilidad de las vistas
@@ -3827,12 +3847,17 @@ function procesarMensajeMqttSala(data) {
         return;
     }
 
-    if (data.tipo === "BOMBA_VOLVER_LOBBY") {
-        clearInterval(juegosEduEstado.bomba.timerId);
+    if (data.tipo === "BOMBA_VOLVER_LOBBY" || data.tipo === "VOLVER_LOBBY_ONLINE") {
+        if (juegosEduEstado.bomba && juegosEduEstado.bomba.timerId) clearInterval(juegosEduEstado.bomba.timerId);
+        if (juegosEduEstado.impostor && juegosEduEstado.impostor.timerId) clearInterval(juegosEduEstado.impostor.timerId);
+        if (juegosEduEstado.memotest && juegosEduEstado.memotest.timerId) clearInterval(juegosEduEstado.memotest.timerId);
         juegosEduEstado.esOnline = false;
-        cambiarVista("duelo");
+        if (dom.dueloVictoryModal && typeof dom.dueloVictoryModal.close === "function") {
+            try { dom.dueloVictoryModal.close(); } catch(e) {}
+        }
+        cambiarVista("juntos");
         mostrarSalaDeEsperaOnline(onlineDueloEstado.codigoSala);
-        mostrarToast("🔄 Volvieron a la sala de espera.");
+        mostrarToast("🔄 Todos los jugadores regresaron a la sala de espera.");
         return;
     }
 
@@ -3948,6 +3973,7 @@ function procesarMensajeMqttSala(data) {
     if (data.tipo === "FIN_PARTIDA_ONLINE") {
         if (!onlineDueloEstado.esHost && data.partidaGuardada) {
             mostrarModalVictoriaDuelo(data.partidaGuardada);
+            mostrarPodioOnline(data.partidaGuardada);
         }
     }
 }
@@ -6081,6 +6107,7 @@ function avanzarSiguienteTemaDuelo() {
 
 function finalizarPartidaCooperativa(victoria) {
     const partida = dueloEstado.partida;
+    if (!partida) return;
     pausarCronometroTurnoDuelo();
     partida.activa = false;
 
@@ -6096,7 +6123,51 @@ function finalizarPartidaCooperativa(victoria) {
         if (dom.dueloVictoryDesc) dom.dueloVictoryDesc.textContent = `El equipo agotó sus 3 oportunidades de examen tras alcanzar ${partida.puntosEquipo} de 100 puntos. ¡Momento de debatir y volver a intentarlo!`;
     }
 
+    const ranking = [...(partida.jugadores || [])].sort((a, b) => (b.puntosAportados || b.puntos || 0) - (a.puntosAportados || a.puntos || 0));
+    const lista = estado.listas.find(l => l.id === dueloEstado.config.listaId);
+    const nombreLista = lista ? lista.nombre : "Materia";
+
+    const partidaGuardada = {
+        id: crypto.randomUUID(),
+        juego: "duelo",
+        esCoop: true,
+        fecha: new Date().toISOString(),
+        listaNombre: nombreLista,
+        codigoSala: onlineDueloEstado.codigoSala || "",
+        totalTurnos: partida.turnoNumero || 1,
+        coopResultado: {
+            victoria,
+            puntos: partida.puntosEquipo || 0,
+            meta: partida.metaPuntosEquipo || 100,
+            motivo: victoria ? "Meta de 100 puntos alcanzada en equipo" : "Se agotaron las 3 vidas del equipo"
+        },
+        ganador: {
+            nombre: victoria ? "¡Equipo Campeón!" : "Equipo en Repaso",
+            puntos: partida.puntosEquipo || 0,
+            avatar: victoria ? "🏆" : "📚"
+        },
+        posiciones: ranking.map((j, i) => ({
+            rank: i + 1,
+            nombre: j.apodo || j.nombre || `Compañero ${i + 1}`,
+            avatar: j.avatar || "🤝",
+            puntos: j.puntosAportados || j.puntos || 0,
+            aciertos: Math.max(0, Math.round((j.puntosAportados || 0) / 10)),
+            errores: 0,
+            efectividad: "100%",
+            tiempo: "—",
+            detalles: `Aporte al equipo: +${j.puntosAportados || 0} pts`
+        }))
+    };
+
+    if (onlineDueloEstado.modo === "online" && onlineDueloEstado.codigoSala && onlineDueloEstado.esHost) {
+        publicarMensajeSala({
+            tipo: "FIN_PARTIDA_ONLINE",
+            partidaGuardada
+        });
+    }
+
     if (dom.dueloVictoryModal) dom.dueloVictoryModal.showModal();
+    mostrarPodioOnline(partidaGuardada);
 }
 
 function actualizarMarcadorDueloUI() {
@@ -6194,20 +6265,27 @@ function agregarRegistroTurnoDuelo(mensaje, pts) {
 
 function finalizarDueloPartida(forzar = false) {
     const partida = dueloEstado.partida;
-    if (!partida.activa) return;
+    if (!partida) return;
+    if (!partida.activa && !forzar) return;
 
     pausarCronometroTurnoDuelo();
-    if (partida.robo.intervalId) clearInterval(partida.robo.intervalId);
+    if (partida.robo && partida.robo.intervalId) clearInterval(partida.robo.intervalId);
 
     partida.activa = false;
 
+    // Si es cooperativo, delegar en finalizarPartidaCooperativa
+    if (partida.esCoop) {
+        finalizarPartidaCooperativa(partida.puntosEquipo >= (partida.metaPuntosEquipo || 100));
+        return;
+    }
+
     // Calcular podio
-    const ranking = [...partida.jugadores].sort((a, b) => b.puntos - a.puntos);
+    const ranking = [...(partida.jugadores || [])].sort((a, b) => b.puntos - a.puntos);
     const ganador = ranking[0];
 
     // Rey de la racha y Ladrón relámpago
-    const reyRacha = [...partida.jugadores].sort((a, b) => b.maxRacha - a.maxRacha)[0];
-    const ladron = [...partida.jugadores].sort((a, b) => b.robosExitosos - a.robosExitosos)[0];
+    const reyRacha = [...(partida.jugadores || [])].sort((a, b) => (b.maxRacha || 0) - (a.maxRacha || 0))[0];
+    const ladron = [...(partida.jugadores || [])].sort((a, b) => (b.robosExitosos || 0) - (a.robosExitosos || 0))[0];
 
     const lista = estado.listas.find(l => l.id === dueloEstado.config.listaId);
     const nombreLista = lista ? lista.nombre : "Materia";
@@ -6215,28 +6293,42 @@ function finalizarDueloPartida(forzar = false) {
     // Guardar partida en Salón de la Fama
     const partidaGuardada = {
         id: crypto.randomUUID(),
+        juego: "duelo",
+        esOnline: onlineDueloEstado.modo === "online",
+        codigoSala: onlineDueloEstado.codigoSala || "",
         fecha: new Date().toISOString(),
         listaNombre: nombreLista,
-        totalTurnos: partida.turnoNumero,
+        totalTurnos: partida.turnoNumero || 1,
         ganador: {
             nombre: ganador ? (ganador.apodo || ganador.nombre || "Sin campeón") : "Sin campeón",
-            puntos: ganador ? ganador.puntos : 0
+            puntos: ganador ? ganador.puntos : 0,
+            avatar: ganador ? (ganador.avatar || "👑") : "👑"
         },
         reyRacha: {
             nombre: reyRacha ? (reyRacha.apodo || reyRacha.nombre || "—") : "—",
-            racha: reyRacha ? reyRacha.maxRacha : 0
+            racha: reyRacha ? (reyRacha.maxRacha || 0) : 0
         },
         ladronRelampago: {
             nombre: ladron ? (ladron.apodo || ladron.nombre || "—") : "—",
-            robos: ladron ? ladron.robosExitosos : 0
+            robos: ladron ? (ladron.robosExitosos || 0) : 0
         },
-        posiciones: ranking.map((j, i) => ({
-            rank: i + 1,
-            nombre: j.apodo || j.nombre || "Jugador",
-            puntos: j.puntos,
-            maxRacha: j.maxRacha,
-            robosExitosos: j.robosExitosos
-        }))
+        posiciones: ranking.map((j, i) => {
+            const turnosJugados = Math.max(1, Math.round((partida.turnoNumero || 1) / Math.max(1, ranking.length)));
+            const aciertosEst = Math.max(0, Math.round((j.puntos || 0) / 10));
+            return {
+                rank: i + 1,
+                nombre: j.apodo || j.nombre || `Jugador ${i + 1}`,
+                avatar: j.avatar || "👤",
+                puntos: j.puntos || 0,
+                aciertos: aciertosEst,
+                errores: Math.max(0, turnosJugados - aciertosEst),
+                efectividad: Math.min(100, Math.max(0, Math.round((aciertosEst / Math.max(1, turnosJugados)) * 100))) + "%",
+                tiempo: "—",
+                maxRacha: j.maxRacha || 0,
+                robosExitosos: j.robosExitosos || 0,
+                detalles: `🔥 Racha: ${j.maxRacha || 0} | ⚡ Robos: ${j.robosExitosos || 0}`
+            };
+        })
     };
 
     const historial = cargarHistorialDuelo();
@@ -6250,8 +6342,9 @@ function finalizarDueloPartida(forzar = false) {
         });
     }
 
-    // Mostrar Modal de Victoria
+    // Mostrar Modal de Victoria y también navegar a Sala de Podio
     mostrarModalVictoriaDuelo(partidaGuardada);
+    mostrarPodioOnline(partidaGuardada);
 }
 
 function mostrarModalVictoriaDuelo(partida) {
@@ -6346,6 +6439,407 @@ function mostrarModalVictoriaDuelo(partida) {
 
     dom.dueloVictoryModal.showModal();
     reproducirSonidoDuelo("fanfare");
+}
+
+/* ==========================================================
+   SALA DE PODIO & RESULTADOS MULTIJUGADOR / ONLINE
+   ========================================================== */
+function mostrarPodioOnline(partida) {
+    if (!partida) return;
+
+    // Normalizar datos
+    const juego = partida.juego || "duelo";
+    const esCoop = Boolean(partida.esCoop);
+    const materia = partida.listaNombre || partida.materia || "Materia General";
+    const codigoSala = partida.codigoSala || onlineDueloEstado.codigoSala || "—";
+    const modo = esCoop ? "🤝 Cooperativo" : (partida.esOnline || onlineDueloEstado.conectado ? "🌐 Online" : "⚔️ Versus");
+
+    const labelsJuegos = {
+        duelo: "⚔️ Duelo Bolillero",
+        bomba: "💣 Desactivá la Bomba",
+        impostor: "🕵️‍♂️ Caza al Impostor",
+        memotest: "🧠 Memotest Conectado",
+        triatlon: "🏅 Triatlón Académico"
+    };
+
+    if (dom.podioBadgeGame) dom.podioBadgeGame.textContent = labelsJuegos[juego] || "🎮 Juego";
+    if (dom.podioBadgeMateria) dom.podioBadgeMateria.textContent = `📚 ${materia}`;
+    if (dom.podioBadgeSala) dom.podioBadgeSala.textContent = `🔑 PIN: ${codigoSala}`;
+    if (dom.podioBadgeMode) dom.podioBadgeMode.textContent = modo;
+
+    if (dom.podioOnlineTitle) {
+        dom.podioOnlineTitle.textContent = esCoop 
+            ? "RESULTADOS DE EQUIPO COOPERATIVO" 
+            : "SALA DE RESULTADOS & PODIO";
+    }
+
+    if (dom.podioOnlineSubtitle) {
+        if (esCoop) {
+            dom.podioOnlineSubtitle.textContent = partida.coopResultado && partida.coopResultado.victoria
+                ? "🎉 ¡Misión cumplida! El equipo alcanzó la meta colaborativa."
+                : "💔 El equipo agotó sus oportunidades. ¡Momento de debatir y repasar!";
+        } else {
+            const nomGanador = partida.ganador ? partida.ganador.nombre : "Campeón";
+            dom.podioOnlineSubtitle.textContent = `¡Felicitaciones a ${nomGanador} y a todos los participantes por la partida!`;
+        }
+    }
+
+    // 1. Escenario 3D del Podio
+    if (dom.podio3DStage) {
+        dom.podio3DStage.innerHTML = "";
+
+        if (esCoop) {
+            const victoria = partida.coopResultado ? partida.coopResultado.victoria : true;
+            const pts = partida.coopResultado ? partida.coopResultado.puntos : (partida.ganador ? partida.ganador.puntos : 0);
+            const card = document.createElement("div");
+            card.className = `podio-coop-card ${victoria ? "is-victory" : "is-defeat"}`;
+            card.innerHTML = `
+                <div class="podio-coop-banner-icon">${victoria ? "🏆" : "📚"}</div>
+                <h2 class="podio-coop-title">${victoria ? "¡EQUIPO TRIUNFADOR!" : "MESA DE REPASO FINALIZADA"}</h2>
+                <p class="podio-coop-desc">${partida.coopResultado && partida.coopResultado.motivo ? partida.coopResultado.motivo : "Evaluación colaborativa completada."}</p>
+                <div class="podio-coop-score-box">
+                    <span>Puntos acumulados:</span>
+                    <strong>${pts} pts</strong>
+                </div>
+            `;
+            dom.podio3DStage.appendChild(card);
+        } else {
+            const pos = partida.posiciones || [];
+            if (pos.length === 1) {
+                // Un solo jugador
+                const j = pos[0];
+                const step = document.createElement("div");
+                step.className = "podio-online-step podio-online-step--1";
+                step.innerHTML = `
+                    <div class="podio-step-avatar-wrap">
+                        <span class="podio-step-crown-mini">👑</span>
+                        <div class="podio-step-avatar">${j.avatar || "👑"}</div>
+                    </div>
+                    <div class="podio-step-name" title="${j.nombre}">${j.nombre}</div>
+                    <div class="podio-step-points">${j.puntos || 0} pts</div>
+                    <div class="podio-step-pillar">1</div>
+                `;
+                dom.podio3DStage.appendChild(step);
+            } else {
+                // 2 o más jugadores: 2° a la izquierda, 1° al centro, 3° a la derecha
+                const ordenPodio = [pos[1] || null, pos[0] || null, pos[2] || null];
+                const indices = [2, 1, 3];
+                const clases = ["podio-online-step--2", "podio-online-step--1", "podio-online-step--3"];
+                const coronas = ["", "👑", ""];
+
+                ordenPodio.forEach((j, idx) => {
+                    if (!j) return;
+                    const step = document.createElement("div");
+                    step.className = `podio-online-step ${clases[idx]}`;
+                    step.innerHTML = `
+                        <div class="podio-step-avatar-wrap">
+                            ${coronas[idx] ? `<span class="podio-step-crown-mini">${coronas[idx]}</span>` : ""}
+                            <div class="podio-step-avatar">${j.avatar || (indices[idx] === 1 ? "👑" : "👤")}</div>
+                        </div>
+                        <div class="podio-step-name" title="${j.nombre}">${j.nombre}</div>
+                        <div class="podio-step-points">${j.puntos || 0} pts</div>
+                        <div class="podio-step-pillar">${indices[idx]}</div>
+                    `;
+                    dom.podio3DStage.appendChild(step);
+                });
+            }
+        }
+    }
+
+    // 2. Menciones de Honor
+    if (dom.podioHonorsSection) {
+        dom.podioHonorsSection.innerHTML = "";
+
+        if (partida.reyRacha && partida.reyRacha.racha > 1) {
+            const chip = document.createElement("div");
+            chip.className = "podio-honor-chip";
+            chip.innerHTML = `🔥 <span><strong>Rey de la Racha:</strong> ${partida.reyRacha.nombre} (${partida.reyRacha.racha} seguidas)</span>`;
+            dom.podioHonorsSection.appendChild(chip);
+        }
+
+        if (partida.ladronRelampago && partida.ladronRelampago.robos > 0) {
+            const chip = document.createElement("div");
+            chip.className = "podio-honor-chip";
+            chip.innerHTML = `⚡ <span><strong>Ladrón Relámpago:</strong> ${partida.ladronRelampago.nombre} (${partida.ladronRelampago.robos} robos)</span>`;
+            dom.podioHonorsSection.appendChild(chip);
+        }
+
+        const pos = partida.posiciones || [];
+        if (pos.length > 0) {
+            const mejorEfectividad = [...pos].sort((a, b) => parseInt(b.efectividad || 0) - parseInt(a.efectividad || 0))[0];
+            if (mejorEfectividad && parseInt(mejorEfectividad.efectividad || 0) >= 80) {
+                const chip = document.createElement("div");
+                chip.className = "podio-honor-chip";
+                chip.innerHTML = `🎯 <span><strong>Precisión Quirúrgica:</strong> ${mejorEfectividad.nombre} (${mejorEfectividad.efectividad})</span>`;
+                dom.podioHonorsSection.appendChild(chip);
+            }
+        }
+    }
+
+    // 3. Tabla Detallada de Jugadores
+    if (dom.podioStatsTableBody) {
+        dom.podioStatsTableBody.innerHTML = "";
+        const pos = partida.posiciones || [];
+        if (dom.podioPlayersCountBadge) dom.podioPlayersCountBadge.textContent = `${pos.length} jugador${pos.length === 1 ? "" : "es"}`;
+
+        pos.forEach((j, i) => {
+            const tr = document.createElement("tr");
+            const esMio = perfilUsuario && perfilUsuario.apodo && j.nombre && j.nombre.toLowerCase().includes(perfilUsuario.apodo.toLowerCase());
+            if (esMio) tr.style.background = "rgba(79, 140, 255, 0.08)";
+
+            const rankClass = i === 0 ? "podio-rank-badge--1" : (i === 1 ? "podio-rank-badge--2" : (i === 2 ? "podio-rank-badge--3" : "podio-rank-badge--other"));
+            const medallas = ["🥇", "🥈", "🥉"];
+            const rankIcon = medallas[i] || `${i + 1}°`;
+
+            tr.innerHTML = `
+                <td>
+                    <span class="podio-rank-badge ${rankClass}">${rankIcon}</span>
+                </td>
+                <td>
+                    <div class="podio-player-cell">
+                        <span class="podio-player-cell-avatar">${j.avatar || "👤"}</span>
+                        <span>${j.nombre} ${esMio ? '<span class="badge badge--sm" style="background: rgba(79, 140, 255, 0.2); color: #93c5fd;">Tú</span>' : ''}</span>
+                    </div>
+                </td>
+                <td><strong style="color: #fbbf24; font-size: 1rem;">${j.puntos || 0} pts</strong></td>
+                <td><span>${j.aciertos !== undefined ? j.aciertos : "—"} / ${j.errores !== undefined ? j.errores : "—"}</span></td>
+                <td><span style="color: #6ee7b7; font-weight: 700;">${j.efectividad || "—"}</span></td>
+                <td><span style="color: var(--color-text-muted);">${j.tiempo || "—"}</span></td>
+                <td><span style="font-size: 0.82rem; color: var(--color-text-secondary);">${j.detalles || "—"}</span></td>
+            `;
+            dom.podioStatsTableBody.appendChild(tr);
+        });
+    }
+
+    // 4. Enlazar Acciones del Podio
+    if (dom.podioBtnVolverLobby) {
+        dom.podioBtnVolverLobby.onclick = () => retornarAlLobbyDesdePodio();
+    }
+    if (dom.podioBtnVolverMenu) {
+        dom.podioBtnVolverMenu.onclick = () => retornarAlMenuDesdePodio();
+    }
+    if (dom.podioBtnCompartirWsp) {
+        dom.podioBtnCompartirWsp.onclick = () => {
+            const texto = generarResumenWhatsApp(partida);
+            navigator.clipboard.writeText(texto).then(() => {
+                mostrarToast("📲 Resumen copiado para enviar por WhatsApp.", "exito");
+            }).catch(() => {
+                mostrarToast("📲 No se pudo copiar el resumen.", "aviso");
+            });
+        };
+    }
+    if (dom.podioBtnSalondeLaFama) {
+        dom.podioBtnSalondeLaFama.onclick = () => cambiarVista("fama");
+    }
+
+    // Enlazar botones del modal de victoria
+    if (dom.victoryReturnLobbyBtn) {
+        dom.victoryReturnLobbyBtn.onclick = () => {
+            if (dom.dueloVictoryModal && dom.dueloVictoryModal.close) dom.dueloVictoryModal.close();
+            retornarAlLobbyDesdePodio();
+        };
+    }
+    if (dom.victoryReturnHomeBtn) {
+        dom.victoryReturnHomeBtn.onclick = () => {
+            if (dom.dueloVictoryModal && dom.dueloVictoryModal.close) dom.dueloVictoryModal.close();
+            retornarAlMenuDesdePodio();
+        };
+    }
+
+    // 5. Navegar a la sala de podio
+    cambiarVista("podio");
+    reproducirSonido("ruletaFin");
+}
+
+function retornarAlLobbyDesdePodio() {
+    if (dom.dueloVictoryModal && dom.dueloVictoryModal.close) {
+        try { dom.dueloVictoryModal.close(); } catch(e) {}
+    }
+
+    if (onlineDueloEstado.modo === "online" && onlineDueloEstado.codigoSala) {
+        if (onlineDueloEstado.esHost) {
+            publicarMensajeSala({
+                tipo: "VOLVER_LOBBY_ONLINE"
+            });
+        }
+        cambiarVista("juntos");
+        mostrarSalaDeEsperaOnline(onlineDueloEstado.codigoSala);
+        mostrarToast("🔄 Volvieron al lobby de la sala.", "exito");
+    } else {
+        // Modo local
+        if (juegosEduEstado && juegosEduEstado.activo) {
+            cambiarVista("juegos");
+        } else {
+            cambiarVista("juntos");
+        }
+    }
+}
+
+function retornarAlMenuDesdePodio() {
+    if (dom.dueloVictoryModal && dom.dueloVictoryModal.close) {
+        try { dom.dueloVictoryModal.close(); } catch(e) {}
+    }
+
+    if (onlineDueloEstado.modo === "online" && onlineDueloEstado.codigoSala) {
+        salirDeSalaOnline();
+    }
+
+    if (juegosEduEstado.bomba && juegosEduEstado.bomba.timerId) clearInterval(juegosEduEstado.bomba.timerId);
+    if (juegosEduEstado.impostor && juegosEduEstado.impostor.timerId) clearInterval(juegosEduEstado.impostor.timerId);
+    if (juegosEduEstado.memotest && juegosEduEstado.memotest.timerId) clearInterval(juegosEduEstado.memotest.timerId);
+
+    cambiarVista("home");
+    mostrarToast("🏠 Regresaste al Menú Principal.");
+}
+
+function mostrarPodioDesdeBomba(puntos, desactiva, motivo) {
+    const lista = estado.listas.find(l => l.id === (juegosEduEstado.config ? juegosEduEstado.config.listaId : null));
+    const nombreLista = lista ? lista.nombre : (apuntesEstado.bomba ? apuntesEstado.bomba.nombre : "Materia");
+
+    let posiciones = [];
+    if (juegosEduEstado.bombaOnline && juegosEduEstado.bombaOnline.jugadores && juegosEduEstado.bombaOnline.jugadores.length > 0) {
+        posiciones = [...juegosEduEstado.bombaOnline.jugadores].sort((a, b) => {
+            if (a.desactivada && !b.desactivada) return -1;
+            if (!a.desactivada && b.desactivada) return 1;
+            return (b.puntos || 0) - (a.puntos || 0);
+        }).map((j, i) => ({
+            rank: i + 1,
+            nombre: j.apodo || j.nombre || `Agente ${i + 1}`,
+            avatar: j.avatar || (j.desactivada ? "🛡️" : "💥"),
+            puntos: j.puntos || 0,
+            aciertos: j.desactivada ? 3 : (j.fase ? j.fase - 1 : 1),
+            errores: j.detonada ? 3 : (j.fallos || 0),
+            efectividad: j.desactivada ? "100%" : (j.detonada ? "33%" : "66%"),
+            tiempo: j.tiempoRestante ? `${j.tiempoRestante}s restantes` : "—",
+            detalles: j.desactivada ? `✅ Desactivó (#${j.posicion || (i+1)})` : (j.detonada ? "💥 Detonó" : "En progreso")
+        }));
+    } else {
+        posiciones = [{
+            rank: 1,
+            nombre: perfilUsuario.apodo || "Tú",
+            avatar: desactiva ? "🛡️" : "💥",
+            puntos: puntos || 0,
+            aciertos: desactiva ? 3 : Math.max(0, (juegosEduEstado.bomba.fase || 1) - 1),
+            errores: (juegosEduEstado.bomba && juegosEduEstado.bomba.fallos) || 0,
+            efectividad: desactiva ? "100%" : `${Math.round(Math.max(0, ((juegosEduEstado.bomba && juegosEduEstado.bomba.fase) || 1) - 1) / 3 * 100)}%`,
+            tiempo: `${(juegosEduEstado.bomba && juegosEduEstado.bomba.tiempoRestante) || 0}s restantes`,
+            detalles: desactiva ? "Bomba Desactivada con éxito" : (motivo || "Detonación")
+        }];
+    }
+
+    const ganador = posiciones[0];
+    const datos = {
+        id: crypto.randomUUID(),
+        juego: "bomba",
+        esOnline: Boolean(juegosEduEstado.esOnline),
+        codigoSala: onlineDueloEstado.codigoSala || "",
+        listaNombre: nombreLista,
+        ganador: {
+            nombre: ganador ? ganador.nombre : "Sin campeón",
+            puntos: ganador ? ganador.puntos : puntos,
+            avatar: ganador ? ganador.avatar : "💣"
+        },
+        posiciones
+    };
+
+    if (onlineDueloEstado.modo === "online" && onlineDueloEstado.codigoSala && onlineDueloEstado.esHost) {
+        publicarMensajeSala({
+            tipo: "FIN_PARTIDA_ONLINE",
+            partidaGuardada: datos
+        });
+    }
+
+    mostrarPodioOnline(datos);
+}
+
+function mostrarPodioDesdeImpostor() {
+    const imp = juegosEduEstado.impostor;
+    const lista = estado.listas.find(l => l.id === (juegosEduEstado.config ? juegosEduEstado.config.listaId : null));
+    const nombreLista = lista ? lista.nombre : "Materia";
+
+    const datos = {
+        id: crypto.randomUUID(),
+        juego: "impostor",
+        esOnline: Boolean(onlineDueloEstado.conectado),
+        codigoSala: onlineDueloEstado.codigoSala || "",
+        listaNombre: nombreLista,
+        ganador: {
+            nombre: perfilUsuario.apodo || "Detective",
+            puntos: imp.puntaje || 0,
+            avatar: "🕵️‍♂️"
+        },
+        reyRacha: {
+            nombre: perfilUsuario.apodo || "Detective",
+            racha: imp.racha || 0
+        },
+        posiciones: [{
+            rank: 1,
+            nombre: perfilUsuario.apodo || "Detective",
+            avatar: "🕵️‍♂️",
+            puntos: imp.puntaje || 0,
+            aciertos: imp.impostoresAtrapados || Math.min(5, imp.ola),
+            errores: imp.fallos || 0,
+            efectividad: imp.fallos === 0 ? "100%" : `${Math.round((imp.impostoresAtrapados || 1) / ((imp.impostoresAtrapados || 1) + (imp.fallos || 0)) * 100)}%`,
+            tiempo: "Olas completadas",
+            detalles: `🎯 Olas: ${imp.ola}/${imp.maxOlas || 5} | Racha: ${imp.racha || 0}`
+        }]
+    };
+
+    if (onlineDueloEstado.modo === "online" && onlineDueloEstado.codigoSala && onlineDueloEstado.esHost) {
+        publicarMensajeSala({
+            tipo: "FIN_PARTIDA_ONLINE",
+            partidaGuardada: datos
+        });
+    }
+
+    mostrarPodioOnline(datos);
+}
+
+function mostrarPodioDesdeMemotest(pts, exito = true) {
+    const mem = juegosEduEstado.memotest;
+    const lista = estado.listas.find(l => l.id === (juegosEduEstado.config ? juegosEduEstado.config.listaId : null));
+    const nombreLista = lista ? lista.nombre : "Materia";
+
+    const efPct = mem.movimientos > 0 
+        ? Math.min(100, Math.round(((mem.paresEncontrados || 1) / mem.movimientos) * 100)) + "%" 
+        : "100%";
+
+    const datos = {
+        id: crypto.randomUUID(),
+        juego: "memotest",
+        esOnline: Boolean(onlineDueloEstado.conectado),
+        codigoSala: onlineDueloEstado.codigoSala || "",
+        listaNombre: nombreLista,
+        ganador: {
+            nombre: perfilUsuario.apodo || "Duelista Cuántico",
+            puntos: pts || 500,
+            avatar: "🧠"
+        },
+        reyRacha: {
+            nombre: perfilUsuario.apodo || "Duelista",
+            racha: mem.racha || 0
+        },
+        posiciones: [{
+            rank: 1,
+            nombre: perfilUsuario.apodo || "Duelista Cuántico",
+            avatar: "🧠",
+            puntos: pts || 500,
+            aciertos: mem.paresEncontrados || 6,
+            errores: Math.max(0, (mem.movimientos || 6) - (mem.paresEncontrados || 6)),
+            efectividad: efPct,
+            tiempo: typeof formatearTiempo === "function" ? formatearTiempo(mem.segundos || 0) : `${mem.segundos || 0}s`,
+            detalles: `Movimientos: ${mem.movimientos || 0} | Pares: ${mem.paresEncontrados}/${mem.totalPares || 6}`
+        }]
+    };
+
+    if (onlineDueloEstado.modo === "online" && onlineDueloEstado.codigoSala && onlineDueloEstado.esHost) {
+        publicarMensajeSala({
+            tipo: "FIN_PARTIDA_ONLINE",
+            partidaGuardada: datos
+        });
+    }
+
+    mostrarPodioOnline(datos);
 }
 
 /* ==========================================================
@@ -8448,7 +8942,21 @@ function seleccionarTemaManualBolillero(temaId, dispararIaInmediata = false) {
         });
     }
 
-    // Modales de Duelo
+    // Modales de Duelo & Podio Online
+    if (dom.victoryReturnLobbyBtn) {
+        dom.victoryReturnLobbyBtn.addEventListener("click", () => {
+            if (dom.dueloVictoryModal) dom.dueloVictoryModal.close();
+            retornarAlLobbyDesdePodio();
+        });
+    }
+
+    if (dom.victoryReturnHomeBtn) {
+        dom.victoryReturnHomeBtn.addEventListener("click", () => {
+            if (dom.dueloVictoryModal) dom.dueloVictoryModal.close();
+            retornarAlMenuDesdePodio();
+        });
+    }
+
     if (dom.victoryGoToFamaBtn) {
         dom.victoryGoToFamaBtn.addEventListener("click", () => {
             if (dom.dueloVictoryModal) dom.dueloVictoryModal.close();
@@ -8459,7 +8967,22 @@ function seleccionarTemaManualBolillero(temaId, dispararIaInmediata = false) {
     if (dom.victoryCloseBtn) {
         dom.victoryCloseBtn.addEventListener("click", () => {
             if (dom.dueloVictoryModal) dom.dueloVictoryModal.close();
+            if (dueloEstado.partida && !dueloEstado.partida.activa) {
+                cambiarVista("podio");
+            }
         });
+    }
+
+    if (dom.podioBtnVolverLobby) {
+        dom.podioBtnVolverLobby.addEventListener("click", retornarAlLobbyDesdePodio);
+    }
+
+    if (dom.podioBtnVolverMenu) {
+        dom.podioBtnVolverMenu.addEventListener("click", retornarAlMenuDesdePodio);
+    }
+
+    if (dom.podioBtnSalondeLaFama) {
+        dom.podioBtnSalondeLaFama.addEventListener("click", () => cambiarVista("fama"));
     }
 
     if (dom.dueloCancelSocorroBtn) {
@@ -8471,7 +8994,7 @@ function seleccionarTemaManualBolillero(temaId, dispararIaInmediata = false) {
     window.addEventListener("hashchange", () => {
         const hash = window.location.hash.replace("#", "");
         const normalized = (hash === "duelo" || hash === "juntos") ? "juntos" : hash;
-        if (["solo", "juntos", "bolillero", "fama", "home", "laboratorio"].includes(normalized)) {
+        if (["solo", "juntos", "bolillero", "fama", "home", "laboratorio", "podio"].includes(normalized)) {
             if (normalized !== estado.interfaz.vistaActual) {
                 cambiarVista(normalized);
             }
@@ -9038,7 +9561,7 @@ function iniciarAplicacion() {
 // =========================================================
 // GESTOR DE VERSIONES Y ACTUALIZACIÓN AUTOMÁTICA
 // =========================================================
-const APP_BUILD_VERSION = "27.0";
+const APP_BUILD_VERSION = "27.1";
 
 async function forzarActualizacionCompleta(mostrarNotificacion = true) {
     const btnActualizar = document.getElementById("btnForzarActualizar");
@@ -10100,6 +10623,10 @@ function desactivarBombaExito() {
         juegosEduEstado.triatlon.scores[0] = puntos;
         juegosEduEstado.triatlon.puntosTotal += puntos;
         setTimeout(() => avanzarRondaTriatlon(2), 2500);
+    } else {
+        setTimeout(() => {
+            mostrarPodioDesdeBomba(puntos, true);
+        }, 1200);
     }
 }
 
@@ -10157,8 +10684,8 @@ function detonarBomba(motivo) {
     } else {
         setTimeout(() => {
             if (dom.arenaBomba) dom.arenaBomba.classList.remove("bomba-exploding");
-            mostrarToast(`💥 ¡Bomba detonada! Podés reintentar o volver al lobby.`);
-        }, 3000);
+            mostrarPodioDesdeBomba(puntos, false, motivo);
+        }, 2000);
     }
 }
 
@@ -10572,7 +11099,7 @@ function finalizarImpostor() {
         juegosEduEstado.triatlon.puntosTotal += imp.puntaje;
         setTimeout(() => avanzarRondaTriatlon(3), 2000);
     } else {
-        setTimeout(() => cambiarVista("fama"), 1800);
+        setTimeout(() => mostrarPodioDesdeImpostor(), 1500);
     }
 }
 
@@ -10924,7 +11451,7 @@ function finalizarMemotest(pts, exito = true) {
         juegosEduEstado.triatlon.puntosTotal += puntosFinales;
         finalizarTriatlon();
     } else {
-        setTimeout(() => cambiarVista("fama"), 1800);
+        setTimeout(() => mostrarPodioDesdeMemotest(puntosFinales, exito), 1500);
     }
 }
 
