@@ -246,11 +246,21 @@ Debes responder ÚNICAMENTE un objeto JSON con esta estructura exacta:
 } `;
         } else if (tipoJuego === 'impostor') {
             const cantidadCasos = Math.min(10, Math.max(3, parseInt(body.cantidadCasos || body.cantidadRondas || 5, 10)));
+            let ordenImpostor = "";
+            if (instruccionUsuario && typeof instruccionUsuario === 'string' && instruccionUsuario.trim().length > 0) {
+                ordenImpostor = `
+ORDEN O ENFOQUE PUNTUAL DEL ESTUDIANTE:
+"${instruccionUsuario.trim()}"
+REGLA DE FILTRADO ESTRICTO: Si el material provisto cubre múltiples unidades o temas, DEBES focalizar los ${cantidadCasos} casos EXCLUSIVAMENTE en la unidad, capítulo o aspectos solicitados por el estudiante.`;
+            }
+
             promptInstrucciones = `
 JUEGO: "CAZA AL IMPOSTOR"
 TEMA: "${tema}"
 NIVEL: ${dificultad}
 CANTIDAD EXACTA REQUERIDA: Generá un expediente completo de exactamente ${cantidadCasos} CASOS progresivos y distintos sobre el tema y el material provisto.
+${ordenImpostor}
+
 Para CADA uno de los ${cantidadCasos} casos:
 - Formular 4 afirmaciones académicas: exactamente 3 VERDADERAS (rigurosas y correctas) y exactamente 1 FALSA (el IMPOSTOR, con un error conceptual sutil o contradicción teórica).
 - "opciones": array con las 4 afirmaciones.
@@ -276,24 +286,29 @@ Debes responder ÚNICAMENTE un objeto JSON con esta estructura exacta:
   ]
 } `;
         } else if (tipoJuego === 'memotest') {
+            const cantidadPares = Math.min(12, Math.max(4, parseInt(body.cantidadPares || 6, 10)));
+            let ordenMemotest = "";
+            if (instruccionUsuario && typeof instruccionUsuario === 'string' && instruccionUsuario.trim().length > 0) {
+                ordenMemotest = `
+ORDEN O FILTRO EXCLUSIVO DEL ESTUDIANTE:
+"${instruccionUsuario.trim()}"
+REGLA DE FILTRADO ESTRICTO: El estudiante especificó una unidad, capítulo o enfoque concreto (por ejemplo: "solo conceptos de la Unidad 1" o "fórmulas del capítulo 2"). Si el material contiene toda la materia, DEBES extraer los ${cantidadPares} pares EXCLUSIVAMENTE de esa unidad o tema solicitado.`;
+            }
+
             promptInstrucciones = `
 JUEGO: "MEMOTEST CONECTADO"
 TEMA: "${tema}"
 NIVEL: ${dificultad}
+${ordenMemotest}
 
-Generá 6 pares de Concepto <-> Definición o Ecuación matemática clave para un tablero de memoria académica.
+Generá exactamente ${cantidadPares} pares de Concepto <-> Definición o Ecuación matemática clave para un tablero de memoria académica.
 Cada "concepto" debe ser corto (1 a 4 palabras).
 Cada "definicion" debe ser concisa pero precisa (máximo 80 caracteres).
 
 Debes responder ÚNICAMENTE un objeto JSON con esta estructura exacta:
 {
   "pares": [
-    { "concepto": "Concepto 1", "definicion": "Definición o fórmula 1" },
-    { "concepto": "Concepto 2", "definicion": "Definición o fórmula 2" },
-    { "concepto": "Concepto 3", "definicion": "Definición o fórmula 3" },
-    { "concepto": "Concepto 4", "definicion": "Definición o fórmula 4" },
-    { "concepto": "Concepto 5", "definicion": "Definición o fórmula 5" },
-    { "concepto": "Concepto 6", "definicion": "Definición o fórmula 6" }
+    { "concepto": "Concepto 1", "definicion": "Definición o fórmula 1" }
   ]
 }`;
         } else if (tipoJuego === 'temas_bolillero' || tipoJuego === 'palabras_bolillero') {

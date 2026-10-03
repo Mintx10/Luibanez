@@ -915,7 +915,68 @@ const dom = {
     bombaBtnCongelar: document.getElementById("bombaBtnCongelar"),
     bombaCountCongelar: document.getElementById("bombaCountCongelar"),
     bombaBtnPista: document.getElementById("bombaBtnPista"),
-    bombaCountPista: document.getElementById("bombaCountPista")
+    bombaCountPista: document.getElementById("bombaCountPista"),
+
+    /* Modal de Configuración Inicial: Impostor IA */
+    impostorSetupModal: document.getElementById("impostorSetupModal"),
+    closeImpostorSetupModalBtn: document.getElementById("closeImpostorSetupModalBtn"),
+    closeImpostorSetupModalBottomBtn: document.getElementById("closeImpostorSetupModalBottomBtn"),
+    impostorBtnCargarConfig: document.getElementById("impostorBtnCargarConfig"),
+    impostorUploadDropzone: document.getElementById("impostorUploadDropzone"),
+    impostorPdfFileInput: document.getElementById("impostorPdfFileInput"),
+    impostorLoadedPdfInfo: document.getElementById("impostorLoadedPdfInfo"),
+    impostorLoadedPdfIcon: document.getElementById("impostorLoadedPdfIcon"),
+    impostorLoadedPdfName: document.getElementById("impostorLoadedPdfName"),
+    impostorLoadedPdfMeta: document.getElementById("impostorLoadedPdfMeta"),
+    impostorBtnQuitarPdf: document.getElementById("impostorBtnQuitarPdf"),
+    impostorModalTimeBadge: document.getElementById("impostorModalTimeBadge"),
+    impostorModalTimeSelector: document.getElementById("impostorModalTimeSelector"),
+    impostorConfigDifficultySelector: document.getElementById("impostorConfigDifficultySelector"),
+    impostorConfigOrderInput: document.getElementById("impostorConfigOrderInput"),
+    impostorModalRoundsBadge: document.getElementById("impostorModalRoundsBadge"),
+    impostorModalRoundsSelector: document.getElementById("impostorModalRoundsSelector"),
+    impostorSetupCard5050: document.getElementById("impostorSetupCard5050"),
+    impostorSetupCheck5050: document.getElementById("impostorSetupCheck5050"),
+    impostorSetupCardTiempo: document.getElementById("impostorSetupCardTiempo"),
+    impostorSetupCheckTiempo: document.getElementById("impostorSetupCheckTiempo"),
+    impostorSetupCardSocorro: document.getElementById("impostorSetupCardSocorro"),
+    impostorSetupCheckSocorro: document.getElementById("impostorSetupCheckSocorro"),
+    impostorOpenConfigBtn: document.getElementById("impostorOpenConfigBtn"),
+
+    /* Modal de Configuración Inicial: Memotest IA & Arena */
+    memotestSetupModal: document.getElementById("memotestSetupModal"),
+    closeMemotestSetupModalBtn: document.getElementById("closeMemotestSetupModalBtn"),
+    closeMemotestSetupModalBottomBtn: document.getElementById("closeMemotestSetupModalBottomBtn"),
+    memotestBtnCargarConfig: document.getElementById("memotestBtnCargarConfig"),
+    memotestUploadDropzone: document.getElementById("memotestUploadDropzone"),
+    memotestPdfFileInput: document.getElementById("memotestPdfFileInput"),
+    memotestLoadedPdfInfo: document.getElementById("memotestLoadedPdfInfo"),
+    memotestLoadedPdfIcon: document.getElementById("memotestLoadedPdfIcon"),
+    memotestLoadedPdfName: document.getElementById("memotestLoadedPdfName"),
+    memotestLoadedPdfMeta: document.getElementById("memotestLoadedPdfMeta"),
+    memotestBtnQuitarPdf: document.getElementById("memotestBtnQuitarPdf"),
+    memotestModalTimeBadge: document.getElementById("memotestModalTimeBadge"),
+    memotestModalTimeSelector: document.getElementById("memotestModalTimeSelector"),
+    memotestConfigDifficultySelector: document.getElementById("memotestConfigDifficultySelector"),
+    memotestConfigOrderInput: document.getElementById("memotestConfigOrderInput"),
+    memotestPairsBadge: document.getElementById("memotestPairsBadge"),
+    memotestPairsSelector: document.getElementById("memotestPairsSelector"),
+    memotestSetupCardVistazo: document.getElementById("memotestSetupCardVistazo"),
+    memotestSetupCheckVistazo: document.getElementById("memotestSetupCheckVistazo"),
+    memotestSetupCardCongelar: document.getElementById("memotestSetupCardCongelar"),
+    memotestSetupCheckCongelar: document.getElementById("memotestSetupCheckCongelar"),
+    memotestSetupCardConexion: document.getElementById("memotestSetupCardConexion"),
+    memotestSetupCheckConexion: document.getElementById("memotestSetupCheckConexion"),
+    memotestOpenConfigBtn: document.getElementById("memotestOpenConfigBtn"),
+    memotestStreakBadge: document.getElementById("memotestStreakBadge"),
+    memotestProgressBar: document.getElementById("memotestProgressBar"),
+    memotestComodinesTray: document.getElementById("memotestComodinesTray"),
+    memotestBtnVistazo: document.getElementById("memotestBtnVistazo"),
+    memotestCountVistazo: document.getElementById("memotestCountVistazo"),
+    memotestBtnCongelar: document.getElementById("memotestBtnCongelar"),
+    memotestCountCongelar: document.getElementById("memotestCountCongelar"),
+    memotestBtnConexion: document.getElementById("memotestBtnConexion"),
+    memotestCountConexion: document.getElementById("memotestCountConexion")
 };
 
 /* ==========================================================
@@ -8763,6 +8824,213 @@ function iniciarAplicacion() {
         dom.bombaBtnPista.addEventListener("click", usarComodinBombaPista);
     }
 
+    // =========================================================
+    // LISTENERS: MODAL DE CONFIGURACIÓN DE CAZA AL IMPOSTOR (IA)
+    // =========================================================
+    if (dom.impostorOpenConfigBtn) {
+        dom.impostorOpenConfigBtn.addEventListener("click", () => abrirModalConfigImpostor(juegosEduEstado.modo || "solo"));
+    }
+    if (dom.closeImpostorSetupModalBtn) {
+        dom.closeImpostorSetupModalBtn.addEventListener("click", cerrarModalConfigImpostor);
+    }
+    if (dom.closeImpostorSetupModalBottomBtn) {
+        dom.closeImpostorSetupModalBottomBtn.addEventListener("click", () => {
+            cerrarModalConfigImpostor();
+            iniciarImpostor(juegosEduEstado.modo || "solo");
+        });
+    }
+    if (dom.impostorUploadDropzone && dom.impostorPdfFileInput) {
+        dom.impostorUploadDropzone.addEventListener("click", (e) => {
+            if (e.target.closest("#impostorBtnQuitarPdf")) return;
+            dom.impostorPdfFileInput.click();
+        });
+        dom.impostorPdfFileInput.addEventListener("change", (e) => {
+            const file = e.target.files?.[0];
+            if (file) procesarArchivoImpostor(file);
+        });
+        dom.impostorUploadDropzone.addEventListener("dragover", (e) => {
+            e.preventDefault();
+            dom.impostorUploadDropzone.classList.add("is-dragover");
+        });
+        dom.impostorUploadDropzone.addEventListener("dragleave", () => {
+            dom.impostorUploadDropzone.classList.remove("is-dragover");
+        });
+        dom.impostorUploadDropzone.addEventListener("drop", (e) => {
+            e.preventDefault();
+            dom.impostorUploadDropzone.classList.remove("is-dragover");
+            const file = e.dataTransfer.files?.[0];
+            if (file) procesarArchivoImpostor(file);
+        });
+    }
+    if (dom.impostorBtnQuitarPdf) {
+        dom.impostorBtnQuitarPdf.addEventListener("click", (e) => {
+            e.stopPropagation();
+            limpiarArchivoImpostor();
+        });
+    }
+    if (dom.impostorModalTimeSelector) {
+        dom.impostorModalTimeSelector.querySelectorAll(".impostor-time-modal-btn").forEach(btn => {
+            btn.addEventListener("click", () => {
+                const t = parseInt(btn.dataset.time, 10);
+                if (t) {
+                    impostorSetupEstado.tiempo = t;
+                    sincronizarTiempoImpostorUI();
+                }
+            });
+        });
+    }
+    if (dom.impostorModalRoundsSelector) {
+        dom.impostorModalRoundsSelector.querySelectorAll(".impostor-rounds-modal-btn").forEach(btn => {
+            btn.addEventListener("click", () => {
+                const r = parseInt(btn.dataset.rounds, 10);
+                if (r) {
+                    impostorSetupEstado.rondas = r;
+                    sincronizarRondasImpostorUI();
+                }
+            });
+        });
+    }
+    if (dom.impostorConfigDifficultySelector) {
+        dom.impostorConfigDifficultySelector.querySelectorAll(".lab-diff-btn").forEach(btn => {
+            btn.addEventListener("click", () => {
+                impostorSetupEstado.dificultad = btn.dataset.diff;
+                sincronizarDificultadImpostorUI();
+            });
+        });
+    }
+    [
+        { card: dom.impostorSetupCard5050, check: dom.impostorSetupCheck5050, key: "pista5050" },
+        { card: dom.impostorSetupCardTiempo, check: dom.impostorSetupCheckTiempo, key: "tiempoExtra" },
+        { card: dom.impostorSetupCardSocorro, check: dom.impostorSetupCheckSocorro, key: "radarSocorro" }
+    ].forEach(({ card, check, key }) => {
+        if (!card) return;
+        card.addEventListener("click", (e) => {
+            if (e.target !== check && check) {
+                check.checked = !check.checked;
+            }
+            const activo = check ? check.checked : true;
+            impostorSetupEstado.comodines[key] = activo;
+            card.classList.toggle("is-active", activo);
+            const badge = card.querySelector(".bomba-setup-badge");
+            if (badge) {
+                badge.textContent = activo ? "Activado" : "Desactivado";
+                badge.className = `badge ${activo ? 'badge--success' : 'badge--secondary'} bomba-setup-badge`;
+            }
+        });
+    });
+    if (dom.impostorBtnCargarConfig) {
+        dom.impostorBtnCargarConfig.addEventListener("click", ejecutarInicioImpostorConfigurado);
+    }
+
+    // =========================================================
+    // LISTENERS: MODAL DE CONFIGURACIÓN DE MEMOTEST (IA)
+    // =========================================================
+    if (dom.memotestOpenConfigBtn) {
+        dom.memotestOpenConfigBtn.addEventListener("click", () => abrirModalConfigMemotest(juegosEduEstado.modo || "solo"));
+    }
+    if (dom.closeMemotestSetupModalBtn) {
+        dom.closeMemotestSetupModalBtn.addEventListener("click", cerrarModalConfigMemotest);
+    }
+    if (dom.closeMemotestSetupModalBottomBtn) {
+        dom.closeMemotestSetupModalBottomBtn.addEventListener("click", () => {
+            cerrarModalConfigMemotest();
+            iniciarMemotest(juegosEduEstado.modo || "solo");
+        });
+    }
+    if (dom.memotestUploadDropzone && dom.memotestPdfFileInput) {
+        dom.memotestUploadDropzone.addEventListener("click", (e) => {
+            if (e.target.closest("#memotestBtnQuitarPdf")) return;
+            dom.memotestPdfFileInput.click();
+        });
+        dom.memotestPdfFileInput.addEventListener("change", (e) => {
+            const file = e.target.files?.[0];
+            if (file) procesarArchivoMemotest(file);
+        });
+        dom.memotestUploadDropzone.addEventListener("dragover", (e) => {
+            e.preventDefault();
+            dom.memotestUploadDropzone.classList.add("is-dragover");
+        });
+        dom.memotestUploadDropzone.addEventListener("dragleave", () => {
+            dom.memotestUploadDropzone.classList.remove("is-dragover");
+        });
+        dom.memotestUploadDropzone.addEventListener("drop", (e) => {
+            e.preventDefault();
+            dom.memotestUploadDropzone.classList.remove("is-dragover");
+            const file = e.dataTransfer.files?.[0];
+            if (file) procesarArchivoMemotest(file);
+        });
+    }
+    if (dom.memotestBtnQuitarPdf) {
+        dom.memotestBtnQuitarPdf.addEventListener("click", (e) => {
+            e.stopPropagation();
+            limpiarArchivoMemotest();
+        });
+    }
+    if (dom.memotestPairsSelector) {
+        dom.memotestPairsSelector.querySelectorAll(".memotest-pairs-chip").forEach(btn => {
+            btn.addEventListener("click", () => {
+                const p = parseInt(btn.dataset.pairs, 10);
+                if (p) {
+                    memotestSetupEstado.pares = p;
+                    sincronizarParesMemotestUI();
+                }
+            });
+        });
+    }
+    if (dom.memotestModalTimeSelector) {
+        dom.memotestModalTimeSelector.querySelectorAll(".memotest-time-modal-btn").forEach(btn => {
+            btn.addEventListener("click", () => {
+                const t = parseInt(btn.dataset.time, 10);
+                memotestSetupEstado.tiempo = t;
+                sincronizarTiempoMemotestUI();
+            });
+        });
+    }
+    if (dom.memotestConfigDifficultySelector) {
+        dom.memotestConfigDifficultySelector.querySelectorAll(".lab-diff-btn").forEach(btn => {
+            btn.addEventListener("click", () => {
+                memotestSetupEstado.dificultad = btn.dataset.diff;
+                sincronizarDificultadMemotestUI();
+            });
+        });
+    }
+    [
+        { card: dom.memotestSetupCardVistazo, check: dom.memotestSetupCheckVistazo, key: "vistazo" },
+        { card: dom.memotestSetupCardCongelar, check: dom.memotestSetupCheckCongelar, key: "congelar" },
+        { card: dom.memotestSetupCardConexion, check: dom.memotestSetupCheckConexion, key: "conexion" }
+    ].forEach(({ card, check, key }) => {
+        if (!card) return;
+        card.addEventListener("click", (e) => {
+            if (e.target !== check && check) {
+                check.checked = !check.checked;
+            }
+            const activo = check ? check.checked : true;
+            memotestSetupEstado.comodines[key] = activo;
+            card.classList.toggle("is-active", activo);
+            const badge = card.querySelector(".bomba-setup-badge");
+            if (badge) {
+                badge.textContent = activo ? "Activado" : "Desactivado";
+                badge.className = `badge ${activo ? 'badge--success' : 'badge--secondary'} bomba-setup-badge`;
+            }
+        });
+    });
+    if (dom.memotestBtnCargarConfig) {
+        dom.memotestBtnCargarConfig.addEventListener("click", ejecutarInicioMemotestConfigurado);
+    }
+
+    // =========================================================
+    // LISTENERS: COMODINES EN PARTIDA DE MEMOTEST
+    // =========================================================
+    if (dom.memotestBtnVistazo) {
+        dom.memotestBtnVistazo.addEventListener("click", usarComodinMemotestVistazo);
+    }
+    if (dom.memotestBtnCongelar) {
+        dom.memotestBtnCongelar.addEventListener("click", usarComodinMemotestCongelar);
+    }
+    if (dom.memotestBtnConexion) {
+        dom.memotestBtnConexion.addEventListener("click", usarComodinMemotestConexion);
+    }
+
     // Chequeo de versión inmediato
     verificarActualizacionesDisponibles(true);
 }
@@ -8770,7 +9038,7 @@ function iniciarAplicacion() {
 // =========================================================
 // GESTOR DE VERSIONES Y ACTUALIZACIÓN AUTOMÁTICA
 // =========================================================
-const APP_BUILD_VERSION = "26.9";
+const APP_BUILD_VERSION = "27.0";
 
 async function forzarActualizacionCompleta(mostrarNotificacion = true) {
     const btnActualizar = document.getElementById("btnForzarActualizar");
@@ -9312,40 +9580,34 @@ async function abrirArenaJuego(tipoJuego, modo, listaId = null, forzarNuevas = f
     if (dom.arenaMemotest) dom.arenaMemotest.classList.add("hidden");
     if (dom.triatlonProgressBar) dom.triatlonProgressBar.classList.add("hidden");
 
+    // Conmutar botones de configuración en la topbar de juegos
+    if (dom.bombaOpenConfigBtn) dom.bombaOpenConfigBtn.classList.toggle("hidden", tipoJuego !== "bomba");
+    if (dom.impostorOpenConfigBtn) dom.impostorOpenConfigBtn.classList.toggle("hidden", tipoJuego !== "impostor");
+    if (dom.memotestOpenConfigBtn) dom.memotestOpenConfigBtn.classList.toggle("hidden", tipoJuego !== "memotest");
+
     cambiarVista("juegos");
 
-    // Para Caza al Impostor: mostrar de inmediato el panel de configuración sin bloquear con overlay
+    // Para Caza al Impostor: abrir modal de configuración inicial
     if (tipoJuego === "impostor") {
-        iniciarImpostor(modo);
-        if (apunteActivo && apunteActivo.texto) {
-            enriquecerJuegoActualConIA(false).then(() => {
-                actualizarSetupImpostorUI();
-            }).catch(console.warn);
-        }
-        comprobarYMostrarReglas("impostor");
+        abrirModalConfigImpostor(modo);
         return;
     }
 
-    // Para Bomba y otros juegos con PDF: mostrar overlay mientras Gemini genera preguntas
-    if (apunteActivo && apunteActivo.texto) {
-        mostrarOverlayCargandoJuegoIA(true, tipoJuego);
-        try {
-            await enriquecerJuegoActualConIA(false);
-        } catch (err) {
-            console.warn("Fallo al pregenerar con IA:", err);
-        } finally {
-            mostrarOverlayCargandoJuegoIA(false);
-        }
-    }
-
-    // Iniciar la arena del juego con el cronómetro comenzando sincronizado al 100%
-    if (tipoJuego === "triatlon") {
-        iniciarTriatlon(modo);
-    } else if (tipoJuego === "bomba") {
+    // Para Bomba: abrir modal de configuración inicial
+    if (tipoJuego === "bomba") {
         abrirModalConfigBomba(modo);
         return;
-    } else if (tipoJuego === "memotest") {
-        iniciarMemotest(modo);
+    }
+
+    // Para Memotest: abrir modal de configuración inicial
+    if (tipoJuego === "memotest") {
+        abrirModalConfigMemotest(modo);
+        return;
+    }
+
+    // Triatlón Académico
+    if (tipoJuego === "triatlon") {
+        iniciarTriatlon(modo);
     }
 
     comprobarYMostrarReglas(tipoJuego);
@@ -10329,11 +10591,19 @@ function iniciarMemotest(modo) {
     mem.primeraCarta = null;
     mem.bloqueado = false;
     mem.paresEncontrados = 0;
-    mem.totalPares = Math.min(6, juegosEduEstado.temas.length);
+    mem.totalPares = (memotestSetupEstado && memotestSetupEstado.pares)
+        ? Math.min(memotestSetupEstado.pares, juegosEduEstado.temas.length)
+        : Math.min(6, juegosEduEstado.temas.length);
     mem.movimientos = 0;
     mem.segundos = 0;
+    mem.tiempoLimite = (memotestSetupEstado && memotestSetupEstado.tiempo) ? memotestSetupEstado.tiempo : 0;
+    mem.racha = 0;
+    mem.puntaje = 0;
 
     clearInterval(mem.timerId);
+
+    // Inicializar comodines de Memotest
+    inicializarComodinesMemotest();
 
     // Generar cartas
     const temasElegidos = [...juegosEduEstado.temas].slice(0, mem.totalPares);
@@ -10344,13 +10614,13 @@ function iniciarMemotest(modo) {
             id: `par_${parId}_c`,
             parId,
             tipo: "concepto",
-            texto: t.memotest.concepto || t.nombre
+            texto: t.memotest?.concepto || t.nombre
         });
         cartasGeneradas.push({
             id: `par_${parId}_f`,
             parId,
             tipo: "formula",
-            texto: t.memotest.definicionOFormula || t.descripcion
+            texto: t.memotest?.definicionOFormula || t.descripcion
         });
     });
 
@@ -10360,15 +10630,34 @@ function iniciarMemotest(modo) {
 
     if (dom.memotestPairsCount) dom.memotestPairsCount.textContent = `0 / ${mem.totalPares}`;
     if (dom.memotestMovesCount) dom.memotestMovesCount.textContent = "0";
-    if (dom.memotestTimerDisplay) dom.memotestTimerDisplay.textContent = "00:00";
+    if (dom.memotestTimerDisplay) dom.memotestTimerDisplay.textContent = mem.tiempoLimite > 0 ? formatearTiempo(mem.tiempoLimite) : "00:00";
     if (dom.memotestScoreDisplay) dom.memotestScoreDisplay.textContent = "0";
+    if (dom.memotestStreakBadge) dom.memotestStreakBadge.textContent = "🔥 x1";
+    if (dom.memotestProgressBar) dom.memotestProgressBar.style.width = "0%";
 
+    // Si tiene habilitado vistazo inicial en setup, dar vistazo inicial de 2.5s
+    if (memotestSetupEstado && memotestSetupEstado.comodines && memotestSetupEstado.comodines.vistazo) {
+        setTimeout(() => {
+            ejecutarVistazoTableroMemotest(2500);
+        }, 500);
+    }
+
+    let tiempoRestante = mem.tiempoLimite;
     mem.timerId = setInterval(() => {
-        mem.segundos++;
-        const m = Math.floor(mem.segundos / 60);
-        const s = mem.segundos % 60;
-        if (dom.memotestTimerDisplay) {
-            dom.memotestTimerDisplay.textContent = `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+        if (mem.tiempoLimite > 0) {
+            tiempoRestante--;
+            if (dom.memotestTimerDisplay) dom.memotestTimerDisplay.textContent = formatearTiempo(Math.max(0, tiempoRestante));
+            if (tiempoRestante <= 0) {
+                clearInterval(mem.timerId);
+                finalizarMemotest(mem.puntaje, false);
+            }
+        } else {
+            mem.segundos++;
+            const m = Math.floor(mem.segundos / 60);
+            const s = mem.segundos % 60;
+            if (dom.memotestTimerDisplay) {
+                dom.memotestTimerDisplay.textContent = `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+            }
         }
     }, 1000);
 }
@@ -10382,11 +10671,31 @@ function renderTableroMemotest() {
         cardEl.className = `memotest-card memotest-card--${c.tipo}`;
         cardEl.dataset.id = c.id;
         cardEl.dataset.parId = c.parId;
+        cardEl.setAttribute("tabindex", "0");
+        cardEl.setAttribute("role", "button");
+        cardEl.setAttribute("aria-label", `Carta de Memotest ${c.tipo}`);
+
         cardEl.innerHTML = `
-            <div class="memotest-card__face-back">🧠</div>
-            <div class="memotest-card__face-front hidden">${c.texto}</div>
+            <div class="memotest-card__inner">
+                <div class="memotest-card__face-back">
+                    <span class="memotest-card__back-pattern"></span>
+                    <span class="memotest-card__back-icon">🧠</span>
+                </div>
+                <div class="memotest-card__face-front">
+                    <span class="memotest-card__pill">${c.tipo === "concepto" ? "🔑 CONCEPTO" : "📐 DEFINICIÓN / FÓRMULA"}</span>
+                    <span class="memotest-card__text">${c.texto}</span>
+                </div>
+            </div>
         `;
+
         cardEl.addEventListener("click", () => clickCartaMemotest(c, cardEl));
+        cardEl.addEventListener("keydown", (e) => {
+            if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                clickCartaMemotest(c, cardEl);
+            }
+        });
+
         dom.memotestGrid.appendChild(cardEl);
     });
 }
@@ -10396,12 +10705,9 @@ function clickCartaMemotest(carta, cardEl) {
     if (mem.bloqueado) return;
     if (cardEl.classList.contains("is-matched") || cardEl.classList.contains("is-flipped")) return;
 
-    // Voltear carta
+    // Volteo con perspectiva 3D
     cardEl.classList.add("is-flipped");
-    const faceBack = cardEl.querySelector(".memotest-card__face-back");
-    const faceFront = cardEl.querySelector(".memotest-card__face-front");
-    if (faceBack) faceBack.classList.add("hidden");
-    if (faceFront) faceFront.classList.remove("hidden");
+    reproducirSonido("click");
 
     if (!mem.primeraCarta) {
         mem.primeraCarta = { carta, cardEl };
@@ -10411,49 +10717,207 @@ function clickCartaMemotest(carta, cardEl) {
 
         const primera = mem.primeraCarta;
         if (primera.carta.parId === carta.parId && primera.carta.id !== carta.id) {
-            // ¡MATCH!
+            // ¡MATCH EXITOSO!
             cardEl.classList.add("is-matched");
             primera.cardEl.classList.add("is-matched");
             mem.paresEncontrados++;
-            if (dom.memotestPairsCount) dom.memotestPairsCount.textContent = `${mem.paresEncontrados} / ${mem.totalPares}`;
-            mostrarToast("✨ ¡CONEXIÓN ESTABLECIDA! Concepto y Fórmula unidos.");
 
-            const pts = Math.max(100, 600 - mem.segundos * 5 - mem.movimientos * 10);
-            if (dom.memotestScoreDisplay) dom.memotestScoreDisplay.textContent = pts;
+            // Sistema de Racha / Combo
+            mem.racha++;
+            const puntosBase = 120;
+            const bonoCombo = (mem.racha - 1) * 60;
+            mem.puntaje += (puntosBase + bonoCombo);
+
+            if (dom.memotestPairsCount) dom.memotestPairsCount.textContent = `${mem.paresEncontrados} / ${mem.totalPares}`;
+            if (dom.memotestScoreDisplay) dom.memotestScoreDisplay.textContent = mem.puntaje;
+
+            if (dom.memotestProgressBar) {
+                const pct = (mem.paresEncontrados / mem.totalPares) * 100;
+                dom.memotestProgressBar.style.width = `${pct}%`;
+            }
+
+            if (dom.memotestStreakBadge) {
+                dom.memotestStreakBadge.textContent = mem.racha > 1 ? `🔥 x${mem.racha} COMBO!` : `🔥 x1`;
+                dom.memotestStreakBadge.classList.add("streak-combo-boost");
+                setTimeout(() => dom.memotestStreakBadge?.classList.remove("streak-combo-boost"), 450);
+            }
+
+            reproducirSonido("acierto");
+            const mensajeCombo = mem.racha > 1 ? ` ¡COMBO x${mem.racha}! (+${puntosBase + bonoCombo} pts)` : ` (+${puntosBase} pts)`;
+            mostrarToast(`✨ ¡CONEXIÓN ESTABLECIDA!${mensajeCombo}`, "exito");
 
             mem.primeraCarta = null;
 
             if (mem.paresEncontrados >= mem.totalPares) {
-                finalizarMemotest(pts);
+                setTimeout(() => finalizarMemotest(mem.puntaje, true), 500);
             }
         } else {
-            // No coinciden
+            // No coinciden (MISMATCH)
             mem.bloqueado = true;
+            mem.racha = 0;
+            if (dom.memotestStreakBadge) dom.memotestStreakBadge.textContent = "🔥 x1";
+
+            cardEl.classList.add("is-mismatch");
+            primera.cardEl.classList.add("is-mismatch");
+            reproducirSonido("error");
+
             setTimeout(() => {
-                cardEl.classList.remove("is-flipped");
-                primera.cardEl.classList.remove("is-flipped");
-                const b1 = primera.cardEl.querySelector(".memotest-card__face-back");
-                const f1 = primera.cardEl.querySelector(".memotest-card__face-front");
-                if (b1) b1.classList.remove("hidden");
-                if (f1) f1.classList.add("hidden");
-
-                if (faceBack) faceBack.classList.remove("hidden");
-                if (faceFront) faceFront.classList.add("hidden");
-
+                cardEl.classList.remove("is-flipped", "is-mismatch");
+                primera.cardEl.classList.remove("is-flipped", "is-mismatch");
                 mem.primeraCarta = null;
                 mem.bloqueado = false;
-            }, 900);
+            }, 850);
         }
     }
 }
 
-function finalizarMemotest(pts) {
+function ejecutarVistazoTableroMemotest(duracionMs = 2500) {
+    if (!dom.memotestGrid) return;
+    const cards = dom.memotestGrid.querySelectorAll(".memotest-card:not(.is-matched)");
+    cards.forEach(c => c.classList.add("is-flipped"));
+    mostrarToast("👁️ ¡Ojo de Halcón activo! Memorizá la ubicación de los conceptos...", "info");
+
+    setTimeout(() => {
+        cards.forEach(c => {
+            if (!c.classList.contains("is-matched")) {
+                c.classList.remove("is-flipped");
+            }
+        });
+    }, duracionMs);
+}
+
+/* Comodines en Arena Memotest */
+function inicializarComodinesMemotest() {
+    const mem = juegosEduEstado.memotest;
+    mem.comodines = {
+        vistazo: 1,
+        congelar: 1,
+        conexion: 1
+    };
+    if (dom.memotestComodinesTray) {
+        dom.memotestComodinesTray.classList.remove("hidden");
+    }
+    actualizarComodinesMemotestUI();
+}
+
+function actualizarComodinesMemotestUI() {
+    const mem = juegosEduEstado.memotest;
+    if (!mem || !mem.comodines) return;
+
+    if (dom.memotestCountVistazo) dom.memotestCountVistazo.textContent = mem.comodines.vistazo;
+    if (dom.memotestBtnVistazo) {
+        dom.memotestBtnVistazo.disabled = mem.comodines.vistazo <= 0 || !mem.activo;
+        dom.memotestBtnVistazo.classList.toggle("is-used", mem.comodines.vistazo <= 0);
+    }
+
+    if (dom.memotestCountCongelar) dom.memotestCountCongelar.textContent = mem.comodines.congelar;
+    if (dom.memotestBtnCongelar) {
+        dom.memotestBtnCongelar.disabled = mem.comodines.congelar <= 0 || !mem.activo;
+        dom.memotestBtnCongelar.classList.toggle("is-used", mem.comodines.congelar <= 0);
+    }
+
+    if (dom.memotestCountConexion) dom.memotestCountConexion.textContent = mem.comodines.conexion;
+    if (dom.memotestBtnConexion) {
+        dom.memotestBtnConexion.disabled = mem.comodines.conexion <= 0 || !mem.activo;
+        dom.memotestBtnConexion.classList.toggle("is-used", mem.comodines.conexion <= 0);
+    }
+}
+
+function usarComodinMemotestVistazo() {
+    const mem = juegosEduEstado.memotest;
+    if (!mem || !mem.activo || !mem.comodines || mem.comodines.vistazo <= 0 || mem.bloqueado) return;
+
+    animarActivacionComodinCard(dom.memotestBtnVistazo);
+    ejecutarVistazoTableroMemotest(2500);
+
+    mem.comodines.vistazo--;
+    actualizarComodinesMemotestUI();
+    reproducirSonido("comodin");
+}
+
+function usarComodinMemotestCongelar() {
+    const mem = juegosEduEstado.memotest;
+    if (!mem || !mem.activo || !mem.comodines || mem.comodines.congelar <= 0) return;
+
+    animarActivacionComodinCard(dom.memotestBtnCongelar);
+
+    if (mem.tiempoLimite > 0) {
+        mem.tiempoLimite += 20;
+        mostrarToast("❄️ ¡Congelar activado! +20 segundos añadidos al temporizador.", "exito");
+    } else {
+        mem.segundos = Math.max(0, mem.segundos - 20);
+        mostrarToast("❄️ ¡Reloj retrasado 20 segundos! Mayor bonificación de puntaje.", "exito");
+    }
+
+    if (dom.memotestTimerDisplay) {
+        dom.memotestTimerDisplay.style.boxShadow = "0 0 20px #38bdf8";
+        setTimeout(() => { if (dom.memotestTimerDisplay) dom.memotestTimerDisplay.style.boxShadow = ""; }, 1200);
+    }
+
+    mem.comodines.congelar--;
+    actualizarComodinesMemotestUI();
+    reproducirSonido("comodin");
+}
+
+function usarComodinMemotestConexion() {
+    const mem = juegosEduEstado.memotest;
+    if (!mem || !mem.activo || !mem.comodines || mem.comodines.conexion <= 0 || mem.bloqueado) return;
+
+    animarActivacionComodinCard(dom.memotestBtnConexion);
+
+    // Buscar el primer par no completado
+    const cartasDisponibles = mem.cartas.filter(c => {
+        const el = dom.memotestGrid?.querySelector(`[data-id="${c.id}"]`);
+        return el && !el.classList.contains("is-matched");
+    });
+
+    if (cartasDisponibles.length < 2) {
+        mostrarToast("⚠️ Ya no hay más pares disponibles para conectar.", "aviso");
+        return;
+    }
+
+    const parTargetId = cartasDisponibles[0].parId;
+    const cardsElements = dom.memotestGrid?.querySelectorAll(`[data-par-id="${parTargetId}"]`);
+
+    if (cardsElements && cardsElements.length === 2) {
+        cardsElements.forEach(el => {
+            el.classList.add("is-flipped", "is-matched");
+        });
+        mem.paresEncontrados++;
+        mem.puntaje += 150;
+
+        if (dom.memotestPairsCount) dom.memotestPairsCount.textContent = `${mem.paresEncontrados} / ${mem.totalPares}`;
+        if (dom.memotestScoreDisplay) dom.memotestScoreDisplay.textContent = mem.puntaje;
+        if (dom.memotestProgressBar) {
+            const pct = (mem.paresEncontrados / mem.totalPares) * 100;
+            dom.memotestProgressBar.style.width = `${pct}%`;
+        }
+
+        reproducirSonido("acierto");
+        mostrarToast("⚡ ¡Detector Cuántico conectó un par exitosamente!", "exito");
+
+        if (mem.paresEncontrados >= mem.totalPares) {
+            setTimeout(() => finalizarMemotest(mem.puntaje, true), 600);
+        }
+    }
+
+    mem.comodines.conexion--;
+    actualizarComodinesMemotestUI();
+    reproducirSonido("comodin");
+}
+
+function finalizarMemotest(pts, exito = true) {
     const mem = juegosEduEstado.memotest;
     clearInterval(mem.timerId);
+    mem.activo = false;
 
-    const puntosFinales = pts || 500;
-    mostrarToast(`🧠 ¡MEMOTEST COMPLETADO! Tiempo: ${mem.segundos}s - Puntos: ${puntosFinales}`);
-    registrarResultadoJuego("memotest", puntosFinales, true);
+    const puntosFinales = Math.max(100, pts || 500);
+    if (exito) {
+        mostrarToast(`🧠 ¡MEMOTEST CONECTADO! Puntos obtenidos: ${puntosFinales}`, "exito");
+    } else {
+        mostrarToast(`⏱️ ¡Tiempo agotado en Memotest! Puntos obtenidos: ${puntosFinales}`, "aviso");
+    }
+    registrarResultadoJuego("memotest", puntosFinales, exito);
 
     if (juegosEduEstado.juegoActual === "triatlon") {
         juegosEduEstado.triatlon.scores[2] = puntosFinales;
@@ -13425,6 +13889,380 @@ function animarActivacionComodinCard(btn) {
     setTimeout(() => {
         btn.classList.remove("is-activating");
     }, 600);
+}
+
+// =========================================================
+// CONFIGURACIÓN DE CAZA AL IMPOSTOR CON IA (MODAL FLOTANTE & COMODINES)
+// =========================================================
+const impostorSetupEstado = {
+    archivoTexto: "",
+    archivoNombre: "",
+    archivoPaginas: 0,
+    tiempo: 15,
+    dificultad: "intermedio",
+    rondas: 5,
+    orden: "",
+    formato: "afirmaciones",
+    comodines: {
+        pista5050: true,
+        tiempoExtra: true,
+        radarSocorro: true
+    }
+};
+
+function abrirModalConfigImpostor(modo = "solo") {
+    juegosEduEstado.modo = modo;
+    const apunte = apuntesEstado.impostor || apuntesEstado.global;
+    if (!impostorSetupEstado.archivoTexto && apunte && apunte.texto) {
+        impostorSetupEstado.archivoTexto = apunte.texto;
+        impostorSetupEstado.archivoNombre = apunte.nombre || "apuntes.pdf";
+        impostorSetupEstado.archivoPaginas = apunte.paginas || 1;
+        if (dom.impostorLoadedPdfInfo) dom.impostorLoadedPdfInfo.classList.remove("hidden");
+        if (dom.impostorLoadedPdfIcon) dom.impostorLoadedPdfIcon.textContent = "📄";
+        if (dom.impostorLoadedPdfName) dom.impostorLoadedPdfName.textContent = impostorSetupEstado.archivoNombre;
+        if (dom.impostorLoadedPdfMeta) dom.impostorLoadedPdfMeta.textContent = `${impostorSetupEstado.archivoPaginas} pág(s) listas`;
+        if (dom.impostorUploadTitle) dom.impostorUploadTitle.textContent = "Material Activo en Impostor";
+    }
+
+    sincronizarDificultadImpostorUI();
+    sincronizarTiempoImpostorUI();
+    sincronizarRondasImpostorUI();
+
+    if (dom.impostorSetupModal) {
+        if (typeof dom.impostorSetupModal.showModal === "function") {
+            try { dom.impostorSetupModal.showModal(); } catch { dom.impostorSetupModal.setAttribute("open", ""); }
+        } else {
+            dom.impostorSetupModal.setAttribute("open", "");
+        }
+    }
+}
+
+function cerrarModalConfigImpostor() {
+    if (dom.impostorSetupModal) {
+        if (typeof dom.impostorSetupModal.close === "function") {
+            try { dom.impostorSetupModal.close(); } catch { dom.impostorSetupModal.removeAttribute("open"); }
+        } else {
+            dom.impostorSetupModal.removeAttribute("open");
+        }
+    }
+}
+
+async function procesarArchivoImpostor(file) {
+    if (!file) return;
+    mostrarToast("🕵️‍♂️ Analizando material para formular casos sospechosos...", "info");
+    try {
+        const res = await extraerTextoDeCualquierArchivo(file);
+        impostorSetupEstado.archivoTexto = res.texto;
+        impostorSetupEstado.archivoNombre = res.nombre;
+        impostorSetupEstado.archivoPaginas = res.paginas;
+
+        if (dom.impostorLoadedPdfInfo) dom.impostorLoadedPdfInfo.classList.remove("hidden");
+        if (dom.impostorLoadedPdfIcon) dom.impostorLoadedPdfIcon.textContent = res.icono;
+        if (dom.impostorLoadedPdfName) dom.impostorLoadedPdfName.textContent = res.nombre;
+        if (dom.impostorLoadedPdfMeta) dom.impostorLoadedPdfMeta.textContent = res.metaDetalle;
+        if (dom.impostorUploadTitle) dom.impostorUploadTitle.textContent = `${res.tipoLabel} cargado con éxito`;
+        if (dom.impostorUploadHint) dom.impostorUploadHint.textContent = "Listo para calibrar las sospechas y casos.";
+
+        apuntesEstado.impostor = {
+            nombre: res.nombre,
+            texto: res.texto,
+            paginas: res.paginas
+        };
+        mostrarToast(`✅ ${res.tipoLabel} "${res.nombre}" vinculado a Caza al Impostor.`, "exito");
+    } catch (err) {
+        console.error("Error al procesar archivo en Impostor:", err);
+        mostrarToast(`⚠️ Error: ${err.message || 'No se pudo leer el archivo'}`, "aviso");
+    }
+}
+
+function limpiarArchivoImpostor() {
+    impostorSetupEstado.archivoTexto = "";
+    impostorSetupEstado.archivoNombre = "";
+    impostorSetupEstado.archivoPaginas = 0;
+    delete apuntesEstado.impostor;
+
+    if (dom.impostorPdfFileInput) dom.impostorPdfFileInput.value = "";
+    if (dom.impostorLoadedPdfInfo) dom.impostorLoadedPdfInfo.classList.add("hidden");
+    if (dom.impostorUploadTitle) dom.impostorUploadTitle.textContent = "Subir Material de Estudio";
+    if (dom.impostorUploadHint) dom.impostorUploadHint.textContent = "Hacé clic o arrastrá apuntes, manuales o temas para calibrar las sospechas.";
+    mostrarToast("🗑️ Material desvinculado de Caza al Impostor.", "info");
+}
+
+function sincronizarDificultadImpostorUI() {
+    if (!dom.impostorConfigDifficultySelector) return;
+    dom.impostorConfigDifficultySelector.querySelectorAll(".lab-diff-btn").forEach(btn => {
+        btn.classList.toggle("is-active", btn.dataset.diff === impostorSetupEstado.dificultad);
+    });
+}
+
+function sincronizarTiempoImpostorUI() {
+    if (dom.impostorModalTimeBadge) dom.impostorModalTimeBadge.textContent = `${impostorSetupEstado.tiempo} segundos`;
+    if (dom.impostorModalTimeSelector) {
+        dom.impostorModalTimeSelector.querySelectorAll(".impostor-time-modal-btn").forEach(btn => {
+            const t = parseInt(btn.dataset.time, 10);
+            btn.classList.toggle("is-active", t === impostorSetupEstado.tiempo);
+            btn.classList.toggle("button--primary", t === impostorSetupEstado.tiempo);
+            btn.classList.toggle("button--secondary", t !== impostorSetupEstado.tiempo);
+        });
+    }
+}
+
+function sincronizarRondasImpostorUI() {
+    if (dom.impostorModalRoundsBadge) dom.impostorModalRoundsBadge.textContent = `${impostorSetupEstado.rondas} rondas`;
+    if (dom.impostorModalRoundsSelector) {
+        dom.impostorModalRoundsSelector.querySelectorAll(".impostor-rounds-modal-btn").forEach(btn => {
+            const r = parseInt(btn.dataset.rounds, 10);
+            btn.classList.toggle("is-active", r === impostorSetupEstado.rondas);
+            btn.classList.toggle("button--primary", r === impostorSetupEstado.rondas);
+            btn.classList.toggle("button--secondary", r !== impostorSetupEstado.rondas);
+        });
+    }
+}
+
+async function ejecutarInicioImpostorConfigurado() {
+    const btn = dom.impostorBtnCargarConfig;
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<span style="display:inline-block; animation: spin 0.8s linear infinite;">🔄</span> Calibrando Casos con IA...`;
+    }
+
+    const apunte = impostorSetupEstado.archivoTexto
+        ? { texto: impostorSetupEstado.archivoTexto, nombre: impostorSetupEstado.archivoNombre }
+        : (apuntesEstado.impostor || apuntesEstado.global);
+
+    const orden = (dom.impostorConfigOrderInput ? dom.impostorConfigOrderInput.value.trim() : "");
+    impostorSetupEstado.orden = orden;
+
+    try {
+        const imp = juegosEduEstado.impostor;
+        imp.tiempoSeleccionado = impostorSetupEstado.tiempo || 15;
+        imp.maxOlas = impostorSetupEstado.rondas || 5;
+
+        if (apunte && apunte.texto) {
+            mostrarToast("🤖 Gemini está analizando tu apunte y redactando casos sospechosos...", "info");
+            const materia = apunte.nombre ? apunte.nombre.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " ") : "Materia de Estudio";
+            
+            try {
+                const data = await generarPreguntaIA({
+                    materia: materia,
+                    tema: orden ? `Unidad o Eje: ${orden}` : "Expediente de Conceptos",
+                    tipoJuego: "impostor",
+                    contextoPDF: apunte.texto,
+                    cantidadCasos: impostorSetupEstado.rondas,
+                    dificultad: impostorSetupEstado.dificultad,
+                    instruccionUsuario: orden
+                });
+
+                if (data && Array.isArray(data.casos) && data.casos.length > 0) {
+                    imp.casosPool = data.casos;
+                }
+            } catch (errApi) {
+                console.warn("Fallo al generar casos con Gemini API, usando banco temático:", errApi);
+            }
+        }
+
+        cerrarModalConfigImpostor();
+        iniciarImpostor(juegosEduEstado.modo || "solo");
+        comenzarPartidaImpostor();
+        mostrarToast("🚀 ¡Misión de Caza al Impostor iniciada!", "exito");
+    } catch (err) {
+        console.error("Error al iniciar Impostor configurado:", err);
+        mostrarToast(`❌ Error: ${err.message}`, "error");
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = `🕵️‍♂️ Iniciar Misión con IA`;
+        }
+    }
+}
+
+// =========================================================
+// CONFIGURACIÓN DE MEMOTEST CONECTADO CON IA (MODAL FLOTANTE & PARES)
+// =========================================================
+const memotestSetupEstado = {
+    archivoTexto: "",
+    archivoNombre: "",
+    archivoPaginas: 0,
+    pares: 6,
+    tiempo: 0,
+    dificultad: "intermedio",
+    orden: "",
+    formato: "conceptos",
+    comodines: {
+        vistazo: true,
+        congelar: true,
+        conexion: true
+    }
+};
+
+function abrirModalConfigMemotest(modo = "solo") {
+    juegosEduEstado.modo = modo;
+    const apunte = apuntesEstado.memotest || apuntesEstado.global;
+    if (!memotestSetupEstado.archivoTexto && apunte && apunte.texto) {
+        memotestSetupEstado.archivoTexto = apunte.texto;
+        memotestSetupEstado.archivoNombre = apunte.nombre || "apuntes.pdf";
+        memotestSetupEstado.archivoPaginas = apunte.paginas || 1;
+        if (dom.memotestLoadedPdfInfo) dom.memotestLoadedPdfInfo.classList.remove("hidden");
+        if (dom.memotestLoadedPdfIcon) dom.memotestLoadedPdfIcon.textContent = "📄";
+        if (dom.memotestLoadedPdfName) dom.memotestLoadedPdfName.textContent = memotestSetupEstado.archivoNombre;
+        if (dom.memotestLoadedPdfMeta) dom.memotestLoadedPdfMeta.textContent = `${memotestSetupEstado.archivoPaginas} pág(s) listas`;
+        if (dom.memotestUploadTitle) dom.memotestUploadTitle.textContent = "Material Activo en Memotest";
+    }
+
+    sincronizarDificultadMemotestUI();
+    sincronizarParesMemotestUI();
+    sincronizarTiempoMemotestUI();
+
+    if (dom.memotestSetupModal) {
+        if (typeof dom.memotestSetupModal.showModal === "function") {
+            try { dom.memotestSetupModal.showModal(); } catch { dom.memotestSetupModal.setAttribute("open", ""); }
+        } else {
+            dom.memotestSetupModal.setAttribute("open", "");
+        }
+    }
+}
+
+function cerrarModalConfigMemotest() {
+    if (dom.memotestSetupModal) {
+        if (typeof dom.memotestSetupModal.close === "function") {
+            try { dom.memotestSetupModal.close(); } catch { dom.memotestSetupModal.removeAttribute("open"); }
+        } else {
+            dom.memotestSetupModal.removeAttribute("open");
+        }
+    }
+}
+
+async function procesarArchivoMemotest(file) {
+    if (!file) return;
+    mostrarToast("🧠 Extrayendo conceptos y definiciones para el Memotest...", "info");
+    try {
+        const res = await extraerTextoDeCualquierArchivo(file);
+        memotestSetupEstado.archivoTexto = res.texto;
+        memotestSetupEstado.archivoNombre = res.nombre;
+        memotestSetupEstado.archivoPaginas = res.paginas;
+
+        if (dom.memotestLoadedPdfInfo) dom.memotestLoadedPdfInfo.classList.remove("hidden");
+        if (dom.memotestLoadedPdfIcon) dom.memotestLoadedPdfIcon.textContent = res.icono;
+        if (dom.memotestLoadedPdfName) dom.memotestLoadedPdfName.textContent = res.nombre;
+        if (dom.memotestLoadedPdfMeta) dom.memotestLoadedPdfMeta.textContent = res.metaDetalle;
+        if (dom.memotestUploadTitle) dom.memotestUploadTitle.textContent = `${res.tipoLabel} cargado con éxito`;
+        if (dom.memotestUploadHint) dom.memotestUploadHint.textContent = "Listo para armar las parejas del tablero.";
+
+        apuntesEstado.memotest = {
+            nombre: res.nombre,
+            texto: res.texto,
+            paginas: res.paginas
+        };
+        mostrarToast(`✅ ${res.tipoLabel} "${res.nombre}" vinculado al Memotest.`, "exito");
+    } catch (err) {
+        console.error("Error al procesar archivo en Memotest:", err);
+        mostrarToast(`⚠️ Error: ${err.message || 'No se pudo leer el archivo'}`, "aviso");
+    }
+}
+
+function limpiarArchivoMemotest() {
+    memotestSetupEstado.archivoTexto = "";
+    memotestSetupEstado.archivoNombre = "";
+    memotestSetupEstado.archivoPaginas = 0;
+    delete apuntesEstado.memotest;
+
+    if (dom.memotestPdfFileInput) dom.memotestPdfFileInput.value = "";
+    if (dom.memotestLoadedPdfInfo) dom.memotestLoadedPdfInfo.classList.add("hidden");
+    if (dom.memotestUploadTitle) dom.memotestUploadTitle.textContent = "Subir Material de Estudio";
+    if (dom.memotestUploadHint) dom.memotestUploadHint.textContent = "Hacé clic o arrastrá apuntes para emparejar conceptos.";
+    mostrarToast("🗑️ Material desvinculado de Memotest.", "info");
+}
+
+function sincronizarDificultadMemotestUI() {
+    if (!dom.memotestConfigDifficultySelector) return;
+    dom.memotestConfigDifficultySelector.querySelectorAll(".lab-diff-btn").forEach(btn => {
+        btn.classList.toggle("is-active", btn.dataset.diff === memotestSetupEstado.dificultad);
+    });
+}
+
+function sincronizarParesMemotestUI() {
+    if (dom.memotestPairsBadge) dom.memotestPairsBadge.textContent = `${memotestSetupEstado.pares} Pares (${memotestSetupEstado.pares * 2} Cartas)`;
+    if (dom.memotestPairsSelector) {
+        dom.memotestPairsSelector.querySelectorAll(".memotest-pairs-chip").forEach(btn => {
+            const p = parseInt(btn.dataset.pairs, 10);
+            btn.classList.toggle("is-active", p === memotestSetupEstado.pares);
+            btn.classList.toggle("button--primary", p === memotestSetupEstado.pares);
+            btn.classList.toggle("button--secondary", p !== memotestSetupEstado.pares);
+        });
+    }
+}
+
+function sincronizarTiempoMemotestUI() {
+    const label = memotestSetupEstado.tiempo === 0 ? "Sin límite (Práctica)" : `${memotestSetupEstado.tiempo} segundos`;
+    if (dom.memotestModalTimeBadge) dom.memotestModalTimeBadge.textContent = label;
+    if (dom.memotestModalTimeSelector) {
+        dom.memotestModalTimeSelector.querySelectorAll(".memotest-time-modal-btn").forEach(btn => {
+            const t = parseInt(btn.dataset.time, 10);
+            btn.classList.toggle("is-active", t === memotestSetupEstado.tiempo);
+            btn.classList.toggle("button--primary", t === memotestSetupEstado.tiempo);
+            btn.classList.toggle("button--secondary", t !== memotestSetupEstado.tiempo);
+        });
+    }
+}
+
+async function ejecutarInicioMemotestConfigurado() {
+    const btn = dom.memotestBtnCargarConfig;
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<span style="display:inline-block; animation: spin 0.8s linear infinite;">🔄</span> Conectando Parejas con IA...`;
+    }
+
+    const apunte = memotestSetupEstado.archivoTexto
+        ? { texto: memotestSetupEstado.archivoTexto, nombre: memotestSetupEstado.archivoNombre }
+        : (apuntesEstado.memotest || apuntesEstado.global);
+
+    const orden = (dom.memotestConfigOrderInput ? dom.memotestConfigOrderInput.value.trim() : "");
+    memotestSetupEstado.orden = orden;
+
+    try {
+        if (apunte && apunte.texto) {
+            mostrarToast("🤖 Gemini está analizando tu apunte y extrayendo pares conceptuales...", "info");
+            const materia = apunte.nombre ? apunte.nombre.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " ") : "Materia de Estudio";
+
+            try {
+                const data = await generarPreguntaIA({
+                    materia: materia,
+                    tema: orden ? `Unidad o Eje: ${orden}` : "Tablero de Conceptos",
+                    tipoJuego: "memotest",
+                    contextoPDF: apunte.texto,
+                    cantidadPares: memotestSetupEstado.pares,
+                    dificultad: memotestSetupEstado.dificultad,
+                    instruccionUsuario: orden
+                });
+
+                if (data && Array.isArray(data.pares) && data.pares.length > 0) {
+                    juegosEduEstado.temas = data.pares.map((p, idx) => ({
+                        id: `tema_memo_${idx}`,
+                        nombre: p.concepto || `Concepto #${idx + 1}`,
+                        descripcion: p.definicion || `Definición #${idx + 1}`,
+                        memotest: {
+                            concepto: p.concepto || `Concepto #${idx + 1}`,
+                            definicionOFormula: p.definicion || `Definición #${idx + 1}`
+                        }
+                    }));
+                }
+            } catch (errApi) {
+                console.warn("Fallo en Gemini API para Memotest, usando banco estándar:", errApi);
+            }
+        }
+
+        cerrarModalConfigMemotest();
+        iniciarMemotest(juegosEduEstado.modo || "solo");
+        mostrarToast("🧠 ¡Tablero de Memotest conectado y listo para jugar!", "exito");
+    } catch (err) {
+        console.error("Error al iniciar Memotest configurado:", err);
+        mostrarToast(`❌ Error: ${err.message}`, "error");
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = `🧠 Armar y Conectar Memotest con IA`;
+        }
+    }
 }
 const procesarPdfLaboratorio = procesarArchivoLaboratorio;
 

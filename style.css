@@ -6517,57 +6517,170 @@ input:focus {
     grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
     gap: 0.85rem;
 }
+/* =========================================================
+   MEMOTEST CONECTADO 3D (FLIP CARD, GLOW NEÓN & COMBOS)
+   ========================================================= */
 .memotest-card {
-    height: 120px;
-    background: #161922;
-    border: 2px solid rgba(255, 255, 255, 0.1);
-    border-radius: var(--radius-md);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0.75rem;
-    text-align: center;
+    height: 130px;
+    perspective: 1000px;
+    background: transparent;
+    border: none;
+    padding: 0;
     cursor: pointer;
     position: relative;
     user-select: none;
-    transition: all 0.2s ease;
+    outline: none;
 }
-.memotest-card:hover {
-    border-color: #8b5cf6;
-    transform: translateY(-2px);
+.memotest-card:focus-visible {
+    outline: 2px solid #38bdf8;
+    outline-offset: 3px;
+    border-radius: var(--radius-md);
 }
-.memotest-card.is-flipped {
-    background: #1e2433;
-    border-color: #38bdf8;
-    box-shadow: 0 4px 16px rgba(56, 189, 248, 0.25);
+.memotest-card__inner {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.55s cubic-bezier(0.2, 0.85, 0.4, 1.25);
+    border-radius: var(--radius-md);
 }
-.memotest-card.is-matched {
-    border-color: #10b981;
-    background: rgba(16, 185, 129, 0.15);
-    box-shadow: 0 0 16px rgba(16, 185, 129, 0.3);
-    cursor: default;
-    animation: memotestMatchedPop 0.45s ease-out;
+.memotest-card.is-flipped .memotest-card__inner,
+.memotest-card.is-matched .memotest-card__inner {
+    transform: rotateY(180deg);
 }
-@keyframes memotestMatchedPop {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.08); box-shadow: 0 0 24px rgba(16, 185, 129, 0.6); }
-    100% { transform: scale(1); }
-}
-.memotest-card__face-back {
-    font-size: 1.8rem;
-    opacity: 0.4;
-}
+.memotest-card__face-back,
 .memotest-card__face-front {
-    font-size: 0.88rem;
+    position: absolute;
+    inset: 0;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    border-radius: var(--radius-md);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 0.85rem;
+    text-align: center;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+/* Cara Trasera (Dorso de Carta Neón) */
+.memotest-card__face-back {
+    background: radial-gradient(circle at 50% 35%, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.98));
+    border: 1.5px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    transition: all 0.25s ease;
+}
+.memotest-card:hover .memotest-card__face-back {
+    border-color: rgba(56, 189, 248, 0.6);
+    box-shadow: 0 6px 20px rgba(56, 189, 248, 0.25), inset 0 0 12px rgba(56, 189, 248, 0.15);
+    transform: translateY(-3px);
+}
+.memotest-card__back-icon {
+    font-size: 2rem;
+    filter: drop-shadow(0 0 10px rgba(56, 189, 248, 0.5));
+    transition: transform 0.3s ease;
+}
+.memotest-card:hover .memotest-card__back-icon {
+    transform: scale(1.15) rotate(6deg);
+}
+.memotest-card__back-pattern {
+    position: absolute;
+    inset: 4px;
+    border: 1px dashed rgba(56, 189, 248, 0.2);
+    border-radius: calc(var(--radius-md) - 3px);
+    pointer-events: none;
+}
+
+/* Cara Frontal (Texto del Concepto o Definición) */
+.memotest-card__face-front {
+    transform: rotateY(180deg);
+    background: #111827;
+    border: 2px solid rgba(56, 189, 248, 0.4);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), inset 0 0 16px rgba(56, 189, 248, 0.08);
+}
+.memotest-card--concepto .memotest-card__face-front {
+    border-color: #38bdf8;
+    background: linear-gradient(145deg, #0b192c, #0f172a);
+    box-shadow: 0 6px 20px rgba(56, 189, 248, 0.22);
+}
+.memotest-card--formula .memotest-card__face-front {
+    border-color: #a855f7;
+    background: linear-gradient(145deg, #190f2c, #0f172a);
+    box-shadow: 0 6px 20px rgba(168, 85, 247, 0.22);
+}
+
+.memotest-card__pill {
+    font-size: 0.63rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+    margin-bottom: 0.45rem;
+    display: inline-block;
+}
+.memotest-card--concepto .memotest-card__pill {
+    background: rgba(56, 189, 248, 0.18);
+    color: #38bdf8;
+    border: 1px solid rgba(56, 189, 248, 0.35);
+}
+.memotest-card--formula .memotest-card__pill {
+    background: rgba(168, 85, 247, 0.18);
+    color: #c084fc;
+    border: 1px solid rgba(168, 85, 247, 0.35);
+}
+
+.memotest-card__text {
+    font-size: 0.86rem;
     font-weight: 600;
     line-height: 1.35;
-    color: #f1f5f9;
+    color: #f8fafc;
+    word-break: break-word;
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
-.memotest-card--concepto {
-    border-top: 3px solid #38bdf8;
+
+/* Pareja Acertada (MATCH) */
+.memotest-card.is-matched .memotest-card__face-front {
+    border-color: #10b981 !important;
+    background: linear-gradient(145deg, #063826, #09261a) !important;
+    box-shadow: 0 0 25px rgba(16, 185, 129, 0.5), inset 0 0 15px rgba(16, 185, 129, 0.3) !important;
+    cursor: default;
 }
-.memotest-card--formula {
-    border-top: 3px solid #a855f7;
+.memotest-card.is-matched {
+    animation: memotestMatchSparkle 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+@keyframes memotestMatchSparkle {
+    0% { transform: scale(1); }
+    40% { transform: scale(1.08) translateY(-4px); }
+    100% { transform: scale(1); }
+}
+
+/* Pareja Errónea (MISMATCH SHAKE) */
+.memotest-card.is-mismatch .memotest-card__face-front {
+    border-color: #ef4444 !important;
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.5), inset 0 0 10px rgba(239, 68, 68, 0.3) !important;
+    animation: memotestMismatchShake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+@keyframes memotestMismatchShake {
+    10%, 90% { transform: rotateY(180deg) translate3d(-2px, 0, 0); }
+    20%, 80% { transform: rotateY(180deg) translate3d(4px, 0, 0); }
+    30%, 50%, 70% { transform: rotateY(180deg) translate3d(-4px, 0, 0); }
+    40%, 60% { transform: rotateY(180deg) translate3d(4px, 0, 0); }
+}
+
+/* Animación de Racha Combo */
+.streak-combo-boost {
+    animation: streakComboPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+@keyframes streakComboPop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.35); filter: drop-shadow(0 0 12px #f59e0b); }
+    100% { transform: scale(1); }
 }
 
 /* =========================================================
@@ -10520,6 +10633,15 @@ body.modo-dev-activo .juntos-locked-notice {
 .comodin-card--duelo .comodin-card__badge {
     border-color: rgba(129, 140, 248, 0.4);
     color: #c7d2fe;
+}
+
+.comodin-card--memotest {
+    --card-glow: rgba(56, 189, 248, 0.45);
+    --card-border: #0ea5e9;
+}
+.comodin-card--memotest .comodin-card__badge {
+    border-color: rgba(56, 189, 248, 0.4);
+    color: #7dd3fc;
 }
 
 /* Estado Agotado / Usado */

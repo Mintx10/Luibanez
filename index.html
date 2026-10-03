@@ -15,10 +15,10 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     
-    <link rel="icon" type="image/svg+xml" href="icon.svg?v=26.9">
-    <link rel="apple-touch-icon" href="icon-192.png?v=26.9">
-    <link rel="manifest" href="manifest.json?v=26.9">
-    <link rel="stylesheet" href="style.css?v=26.9">
+    <link rel="icon" type="image/svg+xml" href="icon.svg?v=27.0">
+    <link rel="apple-touch-icon" href="icon-192.png?v=27.0">
+    <link rel="manifest" href="manifest.json?v=27.0">
+    <link rel="stylesheet" href="style.css?v=27.0">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1936,6 +1936,12 @@
                     <button id="bombaOpenConfigBtn" class="button button--secondary button--sm" type="button" title="Configurar tiempo, dificultad, comodines y archivo con IA" style="font-weight: 600; border-color: rgba(239, 68, 68, 0.4); background: rgba(239, 68, 68, 0.1);">
                         ⚙️ Configurar Desafío IA
                     </button>
+                    <button id="impostorOpenConfigBtn" class="button button--secondary button--sm hidden" type="button" title="Configurar casos, tiempo y archivo con IA" style="font-weight: 600; border-color: rgba(234, 179, 8, 0.4); background: rgba(234, 179, 8, 0.1); color: #fde047;">
+                        ⚙️ Configurar Misión IA
+                    </button>
+                    <button id="memotestOpenConfigBtn" class="button button--secondary button--sm hidden" type="button" title="Configurar pares, tiempo y archivo con IA" style="font-weight: 600; border-color: rgba(56, 189, 248, 0.4); background: rgba(56, 189, 248, 0.1); color: #38bdf8;">
+                        ⚙️ Configurar Memotest IA
+                    </button>
                     <button id="juegosRulesBtn" class="rules-trigger-btn" type="button" title="Ver reglas y controles de este juego">
                         <span>❓</span><span>Reglas</span>
                     </button>
@@ -2248,6 +2254,10 @@
                             <strong class="memotest-hud__value" id="memotestMovesCount">0</strong>
                         </div>
                         <div class="memotest-hud__stat">
+                            <span class="memotest-hud__label">Racha Combo</span>
+                            <span class="badge badge--warning" id="memotestStreakBadge">🔥 x1</span>
+                        </div>
+                        <div class="memotest-hud__stat">
                             <span class="memotest-hud__label">Cronómetro</span>
                             <strong class="memotest-hud__value" id="memotestTimerDisplay">00:00</strong>
                         </div>
@@ -2256,6 +2266,39 @@
                             <strong class="memotest-hud__value" id="memotestScoreDisplay">0</strong>
                         </div>
                     </header>
+
+                    <!-- Barra de progreso visual de conexiones -->
+                    <div class="memotest-progress-wrap" style="width: 100%; height: 6px; background: rgba(255,255,255,0.08); border-radius: 999px; overflow: hidden; margin-bottom: 0.75rem;">
+                        <div class="memotest-progress-bar" id="memotestProgressBar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #38bdf8, #8b5cf6, #10b981); transition: width 0.4s ease;"></div>
+                    </div>
+
+                    <!-- Bandeja de Comodines para Memotest (Cartas Grandes 3D) -->
+                    <div class="memotest-comodines-tray" id="memotestComodinesTray" style="margin-bottom: 1rem;">
+                        <div class="comodines-tray-header">
+                            <span class="comodines-tray-label">⚡ PODERES DE MEMORIA & RAYOS X</span>
+                            <span class="comodines-tray-hint">Tocá una carta para activarla</span>
+                        </div>
+                        <div class="comodines-cards-grid">
+                            <button id="memotestBtnVistazo" class="comodin-card comodin-card--memotest" type="button" title="Destapa todas las cartas durante 2.5 segundos para memorizarlas">
+                                <span class="comodin-card__badge" id="memotestCountVistazo">1</span>
+                                <span class="comodin-card__icon">👁️</span>
+                                <strong class="comodin-card__title">Ojo de Halcón</strong>
+                                <span class="comodin-card__desc">Rayos X 2.5s</span>
+                            </button>
+                            <button id="memotestBtnCongelar" class="comodin-card comodin-card--memotest" type="button" title="Pausa el reloj y suma +20 segundos de tiempo extra">
+                                <span class="comodin-card__badge" id="memotestCountCongelar">1</span>
+                                <span class="comodin-card__icon">❄️</span>
+                                <strong class="comodin-card__title">Congelar Reloj</strong>
+                                <span class="comodin-card__desc">+20s Extra</span>
+                            </button>
+                            <button id="memotestBtnConexion" class="comodin-card comodin-card--memotest" type="button" title="Encuentra y conecta 1 par automáticamente">
+                                <span class="comodin-card__badge" id="memotestCountConexion">1</span>
+                                <span class="comodin-card__icon">⚡</span>
+                                <strong class="comodin-card__title">Detector Par</strong>
+                                <span class="comodin-card__desc">Auto-conectar 1</span>
+                            </button>
+                        </div>
+                    </div>
 
                     <div class="memotest-instructions">
                         <span>💡 Hacé clic en una tarjeta de Concepto y luego en su Definición o Fórmula matemática para conectarlas con energía neón.</span>
@@ -3479,7 +3522,7 @@
 </dialog>
 
 <script src="mqtt.min.js"></script>
-<script src="script.js?v=26.9" defer></script>
+<script src="script.js?v=27.0" defer></script>
 
 <!-- =========================================================
      MODAL DE PROMPT PARA GEMINI (CREAR JUEGOS DESDE PDF)
@@ -3866,6 +3909,375 @@
             <button id="closeBombaSetupModalBottomBtn" class="button button--ghost" type="button">Cancelar / Jugar Modo Clásico</button>
             <button id="bombaBtnCargarConfig" class="button button--primary" type="button" style="background: linear-gradient(135deg, #dc2626, #ef4444); font-weight: 600; padding: 0.65rem 1.4rem;">
                 💣 Armar y Comenzar Desafío con IA
+            </button>
+        </footer>
+    </div>
+</dialog>
+
+<!-- =========================================================
+     MODAL DE CONFIGURACIÓN INICIAL: CAZA AL IMPOSTOR (IA)
+     ========================================================= -->
+<dialog id="impostorSetupModal" class="modal lab-config-dialog" aria-labelledby="impostorSetupModalTitle">
+    <div class="modal__content lab-config-modal-content">
+        <header class="modal__header lab-config-header">
+            <div class="lab-config-header-text">
+                <span class="lab-config-header-icon">🕵️‍♂️</span>
+                <div>
+                    <h3 id="impostorSetupModalTitle" class="modal__title">Caza al Impostor: Configuración de Misión</h3>
+                    <p class="lab-config-subtitle">Cargá tu material de estudio y calibrá casos, tiempo, dificultad y comodines de investigación</p>
+                </div>
+            </div>
+            <button id="closeImpostorSetupModalBtn" class="modal__close icon-button" type="button" aria-label="Cerrar modal">✕</button>
+        </header>
+
+        <div class="modal__body lab-config-modal-body">
+            <!-- COLUMNA IZQUIERDA: Material + Tiempo + Dificultad + Prompt -->
+            <div class="lab-config-col lab-config-col--upload">
+                <!-- Dropzone de Archivo -->
+                <div class="lab-upload-section">
+                    <label class="section-title lab-section-label">
+                        <span>📂 Material de Estudio</span>
+                        <span class="lab-formats-pill">PDF • WORD • PPTX • TXT</span>
+                    </label>
+                    <input type="file" id="impostorPdfFileInput" accept=".pdf,.docx,.pptx,.txt,.md,.csv" class="hidden">
+                    <div class="lab-upload-dropzone" id="impostorUploadDropzone" tabindex="0" role="button" aria-label="Cargar archivo de estudio">
+                        <div class="lab-upload-plus-circle" id="impostorUploadPlusCircle">➕</div>
+                        <strong class="lab-upload-title" id="impostorUploadTitle">Subir Material de Estudio</strong>
+                        <p class="lab-upload-hint" id="impostorUploadHint">
+                            Hacé clic o arrastrá apuntes, manuales o temas para calibrar las sospechas y casos.
+                        </p>
+                        <div class="lab-loaded-pdf-info hidden" id="impostorLoadedPdfInfo">
+                            <span class="lab-loaded-pdf-icon" id="impostorLoadedPdfIcon">📄</span>
+                            <div class="lab-loaded-pdf-text">
+                                <strong id="impostorLoadedPdfName">apuntes.pdf</strong>
+                                <span id="impostorLoadedPdfMeta">Listo para procesar</span>
+                            </div>
+                            <button type="button" class="button button--ghost button--xs" id="impostorBtnQuitarPdf" style="color: #f87171; margin-left: auto;">✕ Quitar</button>
+                        </div>
+                    </div>
+                    <div class="lab-gdocs-hint">
+                        💡 <strong>¿Google Docs o Slides?</strong> Descargalo como <em>.docx</em> o <em>PDF</em> y subilo acá directamente.
+                    </div>
+                </div>
+
+                <!-- Selector de Tiempo por Pregunta -->
+                <div class="bomba-time-section">
+                    <label class="section-title lab-section-label">
+                        <span>⏱️ Tiempo por Pregunta / Ola:</span>
+                        <strong id="impostorModalTimeBadge" class="badge badge--warning" style="font-size: 0.85rem;">15 segundos</strong>
+                    </label>
+                    <div class="bomba-time-selector" id="impostorModalTimeSelector" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.35rem;">
+                        <button type="button" class="button button--secondary button--xs impostor-time-modal-btn" data-time="10">⚡ 10s</button>
+                        <button type="button" class="button button--primary button--xs impostor-time-modal-btn is-active" data-time="15">🎯 15s</button>
+                        <button type="button" class="button button--secondary button--xs impostor-time-modal-btn" data-time="20">🧠 20s</button>
+                        <button type="button" class="button button--secondary button--xs impostor-time-modal-btn" data-time="30">🛡️ 30s</button>
+                    </div>
+                </div>
+
+                <!-- Selector de Dificultad -->
+                <div class="lab-difficulty-section">
+                    <label class="section-title lab-section-label">
+                        <span>⚙️ Nivel de Dificultad:</span>
+                        <span style="font-size: 0.72rem; color: var(--color-text-muted); font-weight: normal;">Sutileza del engaño</span>
+                    </label>
+                    <div class="lab-difficulty-selector" id="impostorConfigDifficultySelector">
+                        <button type="button" class="lab-diff-btn" data-diff="facil">
+                            <span class="diff-dot diff-dot--facil"></span> Fácil
+                        </button>
+                        <button type="button" class="lab-diff-btn is-active" data-diff="intermedio">
+                            <span class="diff-dot diff-dot--intermedio"></span> Intermedio
+                        </button>
+                        <button type="button" class="lab-diff-btn" data-diff="dificil">
+                            <span class="diff-dot diff-dot--dificil"></span> Difícil
+                        </button>
+                        <button type="button" class="lab-diff-btn" data-diff="extremo">
+                            <span class="diff-dot diff-dot--extremo"></span> Extremo
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Orden / Prompt puntual para Impostor -->
+                <div class="lab-order-section">
+                    <label for="impostorConfigOrderInput" class="section-title lab-section-label">
+                        <span>✍️ Unidad o Enfoque Específico (Opcional):</span>
+                    </label>
+                    <textarea id="impostorConfigOrderInput" rows="2" class="lab-config-textarea" placeholder="Ej: 'Solo casos de la Unidad 1', 'Enfocate en excepciones doctrinales', 'Capítulo de contratos'..."></textarea>
+                    <span style="font-size: 0.73rem; color: var(--color-text-muted); display: block; margin-top: 0.25rem;">
+                        💡 La IA filtrará y creará casos con errores conceptuales exclusivamente de la unidad solicitada.
+                    </span>
+                </div>
+            </div>
+
+            <!-- COLUMNA DERECHA: Cantidad de Rondas + Comodines -->
+            <div class="lab-config-col lab-config-col--topics">
+                <!-- Selector de Rondas / Casos -->
+                <div class="bolillero-count-section">
+                    <label class="section-title lab-section-label">
+                        <span>📋 Cantidad de Rondas / Expedientes:</span>
+                        <strong id="impostorModalRoundsBadge" class="badge badge--primary" style="font-size: 0.85rem;">5 rondas</strong>
+                    </label>
+                    <div class="bomba-time-selector" id="impostorModalRoundsSelector" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.35rem;">
+                        <button type="button" class="button button--secondary button--xs impostor-rounds-modal-btn" data-rounds="3">3 Casos</button>
+                        <button type="button" class="button button--primary button--xs impostor-rounds-modal-btn is-active" data-rounds="5">5 Casos</button>
+                        <button type="button" class="button button--secondary button--xs impostor-rounds-modal-btn" data-rounds="7">7 Casos</button>
+                        <button type="button" class="button button--secondary button--xs impostor-rounds-modal-btn" data-rounds="10">10 Casos</button>
+                    </div>
+                </div>
+
+                <!-- Comodines Disponibles en la Misión -->
+                <label class="section-title lab-section-label" style="margin-top: 0.75rem;">🃏 Comodines de Investigación Habilitados:</label>
+                <div class="bomba-setup-comodines-grid" style="display: flex; flex-direction: column; gap: 0.55rem;">
+                    <label class="bomba-comodin-setup-card is-active" id="impostorSetupCard5050">
+                        <input type="checkbox" id="impostorSetupCheck5050" checked class="hidden">
+                        <div style="display: flex; align-items: center; gap: 0.75rem; width: 100%;">
+                            <span style="font-size: 1.5rem; line-height: 1;">💡</span>
+                            <div style="flex: 1;">
+                                <strong style="display: block; color: #fff; font-size: 0.88rem;">Pista 50/50</strong>
+                                <span style="font-size: 0.74rem; color: var(--color-text-muted);">Descarta de inmediato 2 afirmaciones verdaderas.</span>
+                            </div>
+                            <span class="badge badge--success bomba-setup-badge">Activado</span>
+                        </div>
+                    </label>
+                    <label class="bomba-comodin-setup-card is-active" id="impostorSetupCardTiempo">
+                        <input type="checkbox" id="impostorSetupCheckTiempo" checked class="hidden">
+                        <div style="display: flex; align-items: center; gap: 0.75rem; width: 100%;">
+                            <span style="font-size: 1.5rem; line-height: 1;">⏱️</span>
+                            <div style="flex: 1;">
+                                <strong style="display: block; color: #fff; font-size: 0.88rem;">Tiempo Extra (+15s)</strong>
+                                <span style="font-size: 0.74rem; color: var(--color-text-muted);">Otorga 15 segundos adicionales para analizar el caso.</span>
+                            </div>
+                            <span class="badge badge--success bomba-setup-badge">Activado</span>
+                        </div>
+                    </label>
+                    <label class="bomba-comodin-setup-card is-active" id="impostorSetupCardSocorro">
+                        <input type="checkbox" id="impostorSetupCheckSocorro" checked class="hidden">
+                        <div style="display: flex; align-items: center; gap: 0.75rem; width: 100%;">
+                            <span style="font-size: 1.5rem; line-height: 1;">🛟</span>
+                            <div style="flex: 1;">
+                                <strong style="display: block; color: #fff; font-size: 0.88rem;">Radar de Detección</strong>
+                                <span style="font-size: 0.74rem; color: var(--color-text-muted);">El radar escanea y señala la tarjeta con el error conceptual.</span>
+                            </div>
+                            <span class="badge badge--success bomba-setup-badge">Activado</span>
+                        </div>
+                    </label>
+                </div>
+
+                <!-- Formato de Sospecha -->
+                <label class="section-title lab-section-label" style="margin-top: 0.75rem;">🎯 Tipo de Casos Teóricos:</label>
+                <div class="lab-topics-grid" id="impostorFormatGrid">
+                    <label class="lab-topic-option is-selected" data-format="afirmaciones">
+                        <input type="radio" name="impostorFormatRadio" value="afirmaciones" checked class="hidden">
+                        <div class="lab-topic-card-body">
+                            <span class="lab-topic-icon">⚖️</span>
+                            <div class="lab-topic-info">
+                                <strong>Doctrina y Principios</strong>
+                                <span>3 afirmaciones canónicas y 1 impostor sutil.</span>
+                            </div>
+                        </div>
+                    </label>
+                    <label class="lab-topic-option" data-format="casos">
+                        <input type="radio" name="impostorFormatRadio" value="casos" class="hidden">
+                        <div class="lab-topic-card-body">
+                            <span class="lab-topic-icon">🔍</span>
+                            <div class="lab-topic-info">
+                                <strong>Casos Prácticos Aplicados</strong>
+                                <span>Situaciones donde una deducción es falaz.</span>
+                            </div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <footer class="modal__footer lab-config-footer">
+            <button id="closeImpostorSetupModalBottomBtn" class="button button--ghost" type="button">Cancelar / Usar Casos Actuales</button>
+            <button id="impostorBtnCargarConfig" class="button button--primary" type="button" style="background: linear-gradient(135deg, #d97706, #f59e0b); font-weight: 600; padding: 0.65rem 1.4rem;">
+                🕵️‍♂️ Iniciar Misión con IA
+            </button>
+        </footer>
+    </div>
+</dialog>
+
+<!-- =========================================================
+     MODAL DE CONFIGURACIÓN INICIAL: MEMOTEST CONECTADO (IA)
+     ========================================================= -->
+<dialog id="memotestSetupModal" class="modal lab-config-dialog" aria-labelledby="memotestSetupModalTitle">
+    <div class="modal__content lab-config-modal-content">
+        <header class="modal__header lab-config-header">
+            <div class="lab-config-header-text">
+                <span class="lab-config-header-icon">🧠</span>
+                <div>
+                    <h3 id="memotestSetupModalTitle" class="modal__title">Memotest Conectado: Configuración de Tablero IA</h3>
+                    <p class="lab-config-subtitle">Cargá tu material de estudio y calibrá pares, tiempo, dificultad y habilidades de memoria</p>
+                </div>
+            </div>
+            <button id="closeMemotestSetupModalBtn" class="modal__close icon-button" type="button" aria-label="Cerrar modal">✕</button>
+        </header>
+
+        <div class="modal__body lab-config-modal-body">
+            <!-- COLUMNA IZQUIERDA: Material + Tiempo + Dificultad + Prompt -->
+            <div class="lab-config-col lab-config-col--upload">
+                <!-- Dropzone de Archivo -->
+                <div class="lab-upload-section">
+                    <label class="section-title lab-section-label">
+                        <span>📂 Material de Estudio</span>
+                        <span class="lab-formats-pill">PDF • WORD • PPTX • TXT</span>
+                    </label>
+                    <input type="file" id="memotestPdfFileInput" accept=".pdf,.docx,.pptx,.txt,.md,.csv" class="hidden">
+                    <div class="lab-upload-dropzone" id="memotestUploadDropzone" tabindex="0" role="button" aria-label="Cargar archivo de estudio">
+                        <div class="lab-upload-plus-circle" id="memotestUploadPlusCircle">➕</div>
+                        <strong class="lab-upload-title" id="memotestUploadTitle">Subir Material de Estudio</strong>
+                        <p class="lab-upload-hint" id="memotestUploadHint">
+                            Hacé clic o arrastrá apuntes para emparejar conceptos con sus definiciones exactas.
+                        </p>
+                        <div class="lab-loaded-pdf-info hidden" id="memotestLoadedPdfInfo">
+                            <span class="lab-loaded-pdf-icon" id="memotestLoadedPdfIcon">📄</span>
+                            <div class="lab-loaded-pdf-text">
+                                <strong id="memotestLoadedPdfName">apuntes.pdf</strong>
+                                <span id="memotestLoadedPdfMeta">Listo para procesar</span>
+                            </div>
+                            <button type="button" class="button button--ghost button--xs" id="memotestBtnQuitarPdf" style="color: #f87171; margin-left: auto;">✕ Quitar</button>
+                        </div>
+                    </div>
+                    <div class="lab-gdocs-hint">
+                        💡 <strong>¿Google Docs o Slides?</strong> Descargalo como <em>.docx</em> o <em>PDF</em> y subilo acá directamente.
+                    </div>
+                </div>
+
+                <!-- Selector de Tiempo Límite -->
+                <div class="bomba-time-section">
+                    <label class="section-title lab-section-label">
+                        <span>⏱️ Tiempo Límite / Cronómetro:</span>
+                        <strong id="memotestModalTimeBadge" class="badge badge--warning" style="font-size: 0.85rem;">Sin límite (Práctica)</strong>
+                    </label>
+                    <div class="bomba-time-selector" id="memotestModalTimeSelector" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.35rem;">
+                        <button type="button" class="button button--primary button--xs memotest-time-modal-btn is-active" data-time="0">🧘 Libre</button>
+                        <button type="button" class="button button--secondary button--xs memotest-time-modal-btn" data-time="60">⚡ 60s</button>
+                        <button type="button" class="button button--secondary button--xs memotest-time-modal-btn" data-time="90">🎯 90s</button>
+                        <button type="button" class="button button--secondary button--xs memotest-time-modal-btn" data-time="120">🛡️ 120s</button>
+                    </div>
+                </div>
+
+                <!-- Selector de Dificultad -->
+                <div class="lab-difficulty-section">
+                    <label class="section-title lab-section-label">
+                        <span>⚙️ Nivel de Dificultad:</span>
+                        <span style="font-size: 0.72rem; color: var(--color-text-muted); font-weight: normal;">Complejidad de conceptos</span>
+                    </label>
+                    <div class="lab-difficulty-selector" id="memotestConfigDifficultySelector">
+                        <button type="button" class="lab-diff-btn" data-diff="facil">
+                            <span class="diff-dot diff-dot--facil"></span> Fácil
+                        </button>
+                        <button type="button" class="lab-diff-btn is-active" data-diff="intermedio">
+                            <span class="diff-dot diff-dot--intermedio"></span> Intermedio
+                        </button>
+                        <button type="button" class="lab-diff-btn" data-diff="dificil">
+                            <span class="diff-dot diff-dot--dificil"></span> Difícil
+                        </button>
+                        <button type="button" class="lab-diff-btn" data-diff="extremo">
+                            <span class="diff-dot diff-dot--extremo"></span> Extremo
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Orden / Prompt puntual para Memotest -->
+                <div class="lab-order-section">
+                    <label for="memotestConfigOrderInput" class="section-title lab-section-label">
+                        <span>✍️ Unidad o Tema Específico (Opcional):</span>
+                    </label>
+                    <textarea id="memotestConfigOrderInput" rows="2" class="lab-config-textarea" placeholder="Ej: 'Solo conceptos de la Unidad 1', 'Fórmulas del capítulo 4', 'Definiciones de microeconomía'..."></textarea>
+                    <span style="font-size: 0.73rem; color: var(--color-text-muted); display: block; margin-top: 0.25rem;">
+                        💡 La IA generará los pares de memoria exclusivamente basados en la unidad indicada.
+                    </span>
+                </div>
+            </div>
+
+            <!-- COLUMNA DERECHA: Cantidad de Pares + Poderes -->
+            <div class="lab-config-col lab-config-col--topics">
+                <!-- Selector de Cantidad de Pares -->
+                <div class="bolillero-count-section">
+                    <label class="section-title lab-section-label">
+                        <span>🔢 Cantidad de Pares en el Tablero:</span>
+                        <strong id="memotestPairsBadge" class="badge badge--primary" style="font-size: 0.85rem;">6 Pares (12 Cartas)</strong>
+                    </label>
+                    <div class="bomba-time-selector" id="memotestPairsSelector" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.35rem;">
+                        <button type="button" class="button button--secondary button--xs memotest-pairs-chip" data-pairs="4">4 (8)</button>
+                        <button type="button" class="button button--primary button--xs memotest-pairs-chip is-active" data-pairs="6">6 (12)</button>
+                        <button type="button" class="button button--secondary button--xs memotest-pairs-chip" data-pairs="8">8 (16)</button>
+                        <button type="button" class="button button--secondary button--xs memotest-pairs-chip" data-pairs="10">10 (20)</button>
+                        <button type="button" class="button button--secondary button--xs memotest-pairs-chip" data-pairs="12">12 (24)</button>
+                    </div>
+                </div>
+
+                <!-- Poderes y Habilidades de Memoria -->
+                <label class="section-title lab-section-label" style="margin-top: 0.75rem;">🃏 Poderes de Memoria Habilitados:</label>
+                <div class="bomba-setup-comodines-grid" style="display: flex; flex-direction: column; gap: 0.55rem;">
+                    <label class="bomba-comodin-setup-card is-active" id="memotestSetupCardVistazo">
+                        <input type="checkbox" id="memotestSetupCheckVistazo" checked class="hidden">
+                        <div style="display: flex; align-items: center; gap: 0.75rem; width: 100%;">
+                            <span style="font-size: 1.5rem; line-height: 1;">👁️</span>
+                            <div style="flex: 1;">
+                                <strong style="display: block; color: #fff; font-size: 0.88rem;">Ojo de Halcón (Rayos X)</strong>
+                                <span style="font-size: 0.74rem; color: var(--color-text-muted);">Destapa todas las cartas por 2.5 segundos para memorizarlas.</span>
+                            </div>
+                            <span class="badge badge--success bomba-setup-badge">Activado</span>
+                        </div>
+                    </label>
+                    <label class="bomba-comodin-setup-card is-active" id="memotestSetupCardCongelar">
+                        <input type="checkbox" id="memotestSetupCheckCongelar" checked class="hidden">
+                        <div style="display: flex; align-items: center; gap: 0.75rem; width: 100%;">
+                            <span style="font-size: 1.5rem; line-height: 1;">❄️</span>
+                            <div style="flex: 1;">
+                                <strong style="display: block; color: #fff; font-size: 0.88rem;">Congelar / +20s Extra</strong>
+                                <span style="font-size: 0.74rem; color: var(--color-text-muted);">Pausa el cronómetro y te regala 20 segundos de tiempo.</span>
+                            </div>
+                            <span class="badge badge--success bomba-setup-badge">Activado</span>
+                        </div>
+                    </label>
+                    <label class="bomba-comodin-setup-card is-active" id="memotestSetupCardConexion">
+                        <input type="checkbox" id="memotestSetupCheckConexion" checked class="hidden">
+                        <div style="display: flex; align-items: center; gap: 0.75rem; width: 100%;">
+                            <span style="font-size: 1.5rem; line-height: 1;">⚡</span>
+                            <div style="flex: 1;">
+                                <strong style="display: block; color: #fff; font-size: 0.88rem;">Detector Cuántico</strong>
+                                <span style="font-size: 0.74rem; color: var(--color-text-muted);">Encuentra y conecta 1 par automáticamente en el tablero.</span>
+                            </div>
+                            <span class="badge badge--success bomba-setup-badge">Activado</span>
+                        </div>
+                    </label>
+                </div>
+
+                <!-- Tipo de Conexión -->
+                <label class="section-title lab-section-label" style="margin-top: 0.75rem;">🎯 Tipo de Emparejamiento:</label>
+                <div class="lab-topics-grid" id="memotestFormatGrid">
+                    <label class="lab-topic-option is-selected" data-mode="conceptos">
+                        <input type="radio" name="memotestFormatRadio" value="conceptos" checked class="hidden">
+                        <div class="lab-topic-card-body">
+                            <span class="lab-topic-icon">🧩</span>
+                            <div class="lab-topic-info">
+                                <strong>Concepto ↔ Definición</strong>
+                                <span>Uní el término técnico con su significado doctrinario.</span>
+                            </div>
+                        </div>
+                    </label>
+                    <label class="lab-topic-option" data-mode="formulas">
+                        <input type="radio" name="memotestFormatRadio" value="formulas" class="hidden">
+                        <div class="lab-topic-card-body">
+                            <span class="lab-topic-icon">📐</span>
+                            <div class="lab-topic-info">
+                                <strong>Ley ↔ Fórmula / Causa</strong>
+                                <span>Relacioná postulados científicos con sus fórmulas.</span>
+                            </div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <footer class="modal__footer lab-config-footer">
+            <button id="closeMemotestSetupModalBottomBtn" class="button button--ghost" type="button">Cancelar / Tablero Estándar</button>
+            <button id="memotestBtnCargarConfig" class="button button--primary" type="button" style="background: linear-gradient(135deg, #0284c7, #38bdf8); font-weight: 600; padding: 0.65rem 1.4rem;">
+                🧠 Armar y Conectar Memotest con IA
             </button>
         </footer>
     </div>
