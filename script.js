@@ -869,6 +869,13 @@ const dom = {
    ========================================================== */
 function mostrarToast(mensaje, duracion = 3200) {
     if (!mensaje) return;
+    // Muchas llamadas pasan un tipo ("info", "exito", "error") como 2º argumento.
+    // Antes eso hacía setTimeout("info") => 0 ms y el aviso desaparecía al instante.
+    let tipo = "";
+    if (typeof duracion !== "number" || !isFinite(duracion) || duracion <= 0) {
+        tipo = typeof duracion === "string" ? duracion : "";
+        duracion = 3200;
+    }
     let container = document.getElementById("appToastContainer");
     if (!container) {
         container = document.createElement("div");
@@ -879,7 +886,7 @@ function mostrarToast(mensaje, duracion = 3200) {
     }
 
     const toast = document.createElement("div");
-    toast.className = "app-toast-item";
+    toast.className = "app-toast-item" + (tipo ? ` app-toast-item--${tipo}` : "");
     toast.innerHTML = `<span class="app-toast-text">${mensaje}</span>`;
 
     container.appendChild(toast);
@@ -1057,6 +1064,11 @@ function cambiarVista(vista) {
     });
 
     estado.interfaz.vistaActual = vistaDestino;
+
+    // El pizarrón flotante del laboratorio vive fuera de la vista: cerrarlo al salir
+    if (vistaDestino !== "laboratorio" && typeof cerrarPizarronFlotanteLab === "function") {
+        cerrarPizarronFlotanteLab();
+    }
 
     const currentHash = window.location.hash.replace("#", "");
     if (currentHash !== vistaDestino) {
@@ -1785,6 +1797,10 @@ async function girarBolillero() {
     if (estado.interfaz.girando) return;
 
     const lista = obtenerListaSeleccionada();
+    if (!lista || !Array.isArray(lista.temas) || lista.temas.length === 0) {
+        mostrarToast("📋 Primero elegí o creá una lista con temas para girar el bolillero.");
+        return;
+    }
     const temasDisponibles = lista.temas.filter(t => estado.ronda.disponibles.includes(t.id));
 
     if (temasDisponibles.length === 0) {
@@ -8316,7 +8332,7 @@ function seleccionarTemaManualBolillero(temaId, dispararIaInmediata = false) {
     window.addEventListener("hashchange", () => {
         const hash = window.location.hash.replace("#", "");
         const normalized = (hash === "duelo" || hash === "juntos") ? "juntos" : hash;
-        if (["solo", "juntos", "bolillero", "fama", "home"].includes(normalized)) {
+        if (["solo", "juntos", "bolillero", "fama", "home", "laboratorio"].includes(normalized)) {
             if (normalized !== estado.interfaz.vistaActual) {
                 cambiarVista(normalized);
             }
@@ -8477,7 +8493,7 @@ function iniciarAplicacion() {
 // =========================================================
 // GESTOR DE VERSIONES Y ACTUALIZACIÓN AUTOMÁTICA
 // =========================================================
-const APP_BUILD_VERSION = "26.7";
+const APP_BUILD_VERSION = "26.8";
 
 async function forzarActualizacionCompleta(mostrarNotificacion = true) {
     const btnActualizar = document.getElementById("btnForzarActualizar");
@@ -10896,6 +10912,10 @@ function irASeccionEstudio(idSeccion, navId) {
         eraserSize: 22
     };
 
+    // Se declara en el scope exterior: en modo estricto una función declarada dentro
+    // de un bloque if no es visible desde abrirPizarron() y lanzaba ReferenceError.
+    let ajustarResolucionCanvas = function () {};
+
     function abrirPizarron() {
         scratchState.isMinimized = false;
         scratchpadCard.classList.remove("is-minimized");
@@ -11005,7 +11025,7 @@ function irASeccionEstudio(idSeccion, navId) {
         let lastX = 0;
         let lastY = 0;
 
-        function ajustarResolucionCanvas() {
+        ajustarResolucionCanvas = function () {
             const rect = scratchpadCanvas.getBoundingClientRect();
             if (rect.width > 0 && rect.height > 0) {
                 const tempCanvas = document.createElement("canvas");
@@ -13911,10 +13931,38 @@ function configurarEventosLaboratorio() {
     }
     if (dom.labBtnClearTable) dom.labBtnClearTable.addEventListener("click", limpiarGrillaFrecuencias);
 
-    // Calculadora Normal inputs
+    // Calculadora Normal inputs ("change" asegura que el <select> de cola actualice en todos los navegadores)
     [dom.labNormMean, dom.labNormStd, dom.labNormX, dom.labNormTail].forEach(elem => {
-        if (elem) elem.addEventListener("input", actualizarCalculosNormalUI);
+        if (!elem) return;
+        elem.addEventListener("input", actualizarCalculosNormalUI);
+        elem.addEventListener("change", actualizarCalculosNormalUI);
     });
+
+    // Botón "📥 Copiar P a Checkpoint": pega la probabilidad calculada en el primer inciso sin resolver
+    if (dom.labBtnCopyNormToInput) {
+        dom.labBtnCopyNormToInput.addEventListener("click", () => {
+            const pTexto = (dom.labNormPVal?.textContent || "").trim();
+            const pValor = parseFloat(pTexto);
+            if (!isFinite(pValor)) {
+                mostrarToast("⚠️ No hay una probabilidad calculada para copiar.");
+                return;
+            }
+            const inputs = [...document.querySelectorAll("#labQuestionsList .lab-q-input")];
+            const destino = inputs.find(inp => !inp.disabled && !inp.readOnly && inp.value.trim() === "")
+                || inputs.find(inp => !inp.disabled && !inp.readOnly);
+            if (!destino) {
+                navigator.clipboard?.writeText(String(pValor)).catch(() => {});
+                mostrarToast(`📋 No hay incisos abiertos. P = ${pValor} copiado al portapapeles.`);
+                return;
+            }
+            destino.value = String(pValor);
+            destino.dispatchEvent(new Event("input", { bubbles: true }));
+            destino.focus();
+            destino.scrollIntoView({ behavior: "smooth", block: "center" });
+            cambiarVistaMovilLab("enunciado");
+            mostrarToast(`📥 P = ${pValor} pegado en el inciso. Revisalo y verificá tu respuesta.`);
+        });
+    }
 
     // Subtabs Calculadora Probabilidades
     if (dom.labWidgetProb) {
