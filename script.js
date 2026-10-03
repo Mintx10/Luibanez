@@ -726,6 +726,9 @@ const dom = {
     labActivePdfBadge: document.getElementById("labActivePdfBadge"),
     labBtnAbrirConfigModal: document.getElementById("labBtnAbrirConfigModal"),
     labBtnGenerarConIA: document.getElementById("labBtnGenerarConIA"),
+    labBtnOtroEjercicioIA: document.getElementById("labBtnOtroEjercicioIA"),
+    labBtnQuickOtroIA: document.getElementById("labBtnQuickOtroIA"),
+    labBtnSiguienteCasoModal: document.getElementById("labBtnSiguienteCasoModal"),
     labBtnGenerarOtro: document.getElementById("labBtnGenerarOtro"),
     labXpDisplay: document.getElementById("labXpDisplay"),
     labTagMateria: document.getElementById("labMateriaBadge"),
@@ -8474,7 +8477,7 @@ function iniciarAplicacion() {
 // =========================================================
 // GESTOR DE VERSIONES Y ACTUALIZACIÓN AUTOMÁTICA
 // =========================================================
-const APP_BUILD_VERSION = "26.6";
+const APP_BUILD_VERSION = "26.7";
 
 async function forzarActualizacionCompleta(mostrarNotificacion = true) {
     const btnActualizar = document.getElementById("btnForzarActualizar");
@@ -11203,6 +11206,8 @@ const laboratorioEstado = {
         tool: "pen",
         size: 2
     },
+    historialEjercicios: [],
+    ultimoProceduralSector: "",
     // La grilla empieza vacía para que el alumno complete x e f deduciéndolas del enunciado
     tablaDatos: [
         { xi: "", fi: "" },
@@ -12632,6 +12637,36 @@ function obtenerEtiquetaTema(tema) {
 // GENERADOR DE EJERCICIOS (IA + OFFLINE)
 // ------------------------------------------
 
+async function generarOtroEjercicioIALab(btnElement = null) {
+    const btns = [
+        dom.labBtnOtroEjercicioIA,
+        dom.labBtnQuickOtroIA,
+        dom.labBtnSiguienteCasoModal
+    ].filter(Boolean);
+
+    btns.forEach(b => {
+        b.disabled = true;
+        if (!b.dataset.origHtml) b.dataset.origHtml = b.innerHTML;
+        b.innerHTML = `<span style="display:inline-block; animation: spin 0.8s linear infinite;">🔄</span> Generando con IA...`;
+    });
+
+    try {
+        mostrarToast("🎲 Conectando con Gemini para generar otro ejercicio inédito...", "info");
+        await generarEjercicioLaboratorio(true);
+        if (dom.labCompletedCard) dom.labCompletedCard.classList.add("hidden");
+        cambiarVistaMovilLab("enunciado", true);
+        mostrarToast("✨ ¡Nuevo ejercicio con IA listo! Totalmente diferente al anterior.", "exito");
+    } catch (err) {
+        console.error("Error al generar otro ejercicio con IA:", err);
+        mostrarToast("⚠️ Error al crear el nuevo ejercicio. Probá nuevamente.", "error");
+    } finally {
+        btns.forEach(b => {
+            b.disabled = false;
+            if (b.dataset.origHtml) b.innerHTML = b.dataset.origHtml;
+        });
+    }
+}
+
 async function generarEjercicioLaboratorio(forzarNuevo = false, ordenManual = null) {
     const tema = laboratorioEstado.temaSeleccionado || "descriptiva";
     const orden = (typeof ordenManual === "string" ? ordenManual : laboratorioEstado.instruccionUsuario || "").trim();
@@ -12644,13 +12679,18 @@ async function generarEjercicioLaboratorio(forzarNuevo = false, ordenManual = nu
     if (typeof generarPreguntaIA === "function") {
         try {
             mostrarToast("🤖 Gemini está creando tu ejercicio de práctica...", "info");
+            const prevEjercicios = Array.isArray(laboratorioEstado.historialEjercicios)
+                ? laboratorioEstado.historialEjercicios.slice(-5)
+                : [];
+
             const data = await generarPreguntaIA({
                 materia: "Estadística y Probabilidad",
                 tema: obtenerEtiquetaTema(tema),
                 tipoJuego: 'laboratorio',
                 contextoPDF: laboratorioEstado.pdfTexto || "",
                 dificultad: laboratorioEstado.dificultad || "intermedio",
-                instruccionUsuario: orden
+                instruccionUsuario: orden,
+                preguntasPrevias: prevEjercicios
             });
 
             if (data && Array.isArray(data.preguntas) && data.preguntas.length >= 3) {
@@ -12673,6 +12713,16 @@ async function generarEjercicioLaboratorio(forzarNuevo = false, ordenManual = nu
                         explicacion: p.explicacion || `El valor esperado es ${p.esperado}.`
                     }))
                 };
+
+                // Registrar en historial para que el próximo ejercicio sea 100% distinto
+                const resumenEj = `${data.titulo || ''}: ${(data.enunciado || '').slice(0, 100)}`;
+                if (!laboratorioEstado.historialEjercicios.includes(resumenEj)) {
+                    laboratorioEstado.historialEjercicios.push(resumenEj);
+                    if (laboratorioEstado.historialEjercicios.length > 10) {
+                        laboratorioEstado.historialEjercicios.shift();
+                    }
+                }
+
                 renderizarEjercicioActual();
                 mostrarToast("✨ ¡Ejercicio generado con éxito según tus preferencias!", "exito");
                 return;
@@ -12708,6 +12758,16 @@ function generarEjercicioProcedimental(tema, orden = "") {
     }
 
     laboratorioEstado.ejercicioActual = ej;
+
+    // Registrar en historial procedimental
+    if (ej && ej.titulo) {
+        const resumenEj = `${ej.titulo}: ${(ej.enunciado || '').slice(0, 100)}`;
+        if (!laboratorioEstado.historialEjercicios.includes(resumenEj)) {
+            laboratorioEstado.historialEjercicios.push(resumenEj);
+            if (laboratorioEstado.historialEjercicios.length > 10) laboratorioEstado.historialEjercicios.shift();
+        }
+    }
+
     renderizarEjercicioActual();
     const origenMsg = orden ? `🎯 Ejercicio generado a medida para: "${orden.slice(0, 35)}..."` : "🎲 Ejercicio práctico preparado en la mesa de trabajo.";
     mostrarToast(origenMsg, "info");
@@ -13726,10 +13786,27 @@ function configurarEventosLaboratorio() {
         });
     }
 
-    // Botón Unificado "Generar Ejercicio" (Abre modal de orden / personalización)
+    // Botón "Personalizar con IA" (Abre modal de orden / personalización)
     if (dom.labBtnGenerarConIA) {
         dom.labBtnGenerarConIA.addEventListener("click", () => {
             abrirModalPromptLab();
+        });
+    }
+
+    // Botones directos "Otro Ejercicio con IA" (Generación inmediata sin repetir)
+    if (dom.labBtnOtroEjercicioIA) {
+        dom.labBtnOtroEjercicioIA.addEventListener("click", () => {
+            generarOtroEjercicioIALab(dom.labBtnOtroEjercicioIA);
+        });
+    }
+    if (dom.labBtnQuickOtroIA) {
+        dom.labBtnQuickOtroIA.addEventListener("click", () => {
+            generarOtroEjercicioIALab(dom.labBtnQuickOtroIA);
+        });
+    }
+    if (dom.labBtnSiguienteCasoModal) {
+        dom.labBtnSiguienteCasoModal.addEventListener("click", () => {
+            generarOtroEjercicioIALab(dom.labBtnSiguienteCasoModal);
         });
     }
 

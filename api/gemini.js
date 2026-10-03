@@ -332,11 +332,25 @@ DEBES PRIORIZAR Y CUMPLIR ESTA ORDEN Y GENERAR UN EJERCICIO EXACTAMENTE ENFOCADO
                 instruccionDificultad = `NIVEL DE DIFICULTAD: INTERMEDIO (PREDETERMINADO - Nivel estándar de examen parcial universitario). Calibrá la complejidad basándote fielmente en la dificultad promedio de los ejercicios del archivo PDF/PPT provisto.`;
             }
 
+            let seccionPreviasLab = "";
+            if (Array.isArray(preguntasPrevias) && preguntasPrevias.length > 0) {
+                seccionPreviasLab = `
+REGLA CRÍTICA DE NOVEDAD Y DIVERSIDAD (PROHIBIDO REPETIR O CREAR UN EJERCICIO IDÉNTICO):
+El estudiante YA resolvió recientemente estos ejercicios anteriores:
+${preguntasPrevias.map((p, idx) => `   ${idx + 1}. "${p}"`).join("\n")}
+
+ES ESTRICTAMENTE OBLIGATORIO que este nuevo ejercicio sea TOTALMENTE DIFERENTE e INÉDITO:
+- Cambiá radicalmente el escenario o contexto temático (por ejemplo, si el anterior fue de producción industrial, usá medicina/epidemiología, transporte urbano/vuelos, telecomunicaciones, finanzas/banca, deportes, educación o rendimiento ambiental).
+- Usá variables numéricas y valores de datos completamente nuevos y distintos.
+- Variá los tipos de incisos y preguntas para que no se parezca en nada al anterior.`;
+            }
+
             promptInstrucciones = `
 JUEGO: "LABORATORIO DE PRÁCTICAS NUMÉRICAS Y ANÁLISIS DE CASOS"
 TEMA DE ESTUDIO: "${tema}"
 ${instruccionDificultad}
 ${ordenEspecifica}
+${seccionPreviasLab}
 
 REGLA ESTRICTA DE ESTRUCTURA UNIVERSITARIA (ANTI-ENUNCIADOS GORDOS Y AMONTONADOS):
 Los estudiantes necesitan enunciados cortos, directos y con los datos perfectamente claros y separados:
@@ -509,7 +523,7 @@ IMPORTANTE: Basá tus preguntas, fórmulas, afirmaciones, bolillas y explicacion
                         contents: [{ parts }],
                         generationConfig: {
                             responseMimeType: "application/json",
-                            temperature: tipoJuego === 'bolillero' ? 0.85 : 0.4
+                            temperature: (tipoJuego === 'bolillero' || tipoJuego === 'laboratorio') ? 0.9 : 0.4
                         }
                     })
                 });
