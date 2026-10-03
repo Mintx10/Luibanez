@@ -861,7 +861,61 @@ const dom = {
     labAiResultContent: document.getElementById("labAiResultContent"),
     labAiResultCloseBtn: document.getElementById("labAiResultCloseBtn"),
     labAiCopyAllBtn: document.getElementById("labAiCopyAllBtn"),
-    labAiCleanSpaceBtn: document.getElementById("labAiCleanSpaceBtn")
+    labAiCleanSpaceBtn: document.getElementById("labAiCleanSpaceBtn"),
+
+    /* Modal de Configuración Inicial: Bolillero IA */
+    bolilleroSetupModal: document.getElementById("bolilleroSetupModal"),
+    closeBolilleroSetupModalBtn: document.getElementById("closeBolilleroSetupModalBtn"),
+    closeBolilleroSetupModalBottomBtn: document.getElementById("closeBolilleroSetupModalBottomBtn"),
+    bolilleroBtnCargarConfig: document.getElementById("bolilleroBtnCargarConfig"),
+    bolilleroUploadDropzone: document.getElementById("bolilleroUploadDropzone"),
+    bolilleroPdfFileInput: document.getElementById("bolilleroPdfFileInput"),
+    bolilleroLoadedPdfInfo: document.getElementById("bolilleroLoadedPdfInfo"),
+    bolilleroLoadedPdfIcon: document.getElementById("bolilleroLoadedPdfIcon"),
+    bolilleroLoadedPdfName: document.getElementById("bolilleroLoadedPdfName"),
+    bolilleroLoadedPdfMeta: document.getElementById("bolilleroLoadedPdfMeta"),
+    bolilleroBtnQuitarPdf: document.getElementById("bolilleroBtnQuitarPdf"),
+    bolilleroConfigDifficultySelector: document.getElementById("bolilleroConfigDifficultySelector"),
+    bolilleroConfigOrderInput: document.getElementById("bolilleroConfigOrderInput"),
+    bolilleroCountBadge: document.getElementById("bolilleroCountBadge"),
+    bolilleroCountCustomInput: document.getElementById("bolilleroCountCustomInput"),
+    bolilleroCountSelector: document.getElementById("bolilleroCountSelector"),
+    bolilleroTopicsGrid: document.getElementById("bolilleroTopicsGrid"),
+    bolilleroOpenSetupBtn: document.getElementById("bolilleroOpenSetupBtn"),
+
+    /* Modal de Configuración Inicial: Bomba IA */
+    bombaSetupModal: document.getElementById("bombaSetupModal"),
+    closeBombaSetupModalBtn: document.getElementById("closeBombaSetupModalBtn"),
+    closeBombaSetupModalBottomBtn: document.getElementById("closeBombaSetupModalBottomBtn"),
+    bombaBtnCargarConfig: document.getElementById("bombaBtnCargarConfig"),
+    bombaUploadDropzone: document.getElementById("bombaUploadDropzone"),
+    bombaPdfFileInput: document.getElementById("bombaPdfFileInput"),
+    bombaLoadedPdfInfo: document.getElementById("bombaLoadedPdfInfo"),
+    bombaLoadedPdfIcon: document.getElementById("bombaLoadedPdfIcon"),
+    bombaLoadedPdfName: document.getElementById("bombaLoadedPdfName"),
+    bombaLoadedPdfMeta: document.getElementById("bombaLoadedPdfMeta"),
+    bombaBtnQuitarPdf: document.getElementById("bombaBtnQuitarPdf"),
+    bombaTimeBadge: document.getElementById("bombaTimeBadge"),
+    bombaTimeSelector: document.getElementById("bombaTimeSelector"),
+    bombaConfigDifficultySelector: document.getElementById("bombaConfigDifficultySelector"),
+    bombaConfigOrderInput: document.getElementById("bombaConfigOrderInput"),
+    bombaSetupCardCortacables: document.getElementById("bombaSetupCardCortacables"),
+    bombaSetupCheckCortacables: document.getElementById("bombaSetupCheckCortacables"),
+    bombaSetupCardCongelar: document.getElementById("bombaSetupCardCongelar"),
+    bombaSetupCheckCongelar: document.getElementById("bombaSetupCheckCongelar"),
+    bombaSetupCardPista: document.getElementById("bombaSetupCardPista"),
+    bombaSetupCheckPista: document.getElementById("bombaSetupCheckPista"),
+    bombaProtocolGrid: document.getElementById("bombaProtocolGrid"),
+    bombaOpenConfigBtn: document.getElementById("bombaOpenConfigBtn"),
+
+    /* Comodines en Arena Bomba */
+    bombaComodinesTray: document.getElementById("bombaComodinesTray"),
+    bombaBtnCortacables: document.getElementById("bombaBtnCortacables"),
+    bombaCountCortacables: document.getElementById("bombaCountCortacables"),
+    bombaBtnCongelar: document.getElementById("bombaBtnCongelar"),
+    bombaCountCongelar: document.getElementById("bombaCountCongelar"),
+    bombaBtnPista: document.getElementById("bombaBtnPista"),
+    bombaCountPista: document.getElementById("bombaCountPista")
 };
 
 /* ==========================================================
@@ -1075,7 +1129,16 @@ function cambiarVista(vista) {
         window.location.hash = vistaDestino;
     }
 
-    if (vistaDestino === "juntos") {
+    if (vistaDestino === "bolillero") {
+        if (!window._bolilleroModalYaVisto) {
+            window._bolilleroModalYaVisto = true;
+            setTimeout(() => {
+                if (typeof abrirModalConfigBolillero === "function") {
+                    abrirModalConfigBolillero();
+                }
+            }, 120);
+        }
+    } else if (vistaDestino === "juntos") {
         if (!dueloEstado.partida.activa && !onlineDueloEstado.codigoSala) {
             actualizarDropdownListasDuelo();
             actualizarUIPerfilUsuario();
@@ -5606,6 +5669,8 @@ function usarComodinSocorro() {
     const jugador = partida.jugadores.find(j => j.id === partida.jugadorActualId);
     if (!jugador || jugador.comodinesUsados.socorro) return;
 
+    animarActivacionComodinCard(dom.dueloBtnSocorro);
+
     if (!dom.dueloSocorroOptions || !dom.dueloSocorroModal) return;
     dom.dueloSocorroOptions.innerHTML = "";
 
@@ -5635,7 +5700,7 @@ function seleccionarCompaneroSocorro(companeroId) {
 
     if (dom.dueloSocorroModal) dom.dueloSocorroModal.close();
     actualizarComodinesJugadorUI(jugador);
-    alert(`🤝 ¡Socorro activado con ${companero.nombre}! Si responden correctamente, sumarán 5 pts cada uno.`);
+    mostrarToast(`🤝 ¡Socorro activado con ${companero.nombre}! Resolverán juntos por 5 pts cada uno.`, "exito");
 }
 
 function usarComodinPista() {
@@ -5643,12 +5708,14 @@ function usarComodinPista() {
     const jugador = partida.jugadores.find(j => j.id === partida.jugadorActualId);
     if (!jugador || jugador.comodinesUsados.pista) return;
 
+    animarActivacionComodinCard(dom.dueloBtnPista);
+
     jugador.comodinesUsados.pista = true;
     partida.tiempoRestante += 15;
     actualizarCronometroTurnoDueloUI();
     actualizarComodinesJugadorUI(jugador);
     reproducirSonidoDuelo("beep");
-    alert("💡 ¡Pista clave activada! Tenés 15 segundos extra para consultar tus apuntes o fórmulas.");
+    mostrarToast("💡 ¡Pista clave activada! Tenés 15 segundos extra para consultar tus notas.", "info");
 }
 
 function usarComodinPaso() {
@@ -5656,9 +5723,11 @@ function usarComodinPaso() {
     const jugador = partida.jugadores.find(j => j.id === partida.jugadorActualId);
     if (!jugador || jugador.comodinesUsados.pasoRebote) return;
     if (partida.temasDisponibles.length <= 1) {
-        alert("No hay otros temas disponibles para cambiar.");
+        mostrarToast("⚠️ No hay otros temas disponibles para cambiar.", "aviso");
         return;
     }
+
+    animarActivacionComodinCard(dom.dueloBtnPaso);
 
     jugador.comodinesUsados.pasoRebote = true;
     actualizarComodinesJugadorUI(jugador);
@@ -5672,7 +5741,7 @@ function usarComodinPaso() {
     if (dom.dueloTopicRoulette) dom.dueloTopicRoulette.textContent = nuevoTema.titulo;
 
     reproducirSonidoDuelo("fanfare");
-    alert(`🔄 ¡Paso y Rebote! Tu nuevo tema es: "${nuevoTema.titulo}".`);
+    mostrarToast(`🔄 ¡Paso y Rebote! Tu nuevo tema es: "${nuevoTema.titulo}".`, "exito");
 }
 
 /* Calificación de Turno & Robo Relámpago */
@@ -6867,10 +6936,19 @@ async function generarPreguntaIA({ materia, tema, tipoJuego = 'bolillero', conte
 // =========================================================
 // EXTRACCIÓN DE PALABRAS / CONCEPTOS CON IA PARA EL BOLILLERO
 // =========================================================
-function extraerConceptosHeuristicos(texto, count = 10) {
+function extraerConceptosHeuristicos(texto, count = 10, filtroUnidad = '') {
     if (!texto || typeof texto !== "string") return [];
     
-    const lineas = texto.split("\n").map(l => l.trim()).filter(l => l.length > 2);
+    let textoTrabajo = texto;
+    if (filtroUnidad && typeof filtroUnidad === "string" && filtroUnidad.trim().length > 0) {
+        const uTerm = filtroUnidad.trim().toLowerCase();
+        const matchIndex = texto.toLowerCase().indexOf(uTerm);
+        if (matchIndex !== -1) {
+            textoTrabajo = texto.slice(matchIndex, matchIndex + 25000);
+        }
+    }
+
+    const lineas = textoTrabajo.split("\n").map(l => l.trim()).filter(l => l.length > 2);
     const candidatos = [];
     const vistos = new Set();
 
@@ -8486,6 +8564,205 @@ function iniciarAplicacion() {
         });
     }
 
+    // =========================================================
+    // LISTENERS: MODAL DE CONFIGURACIÓN DEL BOLILLERO (IA)
+    // =========================================================
+    if (dom.bolilleroOpenSetupBtn) {
+        dom.bolilleroOpenSetupBtn.addEventListener("click", abrirModalConfigBolillero);
+    }
+    if (dom.closeBolilleroSetupModalBtn) {
+        dom.closeBolilleroSetupModalBtn.addEventListener("click", cerrarModalConfigBolillero);
+    }
+    if (dom.closeBolilleroSetupModalBottomBtn) {
+        dom.closeBolilleroSetupModalBottomBtn.addEventListener("click", cerrarModalConfigBolillero);
+    }
+    if (dom.bolilleroUploadDropzone && dom.bolilleroPdfFileInput) {
+        dom.bolilleroUploadDropzone.addEventListener("click", (e) => {
+            if (e.target.closest("#bolilleroBtnQuitarPdf")) return;
+            dom.bolilleroPdfFileInput.click();
+        });
+        dom.bolilleroPdfFileInput.addEventListener("change", (e) => {
+            const file = e.target.files?.[0];
+            if (file) procesarArchivoBolillero(file);
+        });
+        dom.bolilleroUploadDropzone.addEventListener("dragover", (e) => {
+            e.preventDefault();
+            dom.bolilleroUploadDropzone.classList.add("is-dragover");
+        });
+        dom.bolilleroUploadDropzone.addEventListener("dragleave", () => {
+            dom.bolilleroUploadDropzone.classList.remove("is-dragover");
+        });
+        dom.bolilleroUploadDropzone.addEventListener("drop", (e) => {
+            e.preventDefault();
+            dom.bolilleroUploadDropzone.classList.remove("is-dragover");
+            const file = e.dataTransfer.files?.[0];
+            if (file) procesarArchivoBolillero(file);
+        });
+    }
+    if (dom.bolilleroBtnQuitarPdf) {
+        dom.bolilleroBtnQuitarPdf.addEventListener("click", (e) => {
+            e.stopPropagation();
+            limpiarArchivoBolillero();
+        });
+    }
+    if (dom.bolilleroConfigDifficultySelector) {
+        dom.bolilleroConfigDifficultySelector.querySelectorAll(".lab-diff-btn").forEach(btn => {
+            btn.addEventListener("click", () => {
+                bolilleroSetupEstado.dificultad = btn.dataset.diff;
+                sincronizarDificultadBolilleroUI();
+            });
+        });
+    }
+    if (dom.bolilleroCountSelector) {
+        dom.bolilleroCountSelector.querySelectorAll(".bolillero-count-chip").forEach(chip => {
+            chip.addEventListener("click", () => {
+                const c = parseInt(chip.dataset.count, 10);
+                if (c) {
+                    bolilleroSetupEstado.cantidad = c;
+                    sincronizarCantidadBolilleroUI();
+                }
+            });
+        });
+    }
+    if (dom.bolilleroCountCustomInput) {
+        dom.bolilleroCountCustomInput.addEventListener("input", (e) => {
+            const c = parseInt(e.target.value, 10);
+            if (c && c >= 3 && c <= 50) {
+                bolilleroSetupEstado.cantidad = c;
+                sincronizarCantidadBolilleroUI();
+            }
+        });
+    }
+    if (dom.bolilleroTopicsGrid) {
+        dom.bolilleroTopicsGrid.querySelectorAll(".lab-topic-option").forEach(opt => {
+            opt.addEventListener("click", () => {
+                dom.bolilleroTopicsGrid.querySelectorAll(".lab-topic-option").forEach(o => o.classList.remove("is-selected"));
+                opt.classList.add("is-selected");
+                const radio = opt.querySelector('input[type="radio"]');
+                if (radio) {
+                    radio.checked = true;
+                    bolilleroSetupEstado.modo = radio.value;
+                }
+            });
+        });
+    }
+    if (dom.bolilleroBtnCargarConfig) {
+        dom.bolilleroBtnCargarConfig.addEventListener("click", ejecutarGeneracionBolilleroIA);
+    }
+
+    // =========================================================
+    // LISTENERS: MODAL DE CONFIGURACIÓN DE LA BOMBA (IA)
+    // =========================================================
+    if (dom.bombaOpenConfigBtn) {
+        dom.bombaOpenConfigBtn.addEventListener("click", () => abrirModalConfigBomba(juegosEduEstado.modo || "solo"));
+    }
+    if (dom.closeBombaSetupModalBtn) {
+        dom.closeBombaSetupModalBtn.addEventListener("click", cerrarModalConfigBomba);
+    }
+    if (dom.closeBombaSetupModalBottomBtn) {
+        dom.closeBombaSetupModalBottomBtn.addEventListener("click", () => {
+            cerrarModalConfigBomba();
+            iniciarBomba(juegosEduEstado.modo || "solo");
+        });
+    }
+    if (dom.bombaUploadDropzone && dom.bombaPdfFileInput) {
+        dom.bombaUploadDropzone.addEventListener("click", (e) => {
+            if (e.target.closest("#bombaBtnQuitarPdf")) return;
+            dom.bombaPdfFileInput.click();
+        });
+        dom.bombaPdfFileInput.addEventListener("change", (e) => {
+            const file = e.target.files?.[0];
+            if (file) procesarArchivoBomba(file);
+        });
+        dom.bombaUploadDropzone.addEventListener("dragover", (e) => {
+            e.preventDefault();
+            dom.bombaUploadDropzone.classList.add("is-dragover");
+        });
+        dom.bombaUploadDropzone.addEventListener("dragleave", () => {
+            dom.bombaUploadDropzone.classList.remove("is-dragover");
+        });
+        dom.bombaUploadDropzone.addEventListener("drop", (e) => {
+            e.preventDefault();
+            dom.bombaUploadDropzone.classList.remove("is-dragover");
+            const file = e.dataTransfer.files?.[0];
+            if (file) procesarArchivoBomba(file);
+        });
+    }
+    if (dom.bombaBtnQuitarPdf) {
+        dom.bombaBtnQuitarPdf.addEventListener("click", (e) => {
+            e.stopPropagation();
+            limpiarArchivoBomba();
+        });
+    }
+    if (dom.bombaTimeSelector) {
+        dom.bombaTimeSelector.querySelectorAll(".bomba-time-btn").forEach(btn => {
+            btn.addEventListener("click", () => {
+                const s = parseInt(btn.dataset.seconds, 10);
+                if (s) {
+                    bombaSetupEstado.tiempo = s;
+                    sincronizarTiempoBombaUI();
+                }
+            });
+        });
+    }
+    if (dom.bombaConfigDifficultySelector) {
+        dom.bombaConfigDifficultySelector.querySelectorAll(".lab-diff-btn").forEach(btn => {
+            btn.addEventListener("click", () => {
+                bombaSetupEstado.dificultad = btn.dataset.diff;
+                sincronizarDificultadBombaUI();
+            });
+        });
+    }
+    [
+        { card: dom.bombaSetupCardCortacables, check: dom.bombaSetupCheckCortacables, key: "cortacables" },
+        { card: dom.bombaSetupCardCongelar, check: dom.bombaSetupCheckCongelar, key: "congelar" },
+        { card: dom.bombaSetupCardPista, check: dom.bombaSetupCheckPista, key: "pista" }
+    ].forEach(({ card, check, key }) => {
+        if (!card) return;
+        card.addEventListener("click", (e) => {
+            if (e.target !== check && check) {
+                check.checked = !check.checked;
+            }
+            const activo = check ? check.checked : true;
+            bombaSetupEstado.comodines[key] = activo;
+            card.classList.toggle("is-active", activo);
+            const badge = card.querySelector(".bomba-setup-badge");
+            if (badge) {
+                badge.textContent = activo ? "Activado" : "Desactivado";
+                badge.className = `badge ${activo ? 'badge--success' : 'badge--secondary'} bomba-setup-badge`;
+            }
+        });
+    });
+    if (dom.bombaProtocolGrid) {
+        dom.bombaProtocolGrid.querySelectorAll(".lab-topic-option").forEach(opt => {
+            opt.addEventListener("click", () => {
+                dom.bombaProtocolGrid.querySelectorAll(".lab-topic-option").forEach(o => o.classList.remove("is-selected"));
+                opt.classList.add("is-selected");
+                const radio = opt.querySelector('input[type="radio"]');
+                if (radio) {
+                    radio.checked = true;
+                    bombaSetupEstado.protocolo = radio.value;
+                }
+            });
+        });
+    }
+    if (dom.bombaBtnCargarConfig) {
+        dom.bombaBtnCargarConfig.addEventListener("click", ejecutarInicioBombaConfigurada);
+    }
+
+    // =========================================================
+    // LISTENERS: COMODINES EN PARTIDA DE LA BOMBA
+    // =========================================================
+    if (dom.bombaBtnCortacables) {
+        dom.bombaBtnCortacables.addEventListener("click", usarComodinBombaCortacables);
+    }
+    if (dom.bombaBtnCongelar) {
+        dom.bombaBtnCongelar.addEventListener("click", usarComodinBombaCongelar);
+    }
+    if (dom.bombaBtnPista) {
+        dom.bombaBtnPista.addEventListener("click", usarComodinBombaPista);
+    }
+
     // Chequeo de versión inmediato
     verificarActualizacionesDisponibles(true);
 }
@@ -8493,7 +8770,7 @@ function iniciarAplicacion() {
 // =========================================================
 // GESTOR DE VERSIONES Y ACTUALIZACIÓN AUTOMÁTICA
 // =========================================================
-const APP_BUILD_VERSION = "26.8";
+const APP_BUILD_VERSION = "26.9";
 
 async function forzarActualizacionCompleta(mostrarNotificacion = true) {
     const btnActualizar = document.getElementById("btnForzarActualizar");
@@ -9065,7 +9342,8 @@ async function abrirArenaJuego(tipoJuego, modo, listaId = null, forzarNuevas = f
     if (tipoJuego === "triatlon") {
         iniciarTriatlon(modo);
     } else if (tipoJuego === "bomba") {
-        iniciarBomba(modo);
+        abrirModalConfigBomba(modo);
+        return;
     } else if (tipoJuego === "memotest") {
         iniciarMemotest(modo);
     }
@@ -9084,9 +9362,10 @@ function iniciarBomba(modo) {
 
     const b = juegosEduEstado.bomba;
     b.activo = true;
-    b.tiempoRestante = modo === "coop" ? 120 : 90;
+    b.tiempoRestante = (bombaSetupEstado && bombaSetupEstado.tiempo) ? bombaSetupEstado.tiempo : (modo === "coop" ? 120 : 90);
     b.fase = 1;
     b.fallos = 0;
+    actualizarComodinesBombaUI();
 
     clearInterval(b.timerId);
 
@@ -9716,16 +9995,19 @@ function actualizarComodinesImpostorUI() {
     if (dom.impostorCount5050) dom.impostorCount5050.textContent = imp.comodines.pista5050;
     if (dom.impostorBtn5050) {
         dom.impostorBtn5050.disabled = botonesDeshabilitados || imp.comodines.pista5050 <= 0;
+        dom.impostorBtn5050.classList.toggle("is-used", imp.comodines.pista5050 <= 0);
     }
 
     if (dom.impostorCountTiempo) dom.impostorCountTiempo.textContent = imp.comodines.tiempoExtra;
     if (dom.impostorBtnTiempo) {
         dom.impostorBtnTiempo.disabled = botonesDeshabilitados || imp.comodines.tiempoExtra <= 0;
+        dom.impostorBtnTiempo.classList.toggle("is-used", imp.comodines.tiempoExtra <= 0);
     }
 
     if (dom.impostorCountSocorro) dom.impostorCountSocorro.textContent = imp.comodines.radarSocorro;
     if (dom.impostorBtnSocorro) {
         dom.impostorBtnSocorro.disabled = botonesDeshabilitados || imp.comodines.radarSocorro <= 0;
+        dom.impostorBtnSocorro.classList.toggle("is-used", imp.comodines.radarSocorro <= 0);
     }
 }
 
@@ -9742,6 +10024,8 @@ function usarComodinImpostor5050() {
         mostrarToast("⚠️ No hay suficientes afirmaciones válidas para descartar.");
         return;
     }
+
+    animarActivacionComodinCard(dom.impostorBtn5050);
 
     inocentes.sort(() => Math.random() - 0.5);
     const aDescartar = inocentes.slice(0, 2);
@@ -9760,6 +10044,8 @@ function usarComodinImpostorTiempo() {
     const imp = juegosEduEstado.impostor;
     if (!imp.activo || !imp.comodines || imp.comodines.tiempoExtra <= 0) return;
     if (dom.impostorFeedbackBox && !dom.impostorFeedbackBox.classList.contains("hidden")) return;
+
+    animarActivacionComodinCard(dom.impostorBtnTiempo);
 
     imp.tiempoRestanteMs = (imp.tiempoRestanteMs || 0) + 15000;
     imp.tiempoOla = (imp.tiempoOla || 15) + 15;
@@ -9782,6 +10068,7 @@ function usarComodinImpostorSocorro() {
     const impostorCard = cards.find(c => c._cardData && c._cardData.esImpostor);
 
     if (impostorCard) {
+        animarActivacionComodinCard(dom.impostorBtnSocorro);
         impostorCard.classList.add("is-radar-detected");
         imp.comodines.radarSocorro--;
         actualizarComodinesImpostorUI();
@@ -12499,131 +12786,645 @@ function actualizarQuickChipsUI(tema) {
     });
 }
 
-async function procesarArchivoLaboratorio(file) {
-    if (!file) return;
+// =========================================================
+// EXTRACTOR UNIVERSAL DE TEXTO (PDF, DOCX, PPTX, TXT)
+// =========================================================
+async function extraerTextoDeCualquierArchivo(file) {
+    if (!file) return null;
     const nameLower = file.name.toLowerCase();
     const esPdf = file.type === "application/pdf" || nameLower.endsWith(".pdf");
     const esDocx = nameLower.endsWith(".docx");
     const esPptx = nameLower.endsWith(".pptx");
-    const esTxt = nameLower.endsWith(".txt") || nameLower.endsWith(".md") || nameLower.endsWith(".csv") || file.type.startsWith("text/");
+    const esTxt = file.type.startsWith("text/") || nameLower.endsWith(".txt") || nameLower.endsWith(".md") || nameLower.endsWith(".csv");
 
     if (!esPdf && !esDocx && !esPptx && !esTxt) {
-        mostrarToast("⚠️ Formato no compatible. Por favor subí archivos en PDF, Word (.docx), PowerPoint (.pptx) o Texto (.txt).", "aviso");
-        return;
+        throw new Error("Formato no compatible. Por favor subí archivos en PDF, Word (.docx), PowerPoint (.pptx) o Texto (.txt).");
     }
 
     let fileIcon = "📄";
     let fileTypeLabel = "Archivo";
-    if (esPdf) { fileIcon = "📄"; fileTypeLabel = "PDF"; }
+    if (esPdf) { fileIcon = "📑"; fileTypeLabel = "PDF"; }
     else if (esDocx) { fileIcon = "📘"; fileTypeLabel = "Word (.docx)"; }
     else if (esPptx) { fileIcon = "📙"; fileTypeLabel = "PowerPoint (.pptx)"; }
     else if (esTxt) { fileIcon = "📝"; fileTypeLabel = "Texto"; }
 
-    mostrarToast(`${fileIcon} Analizando ${fileTypeLabel} con IA...`, "info");
+    let textoCompleto = "";
+    let metaDetalle = "";
+    let paginas = 1;
 
+    if (esPdf) {
+        if (typeof pdfjsLib === "undefined") throw new Error("Librería PDF no disponible");
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        const maxPaginas = Math.min(pdf.numPages, 30);
+        for (let i = 1; i <= maxPaginas; i++) {
+            const page = await pdf.getPage(i);
+            const content = await page.getTextContent();
+            const textPage = content.items.map(item => item.str).join(" ");
+            textoCompleto += `\n--- PÁGINA ${i} ---\n` + textPage;
+        }
+        metaDetalle = `${pdf.numPages} páginas leídas con éxito`;
+        paginas = pdf.numPages;
+    } else if (esDocx) {
+        if (typeof JSZip === "undefined") throw new Error("Librería JSZip no disponible");
+        const arrayBuffer = await file.arrayBuffer();
+        const zip = await JSZip.loadAsync(arrayBuffer);
+        const docFile = zip.file("word/document.xml");
+        if (!docFile) throw new Error("No se encontró el texto principal en el archivo .docx");
+        const docXml = await docFile.async("string");
+        const parser = new DOMParser();
+        const xmlDoc = parser.parseFromString(docXml, "text/xml");
+        const nodes = xmlDoc.getElementsByTagName("w:t");
+        const words = [];
+        for (let i = 0; i < nodes.length; i++) {
+            if (nodes[i].textContent) words.push(nodes[i].textContent);
+        }
+        textoCompleto = words.join(" ");
+        metaDetalle = `${words.length} fragmentos de texto extraídos`;
+        paginas = Math.ceil(words.length / 300) || 1;
+    } else if (esPptx) {
+        if (typeof JSZip === "undefined") throw new Error("Librería JSZip no disponible");
+        const arrayBuffer = await file.arrayBuffer();
+        const zip = await JSZip.loadAsync(arrayBuffer);
+        const slideNames = Object.keys(zip.files).filter(k => /^ppt\/slides\/slide\d+\.xml$/.test(k));
+        slideNames.sort((a, b) => {
+            const na = parseInt((a.match(/\d+/) || [0])[0], 10);
+            const nb = parseInt((b.match(/\d+/) || [0])[0], 10);
+            return na - nb;
+        });
+        if (slideNames.length === 0) throw new Error("No se encontraron diapositivas en la presentación .pptx");
+        const parser = new DOMParser();
+        let diapositivasTexto = [];
+        for (let i = 0; i < slideNames.length; i++) {
+            const xmlStr = await zip.file(slideNames[i]).async("string");
+            const xmlDoc = parser.parseFromString(xmlStr, "text/xml");
+            const textNodes = xmlDoc.getElementsByTagName("a:t");
+            let slideText = [];
+            for (let j = 0; j < textNodes.length; j++) {
+                if (textNodes[j].textContent) slideText.push(textNodes[j].textContent);
+            }
+            diapositivasTexto.push(`\n--- DIAPOSITIVA ${i + 1} ---\n` + slideText.join(" "));
+        }
+        textoCompleto = diapositivasTexto.join("\n");
+        metaDetalle = `${slideNames.length} diapositivas procesadas`;
+        paginas = slideNames.length;
+    } else if (esTxt) {
+        textoCompleto = await file.text();
+        const lines = textoCompleto.split("\n").filter(l => l.trim().length > 0);
+        metaDetalle = `${lines.length} líneas de texto extraídas`;
+        paginas = Math.ceil(lines.length / 40) || 1;
+    }
+
+    if (!textoCompleto.trim()) {
+        throw new Error("El archivo no contenía texto legible.");
+    }
+
+    return {
+        texto: textoCompleto.trim(),
+        nombre: file.name,
+        paginas,
+        icono: fileIcon,
+        tipoLabel: fileTypeLabel,
+        metaDetalle
+    };
+}
+
+async function procesarArchivoLaboratorio(file) {
+    if (!file) return;
+    mostrarToast("📄 Procesando archivo para el Laboratorio...", "info");
     try {
-        let textoCompleto = "";
-        let metaDetalle = "";
+        const res = await extraerTextoDeCualquierArchivo(file);
+        laboratorioEstado.pdfTexto = res.texto;
+        laboratorioEstado.pdfNombre = res.nombre;
+        laboratorioEstado.pdfPaginas = res.paginas;
 
-        if (esPdf) {
-            if (typeof pdfjsLib === "undefined") {
-                throw new Error("Librería PDF no disponible");
-            }
-            const arrayBuffer = await file.arrayBuffer();
-            const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-            const maxPaginas = Math.min(pdf.numPages, 25);
-            for (let i = 1; i <= maxPaginas; i++) {
-                const page = await pdf.getPage(i);
-                const content = await page.getTextContent();
-                const textPage = content.items.map(item => item.str).join(" ");
-                textoCompleto += `\n--- PÁGINA ${i} ---\n` + textPage;
-            }
-            metaDetalle = `${pdf.numPages} páginas leídas con éxito`;
-            laboratorioEstado.pdfPaginas = pdf.numPages;
-        } else if (esDocx) {
-            if (typeof JSZip === "undefined") {
-                throw new Error("Librería JSZip no disponible");
-            }
-            const arrayBuffer = await file.arrayBuffer();
-            const zip = await JSZip.loadAsync(arrayBuffer);
-            const docFile = zip.file("word/document.xml");
-            if (!docFile) throw new Error("No se encontró el texto principal en el archivo .docx");
-            const docXml = await docFile.async("string");
-            const parser = new DOMParser();
-            const xmlDoc = parser.parseFromString(docXml, "text/xml");
-            const nodes = xmlDoc.getElementsByTagName("w:t");
-            const words = [];
-            for (let i = 0; i < nodes.length; i++) {
-                if (nodes[i].textContent) words.push(nodes[i].textContent);
-            }
-            textoCompleto = words.join(" ");
-            metaDetalle = `${words.length} fragmentos de texto extraídos`;
-            laboratorioEstado.pdfPaginas = Math.ceil(words.length / 300) || 1;
-        } else if (esPptx) {
-            if (typeof JSZip === "undefined") {
-                throw new Error("Librería JSZip no disponible");
-            }
-            const arrayBuffer = await file.arrayBuffer();
-            const zip = await JSZip.loadAsync(arrayBuffer);
-            const slideNames = Object.keys(zip.files).filter(k => /^ppt\/slides\/slide\d+\.xml$/.test(k));
-            slideNames.sort((a, b) => {
-                const na = parseInt((a.match(/\d+/) || [0])[0], 10);
-                const nb = parseInt((b.match(/\d+/) || [0])[0], 10);
-                return na - nb;
-            });
-            if (slideNames.length === 0) throw new Error("No se encontraron diapositivas en la presentación .pptx");
-            const parser = new DOMParser();
-            let diapositivasTexto = [];
-            for (let i = 0; i < slideNames.length; i++) {
-                const xmlStr = await zip.file(slideNames[i]).async("string");
-                const xmlDoc = parser.parseFromString(xmlStr, "text/xml");
-                const textNodes = xmlDoc.getElementsByTagName("a:t");
-                let slideText = [];
-                for (let j = 0; j < textNodes.length; j++) {
-                    if (textNodes[j].textContent) slideText.push(textNodes[j].textContent);
-                }
-                diapositivasTexto.push(`\n--- DIAPOSITIVA ${i + 1} ---\n` + slideText.join(" "));
-            }
-            textoCompleto = diapositivasTexto.join("\n");
-            metaDetalle = `${slideNames.length} diapositivas procesadas`;
-            laboratorioEstado.pdfPaginas = slideNames.length;
-        } else if (esTxt) {
-            textoCompleto = await file.text();
-            const lines = textoCompleto.split("\n").filter(l => l.trim().length > 0);
-            metaDetalle = `${lines.length} líneas de texto extraídas`;
-            laboratorioEstado.pdfPaginas = Math.ceil(lines.length / 40) || 1;
-        }
-
-        if (!textoCompleto.trim()) {
-            throw new Error("El archivo no contenía texto legible.");
-        }
-
-        laboratorioEstado.pdfTexto = textoCompleto.trim();
-        laboratorioEstado.pdfNombre = file.name;
-
-        // Actualizar UI del Modal
         if (dom.labLoadedPdfInfo) dom.labLoadedPdfInfo.classList.remove("hidden");
-        if (dom.labLoadedPdfIcon) dom.labLoadedPdfIcon.textContent = fileIcon;
-        if (dom.labLoadedPdfName) dom.labLoadedPdfName.textContent = file.name;
-        if (dom.labLoadedPdfMeta) dom.labLoadedPdfMeta.textContent = metaDetalle;
-        if (dom.labUploadTitle) dom.labUploadTitle.textContent = `${fileTypeLabel} cargado con éxito`;
+        if (dom.labLoadedPdfIcon) dom.labLoadedPdfIcon.textContent = res.icono;
+        if (dom.labLoadedPdfName) dom.labLoadedPdfName.textContent = res.nombre;
+        if (dom.labLoadedPdfMeta) dom.labLoadedPdfMeta.textContent = res.metaDetalle;
+        if (dom.labUploadTitle) dom.labUploadTitle.textContent = `${res.tipoLabel} cargado con éxito`;
         if (dom.labUploadHint) dom.labUploadHint.textContent = "Hacé clic en 'Cargar y Preparar Laboratorio' para comenzar.";
 
-        // Actualizar Badge en el header del laboratorio
         if (dom.labActivePdfBadge) {
-            dom.labActivePdfBadge.textContent = `${fileIcon} ${file.name}`;
+            dom.labActivePdfBadge.textContent = `${res.icono} ${res.nombre}`;
             dom.labActivePdfBadge.classList.remove("hidden");
         }
         if (dom.labTagOrigenPdf) {
-            dom.labTagOrigenPdf.textContent = `${fileIcon} Basado en tu archivo`;
+            dom.labTagOrigenPdf.textContent = `${res.icono} Basado en tu archivo`;
             dom.labTagOrigenPdf.classList.remove("hidden");
         }
 
-        mostrarToast(`✅ ${fileTypeLabel} "${file.name}" leído correctamente.`, "exito");
+        mostrarToast(`✅ ${res.tipoLabel} "${res.nombre}" cargado correctamente.`, "exito");
     } catch (err) {
         console.error("Error al procesar archivo en Laboratorio:", err);
-        mostrarToast("⚠️ No se pudo extraer el texto del archivo. Se utilizará el generador estadístico estándar.", "aviso");
+        mostrarToast(`⚠️ Error: ${err.message || 'No se pudo leer el archivo'}`, "aviso");
     }
+}
+
+// =========================================================
+// CONFIGURACIÓN DE BOLILLERO CON IA (MODAL FLOTANTE & PROMPT)
+// =========================================================
+const bolilleroSetupEstado = {
+    archivoTexto: "",
+    archivoNombre: "",
+    archivoPaginas: 0,
+    dificultad: "intermedio",
+    cantidad: 15,
+    modo: "conceptos",
+    target: "new",
+    orden: ""
+};
+
+function abrirModalConfigBolillero() {
+    const apunte = apuntesEstado.bolillero || apuntesEstado.global;
+    if (!bolilleroSetupEstado.archivoTexto && apunte && apunte.texto) {
+        bolilleroSetupEstado.archivoTexto = apunte.texto;
+        bolilleroSetupEstado.archivoNombre = apunte.nombre || "apuntes.pdf";
+        bolilleroSetupEstado.archivoPaginas = apunte.paginas || 1;
+        if (dom.bolilleroLoadedPdfInfo) dom.bolilleroLoadedPdfInfo.classList.remove("hidden");
+        if (dom.bolilleroLoadedPdfIcon) dom.bolilleroLoadedPdfIcon.textContent = "📄";
+        if (dom.bolilleroLoadedPdfName) dom.bolilleroLoadedPdfName.textContent = bolilleroSetupEstado.archivoNombre;
+        if (dom.bolilleroLoadedPdfMeta) dom.bolilleroLoadedPdfMeta.textContent = `${bolilleroSetupEstado.archivoPaginas} pág(s) listas`;
+        if (dom.bolilleroUploadTitle) dom.bolilleroUploadTitle.textContent = "Material Activo en el Bolillero";
+    }
+
+    sincronizarDificultadBolilleroUI();
+    sincronizarCantidadBolilleroUI();
+
+    if (dom.bolilleroSetupModal) {
+        if (typeof dom.bolilleroSetupModal.showModal === "function") {
+            try { dom.bolilleroSetupModal.showModal(); } catch { dom.bolilleroSetupModal.setAttribute("open", ""); }
+        } else {
+            dom.bolilleroSetupModal.setAttribute("open", "");
+        }
+    }
+}
+
+function cerrarModalConfigBolillero() {
+    if (dom.bolilleroSetupModal) {
+        if (typeof dom.bolilleroSetupModal.close === "function") {
+            try { dom.bolilleroSetupModal.close(); } catch { dom.bolilleroSetupModal.removeAttribute("open"); }
+        } else {
+            dom.bolilleroSetupModal.removeAttribute("open");
+        }
+    }
+}
+
+async function procesarArchivoBolillero(file) {
+    if (!file) return;
+    mostrarToast("📄 Procesando archivo para Bolillero...", "info");
+    try {
+        const res = await extraerTextoDeCualquierArchivo(file);
+        bolilleroSetupEstado.archivoTexto = res.texto;
+        bolilleroSetupEstado.archivoNombre = res.nombre;
+        bolilleroSetupEstado.archivoPaginas = res.paginas;
+
+        if (dom.bolilleroLoadedPdfInfo) dom.bolilleroLoadedPdfInfo.classList.remove("hidden");
+        if (dom.bolilleroLoadedPdfIcon) dom.bolilleroLoadedPdfIcon.textContent = res.icono;
+        if (dom.bolilleroLoadedPdfName) dom.bolilleroLoadedPdfName.textContent = res.nombre;
+        if (dom.bolilleroLoadedPdfMeta) dom.bolilleroLoadedPdfMeta.textContent = res.metaDetalle;
+        if (dom.bolilleroUploadTitle) dom.bolilleroUploadTitle.textContent = `${res.tipoLabel} cargado con éxito`;
+        if (dom.bolilleroUploadHint) dom.bolilleroUploadHint.textContent = "Hacé clic en 'Generar Bolillero con IA' para extraer las bolillas.";
+
+        apuntesEstado.bolillero = {
+            nombre: res.nombre,
+            texto: res.texto,
+            paginas: res.paginas,
+            fecha: new Date().toISOString()
+        };
+        guardarApuntesEnStorage().catch(() => {});
+
+        mostrarToast(`✅ ${res.tipoLabel} "${res.nombre}" conectado al Bolillero.`, "exito");
+    } catch (err) {
+        console.error("Error al procesar archivo en Bolillero:", err);
+        mostrarToast("⚠️ No se pudo procesar el archivo. Probá con otro formato.", "error");
+    }
+}
+
+function limpiarArchivoBolillero() {
+    bolilleroSetupEstado.archivoTexto = "";
+    bolilleroSetupEstado.archivoNombre = "";
+    bolilleroSetupEstado.archivoPaginas = 0;
+    if (dom.bolilleroPdfFileInput) dom.bolilleroPdfFileInput.value = "";
+    if (dom.bolilleroLoadedPdfInfo) dom.bolilleroLoadedPdfInfo.classList.add("hidden");
+    if (dom.bolilleroUploadTitle) dom.bolilleroUploadTitle.textContent = "Subir Material de Estudio";
+    if (dom.bolilleroUploadHint) dom.bolilleroUploadHint.textContent = "Hacé clic o arrastrá acá tus apuntes, libro o programa de la materia.";
+    mostrarToast("🗑️ Archivo desvinculado del Bolillero.", "info");
+}
+
+function sincronizarDificultadBolilleroUI() {
+    if (!dom.bolilleroConfigDifficultySelector) return;
+    dom.bolilleroConfigDifficultySelector.querySelectorAll(".lab-diff-btn").forEach(btn => {
+        btn.classList.toggle("is-active", btn.dataset.diff === bolilleroSetupEstado.dificultad);
+    });
+}
+
+function sincronizarCantidadBolilleroUI() {
+    if (dom.bolilleroCountBadge) dom.bolilleroCountBadge.textContent = `${bolilleroSetupEstado.cantidad} temas`;
+    if (dom.bolilleroCountCustomInput) dom.bolilleroCountCustomInput.value = bolilleroSetupEstado.cantidad;
+    if (dom.bolilleroCountSelector) {
+        dom.bolilleroCountSelector.querySelectorAll(".bolillero-count-chip").forEach(chip => {
+            const c = parseInt(chip.dataset.count, 10);
+            chip.classList.toggle("is-active", c === bolilleroSetupEstado.cantidad);
+            chip.classList.toggle("button--primary", c === bolilleroSetupEstado.cantidad);
+            chip.classList.toggle("button--secondary", c !== bolilleroSetupEstado.cantidad);
+        });
+    }
+}
+
+async function ejecutarGeneracionBolilleroIA() {
+    const btn = dom.bolilleroBtnCargarConfig;
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<span style="display:inline-block; animation: spin 0.8s linear infinite;">🔄</span> Generando Bolillero con IA...`;
+    }
+
+    const apunte = bolilleroSetupEstado.archivoTexto
+        ? { texto: bolilleroSetupEstado.archivoTexto, nombre: bolilleroSetupEstado.archivoNombre }
+        : (apuntesEstado.bolillero || apuntesEstado.global);
+
+    const orden = (dom.bolilleroConfigOrderInput ? dom.bolilleroConfigOrderInput.value.trim() : "");
+    const count = bolilleroSetupEstado.cantidad || 15;
+    const diff = bolilleroSetupEstado.dificultad || "intermedio";
+    const target = document.querySelector('input[name="bolilleroTargetRadio"]:checked')?.value || "new";
+
+    try {
+        mostrarToast("🤖 Gemini está analizando tu apunte y extrayendo las bolillas solicitadas...", "info");
+
+        let palabras = [];
+        let materia = apunte ? apunte.nombre.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " ") : "Materia de Estudio";
+
+        if (apunte && apunte.texto) {
+            try {
+                const data = await generarPreguntaIA({
+                    materia: materia,
+                    tema: orden ? `Unidad o Eje: ${orden}` : "Conceptos Clave de Estudio",
+                    tipoJuego: "temas_bolillero",
+                    contextoPDF: apunte.texto,
+                    cantidadTemas: count,
+                    dificultad: diff,
+                    instruccionUsuario: orden
+                });
+
+                if (data && Array.isArray(data.palabras) && data.palabras.length > 0) {
+                    palabras = data.palabras;
+                } else if (data && Array.isArray(data) && data.length > 0) {
+                    palabras = data;
+                }
+            } catch (errApi) {
+                console.warn("Fallo en Gemini API, usando extractor inteligente con filtro:", errApi);
+            }
+
+            if (!palabras || palabras.length === 0) {
+                palabras = extraerConceptosHeuristicos(apunte.texto, count, orden);
+            }
+        }
+
+        if (!palabras || palabras.length === 0) {
+            const etiqueta = orden || "Concepto Clave";
+            palabras = Array.from({ length: count }, (_, i) => `${etiqueta} #${i + 1}`);
+        }
+
+        palabras = palabras.slice(0, count);
+        const nuevosTemas = palabras.map(p => ({
+            id: crypto.randomUUID(),
+            titulo: String(p).trim().slice(0, 100)
+        }));
+
+        let listaActual = obtenerListaSeleccionada();
+        let nombreLista = orden
+            ? `${materia} - ${orden.toUpperCase()} (${nuevosTemas.length} TEMAS)`
+            : `${materia} (${nuevosTemas.length} TEMAS)`.toUpperCase();
+
+        if (target === "new" || !listaActual) {
+            const nuevaListaId = crypto.randomUUID();
+            estado.listas.push({
+                id: nuevaListaId,
+                nombre: nombreLista,
+                temas: nuevosTemas
+            });
+            estado.listaSeleccionadaId = nuevaListaId;
+        } else if (target === "replace") {
+            listaActual.nombre = nombreLista;
+            listaActual.temas = nuevosTemas;
+        } else {
+            listaActual.temas.push(...nuevosTemas);
+        }
+
+        cerrarModalConfigBolillero();
+        actualizarInterfaz();
+        mostrarToast(`🎉 ¡${nuevosTemas.length} bolillas generadas y listas para sortear!`, "exito");
+    } catch (err) {
+        console.error("Error al generar bolillero con IA:", err);
+        mostrarToast(`❌ Error: ${err.message}`, "error");
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = `🚀 Generar Bolillero con IA`;
+        }
+    }
+}
+
+// =========================================================
+// CONFIGURACIÓN DE LA BOMBA CON IA (MODAL FLOTANTE & COMODINES)
+// =========================================================
+const bombaSetupEstado = {
+    archivoTexto: "",
+    archivoNombre: "",
+    archivoPaginas: 0,
+    tiempo: 90,
+    dificultad: "intermedio",
+    orden: "",
+    protocolo: "fases",
+    comodines: {
+        cortacables: true,
+        congelar: true,
+        pista: true
+    }
+};
+
+function abrirModalConfigBomba(modo = "solo") {
+    juegosEduEstado.modo = modo;
+    const apunte = apuntesEstado.bomba || apuntesEstado.global;
+    if (!bombaSetupEstado.archivoTexto && apunte && apunte.texto) {
+        bombaSetupEstado.archivoTexto = apunte.texto;
+        bombaSetupEstado.archivoNombre = apunte.nombre || "apuntes.pdf";
+        bombaSetupEstado.archivoPaginas = apunte.paginas || 1;
+        if (dom.bombaLoadedPdfInfo) dom.bombaLoadedPdfInfo.classList.remove("hidden");
+        if (dom.bombaLoadedPdfIcon) dom.bombaLoadedPdfIcon.textContent = "📄";
+        if (dom.bombaLoadedPdfName) dom.bombaLoadedPdfName.textContent = bombaSetupEstado.archivoNombre;
+        if (dom.bombaLoadedPdfMeta) dom.bombaLoadedPdfMeta.textContent = `${bombaSetupEstado.archivoPaginas} pág(s) listas`;
+        if (dom.bombaUploadTitle) dom.bombaUploadTitle.textContent = "Material Activo en la Bomba";
+    }
+
+    sincronizarDificultadBombaUI();
+    sincronizarTiempoBombaUI();
+
+    if (dom.bombaSetupModal) {
+        if (typeof dom.bombaSetupModal.showModal === "function") {
+            try { dom.bombaSetupModal.showModal(); } catch { dom.bombaSetupModal.setAttribute("open", ""); }
+        } else {
+            dom.bombaSetupModal.setAttribute("open", "");
+        }
+    }
+}
+
+function cerrarModalConfigBomba() {
+    if (dom.bombaSetupModal) {
+        if (typeof dom.bombaSetupModal.close === "function") {
+            try { dom.bombaSetupModal.close(); } catch { dom.bombaSetupModal.removeAttribute("open"); }
+        } else {
+            dom.bombaSetupModal.removeAttribute("open");
+        }
+    }
+}
+
+async function procesarArchivoBomba(file) {
+    if (!file) return;
+    mostrarToast("💣 Vinculando material para el artificiero...", "info");
+    try {
+        const res = await extraerTextoDeCualquierArchivo(file);
+        bombaSetupEstado.archivoTexto = res.texto;
+        bombaSetupEstado.archivoNombre = res.nombre;
+        bombaSetupEstado.archivoPaginas = res.paginas;
+
+        if (dom.bombaLoadedPdfInfo) dom.bombaLoadedPdfInfo.classList.remove("hidden");
+        if (dom.bombaLoadedPdfIcon) dom.bombaLoadedPdfIcon.textContent = res.icono;
+        if (dom.bombaLoadedPdfName) dom.bombaLoadedPdfName.textContent = res.nombre;
+        if (dom.bombaLoadedPdfMeta) dom.bombaLoadedPdfMeta.textContent = res.metaDetalle;
+        if (dom.bombaUploadTitle) dom.bombaUploadTitle.textContent = `${res.tipoLabel} cargado con éxito`;
+        if (dom.bombaUploadHint) dom.bombaUploadHint.textContent = "Listo para calibrar las preguntas de la bomba.";
+
+        apuntesEstado.bomba = {
+            nombre: res.nombre,
+            texto: res.texto,
+            paginas: res.paginas,
+            fecha: new Date().toISOString()
+        };
+        guardarApuntesEnStorage().catch(() => {});
+
+        mostrarToast(`✅ ${res.tipoLabel} "${res.nombre}" vinculado a la Bomba.`, "exito");
+    } catch (err) {
+        console.error("Error al procesar archivo en Bomba:", err);
+        mostrarToast("⚠️ No se pudo procesar el archivo para la Bomba.", "error");
+    }
+}
+
+function limpiarArchivoBomba() {
+    bombaSetupEstado.archivoTexto = "";
+    bombaSetupEstado.archivoNombre = "";
+    bombaSetupEstado.archivoPaginas = 0;
+    if (dom.bombaPdfFileInput) dom.bombaPdfFileInput.value = "";
+    if (dom.bombaLoadedPdfInfo) dom.bombaLoadedPdfInfo.classList.add("hidden");
+    if (dom.bombaUploadTitle) dom.bombaUploadTitle.textContent = "Subir Material de Estudio";
+    if (dom.bombaUploadHint) dom.bombaUploadHint.textContent = "Hacé clic o arrastrá apuntes, manuales o temas para calibrar las preguntas.";
+    mostrarToast("🗑️ Archivo desvinculado de la Bomba.", "info");
+}
+
+function sincronizarDificultadBombaUI() {
+    if (!dom.bombaConfigDifficultySelector) return;
+    dom.bombaConfigDifficultySelector.querySelectorAll(".lab-diff-btn").forEach(btn => {
+        btn.classList.toggle("is-active", btn.dataset.diff === bombaSetupEstado.dificultad);
+    });
+}
+
+function sincronizarTiempoBombaUI() {
+    if (dom.bombaTimeBadge) dom.bombaTimeBadge.textContent = `${bombaSetupEstado.tiempo} segundos`;
+    if (dom.bombaTimeSelector) {
+        dom.bombaTimeSelector.querySelectorAll(".bomba-time-btn").forEach(btn => {
+            const s = parseInt(btn.dataset.seconds, 10);
+            btn.classList.toggle("is-active", s === bombaSetupEstado.tiempo);
+            btn.classList.toggle("button--primary", s === bombaSetupEstado.tiempo);
+            btn.classList.toggle("button--secondary", s !== bombaSetupEstado.tiempo);
+        });
+    }
+}
+
+async function ejecutarInicioBombaConfigurada() {
+    const btn = dom.bombaBtnCargarConfig;
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<span style="display:inline-block; animation: spin 0.8s linear infinite;">🔄</span> Armando Desafío con IA...`;
+    }
+
+    const apunte = bombaSetupEstado.archivoTexto
+        ? { texto: bombaSetupEstado.archivoTexto, nombre: bombaSetupEstado.archivoNombre }
+        : (apuntesEstado.bomba || apuntesEstado.global);
+
+    const orden = (dom.bombaConfigOrderInput ? dom.bombaConfigOrderInput.value.trim() : "");
+    bombaSetupEstado.orden = orden;
+
+    bombaSetupEstado.comodines.cortacables = dom.bombaSetupCheckCortacables ? dom.bombaSetupCheckCortacables.checked : true;
+    bombaSetupEstado.comodines.congelar = dom.bombaSetupCheckCongelar ? dom.bombaSetupCheckCongelar.checked : true;
+    bombaSetupEstado.comodines.pista = dom.bombaSetupCheckPista ? dom.bombaSetupCheckPista.checked : true;
+
+    if (!juegosEduEstado.bomba) juegosEduEstado.bomba = {};
+    juegosEduEstado.bomba.tiempoRestante = bombaSetupEstado.tiempo || 90;
+    juegosEduEstado.bomba.comodines = {
+        cortacables: bombaSetupEstado.comodines.cortacables ? 1 : 0,
+        congelar: bombaSetupEstado.comodines.congelar ? 1 : 0,
+        pista: bombaSetupEstado.comodines.pista ? 1 : 0
+    };
+
+    if (dom.juegosDifficultyBadge) {
+        dom.juegosDifficultyBadge.textContent = (bombaSetupEstado.dificultad || "Normal").toUpperCase();
+    }
+
+    try {
+        if (apunte && apunte.texto) {
+            mostrarToast("🤖 Gemini está redactando las 3 fases conceptuales de tu unidad...", "info");
+            const materia = apunte.nombre.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " ");
+            const tema = orden ? `Unidad o Eje: ${orden}` : "Conceptos Clave";
+
+            const data = await generarPreguntaIA({
+                materia,
+                tema,
+                tipoJuego: 'bomba',
+                contextoPDF: apunte.texto,
+                dificultad: bombaSetupEstado.dificultad,
+                instruccionUsuario: orden
+            });
+
+            const tAct = juegosEduEstado.temas[juegosEduEstado.temaIndice] || juegosEduEstado.temas[0];
+            if (tAct && data && data.fase1) {
+                tAct.bomba = {
+                    fase1: data.fase1,
+                    fase2: data.fase2,
+                    fase3: data.fase3
+                };
+            }
+        }
+    } catch (err) {
+        console.warn("Fallo al generar preguntas de Bomba con IA, usando banco base:", err);
+    }
+
+    cerrarModalConfigBomba();
+    iniciarBomba(juegosEduEstado.modo || "solo");
+    actualizarComodinesBombaUI();
+
+    if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = `💣 Armar y Comenzar Desafío con IA`;
+    }
+}
+
+// ------------------------------------------
+// LÓGICA DE COMODINES DE LA BOMBA EN PARTIDA
+// ------------------------------------------
+function actualizarComodinesBombaUI() {
+    const coms = juegosEduEstado.bomba?.comodines || { cortacables: 0, congelar: 0, pista: 0 };
+
+    if (dom.bombaCountCortacables) dom.bombaCountCortacables.textContent = `x${coms.cortacables}`;
+    if (dom.bombaBtnCortacables) {
+        dom.bombaBtnCortacables.disabled = coms.cortacables <= 0;
+        dom.bombaBtnCortacables.classList.toggle("is-used", coms.cortacables <= 0);
+    }
+
+    if (dom.bombaCountCongelar) dom.bombaCountCongelar.textContent = `x${coms.congelar}`;
+    if (dom.bombaBtnCongelar) {
+        dom.bombaBtnCongelar.disabled = coms.congelar <= 0;
+        dom.bombaBtnCongelar.classList.toggle("is-used", coms.congelar <= 0);
+    }
+
+    if (dom.bombaCountPista) dom.bombaCountPista.textContent = `x${coms.pista}`;
+    if (dom.bombaBtnPista) {
+        dom.bombaBtnPista.disabled = coms.pista <= 0;
+        dom.bombaBtnPista.classList.toggle("is-used", coms.pista <= 0);
+    }
+}
+
+function usarComodinBombaCortacables() {
+    const b = juegosEduEstado.bomba;
+    if (!b || !b.activo || !b.comodines || b.comodines.cortacables <= 0) return;
+
+    let container = null;
+    if (b.fase === 1) container = dom.bombaFase1Options;
+    else if (b.fase === 2) container = dom.bombaFase2Options;
+    else if (b.fase === 3) container = dom.bombaFase3Options;
+    if (!container) return;
+
+    const incorrectBtns = [...container.querySelectorAll(".bomba-option-btn")].filter(btn => {
+        return btn.dataset.correct !== "true" && !btn.disabled && !btn.classList.contains("is-discarded");
+    });
+
+    if (incorrectBtns.length === 0) {
+        mostrarToast("⚠️ No hay más opciones incorrectas para descartar en esta fase.", "aviso");
+        return;
+    }
+
+    animarActivacionComodinCard(dom.bombaBtnCortacables);
+
+    const btnADescartar = incorrectBtns[Math.floor(Math.random() * incorrectBtns.length)];
+    btnADescartar.disabled = true;
+    btnADescartar.classList.add("is-discarded");
+    btnADescartar.style.opacity = "0.25";
+    btnADescartar.style.filter = "grayscale(1)";
+    btnADescartar.style.textDecoration = "line-through";
+
+    b.comodines.cortacables--;
+    actualizarComodinesBombaUI();
+    reproducirSonido("comodin");
+    mostrarToast("✂️ ¡Cortacables activado! 1 opción falsa eliminada con éxito.", "exito");
+}
+
+function usarComodinBombaCongelar() {
+    const b = juegosEduEstado.bomba;
+    if (!b || !b.activo || !b.comodines || b.comodines.congelar <= 0) return;
+
+    animarActivacionComodinCard(dom.bombaBtnCongelar);
+
+    b.tiempoRestante += 15;
+    actualizarTimerBombaDisplay();
+
+    if (dom.bombaTimerDisplay) {
+        dom.bombaTimerDisplay.style.boxShadow = "0 0 25px #38bdf8, inset 0 0 15px #38bdf8";
+        dom.bombaTimerDisplay.style.borderColor = "#38bdf8";
+        setTimeout(() => {
+            if (dom.bombaTimerDisplay) {
+                dom.bombaTimerDisplay.style.boxShadow = "";
+                dom.bombaTimerDisplay.style.borderColor = "";
+            }
+        }, 1500);
+    }
+
+    b.comodines.congelar--;
+    actualizarComodinesBombaUI();
+    reproducirSonido("comodin");
+    mostrarToast("❄️ ¡Congelar activado! +15 segundos sumados al reloj de la bomba.", "exito");
+}
+
+function usarComodinBombaPista() {
+    const b = juegosEduEstado.bomba;
+    if (!b || !b.activo || !b.comodines || b.comodines.pista <= 0) return;
+
+    const t = juegosEduEstado.temas[juegosEduEstado.temaIndice];
+    const dataFase = t?.bomba?.[`fase${b.fase}`];
+    const pistaTexto = dataFase?.explicacion || t?.descripcion || "Concentrate en la definición principal de este principio teórico.";
+
+    animarActivacionComodinCard(dom.bombaBtnPista);
+
+    let pistaBanner = document.getElementById("bombaLcdPistaBanner");
+    if (!pistaBanner) {
+        pistaBanner = document.createElement("div");
+        pistaBanner.id = "bombaLcdPistaBanner";
+        pistaBanner.style.cssText = "background: rgba(14, 165, 233, 0.18); border: 1.5px solid #38bdf8; border-radius: 8px; padding: 0.65rem 0.85rem; margin-top: 0.75rem; color: #e0f2fe; font-size: 0.82rem; line-height: 1.35; animation: fadeIn 0.3s ease;";
+        dom.bombaLcdScreen?.prepend(pistaBanner);
+    }
+    pistaBanner.innerHTML = `<strong>💡 PISTA TEÓRICA:</strong> ${pistaTexto}`;
+
+    b.comodines.pista--;
+    actualizarComodinesBombaUI();
+    reproducirSonido("comodin");
+    mostrarToast("💡 Pista teórica revelada en la pantalla LCD.", "info");
+}
+
+// Helper universal de animación para cartas de comodín
+function animarActivacionComodinCard(btn) {
+    if (!btn) return;
+    btn.classList.add("is-activating");
+    setTimeout(() => {
+        btn.classList.remove("is-activating");
+    }, 600);
 }
 const procesarPdfLaboratorio = procesarArchivoLaboratorio;
 

@@ -180,11 +180,20 @@ REGLAS PEDAGÓGICAS DE ORO CONTRA PATRONES PREDECIBLES:
 
         if (tipoJuego === 'bomba') {
             const enfoqueRonda = Math.random() > 0.5 ? "aspectos metodológicos y deducciones formales" : "condiciones críticas, consecuencias y propiedades analíticas";
+            let ordenBomba = "";
+            if (instruccionUsuario && typeof instruccionUsuario === 'string' && instruccionUsuario.trim().length > 0) {
+                ordenBomba = `
+ORDEN O ENFOQUE EXCLUSIVO DEL ESTUDIANTE:
+"${instruccionUsuario.trim()}"
+ATENCIÓN REGLA DE PRIORIDAD: Si el estudiante indicó una unidad, capítulo o tema específico (ej: "preguntas de la unidad 2"), las 3 fases teóricas deben formularse obligatoriamente sobre los conceptos de dicha unidad o indicación del material.`;
+            }
+
             promptInstrucciones = `
 JUEGO: "DESACTIVÁ LA BOMBA (DESAFÍO 100% TEÓRICO EN 3 FASES)"
 TEMA: "${tema}"
 NIVEL: ${dificultad}
 ENFOQUE INÉDITO PARA ESTA PARTIDA: Priorizá ${enfoqueRonda} del material provisto. Formulá preguntas completamente NUEVAS, frescas e inéditas.
+${ordenBomba}
 
 Generá un desafío de desactivación puramente TEÓRICO y conceptual (SIN cálculos numéricos ni uso de calculadora).
 El estudiante debe cortar 3 cables en secuencia respondiendo 3 preguntas teóricas encadenadas:
@@ -289,18 +298,32 @@ Debes responder ÚNICAMENTE un objeto JSON con esta estructura exacta:
 }`;
         } else if (tipoJuego === 'temas_bolillero' || tipoJuego === 'palabras_bolillero') {
             const cantidad = Math.min(50, Math.max(3, parseInt(body.cantidadTemas || 10, 10)));
-            promptInstrucciones = `
-JUEGO: "EXTRACCIÓN DE CONCEPTOS Y TEMAS PARA BOLILLERO"
-CANTIDAD EXACTA REQUERIDA: ${cantidad} conceptos o temas clave.
-NIVEL: ${dificultad}
-
+            let ordenBolillero = "";
+            let reglaBarrido = `
 REGLA CRÍTICA DE COBERTURA INTEGRAL (100% DEL DOCUMENTO):
 1. BARRIDO TOTAL: Es OBLIGATORIO que recorras y analices TODO el documento provisto, desde la PÁGINA 1 hasta la ÚLTIMA PÁGINA.
 2. DISTRIBUCIÓN EQUITATIVA Y PROPORCIONAL: Repartí la selección de los ${cantidad} conceptos de manera uniforme a lo largo de todo el apunte:
    - Extraé conceptos representativos del INICIO del documento (introducción, axiomas y bases teóricas).
    - Extraé conceptos del MEDIO del documento (desarrollo conceptual, propiedades y modelos de análisis).
    - Extraé conceptos del FINAL del documento (conclusiones, casos especiales y aplicaciones avanzadas).
-3. PROHIBICIÓN DE CONCENTRACIÓN: Queda terminantemente PROHIBIDO concentrar la selección de palabras únicamente en las primeras páginas y omitir el resto. Cada capítulo, unidad o sección del material debe estar representado en el listado.
+3. PROHIBICIÓN DE CONCENTRACIÓN: Queda terminantemente PROHIBIDO concentrar la selección de palabras únicamente en las primeras páginas y omitir el resto. Cada capítulo, unidad o sección del material debe estar representado en el listado.`;
+
+            if (instruccionUsuario && typeof instruccionUsuario === 'string' && instruccionUsuario.trim().length > 0) {
+                ordenBolillero = `
+ORDEN O FILTRO EXCLUSIVO DEL ESTUDIANTE:
+"${instruccionUsuario.trim()}"
+REGLA DE FILTRADO ESTRICTO: El estudiante especificó una unidad, capítulo o indicación concreta (por ejemplo: "solo de la unidad 1" o "conceptos de la unidad 2"). Si el documento contiene toda la materia o múltiples unidades, DEBES buscar e identificar la sección/unidad solicitada y extraer los ${cantidad} conceptos EXCLUSIVAMENTE de esa unidad o tema solicitado, ignorando las demás secciones del documento.`;
+                reglaBarrido = `
+REGLA DE COBERTURA DE LA UNIDAD/TEMA SOLICITADO:
+Recorré toda la extensión de la unidad o sección solicitada en el documento para extraer los ${cantidad} conceptos más importantes.`;
+            }
+
+            promptInstrucciones = `
+JUEGO: "EXTRACCIÓN DE CONCEPTOS Y TEMAS PARA BOLILLERO"
+CANTIDAD EXACTA REQUERIDA: ${cantidad} conceptos o temas clave.
+NIVEL: ${dificultad}
+${ordenBolillero}
+${reglaBarrido}
 4. FORMATO DE CADA CONCEPTO: Frase o término corto, nítido y representativo (1 a 4 palabras, por ejemplo: "Primera Ley de Newton", "Equilibrio Químico", "Árboles Binarios").
 
 Debes responder ÚNICAMENTE un objeto JSON con esta estructura exacta:

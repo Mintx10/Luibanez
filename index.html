@@ -15,10 +15,10 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     
-    <link rel="icon" type="image/svg+xml" href="icon.svg?v=26.8">
-    <link rel="apple-touch-icon" href="icon-192.png?v=26.8">
-    <link rel="manifest" href="manifest.json?v=26.8">
-    <link rel="stylesheet" href="style.css?v=26.8">
+    <link rel="icon" type="image/svg+xml" href="icon.svg?v=26.9">
+    <link rel="apple-touch-icon" href="icon-192.png?v=26.9">
+    <link rel="manifest" href="manifest.json?v=26.9">
+    <link rel="stylesheet" href="style.css?v=26.9">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -605,9 +605,13 @@
                     <div class="panel__header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
                         <h3 id="topics-title" class="panel__title" style="margin: 0;">Temas de la lista</h3>
                         <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+                            <!-- Botón Cargar Archivo / Configurar Bolillero con IA -->
+                            <button id="bolilleroOpenSetupBtn" class="button button--primary button--sm" type="button" title="Configurar bolillero con IA, cargar archivos y filtrar por unidad" style="background: linear-gradient(135deg, #0284c7, #0ea5e9); font-weight: 600; box-shadow: 0 0 12px rgba(14, 165, 233, 0.35);">
+                                ✨ Cargar con IA / Archivo
+                            </button>
                             <!-- Botón Cargar Palabras con IA desde el PDF -->
                             <button id="bolilleroIaWordsBtn" class="button button--accent button--sm" type="button" title="Extraer palabras y conceptos del PDF activo con IA">
-                                ✨ Cargar palabras con IA
+                                🤖 Palabras Rápidas
                             </button>
                             <!-- Botón Importar Bloc de Notas / Archivo .txt -->
                             <button id="importButton" class="button button--secondary button--sm" type="button" title="Importar temas desde bloc de notas (.txt) o .json">
@@ -1626,21 +1630,36 @@
                             </div>
                         </div>
 
-                        <!-- Comodines Habilitados para este Jugador -->
+                        <!-- Comodines Habilitados para este Jugador (Cartas Grandes 3D) -->
                         <div id="dueloComodinesTray" class="duelo-comodines-tray">
-                            <span class="duelo-comodines-title">Tus comodines disponibles:</span>
-                            <div class="duelo-comodines-buttons">
-                                <button id="dueloBtnSocorro" class="comodin-btn" type="button" title="Resolver a medias con otro por 5 pts cada uno">
-                                    🤝 Socorro
+                            <div class="comodines-tray-header">
+                                <span class="comodines-tray-label">🃏 TUS COMODINES DISPONIBLES</span>
+                                <span class="comodines-tray-hint">Tocá una carta para activarla</span>
+                            </div>
+                            <div class="comodines-cards-grid">
+                                <button id="dueloBtnSocorro" class="comodin-card comodin-card--duelo comodin-btn" type="button" title="Resolver a medias con otro por 5 pts cada uno">
+                                    <span class="comodin-card__badge">x1</span>
+                                    <span class="comodin-card__icon">🤝</span>
+                                    <strong class="comodin-card__title">Socorro</strong>
+                                    <span class="comodin-card__desc">Compartir pts</span>
                                 </button>
-                                <button id="dueloBtnPista" class="comodin-btn" type="button" title="Obtener 15 seg para ver apuntes">
-                                    💡 Pista clave (+15s)
+                                <button id="dueloBtnPista" class="comodin-card comodin-card--duelo comodin-btn" type="button" title="Obtener 15 seg para ver apuntes">
+                                    <span class="comodin-card__badge">x1</span>
+                                    <span class="comodin-card__icon">💡</span>
+                                    <strong class="comodin-card__title">Pista Clave</strong>
+                                    <span class="comodin-card__desc">+15s apunte</span>
                                 </button>
-                                <button id="dueloBtnPaso" class="comodin-btn" type="button" title="Cambiar tema por otro sin penalización">
-                                    🔄 Paso y Rebote
+                                <button id="dueloBtnPaso" class="comodin-card comodin-card--duelo comodin-btn" type="button" title="Cambiar tema por otro sin penalización">
+                                    <span class="comodin-card__badge">x1</span>
+                                    <span class="comodin-card__icon">🔄</span>
+                                    <strong class="comodin-card__title">Paso y Rebote</strong>
+                                    <span class="comodin-card__desc">Cambiar tema</span>
                                 </button>
-                                <button id="dueloBtnRelevoCoop" class="comodin-btn button--coop hidden" type="button" title="Pedir relevo a un compañero si tenés dudas" style="background: rgba(16, 185, 129, 0.2); border-color: rgba(16, 185, 129, 0.5); color: #6ee7b7;">
-                                    🤝 Pedir Relevo
+                                <button id="dueloBtnRelevoCoop" class="comodin-card comodin-card--duelo comodin-btn button--coop hidden" type="button" title="Pedir relevo a un compañero si tenés dudas">
+                                    <span class="comodin-card__badge">x1</span>
+                                    <span class="comodin-card__icon">👥</span>
+                                    <strong class="comodin-card__title">Relevo Co-op</strong>
+                                    <span class="comodin-card__desc">Pasa la posta</span>
                                 </button>
                             </div>
                         </div>
@@ -1913,7 +1932,10 @@
                     </div>
                 </div>
 
-                <div class="juegos-edu-topbar__right" style="display: flex; gap: 0.5rem; align-items: center;">
+                <div class="juegos-edu-topbar__right" style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+                    <button id="bombaOpenConfigBtn" class="button button--secondary button--sm" type="button" title="Configurar tiempo, dificultad, comodines y archivo con IA" style="font-weight: 600; border-color: rgba(239, 68, 68, 0.4); background: rgba(239, 68, 68, 0.1);">
+                        ⚙️ Configurar Desafío IA
+                    </button>
                     <button id="juegosRulesBtn" class="rules-trigger-btn" type="button" title="Ver reglas y controles de este juego">
                         <span>❓</span><span>Reglas</span>
                     </button>
@@ -2005,6 +2027,34 @@
                                     <span class="bomba-wire-name">Cable Maestro: Clave de Síntesis</span>
                                     <span class="bomba-wire-status badge badge--warning" id="bombaWire3Status">Bloqueado</span>
                                 </div>
+                            </div>
+                        </div>
+
+                        <!-- Bandeja de Comodines de la Bomba (Cartas Grandes 3D) -->
+                        <div class="bomba-comodines-tray" id="bombaComodinesTray">
+                            <div class="comodines-tray-header">
+                                <span class="comodines-tray-label">🃏 COMODINES DE ARTIFICIERO</span>
+                                <span class="comodines-tray-hint">Tocá una carta para activarla</span>
+                            </div>
+                            <div class="comodines-cards-grid">
+                                <button id="bombaBtnCortacables" class="comodin-card comodin-card--bomba" type="button" title="Descarta 1 cable / opción errónea">
+                                    <span class="comodin-card__badge" id="bombaCountCortacables">x1</span>
+                                    <span class="comodin-card__icon">✂️</span>
+                                    <strong class="comodin-card__title">Cortacables</strong>
+                                    <span class="comodin-card__desc">Descarta 1 falsa</span>
+                                </button>
+                                <button id="bombaBtnCongelar" class="comodin-card comodin-card--bomba" type="button" title="Pausa el cronómetro y otorga +15 segundos">
+                                    <span class="comodin-card__badge" id="bombaCountCongelar">x1</span>
+                                    <span class="comodin-card__icon">❄️</span>
+                                    <strong class="comodin-card__title">Congelar</strong>
+                                    <span class="comodin-card__desc">+15s al reloj</span>
+                                </button>
+                                <button id="bombaBtnPista" class="comodin-card comodin-card--bomba" type="button" title="Muestra una pista teórica en la pantalla LCD">
+                                    <span class="comodin-card__badge" id="bombaCountPista">x1</span>
+                                    <span class="comodin-card__icon">💡</span>
+                                    <strong class="comodin-card__title">Pista Teórica</strong>
+                                    <span class="comodin-card__desc">Ayuda del apunte</span>
+                                </button>
                             </div>
                         </div>
 
@@ -2143,18 +2193,30 @@
                             </h3>
                         </div>
 
-                        <!-- Barra de 3 Comodines para Modo Solo -->
+                        <!-- Barra de 3 Comodines para Modo Solo (Cartas Grandes 3D) -->
                         <div class="impostor-comodines-tray" id="impostorComodinesTray">
-                            <span class="impostor-comodines-title">🃏 Comodines:</span>
-                            <div class="impostor-comodines-actions">
-                                <button id="impostorBtn5050" class="button button--secondary button--xs impostor-comodin-btn" type="button" title="Descarta 2 afirmaciones verdaderas">
-                                    💡 Pista 50/50 (<span id="impostorCount5050">1</span>)
+                            <div class="comodines-tray-header">
+                                <span class="comodines-tray-label">🃏 TUS COMODINES DE INVESTIGACIÓN</span>
+                                <span class="comodines-tray-hint">Tocá una carta para activarla</span>
+                            </div>
+                            <div class="comodines-cards-grid">
+                                <button id="impostorBtn5050" class="comodin-card comodin-card--impostor impostor-comodin-btn" type="button" title="Descarta 2 afirmaciones verdaderas">
+                                    <span class="comodin-card__badge" id="impostorCount5050">1</span>
+                                    <span class="comodin-card__icon">💡</span>
+                                    <strong class="comodin-card__title">Pista 50/50</strong>
+                                    <span class="comodin-card__desc">Descarta 2</span>
                                 </button>
-                                <button id="impostorBtnTiempo" class="button button--secondary button--xs impostor-comodin-btn" type="button" title="Suma +15 segundos al cronómetro">
-                                    ⏱️ +15s Tiempo (<span id="impostorCountTiempo">1</span>)
+                                <button id="impostorBtnTiempo" class="comodin-card comodin-card--impostor impostor-comodin-btn" type="button" title="Suma +15 segundos al cronómetro">
+                                    <span class="comodin-card__badge" id="impostorCountTiempo">1</span>
+                                    <span class="comodin-card__icon">⏱️</span>
+                                    <strong class="comodin-card__title">+15 Segundos</strong>
+                                    <span class="comodin-card__desc">Más tiempo</span>
                                 </button>
-                                <button id="impostorBtnSocorro" class="button button--secondary button--xs impostor-comodin-btn" type="button" title="El radar detecta la tarjeta con el error conceptual">
-                                    🛟 Radar Socorro (<span id="impostorCountSocorro">1</span>)
+                                <button id="impostorBtnSocorro" class="comodin-card comodin-card--impostor impostor-comodin-btn" type="button" title="El radar detecta la tarjeta con el error conceptual">
+                                    <span class="comodin-card__badge" id="impostorCountSocorro">1</span>
+                                    <span class="comodin-card__icon">🛟</span>
+                                    <strong class="comodin-card__title">Radar</strong>
+                                    <span class="comodin-card__desc">Detecta error</span>
                                 </button>
                             </div>
                         </div>
@@ -3417,7 +3479,7 @@
 </dialog>
 
 <script src="mqtt.min.js"></script>
-<script src="script.js?v=26.8" defer></script>
+<script src="script.js?v=26.9" defer></script>
 
 <!-- =========================================================
      MODAL DE PROMPT PARA GEMINI (CREAR JUEGOS DESDE PDF)
@@ -3462,6 +3524,348 @@
             </a>
             <button id="closeGeminiPromptBottomBtn" class="button button--ghost" type="button">
                 Cerrar
+            </button>
+        </footer>
+    </div>
+</dialog>
+
+<!-- =========================================================
+     MODAL DE CONFIGURACIÓN INICIAL: BOLILLERO DE ESTUDIO (IA)
+     ========================================================= -->
+<dialog id="bolilleroSetupModal" class="modal lab-config-dialog" aria-labelledby="bolilleroSetupModalTitle">
+    <div class="modal__content lab-config-modal-content">
+        <header class="modal__header lab-config-header">
+            <div class="lab-config-header-text">
+                <span class="lab-config-header-icon">🎲</span>
+                <div>
+                    <h3 id="bolilleroSetupModalTitle" class="modal__title">Configurar Bolillero con IA</h3>
+                    <p class="lab-config-subtitle">Cargá tu material de estudio y seleccioná la unidad o cantidad de palabras a sortear</p>
+                </div>
+            </div>
+            <button id="closeBolilleroSetupModalBtn" class="modal__close icon-button" type="button" aria-label="Cerrar modal">✕</button>
+        </header>
+
+        <div class="modal__body lab-config-modal-body">
+            <!-- COLUMNA IZQUIERDA: Material de Estudio + Dificultad + Prompt de Unidad -->
+            <div class="lab-config-col lab-config-col--upload">
+                <!-- Dropzone de Archivo -->
+                <div class="lab-upload-section">
+                    <label class="section-title lab-section-label">
+                        <span>📂 Material de Estudio</span>
+                        <span class="lab-formats-pill">PDF • WORD • PPTX • TXT</span>
+                    </label>
+                    <input type="file" id="bolilleroPdfFileInput" accept=".pdf,.docx,.pptx,.txt,.md,.csv" class="hidden">
+                    <div class="lab-upload-dropzone" id="bolilleroUploadDropzone" tabindex="0" role="button" aria-label="Cargar archivo de estudio">
+                        <div class="lab-upload-plus-circle" id="bolilleroUploadPlusCircle">➕</div>
+                        <strong class="lab-upload-title" id="bolilleroUploadTitle">Subir Material de Estudio</strong>
+                        <p class="lab-upload-hint" id="bolilleroUploadHint">
+                            Hacé clic o arrastrá acá tus apuntes, libro o programa de la materia.
+                        </p>
+                        <div class="lab-loaded-pdf-info hidden" id="bolilleroLoadedPdfInfo">
+                            <span class="lab-loaded-pdf-icon" id="bolilleroLoadedPdfIcon">📄</span>
+                            <div class="lab-loaded-pdf-text">
+                                <strong id="bolilleroLoadedPdfName">apuntes.pdf</strong>
+                                <span id="bolilleroLoadedPdfMeta">Listo para procesar</span>
+                            </div>
+                            <button type="button" class="button button--ghost button--xs" id="bolilleroBtnQuitarPdf" style="color: #f87171; margin-left: auto;">✕ Quitar</button>
+                        </div>
+                    </div>
+                    <div class="lab-gdocs-hint">
+                        💡 <strong>¿Google Docs o Slides?</strong> Descargalo como <em>.docx</em> o <em>PDF</em> y subilo acá directamente.
+                    </div>
+                </div>
+
+                <!-- Selector de Dificultad -->
+                <div class="lab-difficulty-section">
+                    <label class="section-title lab-section-label">
+                        <span>⚙️ Nivel de Dificultad:</span>
+                        <span style="font-size: 0.72rem; color: var(--color-text-muted); font-weight: normal;">Profundidad de conceptos</span>
+                    </label>
+                    <div class="lab-difficulty-selector" id="bolilleroConfigDifficultySelector">
+                        <button type="button" class="lab-diff-btn" data-diff="facil">
+                            <span class="diff-dot diff-dot--facil"></span> Fácil
+                        </button>
+                        <button type="button" class="lab-diff-btn is-active" data-diff="intermedio">
+                            <span class="diff-dot diff-dot--intermedio"></span> Intermedio
+                        </button>
+                        <button type="button" class="lab-diff-btn" data-diff="dificil">
+                            <span class="diff-dot diff-dot--dificil"></span> Difícil
+                        </button>
+                        <button type="button" class="lab-diff-btn" data-diff="extremo">
+                            <span class="diff-dot diff-dot--extremo"></span> Extremo
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Orden / Prompt de Unidad Específica -->
+                <div class="lab-order-section">
+                    <label for="bolilleroConfigOrderInput" class="section-title lab-section-label">
+                        <span>✍️ Indicación o Unidad Específica (Opcional):</span>
+                    </label>
+                    <textarea id="bolilleroConfigOrderInput" rows="2" class="lab-config-textarea" placeholder="Ej: 'Solo palabras de la Unidad 1', 'Enfocate en el capítulo 3', 'Quiero conceptos de Derecho Constitucional'..."></textarea>
+                    <span style="font-size: 0.73rem; color: var(--color-text-muted); display: block; margin-top: 0.25rem;">
+                        💡 Si cargás el apunte de toda la materia, la IA buscará y extraerá exclusivamente los conceptos de la unidad que indiques acá.
+                    </span>
+                </div>
+            </div>
+
+            <!-- COLUMNA DERECHA: Cantidad de Palabras + Modo de Bolillas + Destino -->
+            <div class="lab-config-col lab-config-col--topics">
+                <!-- Selector de Cantidad de Palabras -->
+                <div class="bolillero-count-section">
+                    <label class="section-title lab-section-label">
+                        <span>🔢 Cantidad de Palabras / Bolillas a Generar:</span>
+                        <strong id="bolilleroCountBadge" class="badge badge--primary" style="font-size: 0.85rem;">15 temas</strong>
+                    </label>
+                    <div class="bolillero-count-selector" id="bolilleroCountSelector" style="display: flex; gap: 0.4rem; align-items: center; flex-wrap: wrap;">
+                        <button type="button" class="button button--secondary button--xs bolillero-count-chip" data-count="5">5</button>
+                        <button type="button" class="button button--secondary button--xs bolillero-count-chip" data-count="10">10</button>
+                        <button type="button" class="button button--primary button--xs bolillero-count-chip is-active" data-count="15">15</button>
+                        <button type="button" class="button button--secondary button--xs bolillero-count-chip" data-count="20">20</button>
+                        <button type="button" class="button button--secondary button--xs bolillero-count-chip" data-count="30">30</button>
+                        <input type="number" id="bolilleroCountCustomInput" min="3" max="50" value="15" style="width: 65px; padding: 0.25rem 0.5rem; background: rgba(15,23,42,0.8); border: 1px solid rgba(56,189,248,0.3); border-radius: 6px; color: #fff; font-size: 0.82rem; text-align: center;" title="Cantidad personalizada (entre 3 y 50)">
+                    </div>
+                </div>
+
+                <!-- Grilla de Tipo de Conceptos / Bolillas -->
+                <label class="section-title lab-section-label" style="margin-top: 0.35rem;">🎯 ¿Cómo querés estructurar las bolillas?</label>
+                <div class="lab-topics-grid" id="bolilleroTopicsGrid">
+                    <label class="lab-topic-option is-selected" data-mode="conceptos">
+                        <input type="radio" name="bolilleroModeRadio" value="conceptos" checked class="hidden">
+                        <div class="lab-topic-card-body">
+                            <span class="lab-topic-icon">🔑</span>
+                            <div class="lab-topic-info">
+                                <strong>Conceptos & Términos Clave</strong>
+                                <span>Palabras centrales de la unidad para desarrollar oralmente.</span>
+                            </div>
+                        </div>
+                    </label>
+                    <label class="lab-topic-option" data-mode="preguntas">
+                        <input type="radio" name="bolilleroModeRadio" value="preguntas" class="hidden">
+                        <div class="lab-topic-card-body">
+                            <span class="lab-topic-icon">❓</span>
+                            <div class="lab-topic-info">
+                                <strong>Preguntas de Examen Oral</strong>
+                                <span>Preguntas típicas y ejes teóricos de mesa de examen.</span>
+                            </div>
+                        </div>
+                    </label>
+                    <label class="lab-topic-option" data-mode="casos">
+                        <input type="radio" name="bolilleroModeRadio" value="casos" class="hidden">
+                        <div class="lab-topic-card-body">
+                            <span class="lab-topic-icon">⚖️</span>
+                            <div class="lab-topic-info">
+                                <strong>Casos & Problemas Teóricos</strong>
+                                <span>Situaciones aplicadas para justificar conceptos.</span>
+                            </div>
+                        </div>
+                    </label>
+                    <label class="lab-topic-option" data-mode="mixto">
+                        <input type="radio" name="bolilleroModeRadio" value="mixto" class="hidden">
+                        <div class="lab-topic-card-body">
+                            <span class="lab-topic-icon">📚</span>
+                            <div class="lab-topic-info">
+                                <strong>Temario Completo Equilibrado</strong>
+                                <span>Mezcla uniforme de definiciones, fórmulas y principios.</span>
+                            </div>
+                        </div>
+                    </label>
+                </div>
+
+                <!-- Destino de la Lista Generada -->
+                <div class="bolillero-destination-section" style="margin-top: 0.25rem; background: rgba(15,23,42,0.5); padding: 0.6rem 0.85rem; border-radius: var(--radius-md); border: 1px solid rgba(255,255,255,0.06);">
+                    <label class="section-title lab-section-label" style="margin-bottom: 0.3rem;">📥 Destino de las bolillas:</label>
+                    <div style="display: flex; gap: 0.85rem; flex-wrap: wrap; font-size: 0.82rem; color: #cbd5e1;">
+                        <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
+                            <input type="radio" name="bolilleroTargetRadio" value="new" checked>
+                            <span>Crear lista nueva</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
+                            <input type="radio" name="bolilleroTargetRadio" value="replace">
+                            <span>Reemplazar lista actual</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
+                            <input type="radio" name="bolilleroTargetRadio" value="append">
+                            <span>Agregar al final</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer class="modal__footer lab-config-footer">
+            <button id="closeBolilleroSetupModalBottomBtn" class="button button--ghost" type="button">Cancelar / Usar Listas Actuales</button>
+            <button id="bolilleroBtnCargarConfig" class="button button--primary" type="button" style="background: linear-gradient(135deg, #059669, #10b981); font-weight: 600; padding: 0.65rem 1.4rem;">
+                🚀 Generar Bolillero con IA
+            </button>
+        </footer>
+    </div>
+</dialog>
+
+<!-- =========================================================
+     MODAL DE CONFIGURACIÓN INICIAL: DESACTIVÁ LA BOMBA (IA)
+     ========================================================= -->
+<dialog id="bombaSetupModal" class="modal lab-config-dialog" aria-labelledby="bombaSetupModalTitle">
+    <div class="modal__content lab-config-modal-content">
+        <header class="modal__header lab-config-header">
+            <div class="lab-config-header-text">
+                <span class="lab-config-header-icon">💣</span>
+                <div>
+                    <h3 id="bombaSetupModalTitle" class="modal__title">Desactivá la Bomba: Configuración de Misión</h3>
+                    <p class="lab-config-subtitle">Cargá tu material de estudio y calibrá tiempo, dificultad y comodines para el artificiero</p>
+                </div>
+            </div>
+            <button id="closeBombaSetupModalBtn" class="modal__close icon-button" type="button" aria-label="Cerrar modal">✕</button>
+        </header>
+
+        <div class="modal__body lab-config-modal-body">
+            <!-- COLUMNA IZQUIERDA: Material + Tiempo + Dificultad + Prompt -->
+            <div class="lab-config-col lab-config-col--upload">
+                <!-- Dropzone de Archivo -->
+                <div class="lab-upload-section">
+                    <label class="section-title lab-section-label">
+                        <span>📂 Material de Estudio</span>
+                        <span class="lab-formats-pill">PDF • WORD • PPTX • TXT</span>
+                    </label>
+                    <input type="file" id="bombaPdfFileInput" accept=".pdf,.docx,.pptx,.txt,.md,.csv" class="hidden">
+                    <div class="lab-upload-dropzone" id="bombaUploadDropzone" tabindex="0" role="button" aria-label="Cargar archivo de estudio">
+                        <div class="lab-upload-plus-circle" id="bombaUploadPlusCircle">➕</div>
+                        <strong class="lab-upload-title" id="bombaUploadTitle">Subir Material de Estudio</strong>
+                        <p class="lab-upload-hint" id="bombaUploadHint">
+                            Hacé clic o arrastrá apuntes, manuales o temas para calibrar las preguntas.
+                        </p>
+                        <div class="lab-loaded-pdf-info hidden" id="bombaLoadedPdfInfo">
+                            <span class="lab-loaded-pdf-icon" id="bombaLoadedPdfIcon">📄</span>
+                            <div class="lab-loaded-pdf-text">
+                                <strong id="bombaLoadedPdfName">apuntes.pdf</strong>
+                                <span id="bombaLoadedPdfMeta">Listo para procesar</span>
+                            </div>
+                            <button type="button" class="button button--ghost button--xs" id="bombaBtnQuitarPdf" style="color: #f87171; margin-left: auto;">✕ Quitar</button>
+                        </div>
+                    </div>
+                    <div class="lab-gdocs-hint">
+                        💡 <strong>¿Google Docs o Slides?</strong> Descargalo como <em>.docx</em> o <em>PDF</em> y subilo acá directamente.
+                    </div>
+                </div>
+
+                <!-- Selector de Tiempo de la Bomba -->
+                <div class="bomba-time-section">
+                    <label class="section-title lab-section-label">
+                        <span>⏱️ Tiempo del Temporizador:</span>
+                        <strong id="bombaTimeBadge" class="badge badge--warning" style="font-size: 0.85rem;">90 segundos</strong>
+                    </label>
+                    <div class="bomba-time-selector" id="bombaTimeSelector" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.35rem;">
+                        <button type="button" class="button button--secondary button--xs bomba-time-btn" data-seconds="45">⚡ 45s</button>
+                        <button type="button" class="button button--secondary button--xs bomba-time-btn" data-seconds="60">🔥 60s</button>
+                        <button type="button" class="button button--primary button--xs bomba-time-btn is-active" data-seconds="90">🎯 90s</button>
+                        <button type="button" class="button button--secondary button--xs bomba-time-btn" data-seconds="120">🛡️ 120s</button>
+                    </div>
+                </div>
+
+                <!-- Selector de Dificultad -->
+                <div class="lab-difficulty-section">
+                    <label class="section-title lab-section-label">
+                        <span>⚙️ Nivel de Dificultad:</span>
+                        <span style="font-size: 0.72rem; color: var(--color-text-muted); font-weight: normal;">Complejidad teórica</span>
+                    </label>
+                    <div class="lab-difficulty-selector" id="bombaConfigDifficultySelector">
+                        <button type="button" class="lab-diff-btn" data-diff="facil">
+                            <span class="diff-dot diff-dot--facil"></span> Fácil
+                        </button>
+                        <button type="button" class="lab-diff-btn is-active" data-diff="intermedio">
+                            <span class="diff-dot diff-dot--intermedio"></span> Intermedio
+                        </button>
+                        <button type="button" class="lab-diff-btn" data-diff="dificil">
+                            <span class="diff-dot diff-dot--dificil"></span> Difícil
+                        </button>
+                        <button type="button" class="lab-diff-btn" data-diff="extremo">
+                            <span class="diff-dot diff-dot--extremo"></span> Extremo
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Orden / Prompt puntual para la Bomba -->
+                <div class="lab-order-section">
+                    <label for="bombaConfigOrderInput" class="section-title lab-section-label">
+                        <span>✍️ Unidad o Enfoque de Preguntas (Opcional):</span>
+                    </label>
+                    <textarea id="bombaConfigOrderInput" rows="2" class="lab-config-textarea" placeholder="Ej: 'Preguntas solo de la Unidad 2', 'Enfocate en relaciones causa-efecto', 'Nivel de examen final'..."></textarea>
+                </div>
+            </div>
+
+            <!-- COLUMNA DERECHA: Comodines Activos + Protocolo -->
+            <div class="lab-config-col lab-config-col--topics">
+                <label class="section-title lab-section-label">🃏 Comodines Disponibles en tu Misión:</label>
+                <div class="bomba-setup-comodines-grid" style="display: flex; flex-direction: column; gap: 0.55rem;">
+                    <!-- Comodín 1: Cortacables -->
+                    <label class="bomba-comodin-setup-card is-active" id="bombaSetupCardCortacables">
+                        <input type="checkbox" id="bombaSetupCheckCortacables" checked class="hidden">
+                        <div style="display: flex; align-items: center; gap: 0.75rem; width: 100%;">
+                            <span style="font-size: 1.5rem; line-height: 1;">✂️</span>
+                            <div style="flex: 1;">
+                                <strong style="display: block; color: #fff; font-size: 0.88rem;">Cortacables Seguro</strong>
+                                <span style="font-size: 0.74rem; color: var(--color-text-muted);">Descarta de inmediato 1 opción falsa de la fase actual.</span>
+                            </div>
+                            <span class="badge badge--success bomba-setup-badge">Activado</span>
+                        </div>
+                    </label>
+                    <!-- Comodín 2: Congelar -->
+                    <label class="bomba-comodin-setup-card is-active" id="bombaSetupCardCongelar">
+                        <input type="checkbox" id="bombaSetupCheckCongelar" checked class="hidden">
+                        <div style="display: flex; align-items: center; gap: 0.75rem; width: 100%;">
+                            <span style="font-size: 1.5rem; line-height: 1;">❄️</span>
+                            <div style="flex: 1;">
+                                <strong style="display: block; color: #fff; font-size: 0.88rem;">Congelar / +15s Extra</strong>
+                                <span style="font-size: 0.74rem; color: var(--color-text-muted);">Pausa el tiempo de la bomba y te da 15 segundos para pensar.</span>
+                            </div>
+                            <span class="badge badge--success bomba-setup-badge">Activado</span>
+                        </div>
+                    </label>
+                    <!-- Comodín 3: Pista Teórica -->
+                    <label class="bomba-comodin-setup-card is-active" id="bombaSetupCardPista">
+                        <input type="checkbox" id="bombaSetupCheckPista" checked class="hidden">
+                        <div style="display: flex; align-items: center; gap: 0.75rem; width: 100%;">
+                            <span style="font-size: 1.5rem; line-height: 1;">💡</span>
+                            <div style="flex: 1;">
+                                <strong style="display: block; color: #fff; font-size: 0.88rem;">Pista Teórica del Apunte</strong>
+                                <span style="font-size: 0.74rem; color: var(--color-text-muted);">Muestra en la pantalla LCD la idea fuerza que resuelve la fase.</span>
+                            </div>
+                            <span class="badge badge--success bomba-setup-badge">Activado</span>
+                        </div>
+                    </label>
+                </div>
+
+                <!-- Protocolo de Preguntas -->
+                <label class="section-title lab-section-label" style="margin-top: 0.5rem;">🎯 Protocolo de Desactivación:</label>
+                <div class="lab-topics-grid" id="bombaProtocolGrid">
+                    <label class="lab-topic-option is-selected" data-protocol="fases">
+                        <input type="radio" name="bombaProtocolRadio" value="fases" checked class="hidden">
+                        <div class="lab-topic-card-body">
+                            <span class="lab-topic-icon">📡</span>
+                            <div class="lab-topic-info">
+                                <strong>3 Fases Progresivas</strong>
+                                <span>1. Fundamento Teórico ➔ 2. Deducción ➔ 3. Clave Maestra.</span>
+                            </div>
+                        </div>
+                    </label>
+                    <label class="lab-topic-option" data-protocol="rapido">
+                        <input type="radio" name="bombaProtocolRadio" value="rapido" class="hidden">
+                        <div class="lab-topic-card-body">
+                            <span class="lab-topic-icon">⚡</span>
+                            <div class="lab-topic-info">
+                                <strong>Desafío Relámpago</strong>
+                                <span>Cortes directos sin preámbulos para máxima velocidad.</span>
+                            </div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <footer class="modal__footer lab-config-footer">
+            <button id="closeBombaSetupModalBottomBtn" class="button button--ghost" type="button">Cancelar / Jugar Modo Clásico</button>
+            <button id="bombaBtnCargarConfig" class="button button--primary" type="button" style="background: linear-gradient(135deg, #dc2626, #ef4444); font-weight: 600; padding: 0.65rem 1.4rem;">
+                💣 Armar y Comenzar Desafío con IA
             </button>
         </footer>
     </div>
