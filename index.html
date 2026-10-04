@@ -15,14 +15,16 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     
-    <link rel="icon" type="image/svg+xml" href="icon.svg?v=27.4">
-    <link rel="apple-touch-icon" href="icon-192.png?v=27.4">
-    <link rel="manifest" href="manifest.json?v=27.4">
-    <link rel="stylesheet" href="style.css?v=27.4">
+    <link rel="icon" type="image/svg+xml" href="icon.svg?v=27.5">
+    <link rel="apple-touch-icon" href="icon-192.png?v=27.5">
+    <link rel="manifest" href="manifest.json?v=27.5">
+    <link rel="stylesheet" href="style.css?v=27.5">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script src="jszip.min.js"></script>
 </head>
@@ -229,6 +231,22 @@
                     <button id="drawerPomoToggleBtn" class="button button--primary button--sm" type="button">Iniciar</button>
                     <button id="drawerPomoOpenCardBtn" class="button button--secondary button--sm" type="button">Ver Reloj</button>
                 </div>
+            </div>
+        </div>
+
+        <!-- Sección 5: Copia de Seguridad y Datos -->
+        <div class="drawer-section">
+            <span class="drawer-section__label">Copia de Seguridad y Datos</span>
+            <div class="drawer-tools" style="grid-template-columns: 1fr 1fr;">
+                <button id="drawerExportarBackupBtn" class="drawer-tool-btn" type="button" aria-label="Descargar copia de seguridad en JSON">
+                    <span class="drawer-tool-icon" aria-hidden="true">💾</span>
+                    <span class="drawer-tool-text">Exportar Backup</span>
+                </button>
+                <button id="drawerImportarBackupBtn" class="drawer-tool-btn" type="button" aria-label="Restaurar copia de seguridad desde JSON">
+                    <span class="drawer-tool-icon" aria-hidden="true">📥</span>
+                    <span class="drawer-tool-text">Importar Backup</span>
+                </button>
+                <input type="file" id="inputImportarBackupJson" accept=".json" style="display: none;">
             </div>
         </div>
 
@@ -1287,6 +1305,7 @@
                                     <div class="duelo-lobby-badges">
                                         <span class="badge badge--accent" id="dueloWaitingRoomModoBadge">⚔️ Versus (Hasta 8)</span>
                                         <span class="badge badge--success" id="dueloServerStatusBadge">🟢 Servidor Conectado</span>
+                                        <span class="badge badge--info" id="dueloPingBadge" style="display: inline-flex; font-weight: 700;">⚡ --ms</span>
                                         <span class="badge badge--info" id="dueloWaitingRoomMaterialBadge" style="display: inline-flex;">📄 Material: General</span>
                                     </div>
                                 </div>
@@ -1376,6 +1395,7 @@
                     <span class="badge badge--accent">⚔️ Duelo en Curso</span>
                     <span class="duelo-bar-list" id="dueloBarListName">Materia</span>
                     <span class="badge badge--warning" id="dueloTopRoundBadge" style="font-weight: 700;">Ronda 1</span>
+                    <span class="badge badge--info" id="dueloArenaPingBadge" style="display: inline-flex; font-weight: 700;">⚡ --ms</span>
                     <span class="duelo-bar-stats" id="dueloBarRemainingTopics">Temas restantes: 0</span>
                 </div>
                 <div class="duelo-bar-actions">
@@ -3492,7 +3512,7 @@
 </dialog>
 
 <script src="mqtt.min.js"></script>
-<script src="script.js?v=27.4" defer></script>
+<script src="script.js?v=27.5" defer></script>
 
 <!-- =========================================================
      MODAL DE PROMPT PARA GEMINI (CREAR JUEGOS DESDE PDF)
@@ -3526,6 +3546,36 @@
             <div class="gemini-prompt-preview">
                 <label for="geminiPromptTextarea" class="gemini-preview-label">Texto del Prompt para Gemini:</label>
                 <textarea id="geminiPromptTextarea" class="gemini-prompt-box" readonly rows="7"></textarea>
+            </div>
+
+            <!-- Opción Automática Directa con Gemini API Key -->
+            <div class="gemini-direct-api-box" style="margin-top: 1.25rem; padding: 1.15rem; border-radius: var(--radius-md, 12px); background: linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(15, 23, 42, 0.7)); border: 1px solid rgba(99, 102, 241, 0.35);">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem;">
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <span style="font-size: 1.3rem;">⚡</span>
+                        <strong style="color: #fff; font-size: 0.98rem;">Generación Automática Directa (1-Click)</strong>
+                    </div>
+                    <span class="badge badge--success" style="font-size: 0.75rem; font-weight: 700;">Google Gemini Flash</span>
+                </div>
+                <p style="margin: 0 0 0.85rem; font-size: 0.86rem; color: var(--color-text-muted); line-height: 1.45;">
+                    Podés ingresar tu API Key gratuita de Google Gemini para que Luibañez procese tu PDF y genere la lista de temas y preguntas automáticamente sin salir de la app:
+                </p>
+                <div class="field" style="margin-bottom: 0.85rem;">
+                    <label for="geminiDirectApiKeyInput" style="font-size: 0.82rem; font-weight: 600; color: #fff;">🔑 Tu API Key de Gemini (Queda guardada solo en tu dispositivo)</label>
+                    <div style="display: flex; gap: 0.5rem; margin-top: 0.35rem;">
+                        <input id="geminiDirectApiKeyInput" type="password" placeholder="AIzaSy..." style="flex: 1; font-family: monospace; font-size: 0.85rem; padding: 0.5rem 0.75rem;" autocomplete="off">
+                        <button id="geminiDirectSaveKeyBtn" class="button button--secondary button--sm" type="button" style="white-space: nowrap;">💾 Guardar</button>
+                    </div>
+                    <span style="font-size: 0.75rem; color: var(--color-text-muted); display: block; margin-top: 0.35rem;">
+                        ¿No tenés una? Es 100% gratuita. Conseguila en <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener" style="color: #818cf8; text-decoration: underline;">Google AI Studio</a>.
+                    </span>
+                </div>
+                <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+                    <button id="geminiDirectGenerateBtn" class="button button--primary button--md" type="button" style="font-weight: 700; box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);">
+                        ✨ Generar Temario con IA Directa
+                    </button>
+                    <span id="geminiDirectStatus" style="font-size: 0.85rem; color: #fbbf24; font-weight: 600; display: none;"></span>
+                </div>
             </div>
         </div>
         <footer class="modal__footer">

@@ -3517,6 +3517,7 @@ function mostrarSalaDeEsperaOnline(codigo) {
     if (dom.dueloOnlineSetupView) dom.dueloOnlineSetupView.classList.add("hidden");
     if (dom.dueloOnlineWaitingRoom) dom.dueloOnlineWaitingRoom.classList.remove("hidden");
     if (dom.dueloWaitingRoomCode) dom.dueloWaitingRoomCode.textContent = codigo;
+    if (typeof iniciarMonitoreoPingOnline === "function") iniciarMonitoreoPingOnline();
 
     const juegoId = onlineDueloEstado.juegoSeleccionado || (dom.dueloOnlineGameSelect ? dom.dueloOnlineGameSelect.value : "bomba");
     onlineDueloEstado.juegoSeleccionado = juegoId;
@@ -3727,6 +3728,11 @@ function procesarMensajeMqttSala(data) {
 
             // Evitar duplicados y verificar límite de 8 jugadores
             const jugadorData = { ...data.jugador, listo: false };
+            const otrosJugadores = onlineDueloEstado.jugadores.filter(j => j.id !== jugadorData.id);
+            if (typeof desambiguarApodoSala === "function") {
+                jugadorData.apodo = desambiguarApodoSala(jugadorData.apodo, otrosJugadores);
+                jugadorData.nombre = jugadorData.apodo;
+            }
             const idx = onlineDueloEstado.jugadores.findIndex(j => j.id === jugadorData.id);
             if (idx === -1) {
                 if (onlineDueloEstado.jugadores.length >= 8) {
@@ -4019,6 +4025,46 @@ function procesarMensajeMqttSala(data) {
             mostrarPodioOnline(data.partidaGuardada);
         }
     }
+
+    // 13. Medidor de Ping / Latencia de Red
+    if (data.tipo === "PING_SALA") {
+        if (data.senderId === perfilUsuario.id) {
+            const rtt = Math.max(1, Date.now() - (data.ts || Date.now()));
+            if (typeof actualizarBadgePingUI === "function") {
+                actualizarBadgePingUI(rtt);
+            }
+        }
+    }
+
+    // 14. Solicitud de sincronización de estado (Reconexión silenciosa de invitados)
+    if (data.tipo === "SOLICITAR_ESTADO_SALA") {
+        if (onlineDueloEstado.esHost && data.jugadorId !== perfilUsuario.id && dueloEstado.partida) {
+            publicarMensajeSala({
+                tipo: "SYNC_ESTADO_ACTUAL",
+                destinatarioId: data.jugadorId,
+                juegoSeleccionado: onlineDueloEstado.juegoSeleccionado,
+                formatoModo: onlineDueloEstado.formatoModo,
+                partidaDueloActiva: Boolean(dueloEstado.partida && dueloEstado.partida.activa),
+                rondaNumero: dueloEstado.partida ? (dueloEstado.partida.rondaNumero || 1) : 1,
+                turnoNumero: dueloEstado.partida ? (dueloEstado.partida.turnoNumero || 0) : 0,
+                jugadorActualId: dueloEstado.partida ? dueloEstado.partida.jugadorActualId : null,
+                temaActual: dueloEstado.partida ? dueloEstado.partida.temaActual : null,
+                tiempoRestante: dueloEstado.partida ? dueloEstado.partida.tiempoRestante : 0,
+                jugadores: dueloEstado.partida ? dueloEstado.partida.jugadores : onlineDueloEstado.jugadores,
+                puntosEquipo: dueloEstado.partida ? (dueloEstado.partida.puntosEquipo || 0) : 0,
+                vidasEquipo: dueloEstado.partida ? (dueloEstado.partida.vidasEquipo || 3) : 3
+            });
+        }
+    }
+
+    // 15. Aplicar sincronización de estado recibida desde el Host
+    if (data.tipo === "SYNC_ESTADO_ACTUAL") {
+        if (!onlineDueloEstado.esHost && (!data.destinatarioId || data.destinatarioId === perfilUsuario.id)) {
+            if (typeof aplicarSincronizacionEstadoDesdeHost === "function") {
+                aplicarSincronizacionEstadoDesdeHost(data);
+            }
+        }
+    }
 }
 
 function salirDeSalaOnline() {
@@ -4033,6 +4079,7 @@ function salirDeSalaOnline() {
     onlineDueloEstado.codigoSala = "";
     onlineDueloEstado.esHost = false;
     onlineDueloEstado.jugadores = [];
+    if (typeof detenerMonitoreoPingOnline === "function") detenerMonitoreoPingOnline();
     if (dom.dueloOnlineWaitingRoom) dom.dueloOnlineWaitingRoom.classList.add("hidden");
     if (dom.dueloOnlineSetupView) dom.dueloOnlineSetupView.classList.remove("hidden");
     iniciarDiscoveryLobbiesOnline();
@@ -4695,6 +4742,9 @@ async function ejecutarAnimacionRuletaSincronizada(jugadorGanador, temaGanador, 
     partida._animandoRuleta = false;
 
     reproducirSonidoDuelo("beep");
+    if (jugadorGanador.id === perfilUsuario.id && typeof dispararVibracion === "function") {
+        dispararVibracion([80, 40, 80]);
+    }
 
     setTimeout(() => {
         prepararTurnoActivoDuelo(jugadorGanador, partida.temaActual);
@@ -5601,13 +5651,17 @@ function prepararTurnoActivoDuelo(jugador, tema) {
     if (dom.dueloTurnArea) dom.dueloTurnArea.classList.remove("hidden");
     if (dom.dueloTurnAvatar) dom.dueloTurnAvatar.textContent = jugador.avatar || "👤";
     if (dom.dueloTurnPlayerName) dom.dueloTurnPlayerName.textContent = jugador.apodo || jugador.nombre || "Jugador";
-    if (dom.dueloActiveTopicTitle) dom.dueloActiveTopicTitle.textContent = (tema && (tema.titulo || tema.palabra || tema.nombre)) ? (tema.titulo || tema.palabra || tema.nombre) : "Tema Asignado";
+    const rawTopicTitle = (tema && (tema.titulo || tema.palabra || tema.nombre)) ? (tema.titulo || tema.palabra || tema.nombre) : "Tema Asignado";
+    if (dom.dueloActiveTopicTitle) {
+        dom.dueloActiveTopicTitle.innerHTML = typeof renderizarFormulasLaTeX === "function" ? renderizarFormulasLaTeX(rawTopicTitle) : rawTopicTitle;
+    }
 
     // Descripción / Guía del Eje Temático
     if (dom.dueloActiveTopicDesc) {
-        dom.dueloActiveTopicDesc.textContent = (tema && (tema.guia || tema.explicacion))
+        const rawTopicDesc = (tema && (tema.guia || tema.explicacion))
             ? (tema.guia || tema.explicacion)
             : "Desarrollá los conceptos principales, aplicaciones y relaciones de este tema oralmente.";
+        dom.dueloActiveTopicDesc.innerHTML = typeof renderizarFormulasLaTeX === "function" ? renderizarFormulasLaTeX(rawTopicDesc) : rawTopicDesc;
     }
 
     // Badge de Fase: Exposición Oral en Vivo
@@ -9757,7 +9811,7 @@ function iniciarAplicacion() {
 // =========================================================
 // GESTOR DE VERSIONES Y ACTUALIZACIÓN AUTOMÁTICA
 // =========================================================
-const APP_BUILD_VERSION = "27.4";
+const APP_BUILD_VERSION = "27.5";
 
 async function forzarActualizacionCompleta(mostrarNotificacion = true) {
     const btnActualizar = document.getElementById("btnForzarActualizar");
@@ -10831,6 +10885,7 @@ function detonarBomba(motivo) {
     clearInterval(b.timerId);
 
     reproducirSonido("explosion");
+    if (typeof dispararVibracion === "function") dispararVibracion([150, 60, 250, 60, 300]);
     if (dom.arenaBomba) dom.arenaBomba.classList.add("bomba-exploding");
 
     if (dom.bombaFase1View) dom.bombaFase1View.classList.add("hidden");
@@ -16374,5 +16429,441 @@ function configurarEventosLaboratorio() {
         });
     }
 }
+
+/* =========================================================
+   MÓDULO: MEJORAS AVANZADAS (BACKUP, RECONEXIÓN, HÁPTICO, PING, GEMINI IA, LATEX)
+   ========================================================= */
+
+// 1. FEEDBACK HÁPTICO (VIBRACIÓN NATIVA EN MÓVILES)
+function dispararVibracion(patron) {
+    try {
+        if ("vibrate" in navigator && typeof navigator.vibrate === "function") {
+            navigator.vibrate(patron);
+        }
+    } catch (_) {}
+}
+
+// 2. FÓRMULAS MATEMÁTICAS Y CIENTÍFICAS (KATEX / LATEX)
+function renderizarFormulasLaTeX(texto) {
+    if (!texto || typeof texto !== "string") return texto || "";
+    if (!texto.includes("$")) return texto;
+
+    try {
+        if (typeof window.katex !== "undefined" && typeof window.katex.renderToString === "function") {
+            // Renderizar fórmulas en bloque $$...$$
+            let procesado = texto.replace(/\$\$([^$]+)\$\$/g, (match, formula) => {
+                try {
+                    return window.katex.renderToString(formula.trim(), { displayMode: true, throwOnError: false });
+                } catch { return match; }
+            });
+            // Renderizar fórmulas en línea $...$
+            procesado = procesado.replace(/\$([^$]+)\$/g, (match, formula) => {
+                try {
+                    return window.katex.renderToString(formula.trim(), { displayMode: false, throwOnError: false });
+                } catch { return match; }
+            });
+            return procesado;
+        }
+    } catch (_) {}
+
+    return texto.replace(/\$([^$]+)\$/g, '<code class="math-expr" style="font-family: serif; font-style: italic; color: #a78bfa;">$1</code>');
+}
+
+// 3. MEDIDOR DE PING / LATENCIA EN VIVO
+let _pingOnlineIntervalId = null;
+
+function iniciarMonitoreoPingOnline() {
+    if (_pingOnlineIntervalId) clearInterval(_pingOnlineIntervalId);
+    _pingOnlineIntervalId = setInterval(() => {
+        if (onlineDueloEstado && onlineDueloEstado.conectado && onlineDueloEstado.codigoSala) {
+            publicarMensajeSala({
+                tipo: "PING_SALA",
+                senderId: perfilUsuario.id,
+                ts: Date.now()
+            });
+        }
+    }, 12000);
+}
+
+function detenerMonitoreoPingOnline() {
+    if (_pingOnlineIntervalId) clearInterval(_pingOnlineIntervalId);
+    _pingOnlineIntervalId = null;
+    const badges = [
+        document.getElementById("dueloPingBadge"),
+        document.getElementById("dueloArenaPingBadge")
+    ];
+    badges.forEach(b => {
+        if (b) b.style.display = "none";
+    });
+}
+
+function actualizarBadgePingUI(ms) {
+    const badges = [
+        document.getElementById("dueloPingBadge"),
+        document.getElementById("dueloArenaPingBadge")
+    ];
+    let cls = "badge--success";
+    let icono = "🟢";
+    if (ms > 160) { cls = "badge--danger"; icono = "🔴"; }
+    else if (ms > 85) { cls = "badge--warning"; icono = "🟡"; }
+
+    badges.forEach(b => {
+        if (b) {
+            b.className = `badge ${cls}`;
+            b.textContent = `⚡ ${icono} ${ms}ms`;
+            b.style.display = "inline-flex";
+        }
+    });
+}
+
+// 4. RECONEXIÓN SILENCIOSA TRAS BLOQUEO DE PANTALLA O MICROCORTES
+function inicializarReconexionResiliente() {
+    const handleReconexion = () => {
+        if (!onlineDueloEstado.codigoSala) return;
+
+        if (onlineDueloEstado.clienteMqtt && !onlineDueloEstado.clienteMqtt.connected) {
+            try { onlineDueloEstado.clienteMqtt.reconnect(); } catch (_) {}
+        }
+
+        if (!onlineDueloEstado.esHost) {
+            setTimeout(() => {
+                if (onlineDueloEstado.clienteMqtt && onlineDueloEstado.clienteMqtt.connected) {
+                    publicarMensajeSala({
+                        tipo: "SOLICITAR_ESTADO_SALA",
+                        jugadorId: perfilUsuario.id
+                    });
+                }
+            }, 500);
+        }
+    };
+
+    document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible") {
+            handleReconexion();
+        }
+    });
+    window.addEventListener("online", handleReconexion);
+    window.addEventListener("focus", handleReconexion);
+}
+
+function aplicarSincronizacionEstadoDesdeHost(data) {
+    if (!data) return;
+
+    if (data.juegoSeleccionado) {
+        onlineDueloEstado.juegoSeleccionado = data.juegoSeleccionado;
+    }
+    if (data.formatoModo) {
+        onlineDueloEstado.formatoModo = data.formatoModo;
+    }
+
+    if (data.partidaDueloActiva && data.temaActual) {
+        if (!dueloEstado.partida) dueloEstado.partida = {};
+        dueloEstado.partida.activa = true;
+        dueloEstado.partida.rondaNumero = data.rondaNumero || 1;
+        dueloEstado.partida.turnoNumero = data.turnoNumero || 0;
+        dueloEstado.partida.jugadorActualId = data.jugadorActualId;
+        dueloEstado.partida.temaActual = data.temaActual;
+        dueloEstado.partida.tiempoRestante = data.tiempoRestante || 0;
+        dueloEstado.partida.jugadores = data.jugadores || dueloEstado.partida.jugadores || [];
+        dueloEstado.partida.puntosEquipo = data.puntosEquipo || 0;
+        dueloEstado.partida.vidasEquipo = data.vidasEquipo || 3;
+
+        cambiarVista("duelo");
+        if (dom.dueloLobby) dom.dueloLobby.classList.add("hidden");
+        if (dom.dueloArena) dom.dueloArena.classList.remove("hidden");
+        if (dom.dueloFinRondaBanner) dom.dueloFinRondaBanner.classList.add("hidden");
+
+        const orador = (data.jugadores || []).find(j => j.id === data.jugadorActualId) || { id: data.jugadorActualId, nombre: "Compañero", avatar: "👤" };
+        prepararTurnoActivoDuelo(orador, data.temaActual);
+        actualizarMarcadorDueloUI();
+        mostrarToast("🔄 Sincronizado con la partida en curso.", "info");
+    }
+}
+
+// 5. DESAMBIGUACIÓN DE NOMBRES DUPLICADOS
+function desambiguarApodoSala(apodoBase, listaJugadores) {
+    let base = (apodoBase || "Invitado").trim();
+    let existentes = (listaJugadores || []).map(j => (j.apodo || j.nombre || "").trim().toLowerCase());
+    if (!existentes.includes(base.toLowerCase())) {
+        return base;
+    }
+    let n = 2;
+    while (existentes.includes(`${base.toLowerCase()} (${n})`)) {
+        n++;
+    }
+    return `${base} (${n})`;
+}
+
+// 6. COPIA DE SEGURIDAD TOTAL (EXPORTAR / IMPORTAR EN JSON)
+function exportarCopiaDeSeguridadJson() {
+    try {
+        const backup = {
+            app: "Luibanez",
+            version: typeof APP_BUILD_VERSION !== "undefined" ? APP_BUILD_VERSION : "27.5",
+            fechaExportacion: new Date().toISOString(),
+            listas: estado.listas || [],
+            listaSeleccionadaId: estado.listaSeleccionadaId || null,
+            perfilUsuario: typeof perfilUsuario !== "undefined" ? perfilUsuario : null,
+            dueloHistorial: (typeof cargarHistorialDuelo === "function") ? cargarHistorialDuelo() : [],
+            apuntes: typeof apuntesEstado !== "undefined" ? apuntesEstado : null,
+            dueloConfig: typeof dueloEstado !== "undefined" ? dueloEstado.config : null
+        };
+
+        const jsonString = JSON.stringify(backup, null, 2);
+        const blob = new Blob([jsonString], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        const fechaStr = new Date().toISOString().slice(0, 10);
+        a.href = url;
+        a.download = `luibanez_backup_${fechaStr}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        mostrarToast("💾 Respaldo descargado exitosamente.", "exito");
+    } catch (err) {
+        console.error("Error al exportar:", err);
+        mostrarToast("❌ Error al exportar la copia de seguridad.", "error");
+    }
+}
+
+function importarCopiaDeSeguridadJson(archivo) {
+    if (!archivo) return;
+    const lector = new FileReader();
+    lector.onload = (e) => {
+        try {
+            const data = JSON.parse(e.target.result);
+            if (!data || (!Array.isArray(data.listas) && !data.perfilUsuario)) {
+                mostrarToast("❌ El archivo seleccionado no es un respaldo válido de Luibañez.", "error");
+                return;
+            }
+
+            let materiasAgregadas = 0;
+            if (Array.isArray(data.listas) && data.listas.length > 0) {
+                const idsExistentes = new Set((estado.listas || []).map(l => l.id));
+                data.listas.forEach(l => {
+                    if (idsExistentes.has(l.id)) {
+                        l.id = crypto.randomUUID();
+                    }
+                    estado.listas.push(l);
+                    idsExistentes.add(l.id);
+                    materiasAgregadas++;
+                });
+
+                if (!estado.listaSeleccionadaId && estado.listas.length > 0) {
+                    estado.listaSeleccionadaId = estado.listas[0].id;
+                }
+                guardarDatos();
+                actualizarInterfaz();
+                if (typeof actualizarDropdownListasDuelo === "function") {
+                    actualizarDropdownListasDuelo();
+                }
+            }
+
+            if (data.perfilUsuario && typeof perfilUsuario !== "undefined") {
+                Object.assign(perfilUsuario, data.perfilUsuario);
+                guardarPerfilUsuario();
+            }
+
+            if (Array.isArray(data.dueloHistorial) && typeof guardarHistorialDuelo === "function") {
+                guardarHistorialDuelo(data.dueloHistorial);
+            }
+
+            if (data.apuntes && typeof apuntesEstado !== "undefined") {
+                Object.assign(apuntesEstado, data.apuntes);
+                try { localStorage.setItem("luibanez_apuntes_v1", JSON.stringify(apuntesEstado)); } catch(_) {}
+            }
+
+            mostrarToast(`✅ Respaldo restaurado (${materiasAgregadas} materias incorporadas).`, "exito");
+        } catch (err) {
+            console.error("Error al importar:", err);
+            mostrarToast("❌ El archivo JSON no tiene un formato válido.", "error");
+        }
+    };
+    lector.readAsText(archivo);
+}
+
+// 7. GENERACIÓN AUTOMÁTICA DIRECTA CON GEMINI FLASH (1-CLICK)
+function guardarGeminiApiKey(key) {
+    try {
+        localStorage.setItem("luibanez_gemini_api_key", (key || "").trim());
+        mostrarToast("🔑 API Key de Gemini guardada correctamente.", "exito");
+    } catch (_) {}
+}
+
+function obtenerGeminiApiKey() {
+    try {
+        return localStorage.getItem("luibanez_gemini_api_key") || "";
+    } catch (_) { return ""; }
+}
+
+async function generarTemarioConGeminiDirecto() {
+    const apiKey = obtenerGeminiApiKey();
+    if (!apiKey) {
+        mostrarToast("⚠️ Por favor ingresá y guardá tu API Key de Gemini primero.", "aviso");
+        const inp = document.getElementById("geminiDirectApiKeyInput");
+        if (inp) inp.focus();
+        return;
+    }
+
+    const statusEl = document.getElementById("geminiDirectStatus");
+    const btn = document.getElementById("geminiDirectGenerateBtn");
+
+    let textoBase = "";
+    let nombreMateria = "Materia de Estudio";
+    const apunte = apuntesEstado.global || apuntesEstado.bolillero || apuntesEstado.bomba;
+    if (apunte && apunte.texto) {
+        textoBase = apunte.texto;
+        nombreMateria = apunte.nombre || nombreMateria;
+    } else if (estado.listas.length > 0 && estado.listas[0].temas && estado.listas[0].temas.length > 0) {
+        textoBase = estado.listas[0].temas.map(t => `${t.nombre || t.titulo}: ${t.descripcion || t.guia || ""}`).join("\n");
+        nombreMateria = estado.listas[0].nombre;
+    } else {
+        textoBase = "Conceptos fundamentales universitarios de la materia: principios rectores, teoría, arquitectura y postulados clave.";
+    }
+
+    textoBase = textoBase.slice(0, 12000);
+
+    if (btn) btn.disabled = true;
+    if (statusEl) {
+        statusEl.style.display = "inline";
+        statusEl.textContent = "⏳ Consultando a Gemini Flash...";
+    }
+
+    try {
+        const prompt = `Analizá el siguiente material académico de "${nombreMateria}" y generá exactamente 10 temas o conceptos clave para examen oral y juego de preguntas.
+Respondé ÚNICAMENTE con un array JSON válido sin texto adicional ni bloques de markdown (sin \`\`\`json).
+Cada elemento del array debe tener este formato:
+{
+  "nombre": "Título conciso del concepto",
+  "guia": "Guía breve de examen oral para desarrollar",
+  "preguntaBomba": "Pregunta de opción múltiple con 1 correcta y 3 falsas",
+  "cables": [
+    { "color": "azul", "texto": "Respuesta correcta", "correcta": true },
+    { "color": "rojo", "texto": "Respuesta incorrecta 1", "correcta": false },
+    { "color": "verde", "texto": "Respuesta incorrecta 2", "correcta": false },
+    { "color": "amarillo", "texto": "Respuesta incorrecta 3", "correcta": false }
+  ]
+}
+
+Material:
+${textoBase}`;
+
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+        const res = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                contents: [{ parts: [{ text: prompt }] }],
+                generationConfig: {
+                    temperature: 0.3,
+                    responseMimeType: "application/json"
+                }
+            })
+        });
+
+        if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            throw new Error(errData.error?.message || `HTTP ${res.status}`);
+        }
+
+        const data = await res.json();
+        const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+        let jsonLimpio = rawText.replace(/```json/g, "").replace(/```/g, "").trim();
+        const temasParseados = JSON.parse(jsonLimpio);
+
+        if (!Array.isArray(temasParseados) || temasParseados.length === 0) {
+            throw new Error("La IA no devolvió un array de temas.");
+        }
+
+        const nuevaLista = {
+            id: crypto.randomUUID(),
+            nombre: `${nombreMateria} (IA)`,
+            fechaCreacion: new Date().toISOString(),
+            temas: temasParseados.map((t, idx) => ({
+                id: `tema_ia_${idx}_${Date.now()}`,
+                nombre: t.nombre || `Tema ${idx + 1}`,
+                titulo: t.nombre || `Tema ${idx + 1}`,
+                descripcion: t.guia || "Desarrollá los conceptos principales.",
+                guia: t.guia || "Desarrollá los conceptos principales.",
+                preguntaBomba: t.preguntaBomba || null,
+                cables: Array.isArray(t.cables) ? t.cables : null
+            }))
+        };
+
+        estado.listas.unshift(nuevaLista);
+        estado.listaSeleccionadaId = nuevaLista.id;
+        guardarDatos();
+        actualizarInterfaz();
+        if (typeof actualizarDropdownListasDuelo === "function") {
+            actualizarDropdownListasDuelo();
+        }
+
+        mostrarToast(`🎉 ¡Generados ${nuevaLista.temas.length} temas y preguntas con IA!`, "exito");
+        if (dom.geminiPromptModal && typeof dom.geminiPromptModal.close === "function") {
+            dom.geminiPromptModal.close();
+        }
+    } catch (err) {
+        console.error("Error al generar con Gemini:", err);
+        mostrarToast(`❌ Error al consultar Gemini: ${err.message}`, "error");
+    } finally {
+        if (btn) btn.disabled = false;
+        if (statusEl) statusEl.style.display = "none";
+    }
+}
+
+// 8. REGISTRO DE EVENTOS DEL MÓDULO AVANZADO
+function registrarEventosMejorasAvanzadas() {
+    // Backup en Drawer
+    const btnExportar = document.getElementById("drawerExportarBackupBtn");
+    if (btnExportar) {
+        btnExportar.addEventListener("click", () => {
+            exportarCopiaDeSeguridadJson();
+            if (typeof cerrarDrawerMenu === "function") cerrarDrawerMenu();
+        });
+    }
+
+    const btnImportar = document.getElementById("drawerImportarBackupBtn");
+    const inputImportar = document.getElementById("inputImportarBackupJson");
+    if (btnImportar && inputImportar) {
+        btnImportar.addEventListener("click", () => {
+            inputImportar.click();
+            if (typeof cerrarDrawerMenu === "function") cerrarDrawerMenu();
+        });
+        inputImportar.addEventListener("change", (e) => {
+            if (e.target.files && e.target.files[0]) {
+                importarCopiaDeSeguridadJson(e.target.files[0]);
+                e.target.value = "";
+            }
+        });
+    }
+
+    // Gemini Direct API Box
+    const btnSaveKey = document.getElementById("geminiDirectSaveKeyBtn");
+    const inputKey = document.getElementById("geminiDirectApiKeyInput");
+    if (btnSaveKey && inputKey) {
+        inputKey.value = obtenerGeminiApiKey();
+        btnSaveKey.addEventListener("click", () => {
+            guardarGeminiApiKey(inputKey.value);
+        });
+    }
+
+    const btnGenDirect = document.getElementById("geminiDirectGenerateBtn");
+    if (btnGenDirect) {
+        btnGenDirect.addEventListener("click", generarTemarioConGeminiDirecto);
+    }
+
+    // Inicializar reconexión y sincronización móvil
+    inicializarReconexionResiliente();
+}
+
+// Auto-inicialización con retardo seguro
+setTimeout(() => {
+    try {
+        registrarEventosMejorasAvanzadas();
+    } catch (e) {
+        console.warn("Auto-registro mejoras avanzadas:", e);
+    }
+}, 350);
 
 
