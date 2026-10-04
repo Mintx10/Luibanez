@@ -383,6 +383,87 @@ ES ESTRICTAMENTE OBLIGATORIO que este nuevo ejercicio sea TOTALMENTE DIFERENTE e
 - Variá los tipos de incisos y preguntas para que no se parezca en nada al anterior.`;
             }
 
+            let pautasPorMateria = "";
+            const matKey = ((materia || "") + " " + (tema || "")).toLowerCase();
+            if (matKey.includes("contabilidad") || matKey.includes("asiento") || matKey.includes("libro diario") || matKey.includes("cuentas t")) {
+                pautasPorMateria = `
+PAUTAS OBLIGATORIAS PARA CONTABILIDAD Y SISTEMAS CONTABLES:
+- Contexto: Operaciones comerciales reales de una empresa (inicio con aporte social, compras a crédito/efectivo, ventas con CMV, pagos bancarios, proveedores, cobros).
+- Bloque "datos": Lista cronológica de 3 o 4 transacciones con cuentas y montos numéricos precisos.
+  Ej:
+  1) 01/03: Inicio con Caja $150.000, Mercaderías $250.000 y Capital Social $400.000.
+  2) 05/03: Compra a crédito de mercaderías por $80.000 (Proveedores).
+  3) 12/03: Venta en efectivo por $120.000 (CMV: $60.000).
+  4) 20/03: Pago en efectivo a proveedores por $40.000.
+- "datos_tipo": "lista"
+- "preguntas": Incisos que pregunten saldos finales o sumas del balance (valor numérico exacto en "esperado"):
+  a) ¿Cuál es el saldo deudor final de la cuenta Caja ($)? (esperado: 230000)
+  b) ¿Cuál es el saldo deudor final de la cuenta Mercaderías ($)? (esperado: 270000)
+  c) ¿Cuál es el saldo acreedor de Proveedores ($)? (esperado: 40000)
+  d) ¿Cuál es el total de sumas iguales del balance ($)? (esperado: 600000)`;
+            } else if (matKey.includes("quimica") || matKey.includes("química")) {
+                pautasPorMateria = `
+PAUTAS OBLIGATORIAS PARA QUÍMICA:
+- Contexto: Estequiometría de reacciones químicas, soluciones y concentración molar, cálculo de pH/pOH, o gases ideales.
+- Bloque "datos": Ecuación química balanceada, masas molares en g/mol y cantidades iniciales.
+  Ej:
+  Ecuación balanceada: N₂ (g) + 3 H₂ (g) ➔ 2 NH₃ (g)
+  Masas molares: M(N₂) = 28 g/mol, M(H₂) = 2 g/mol, M(NH₃) = 17 g/mol
+  Cantidades iniciales: 56 g de N₂ y 18 g de H₂
+- "datos_tipo": "parametros"
+- "preguntas": Incisos que pidan moles, reactivo limitante o gramos producidos:
+  a) Moles iniciales de N₂ disponibles (esperado: 2).
+  b) Moles de NH₃ teóricamente producidos (esperado: 4).
+  c) Masa en gramos de NH₃ obtenida al 100% de rendimiento (esperado: 68).`;
+            } else if (matKey.includes("fisica") || matKey.includes("física")) {
+                pautasPorMateria = `
+PAUTAS OBLIGATORIAS PARA FÍSICA:
+- Contexto: Cinemática (MRU, MRUV, tiro vertical), leyes de Newton / dinámica (F=m·a), trabajo, potencia o energía mecánica.
+- Bloque "datos": Parámetros en unidades SI (m/s, m/s², s, kg, N, J).
+  Ej:
+  Velocidad inicial: v₀ = 10 m/s
+  Aceleración constante: a = 4 m/s²
+  Tiempo transcurrido: t = 5 s
+- "datos_tipo": "parametros"
+- "preguntas": Incisos físicos concretos:
+  a) Velocidad final vf a los 5 segundos en m/s (esperado: 30).
+  b) Distancia recorrida d en metros a los 5 segundos (esperado: 100).
+  c) Velocidad media vm en m/s durante el recorrido (esperado: 20).`;
+            } else if (matKey.includes("matematica") || matKey.includes("matemática") || matKey.includes("calculo") || matKey.includes("cálculo")) {
+                pautasPorMateria = `
+PAUTAS OBLIGATORIAS PARA MATEMÁTICAS Y CÁLCULO:
+- Contexto: Funciones analíticas f(x), raíces, vértice de parábola, derivadas f'(x), o integrales.
+- Bloque "datos": Expresión matemática clara y dominio.
+  Ej:
+  Función cuadrática: f(x) = x² - 6x + 8
+  Dominio: ℝ
+- "datos_tipo": "parametros"
+- "preguntas": Incisos analíticos con valor numérico en "esperado":
+  a) Abscisa del vértice xv = -b / (2a) (esperado: 3).
+  b) Ordenada mínima del vértice yv = f(3) (esperado: -1).
+  c) Raíz menor de la función: corte con el eje x (esperado: 2).
+  d) Pendiente de la recta tangente en x = 5: f'(5) = 2(5) - 6 (esperado: 4).`;
+            } else if (matKey.includes("algebra") || matKey.includes("álgebra") || matKey.includes("matrices") || matKey.includes("logica") || matKey.includes("lógica")) {
+                pautasPorMateria = `
+PAUTAS OBLIGATORIAS PARA ÁLGEBRA LINEAL Y LÓGICA:
+- Contexto: Matrices 2x2, determinantes det(A) = ad - bc, traza, inversa o sistemas de ecuaciones.
+- Bloque "datos": Matriz explícita o coeficientes.
+  Ej:
+  Matriz A = [[4, 2], [1, 3]]
+- "datos_tipo": "tabla"
+- "preguntas": Incisos numéricos exactos:
+  a) Determinante det(A) (esperado: 10).
+  b) Traza tr(A) = 4 + 3 (esperado: 7).
+  c) Elemento a₁₁ de la matriz identidad multiplicada por 5 (esperado: 5).`;
+            } else if (matKey.includes("financiera")) {
+                pautasPorMateria = `
+PAUTAS OBLIGATORIAS PARA MATEMÁTICA FINANCIERA:
+- Contexto: Interés simple o compuesto, valor futuro M = C(1+i)ⁿ, tasas o amortización.
+- Bloque "datos": Capital C₀, tasa de interés periódica i y plazo n.
+- "datos_tipo": "parametros"
+- "preguntas": Incisos de capitalización o montos finales.`;
+            }
+
             promptInstrucciones = `
 JUEGO: "LABORATORIO DE PRÁCTICAS (CIENCIAS EXACTAS Y CONTABILIDAD)"
 DISCIPLINA / MATERIA: "${materia || 'Ciencias Exactas y Contabilidad'}"
@@ -390,20 +471,17 @@ TEMAS DE ESTUDIO: "${tema}"
 ${instruccionDificultad}
 ${ordenEspecifica}
 ${seccionPreviasLab}
+${pautasPorMateria}
 
 REGLA ESTRICTA DE ESTRUCTURA UNIVERSITARIA (ANTI-ENUNCIADOS GORDOS Y AMONTONADOS):
 Los estudiantes necesitan enunciados cortos, directos y con los datos perfectamente claros y separados:
 1. "enunciado": Debe ser CORTO y DIRECTO (máximo 1 o 2 oraciones concisas que presenten el caso real: empresa, hospital, control de calidad, etc.). NUNCA amontones datos o números adentro de un párrafo largo.
-2. "datos": Bloque estructurado y limpio con la información numérica. Debe presentarse de forma clara según el caso:
-   - Muestra de datos: "Muestra observada (n=10): 4.2, 5.4, 5.8, 6.2, 6.7, 7.7, 7.7, 8.5, 9.3, 10.0"
-   - Tabla de distribución de probabilidades: "x: 0, 1, 2, 3, 4 | P(x): 0.15, 0.17, 0.23, 0.25, 0.20"
-   - Tabla de contingencia o categorías: "Puesto / Personas: Propietario (1), Gerentes (4), Obreros (12)..."
-   - Parámetros clave: "n = 12 ensayos, p = 0.25" o "P(A) = 0.65, P(Defecto|A) = 0.02, P(Defecto|B) = 0.05"
-3. "datos_tipo": "lista" (si son números/muestra), "tabla" (si es distribución o contingencia) o "parametros" (si son probabilidades/constantes).
+2. "datos": Bloque estructurado y limpio con la información numérica o parámetros según la disciplina.
+3. "datos_tipo": "lista", "tabla" o "parametros".
 4. "preguntas": Un array de exactamente 3 a 5 incisos consecutivos (letras "a", "b", "c", "d" y opcionalmente "e").
    Para CADA inciso:
    - "letra": "a", "b", "c", "d" o "e".
-   - "texto": Pregunta concisa del inciso (ej: "¿Cuál es la media aritmética (x̄)?", "¿Cuál es la probabilidad de que fallen a lo sumo 2 solicitudes: P(X ≤ 2)?", etc.).
+   - "texto": Pregunta concisa del inciso.
    - "esperado": El valor numérico exacto de la respuesta correcta (tipo number, ej: 14.5, 0.2304, 35). NO incluyas letras ni unidades acá, solo el número.
    - "tolerancia": Margen de error aceptable para redondeo (ej: 0.1 para valores grandes, 0.01 para probabilidades).
    - "pista": Fórmula, sugerencia o paso clave para orientar si el estudiante se traba.
@@ -413,17 +491,17 @@ Debes responder ÚNICAMENTE un objeto JSON con esta estructura exacta:
 {
   "titulo": "Título del Caso",
   "dificultad": "${nivelDificultad}",
-  "enunciado": "Una empresa manufacturera registra los errores por turno en su línea de montaje para evaluar la estabilidad del proceso:",
-  "datos": "Cantidad de errores (x): 0, 1, 2, 3, 4\\nProbabilidades P(x): 0.15, 0.17, 0.23, 0.25, 0.20",
-  "datos_tipo": "tabla",
+  "enunciado": "Descripción concisa del caso planteado.",
+  "datos": "Bloque limpio con los datos o parámetros necesarios.",
+  "datos_tipo": "parametros",
   "preguntas": [
     {
       "letra": "a",
-      "texto": "Calcular el número medio esperado de errores E(x)",
-      "esperado": 2.18,
-      "tolerancia": 0.05,
-      "pista": "Calculá la sumatoria Σ [x · P(x)].",
-      "explicacion": "E(x) = (0)(0.15) + (1)(0.17) + (2)(0.23) + (3)(0.25) + (4)(0.20) = 2.18 errores."
+      "texto": "Pregunta del inciso a",
+      "esperado": 10,
+      "tolerancia": 0.1,
+      "pista": "Fórmula o guía de resolución.",
+      "explicacion": "Explicación paso a paso de por qué da 10."
     }
   ]
 }`;

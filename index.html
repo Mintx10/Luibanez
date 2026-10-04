@@ -15,10 +15,10 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     
-    <link rel="icon" type="image/svg+xml" href="icon.svg?v=27.7">
-    <link rel="apple-touch-icon" href="icon-192.png?v=27.7">
-    <link rel="manifest" href="manifest.json?v=27.7">
-    <link rel="stylesheet" href="style.css?v=27.7">
+    <link rel="icon" type="image/svg+xml" href="icon.svg?v=27.8">
+    <link rel="apple-touch-icon" href="icon-192.png?v=27.8">
+    <link rel="manifest" href="manifest.json?v=27.8">
+    <link rel="stylesheet" href="style.css?v=27.8">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -2510,24 +2510,53 @@
                 <!-- COLUMNA DERECHA: PANEL DE HERRAMIENTAS INTERACTIVAS (WIDGETS) -->
                 <div class="lab-split-col lab-split-right" id="labPanelHerramientas">
                     
-                    <!-- Barra de Pestañas de Herramientas -->
-                    <div class="lab-tabs-nav" role="tablist">
-                        <button id="labTabBtnFreq" class="lab-tab-btn is-active" type="button" role="tab" aria-selected="true" data-tab="freq">
+                    <!-- Barra de Pestañas de Herramientas Dinámicas por Disciplina -->
+                    <div class="lab-tabs-nav" role="tablist" id="labTabsNav">
+                        <!-- Pestañas Estadística -->
+                        <button id="labTabBtnFreq" class="lab-tab-btn is-active" type="button" role="tab" aria-selected="true" data-tab="freq" data-materia-group="estadistica">
                             <span class="lab-tab-icon">📊</span>
                             <span class="lab-tab-label">Tabla de Frecuencias</span>
                         </button>
-                        <button id="labTabBtnProb" class="lab-tab-btn" type="button" role="tab" aria-selected="false" data-tab="prob">
+                        <button id="labTabBtnProb" class="lab-tab-btn" type="button" role="tab" aria-selected="false" data-tab="prob" data-materia-group="estadistica">
                             <span class="lab-tab-icon">🧮</span>
-                            <span class="lab-tab-label">Calculadora de Probabilidad</span>
+                            <span class="lab-tab-label">Campana & Probabilidad</span>
                         </button>
-                        <button id="labTabBtnBayes" class="lab-tab-btn" type="button" role="tab" aria-selected="false" data-tab="bayes">
+                        <button id="labTabBtnBayes" class="lab-tab-btn" type="button" role="tab" aria-selected="false" data-tab="bayes" data-materia-group="estadistica">
                             <span class="lab-tab-icon">🔲</span>
                             <span class="lab-tab-label">Matriz de Bayes</span>
                         </button>
-                        <button id="labTabBtnContabilidad" class="lab-tab-btn" type="button" role="tab" aria-selected="false" data-tab="contabilidad">
+
+                        <!-- Pestaña Contabilidad -->
+                        <button id="labTabBtnContabilidad" class="lab-tab-btn" type="button" role="tab" aria-selected="false" data-tab="contabilidad" data-materia-group="contabilidad">
                             <span class="lab-tab-icon">💼</span>
                             <span class="lab-tab-label">Contabilidad & Libros</span>
                         </button>
+
+                        <!-- Pestaña Química -->
+                        <button id="labTabBtnQuimica" class="lab-tab-btn" type="button" role="tab" aria-selected="false" data-tab="quimica" data-materia-group="quimica">
+                            <span class="lab-tab-icon">🧪</span>
+                            <span class="lab-tab-label">Tabla Periódica & Masas</span>
+                        </button>
+
+                        <!-- Pestaña Física -->
+                        <button id="labTabBtnFisica" class="lab-tab-btn" type="button" role="tab" aria-selected="false" data-tab="fisica" data-materia-group="fisica">
+                            <span class="lab-tab-icon">⚡</span>
+                            <span class="lab-tab-label">Simulador Físico</span>
+                        </button>
+
+                        <!-- Pestaña Matemáticas & Cálculo -->
+                        <button id="labTabBtnMatematicas" class="lab-tab-btn" type="button" role="tab" aria-selected="false" data-tab="matematicas" data-materia-group="matematicas">
+                            <span class="lab-tab-icon">📈</span>
+                            <span class="lab-tab-label">Graficador de Funciones</span>
+                        </button>
+
+                        <!-- Pestaña Álgebra Lineal & Lógica Computacional -->
+                        <button id="labTabBtnMatrices" class="lab-tab-btn" type="button" role="tab" aria-selected="false" data-tab="matrices" data-materia-group="algebra">
+                            <span class="lab-tab-icon">🔲</span>
+                            <span class="lab-tab-label">Matrices & Lógica</span>
+                        </button>
+
+                        <!-- Pizarrón Científico Común -->
                         <button id="labTabBtnScratch" class="lab-tab-btn" type="button" role="tab" aria-selected="false" data-tab="scratch">
                             <span class="lab-tab-icon">📝</span>
                             <span class="lab-tab-label">Pizarrón</span>
@@ -3031,6 +3060,207 @@
                                     <button type="button" class="button button--ghost button--xs" id="labBtnCerrarFeedbackContab" style="margin-left: auto;">✕</button>
                                 </div>
                                 <p id="labContabFeedbackMsg" class="lab-contab-feedback-msg"></p>
+                            </div>
+                        </div>
+
+                        <!-- WIDGET 5: LABORATORIO DE QUÍMICA & TABLA PERIÓDICA INTERACTIVA -->
+                        <div id="labWidgetQuimica" class="lab-tab-pane hidden" role="tabpanel">
+                            <div class="lab-chem-container">
+                                <!-- Cabecera de Química -->
+                                <div class="lab-chem-header">
+                                    <div class="lab-chem-header-left">
+                                        <span class="lab-stats-panel-title">🧪 Banco de Elementos & Masas Molares</span>
+                                        <span class="lab-stats-panel-hint">Tocá un elemento o calculá masas moleculares en vivo</span>
+                                    </div>
+                                    <div class="lab-chem-formula-search">
+                                        <input type="text" id="labChemFormulaInput" class="input input--sm" placeholder="Ej: H2SO4, NaOH, CaCO3..." style="width: 170px;">
+                                        <button type="button" id="labBtnCalcMasaMolecular" class="button button--secondary button--xs">⚖️ Calcular Masa</button>
+                                    </div>
+                                </div>
+
+                                <!-- Resultado de Masa Molecular Compuesta -->
+                                <div class="lab-chem-calc-result-bar hidden" id="labChemResultBar">
+                                    <span id="labChemResultFormula" style="font-weight: 800; color: #38bdf8;">Fórmula</span>
+                                    <span id="labChemResultMasa" style="font-size: 0.95rem; font-weight: 800; color: #34d399;">0.00 g/mol</span>
+                                    <button type="button" id="labBtnCopiarMasaChem" class="button button--ghost button--xs" title="Copiar masa molar">📋 Copiar</button>
+                                </div>
+
+                                <!-- Ficha del Elemento Seleccionado -->
+                                <div class="lab-chem-element-preview" id="labChemElementPreview">
+                                    <div class="lab-chem-preview-card" id="labChemCardPreview">
+                                        <span class="lab-chem-number" id="labChemPrevNum">1</span>
+                                        <strong class="lab-chem-symbol" id="labChemPrevSym">H</strong>
+                                        <span class="lab-chem-name" id="labChemPrevName">Hidrógeno</span>
+                                        <span class="lab-chem-mass" id="labChemPrevMass">1.008 g/mol</span>
+                                    </div>
+                                    <div class="lab-chem-element-info-text">
+                                        <h4 id="labChemInfoTitle">Hidrógeno (H) - Número Atómico: 1</h4>
+                                        <p id="labChemInfoDetails">Masa Molar: 1.008 g/mol • Gas diatómico H₂ = 2.016 g/mol • Elemento más ligero y abundante del universo.</p>
+                                        <div class="lab-chem-quick-actions">
+                                            <button type="button" class="button button--ghost button--xs" id="labBtnCopyChemElementMass">📋 Copiar Peso Atómico</button>
+                                            <button type="button" class="button button--secondary button--xs" id="labBtnInsertChemFormula">➕ Usar en Fórmula</button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Mini Tabla Periódica Interactiva Cuadriculada -->
+                                <div class="lab-periodic-table-wrapper">
+                                    <div class="lab-periodic-grid" id="labPeriodicGrid">
+                                        <!-- Celdas de elementos renderizadas por JavaScript -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- WIDGET 6: SIMULADOR FÍSICO INTERACTIVO (CINEMÁTICA, TRAYECTORIAS Y VECTORES) -->
+                        <div id="labWidgetFisica" class="lab-tab-pane hidden" role="tabpanel">
+                            <div class="lab-physics-container">
+                                <div class="lab-physics-header">
+                                    <div>
+                                        <span class="lab-stats-panel-title">⚡ Simulador Cinemático y Dinámico</span>
+                                        <span class="lab-stats-panel-hint">Controlá parámetros físicos y observá el desplazamiento en tiempo real</span>
+                                    </div>
+                                    <div class="lab-physics-actions">
+                                        <button type="button" id="labBtnPlayPhysics" class="button button--primary button--xs" style="background: linear-gradient(135deg, #f97316, #ea580c);">
+                                            ▶ Lanzar Móvil
+                                        </button>
+                                        <button type="button" id="labBtnResetPhysics" class="button button--ghost button--xs">
+                                            ↺ Reiniciar
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Canvas de Simulación Cinemática -->
+                                <div class="lab-physics-canvas-wrap">
+                                    <canvas id="labPhysicsCanvas" width="600" height="220"></canvas>
+                                    <div class="lab-physics-overlay-telemetry">
+                                        <span>t: <strong id="labPhysTelemetryTime">0.0 s</strong></span>
+                                        <span>v: <strong id="labPhysTelemetryVel">0.0 m/s</strong></span>
+                                        <span>x: <strong id="labPhysTelemetryPos">0.0 m</strong></span>
+                                    </div>
+                                </div>
+
+                                <!-- Controles Deslizadores de Parámetros Físicos -->
+                                <div class="lab-physics-controls-grid">
+                                    <div class="lab-physics-ctrl-card">
+                                        <label for="labPhysV0">Velocidad Inicial (v₀): <span id="labPhysV0Val">10 m/s</span></label>
+                                        <input type="range" id="labPhysV0" min="0" max="50" value="10" step="1" class="lab-range-slider">
+                                    </div>
+                                    <div class="lab-physics-ctrl-card">
+                                        <label for="labPhysAcc">Aceleración (a): <span id="labPhysAccVal">4 m/s²</span></label>
+                                        <input type="range" id="labPhysAcc" min="-10" max="20" value="4" step="0.5" class="lab-range-slider">
+                                    </div>
+                                    <div class="lab-physics-ctrl-card">
+                                        <label for="labPhysTime">Tiempo de marcha (t): <span id="labPhysTimeVal">5 s</span></label>
+                                        <input type="range" id="labPhysTime" min="1" max="20" value="5" step="0.5" class="lab-range-slider">
+                                    </div>
+                                    <div class="lab-physics-ctrl-card lab-physics-calc-box">
+                                        <span style="font-size: 0.72rem; color: var(--color-text-muted);">Resultados Teóricos:</span>
+                                        <div style="display: flex; gap: 0.6rem; margin-top: 0.2rem; align-items: center;">
+                                            <span>vf = <strong id="labPhysVfCalc" style="color: #38bdf8;">30 m/s</strong></span>
+                                            <span>d = <strong id="labPhysDistCalc" style="color: #34d399;">100 m</strong></span>
+                                            <button type="button" id="labBtnCopyPhysRes" class="button button--ghost button--xs" title="Copiar resultados" style="margin-left: auto;">📋</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- WIDGET 7: GRAFICADOR MATEMÁTICO 2D INTERACTIVO (FUNCIONES, RAÍCES Y DERIVADAS) -->
+                        <div id="labWidgetMatematicas" class="lab-tab-pane hidden" role="tabpanel">
+                            <div class="lab-math-container">
+                                <div class="lab-math-header">
+                                    <div>
+                                        <span class="lab-stats-panel-title">📈 Graficador de Funciones 2D</span>
+                                        <span class="lab-stats-panel-hint">Escribí una función f(x) para graficar raíces, vértice y curvatura</span>
+                                    </div>
+                                    <div class="lab-math-func-input-wrap">
+                                        <label for="labMathExprInput">f(x) =</label>
+                                        <input type="text" id="labMathExprInput" class="input input--sm" value="x^2 - 6*x + 8" placeholder="Ej: x^2 - 4, 2*x + 1, sin(x)...">
+                                        <button type="button" id="labBtnPlotFunc" class="button button--primary button--xs" style="background: linear-gradient(135deg, #0284c7, #38bdf8);">
+                                            ⚡ Graficar
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Canvas de Graficación Cartesiana -->
+                                <div class="lab-math-canvas-wrap">
+                                    <canvas id="labMathCanvas" width="600" height="240"></canvas>
+                                    <div class="lab-math-canvas-legend" id="labMathLegend">
+                                        <span>Raíces visibles: <strong id="labMathRootsVal" style="color: #34d399;">x₁ = 2, x₂ = 4</strong></span>
+                                        <span>Vértice / Extremo: <strong id="labMathVertexVal" style="color: #fbbf24;">(3, -1)</strong></span>
+                                    </div>
+                                </div>
+
+                                <!-- Fórmulas y Análisis Rápido -->
+                                <div class="lab-math-presets-row">
+                                    <span style="font-size: 0.74rem; color: var(--color-text-muted);">Ejemplos rápidos:</span>
+                                    <button type="button" class="button button--ghost button--xs lab-math-preset-btn" data-expr="x^2 - 6*x + 8">Parábola Cuadrática</button>
+                                    <button type="button" class="button button--ghost button--xs lab-math-preset-btn" data-expr="2*x - 4">Recta Lineal</button>
+                                    <button type="button" class="button button--ghost button--xs lab-math-preset-btn" data-expr="x^3 - 3*x">Cúbica con Extremos</button>
+                                    <button type="button" class="button button--ghost button--xs lab-math-preset-btn" data-expr="1/x">Hipérbola (Asíntota)</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- WIDGET 8: CALCULADORA DE MATRICES & TABLAS DE VERDAD LÓGICAS -->
+                        <div id="labWidgetMatrices" class="lab-tab-pane hidden" role="tabpanel">
+                            <div class="lab-matrices-container">
+                                <div class="lab-matrices-header">
+                                    <div>
+                                        <span class="lab-stats-panel-title">🔲 Álgebra Matricial & Tablas de Verdad</span>
+                                        <span class="lab-stats-panel-hint">Calculá determinantes, operaciones matriciales y evalúa lógica booleana</span>
+                                    </div>
+                                    <div class="lab-matrices-tabs">
+                                        <button type="button" class="button button--secondary button--xs is-active" id="labBtnSubtabMatriz2x2">Matriz 2x2</button>
+                                        <button type="button" class="button button--ghost button--xs" id="labBtnSubtabMatriz3x3">Matriz 3x3</button>
+                                        <button type="button" class="button button--ghost button--xs" id="labBtnSubtabLogica">Tablas de Verdad</button>
+                                    </div>
+                                </div>
+
+                                <!-- Panel Matriz 2x2 -->
+                                <div id="labPanelMatriz2x2" class="lab-mat-subpanel">
+                                    <div class="lab-matrix-inputs-row">
+                                        <div class="lab-matrix-bracket">
+                                            <div class="lab-matrix-grid lab-matrix-grid--2">
+                                                <input type="number" id="m2_00" class="lab-matrix-cell" value="2" step="any">
+                                                <input type="number" id="m2_01" class="lab-matrix-cell" value="1" step="any">
+                                                <input type="number" id="m2_10" class="lab-matrix-cell" value="5" step="any">
+                                                <input type="number" id="m2_11" class="lab-matrix-cell" value="3" step="any">
+                                            </div>
+                                        </div>
+                                        <div class="lab-matrix-results-box">
+                                            <div>det(A) = <strong id="m2_det" style="color: #38bdf8;">1</strong></div>
+                                            <div>Traza = <strong id="m2_tr" style="color: #34d399;">5</strong></div>
+                                            <div id="m2_inv_desc" style="font-size: 0.72rem; color: var(--color-text-muted);">Inversa existente (det ≠ 0)</div>
+                                            <button type="button" id="labBtnCopyDet2" class="button button--ghost button--xs">📋 Copiar det(A)</button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Panel Tablas de Verdad -->
+                                <div id="labPanelLogica" class="lab-mat-subpanel hidden">
+                                    <div class="lab-logic-table-wrap">
+                                        <table class="lab-grid-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>P</th>
+                                                    <th>Q</th>
+                                                    <th>P ∧ Q (Y)</th>
+                                                    <th>P ∨ Q (O)</th>
+                                                    <th>P → Q (Condicional)</th>
+                                                    <th>P ↔ Q (Bicondicional)</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr><td>V</td><td>V</td><td>V</td><td>V</td><td>V</td><td>V</td></tr>
+                                                <tr><td>V</td><td>F</td><td>F</td><td>V</td><td>F</td><td>F</td></tr>
+                                                <tr><td>F</td><td>V</td><td>F</td><td>V</td><td>V</td><td>F</td></tr>
+                                                <tr><td>F</td><td>F</td><td>F</td><td>F</td><td>V</td><td>V</td></tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -3667,7 +3897,7 @@
 </dialog>
 
 <script src="mqtt.min.js"></script>
-<script src="script.js?v=27.7" defer></script>
+<script src="script.js?v=27.8" defer></script>
 
 <!-- =========================================================
      MODAL DE PROMPT PARA GEMINI (CREAR JUEGOS DESDE PDF)
@@ -4523,7 +4753,7 @@
 
         <footer class="modal__footer lab-config-footer" id="labConfigFooter">
             <button id="closeLabConfigModalBottomBtn" class="button button--ghost" type="button">Cancelar</button>
-            <button id="labBtnCargarConfig" class="button button--primary hidden" type="button" style="background: linear-gradient(135deg, #059669, #10b981); font-weight: 700; padding: 0.65rem 1.4rem;">
+            <button id="labBtnCargarConfig" class="button button--primary hidden" type="button">
                 🚀 Comenzar Práctica
             </button>
         </footer>

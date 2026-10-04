@@ -814,15 +814,24 @@ const dom = {
     labBtnEjecutarGeneracion: document.getElementById("labBtnEjecutarGeneracion"),
 
     /* Tabs y Paneles del Laboratorio */
+    labTabsNav: document.getElementById("labTabsNav"),
     labTabBtnFreq: document.getElementById("labTabBtnFreq"),
     labTabBtnProb: document.getElementById("labTabBtnProb"),
     labTabBtnBayes: document.getElementById("labTabBtnBayes"),
     labTabBtnContabilidad: document.getElementById("labTabBtnContabilidad"),
+    labTabBtnQuimica: document.getElementById("labTabBtnQuimica"),
+    labTabBtnFisica: document.getElementById("labTabBtnFisica"),
+    labTabBtnMatematicas: document.getElementById("labTabBtnMatematicas"),
+    labTabBtnMatrices: document.getElementById("labTabBtnMatrices"),
     labTabBtnScratch: document.getElementById("labTabBtnScratch"),
     labWidgetFreq: document.getElementById("labWidgetFreq"),
     labWidgetProb: document.getElementById("labWidgetProb"),
     labWidgetBayes: document.getElementById("labWidgetBayes"),
     labWidgetContabilidad: document.getElementById("labWidgetContabilidad"),
+    labWidgetQuimica: document.getElementById("labWidgetQuimica"),
+    labWidgetFisica: document.getElementById("labWidgetFisica"),
+    labWidgetMatematicas: document.getElementById("labWidgetMatematicas"),
+    labWidgetMatrices: document.getElementById("labWidgetMatrices"),
     labWidgetScratch: document.getElementById("labWidgetScratch"),
 
     /* Mesa de Trabajo Contable */
@@ -9864,7 +9873,7 @@ function iniciarAplicacion() {
 // =========================================================
 // GESTOR DE VERSIONES Y ACTUALIZACIÓN AUTOMÁTICA
 // =========================================================
-const APP_BUILD_VERSION = "27.7";
+const APP_BUILD_VERSION = "27.8";
 
 async function forzarActualizacionCompleta(mostrarNotificacion = true) {
     const btnActualizar = document.getElementById("btnForzarActualizar");
@@ -12785,12 +12794,12 @@ const CATALOGO_MATERIAS_LABORATORIO = {
         descripcion: "Libro Diario, Cuentas T, Balance de Comprobación y Asientos.",
         tabDefault: "contabilidad",
         subtemas: [
-            { id: "asientos", nombre: "Asientos Contables y Libro Diario", desc: "Registro cronológico de operaciones en el Debe y Haber.", default: true },
-            { id: "mayor", nombre: "Libro Mayor (Cuentas T)", desc: "Saldos deudores y acreedores por cada cuenta.", default: true },
-            { id: "balance", nombre: "Balance General y Sumas y Saldos", desc: "Comprobación de igualdad patrimonial y cuadre.", default: true },
-            { id: "ajustes", nombre: "Ajustes al Cierre y Amortizaciones", desc: "Depreciaciones de bienes de uso y devengamientos.", default: false },
-            { id: "resultados", nombre: "Resultados (R+ / R-) y Ventas", desc: "Costo de mercaderías vendidas (CMV) y utilidad bruta.", default: false },
-            { id: "conciliacion", nombre: "Conciliación Bancaria y Arqueo", desc: "Control de extractos bancarios y diferencias de caja.", default: false }
+            { id: "asientos", nombre: "Asientos Contables y Libro Diario", desc: "Registro cronológico de operaciones en el Debe y Haber.", icono: "📝", default: true },
+            { id: "mayor", nombre: "Libro Mayor (Cuentas T)", desc: "Saldos deudores y acreedores por cada cuenta.", icono: "⚖️", default: true },
+            { id: "balance", nombre: "Balance General y Sumas y Saldos", desc: "Comprobación de igualdad patrimonial y cuadre.", icono: "📑", default: true },
+            { id: "ajustes", nombre: "Ajustes al Cierre y Amortizaciones", desc: "Depreciaciones de bienes de uso y devengamientos.", icono: "🔧", default: false },
+            { id: "resultados", nombre: "Resultados (R+ / R-) y Ventas", desc: "Costo de mercaderías vendidas (CMV) y utilidad bruta.", icono: "📈", default: false },
+            { id: "conciliacion", nombre: "Conciliación Bancaria y Arqueo", desc: "Control de extractos bancarios y diferencias de caja.", icono: "🏦", default: false }
         ]
     },
     matematicas: {
@@ -12801,12 +12810,12 @@ const CATALOGO_MATERIAS_LABORATORIO = {
         descripcion: "Funciones, ecuaciones, fracciones, polinomios y trigonometría.",
         tabDefault: "scratch",
         subtemas: [
-            { id: "fracciones", nombre: "Aritmética, Fracciones y Porcentajes", desc: "Operaciones racionales y simplificación.", default: true },
-            { id: "funciones", nombre: "Funciones y Gráficos (Lineal, Cuadrática)", desc: "Dominio, imagen, raíces, vértices y asíntotas.", default: true },
-            { id: "ecuaciones", nombre: "Ecuaciones e Inecuaciones", desc: "Despejes algebraicos y sistemas de ecuaciones.", default: false },
-            { id: "polinomios", nombre: "Álgebra y Factorización", desc: "Regla de Ruffini, Teorema de Gauss y binomios.", default: false },
-            { id: "trigonometria", nombre: "Trigonometría y Geometría Plana", desc: "Seno, Coseno, Tangente y Teorema de Pitágoras.", default: false },
-            { id: "logaritmos", nombre: "Logaritmos y Exponenciales", desc: "Propiedades logarítmicas y crecimiento exponencial.", default: false }
+            { id: "fracciones", nombre: "Aritmética, Fracciones y Porcentajes", desc: "Operaciones racionales y simplificación.", icono: "➗", default: true },
+            { id: "funciones", nombre: "Funciones y Gráficos (Lineal, Cuadrática)", desc: "Dominio, imagen, raíces, vértices y asíntotas.", icono: "📉", default: true },
+            { id: "ecuaciones", nombre: "Ecuaciones e Inecuaciones", desc: "Despejes algebraicos y sistemas de ecuaciones.", icono: "🟰", default: false },
+            { id: "polinomios", nombre: "Álgebra y Factorización", desc: "Regla de Ruffini, Teorema de Gauss y binomios.", icono: "🔢", default: false },
+            { id: "trigonometria", nombre: "Trigonometría y Geometría Plana", desc: "Seno, Coseno, Tangente y Teorema de Pitágoras.", icono: "📐", default: false },
+            { id: "logaritmos", nombre: "Logaritmos y Exponenciales", desc: "Propiedades logarítmicas y crecimiento exponencial.", icono: "🌿", default: false }
         ]
     },
     calculo: {
@@ -12817,12 +12826,12 @@ const CATALOGO_MATERIAS_LABORATORIO = {
         descripcion: "Límites, derivadas, integrales y optimización matemática.",
         tabDefault: "scratch",
         subtemas: [
-            { id: "limites", nombre: "Límites y Continuidad", desc: "Indeterminaciones 0/0 e infinito/infinito.", default: true },
-            { id: "derivadas", nombre: "Derivadas y Reglas de Derivación", desc: "Regla de la cadena, producto y cociente.", default: true },
-            { id: "optimizacion", nombre: "Máximos, Mínimos y Optimización", desc: "Criterio de primera y segunda derivada.", default: false },
-            { id: "integrales", nombre: "Integrales Indefinidas y Definidas", desc: "Regla de Barrow y áreas bajo la curva.", default: false },
-            { id: "metodos_integracion", nombre: "Métodos de Integración", desc: "Sustitución y partes.", default: false },
-            { id: "series", nombre: "Ecuaciones Diferenciales y Series", desc: "Criterios de convergencia y separación de variables.", default: false }
+            { id: "limites", nombre: "Límites y Continuidad", desc: "Indeterminaciones 0/0 e infinito/infinito.", icono: "🎯", default: true },
+            { id: "derivadas", nombre: "Derivadas y Reglas de Derivación", desc: "Regla de la cadena, producto y cociente.", icono: "⚡", default: true },
+            { id: "optimizacion", nombre: "Máximos, Mínimos y Optimización", desc: "Criterio de primera y segunda derivada.", icono: "🏔️", default: false },
+            { id: "integrales", nombre: "Integrales Indefinidas y Definidas", desc: "Regla de Barrow y áreas bajo la curva.", icono: "∫", default: false },
+            { id: "metodos_integracion", nombre: "Métodos de Integración", desc: "Sustitución y partes.", icono: "🧩", default: false },
+            { id: "series", nombre: "Ecuaciones Diferenciales y Series", desc: "Criterios de convergencia y separación de variables.", icono: "♾️", default: false }
         ]
     },
     estadistica: {
@@ -12833,12 +12842,12 @@ const CATALOGO_MATERIAS_LABORATORIO = {
         descripcion: "Tablas de frecuencia, probabilidad, campana de Gauss y Bayes.",
         tabDefault: "freq",
         subtemas: [
-            { id: "descriptiva", nombre: "Estadística Descriptiva y Promedios", desc: "Media, mediana, moda y medidas de posición.", default: true },
-            { id: "frecuencias", nombre: "Tablas de Frecuencia y Gráficos", desc: "Frecuencia absoluta, relativa y acumulada.", default: true },
-            { id: "dispersion", nombre: "Dispersión (Varianza, Desvío y CV)", desc: "Amplitud y variabilidad de la muestra.", default: false },
-            { id: "bayes", nombre: "Probabilidad y Teorema de Bayes", desc: "Probabilidad condicional y tablas 2x2.", default: false },
-            { id: "normal", nombre: "Distribución Normal (Gauss / Z)", desc: "Estandarización y cálculo de áreas z.", default: false },
-            { id: "discretas", nombre: "Distribución Binomial y Poisson", desc: "Variables discretas y probabilidades acumuladas.", default: false }
+            { id: "descriptiva", nombre: "Estadística Descriptiva y Promedios", desc: "Media, mediana, moda y medidas de posición.", icono: "📊", default: true },
+            { id: "frecuencias", nombre: "Tablas de Frecuencia y Gráficos", desc: "Frecuencia absoluta, relativa y acumulada.", icono: "📋", default: true },
+            { id: "dispersion", nombre: "Dispersión (Varianza, Desvío y CV)", desc: "Amplitud y variabilidad de la muestra.", icono: "🎯", default: false },
+            { id: "bayes", nombre: "Probabilidad y Teorema de Bayes", desc: "Probabilidad condicional y tablas 2x2.", icono: "🎲", default: false },
+            { id: "normal", nombre: "Distribución Normal (Gauss / Z)", desc: "Estandarización y cálculo de áreas z.", icono: "🔔", default: false },
+            { id: "discretas", nombre: "Distribución Binomial y Poisson", desc: "Variables discretas y probabilidades acumuladas.", icono: "🪙", default: false }
         ]
     },
     fisica: {
@@ -12849,12 +12858,12 @@ const CATALOGO_MATERIAS_LABORATORIO = {
         descripcion: "Cinemática, dinámica de Newton, energía, fluidos y circuitos.",
         tabDefault: "scratch",
         subtemas: [
-            { id: "cinematica", nombre: "Cinemática (MRU, MRUV, Caída Libre)", desc: "Velocidad, aceleración y trayectorias.", default: true },
-            { id: "dinamica", nombre: "Dinámica y Leyes de Newton", desc: "Fuerzas, rozamiento, tensión y plano inclinado.", default: true },
-            { id: "energia", nombre: "Trabajo, Potencia y Energía Mecánica", desc: "Conservación de la energía mecánica y rozamiento.", default: false },
-            { id: "fluidos", nombre: "Fluidos e Hidrostática", desc: "Presión, principio de Pascal y Arquímedes.", default: false },
-            { id: "termodinamica", nombre: "Termodinámica y Calorimetría", desc: "Calor específico, cambios de fase y gases.", default: false },
-            { id: "circuitos", nombre: "Electricidad y Circuitos (Ohm y Kirchhoff)", desc: "Resistencias en serie/paralelo y voltaje.", default: false }
+            { id: "cinematica", nombre: "Cinemática (MRU, MRUV, Caída Libre)", desc: "Velocidad, aceleración y trayectorias.", icono: "🚀", default: true },
+            { id: "dinamica", nombre: "Dinámica y Leyes de Newton", desc: "Fuerzas, rozamiento, tensión y plano inclinado.", icono: "🧲", default: true },
+            { id: "energia", nombre: "Trabajo, Potencia y Energía Mecánica", desc: "Conservación de la energía mecánica y rozamiento.", icono: "⚡", default: false },
+            { id: "fluidos", nombre: "Fluidos e Hidrostática", desc: "Presión, principio de Pascal y Arquímedes.", icono: "🌊", default: false },
+            { id: "termodinamica", nombre: "Termodinámica y Calorimetría", desc: "Calor específico, cambios de fase y gases.", icono: "🔥", default: false },
+            { id: "circuitos", nombre: "Electricidad y Circuitos (Ohm y Kirchhoff)", desc: "Resistencias en serie/paralelo y voltaje.", icono: "💡", default: false }
         ]
     },
     quimica: {
@@ -12865,12 +12874,12 @@ const CATALOGO_MATERIAS_LABORATORIO = {
         descripcion: "Estequiometría, moles, soluciones, enlaces, pH y gases.",
         tabDefault: "scratch",
         subtemas: [
-            { id: "estequiometria", nombre: "Estequiometría, Moles y Masas Molares", desc: "Reactivo limitante y rendimiento de reacciones.", default: true },
-            { id: "soluciones", nombre: "Soluciones y Concentración", desc: "Molaridad, %m/m, %m/v y diluciones.", default: true },
-            { id: "ph", nombre: "Ácidos, Bases y Cálculo de pH/pOH", desc: "Constante Kw, disociación y neutralizaciones.", default: false },
-            { id: "enlaces", nombre: "Estructura Atómica y Enlaces Químicos", desc: "Configuración electrónica y geometría molecular.", default: false },
-            { id: "gases", nombre: "Gases Ideales y Leyes de los Gases", desc: "P·V = n·R·T y presiones parciales de Dalton.", default: false },
-            { id: "equilibrio", nombre: "Equilibrio Químico y Termoquímica", desc: "Constante Kc, principio de Le Chatelier.", default: false }
+            { id: "estequiometria", nombre: "Estequiometría, Moles y Masas Molares", desc: "Reactivo limitante y rendimiento de reacciones.", icono: "⚖️", default: true },
+            { id: "soluciones", nombre: "Soluciones y Concentración", desc: "Molaridad, %m/m, %m/v y diluciones.", icono: "🧪", default: true },
+            { id: "ph", nombre: "Ácidos, Bases y Cálculo de pH/pOH", desc: "Constante Kw, disociación y neutralizaciones.", icono: "💧", default: false },
+            { id: "enlaces", nombre: "Estructura Atómica y Enlaces Químicos", desc: "Configuración electrónica y geometría molecular.", icono: "⚛️", default: false },
+            { id: "gases", nombre: "Gases Ideales y Leyes de los Gases", desc: "P·V = n·R·T y presiones parciales de Dalton.", icono: "💨", default: false },
+            { id: "equilibrio", nombre: "Equilibrio Químico y Termoquímica", desc: "Constante Kc, principio de Le Chatelier.", icono: "🔄", default: false }
         ]
     },
     algebra_lineal: {
@@ -12881,11 +12890,11 @@ const CATALOGO_MATERIAS_LABORATORIO = {
         descripcion: "Vectores, matrices, determinantes y sistemas de ecuaciones.",
         tabDefault: "scratch",
         subtemas: [
-            { id: "matrices", nombre: "Matrices y Determinantes", desc: "Multiplicación matricial, matriz inversa y determinantes.", default: true },
-            { id: "sistemas_gauss", nombre: "Sistemas de Ecuaciones (Gauss-Jordan)", desc: "Clasificación SCD, SCI e SI.", default: true },
-            { id: "vectores", nombre: "Vectores en R² y R³", desc: "Producto escalar, vectorial y proyecciones.", default: false },
-            { id: "espacios", nombre: "Espacios y Subespacios Vectoriales", desc: "Bases, dimensión e independencia lineal.", default: false },
-            { id: "transformaciones", nombre: "Transformaciones Lineales", desc: "Núcleo, imagen y matriz asociada.", default: false }
+            { id: "matrices", nombre: "Matrices y Determinantes", desc: "Multiplicación matricial, matriz inversa y determinantes.", icono: "🔲", default: true },
+            { id: "sistemas_gauss", nombre: "Sistemas de Ecuaciones (Gauss-Jordan)", desc: "Clasificación SCD, SCI e SI.", icono: "🔢", default: true },
+            { id: "vectores", nombre: "Vectores en R² y R³", desc: "Producto escalar, vectorial y proyecciones.", icono: "↗️", default: false },
+            { id: "espacios", nombre: "Espacios y Subespacios Vectoriales", desc: "Bases, dimensión e independencia lineal.", icono: "🌐", default: false },
+            { id: "transformaciones", nombre: "Transformaciones Lineales", desc: "Núcleo, imagen y matriz asociada.", icono: "🔄", default: false }
         ]
     },
     computacion: {
@@ -12896,11 +12905,11 @@ const CATALOGO_MATERIAS_LABORATORIO = {
         descripcion: "Tablas de verdad, álgebra de Boole, binario y algoritmos.",
         tabDefault: "scratch",
         subtemas: [
-            { id: "logica", nombre: "Lógica Proposicional y Tablas de Verdad", desc: "Conectores lógicos, tautologías y equivalencias.", default: true },
-            { id: "boole", nombre: "Álgebra de Boole y Compuertas", desc: "Simplificación lógica, mapas de Karnaugh.", default: true },
-            { id: "numeracion", nombre: "Sistemas de Numeración (Binario, Hexa)", desc: "Conversión de bases y aritmética binaria.", default: false },
-            { id: "algoritmos", nombre: "Algoritmos y Complejidad (Big-O)", desc: "Ordenamiento, búsqueda y tiempo de ejecución.", default: false },
-            { id: "estructuras", nombre: "Estructuras de Datos", desc: "Pilas, colas, árboles binarios y grafos.", default: false }
+            { id: "logica", nombre: "Lógica Proposicional y Tablas de Verdad", desc: "Conectores lógicos, tautologías y equivalencias.", icono: "🧠", default: true },
+            { id: "boole", nombre: "Álgebra de Boole y Compuertas", desc: "Simplificación lógica, mapas de Karnaugh.", icono: "🔌", default: true },
+            { id: "numeracion", nombre: "Sistemas de Numeración (Binario, Hexa)", desc: "Conversión de bases y aritmética binaria.", icono: "0️⃣", default: false },
+            { id: "algoritmos", nombre: "Algoritmos y Complejidad (Big-O)", desc: "Ordenamiento, búsqueda y tiempo de ejecución.", icono: "⚙️", default: false },
+            { id: "estructuras", nombre: "Estructuras de Datos", desc: "Pilas, colas, árboles binarios y grafos.", icono: "🌲", default: false }
         ]
     },
     biologia: {
@@ -12911,11 +12920,11 @@ const CATALOGO_MATERIAS_LABORATORIO = {
         descripcion: "Células, genética mendeliana, ADN, enzimas y respiración.",
         tabDefault: "scratch",
         subtemas: [
-            { id: "genetica", nombre: "Genética Mendeliana y Cuadros de Punnett", desc: "Herencia monohíbrida, dihíbrida y probabilidad.", default: true },
-            { id: "celular", nombre: "Biología Celular y Orgánulos", desc: "Membrana plasmática, transporte y funciones celulares.", default: true },
-            { id: "adn", nombre: "ADN, ARN y Síntesis de Proteínas", desc: "Transcripción, traducción y código genético.", default: false },
-            { id: "enzimas", nombre: "Enzimas y Cinética Biológica", desc: "Sitio activo, desnaturalización y sustratos.", default: false },
-            { id: "metabolismo", nombre: "Respiración Celular y Fotosíntesis", desc: "Glucólisis, ciclo de Krebs y producción de ATP.", default: false }
+            { id: "genetica", nombre: "Genética Mendeliana y Cuadros de Punnett", desc: "Herencia monohíbrida, dihíbrida y probabilidad.", icono: "🧬", default: true },
+            { id: "celular", nombre: "Biología Celular y Orgánulos", desc: "Membrana plasmática, transporte y funciones celulares.", icono: "🔬", default: true },
+            { id: "adn", nombre: "ADN, ARN y Síntesis de Proteínas", desc: "Transcripción, traducción y código genético.", icono: "📜", default: false },
+            { id: "enzimas", nombre: "Enzimas y Cinética Biológica", desc: "Sitio activo, desnaturalización y sustratos.", icono: "🧪", default: false },
+            { id: "metabolismo", nombre: "Respiración Celular y Fotosíntesis", desc: "Glucólisis, ciclo de Krebs y producción de ATP.", icono: "🍃", default: false }
         ]
     },
     financiera: {
@@ -12926,11 +12935,11 @@ const CATALOGO_MATERIAS_LABORATORIO = {
         descripcion: "Interés simple, compuesto, anualidades, amortización y VAN.",
         tabDefault: "scratch",
         subtemas: [
-            { id: "interes_compuesto", nombre: "Interés Simple y Compuesto", desc: "Capitalización, monto final y valor presente.", default: true },
-            { id: "tasas", nombre: "Tasas de Interés (TNA, TEA, Equivalente)", desc: "Conversión de tasas y rendimiento efectivo.", default: true },
-            { id: "amortizaciones", nombre: "Sistemas de Amortización (Francés, Alemán)", desc: "Tablas de marcha de deuda, cuotas e intereses.", default: false },
-            { id: "anualidades", nombre: "Anualidades y Rentas Financieras", desc: "Imposiciones y valor actual de series periódicas.", default: false },
-            { id: "proyectos", nombre: "Evaluación de Proyectos (VAN y TIR)", desc: "Flujos de fondos descontados y viabilidad.", default: false }
+            { id: "interes_compuesto", nombre: "Interés Simple y Compuesto", desc: "Capitalización, monto final y valor presente.", icono: "📈", default: true },
+            { id: "tasas", nombre: "Tasas de Interés (TNA, TEA, Equivalente)", desc: "Conversión de tasas y rendimiento efectivo.", icono: "🏷️", default: true },
+            { id: "amortizaciones", nombre: "Sistemas de Amortización (Francés, Alemán)", desc: "Tablas de marcha de deuda, cuotas e intereses.", icono: "💳", default: false },
+            { id: "anualidades", nombre: "Anualidades y Rentas Financieras", desc: "Imposiciones y valor actual de series periódicas.", icono: "📅", default: false },
+            { id: "proyectos", nombre: "Evaluación de Proyectos (VAN y TIR)", desc: "Flujos de fondos descontados y viabilidad.", icono: "🏦", default: false }
         ]
     }
 };
@@ -14067,26 +14076,80 @@ function renderizarFormulasReconocidas(formulas, consejo) {
 // CONTROLADORES DE INTERFAZ Y VISTA MÓVIL
 // ==========================================
 
+function filtrarTabsPorMateria(materiaId) {
+    if (!dom.labTabsNav) return;
+    
+    // Mapeo de visibilidad de pestañas según la materia
+    const visibilidadPorMateria = {
+        contabilidad: ["contabilidad"],
+        estadistica: ["freq", "prob", "bayes"],
+        quimica: ["quimica"],
+        fisica: ["fisica"],
+        matematicas: ["matematicas"],
+        calculo: ["matematicas"],
+        algebra_lineal: ["matrices"],
+        computacion: ["matrices"],
+        biologia: ["quimica"],
+        financiera: ["contabilidad"]
+    };
+
+    const permitidas = visibilidadPorMateria[materiaId] || ["matematicas"];
+
+    // Mostrar/ocultar botones de pestañas según la materia
+    const tabBtns = [
+        { btn: dom.labTabBtnFreq, id: "freq" },
+        { btn: dom.labTabBtnProb, id: "prob" },
+        { btn: dom.labTabBtnBayes, id: "bayes" },
+        { btn: dom.labTabBtnContabilidad, id: "contabilidad" },
+        { btn: dom.labTabBtnQuimica, id: "quimica" },
+        { btn: dom.labTabBtnFisica, id: "fisica" },
+        { btn: dom.labTabBtnMatematicas, id: "matematicas" },
+        { btn: dom.labTabBtnMatrices, id: "matrices" }
+    ];
+
+    tabBtns.forEach(({ btn, id }) => {
+        if (!btn) return;
+        const visible = permitidas.includes(id);
+        btn.classList.toggle("hidden", !visible);
+    });
+
+    // Activar la primera pestaña permitida
+    activarTabLaboratorio(permitidas[0]);
+}
+
 function activarTabLaboratorio(tabId) {
     if (tabId === "scratch") {
         conmutarPizarronFlotanteLab();
         return;
     }
 
-    const tabBtns = [
+    const tabPanels = [
         { btn: dom.labTabBtnFreq, pane: dom.labWidgetFreq, id: "freq" },
         { btn: dom.labTabBtnProb, pane: dom.labWidgetProb, id: "prob" },
         { btn: dom.labTabBtnBayes, pane: dom.labWidgetBayes, id: "bayes" },
-        { btn: dom.labTabBtnContabilidad, pane: dom.labWidgetContabilidad, id: "contabilidad" }
+        { btn: dom.labTabBtnContabilidad, pane: dom.labWidgetContabilidad, id: "contabilidad" },
+        { btn: dom.labTabBtnQuimica, pane: dom.labWidgetQuimica, id: "quimica" },
+        { btn: dom.labTabBtnFisica, pane: dom.labWidgetFisica, id: "fisica" },
+        { btn: dom.labTabBtnMatematicas, pane: dom.labWidgetMatematicas, id: "matematicas" },
+        { btn: dom.labTabBtnMatrices, pane: dom.labWidgetMatrices, id: "matrices" }
     ];
 
-    tabBtns.forEach(t => {
+    tabPanels.forEach(t => {
         const matches = t.id === tabId;
         if (t.btn) t.btn.classList.toggle("is-active", matches);
         if (t.pane) t.pane.classList.toggle("hidden", !matches);
     });
 
     laboratorioEstado.tabActiva = tabId;
+
+    // Disparar renderizados iniciales si entra por primera vez a un widget interactivo
+    if (tabId === "quimica" && typeof renderizarTablaPeriodicaUI === "function") {
+        renderizarTablaPeriodicaUI();
+    } else if (tabId === "fisica" && typeof inicializarSimuladorFisica === "function") {
+        inicializarSimuladorFisica();
+    } else if (tabId === "matematicas" && typeof inicializarGraficadorMatematicas === "function") {
+        inicializarGraficadorMatematicas();
+    }
 }
 
 function cambiarVistaMovilLab(vista, scrollTarget = false) {
@@ -14139,6 +14202,7 @@ function iniciarOReanudarLaboratorio() {
         inicializarModuloContabilidad();
     }
     cambiarVistaMovilLab("enunciado");
+    filtrarTabsPorMateria(laboratorioEstado.materiaSeleccionada || "contabilidad");
 
     // Abrir menú flotante si no hay ejercicio o si se ingresa por primera vez
     if (!laboratorioEstado.ejercicioActual) {
@@ -14218,7 +14282,13 @@ function seleccionarMateriaLab(materiaId) {
 
     laboratorioEstado.materiaSeleccionada = materiaId;
 
-    // Actualizar Banner del Paso 2
+    // Actualizar Banner y tema del Modal Paso 2
+    if (dom.labStepConfigMateria) {
+        dom.labStepConfigMateria.setAttribute("data-materia", materiaId);
+    }
+    if (dom.labConfigModal) {
+        dom.labConfigModal.setAttribute("data-materia", materiaId);
+    }
     if (dom.labMateriaBannerIcon) dom.labMateriaBannerIcon.textContent = mat.icono;
     if (dom.labMateriaBannerTitle) dom.labMateriaBannerTitle.textContent = mat.nombre;
     if (dom.labMateriaBannerDesc) dom.labMateriaBannerDesc.textContent = mat.descripcion;
@@ -14240,7 +14310,7 @@ function renderizarOpcionesSubtemasLab(materiaId) {
 
     const mat = CATALOGO_MATERIAS_LABORATORIO[materiaId] || CATALOGO_MATERIAS_LABORATORIO.contabilidad;
     if (dom.labSubtopicsTitle) {
-        dom.labSubtopicsTitle.innerHTML = `<span>🎯 Temas a practicar en <strong>${mat.nombre}</strong>:</span>`;
+        dom.labSubtopicsTitle.innerHTML = `<span>🎯 Opciones y temas a practicar en <strong>${mat.nombre}</strong>:</span>`;
     }
 
     const seleccionados = Array.isArray(laboratorioEstado.temasSeleccionados)
@@ -14252,10 +14322,14 @@ function renderizarOpcionesSubtemasLab(materiaId) {
         const card = document.createElement("label");
         card.className = `lab-subtopic-card ${estaMarcado ? "is-selected" : ""}`;
         card.dataset.subtemaId = sub.id;
+        card.dataset.materia = materiaId;
+        card.setAttribute("role", "checkbox");
+        card.setAttribute("aria-checked", estaMarcado ? "true" : "false");
+        card.setAttribute("tabindex", "0");
 
         const chk = document.createElement("input");
         chk.type = "checkbox";
-        chk.className = "lab-subtopic-checkbox";
+        chk.className = "lab-subtopic-checkbox hidden";
         chk.checked = estaMarcado;
         chk.value = sub.id;
 
@@ -14266,19 +14340,33 @@ function renderizarOpcionesSubtemasLab(materiaId) {
 
         card.appendChild(chk);
 
-        const infoDiv = document.createElement("div");
-        infoDiv.className = "lab-subtopic-info";
-        infoDiv.innerHTML = `
-            <span class="lab-subtopic-name">${sub.nombre}</span>
+        // Estructura visual idéntica a las tarjetas del primer menú
+        card.innerHTML += `
+            <div class="lab-subtopic-icon-box">
+                <span>${sub.icono || mat.icono}</span>
+            </div>
+            <strong class="lab-subtopic-name">${sub.nombre}</strong>
             <span class="lab-subtopic-desc">${sub.desc}</span>
+            <span class="lab-subtopic-badge">${estaMarcado ? "✓ Seleccionado" : "+ Elegir"}</span>
         `;
-        card.appendChild(infoDiv);
+
+        const toggler = () => {
+            const nuevoEstado = !chk.checked;
+            chk.checked = nuevoEstado;
+            alternarSeleccionSubtemaLab(sub.id, nuevoEstado);
+        };
 
         card.addEventListener("click", (e) => {
             if (e.target === chk) return;
             e.preventDefault();
-            chk.checked = !chk.checked;
-            alternarSeleccionSubtemaLab(sub.id, chk.checked);
+            toggler();
+        });
+
+        card.addEventListener("keydown", (e) => {
+            if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                toggler();
+            }
         });
 
         dom.labSubtopicsGrid.appendChild(card);
@@ -14300,13 +14388,16 @@ function alternarSeleccionSubtemaLab(subtemaId, checked) {
         laboratorioEstado.temasSeleccionados = laboratorioEstado.temasSeleccionados.filter(id => id !== subtemaId);
     }
 
-    // Reflejar clase en la tarjeta
+    // Reflejar clase, atributo de accesibilidad y badge en la tarjeta
     if (dom.labSubtopicsGrid) {
         const card = dom.labSubtopicsGrid.querySelector(`[data-subtema-id="${subtemaId}"]`);
         if (card) {
             card.classList.toggle("is-selected", checked);
+            card.setAttribute("aria-checked", checked ? "true" : "false");
             const chk = card.querySelector('input[type="checkbox"]');
             if (chk) chk.checked = checked;
+            const badge = card.querySelector('.lab-subtopic-badge');
+            if (badge) badge.textContent = checked ? "✓ Seleccionado" : "+ Elegir";
         }
     }
 
@@ -14973,9 +15064,588 @@ function actualizarQuickChipsUI(tema) {
     });
 }
 
-// =========================================================
-// EXTRACTOR UNIVERSAL DE TEXTO (PDF, DOCX, PPTX, TXT)
-// =========================================================
+/* =========================================================
+   MÓDULO: QUÍMICA INTERACTIVA (TABLA PERIÓDICA & MASAS MOLARES)
+   ========================================================= */
+
+const TABLA_ELEMENTOS_QUIMICA = [
+    { num: 1, sym: "H", name: "Hidrógeno", mass: 1.008, desc: "Gas diatómico H₂ = 2.016 g/mol. Fundamental en soluciones ácidas (iones H⁺)." },
+    { num: 2, sym: "He", name: "Helio", mass: 4.003, desc: "Gas noble inerte y ligero." },
+    { num: 3, sym: "Li", name: "Litio", mass: 6.94, desc: "Metal alcalino ligero y muy reactivo." },
+    { num: 4, sym: "Be", name: "Berilio", mass: 9.012, desc: "Metal alcalinotérreo bivalente." },
+    { num: 5, sym: "B", name: "Boro", mass: 10.81, desc: "Metaloide semiconductor." },
+    { num: 6, sym: "C", name: "Carbono", mass: 12.011, desc: "Base de la química orgánica y biomoléculas." },
+    { num: 7, sym: "N", name: "Nitrógeno", mass: 14.007, desc: "Gas diatómico N₂ = 28.014 g/mol. Clave en amoníaco y proteínas." },
+    { num: 8, sym: "O", name: "Oxígeno", mass: 15.999, desc: "Gas diatómico O₂ = 32.0 g/mol. Comburente fundamental en reacciones redox." },
+    { num: 9, sym: "F", name: "Flúor", mass: 18.998, desc: "Halógeno altamente electronegativo." },
+    { num: 10, sym: "Ne", name: "Neón", mass: 20.180, desc: "Gas noble inerte." },
+    { num: 11, sym: "Na", name: "Sodio", mass: 22.990, desc: "Metal alcalino. Clave en sales como NaCl (58.44 g/mol) y NaOH (40.0 g/mol)." },
+    { num: 12, sym: "Mg", name: "Magnesio", mass: 24.305, desc: "Metal alcalinotérreo. Presente en clorofila y aleaciones ligeras." },
+    { num: 13, sym: "Al", name: "Aluminio", mass: 26.982, desc: "Metal ligero y resistente a la corrosión." },
+    { num: 14, sym: "Si", name: "Silicio", mass: 28.085, desc: "Metaloide base de la electrónica y silicatos." },
+    { num: 15, sym: "P", name: "Fósforo", mass: 30.974, desc: "No metal clave en ATP, ADN y fertilizantes." },
+    { num: 16, sym: "S", name: "Azufre", mass: 32.065, desc: "No metal. Esencial en ácido sulfúrico (H₂SO₄ = 98.08 g/mol)." },
+    { num: 17, sym: "Cl", name: "Cloro", mass: 35.45, desc: "Halógeno. Gas Cl₂ = 70.9 g/mol. Forma HCl (36.46 g/mol) y sales." },
+    { num: 18, sym: "Ar", name: "Argón", mass: 39.948, desc: "Gas noble protector para soldadura." },
+    { num: 19, sym: "K", name: "Potasio", mass: 39.098, desc: "Metal alcalino. Electrolito vital y fertilizante." },
+    { num: 20, sym: "Ca", name: "Calcio", mass: 40.078, desc: "Metal alcalinotérreo. Clave en carbonato de calcio (CaCO₃ = 100.09 g/mol)." },
+    { num: 26, sym: "Fe", name: "Hierro", mass: 55.845, desc: "Metal de transición. Central en la hemoglobina y producción de acero." },
+    { num: 29, sym: "Cu", name: "Cobre", mass: 63.546, desc: "Excelente conductor térmico y eléctrico." },
+    { num: 30, sym: "Zn", name: "Cinc", mass: 65.38, desc: "Metal protector contra la corrosión (galvanizado)." },
+    { num: 35, sym: "Br", name: "Bromo", mass: 79.904, desc: "Líquido halógeno volátil marrón-rojizo." },
+    { num: 47, sym: "Ag", name: "Plata", mass: 107.87, desc: "Metal noble con la mayor conductividad eléctrica conocida." },
+    { num: 53, sym: "I", name: "Yodo", mass: 126.90, desc: "Halógeno sólido sublimable esencial en tiroides." },
+    { num: 79, sym: "Au", name: "Oro", mass: 196.97, desc: "Metal precioso inerte e incorruptible." },
+    { num: 82, sym: "Pb", name: "Plomo", mass: 207.2, desc: "Metal pesado denso y maleable." }
+];
+
+let elementoQuimicoSeleccionado = TABLA_ELEMENTOS_QUIMICA[0];
+
+function renderizarTablaPeriodicaUI() {
+    const grid = document.getElementById("labPeriodicGrid");
+    if (!grid) return;
+    grid.innerHTML = "";
+
+    TABLA_ELEMENTOS_QUIMICA.forEach(elem => {
+        const cell = document.createElement("div");
+        cell.className = `lab-chem-cell ${elementoQuimicoSeleccionado.sym === elem.sym ? 'is-selected' : ''}`;
+        cell.dataset.symbol = elem.sym;
+
+        cell.innerHTML = `
+            <span class="lab-chem-cell-num">${elem.num}</span>
+            <strong class="lab-chem-cell-sym">${elem.sym}</strong>
+            <span class="lab-chem-cell-mass">${elem.mass.toFixed(1)}</span>
+        `;
+
+        cell.addEventListener("click", () => {
+            seleccionarElementoQuimico(elem);
+        });
+
+        grid.appendChild(cell);
+    });
+
+    actualizarPreviewElementoQuimico();
+    inicializarEventosQuimica();
+}
+
+function seleccionarElementoQuimico(elem) {
+    elementoQuimicoSeleccionado = elem;
+
+    const grid = document.getElementById("labPeriodicGrid");
+    if (grid) {
+        grid.querySelectorAll(".lab-chem-cell").forEach(c => {
+            c.classList.toggle("is-selected", c.dataset.symbol === elem.sym);
+        });
+    }
+
+    actualizarPreviewElementoQuimico();
+}
+
+function actualizarPreviewElementoQuimico() {
+    const elem = elementoQuimicoSeleccionado;
+    if (!elem) return;
+
+    const numEl = document.getElementById("labChemPrevNum");
+    const symEl = document.getElementById("labChemPrevSym");
+    const nameEl = document.getElementById("labChemPrevName");
+    const massEl = document.getElementById("labChemPrevMass");
+    const titleEl = document.getElementById("labChemInfoTitle");
+    const detailsEl = document.getElementById("labChemInfoDetails");
+
+    if (numEl) numEl.textContent = elem.num;
+    if (symEl) symEl.textContent = elem.sym;
+    if (nameEl) nameEl.textContent = elem.name;
+    if (massEl) massEl.textContent = `${elem.mass} g/mol`;
+    if (titleEl) titleEl.textContent = `${elem.name} (${elem.sym}) - N° Atómico: ${elem.num}`;
+    if (detailsEl) detailsEl.textContent = `Masa Molar: ${elem.mass} g/mol • ${elem.desc}`;
+}
+
+function calcularMasaMolecularCompuesto(formulaStr) {
+    if (!formulaStr || typeof formulaStr !== "string") return 0;
+    const formula = formulaStr.trim().replace(/\s+/g, "");
+
+    // Expresión regular para separar elementos y sus subíndices (ej. H2, S, O4)
+    const regex = /([A-Z][a-z]*)(\d*)/g;
+    let match;
+    let masaTotal = 0;
+    let encontrados = 0;
+
+    const mapaMasas = {};
+    TABLA_ELEMENTOS_QUIMICA.forEach(e => { mapaMasas[e.sym] = e.mass; });
+
+    while ((match = regex.exec(formula)) !== null) {
+        const elem = match[1];
+        const cant = match[2] ? parseInt(match[2], 10) : 1;
+        if (mapaMasas[elem]) {
+            masaTotal += mapaMasas[elem] * cant;
+            encontrados++;
+        }
+    }
+
+    return encontrados > 0 ? Number(masaTotal.toFixed(3)) : 0;
+}
+
+function inicializarEventosQuimica() {
+    const btnCalc = document.getElementById("labBtnCalcMasaMolecular");
+    const inputFormula = document.getElementById("labChemFormulaInput");
+    const resBar = document.getElementById("labChemResultBar");
+    const resFormula = document.getElementById("labChemResultFormula");
+    const resMasa = document.getElementById("labChemResultMasa");
+    const btnCopyRes = document.getElementById("labBtnCopiarMasaChem");
+    const btnCopyElem = document.getElementById("labBtnCopyChemElementMass");
+    const btnInsert = document.getElementById("labBtnInsertChemFormula");
+
+    if (btnCalc && inputFormula) {
+        btnCalc.onclick = () => {
+            const form = inputFormula.value.trim();
+            if (!form) {
+                mostrarToast("⚠️ Escribí una fórmula molecular (ej: H2SO4, NaOH, CaCO3).");
+                return;
+            }
+            const masa = calcularMasaMolecularCompuesto(form);
+            if (masa > 0) {
+                if (resBar) resBar.classList.remove("hidden");
+                if (resFormula) resFormula.textContent = form;
+                if (resMasa) resMasa.textContent = `${masa} g/mol`;
+                mostrarToast(`⚖️ Masa Molar calculada: ${masa} g/mol`, "exito");
+            } else {
+                mostrarToast("⚠️ No se reconocieron elementos válidos en la fórmula.", "aviso");
+            }
+        };
+
+        inputFormula.onkeydown = (e) => {
+            if (e.key === "Enter") btnCalc.click();
+        };
+    }
+
+    if (btnCopyRes && resMasa) {
+        btnCopyRes.onclick = () => {
+            const txt = resMasa.textContent.replace("g/mol", "").trim();
+            navigator.clipboard.writeText(txt).then(() => {
+                mostrarToast(`📋 Copiado: ${txt} g/mol`);
+            });
+        };
+    }
+
+    if (btnCopyElem) {
+        btnCopyElem.onclick = () => {
+            if (elementoQuimicoSeleccionado) {
+                const val = String(elementoQuimicoSeleccionado.mass);
+                navigator.clipboard.writeText(val).then(() => {
+                    mostrarToast(`📋 Peso atómico de ${elementoQuimicoSeleccionado.sym}: ${val} g/mol`);
+                });
+            }
+        };
+    }
+
+    if (btnInsert && inputFormula) {
+        btnInsert.onclick = () => {
+            if (elementoQuimicoSeleccionado) {
+                inputFormula.value += elementoQuimicoSeleccionado.sym;
+                inputFormula.focus();
+            }
+        };
+    }
+}
+
+/* =========================================================
+   MÓDULO: SIMULADOR FÍSICO INTERACTIVO (CANVAS 2D)
+   ========================================================= */
+
+let animacionFisicaId = null;
+let estadoSimulacionFisica = {
+    v0: 10,
+    a: 4,
+    tMax: 5,
+    tActual: 0,
+    corriendo: false
+};
+
+function inicializarSimuladorFisica() {
+    const canvas = document.getElementById("labPhysicsCanvas");
+    const v0Slider = document.getElementById("labPhysV0");
+    const accSlider = document.getElementById("labPhysAcc");
+    const tSlider = document.getElementById("labPhysTime");
+    const playBtn = document.getElementById("labBtnPlayPhysics");
+    const resetBtn = document.getElementById("labBtnResetPhysics");
+    const copyBtn = document.getElementById("labBtnCopyPhysRes");
+
+    if (!canvas) return;
+
+    function recalcularFisicaValores() {
+        estadoSimulacionFisica.v0 = parseFloat(v0Slider?.value || 10);
+        estadoSimulacionFisica.a = parseFloat(accSlider?.value || 4);
+        estadoSimulacionFisica.tMax = parseFloat(tSlider?.value || 5);
+
+        const v0Span = document.getElementById("labPhysV0Val");
+        const aSpan = document.getElementById("labPhysAccVal");
+        const tSpan = document.getElementById("labPhysTimeVal");
+        if (v0Span) v0Span.textContent = `${estadoSimulacionFisica.v0} m/s`;
+        if (aSpan) aSpan.textContent = `${estadoSimulacionFisica.a} m/s²`;
+        if (tSpan) tSpan.textContent = `${estadoSimulacionFisica.tMax} s`;
+
+        const vf = estadoSimulacionFisica.v0 + (estadoSimulacionFisica.a * estadoSimulacionFisica.tMax);
+        const dist = (estadoSimulacionFisica.v0 * estadoSimulacionFisica.tMax) + (0.5 * estadoSimulacionFisica.a * Math.pow(estadoSimulacionFisica.tMax, 2));
+
+        const vfEl = document.getElementById("labPhysVfCalc");
+        const dEl = document.getElementById("labPhysDistCalc");
+        if (vfEl) vfEl.textContent = `${vf.toFixed(1)} m/s`;
+        if (dEl) dEl.textContent = `${dist.toFixed(1)} m`;
+
+        dibujarCuadroSimuladorFisica(canvas, 0);
+    }
+
+    [v0Slider, accSlider, tSlider].forEach(slider => {
+        if (slider) {
+            slider.oninput = recalcularFisicaValores;
+        }
+    });
+
+    if (playBtn) {
+        playBtn.onclick = () => {
+            if (estadoSimulacionFisica.corriendo) return;
+            estadoSimulacionFisica.corriendo = true;
+            estadoSimulacionFisica.tActual = 0;
+            const tInicio = performance.now();
+
+            function animar(tFrame) {
+                const elapsedSec = (tFrame - tInicio) / 1000;
+                estadoSimulacionFisica.tActual = Math.min(elapsedSec, estadoSimulacionFisica.tMax);
+
+                dibujarCuadroSimuladorFisica(canvas, estadoSimulacionFisica.tActual);
+
+                if (estadoSimulacionFisica.tActual < estadoSimulacionFisica.tMax) {
+                    animacionFisicaId = requestAnimationFrame(animar);
+                } else {
+                    estadoSimulacionFisica.corriendo = false;
+                }
+            }
+
+            cancelAnimationFrame(animacionFisicaId);
+            animacionFisicaId = requestAnimationFrame(animar);
+        };
+    }
+
+    if (resetBtn) {
+        resetBtn.onclick = () => {
+            cancelAnimationFrame(animacionFisicaId);
+            estadoSimulacionFisica.corriendo = false;
+            estadoSimulacionFisica.tActual = 0;
+            dibujarCuadroSimuladorFisica(canvas, 0);
+        };
+    }
+
+    if (copyBtn) {
+        copyBtn.onclick = () => {
+            const vf = (estadoSimulacionFisica.v0 + (estadoSimulacionFisica.a * estadoSimulacionFisica.tMax)).toFixed(1);
+            navigator.clipboard.writeText(vf).then(() => {
+                mostrarToast(`📋 Copiado vf = ${vf} m/s`);
+            });
+        };
+    }
+
+    recalcularFisicaValores();
+}
+
+function dibujarCuadroSimuladorFisica(canvas, t) {
+    const ctx = canvas.getContext("2d");
+    const W = canvas.width;
+    const H = canvas.height;
+
+    ctx.clearRect(0, 0, W, H);
+
+    // Fondo y suelo
+    const sueloY = H - 50;
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.15)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(0, sueloY);
+    ctx.lineTo(W, sueloY);
+    ctx.stroke();
+
+    // Marcas de distancia métrica en el suelo
+    for (let x = 40; x < W; x += 60) {
+        ctx.beginPath();
+        ctx.moveTo(x, sueloY);
+        ctx.lineTo(x, sueloY + 8);
+        ctx.stroke();
+        ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
+        ctx.font = "9px sans-serif";
+        ctx.fillText(`${Math.round(x)}m`, x - 8, sueloY + 22);
+    }
+
+    // Cálculo Cinemático: x(t) = v0*t + 0.5*a*t^2
+    const v0 = estadoSimulacionFisica.v0;
+    const a = estadoSimulacionFisica.a;
+    const distReal = (v0 * t) + (0.5 * a * t * t);
+    const velReal = v0 + (a * t);
+
+    // Escala para ajustar en pantalla (40px a W - 80px)
+    const distMax = (v0 * estadoSimulacionFisica.tMax) + (0.5 * a * Math.pow(estadoSimulacionFisica.tMax, 2)) || 1;
+    const factorEscala = (W - 140) / Math.max(distMax, 10);
+    const xPixel = 50 + (distReal * factorEscala);
+
+    // Dibujar trayectoria con estela
+    ctx.strokeStyle = "rgba(249, 115, 22, 0.4)";
+    ctx.lineWidth = 2;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.moveTo(50, sueloY - 15);
+    ctx.lineTo(xPixel, sueloY - 15);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Dibujar el Móvil (Vehículo / Bloque tecnológico)
+    const movilW = 44;
+    const movilH = 22;
+    const movilX = xPixel - (movilW / 2);
+    const movilY = sueloY - movilH - 4;
+
+    ctx.fillStyle = "#f97316";
+    ctx.beginPath();
+    ctx.roundRect ? ctx.roundRect(movilX, movilY, movilW, movilH, 6) : ctx.rect(movilX, movilY, movilW, movilH);
+    ctx.fill();
+
+    // Ruedas
+    ctx.fillStyle = "#0f172a";
+    ctx.beginPath();
+    ctx.arc(movilX + 10, sueloY - 4, 5, 0, Math.PI * 2);
+    ctx.arc(movilX + movilW - 10, sueloY - 4, 5, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Vector Velocidad (Flecha cyan en la punta)
+    const arrowLen = Math.min(60, Math.max(15, velReal * 1.5));
+    ctx.strokeStyle = "#38bdf8";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(movilX + movilW, movilY + (movilH / 2));
+    ctx.lineTo(movilX + movilW + arrowLen, movilY + (movilH / 2));
+    ctx.stroke();
+
+    // Punta de flecha
+    ctx.fillStyle = "#38bdf8";
+    ctx.beginPath();
+    ctx.moveTo(movilX + movilW + arrowLen + 6, movilY + (movilH / 2));
+    ctx.lineTo(movilX + movilW + arrowLen - 2, movilY + (movilH / 2) - 4);
+    ctx.lineTo(movilX + movilW + arrowLen - 2, movilY + (movilH / 2) + 4);
+    ctx.fill();
+
+    // Telemetría en tiempo real
+    const tSpan = document.getElementById("labPhysTelemetryTime");
+    const vSpan = document.getElementById("labPhysTelemetryVel");
+    const posSpan = document.getElementById("labPhysTelemetryPos");
+    if (tSpan) tSpan.textContent = `${t.toFixed(1)} s`;
+    if (vSpan) vSpan.textContent = `${velReal.toFixed(1)} m/s`;
+    if (posSpan) posSpan.textContent = `${distReal.toFixed(1)} m`;
+}
+
+/* =========================================================
+   MÓDULO: GRAFICADOR MATEMÁTICO 2D (CANVAS CARTESIANO)
+   ========================================================= */
+
+function inicializarGraficadorMatematicas() {
+    const canvas = document.getElementById("labMathCanvas");
+    const inputExpr = document.getElementById("labMathExprInput");
+    const btnPlot = document.getElementById("labBtnPlotFunc");
+    if (!canvas) return;
+
+    function plotear() {
+        const expr = inputExpr?.value?.trim() || "x^2 - 6*x + 8";
+        dibujarGraficaFuncion2D(canvas, expr);
+    }
+
+    if (btnPlot) btnPlot.onclick = plotear;
+    if (inputExpr) {
+        inputExpr.onkeydown = (e) => {
+            if (e.key === "Enter") plotear();
+        };
+    }
+
+    document.querySelectorAll(".lab-math-preset-btn").forEach(btn => {
+        btn.onclick = () => {
+            if (inputExpr) {
+                inputExpr.value = btn.dataset.expr || "";
+                plotear();
+            }
+        };
+    });
+
+    plotear();
+}
+
+function evaluarExpresionMatematicaSegura(exprStr, x) {
+    try {
+        let limpio = exprStr.toLowerCase()
+            .replace(/\s+/g, "")
+            .replace(/\^/g, "**")
+            .replace(/sin\(/g, "Math.sin(")
+            .replace(/cos\(/g, "Math.cos(")
+            .replace(/tan\(/g, "Math.tan(")
+            .replace(/sqrt\(/g, "Math.sqrt(")
+            .replace(/abs\(/g, "Math.abs(");
+
+        // Permitir multiplicación implícita (ej. 2x -> 2*x)
+        limpio = limpio.replace(/(\d)x/g, "$1*x");
+        limpio = limpio.replace(/x/g, `(${x})`);
+
+        // Solo permitir números, operadores y Math
+        if (/[^0-9\+\-\*\/\.\(\)Math\.sincotabeqrt]/.test(limpio)) return NaN;
+        return Function(`"use strict"; return (${limpio})`)();
+    } catch {
+        return NaN;
+    }
+}
+
+function dibujarGraficaFuncion2D(canvas, exprStr) {
+    const ctx = canvas.getContext("2d");
+    const W = canvas.width;
+    const H = canvas.height;
+
+    ctx.clearRect(0, 0, W, H);
+
+    // Ejes Cartesianos
+    const origenX = W / 2;
+    const origenY = H / 2;
+    const escala = 22; // 22 píxeles por unidad
+
+    // Cuadrícula suave
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.05)";
+    ctx.lineWidth = 1;
+    for (let x = origenX % escala; x < W; x += escala) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+    }
+    for (let y = origenY % escala; y < H; y += escala) {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+    }
+
+    // Eje X e Y principales
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.35)";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(0, origenY); ctx.lineTo(W, origenY);
+    ctx.moveTo(origenX, 0); ctx.lineTo(origenX, H);
+    ctx.stroke();
+
+    // Trazar curva de la función f(x)
+    ctx.strokeStyle = "#38bdf8";
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+
+    let empezo = false;
+    let raicesDetectadas = [];
+
+    for (let px = 0; px < W; px++) {
+        const xReal = (px - origenX) / escala;
+        const yReal = evaluarExpresionMatematicaSegura(exprStr, xReal);
+
+        if (!isNaN(yReal) && isFinite(yReal)) {
+            const py = origenY - (yReal * escala);
+
+            // Detección de paso por cero (raíz)
+            if (px > 0) {
+                const prevX = (px - 1 - origenX) / escala;
+                const prevY = evaluarExpresionMatematicaSegura(exprStr, prevX);
+                if ((prevY <= 0 && yReal >= 0) || (prevY >= 0 && yReal <= 0)) {
+                    if (Math.abs(yReal) < 0.5) {
+                        raicesDetectadas.push(Number(xReal.toFixed(2)));
+                    }
+                }
+            }
+
+            if (!empezo) {
+                ctx.moveTo(px, py);
+                empezo = true;
+            } else {
+                ctx.lineTo(px, py);
+            }
+        } else {
+            empezo = false;
+        }
+    }
+    ctx.stroke();
+
+    // Actualizar leyenda de raíces en la UI
+    const rootsEl = document.getElementById("labMathRootsVal");
+    if (rootsEl) {
+        if (raicesDetectadas.length > 0) {
+            const unicas = [...new Set(raicesDetectadas.map(r => Math.round(r * 10) / 10))];
+            rootsEl.textContent = unicas.map((r, i) => `x${i + 1} ≈ ${r}`).join(", ");
+        } else {
+            rootsEl.textContent = "Sin raíces reales en el rango visible";
+        }
+    }
+}
+
+/* =========================================================
+   MÓDULO: ÁLGEBRA MATRICIAL & TABLAS DE VERDAD
+   ========================================================= */
+
+function inicializarModuloMatricesYLogica() {
+    const btn2x2 = document.getElementById("labBtnSubtabMatriz2x2");
+    const btnLogica = document.getElementById("labBtnSubtabLogica");
+    const panel2x2 = document.getElementById("labPanelMatriz2x2");
+    const panelLogica = document.getElementById("labPanelLogica");
+    const btnCopy = document.getElementById("labBtnCopyDet2");
+
+    if (btn2x2 && btnLogica) {
+        btn2x2.onclick = () => {
+            btn2x2.classList.add("is-active", "button--secondary");
+            btn2x2.classList.remove("button--ghost");
+            btnLogica.classList.remove("is-active", "button--secondary");
+            btnLogica.classList.add("button--ghost");
+            if (panel2x2) panel2x2.classList.remove("hidden");
+            if (panelLogica) panelLogica.classList.add("hidden");
+        };
+
+        btnLogica.onclick = () => {
+            btnLogica.classList.add("is-active", "button--secondary");
+            btnLogica.classList.remove("button--ghost");
+            btn2x2.classList.remove("is-active", "button--secondary");
+            btn2x2.classList.add("button--ghost");
+            if (panelLogica) panelLogica.classList.remove("hidden");
+            if (panel2x2) panel2x2.classList.add("hidden");
+        };
+    }
+
+    const celdas = ["m2_00", "m2_01", "m2_10", "m2_11"].map(id => document.getElementById(id));
+    function recalcularMatriz2x2() {
+        const a = parseFloat(document.getElementById("m2_00")?.value || 0);
+        const b = parseFloat(document.getElementById("m2_01")?.value || 0);
+        const c = parseFloat(document.getElementById("m2_10")?.value || 0);
+        const d = parseFloat(document.getElementById("m2_11")?.value || 0);
+
+        const det = (a * d) - (b * c);
+        const traza = a + d;
+
+        const detEl = document.getElementById("m2_det");
+        const trEl = document.getElementById("m2_tr");
+        const invEl = document.getElementById("m2_inv_desc");
+
+        if (detEl) detEl.textContent = String(det);
+        if (trEl) trEl.textContent = String(traza);
+        if (invEl) {
+            invEl.textContent = det !== 0
+                ? "Inversa regular existente (det ≠ 0)"
+                : "Matriz singular (no tiene inversa, det = 0)";
+        }
+    }
+
+    celdas.forEach(inp => {
+        if (inp) inp.addEventListener("input", recalcularMatriz2x2);
+    });
+
+    if (btnCopy) {
+        btnCopy.onclick = () => {
+            const det = document.getElementById("m2_det")?.textContent || "0";
+            navigator.clipboard.writeText(det).then(() => {
+                mostrarToast(`📋 Copiado det(A) = ${det}`);
+            });
+        };
+    }
+
+    recalcularMatriz2x2();
+}
+
 async function extraerTextoDeCualquierArchivo(file) {
     if (!file) return null;
     const nameLower = file.name.toLowerCase();
@@ -17510,15 +18180,8 @@ function configurarEventosLaboratorio() {
             }
             actualizarBadgesMateriaLabUI();
 
-            // Activar automáticamente la pestaña correspondiente
-            if (laboratorioEstado.materiaSeleccionada === "contabilidad") {
-                activarTabLaboratorio("contabilidad");
-            } else {
-                const mat = CATALOGO_MATERIAS_LABORATORIO[laboratorioEstado.materiaSeleccionada];
-                if (mat && mat.tabDefault) {
-                    activarTabLaboratorio(mat.tabDefault);
-                }
-            }
+            // Filtrar y activar pestañas específicas de la disciplina seleccionada
+            filtrarTabsPorMateria(laboratorioEstado.materiaSeleccionada);
 
             cerrarModalConfigLab();
             generarEjercicioLaboratorio(true, laboratorioEstado.instruccionUsuario);
@@ -17629,13 +18292,21 @@ function configurarEventosLaboratorio() {
         { btn: dom.labTabBtnProb, id: "prob" },
         { btn: dom.labTabBtnBayes, id: "bayes" },
         { btn: dom.labTabBtnScratch, id: "scratch" },
-        { btn: dom.labTabBtnContabilidad, id: "contabilidad" }
+        { btn: dom.labTabBtnContabilidad, id: "contabilidad" },
+        { btn: dom.labTabBtnQuimica, id: "quimica" },
+        { btn: dom.labTabBtnFisica, id: "fisica" },
+        { btn: dom.labTabBtnMatematicas, id: "matematicas" },
+        { btn: dom.labTabBtnMatrices, id: "matrices" }
     ];
 
     tabBtns.forEach(({ btn, id }) => {
         if (!btn) return;
         btn.addEventListener("click", () => activarTabLaboratorio(id));
     });
+
+    if (typeof inicializarModuloMatricesYLogica === "function") {
+        inicializarModuloMatricesYLogica();
+    }
 
     // Exponer funciones globales requeridas por atributos onclick inline en tablas dinámicas
     window.eliminarAsientoContable = eliminarAsientoContable;
