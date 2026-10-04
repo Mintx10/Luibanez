@@ -901,6 +901,7 @@ const dom = {
     bolilleroCountSelector: document.getElementById("bolilleroCountSelector"),
     bolilleroTopicsGrid: document.getElementById("bolilleroTopicsGrid"),
     bolilleroOpenSetupBtn: document.getElementById("bolilleroOpenSetupBtn"),
+    bolilleroSetupOpenManualBtn: document.getElementById("bolilleroSetupOpenManualBtn"),
 
     /* Modal de Configuración Inicial: Bomba IA */
     bombaSetupModal: document.getElementById("bombaSetupModal"),
@@ -9233,6 +9234,12 @@ function iniciarAplicacion() {
     if (dom.bolilleroBtnCargarConfig) {
         dom.bolilleroBtnCargarConfig.addEventListener("click", ejecutarGeneracionBolilleroIA);
     }
+    if (dom.bolilleroSetupOpenManualBtn) {
+        dom.bolilleroSetupOpenManualBtn.addEventListener("click", () => {
+            cerrarModalConfigBolillero();
+            if (dom.topicModal) dom.topicModal.showModal();
+        });
+    }
 
     // =========================================================
     // LISTENERS: MODAL DE CONFIGURACIÓN DE LA BOMBA (IA)
@@ -9561,7 +9568,7 @@ function iniciarAplicacion() {
 // =========================================================
 // GESTOR DE VERSIONES Y ACTUALIZACIÓN AUTOMÁTICA
 // =========================================================
-const APP_BUILD_VERSION = "27.1";
+const APP_BUILD_VERSION = "27.2";
 
 async function forzarActualizacionCompleta(mostrarNotificacion = true) {
     const btnActualizar = document.getElementById("btnForzarActualizar");

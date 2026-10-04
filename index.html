@@ -15,10 +15,10 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     
-    <link rel="icon" type="image/svg+xml" href="icon.svg?v=27.1">
-    <link rel="apple-touch-icon" href="icon-192.png?v=27.1">
-    <link rel="manifest" href="manifest.json?v=27.1">
-    <link rel="stylesheet" href="style.css?v=27.1">
+    <link rel="icon" type="image/svg+xml" href="icon.svg?v=27.2">
+    <link rel="apple-touch-icon" href="icon-192.png?v=27.2">
+    <link rel="manifest" href="manifest.json?v=27.2">
+    <link rel="stylesheet" href="style.css?v=27.2">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -271,63 +271,6 @@
             </div>
         </div>
 
-        <!-- ==================== CENTRO PRINCIPAL DE MATERIAL DE ESTUDIO (PDF HUB) ==================== -->
-        <div class="main-pdf-hub-container" style="max-width: 1200px; margin: 2rem auto 0; padding: 0 1rem;">
-            <div class="main-pdf-hub-card">
-                <div class="main-pdf-hub-header">
-                    <div class="main-pdf-hub-icon">📚</div>
-                    <div class="main-pdf-hub-content">
-                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.25rem;">
-                            <div class="main-pdf-hub-badge" style="margin-bottom: 0;">
-                                <span class="pulse-dot"></span>
-                                <span>CENTRO DE APUNTES & IA UNIVERSITARIA</span>
-                            </div>
-                            <button id="pdfHubRulesBtn" class="rules-trigger-btn" type="button" title="¿Cómo funciona el Centro de Apuntes y la IA?">
-                                <span>❓</span><span>¿Cómo funciona?</span>
-                            </button>
-                        </div>
-                        <h2 class="main-pdf-hub-title">Material de Estudio Activo</h2>
-                        <p class="main-pdf-hub-desc">
-                            Cargá los apuntes o el libro de tu materia en PDF una sola vez. La IA de Gemini extraerá los conceptos clave para alimentar automáticamente al <strong>Bolillero de examen</strong>, <strong>Desactivá la Bomba</strong>, <strong>Caza al Impostor</strong> y <strong>Memotest Conectado</strong>.
-                        </p>
-                    </div>
-                </div>
-
-                <!-- Estado Vacío: Botón principal de carga -->
-                <div class="main-pdf-hub-body" id="mainPdfHubEmpty">
-                    <input type="file" id="mainGlobalPdfInput" accept=".pdf,.txt" class="hidden">
-                    <button id="mainUploadPdfBtn" class="button button--primary button--lg main-pdf-upload-btn" type="button">
-                        <span style="font-size: 1.25rem;">📄</span> Cargar Apuntes o Libro en PDF
-                    </button>
-                    <span class="main-pdf-hub-hint">
-                        🔒 Procesamiento privado y seguro con PDF.js en tu dispositivo. Guardado automático para futuras sesiones.
-                    </span>
-                </div>
-
-                <!-- Estado Activo: Archivo cargado que alimenta los juegos -->
-                <div class="main-pdf-hub-active hidden" id="mainPdfHubActive">
-                    <div class="main-pdf-file-details">
-                        <span class="main-pdf-file-icon">📑</span>
-                        <div class="main-pdf-file-text">
-                            <strong class="main-pdf-file-name" id="mainPdfFileName">apuntes.pdf</strong>
-                            <span class="main-pdf-file-stats" id="mainPdfFileStats">32 páginas • Guardado en base de datos local</span>
-                        </div>
-                        <span class="badge badge--success main-pdf-connected-badge">
-                            🟢 Conectado: Alimenta a todos los juegos
-                        </span>
-                    </div>
-                    <div class="main-pdf-hub-actions">
-                        <button id="mainChangePdfBtn" class="button button--secondary button--sm" type="button">
-                            🔄 Cambiar PDF
-                        </button>
-                        <button id="mainRemovePdfBtn" class="button button--ghost button--sm" type="button" style="color: #f87171;">
-                            ✕ Quitar Material
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
         <!-- Portal Hub: 3 Grandes Accesos Directos a las Páginas de la App -->
         <div class="portal-hub-container" style="max-width: 1200px; margin: 2rem auto 0; padding: 0 1rem;">
             <div class="modules-grid" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
@@ -340,7 +283,7 @@
                     </div>
                     <h3 class="module-card__title" style="font-size: 1.45rem;">Estudiar Solo</h3>
                     <p class="module-card__desc" style="font-size: 0.95rem; line-height: 1.5;">
-                        Tu espacio de entrenamiento individual con secciones modulares en cuadrículas: <strong>Bolillero Individual</strong>, <strong>Desactivá la Bomba</strong>, <strong>Caza al Impostor</strong> y <strong>Memotest Conectado</strong>.
+                        Tu espacio de entrenamiento individual con las 4 modalidades en cuadrícula: <strong>Bolillero Individual</strong>, <strong>Desactivá la Bomba</strong>, <strong>Caza al Impostor</strong> y <strong>Memotest Conectado</strong>.
                     </p>
                     <div class="module-card__actions" style="margin-top: auto; padding-top: 1rem;">
                         <button id="homeGoToSoloBtn" class="button button--primary button--full" type="button">
@@ -372,28 +315,11 @@
                     </div>
                 </article>
 
-                <!-- Tarjeta Portal 3: Salón de la Fama -->
-                <article class="module-card module-card--active module-card--triatlon" style="border-color: rgba(245, 158, 11, 0.35); padding: 1.85rem;">
-                    <div class="module-card__header">
-                        <div class="module-card__icon module-card__icon--triatlon" style="font-size: 2rem;">🏆</div>
-                        <span class="badge badge--gold">Estadísticas</span>
-                    </div>
-                    <h3 class="module-card__title" style="font-size: 1.45rem;">Salón de la Fama</h3>
-                    <p class="module-card__desc" style="font-size: 0.95rem; line-height: 1.5;">
-                        Historial de partidas, rankings multiverso de campeones, tasa de victorias de carrera y vitrina de medallas por materia.
-                    </p>
-                    <div class="module-card__actions" style="margin-top: auto; padding-top: 1rem;">
-                        <button id="homeGoToFamaBtn" class="button button--secondary button--full" type="button">
-                            Ver Salón de la Fama ➜
-                        </button>
-                    </div>
-                </article>
-
-                <!-- Tarjeta Portal 4: Laboratorio de Prácticas -->
+                <!-- Tarjeta Portal 3: Laboratorio de Prácticas (Con Badge Nuevo) -->
                 <article id="homeCardLaboratorio" class="module-card module-card--active" style="border-color: rgba(16, 185, 129, 0.45); padding: 1.85rem; background: linear-gradient(145deg, rgba(15, 23, 42, 0.75), rgba(6, 78, 59, 0.2)); cursor: pointer;">
                     <div class="module-card__header">
                         <div class="module-card__icon module-card__icon--primary" style="font-size: 2rem; background: rgba(16, 185, 129, 0.15); color: #34d399;">🔬</div>
-                        <span class="badge badge--success">¡Nuevo Módulo Práctico!</span>
+                        <span class="badge badge--success" style="background: rgba(16, 185, 129, 0.2); border: 1px solid #10b981; color: #34d399; font-weight: 800; animation: pulseGlow 2s infinite;">✨ ¡NUEVO!</span>
                     </div>
                     <h3 class="module-card__title" style="font-size: 1.45rem;">Laboratorio de Prácticas</h3>
                     <p class="module-card__desc" style="font-size: 0.95rem; line-height: 1.5;">
@@ -503,53 +429,6 @@
                     </div>
                 </article>
 
-                <!-- Cuadrícula 5: Centro de Apuntes & Documentos PDF (IA) -->
-                <article class="module-card module-card--active module-card--solo" id="cardSoloPDF" style="border-color: rgba(16, 185, 129, 0.45); background: linear-gradient(180deg, rgba(16, 185, 129, 0.05), rgba(15, 20, 30, 0.95));">
-                    <div class="module-card__header">
-                        <div class="module-card__icon" style="background: rgba(16, 185, 129, 0.15); color: #10b981;">📄</div>
-                        <span class="badge badge--success">Gemini PDF Hub</span>
-                    </div>
-                    <h3 class="module-card__title">Apuntes & Material PDF</h3>
-                    <p class="module-card__desc" id="soloPdfCardDesc">
-                        Cargá el resumen o programa en PDF de tu materia. La IA de Google Gemini extraerá los conceptos y adaptará las preguntas de todos tus juegos automáticamente.
-                    </p>
-                    <div class="module-card__actions" style="margin-top: auto; padding-top: 1rem;">
-                        <input type="file" id="soloGlobalPdfInput" accept=".pdf,.txt" class="hidden">
-                        <button id="soloUploadGlobalPdfBtn" class="button button--primary button--full" type="button" style="background: #10b981; border-color: #10b981;">
-                            📂 Cargar Apunte PDF
-                        </button>
-                    </div>
-                </article>
-
-                <!-- Cuadrícula 6: Laboratorio de Prácticas -->
-                <article class="module-card module-card--active module-card--solo" id="cardSoloLab" style="border-color: rgba(16, 185, 129, 0.45); background: linear-gradient(180deg, rgba(16, 185, 129, 0.08), rgba(15, 20, 30, 0.95)); cursor: pointer;">
-                    <div class="module-card__header">
-                        <div class="module-card__icon" style="background: rgba(16, 185, 129, 0.15); color: #34d399;">🔬</div>
-                        <span class="badge badge--success">Estadística & Práctica</span>
-                    </div>
-                    <h3 class="module-card__title">Laboratorio Numérico</h3>
-                    <p class="module-card__desc">
-                        Mesa de trabajo interactiva con resolución por hitos, constructor de tablas de frecuencia, calculadora con campana de Gauss dinámica y matriz de Bayes.
-                    </p>
-                    <div class="module-card__actions" style="margin-top: auto; padding-top: 1rem;">
-                        <button id="soloOpenLabBtn" class="button button--primary button--full" type="button" style="background: linear-gradient(135deg, #059669, #10b981);">
-                            Abrir Laboratorio 🔬
-                        </button>
-                    </div>
-                </article>
-
-                <!-- Cuadrícula 7: Sección Modular Próximamente -->
-                <article class="module-card module-card--solo" style="border: 2px dashed rgba(255, 255, 255, 0.15); background: rgba(255, 255, 255, 0.02); display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; min-height: 240px;">
-                    <div style="font-size: 2.2rem; margin-bottom: 0.5rem; opacity: 0.8;">✨</div>
-                    <h3 style="color: #fff; font-size: 1.15rem; margin-bottom: 0.35rem;">Arquitectura Modular</h3>
-                    <p style="color: var(--color-text-muted); font-size: 0.85rem; max-width: 240px; margin-bottom: 1rem;">
-                        A medida que agregues más secciones de estudio, se ordenarán automáticamente una al lado de la otra.
-                    </p>
-                    <button id="soloNewListShortcutBtn" class="button button--ghost button--sm" type="button">
-                        + Nueva Sección / Lista
-                    </button>
-                </article>
-
             </div>
         </div>
     </section>
@@ -605,22 +484,13 @@
                     <div class="panel__header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
                         <h3 id="topics-title" class="panel__title" style="margin: 0;">Temas de la lista</h3>
                         <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
-                            <!-- Botón Cargar Archivo / Configurar Bolillero con IA -->
-                            <button id="bolilleroOpenSetupBtn" class="button button--primary button--sm" type="button" title="Configurar bolillero con IA, cargar archivos y filtrar por unidad" style="background: linear-gradient(135deg, #0284c7, #0ea5e9); font-weight: 600; box-shadow: 0 0 12px rgba(14, 165, 233, 0.35);">
-                                ✨ Cargar con IA / Archivo
+                            <!-- Botón Principal: Cargar Archivo / Generar Palabras con IA -->
+                            <button id="bolilleroOpenSetupBtn" class="button button--primary button--sm" type="button" title="Configurar bolillero con IA o cargar archivo de estudio" style="background: linear-gradient(135deg, #0284c7, #0ea5e9); font-weight: 600; box-shadow: 0 0 12px rgba(14, 165, 233, 0.35);">
+                                ✨ Generar Palabras / Cargar Archivo
                             </button>
-                            <!-- Botón Cargar Palabras con IA desde el PDF -->
-                            <button id="bolilleroIaWordsBtn" class="button button--accent button--sm" type="button" title="Extraer palabras y conceptos del PDF activo con IA">
-                                🤖 Palabras Rápidas
-                            </button>
-                            <!-- Botón Importar Bloc de Notas / Archivo .txt -->
-                            <button id="importButton" class="button button--secondary button--sm" type="button" title="Importar temas desde bloc de notas (.txt) o .json">
-                                📁 Importar (.txt)
-                            </button>
-                            <input type="file" id="importFileInput" accept=".txt,.json" class="hidden">
-                            <!-- Botón Agregar Tema Manual -->
-                            <button id="addTopicButton" class="button button--secondary button--sm" type="button" aria-haspopup="dialog" aria-controls="topicModal">
-                                + Agregar tema
+                            <!-- Botón Manual: Agregar Palabra a Mano -->
+                            <button id="addTopicButton" class="button button--secondary button--sm" type="button" aria-haspopup="dialog" aria-controls="topicModal" title="Escribir una palabra o concepto manualmente">
+                                + Agregar Palabra Manual
                             </button>
                         </div>
                     </div>
@@ -3606,7 +3476,7 @@
 </dialog>
 
 <script src="mqtt.min.js"></script>
-<script src="script.js?v=27.1" defer></script>
+<script src="script.js?v=27.2" defer></script>
 
 <!-- =========================================================
      MODAL DE PROMPT PARA GEMINI (CREAR JUEGOS DESDE PDF)
@@ -3754,68 +3624,16 @@
                     </div>
                 </div>
 
-                <!-- Grilla de Tipo de Conceptos / Bolillas -->
-                <label class="section-title lab-section-label" style="margin-top: 0.35rem;">🎯 ¿Cómo querés estructurar las bolillas?</label>
-                <div class="lab-topics-grid" id="bolilleroTopicsGrid">
-                    <label class="lab-topic-option is-selected" data-mode="conceptos">
-                        <input type="radio" name="bolilleroModeRadio" value="conceptos" checked class="hidden">
-                        <div class="lab-topic-card-body">
-                            <span class="lab-topic-icon">🔑</span>
-                            <div class="lab-topic-info">
-                                <strong>Conceptos & Términos Clave</strong>
-                                <span>Palabras centrales de la unidad para desarrollar oralmente.</span>
-                            </div>
-                        </div>
-                    </label>
-                    <label class="lab-topic-option" data-mode="preguntas">
-                        <input type="radio" name="bolilleroModeRadio" value="preguntas" class="hidden">
-                        <div class="lab-topic-card-body">
-                            <span class="lab-topic-icon">❓</span>
-                            <div class="lab-topic-info">
-                                <strong>Preguntas de Examen Oral</strong>
-                                <span>Preguntas típicas y ejes teóricos de mesa de examen.</span>
-                            </div>
-                        </div>
-                    </label>
-                    <label class="lab-topic-option" data-mode="casos">
-                        <input type="radio" name="bolilleroModeRadio" value="casos" class="hidden">
-                        <div class="lab-topic-card-body">
-                            <span class="lab-topic-icon">⚖️</span>
-                            <div class="lab-topic-info">
-                                <strong>Casos & Problemas Teóricos</strong>
-                                <span>Situaciones aplicadas para justificar conceptos.</span>
-                            </div>
-                        </div>
-                    </label>
-                    <label class="lab-topic-option" data-mode="mixto">
-                        <input type="radio" name="bolilleroModeRadio" value="mixto" class="hidden">
-                        <div class="lab-topic-card-body">
-                            <span class="lab-topic-icon">📚</span>
-                            <div class="lab-topic-info">
-                                <strong>Temario Completo Equilibrado</strong>
-                                <span>Mezcla uniforme de definiciones, fórmulas y principios.</span>
-                            </div>
-                        </div>
-                    </label>
-                </div>
-
-                <!-- Destino de la Lista Generada -->
-                <div class="bolillero-destination-section" style="margin-top: 0.25rem; background: rgba(15,23,42,0.5); padding: 0.6rem 0.85rem; border-radius: var(--radius-md); border: 1px solid rgba(255,255,255,0.06);">
-                    <label class="section-title lab-section-label" style="margin-bottom: 0.3rem;">📥 Destino de las bolillas:</label>
-                    <div style="display: flex; gap: 0.85rem; flex-wrap: wrap; font-size: 0.82rem; color: #cbd5e1;">
-                        <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
-                            <input type="radio" name="bolilleroTargetRadio" value="new" checked>
-                            <span>Crear lista nueva</span>
-                        </label>
-                        <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
-                            <input type="radio" name="bolilleroTargetRadio" value="replace">
-                            <span>Reemplazar lista actual</span>
-                        </label>
-                        <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
-                            <input type="radio" name="bolilleroTargetRadio" value="append">
-                            <span>Agregar al final</span>
-                        </label>
-                    </div>
+                <!-- Opción de Agregar Palabra Manual -->
+                <div class="bolillero-manual-add-box" style="margin-top: 1.5rem; background: rgba(15,23,42,0.5); padding: 1.1rem; border-radius: var(--radius-md); border: 1px dashed rgba(56,189,248,0.25); text-align: center;">
+                    <span style="font-size: 1.5rem; display: block; margin-bottom: 0.35rem;">✍️</span>
+                    <strong style="color: #fff; font-size: 0.95rem; display: block; margin-bottom: 0.25rem;">¿Querés ingresar palabras a mano?</strong>
+                    <p style="font-size: 0.8rem; color: var(--color-text-muted); margin: 0 0 0.85rem; line-height: 1.4;">
+                        Si no tenés un archivo o querés sumar conceptos específicos, podés escribirlos directamente.
+                    </p>
+                    <button id="bolilleroSetupOpenManualBtn" class="button button--secondary button--sm button--full" type="button" style="border-color: rgba(56,189,248,0.4); color: #38bdf8;">
+                        + Agregar Palabra Manual
+                    </button>
                 </div>
             </div>
         </div>
