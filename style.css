@@ -1714,6 +1714,12 @@ input:focus {
 /* =========================================================
    MODALES
    ========================================================= */
+dialog:not([open]),
+.modal:not([open]),
+.lab-config-dialog:not([open]) {
+    display: none !important;
+}
+
 .modal {
     width: min(90vw, 420px);
     padding: 0;
@@ -11108,14 +11114,22 @@ body.modo-dev-activo .juntos-locked-notice {
     width: min(95vw, 980px);
     max-height: 90vh;
     height: auto;
-    display: flex;
-    flex-direction: column;
     background: #090e1d;
     border: 1.5px solid rgba(56, 189, 248, 0.28);
     border-radius: var(--radius-lg);
     box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8), 0 0 30px rgba(56, 189, 248, 0.12);
     overflow: hidden;
     padding: 0;
+    margin: auto;
+}
+
+#labConfigModal.lab-config-dialog:not([open]) {
+    display: none !important;
+}
+
+#labConfigModal.lab-config-dialog[open] {
+    display: flex;
+    flex-direction: column;
 }
 
 .lab-config-modal-content {

@@ -1269,9 +1269,14 @@ function cambiarVista(vista) {
 
     estado.interfaz.vistaActual = vistaDestino;
 
-    // El pizarrón flotante del laboratorio vive fuera de la vista: cerrarlo al salir
-    if (vistaDestino !== "laboratorio" && typeof cerrarPizarronFlotanteLab === "function") {
-        cerrarPizarronFlotanteLab();
+    // El pizarrón flotante y el modal de materias viven fuera de la vista: cerrarlos al salir
+    if (vistaDestino !== "laboratorio") {
+        if (typeof cerrarPizarronFlotanteLab === "function") {
+            cerrarPizarronFlotanteLab();
+        }
+        if (typeof cerrarModalConfigLab === "function") {
+            cerrarModalConfigLab();
+        }
     }
 
     const currentHash = window.location.hash.replace("#", "");
@@ -9873,7 +9878,7 @@ function iniciarAplicacion() {
 // =========================================================
 // GESTOR DE VERSIONES Y ACTUALIZACIÓN AUTOMÁTICA
 // =========================================================
-const APP_BUILD_VERSION = "27.8";
+const APP_BUILD_VERSION = "27.9";
 
 async function forzarActualizacionCompleta(mostrarNotificacion = true) {
     const btnActualizar = document.getElementById("btnForzarActualizar");
