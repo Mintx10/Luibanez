@@ -786,7 +786,15 @@ const dom = {
     labConfigOrderInput: document.getElementById("labConfigOrderInput"),
 
     /* Selector Multidisciplinario de Exactas y Contabilidad */
+    labDisciplinesGrid: document.getElementById("labDisciplinesGrid"),
     labDisciplinesList: document.getElementById("labDisciplinesList"),
+    labStepMaterias: document.getElementById("labStepMaterias"),
+    labStepConfigMateria: document.getElementById("labStepConfigMateria"),
+    labBtnVolverMaterias: document.getElementById("labBtnVolverMaterias"),
+    labMateriaBannerIcon: document.getElementById("labMateriaBannerIcon"),
+    labMateriaBannerTitle: document.getElementById("labMateriaBannerTitle"),
+    labMateriaBannerDesc: document.getElementById("labMateriaBannerDesc"),
+    labConfigModalSubtitle: document.getElementById("labConfigModalSubtitle"),
     labSubtopicsTitle: document.getElementById("labSubtopicsTitle"),
     labBtnSelectAllSubtopics: document.getElementById("labBtnSelectAllSubtopics"),
     labBtnClearSubtopics: document.getElementById("labBtnClearSubtopics"),
@@ -9856,7 +9864,7 @@ function iniciarAplicacion() {
 // =========================================================
 // GESTOR DE VERSIONES Y ACTUALIZACIÓN AUTOMÁTICA
 // =========================================================
-const APP_BUILD_VERSION = "27.6";
+const APP_BUILD_VERSION = "27.7";
 
 async function forzarActualizacionCompleta(mostrarNotificacion = true) {
     const btnActualizar = document.getElementById("btnForzarActualizar");
@@ -14141,40 +14149,67 @@ function iniciarOReanudarLaboratorio() {
 }
 
 // ------------------------------------------
-// SELECTOR MULTIDISCIPLINARIO DE EXACTAS Y CONTABILIDAD
+// SELECTOR MULTIDISCIPLINARIO DE EXACTAS Y CONTABILIDAD (PASO 1 & PASO 2)
 // ------------------------------------------
 
+function mostrarPasoModalLab(paso) {
+    if (paso === 1) {
+        if (dom.labStepMaterias) dom.labStepMaterias.classList.remove("hidden");
+        if (dom.labStepConfigMateria) dom.labStepConfigMateria.classList.add("hidden");
+        if (dom.labBtnCargarConfig) dom.labBtnCargarConfig.classList.add("hidden");
+        if (dom.labConfigModalSubtitle) {
+            dom.labConfigModalSubtitle.textContent = "Elegí tu disciplina para empezar a practicar con simuladores interactivos e IA.";
+        }
+    } else {
+        if (dom.labStepMaterias) dom.labStepMaterias.classList.add("hidden");
+        if (dom.labStepConfigMateria) dom.labStepConfigMateria.classList.remove("hidden");
+        if (dom.labBtnCargarConfig) dom.labBtnCargarConfig.classList.remove("hidden");
+        const mat = CATALOGO_MATERIAS_LABORATORIO[laboratorioEstado.materiaSeleccionada] || CATALOGO_MATERIAS_LABORATORIO.contabilidad;
+        if (dom.labConfigModalSubtitle) {
+            dom.labConfigModalSubtitle.textContent = `Configurá los temas de ${mat.nombre} y cargá material de apoyo opcional.`;
+        }
+    }
+}
+
 function renderizarSelectorMateriasLab() {
-    if (!dom.labDisciplinesList) return;
-    dom.labDisciplinesList.innerHTML = "";
+    const grid = dom.labDisciplinesGrid || dom.labDisciplinesList;
+    if (!grid) return;
+    grid.innerHTML = "";
 
     const materiaActual = laboratorioEstado.materiaSeleccionada || "contabilidad";
 
     Object.values(CATALOGO_MATERIAS_LABORATORIO).forEach(mat => {
-        const card = document.createElement("button");
-        card.type = "button";
-        card.className = `lab-discipline-card ${mat.id === materiaActual ? "is-active" : ""}`;
-        card.setAttribute("role", "tab");
-        card.setAttribute("aria-selected", mat.id === materiaActual ? "true" : "false");
-        card.dataset.materiaId = mat.id;
+        const card = document.createElement("div");
+        card.className = "lab-subject-card";
+        card.setAttribute("role", "button");
+        card.setAttribute("tabindex", "0");
+        card.dataset.materia = mat.id;
 
         card.innerHTML = `
-            <span class="lab-discipline-icon">${mat.icono}</span>
-            <div class="lab-discipline-info">
-                <strong>${mat.nombre}</strong>
-                <span>${mat.descripcion}</span>
+            <div class="lab-subject-icon-box">
+                <span>${mat.icono}</span>
             </div>
-            <span class="lab-discipline-badge">${mat.badge}</span>
+            <strong class="lab-subject-name">${mat.nombre}</strong>
+            <span class="lab-subject-badge">${mat.badge}</span>
         `;
 
-        card.addEventListener("click", () => {
+        const entrarAMateria = () => {
             seleccionarMateriaLab(mat.id);
+        };
+
+        card.addEventListener("click", entrarAMateria);
+        card.addEventListener("keydown", (e) => {
+            if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                entrarAMateria();
+            }
         });
 
-        dom.labDisciplinesList.appendChild(card);
+        grid.appendChild(card);
     });
 
-    renderizarOpcionesSubtemasLab(materiaActual);
+    // Iniciar siempre en Paso 1 (Solo las materias)
+    mostrarPasoModalLab(1);
 }
 
 function seleccionarMateriaLab(materiaId) {
@@ -14183,21 +14218,20 @@ function seleccionarMateriaLab(materiaId) {
 
     laboratorioEstado.materiaSeleccionada = materiaId;
 
-    // Actualizar estados visuales de las tarjetas de materias
-    if (dom.labDisciplinesList) {
-        dom.labDisciplinesList.querySelectorAll(".lab-discipline-card").forEach(c => {
-            const esActiva = c.dataset.materiaId === materiaId;
-            c.classList.toggle("is-active", esActiva);
-            c.setAttribute("aria-selected", esActiva ? "true" : "false");
-        });
-    }
+    // Actualizar Banner del Paso 2
+    if (dom.labMateriaBannerIcon) dom.labMateriaBannerIcon.textContent = mat.icono;
+    if (dom.labMateriaBannerTitle) dom.labMateriaBannerTitle.textContent = mat.nombre;
+    if (dom.labMateriaBannerDesc) dom.labMateriaBannerDesc.textContent = mat.descripcion;
 
-    // Inicializar subtemas seleccionados por defecto para esta materia
+    // Inicializar subtemas por defecto si aún no están configurados para esta materia
     laboratorioEstado.temasSeleccionados = mat.subtemas
         .filter(s => s.default)
         .map(s => s.id);
 
     renderizarOpcionesSubtemasLab(materiaId);
+
+    // Cambiar al Paso 2: vista personalizada de la materia
+    mostrarPasoModalLab(2);
 }
 
 function renderizarOpcionesSubtemasLab(materiaId) {
@@ -14206,7 +14240,7 @@ function renderizarOpcionesSubtemasLab(materiaId) {
 
     const mat = CATALOGO_MATERIAS_LABORATORIO[materiaId] || CATALOGO_MATERIAS_LABORATORIO.contabilidad;
     if (dom.labSubtopicsTitle) {
-        dom.labSubtopicsTitle.innerHTML = `<span>🎯 2. Temas a entrenar en <strong>${mat.nombre}</strong>:</span>`;
+        dom.labSubtopicsTitle.innerHTML = `<span>🎯 Temas a practicar en <strong>${mat.nombre}</strong>:</span>`;
     }
 
     const seleccionados = Array.isArray(laboratorioEstado.temasSeleccionados)
@@ -17455,6 +17489,13 @@ function configurarEventosLaboratorio() {
     }
     if (dom.labBtnClearSubtopics) {
         dom.labBtnClearSubtopics.addEventListener("click", limpiarSubtemasLab);
+    }
+
+    // Botón para volver al selector de materias (Paso 1)
+    if (dom.labBtnVolverMaterias) {
+        dom.labBtnVolverMaterias.addEventListener("click", () => {
+            mostrarPasoModalLab(1);
+        });
     }
 
     // Botón "Cargar y Preparar Laboratorio" del modal

@@ -15,10 +15,10 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     
-    <link rel="icon" type="image/svg+xml" href="icon.svg?v=27.6">
-    <link rel="apple-touch-icon" href="icon-192.png?v=27.6">
-    <link rel="manifest" href="manifest.json?v=27.6">
-    <link rel="stylesheet" href="style.css?v=27.6">
+    <link rel="icon" type="image/svg+xml" href="icon.svg?v=27.7">
+    <link rel="apple-touch-icon" href="icon-192.png?v=27.7">
+    <link rel="manifest" href="manifest.json?v=27.7">
+    <link rel="stylesheet" href="style.css?v=27.7">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -3667,7 +3667,7 @@
 </dialog>
 
 <script src="mqtt.min.js"></script>
-<script src="script.js?v=27.6" defer></script>
+<script src="script.js?v=27.7" defer></script>
 
 <!-- =========================================================
      MODAL DE PROMPT PARA GEMINI (CREAR JUEGOS DESDE PDF)
@@ -4411,35 +4411,47 @@
      ========================================================= -->
 <dialog id="labConfigModal" class="modal lab-config-dialog" aria-labelledby="labConfigModalTitle">
     <div class="modal__content lab-config-modal-content">
+        <!-- CABECERA DEL MODAL -->
         <header class="modal__header lab-config-header">
             <div class="lab-config-header-text">
-                <span class="lab-config-header-icon">🔬</span>
+                <span class="lab-config-header-icon" id="labConfigHeaderIcon">🔬</span>
                 <div>
-                    <h3 id="labConfigModalTitle" class="modal__title">Laboratorio de Prácticas: Exactas & Contabilidad</h3>
-                    <p class="lab-config-subtitle">Elegí tu materia, seleccioná los temas (selección múltiple) y practicá con casos reales o con tu PDF.</p>
+                    <h3 id="labConfigModalTitle" class="modal__title">Laboratorio de Prácticas</h3>
+                    <p class="lab-config-subtitle" id="labConfigModalSubtitle">Elegí tu disciplina para empezar a practicar con simuladores interactivos e IA.</p>
                 </div>
             </div>
             <button id="closeLabConfigModalBtn" class="modal__close icon-button" type="button" aria-label="Cerrar modal">✕</button>
         </header>
 
         <div class="modal__body lab-config-modal-body">
-            <!-- SELECCIÓN PRINCIPAL EN 2 COLUMNAS (MATERIAS vs SUBTEMAS MULTI-CHECK) -->
-            <div class="lab-disciplines-subtopics-wrapper">
-                <!-- COLUMNA 1: MATERIAS (EXACTAS Y CONTABILIDAD) -->
-                <div class="lab-config-col lab-config-col--disciplines">
-                    <label class="section-title lab-section-label">
-                        <span>📚 1. Elegí la Disciplina o Carrera:</span>
-                    </label>
-                    <div class="lab-disciplines-list" id="labDisciplinesList" role="tablist" aria-label="Materias disponibles">
-                        <!-- Renderizado dinámicamente con las 10 materias -->
+            <!-- PASO 1: GRILLA DE MATERIAS EN CUADRADOS GRANDES CON COLORES Y ANIMACIONES -->
+            <div id="labStepMaterias" class="lab-step-pane">
+                <div class="lab-disciplines-grid" id="labDisciplinesGrid" role="tablist" aria-label="Materias disponibles">
+                    <!-- Tarjetas cuadradas de materias generadas dinámicamente -->
+                </div>
+            </div>
+
+            <!-- PASO 2: VISTA INTERNA DE LA MATERIA SELECCIONADA -->
+            <div id="labStepConfigMateria" class="lab-step-pane hidden">
+                <!-- Barra superior de la materia con botón para volver atrás -->
+                <div class="lab-materia-banner" id="labMateriaBanner">
+                    <button type="button" id="labBtnVolverMaterias" class="button button--ghost button--sm lab-btn-back">
+                        ← Elegir otra materia
+                    </button>
+                    <div class="lab-materia-banner-info">
+                        <span class="lab-materia-banner-icon" id="labMateriaBannerIcon">📊</span>
+                        <div>
+                            <h4 class="lab-materia-banner-title" id="labMateriaBannerTitle">Estadística y Probabilidad</h4>
+                            <p class="lab-materia-banner-desc" id="labMateriaBannerDesc">Tablas de frecuencia, probabilidad, campana de Gauss y Bayes.</p>
+                        </div>
                     </div>
                 </div>
 
-                <!-- COLUMNA 2: SUBTEMAS ESPECÍFICOS DE LA MATERIA (MULTI-SELECCIÓN) -->
-                <div class="lab-config-col lab-config-col--subtopics">
+                <!-- Subtemas con selección múltiple -->
+                <div class="lab-materia-subtopics-card">
                     <div class="lab-subtopics-header">
                         <label class="section-title lab-section-label" id="labSubtopicsTitle">
-                            <span>🎯 2. Temas a entrenar:</span>
+                            <span>🎯 Temas a practicar:</span>
                         </label>
                         <div class="lab-subtopics-actions">
                             <button id="labBtnSelectAllSubtopics" class="button button--ghost button--xs" type="button" title="Marcar todos los temas">✓ Todos</button>
@@ -4448,71 +4460,71 @@
                         </div>
                     </div>
                     <div class="lab-subtopics-grid" id="labSubtopicsGrid">
-                        <!-- Checkboxes / Tarjetas generadas dinámicamente según la materia activa -->
+                        <!-- Checkboxes generados dinámicamente -->
                     </div>
                 </div>
-            </div>
 
-            <!-- SECCIÓN INFERIOR: MATERIAL DE ESTUDIO + DIFICULTAD + ORDEN -->
-            <div class="lab-config-bottom-options">
-                <!-- Dropzone de Archivo -->
-                <div class="lab-upload-section">
-                    <label class="section-title lab-section-label">
-                        <span>📂 Material de Estudio (Opcional):</span>
-                        <span class="lab-formats-pill">PDF • Word • PPTX • TXT</span>
-                    </label>
-                    <input type="file" id="labPdfFileInput" accept=".pdf,.docx,.pptx,.txt,.md,.csv" class="hidden">
-                    <div class="lab-upload-dropzone" id="labUploadDropzone" tabindex="0" role="button" aria-label="Cargar archivo de estudio">
-                        <div class="lab-upload-plus-circle" id="labUploadPlusCircle">➕</div>
-                        <strong class="lab-upload-title" id="labUploadTitle">Subir Apuntes, Guías o Ejercicios</strong>
-                        <p class="lab-upload-hint" id="labUploadHint">
-                            Subí ejercicios de contabilidad, matemática, química o apuntes para que la IA cree casos similares.
-                        </p>
-                        <div class="lab-loaded-pdf-info hidden" id="labLoadedPdfInfo">
-                            <span class="lab-loaded-pdf-icon" id="labLoadedPdfIcon">📄</span>
-                            <div class="lab-loaded-pdf-text">
-                                <strong id="labLoadedPdfName">apuntes.pdf</strong>
-                                <span id="labLoadedPdfMeta">Listo para procesar</span>
+                <!-- Apartado Compacto: Material de Estudio (+) & Indicación / Orden -->
+                <div class="lab-material-prompt-card">
+                    <div class="lab-material-compact-row">
+                        <!-- Dropzone compacto con botón + -->
+                        <div class="lab-upload-compact-box">
+                            <label class="section-title lab-section-label">
+                                <span>📂 Material de estudio (Opcional):</span>
+                            </label>
+                            <input type="file" id="labPdfFileInput" accept=".pdf,.docx,.pptx,.txt,.md,.csv" class="hidden">
+                            <div class="lab-upload-dropzone-compact" id="labUploadDropzone" tabindex="0" role="button" aria-label="Cargar archivo de estudio">
+                                <div class="lab-upload-mini-plus" id="labUploadPlusCircle">➕</div>
+                                <div class="lab-upload-compact-text">
+                                    <strong id="labUploadTitle">Subir PDF, Word o Apuntes</strong>
+                                    <span id="labUploadHint">Hacé clic para adjuntar ejercicios de referencia</span>
+                                </div>
+                                <div class="lab-loaded-pdf-info hidden" id="labLoadedPdfInfo">
+                                    <span class="lab-loaded-pdf-icon" id="labLoadedPdfIcon">📄</span>
+                                    <div class="lab-loaded-pdf-text">
+                                        <strong id="labLoadedPdfName">apuntes.pdf</strong>
+                                        <span id="labLoadedPdfMeta">Listo para procesar</span>
+                                    </div>
+                                    <button type="button" class="button button--ghost button--xs" id="labBtnQuitarPdf" style="color: #f87171; margin-left: auto;">✕</button>
+                                </div>
                             </div>
-                            <button type="button" class="button button--ghost button--xs" id="labBtnQuitarPdf" style="color: #f87171; margin-left: auto;">✕ Quitar</button>
                         </div>
-                    </div>
-                </div>
 
-                <!-- Dificultad y Orden para la IA -->
-                <div class="lab-extra-controls-row">
-                    <div class="lab-difficulty-section">
-                        <label class="section-title lab-section-label">
-                            <span>⚙️ Nivel de Dificultad:</span>
-                        </label>
-                        <div class="lab-difficulty-selector" id="labConfigDifficultySelector">
-                            <button type="button" class="lab-diff-btn" data-diff="facil">
-                                <span class="diff-dot diff-dot--facil"></span> Fácil
-                            </button>
-                            <button type="button" class="lab-diff-btn is-active" data-diff="intermedio">
-                                <span class="diff-dot diff-dot--intermedio"></span> Intermedio
-                            </button>
-                            <button type="button" class="lab-diff-btn" data-diff="dificil">
-                                <span class="diff-dot diff-dot--dificil"></span> Difícil
-                            </button>
-                            <button type="button" class="lab-diff-btn" data-diff="extremo">
-                                <span class="diff-dot diff-dot--extremo"></span> Extremo
-                            </button>
+                        <!-- Selector de Dificultad -->
+                        <div class="lab-difficulty-compact-box">
+                            <label class="section-title lab-section-label">
+                                <span>⚙️ Nivel:</span>
+                            </label>
+                            <div class="lab-difficulty-selector" id="labConfigDifficultySelector">
+                                <button type="button" class="lab-diff-btn" data-diff="facil">
+                                    <span class="diff-dot diff-dot--facil"></span> Fácil
+                                </button>
+                                <button type="button" class="lab-diff-btn is-active" data-diff="intermedio">
+                                    <span class="diff-dot diff-dot--intermedio"></span> Intermedio
+                                </button>
+                                <button type="button" class="lab-diff-btn" data-diff="dificil">
+                                    <span class="diff-dot diff-dot--dificil"></span> Difícil
+                                </button>
+                                <button type="button" class="lab-diff-btn" data-diff="extremo">
+                                    <span class="diff-dot diff-dot--extremo"></span> Extremo
+                                </button>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="lab-order-section">
-                        <label for="labConfigOrderInput" class="section-title lab-section-label">✍️ Orden o ejercicio puntual (Opcional):</label>
-                        <input type="text" id="labConfigOrderInput" class="input input--sm" placeholder="Ej: 'Asientos con IVA y pagarés', 'Funciones cuadráticas con raíces', 'Enfoque en estequiometría'..." style="width: 100%;">
+                    <!-- Indicación / Orden para la IA -->
+                    <div class="lab-order-box">
+                        <label for="labConfigOrderInput" class="section-title lab-section-label">✍️ Indicación o consigna personalizada (Opcional):</label>
+                        <input type="text" id="labConfigOrderInput" class="input input--sm" placeholder="Ej: 'Casos prácticos de examen con IVA', 'Derivadas con regla de la cadena', 'Enfocar en hipótesis'..." style="width: 100%;">
                     </div>
                 </div>
             </div>
         </div>
 
-        <footer class="modal__footer lab-config-footer">
+        <footer class="modal__footer lab-config-footer" id="labConfigFooter">
             <button id="closeLabConfigModalBottomBtn" class="button button--ghost" type="button">Cancelar</button>
-            <button id="labBtnCargarConfig" class="button button--primary" type="button" style="background: linear-gradient(135deg, #059669, #10b981); font-weight: 700; padding: 0.65rem 1.4rem;">
-                🚀 Cargar y Preparar Laboratorio
+            <button id="labBtnCargarConfig" class="button button--primary hidden" type="button" style="background: linear-gradient(135deg, #059669, #10b981); font-weight: 700; padding: 0.65rem 1.4rem;">
+                🚀 Comenzar Práctica
             </button>
         </footer>
     </div>
