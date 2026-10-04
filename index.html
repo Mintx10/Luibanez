@@ -15,10 +15,10 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     
-    <link rel="icon" type="image/svg+xml" href="icon.svg?v=27.3">
-    <link rel="apple-touch-icon" href="icon-192.png?v=27.3">
-    <link rel="manifest" href="manifest.json?v=27.3">
-    <link rel="stylesheet" href="style.css?v=27.3">
+    <link rel="icon" type="image/svg+xml" href="icon.svg?v=27.4">
+    <link rel="apple-touch-icon" href="icon-192.png?v=27.4">
+    <link rel="manifest" href="manifest.json?v=27.4">
+    <link rel="stylesheet" href="style.css?v=27.4">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1375,6 +1375,7 @@
                 <div class="duelo-bar-info">
                     <span class="badge badge--accent">⚔️ Duelo en Curso</span>
                     <span class="duelo-bar-list" id="dueloBarListName">Materia</span>
+                    <span class="badge badge--warning" id="dueloTopRoundBadge" style="font-weight: 700;">Ronda 1</span>
                     <span class="duelo-bar-stats" id="dueloBarRemainingTopics">Temas restantes: 0</span>
                 </div>
                 <div class="duelo-bar-actions">
@@ -1435,6 +1436,20 @@
                         </div>
                     </section>
 
+                    <!-- Banner Notificación de Fin de Ronda -->
+                    <div id="dueloFinRondaBanner" class="duelo-fin-ronda-banner hidden">
+                        <div class="duelo-fin-ronda-card">
+                            <span class="badge badge--warning" style="font-weight: 800;">✨ FIN DE RONDA</span>
+                            <h3 id="dueloFinRondaTitulo" style="margin: 0.5rem 0 0.25rem; font-size: 1.35rem; color: #fff;">🎉 ¡Se terminó la Ronda 1!</h3>
+                            <p id="dueloFinRondaSub" style="margin: 0; color: var(--color-text-muted); font-size: 0.95rem;">Pasamos a la Ronda 2 para girar de nuevo el bolillero.</p>
+                            <div id="dueloFinRondaBtnWrap" style="margin-top: 0.85rem; width: 100%; display: flex; justify-content: center;">
+                                <button id="dueloFinRondaNextBtn" class="button button--accent button--lg" type="button" style="font-weight: 700; min-width: 260px;">
+                                    🎰 Comenzar Ronda 2 (Girar Bolillero)
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Área de Turno en Juego (Visible al revelar sorteo) -->
                     <section id="dueloTurnArea" class="duelo-turn-area hidden">
                         <!-- Cabecera del turno con jugador y multiplicador de fuego -->
@@ -1477,13 +1492,13 @@
                             <span class="role-notice-text" id="dueloRoleNoticeText">Escuchando la exposición...</span>
                         </div>
 
-                        <!-- Botones de Acción exclusivos del Orador para controlar su turno -->
+                        <!-- Botones de Acción para controlar el turno -->
                         <div id="dueloOradorControlBar" class="duelo-orador-control-bar hidden">
                             <button id="dueloOradorFinishBtn" class="button button--success button--md" type="button" style="font-weight: 700; flex: 1; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);">
-                                🏁 Terminé de Exponer (Pedir Calificación)
+                                🏁 Finalizar Turno
                             </button>
                             <button id="dueloOradorConcedeBtn" class="button button--danger button--md" type="button" style="font-weight: 700; flex: 1;">
-                                🏳️ No sé qué decir (Ceder Turno / Robo)
+                                ⏭️ Pasar de Turno
                             </button>
                         </div>
 
@@ -3477,7 +3492,7 @@
 </dialog>
 
 <script src="mqtt.min.js"></script>
-<script src="script.js?v=27.3" defer></script>
+<script src="script.js?v=27.4" defer></script>
 
 <!-- =========================================================
      MODAL DE PROMPT PARA GEMINI (CREAR JUEGOS DESDE PDF)
