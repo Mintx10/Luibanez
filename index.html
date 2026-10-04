@@ -15,10 +15,10 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     
-    <link rel="icon" type="image/svg+xml" href="icon.svg?v=27.5">
-    <link rel="apple-touch-icon" href="icon-192.png?v=27.5">
-    <link rel="manifest" href="manifest.json?v=27.5">
-    <link rel="stylesheet" href="style.css?v=27.5">
+    <link rel="icon" type="image/svg+xml" href="icon.svg?v=27.6">
+    <link rel="apple-touch-icon" href="icon-192.png?v=27.6">
+    <link rel="manifest" href="manifest.json?v=27.6">
+    <link rel="stylesheet" href="style.css?v=27.6">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -2415,8 +2415,8 @@
                         <span class="badge badge--success hidden" id="labActivePdfBadge">📄 Sin archivo cargado</span>
                     </div>
                     <div class="lab-header-buttons">
-                        <button id="labBtnAbrirConfigModal" class="button button--secondary button--sm" type="button" title="Cargar archivo (PDF, Word, PPTX, Texto) o cambiar tema de estudio">
-                            ⚙️ Cargar Archivo / Tema
+                        <button id="labBtnAbrirConfigModal" class="button button--secondary button--sm" type="button" title="Elegir materia de exactas o contabilidad y temas de estudio">
+                            📚 Cambiar Materia / Temas
                         </button>
                         <button id="labBtnGenerarConIA" class="button button--secondary button--sm" type="button" title="Crear o personalizar un ejercicio con IA según tu orden o tema">
                             ✨ Personalizar con IA
@@ -2523,6 +2523,10 @@
                         <button id="labTabBtnBayes" class="lab-tab-btn" type="button" role="tab" aria-selected="false" data-tab="bayes">
                             <span class="lab-tab-icon">🔲</span>
                             <span class="lab-tab-label">Matriz de Bayes</span>
+                        </button>
+                        <button id="labTabBtnContabilidad" class="lab-tab-btn" type="button" role="tab" aria-selected="false" data-tab="contabilidad">
+                            <span class="lab-tab-icon">💼</span>
+                            <span class="lab-tab-label">Contabilidad & Libros</span>
                         </button>
                         <button id="labTabBtnScratch" class="lab-tab-btn" type="button" role="tab" aria-selected="false" data-tab="scratch">
                             <span class="lab-tab-icon">📝</span>
@@ -2874,8 +2878,159 @@
                                 </div>
                                 <div class="lab-res-item">
                                     <span class="lab-res-label">P(A|B) [Valor predictivo]:</span>
-                                    <strong class="lab-res-val lab-res-val--highlight" id="labBayesResultVal">0.6786 (67.86%)</strong>
+                                     <strong class="lab-res-val lab-res-val--highlight" id="labBayesResultVal">0.6786 (67.86%)</strong>
+                                 </div>
+                             </div>
+                         </div>
+
+                        <!-- WIDGET 4: MESA CONTABLE (LIBRO DIARIO, MAYOR Y BALANCE) -->
+                        <div id="labWidgetContabilidad" class="lab-tab-pane hidden" role="tabpanel">
+                            <!-- Barra de Navegación Contable -->
+                            <div class="lab-tool-toolbar lab-contab-toolbar">
+                                <div class="lab-contab-nav-pills" role="tablist">
+                                    <button type="button" class="lab-contab-subtab-btn is-active" data-contab-view="diario" id="labBtnSubtabDiario">
+                                        📖 Libro Diario
+                                    </button>
+                                    <button type="button" class="lab-contab-subtab-btn" data-contab-view="mayor" id="labBtnSubtabMayor">
+                                        🔲 Libro Mayor (Cuentas T)
+                                    </button>
+                                    <button type="button" class="lab-contab-subtab-btn" data-contab-view="balance" id="labBtnSubtabBalance">
+                                        ⚖️ Balance de Sumas y Saldos
+                                    </button>
                                 </div>
+                                <div class="lab-tool-actions-right">
+                                    <button id="labBtnVerificarContabilidad" class="button button--primary button--xs" type="button" style="background: linear-gradient(135deg, #059669, #10b981); font-weight: 700;">
+                                        ✅ Verificar Ejercicio
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- SECCIÓN 1: LIBRO DIARIO -->
+                            <div id="labContabSeccionDiario" class="lab-contab-section">
+                                <div class="lab-diario-controls">
+                                    <div class="lab-diario-controls-left">
+                                        <button id="labBtnAddAsiento" class="button button--secondary button--xs" type="button">
+                                            ➕ Nuevo Asiento
+                                        </button>
+                                        <button id="labBtnAutoMayorizar" class="button button--ghost button--xs" type="button" style="color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4);">
+                                            🔄 Pasar a Libro Mayor
+                                        </button>
+                                    </div>
+                                    <div class="lab-diario-controls-right">
+                                        <button id="labBtnLimpiarDiario" class="button button--ghost button--xs" type="button" style="color: #f87171;">
+                                            🗑️ Vaciar Diario
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="lab-table-container lab-diario-table-container">
+                                    <table class="lab-grid-table lab-diario-table" id="labDiarioTable">
+                                        <thead>
+                                            <tr>
+                                                <th style="width: 105px;">Fecha</th>
+                                                <th>Cuentas / Detalle Operación</th>
+                                                <th style="width: 120px; text-align: right;">Debe ($)</th>
+                                                <th style="width: 120px; text-align: right;">Haber ($)</th>
+                                                <th style="width: 45px;"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="labDiarioTableBody">
+                                            <!-- Asientos generados dinámicamente -->
+                                        </tbody>
+                                        <tfoot>
+                                            <tr class="lab-diario-foot-row">
+                                                <td colspan="2" style="text-align: right; font-weight: 700;">
+                                                    Totales del Libro Diario:
+                                                </td>
+                                                <td id="labDiarioTotalDebe" style="text-align: right; font-weight: 800; color: #34d399;">$0.00</td>
+                                                <td id="labDiarioTotalHaber" style="text-align: right; font-weight: 800; color: #38bdf8;">$0.00</td>
+                                                <td></td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+
+                                <!-- Barra de Estado de Partida Doble -->
+                                <div class="lab-partida-doble-bar" id="labDiarioPartidaDobleBar">
+                                    <div class="lab-pd-status" id="labDiarioStatusBadge">
+                                        <span class="lab-pd-icon">⚖️</span>
+                                        <span id="labDiarioStatusText">Partida Doble Cuadrada: Debe y Haber coinciden</span>
+                                    </div>
+                                    <div class="lab-pd-diff" id="labDiarioDiffText">Diferencia: $0.00</div>
+                                </div>
+                            </div>
+
+                            <!-- SECCIÓN 2: LIBRO MAYOR (CUENTAS T) -->
+                            <div id="labContabSeccionMayor" class="lab-contab-section hidden">
+                                <div class="lab-mayor-header">
+                                    <div class="lab-mayor-header-text">
+                                        <span class="lab-stats-panel-title">📖 Cuentas T del Libro Mayor</span>
+                                        <span class="lab-stats-panel-hint">Calcula automáticamente el saldo deudor o acreedor de cada cuenta</span>
+                                    </div>
+                                    <div class="lab-mayor-actions">
+                                        <button id="labBtnSyncMayor" class="button button--secondary button--xs" type="button">
+                                            🔄 Sincronizar desde Diario
+                                        </button>
+                                        <button id="labBtnAddCuentaTManual" class="button button--ghost button--xs" type="button">
+                                            ➕ Nueva Cuenta T
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="lab-cuentas-t-grid" id="labMayorCuentasGrid">
+                                    <!-- Cuentas T renderizadas dinámicamente -->
+                                </div>
+                            </div>
+
+                            <!-- SECCIÓN 3: BALANCE GENERAL Y SUMAS Y SALDOS -->
+                            <div id="labContabSeccionBalance" class="lab-contab-section hidden">
+                                <div class="lab-balance-header">
+                                    <span class="lab-stats-panel-title">⚖️ Balance de Comprobación de Sumas y Saldos</span>
+                                    <button id="labBtnActualizarBalance" class="button button--secondary button--xs" type="button">
+                                        🔄 Recalcular Balance
+                                    </button>
+                                </div>
+
+                                <div class="lab-table-container">
+                                    <table class="lab-grid-table lab-balance-table" id="labBalanceTable">
+                                        <thead>
+                                            <tr>
+                                                <th>Cuenta Contable</th>
+                                                <th style="text-align: right;">Suma Debe ($)</th>
+                                                <th style="text-align: right;">Suma Haber ($)</th>
+                                                <th style="text-align: right;">Saldo Deudor ($)</th>
+                                                <th style="text-align: right;">Saldo Acreedor ($)</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="labBalanceTableBody">
+                                            <!-- Filas generadas dinámicamente -->
+                                        </tbody>
+                                        <tfoot>
+                                            <tr class="lab-balance-foot-row">
+                                                <td><strong>TOTALES GENERALES:</strong></td>
+                                                <td id="labBalTotalSumasDebe" style="text-align: right; font-weight: 800;">$0.00</td>
+                                                <td id="labBalTotalSumasHaber" style="text-align: right; font-weight: 800;">$0.00</td>
+                                                <td id="labBalTotalSaldoDeudor" style="text-align: right; font-weight: 800; color: #34d399;">$0.00</td>
+                                                <td id="labBalTotalSaldoAcreedor" style="text-align: right; font-weight: 800; color: #38bdf8;">$0.00</td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+
+                                <div class="lab-balance-verification-pill" id="labBalanceVerificationPill">
+                                    <span>⚖️ Estado del Balance:</span>
+                                    <strong id="labBalanceVerificationText">Sumas Iguales y Saldos Cuadrados</strong>
+                                </div>
+                            </div>
+
+                            <!-- PANEL DE FEEDBACK DE VERIFICACIÓN -->
+                            <div class="lab-contab-feedback-box hidden" id="labContabFeedbackBox">
+                                <div class="lab-contab-feedback-header">
+                                    <span class="lab-contab-feedback-icon" id="labContabFeedbackIcon">🎉</span>
+                                    <strong id="labContabFeedbackTitle">¡Excelente trabajo contable!</strong>
+                                    <button type="button" class="button button--ghost button--xs" id="labBtnCerrarFeedbackContab" style="margin-left: auto;">✕</button>
+                                </div>
+                                <p id="labContabFeedbackMsg" class="lab-contab-feedback-msg"></p>
                             </div>
                         </div>
 
@@ -3512,7 +3667,7 @@
 </dialog>
 
 <script src="mqtt.min.js"></script>
-<script src="script.js?v=27.5" defer></script>
+<script src="script.js?v=27.6" defer></script>
 
 <!-- =========================================================
      MODAL DE PROMPT PARA GEMINI (CREAR JUEGOS DESDE PDF)
@@ -4252,7 +4407,7 @@
 </dialog>
 
 <!-- =========================================================
-     MODAL DE CONFIGURACIÓN INICIAL: LABORATORIO DE ESTADÍSTICA
+     MODAL DE CONFIGURACIÓN INICIAL: EXACTAS Y CONTABILIDAD
      ========================================================= -->
 <dialog id="labConfigModal" class="modal lab-config-dialog" aria-labelledby="labConfigModalTitle">
     <div class="modal__content lab-config-modal-content">
@@ -4260,28 +4415,58 @@
             <div class="lab-config-header-text">
                 <span class="lab-config-header-icon">🔬</span>
                 <div>
-                    <h3 id="labConfigModalTitle" class="modal__title">Laboratorio de Estadística</h3>
-                    <p class="lab-config-subtitle">Cargá tu material de estudio y seleccioná el tema a entrenar</p>
+                    <h3 id="labConfigModalTitle" class="modal__title">Laboratorio de Prácticas: Exactas & Contabilidad</h3>
+                    <p class="lab-config-subtitle">Elegí tu materia, seleccioná los temas (selección múltiple) y practicá con casos reales o con tu PDF.</p>
                 </div>
             </div>
             <button id="closeLabConfigModalBtn" class="modal__close icon-button" type="button" aria-label="Cerrar modal">✕</button>
         </header>
 
         <div class="modal__body lab-config-modal-body">
-            <!-- COLUMNA IZQUIERDA: Material de Estudio + Orden para la IA -->
-            <div class="lab-config-col lab-config-col--upload">
+            <!-- SELECCIÓN PRINCIPAL EN 2 COLUMNAS (MATERIAS vs SUBTEMAS MULTI-CHECK) -->
+            <div class="lab-disciplines-subtopics-wrapper">
+                <!-- COLUMNA 1: MATERIAS (EXACTAS Y CONTABILIDAD) -->
+                <div class="lab-config-col lab-config-col--disciplines">
+                    <label class="section-title lab-section-label">
+                        <span>📚 1. Elegí la Disciplina o Carrera:</span>
+                    </label>
+                    <div class="lab-disciplines-list" id="labDisciplinesList" role="tablist" aria-label="Materias disponibles">
+                        <!-- Renderizado dinámicamente con las 10 materias -->
+                    </div>
+                </div>
+
+                <!-- COLUMNA 2: SUBTEMAS ESPECÍFICOS DE LA MATERIA (MULTI-SELECCIÓN) -->
+                <div class="lab-config-col lab-config-col--subtopics">
+                    <div class="lab-subtopics-header">
+                        <label class="section-title lab-section-label" id="labSubtopicsTitle">
+                            <span>🎯 2. Temas a entrenar:</span>
+                        </label>
+                        <div class="lab-subtopics-actions">
+                            <button id="labBtnSelectAllSubtopics" class="button button--ghost button--xs" type="button" title="Marcar todos los temas">✓ Todos</button>
+                            <button id="labBtnClearSubtopics" class="button button--ghost button--xs" type="button" title="Desmarcar todos">✕ Limpiar</button>
+                            <span class="badge badge--accent" id="labSubtopicsCountBadge">1 seleccionado</span>
+                        </div>
+                    </div>
+                    <div class="lab-subtopics-grid" id="labSubtopicsGrid">
+                        <!-- Checkboxes / Tarjetas generadas dinámicamente según la materia activa -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECCIÓN INFERIOR: MATERIAL DE ESTUDIO + DIFICULTAD + ORDEN -->
+            <div class="lab-config-bottom-options">
                 <!-- Dropzone de Archivo -->
                 <div class="lab-upload-section">
                     <label class="section-title lab-section-label">
-                        <span>📂 Material de Estudio</span>
+                        <span>📂 Material de Estudio (Opcional):</span>
                         <span class="lab-formats-pill">PDF • Word • PPTX • TXT</span>
                     </label>
                     <input type="file" id="labPdfFileInput" accept=".pdf,.docx,.pptx,.txt,.md,.csv" class="hidden">
                     <div class="lab-upload-dropzone" id="labUploadDropzone" tabindex="0" role="button" aria-label="Cargar archivo de estudio">
                         <div class="lab-upload-plus-circle" id="labUploadPlusCircle">➕</div>
-                        <strong class="lab-upload-title" id="labUploadTitle">Subir Material de Estudio</strong>
+                        <strong class="lab-upload-title" id="labUploadTitle">Subir Apuntes, Guías o Ejercicios</strong>
                         <p class="lab-upload-hint" id="labUploadHint">
-                            Hacé clic o arrastrá tus apuntes, guías prácticas o diapositivas.
+                            Subí ejercicios de contabilidad, matemática, química o apuntes para que la IA cree casos similares.
                         </p>
                         <div class="lab-loaded-pdf-info hidden" id="labLoadedPdfInfo">
                             <span class="lab-loaded-pdf-icon" id="labLoadedPdfIcon">📄</span>
@@ -4292,106 +4477,41 @@
                             <button type="button" class="button button--ghost button--xs" id="labBtnQuitarPdf" style="color: #f87171; margin-left: auto;">✕ Quitar</button>
                         </div>
                     </div>
-                    <div class="lab-gdocs-hint">
-                        💡 <strong>¿Google Docs o Slides?</strong> Descargalo como <em>.docx</em> o <em>PDF</em> y subilo acá directamente.
+                </div>
+
+                <!-- Dificultad y Orden para la IA -->
+                <div class="lab-extra-controls-row">
+                    <div class="lab-difficulty-section">
+                        <label class="section-title lab-section-label">
+                            <span>⚙️ Nivel de Dificultad:</span>
+                        </label>
+                        <div class="lab-difficulty-selector" id="labConfigDifficultySelector">
+                            <button type="button" class="lab-diff-btn" data-diff="facil">
+                                <span class="diff-dot diff-dot--facil"></span> Fácil
+                            </button>
+                            <button type="button" class="lab-diff-btn is-active" data-diff="intermedio">
+                                <span class="diff-dot diff-dot--intermedio"></span> Intermedio
+                            </button>
+                            <button type="button" class="lab-diff-btn" data-diff="dificil">
+                                <span class="diff-dot diff-dot--dificil"></span> Difícil
+                            </button>
+                            <button type="button" class="lab-diff-btn" data-diff="extremo">
+                                <span class="diff-dot diff-dot--extremo"></span> Extremo
+                            </button>
+                        </div>
                     </div>
-                </div>
 
-                <!-- Selector de Dificultad para el examen o práctica -->
-                <div class="lab-difficulty-section">
-                    <label class="section-title lab-section-label">
-                        <span>⚙️ Nivel de Dificultad:</span>
-                        <span style="font-size: 0.72rem; color: var(--color-text-muted); font-weight: normal;">Se calibra con tu archivo</span>
-                    </label>
-                    <div class="lab-difficulty-selector" id="labConfigDifficultySelector">
-                        <button type="button" class="lab-diff-btn" data-diff="facil">
-                            <span class="diff-dot diff-dot--facil"></span> Fácil
-                        </button>
-                        <button type="button" class="lab-diff-btn is-active" data-diff="intermedio">
-                            <span class="diff-dot diff-dot--intermedio"></span> Intermedio
-                        </button>
-                        <button type="button" class="lab-diff-btn" data-diff="dificil">
-                            <span class="diff-dot diff-dot--dificil"></span> Difícil
-                        </button>
-                        <button type="button" class="lab-diff-btn" data-diff="extremo">
-                            <span class="diff-dot diff-dot--extremo"></span> Extremo
-                        </button>
+                    <div class="lab-order-section">
+                        <label for="labConfigOrderInput" class="section-title lab-section-label">✍️ Orden o ejercicio puntual (Opcional):</label>
+                        <input type="text" id="labConfigOrderInput" class="input input--sm" placeholder="Ej: 'Asientos con IVA y pagarés', 'Funciones cuadráticas con raíces', 'Enfoque en estequiometría'..." style="width: 100%;">
                     </div>
-                </div>
-
-                <!-- Orden opcional para la IA -->
-                <div class="lab-order-section">
-                    <label for="labConfigOrderInput" class="section-title lab-section-label">✍️ Orden o ejercicio puntual (Opcional):</label>
-                    <textarea id="labConfigOrderInput" rows="2" class="lab-config-textarea" placeholder="Ej: 'Hacé uno similar al ejercicio 4 de la guía', 'Enfocate en varianza y percentiles'..."></textarea>
-                </div>
-            </div>
-
-            <!-- COLUMNA DERECHA: Rama de Estadística (Grilla visual de tarjetas compactas) -->
-            <div class="lab-config-col lab-config-col--topics">
-                <label class="section-title lab-section-label">🎯 ¿Qué rama de Estadística querés practicar?</label>
-                <div class="lab-topics-grid" id="labTopicsGrid">
-                    <!-- Tarjeta 1: Descriptiva -->
-                    <label class="lab-topic-option is-selected" data-topic="descriptiva">
-                        <input type="radio" name="labTopicRadio" value="descriptiva" checked class="hidden">
-                        <div class="lab-topic-card-body">
-                            <span class="lab-topic-icon">📊</span>
-                            <div class="lab-topic-info">
-                                <strong>Estadística Descriptiva</strong>
-                                <span>Frecuencias, Media (x̄), Mediana, Moda, Varianza, Desvío y CV.</span>
-                            </div>
-                        </div>
-                    </label>
-                    <!-- Tarjeta 2: Bayes -->
-                    <label class="lab-topic-option" data-topic="bayes">
-                        <input type="radio" name="labTopicRadio" value="bayes" class="hidden">
-                        <div class="lab-topic-card-body">
-                            <span class="lab-topic-icon">🎲</span>
-                            <div class="lab-topic-info">
-                                <strong>Probabilidades & Bayes</strong>
-                                <span>Condicional, tablas 2×2, falsos positivos y Teorema de Bayes.</span>
-                            </div>
-                        </div>
-                    </label>
-                    <!-- Tarjeta 3: Normal -->
-                    <label class="lab-topic-option" data-topic="normal">
-                        <input type="radio" name="labTopicRadio" value="normal" class="hidden">
-                        <div class="lab-topic-card-body">
-                            <span class="lab-topic-icon">🔔</span>
-                            <div class="lab-topic-info">
-                                <strong>Distribución Normal</strong>
-                                <span>Campana de Gauss, estandarización Z y cálculo P(X ≤ x).</span>
-                            </div>
-                        </div>
-                    </label>
-                    <!-- Tarjeta 4: Discretas -->
-                    <label class="lab-topic-option" data-topic="discretas">
-                        <input type="radio" name="labTopicRadio" value="discretas" class="hidden">
-                        <div class="lab-topic-card-body">
-                            <span class="lab-topic-icon">🎯</span>
-                            <div class="lab-topic-info">
-                                <strong>Binomial & Poisson</strong>
-                                <span>Ensayos (n, p), tasa media λ y probabilidades acumuladas.</span>
-                            </div>
-                        </div>
-                    </label>
-                    <!-- Tarjeta 5: Práctica Integral (ocupa ambas columnas en la grilla) -->
-                    <label class="lab-topic-option lab-topic-option--wide" data-topic="integral">
-                        <input type="radio" name="labTopicRadio" value="integral" class="hidden">
-                        <div class="lab-topic-card-body">
-                            <span class="lab-topic-icon">🌐</span>
-                            <div class="lab-topic-info">
-                                <strong>Práctica Integral / Examen Completo</strong>
-                                <span>Casos combinados con tabulación de datos, dispersión y probabilidades.</span>
-                            </div>
-                        </div>
-                    </label>
                 </div>
             </div>
         </div>
 
         <footer class="modal__footer lab-config-footer">
             <button id="closeLabConfigModalBottomBtn" class="button button--ghost" type="button">Cancelar</button>
-            <button id="labBtnCargarConfig" class="button button--primary" type="button" style="background: linear-gradient(135deg, #059669, #10b981); font-weight: 600; padding: 0.65rem 1.4rem;">
+            <button id="labBtnCargarConfig" class="button button--primary" type="button" style="background: linear-gradient(135deg, #059669, #10b981); font-weight: 700; padding: 0.65rem 1.4rem;">
                 🚀 Cargar y Preparar Laboratorio
             </button>
         </footer>

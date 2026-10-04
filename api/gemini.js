@@ -384,8 +384,9 @@ ES ESTRICTAMENTE OBLIGATORIO que este nuevo ejercicio sea TOTALMENTE DIFERENTE e
             }
 
             promptInstrucciones = `
-JUEGO: "LABORATORIO DE PRÁCTICAS NUMÉRICAS Y ANÁLISIS DE CASOS"
-TEMA DE ESTUDIO: "${tema}"
+JUEGO: "LABORATORIO DE PRÁCTICAS (CIENCIAS EXACTAS Y CONTABILIDAD)"
+DISCIPLINA / MATERIA: "${materia || 'Ciencias Exactas y Contabilidad'}"
+TEMAS DE ESTUDIO: "${tema}"
 ${instruccionDificultad}
 ${ordenEspecifica}
 ${seccionPreviasLab}

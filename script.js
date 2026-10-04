@@ -785,6 +785,14 @@ const dom = {
     labTopicsGrid: document.getElementById("labTopicsGrid"),
     labConfigOrderInput: document.getElementById("labConfigOrderInput"),
 
+    /* Selector Multidisciplinario de Exactas y Contabilidad */
+    labDisciplinesList: document.getElementById("labDisciplinesList"),
+    labSubtopicsTitle: document.getElementById("labSubtopicsTitle"),
+    labBtnSelectAllSubtopics: document.getElementById("labBtnSelectAllSubtopics"),
+    labBtnClearSubtopics: document.getElementById("labBtnClearSubtopics"),
+    labSubtopicsCountBadge: document.getElementById("labSubtopicsCountBadge"),
+    labSubtopicsGrid: document.getElementById("labSubtopicsGrid"),
+
     /* Modal de Orden & Prompt Personalizado para Ejercicios */
     labPromptModal: document.getElementById("labPromptModal"),
     closeLabPromptModalBtn: document.getElementById("closeLabPromptModalBtn"),
@@ -801,11 +809,48 @@ const dom = {
     labTabBtnFreq: document.getElementById("labTabBtnFreq"),
     labTabBtnProb: document.getElementById("labTabBtnProb"),
     labTabBtnBayes: document.getElementById("labTabBtnBayes"),
+    labTabBtnContabilidad: document.getElementById("labTabBtnContabilidad"),
     labTabBtnScratch: document.getElementById("labTabBtnScratch"),
     labWidgetFreq: document.getElementById("labWidgetFreq"),
     labWidgetProb: document.getElementById("labWidgetProb"),
     labWidgetBayes: document.getElementById("labWidgetBayes"),
+    labWidgetContabilidad: document.getElementById("labWidgetContabilidad"),
     labWidgetScratch: document.getElementById("labWidgetScratch"),
+
+    /* Mesa de Trabajo Contable */
+    labBtnSubtabDiario: document.getElementById("labBtnSubtabDiario"),
+    labBtnSubtabMayor: document.getElementById("labBtnSubtabMayor"),
+    labBtnSubtabBalance: document.getElementById("labBtnSubtabBalance"),
+    labContabSeccionDiario: document.getElementById("labContabSeccionDiario"),
+    labContabSeccionMayor: document.getElementById("labContabSeccionMayor"),
+    labContabSeccionBalance: document.getElementById("labContabSeccionBalance"),
+    labBtnAddAsiento: document.getElementById("labBtnAddAsiento"),
+    labBtnAutoMayorizar: document.getElementById("labBtnAutoMayorizar"),
+    labBtnLimpiarDiario: document.getElementById("labBtnLimpiarDiario"),
+    labDiarioTableBody: document.getElementById("labDiarioTableBody"),
+    labDiarioTotalDebe: document.getElementById("labDiarioTotalDebe"),
+    labDiarioTotalHaber: document.getElementById("labDiarioTotalHaber"),
+    labDiarioStatusBadge: document.getElementById("labDiarioStatusBadge"),
+    labDiarioStatusText: document.getElementById("labDiarioStatusText"),
+    labDiarioDiffText: document.getElementById("labDiarioDiffText"),
+    labDiarioPartidaDobleBar: document.getElementById("labDiarioPartidaDobleBar"),
+    labMayorCuentasGrid: document.getElementById("labMayorCuentasGrid"),
+    labBtnSyncMayor: document.getElementById("labBtnSyncMayor"),
+    labBtnAddCuentaTManual: document.getElementById("labBtnAddCuentaTManual"),
+    labBalanceTableBody: document.getElementById("labBalanceTableBody"),
+    labBtnActualizarBalance: document.getElementById("labBtnActualizarBalance"),
+    labBalTotalSumasDebe: document.getElementById("labBalTotalSumasDebe"),
+    labBalTotalSumasHaber: document.getElementById("labBalTotalSumasHaber"),
+    labBalTotalSaldoDeudor: document.getElementById("labBalTotalSaldoDeudor"),
+    labBalTotalSaldoAcreedor: document.getElementById("labBalTotalSaldoAcreedor"),
+    labBalanceVerificationText: document.getElementById("labBalanceVerificationText"),
+    labBalanceVerificationPill: document.getElementById("labBalanceVerificationPill"),
+    labBtnVerificarContabilidad: document.getElementById("labBtnVerificarContabilidad"),
+    labContabFeedbackBox: document.getElementById("labContabFeedbackBox"),
+    labContabFeedbackIcon: document.getElementById("labContabFeedbackIcon"),
+    labContabFeedbackTitle: document.getElementById("labContabFeedbackTitle"),
+    labContabFeedbackMsg: document.getElementById("labContabFeedbackMsg"),
+    labBtnCerrarFeedbackContab: document.getElementById("labBtnCerrarFeedbackContab"),
 
     /* Grilla de Frecuencias */
     labBtnAddRow: document.getElementById("labBtnAddRow"),
@@ -9811,7 +9856,7 @@ function iniciarAplicacion() {
 // =========================================================
 // GESTOR DE VERSIONES Y ACTUALIZACIÓN AUTOMÁTICA
 // =========================================================
-const APP_BUILD_VERSION = "27.5";
+const APP_BUILD_VERSION = "27.6";
 
 async function forzarActualizacionCompleta(mostrarNotificacion = true) {
     const btnActualizar = document.getElementById("btnForzarActualizar");
@@ -12721,13 +12766,200 @@ function irASeccionEstudio(idSeccion, navId) {
 })();
 
 /* ==========================================================
-   MÓDULO: LABORATORIO DE PRÁCTICAS & MESA DE TRABAJO NUMÉRICA
-   (Estadística, Probabilidades, Tablas y Resolución por Hitos)
+   CATÁLOGO MULTIDISCIPLINARIO: CIENCIAS EXACTAS Y CONTABILIDAD
    ========================================================== */
+const CATALOGO_MATERIAS_LABORATORIO = {
+    contabilidad: {
+        id: "contabilidad",
+        nombre: "Contabilidad y Sistemas Contables",
+        icono: "💼",
+        badge: "Económicas",
+        descripcion: "Libro Diario, Cuentas T, Balance de Comprobación y Asientos.",
+        tabDefault: "contabilidad",
+        subtemas: [
+            { id: "asientos", nombre: "Asientos Contables y Libro Diario", desc: "Registro cronológico de operaciones en el Debe y Haber.", default: true },
+            { id: "mayor", nombre: "Libro Mayor (Cuentas T)", desc: "Saldos deudores y acreedores por cada cuenta.", default: true },
+            { id: "balance", nombre: "Balance General y Sumas y Saldos", desc: "Comprobación de igualdad patrimonial y cuadre.", default: true },
+            { id: "ajustes", nombre: "Ajustes al Cierre y Amortizaciones", desc: "Depreciaciones de bienes de uso y devengamientos.", default: false },
+            { id: "resultados", nombre: "Resultados (R+ / R-) y Ventas", desc: "Costo de mercaderías vendidas (CMV) y utilidad bruta.", default: false },
+            { id: "conciliacion", nombre: "Conciliación Bancaria y Arqueo", desc: "Control de extractos bancarios y diferencias de caja.", default: false }
+        ]
+    },
+    matematicas: {
+        id: "matematicas",
+        nombre: "Matemáticas Generales y Álgebra",
+        icono: "📐",
+        badge: "Exactas",
+        descripcion: "Funciones, ecuaciones, fracciones, polinomios y trigonometría.",
+        tabDefault: "scratch",
+        subtemas: [
+            { id: "fracciones", nombre: "Aritmética, Fracciones y Porcentajes", desc: "Operaciones racionales y simplificación.", default: true },
+            { id: "funciones", nombre: "Funciones y Gráficos (Lineal, Cuadrática)", desc: "Dominio, imagen, raíces, vértices y asíntotas.", default: true },
+            { id: "ecuaciones", nombre: "Ecuaciones e Inecuaciones", desc: "Despejes algebraicos y sistemas de ecuaciones.", default: false },
+            { id: "polinomios", nombre: "Álgebra y Factorización", desc: "Regla de Ruffini, Teorema de Gauss y binomios.", default: false },
+            { id: "trigonometria", nombre: "Trigonometría y Geometría Plana", desc: "Seno, Coseno, Tangente y Teorema de Pitágoras.", default: false },
+            { id: "logaritmos", nombre: "Logaritmos y Exponenciales", desc: "Propiedades logarítmicas y crecimiento exponencial.", default: false }
+        ]
+    },
+    calculo: {
+        id: "calculo",
+        nombre: "Cálculo y Análisis Matemático",
+        icono: "📈",
+        badge: "Exactas",
+        descripcion: "Límites, derivadas, integrales y optimización matemática.",
+        tabDefault: "scratch",
+        subtemas: [
+            { id: "limites", nombre: "Límites y Continuidad", desc: "Indeterminaciones 0/0 e infinito/infinito.", default: true },
+            { id: "derivadas", nombre: "Derivadas y Reglas de Derivación", desc: "Regla de la cadena, producto y cociente.", default: true },
+            { id: "optimizacion", nombre: "Máximos, Mínimos y Optimización", desc: "Criterio de primera y segunda derivada.", default: false },
+            { id: "integrales", nombre: "Integrales Indefinidas y Definidas", desc: "Regla de Barrow y áreas bajo la curva.", default: false },
+            { id: "metodos_integracion", nombre: "Métodos de Integración", desc: "Sustitución y partes.", default: false },
+            { id: "series", nombre: "Ecuaciones Diferenciales y Series", desc: "Criterios de convergencia y separación de variables.", default: false }
+        ]
+    },
+    estadistica: {
+        id: "estadistica",
+        nombre: "Estadística y Probabilidad",
+        icono: "📊",
+        badge: "Exactas",
+        descripcion: "Tablas de frecuencia, probabilidad, campana de Gauss y Bayes.",
+        tabDefault: "freq",
+        subtemas: [
+            { id: "descriptiva", nombre: "Estadística Descriptiva y Promedios", desc: "Media, mediana, moda y medidas de posición.", default: true },
+            { id: "frecuencias", nombre: "Tablas de Frecuencia y Gráficos", desc: "Frecuencia absoluta, relativa y acumulada.", default: true },
+            { id: "dispersion", nombre: "Dispersión (Varianza, Desvío y CV)", desc: "Amplitud y variabilidad de la muestra.", default: false },
+            { id: "bayes", nombre: "Probabilidad y Teorema de Bayes", desc: "Probabilidad condicional y tablas 2x2.", default: false },
+            { id: "normal", nombre: "Distribución Normal (Gauss / Z)", desc: "Estandarización y cálculo de áreas z.", default: false },
+            { id: "discretas", nombre: "Distribución Binomial y Poisson", desc: "Variables discretas y probabilidades acumuladas.", default: false }
+        ]
+    },
+    fisica: {
+        id: "fisica",
+        nombre: "Física General y Aplicada",
+        icono: "⚡",
+        badge: "Exactas",
+        descripcion: "Cinemática, dinámica de Newton, energía, fluidos y circuitos.",
+        tabDefault: "scratch",
+        subtemas: [
+            { id: "cinematica", nombre: "Cinemática (MRU, MRUV, Caída Libre)", desc: "Velocidad, aceleración y trayectorias.", default: true },
+            { id: "dinamica", nombre: "Dinámica y Leyes de Newton", desc: "Fuerzas, rozamiento, tensión y plano inclinado.", default: true },
+            { id: "energia", nombre: "Trabajo, Potencia y Energía Mecánica", desc: "Conservación de la energía mecánica y rozamiento.", default: false },
+            { id: "fluidos", nombre: "Fluidos e Hidrostática", desc: "Presión, principio de Pascal y Arquímedes.", default: false },
+            { id: "termodinamica", nombre: "Termodinámica y Calorimetría", desc: "Calor específico, cambios de fase y gases.", default: false },
+            { id: "circuitos", nombre: "Electricidad y Circuitos (Ohm y Kirchhoff)", desc: "Resistencias en serie/paralelo y voltaje.", default: false }
+        ]
+    },
+    quimica: {
+        id: "quimica",
+        nombre: "Química General e Inorgánica",
+        icono: "🧪",
+        badge: "Naturales",
+        descripcion: "Estequiometría, moles, soluciones, enlaces, pH y gases.",
+        tabDefault: "scratch",
+        subtemas: [
+            { id: "estequiometria", nombre: "Estequiometría, Moles y Masas Molares", desc: "Reactivo limitante y rendimiento de reacciones.", default: true },
+            { id: "soluciones", nombre: "Soluciones y Concentración", desc: "Molaridad, %m/m, %m/v y diluciones.", default: true },
+            { id: "ph", nombre: "Ácidos, Bases y Cálculo de pH/pOH", desc: "Constante Kw, disociación y neutralizaciones.", default: false },
+            { id: "enlaces", nombre: "Estructura Atómica y Enlaces Químicos", desc: "Configuración electrónica y geometría molecular.", default: false },
+            { id: "gases", nombre: "Gases Ideales y Leyes de los Gases", desc: "P·V = n·R·T y presiones parciales de Dalton.", default: false },
+            { id: "equilibrio", nombre: "Equilibrio Químico y Termoquímica", desc: "Constante Kc, principio de Le Chatelier.", default: false }
+        ]
+    },
+    algebra_lineal: {
+        id: "algebra_lineal",
+        nombre: "Álgebra Lineal y Geometría",
+        icono: "🔲",
+        badge: "Exactas",
+        descripcion: "Vectores, matrices, determinantes y sistemas de ecuaciones.",
+        tabDefault: "scratch",
+        subtemas: [
+            { id: "matrices", nombre: "Matrices y Determinantes", desc: "Multiplicación matricial, matriz inversa y determinantes.", default: true },
+            { id: "sistemas_gauss", nombre: "Sistemas de Ecuaciones (Gauss-Jordan)", desc: "Clasificación SCD, SCI e SI.", default: true },
+            { id: "vectores", nombre: "Vectores en R² y R³", desc: "Producto escalar, vectorial y proyecciones.", default: false },
+            { id: "espacios", nombre: "Espacios y Subespacios Vectoriales", desc: "Bases, dimensión e independencia lineal.", default: false },
+            { id: "transformaciones", nombre: "Transformaciones Lineales", desc: "Núcleo, imagen y matriz asociada.", default: false }
+        ]
+    },
+    computacion: {
+        id: "computacion",
+        nombre: "Computación y Lógica",
+        icono: "💻",
+        badge: "Tecnología",
+        descripcion: "Tablas de verdad, álgebra de Boole, binario y algoritmos.",
+        tabDefault: "scratch",
+        subtemas: [
+            { id: "logica", nombre: "Lógica Proposicional y Tablas de Verdad", desc: "Conectores lógicos, tautologías y equivalencias.", default: true },
+            { id: "boole", nombre: "Álgebra de Boole y Compuertas", desc: "Simplificación lógica, mapas de Karnaugh.", default: true },
+            { id: "numeracion", nombre: "Sistemas de Numeración (Binario, Hexa)", desc: "Conversión de bases y aritmética binaria.", default: false },
+            { id: "algoritmos", nombre: "Algoritmos y Complejidad (Big-O)", desc: "Ordenamiento, búsqueda y tiempo de ejecución.", default: false },
+            { id: "estructuras", nombre: "Estructuras de Datos", desc: "Pilas, colas, árboles binarios y grafos.", default: false }
+        ]
+    },
+    biologia: {
+        id: "biologia",
+        nombre: "Biología Celular y Bioquímica",
+        icono: "🧬",
+        badge: "Naturales",
+        descripcion: "Células, genética mendeliana, ADN, enzimas y respiración.",
+        tabDefault: "scratch",
+        subtemas: [
+            { id: "genetica", nombre: "Genética Mendeliana y Cuadros de Punnett", desc: "Herencia monohíbrida, dihíbrida y probabilidad.", default: true },
+            { id: "celular", nombre: "Biología Celular y Orgánulos", desc: "Membrana plasmática, transporte y funciones celulares.", default: true },
+            { id: "adn", nombre: "ADN, ARN y Síntesis de Proteínas", desc: "Transcripción, traducción y código genético.", default: false },
+            { id: "enzimas", nombre: "Enzimas y Cinética Biológica", desc: "Sitio activo, desnaturalización y sustratos.", default: false },
+            { id: "metabolismo", nombre: "Respiración Celular y Fotosíntesis", desc: "Glucólisis, ciclo de Krebs y producción de ATP.", default: false }
+        ]
+    },
+    financiera: {
+        id: "financiera",
+        nombre: "Matemática Financiera y Economía",
+        icono: "💰",
+        badge: "Económicas",
+        descripcion: "Interés simple, compuesto, anualidades, amortización y VAN.",
+        tabDefault: "scratch",
+        subtemas: [
+            { id: "interes_compuesto", nombre: "Interés Simple y Compuesto", desc: "Capitalización, monto final y valor presente.", default: true },
+            { id: "tasas", nombre: "Tasas de Interés (TNA, TEA, Equivalente)", desc: "Conversión de tasas y rendimiento efectivo.", default: true },
+            { id: "amortizaciones", nombre: "Sistemas de Amortización (Francés, Alemán)", desc: "Tablas de marcha de deuda, cuotas e intereses.", default: false },
+            { id: "anualidades", nombre: "Anualidades y Rentas Financieras", desc: "Imposiciones y valor actual de series periódicas.", default: false },
+            { id: "proyectos", nombre: "Evaluación de Proyectos (VAN y TIR)", desc: "Flujos de fondos descontados y viabilidad.", default: false }
+        ]
+    }
+};
+
+/* Estado del Módulo Contable */
+const contabilidadEstado = {
+    subvistaActiva: "diario", // "diario" | "mayor" | "balance"
+    asientos: [
+        {
+            id: 1,
+            fecha: "01/03",
+            detalle: "Inicio de actividades: Aporte de socios",
+            filas: [
+                { id: "f1", cuenta: "Caja", debe: 150000, haber: 0 },
+                { id: "f2", cuenta: "Mercaderías", debe: 250000, haber: 0 },
+                { id: "f3", cuenta: "Capital Social", debe: 0, haber: 400000 }
+            ]
+        },
+        {
+            id: 2,
+            fecha: "05/03",
+            detalle: "Compra de mercaderías en cta. cte. comercial",
+            filas: [
+                { id: "f4", cuenta: "Mercaderías", debe: 80000, haber: 0 },
+                { id: "f5", cuenta: "Proveedores", debe: 0, haber: 80000 }
+            ]
+        }
+    ],
+    mayores: {},
+    balance: []
+};
 
 const laboratorioEstado = {
     iniciado: false,
-    temaSeleccionado: "descriptiva", // "descriptiva" | "bayes" | "normal" | "discretas" | "integral"
+    materiaSeleccionada: "contabilidad",
+    temasSeleccionados: ["asientos", "mayor", "balance"],
+    temaSeleccionado: "descriptiva", // Compatibilidad hacia atrás
     dificultad: "intermedio", // "facil" | "intermedio" | "dificil" | "extremo"
     pdfTexto: "",
     pdfNombre: "",
@@ -12739,7 +12971,7 @@ const laboratorioEstado = {
     pistasReveladas: {},
     solucionesReveladas: {},
     xpTotal: 0,
-    tabActiva: "freq",
+    tabActiva: "contabilidad",
     distribucionActiva: "normal",
     scratchState: {
         drawing: false,
@@ -13836,7 +14068,8 @@ function activarTabLaboratorio(tabId) {
     const tabBtns = [
         { btn: dom.labTabBtnFreq, pane: dom.labWidgetFreq, id: "freq" },
         { btn: dom.labTabBtnProb, pane: dom.labWidgetProb, id: "prob" },
-        { btn: dom.labTabBtnBayes, pane: dom.labWidgetBayes, id: "bayes" }
+        { btn: dom.labTabBtnBayes, pane: dom.labWidgetBayes, id: "bayes" },
+        { btn: dom.labTabBtnContabilidad, pane: dom.labWidgetContabilidad, id: "contabilidad" }
     ];
 
     tabBtns.forEach(t => {
@@ -13895,21 +14128,204 @@ function iniciarOReanudarLaboratorio() {
         recalcularMatrizBayes();
         inicializarScratchpadLab();
         sincronizarSelectoresDificultadLab();
+        inicializarModuloContabilidad();
     }
     cambiarVistaMovilLab("enunciado");
 
-    // Si aún no hay ejercicio generado, abrir el menú flotante de configuración inicial
+    // Abrir menú flotante si no hay ejercicio o si se ingresa por primera vez
     if (!laboratorioEstado.ejercicioActual) {
         abrirModalConfigLab();
+    } else {
+        actualizarBadgesMateriaLabUI();
     }
 }
 
 // ------------------------------------------
-// MODAL DE CONFIGURACIÓN Y CARGA DE PDF
+// SELECTOR MULTIDISCIPLINARIO DE EXACTAS Y CONTABILIDAD
+// ------------------------------------------
+
+function renderizarSelectorMateriasLab() {
+    if (!dom.labDisciplinesList) return;
+    dom.labDisciplinesList.innerHTML = "";
+
+    const materiaActual = laboratorioEstado.materiaSeleccionada || "contabilidad";
+
+    Object.values(CATALOGO_MATERIAS_LABORATORIO).forEach(mat => {
+        const card = document.createElement("button");
+        card.type = "button";
+        card.className = `lab-discipline-card ${mat.id === materiaActual ? "is-active" : ""}`;
+        card.setAttribute("role", "tab");
+        card.setAttribute("aria-selected", mat.id === materiaActual ? "true" : "false");
+        card.dataset.materiaId = mat.id;
+
+        card.innerHTML = `
+            <span class="lab-discipline-icon">${mat.icono}</span>
+            <div class="lab-discipline-info">
+                <strong>${mat.nombre}</strong>
+                <span>${mat.descripcion}</span>
+            </div>
+            <span class="lab-discipline-badge">${mat.badge}</span>
+        `;
+
+        card.addEventListener("click", () => {
+            seleccionarMateriaLab(mat.id);
+        });
+
+        dom.labDisciplinesList.appendChild(card);
+    });
+
+    renderizarOpcionesSubtemasLab(materiaActual);
+}
+
+function seleccionarMateriaLab(materiaId) {
+    const mat = CATALOGO_MATERIAS_LABORATORIO[materiaId];
+    if (!mat) return;
+
+    laboratorioEstado.materiaSeleccionada = materiaId;
+
+    // Actualizar estados visuales de las tarjetas de materias
+    if (dom.labDisciplinesList) {
+        dom.labDisciplinesList.querySelectorAll(".lab-discipline-card").forEach(c => {
+            const esActiva = c.dataset.materiaId === materiaId;
+            c.classList.toggle("is-active", esActiva);
+            c.setAttribute("aria-selected", esActiva ? "true" : "false");
+        });
+    }
+
+    // Inicializar subtemas seleccionados por defecto para esta materia
+    laboratorioEstado.temasSeleccionados = mat.subtemas
+        .filter(s => s.default)
+        .map(s => s.id);
+
+    renderizarOpcionesSubtemasLab(materiaId);
+}
+
+function renderizarOpcionesSubtemasLab(materiaId) {
+    if (!dom.labSubtopicsGrid) return;
+    dom.labSubtopicsGrid.innerHTML = "";
+
+    const mat = CATALOGO_MATERIAS_LABORATORIO[materiaId] || CATALOGO_MATERIAS_LABORATORIO.contabilidad;
+    if (dom.labSubtopicsTitle) {
+        dom.labSubtopicsTitle.innerHTML = `<span>🎯 2. Temas a entrenar en <strong>${mat.nombre}</strong>:</span>`;
+    }
+
+    const seleccionados = Array.isArray(laboratorioEstado.temasSeleccionados)
+        ? laboratorioEstado.temasSeleccionados
+        : [];
+
+    mat.subtemas.forEach(sub => {
+        const estaMarcado = seleccionados.includes(sub.id);
+        const card = document.createElement("label");
+        card.className = `lab-subtopic-card ${estaMarcado ? "is-selected" : ""}`;
+        card.dataset.subtemaId = sub.id;
+
+        const chk = document.createElement("input");
+        chk.type = "checkbox";
+        chk.className = "lab-subtopic-checkbox";
+        chk.checked = estaMarcado;
+        chk.value = sub.id;
+
+        chk.addEventListener("change", (e) => {
+            e.stopPropagation();
+            alternarSeleccionSubtemaLab(sub.id, chk.checked);
+        });
+
+        card.appendChild(chk);
+
+        const infoDiv = document.createElement("div");
+        infoDiv.className = "lab-subtopic-info";
+        infoDiv.innerHTML = `
+            <span class="lab-subtopic-name">${sub.nombre}</span>
+            <span class="lab-subtopic-desc">${sub.desc}</span>
+        `;
+        card.appendChild(infoDiv);
+
+        card.addEventListener("click", (e) => {
+            if (e.target === chk) return;
+            e.preventDefault();
+            chk.checked = !chk.checked;
+            alternarSeleccionSubtemaLab(sub.id, chk.checked);
+        });
+
+        dom.labSubtopicsGrid.appendChild(card);
+    });
+
+    actualizarContadorSubtemasBadge();
+}
+
+function alternarSeleccionSubtemaLab(subtemaId, checked) {
+    if (!Array.isArray(laboratorioEstado.temasSeleccionados)) {
+        laboratorioEstado.temasSeleccionados = [];
+    }
+
+    if (checked) {
+        if (!laboratorioEstado.temasSeleccionados.includes(subtemaId)) {
+            laboratorioEstado.temasSeleccionados.push(subtemaId);
+        }
+    } else {
+        laboratorioEstado.temasSeleccionados = laboratorioEstado.temasSeleccionados.filter(id => id !== subtemaId);
+    }
+
+    // Reflejar clase en la tarjeta
+    if (dom.labSubtopicsGrid) {
+        const card = dom.labSubtopicsGrid.querySelector(`[data-subtema-id="${subtemaId}"]`);
+        if (card) {
+            card.classList.toggle("is-selected", checked);
+            const chk = card.querySelector('input[type="checkbox"]');
+            if (chk) chk.checked = checked;
+        }
+    }
+
+    actualizarContadorSubtemasBadge();
+}
+
+function seleccionarTodosSubtemasLab() {
+    const mat = CATALOGO_MATERIAS_LABORATORIO[laboratorioEstado.materiaSeleccionada] || CATALOGO_MATERIAS_LABORATORIO.contabilidad;
+    laboratorioEstado.temasSeleccionados = mat.subtemas.map(s => s.id);
+    renderizarOpcionesSubtemasLab(laboratorioEstado.materiaSeleccionada);
+}
+
+function limpiarSubtemasLab() {
+    laboratorioEstado.temasSeleccionados = [];
+    renderizarOpcionesSubtemasLab(laboratorioEstado.materiaSeleccionada);
+}
+
+function actualizarContadorSubtemasBadge() {
+    if (!dom.labSubtopicsCountBadge) return;
+    const count = (laboratorioEstado.temasSeleccionados || []).length;
+    dom.labSubtopicsCountBadge.textContent = `${count} ${count === 1 ? 'tema seleccionado' : 'temas seleccionados'}`;
+}
+
+function actualizarBadgesMateriaLabUI() {
+    const matId = laboratorioEstado.materiaSeleccionada || "contabilidad";
+    const mat = CATALOGO_MATERIAS_LABORATORIO[matId] || CATALOGO_MATERIAS_LABORATORIO.contabilidad;
+
+    if (dom.labMateriaBadge) {
+        dom.labMateriaBadge.textContent = `${mat.icono} ${mat.nombre}`;
+    }
+
+    if (dom.labActiveTopicBadge) {
+        const seleccionados = laboratorioEstado.temasSeleccionados || [];
+        if (seleccionados.length === 0) {
+            dom.labActiveTopicBadge.textContent = `${mat.icono} Práctica General`;
+        } else if (seleccionados.length === 1) {
+            const sub = mat.subtemas.find(s => s.id === seleccionados[0]);
+            dom.labActiveTopicBadge.textContent = `${mat.icono} ${sub ? sub.nombre : seleccionados[0]}`;
+        } else {
+            const subPrimero = mat.subtemas.find(s => s.id === seleccionados[0]);
+            dom.labActiveTopicBadge.textContent = `${mat.icono} ${subPrimero ? subPrimero.nombre : 'Temas'} (+${seleccionados.length - 1})`;
+        }
+    }
+}
+
+// ------------------------------------------
+// MODAL DE CONFIGURACIÓN Y APERTURA
 // ------------------------------------------
 
 function abrirModalConfigLab() {
+    renderizarSelectorMateriasLab();
     if (typeof sincronizarSelectoresDificultadLab === "function") sincronizarSelectoresDificultadLab();
+
     if (dom.labConfigModal) {
         if (typeof dom.labConfigModal.showModal === "function") {
             try { dom.labConfigModal.showModal(); } catch { dom.labConfigModal.setAttribute("open", ""); }
@@ -13927,6 +14343,507 @@ function cerrarModalConfigLab() {
             dom.labConfigModal.removeAttribute("open");
         }
     }
+}
+
+// =========================================================
+// MÓDULO CONTABLE: LIBRO DIARIO, MAYOR (CUENTAS T) Y BALANCE
+// =========================================================
+
+function inicializarModuloContabilidad() {
+    // Configurar pestañas internas de contabilidad
+    if (dom.labBtnSubtabDiario) {
+        dom.labBtnSubtabDiario.addEventListener("click", () => cambiarSubvistaContabilidad("diario"));
+    }
+    if (dom.labBtnSubtabMayor) {
+        dom.labBtnSubtabMayor.addEventListener("click", () => cambiarSubvistaContabilidad("mayor"));
+    }
+    if (dom.labBtnSubtabBalance) {
+        dom.labBtnSubtabBalance.addEventListener("click", () => cambiarSubvistaContabilidad("balance"));
+    }
+
+    // Botones del Libro Diario
+    if (dom.labBtnAddAsiento) {
+        dom.labBtnAddAsiento.addEventListener("click", () => agregarAsientoContable());
+    }
+    if (dom.labBtnAutoMayorizar) {
+        dom.labBtnAutoMayorizar.addEventListener("click", () => {
+            sincronizarLibroMayor();
+            cambiarSubvistaContabilidad("mayor");
+            mostrarToast("📖 Asientos mayorizados con éxito en las Cuentas T.", "exito");
+        });
+    }
+    if (dom.labBtnLimpiarDiario) {
+        dom.labBtnLimpiarDiario.addEventListener("click", () => {
+            contabilidadEstado.asientos = [
+                {
+                    id: 1,
+                    fecha: "01/03",
+                    detalle: "Asiento inicial",
+                    filas: [
+                        { id: "f1", cuenta: "Caja", debe: 0, haber: 0 },
+                        { id: "f2", cuenta: "Capital Social", debe: 0, haber: 0 }
+                    ]
+                }
+            ];
+            renderizarLibroDiarioUI();
+            sincronizarLibroMayor();
+            sincronizarBalanceSumasYSaldos();
+            mostrarToast("🗑️ Libro Diario restablecido.", "info");
+        });
+    }
+
+    // Botones del Libro Mayor
+    if (dom.labBtnSyncMayor) {
+        dom.labBtnSyncMayor.addEventListener("click", () => {
+            sincronizarLibroMayor();
+            mostrarToast("🔄 Cuentas T actualizadas desde el Diario.", "info");
+        });
+    }
+    if (dom.labBtnAddCuentaTManual) {
+        dom.labBtnAddCuentaTManual.addEventListener("click", () => {
+            const nombre = prompt("Ingresá el nombre de la nueva cuenta contable:");
+            if (nombre && nombre.trim()) {
+                const nombreLimpio = nombre.trim();
+                if (!contabilidadEstado.mayores[nombreLimpio]) {
+                    contabilidadEstado.mayores[nombreLimpio] = {
+                        debe: [],
+                        haber: [],
+                        totalDebe: 0,
+                        totalHaber: 0,
+                        saldo: 0,
+                        tipoSaldo: "deudor"
+                    };
+                    renderizarLibroMayorUI();
+                    sincronizarBalanceSumasYSaldos();
+                }
+            }
+        });
+    }
+
+    // Botón de Balance
+    if (dom.labBtnActualizarBalance) {
+        dom.labBtnActualizarBalance.addEventListener("click", () => {
+            sincronizarBalanceSumasYSaldos();
+            mostrarToast("⚖️ Balance de Sumas y Saldos recalculado.", "info");
+        });
+    }
+
+    // Botón de Verificación del Ejercicio Contable
+    if (dom.labBtnVerificarContabilidad) {
+        dom.labBtnVerificarContabilidad.addEventListener("click", verificarEjercicioContable);
+    }
+    if (dom.labBtnCerrarFeedbackContab) {
+        dom.labBtnCerrarFeedbackContab.addEventListener("click", () => {
+            if (dom.labContabFeedbackBox) dom.labContabFeedbackBox.classList.add("hidden");
+        });
+    }
+
+    // Renderizado inicial
+    renderizarLibroDiarioUI();
+    sincronizarLibroMayor();
+    sincronizarBalanceSumasYSaldos();
+}
+
+function cambiarSubvistaContabilidad(vista) {
+    contabilidadEstado.subvistaActiva = vista;
+
+    if (dom.labBtnSubtabDiario) dom.labBtnSubtabDiario.classList.toggle("is-active", vista === "diario");
+    if (dom.labBtnSubtabMayor) dom.labBtnSubtabMayor.classList.toggle("is-active", vista === "mayor");
+    if (dom.labBtnSubtabBalance) dom.labBtnSubtabBalance.classList.toggle("is-active", vista === "balance");
+
+    if (dom.labContabSeccionDiario) dom.labContabSeccionDiario.classList.toggle("hidden", vista !== "diario");
+    if (dom.labContabSeccionMayor) dom.labContabSeccionMayor.classList.toggle("hidden", vista !== "mayor");
+    if (dom.labContabSeccionBalance) dom.labContabSeccionBalance.classList.toggle("hidden", vista !== "balance");
+
+    if (vista === "mayor") renderizarLibroMayorUI();
+    if (vista === "balance") sincronizarBalanceSumasYSaldos();
+}
+
+function renderizarLibroDiarioUI() {
+    if (!dom.labDiarioTableBody) return;
+    dom.labDiarioTableBody.innerHTML = "";
+
+    contabilidadEstado.asientos.forEach((asiento, aIdx) => {
+        // Fila de Encabezado del Asiento (--- Asiento N° X ---)
+        const headerRow = document.createElement("tr");
+        headerRow.className = "lab-asiento-header-row";
+        headerRow.innerHTML = `
+            <td colspan="4">
+                <strong>📝 Asiento N° ${asiento.id || aIdx + 1}</strong>: 
+                <span style="font-weight: normal; color: #cbd5e1;">${asiento.detalle || 'Operación comercial'}</span>
+            </td>
+            <td style="text-align: center;">
+                <button type="button" class="button button--ghost button--xs" title="Eliminar este asiento completo" style="color: #f87171; padding: 0.15rem 0.35rem;" onclick="eliminarAsientoContable(${aIdx})">🗑️</button>
+            </td>
+        `;
+        dom.labDiarioTableBody.appendChild(headerRow);
+
+        // Filas de Cuentas (Debe / Haber)
+        asiento.filas.forEach((fila, fIdx) => {
+            const tr = document.createElement("tr");
+            tr.className = "lab-asiento-row";
+
+            tr.innerHTML = `
+                <td>
+                    <input type="text" class="lab-diario-input" value="${fila.fecha || asiento.fecha || ''}" placeholder="dd/mm" onchange="actualizarCeldaDiario(${aIdx}, ${fIdx}, 'fecha', this.value)">
+                </td>
+                <td>
+                    <input type="text" class="lab-diario-input" value="${fila.cuenta || ''}" placeholder="Nombre de la cuenta (ej. Caja, Mercaderías)" onchange="actualizarCeldaDiario(${aIdx}, ${fIdx}, 'cuenta', this.value)">
+                </td>
+                <td>
+                    <input type="number" step="any" min="0" class="lab-diario-input lab-diario-input--number" value="${fila.debe ? fila.debe : ''}" placeholder="0.00" onchange="actualizarCeldaDiario(${aIdx}, ${fIdx}, 'debe', this.value)">
+                </td>
+                <td>
+                    <input type="number" step="any" min="0" class="lab-diario-input lab-diario-input--number" value="${fila.haber ? fila.haber : ''}" placeholder="0.00" onchange="actualizarCeldaDiario(${aIdx}, ${fIdx}, 'haber', this.value)">
+                </td>
+                <td class="lab-asiento-actions-cell">
+                    <button type="button" class="button button--ghost button--xs" title="Quitar línea" style="color: #f87171; padding: 0.15rem 0.3rem;" onclick="eliminarFilaDeAsiento(${aIdx}, ${fIdx})">✕</button>
+                </td>
+            `;
+            dom.labDiarioTableBody.appendChild(tr);
+        });
+
+        // Fila para agregar otra cuenta al asiento
+        const addRow = document.createElement("tr");
+        addRow.innerHTML = `
+            <td colspan="5" style="padding: 0.25rem 0.55rem; background: rgba(15, 23, 42, 0.25);">
+                <button type="button" class="button button--ghost button--xs" style="color: #38bdf8; font-size: 0.74rem;" onclick="agregarFilaAAsiento(${aIdx})">
+                    ➕ Agregar Cuenta al Asiento N° ${asiento.id || aIdx + 1}
+                </button>
+            </td>
+        `;
+        dom.labDiarioTableBody.appendChild(addRow);
+    });
+
+    recalcularTotalesDiario();
+}
+
+function agregarAsientoContable(fecha = null, detalle = null) {
+    const nuevoId = contabilidadEstado.asientos.length + 1;
+    const fechaDefecto = fecha || (nuevoId > 1 ? contabilidadEstado.asientos[nuevoId - 2]?.fecha || "10/03" : "01/03");
+
+    contabilidadEstado.asientos.push({
+        id: nuevoId,
+        fecha: fechaDefecto,
+        detalle: detalle || `Operación comercial N° ${nuevoId}`,
+        filas: [
+            { id: "f_" + Date.now() + "_1", fecha: fechaDefecto, cuenta: "", debe: 0, haber: 0 },
+            { id: "f_" + Date.now() + "_2", fecha: fechaDefecto, cuenta: "", debe: 0, haber: 0 }
+        ]
+    });
+
+    renderizarLibroDiarioUI();
+    mostrarToast(`➕ Asiento N° ${nuevoId} creado.`, "info");
+}
+
+function agregarFilaAAsiento(asientoIndex, cuenta = "", debe = 0, haber = 0) {
+    const asiento = contabilidadEstado.asientos[asientoIndex];
+    if (!asiento) return;
+
+    asiento.filas.push({
+        id: "f_" + Date.now(),
+        fecha: asiento.fecha || "",
+        cuenta: cuenta,
+        debe: Number(debe) || 0,
+        haber: Number(haber) || 0
+    });
+
+    renderizarLibroDiarioUI();
+}
+
+function eliminarFilaDeAsiento(asientoIndex, filaIndex) {
+    const asiento = contabilidadEstado.asientos[asientoIndex];
+    if (!asiento) return;
+
+    if (asiento.filas.length <= 1) {
+        mostrarToast("⚠️ El asiento debe tener al menos una línea.", "aviso");
+        return;
+    }
+
+    asiento.filas.splice(filaIndex, 1);
+    renderizarLibroDiarioUI();
+}
+
+function eliminarAsientoContable(asientoIndex) {
+    if (contabilidadEstado.asientos.length <= 1) {
+        mostrarToast("⚠️ Debe haber al menos un asiento en el Libro Diario.", "aviso");
+        return;
+    }
+
+    contabilidadEstado.asientos.splice(asientoIndex, 1);
+    contabilidadEstado.asientos.forEach((a, i) => { a.id = i + 1; });
+    renderizarLibroDiarioUI();
+    sincronizarLibroMayor();
+    sincronizarBalanceSumasYSaldos();
+}
+
+function actualizarCeldaDiario(asientoIndex, filaIndex, campo, valor) {
+    const asiento = contabilidadEstado.asientos[asientoIndex];
+    if (!asiento || !asiento.filas[filaIndex]) return;
+
+    if (campo === "debe" || campo === "haber") {
+        asiento.filas[filaIndex][campo] = Math.max(0, parseFloat(valor) || 0);
+    } else {
+        asiento.filas[filaIndex][campo] = String(valor).trim();
+    }
+
+    recalcularTotalesDiario();
+}
+
+function recalcularTotalesDiario() {
+    let totalDebe = 0;
+    let totalHaber = 0;
+
+    contabilidadEstado.asientos.forEach(a => {
+        a.filas.forEach(f => {
+            totalDebe += (Number(f.debe) || 0);
+            totalHaber += (Number(f.haber) || 0);
+        });
+    });
+
+    const diff = Math.abs(totalDebe - totalHaber);
+    const balanceado = diff < 0.01;
+
+    if (dom.labDiarioTotalDebe) dom.labDiarioTotalDebe.textContent = `$${totalDebe.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    if (dom.labDiarioTotalHaber) dom.labDiarioTotalHaber.textContent = `$${totalHaber.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+    if (dom.labDiarioPartidaDobleBar) {
+        dom.labDiarioPartidaDobleBar.classList.toggle("is-descuadrada", !balanceado);
+    }
+
+    if (dom.labDiarioStatusText) {
+        dom.labDiarioStatusText.textContent = balanceado
+            ? "Partida Doble Cuadrada: Total Debe y Total Haber coinciden."
+            : "Partida Doble Descuadrada: El Debe y el Haber no son iguales.";
+    }
+
+    if (dom.labDiarioDiffText) {
+        dom.labDiarioDiffText.textContent = balanceado
+            ? "Diferencia: $0.00"
+            : `Diferencia: $${diff.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    }
+}
+
+function sincronizarLibroMayor() {
+    const cuentasMap = {};
+
+    contabilidadEstado.asientos.forEach(a => {
+        a.filas.forEach(f => {
+            const nom = (f.cuenta || "").trim();
+            if (!nom) return;
+
+            if (!cuentasMap[nom]) {
+                cuentasMap[nom] = {
+                    debe: [],
+                    haber: [],
+                    totalDebe: 0,
+                    totalHaber: 0,
+                    saldo: 0,
+                    tipoSaldo: "deudor"
+                };
+            }
+
+            const d = Number(f.debe) || 0;
+            const h = Number(f.haber) || 0;
+
+            if (d > 0) cuentasMap[nom].debe.push(d);
+            if (h > 0) cuentasMap[nom].haber.push(h);
+        });
+    });
+
+    // Calcular saldos
+    Object.keys(cuentasMap).forEach(k => {
+        const c = cuentasMap[k];
+        c.totalDebe = c.debe.reduce((acc, v) => acc + v, 0);
+        c.totalHaber = c.haber.reduce((acc, v) => acc + v, 0);
+
+        if (c.totalDebe >= c.totalHaber) {
+            c.saldo = c.totalDebe - c.totalHaber;
+            c.tipoSaldo = "deudor";
+        } else {
+            c.saldo = c.totalHaber - c.totalDebe;
+            c.tipoSaldo = "acreedor";
+        }
+    });
+
+    contabilidadEstado.mayores = cuentasMap;
+    renderLibroMayorUI();
+    sincronizarBalanceSumasYSaldos();
+}
+
+function renderLibroMayorUI() {
+    if (!dom.labMayorCuentasGrid) return;
+    dom.labMayorCuentasGrid.innerHTML = "";
+
+    const cuentas = Object.keys(contabilidadEstado.mayores);
+    if (cuentas.length === 0) {
+        dom.labMayorCuentasGrid.innerHTML = `
+            <div style="grid-column: 1 / -1; padding: 2rem; text-align: center; color: var(--color-text-muted);">
+                <p>No hay cuentas registradas aún en el Libro Diario.</p>
+                <p style="font-size: 0.8rem;">Escribí las cuentas e importes en el Libro Diario y tocá 'Pasar a Libro Mayor'.</p>
+            </div>
+        `;
+        return;
+    }
+
+    cuentas.forEach(nom => {
+        const c = contabilidadEstado.mayores[nom];
+        const card = document.createElement("div");
+        card.className = "lab-cuenta-t-card";
+
+        const filasMax = Math.max(c.debe.length, c.haber.length, 1);
+        let debeItems = "";
+        let haberItems = "";
+
+        for (let i = 0; i < filasMax; i++) {
+            const dVal = c.debe[i] !== undefined ? `$${c.debe[i].toLocaleString('es-AR')}` : "";
+            const hVal = c.haber[i] !== undefined ? `$${c.haber[i].toLocaleString('es-AR')}` : "";
+            debeItems += `<span>${dVal}</span>`;
+            haberItems += `<span>${hVal}</span>`;
+        }
+
+        const pillClass = c.tipoSaldo === "deudor" ? "lab-t-saldo-pill--deudor" : "lab-t-saldo-pill--acreedor";
+        const saldoTexto = `Saldo ${c.tipoSaldo === 'deudor' ? 'Deudor' : 'Acreedor'}: $${c.saldo.toLocaleString('es-AR', { minimumFractionDigits: 2 })}`;
+
+        card.innerHTML = `
+            <div class="lab-t-header">${nom}</div>
+            <div class="lab-t-body">
+                <div class="lab-t-col lab-t-col--debe">
+                    <span class="lab-t-col-header">DEBE</span>
+                    ${debeItems}
+                </div>
+                <div class="lab-t-col lab-t-col--haber">
+                    <span class="lab-t-col-header">HABER</span>
+                    ${haberItems}
+                </div>
+            </div>
+            <div class="lab-t-footer">
+                <div>
+                    <strong>Σ D:</strong> $${c.totalDebe.toLocaleString('es-AR')} | 
+                    <strong>Σ H:</strong> $${c.totalHaber.toLocaleString('es-AR')}
+                </div>
+                <span class="lab-t-saldo-pill ${pillClass}">${saldoTexto}</span>
+            </div>
+        `;
+
+        dom.labMayorCuentasGrid.appendChild(card);
+    });
+}
+
+function sincronizarBalanceSumasYSaldos() {
+    if (!dom.labBalanceTableBody) return;
+    dom.labBalanceTableBody.innerHTML = "";
+
+    const cuentas = Object.keys(contabilidadEstado.mayores);
+    let totSumDebe = 0;
+    let totSumHaber = 0;
+    let totSalDeudor = 0;
+    let totSalAcreedor = 0;
+
+    cuentas.forEach(nom => {
+        const c = contabilidadEstado.mayores[nom];
+        totSumDebe += c.totalDebe;
+        totSumHaber += c.totalHaber;
+
+        const salDeudor = c.tipoSaldo === "deudor" ? c.saldo : 0;
+        const salAcreedor = c.tipoSaldo === "acreedor" ? c.saldo : 0;
+
+        totSalDeudor += salDeudor;
+        totSalAcreedor += salAcreedor;
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td><strong>${nom}</strong></td>
+            <td style="text-align: right; font-family: monospace;">$${c.totalDebe.toLocaleString('es-AR', { minimumFractionDigits: 2 })}</td>
+            <td style="text-align: right; font-family: monospace;">$${c.totalHaber.toLocaleString('es-AR', { minimumFractionDigits: 2 })}</td>
+            <td style="text-align: right; font-family: monospace; color: #34d399;">$${salDeudor ? salDeudor.toLocaleString('es-AR', { minimumFractionDigits: 2 }) : '-'}</td>
+            <td style="text-align: right; font-family: monospace; color: #38bdf8;">$${salAcreedor ? salAcreedor.toLocaleString('es-AR', { minimumFractionDigits: 2 }) : '-'}</td>
+        `;
+        dom.labBalanceTableBody.appendChild(tr);
+    });
+
+    if (dom.labBalTotalSumasDebe) dom.labBalTotalSumasDebe.textContent = `$${totSumDebe.toLocaleString('es-AR', { minimumFractionDigits: 2 })}`;
+    if (dom.labBalTotalSumasHaber) dom.labBalTotalSumasHaber.textContent = `$${totSumHaber.toLocaleString('es-AR', { minimumFractionDigits: 2 })}`;
+    if (dom.labBalTotalSaldoDeudor) dom.labBalTotalSaldoDeudor.textContent = `$${totSalDeudor.toLocaleString('es-AR', { minimumFractionDigits: 2 })}`;
+    if (dom.labBalTotalSaldoAcreedor) dom.labBalTotalSaldoAcreedor.textContent = `$${totSalAcreedor.toLocaleString('es-AR', { minimumFractionDigits: 2 })}`;
+
+    const sumasCuadran = Math.abs(totSumDebe - totSumHaber) < 0.01;
+    const saldosCuadran = Math.abs(totSalDeudor - totSalAcreedor) < 0.01;
+    const balanceado = sumasCuadran && saldosCuadran;
+
+    if (dom.labBalanceVerificationText) {
+        dom.labBalanceVerificationText.textContent = balanceado
+            ? "Sumas Iguales y Saldos Cuadrados (Partida Doble Perfecta)"
+            : `Descuadre detectado: Sumas diff $${Math.abs(totSumDebe - totSumHaber).toFixed(2)}, Saldos diff $${Math.abs(totSalDeudor - totSalAcreedor).toFixed(2)}`;
+    }
+}
+
+function verificarEjercicioContable() {
+    recalcularTotalesDiario();
+    sincronizarLibroMayor();
+    sincronizarBalanceSumasYSaldos();
+
+    let totalDebe = 0;
+    let totalHaber = 0;
+    let asientosDescuadrados = [];
+
+    contabilidadEstado.asientos.forEach((a, idx) => {
+        let d = 0;
+        let h = 0;
+        a.filas.forEach(f => {
+            d += (Number(f.debe) || 0);
+            h += (Number(f.haber) || 0);
+        });
+        totalDebe += d;
+        totalHaber += h;
+
+        if (Math.abs(d - h) > 0.01) {
+            asientosDescuadrados.push(`Asiento N° ${a.id || idx + 1} (Debe: $${d} vs Haber: $${h})`);
+        }
+    });
+
+    if (!dom.labContabFeedbackBox) return;
+    dom.labContabFeedbackBox.classList.remove("hidden");
+
+    if (asientosDescuadrados.length > 0) {
+        dom.labContabFeedbackBox.className = "lab-contab-feedback-box is-error";
+        if (dom.labContabFeedbackIcon) dom.labContabFeedbackIcon.textContent = "⚠️";
+        if (dom.labContabFeedbackTitle) dom.labContabFeedbackTitle.textContent = "Partida Doble Descuadrada";
+        if (dom.labContabFeedbackMsg) {
+            dom.labContabFeedbackMsg.innerHTML = `
+                Tenés asientos donde la suma del Debe no es igual a la suma del Haber:<br>
+                <strong>${asientosDescuadrados.join("<br>")}</strong>.<br>
+                Revisá que todo débito tenga su contrapartida acreditada por el mismo valor.
+            `;
+        }
+        mostrarToast("⚠️ Hay asientos desbalanceados en el Libro Diario.", "aviso");
+        return;
+    }
+
+    if (totalDebe === 0) {
+        dom.labContabFeedbackBox.className = "lab-contab-feedback-box is-error";
+        if (dom.labContabFeedbackIcon) dom.labContabFeedbackIcon.textContent = "📝";
+        if (dom.labContabFeedbackTitle) dom.labContabFeedbackTitle.textContent = "Libro Diario Vacío";
+        if (dom.labContabFeedbackMsg) dom.labContabFeedbackMsg.textContent = "Completá los importes y nombres de cuenta para poder verificar el ejercicio.";
+        return;
+    }
+
+    // Si todo cuadra
+    dom.labContabFeedbackBox.className = "lab-contab-feedback-box";
+    if (dom.labContabFeedbackIcon) dom.labContabFeedbackIcon.textContent = "🎉";
+    if (dom.labContabFeedbackTitle) dom.labContabFeedbackTitle.textContent = "¡Registración Contable Verificada con Éxito!";
+    if (dom.labContabFeedbackMsg) {
+        dom.labContabFeedbackMsg.innerHTML = `
+            Todos los asientos cumplen estrictamente con la <strong>Partida Doble</strong>.<br>
+            Total contabilizado: <strong>$${totalDebe.toLocaleString('es-AR', { minimumFractionDigits: 2 })}</strong>.<br>
+            El Libro Mayor y el Balance de Sumas y Saldos se encuentran 100% equilibrados. ¡Ganaste +100 XP contables!
+        `;
+    }
+
+    laboratorioEstado.xpTotal = (laboratorioEstado.xpTotal || 0) + 100;
+    if (dom.labXpDisplay) dom.labXpDisplay.textContent = `${laboratorioEstado.xpTotal} XP`;
+    mostrarToast("🎉 ¡Excelente trabajo contable! Todos los libros cuadran a la perfección.", "exito");
+    if (typeof dispararVibracion === "function") dispararVibracion("victoria");
 }
 
 function abrirModalPromptLab() {
@@ -15054,14 +15971,17 @@ function limpiarPdfLaboratorio() {
 }
 
 function obtenerEtiquetaTema(tema) {
-    const mapa = {
-        descriptiva: "📊 Estadística Descriptiva",
-        bayes: "🎲 Probabilidades & Bayes",
-        normal: "🔔 Distribución Normal",
-        discretas: "🎯 Discretas (Binomial/Poisson)",
-        integral: "📝 Examen Completo / Práctica Integral"
-    };
-    return mapa[tema] || "Estadística y Probabilidad";
+    const matId = laboratorioEstado.materiaSeleccionada || "contabilidad";
+    const mat = CATALOGO_MATERIAS_LABORATORIO[matId] || CATALOGO_MATERIAS_LABORATORIO.contabilidad;
+    if (laboratorioEstado.temasSeleccionados && laboratorioEstado.temasSeleccionados.length > 0) {
+        const nombres = laboratorioEstado.temasSeleccionados.map(tid => {
+            const sub = mat.subtemas.find(s => s.id === tid);
+            return sub ? sub.nombre : tid;
+        });
+        if (nombres.length === 1) return `${mat.icono} ${nombres[0]}`;
+        if (nombres.length > 1) return `${mat.icono} ${nombres[0]} (+${nombres.length - 1})`;
+    }
+    return `${mat.icono} ${mat.nombre}`;
 }
 
 // ------------------------------------------
@@ -15099,24 +16019,31 @@ async function generarOtroEjercicioIALab(btnElement = null) {
 }
 
 async function generarEjercicioLaboratorio(forzarNuevo = false, ordenManual = null) {
-    const tema = laboratorioEstado.temaSeleccionado || "descriptiva";
+    const materiaId = laboratorioEstado.materiaSeleccionada || "contabilidad";
+    const mat = CATALOGO_MATERIAS_LABORATORIO[materiaId] || CATALOGO_MATERIAS_LABORATORIO.contabilidad;
     const orden = (typeof ordenManual === "string" ? ordenManual : laboratorioEstado.instruccionUsuario || "").trim();
 
     // Actualizar Badges de Cabecera
-    if (dom.labActiveTopicBadge) dom.labActiveTopicBadge.textContent = obtenerEtiquetaTema(tema);
-    if (dom.labTagTema) dom.labTagTema.textContent = obtenerEtiquetaTema(tema);
+    actualizarBadgesMateriaLabUI();
+
+    const temasTexto = (laboratorioEstado.temasSeleccionados && laboratorioEstado.temasSeleccionados.length > 0)
+        ? laboratorioEstado.temasSeleccionados.map(id => {
+            const sub = mat.subtemas.find(s => s.id === id);
+            return sub ? sub.nombre : id;
+        }).join(", ")
+        : mat.nombre;
 
     // 1. Intentar con la API de Gemini mediante el endpoint /api/gemini
     if (typeof generarPreguntaIA === "function") {
         try {
-            mostrarToast("🤖 Gemini está creando tu ejercicio de práctica...", "info");
+            mostrarToast(`🤖 Gemini está creando tu caso de estudio de ${mat.nombre}...`, "info");
             const prevEjercicios = Array.isArray(laboratorioEstado.historialEjercicios)
                 ? laboratorioEstado.historialEjercicios.slice(-5)
                 : [];
 
             const data = await generarPreguntaIA({
-                materia: "Estadística y Probabilidad",
-                tema: obtenerEtiquetaTema(tema),
+                materia: mat.nombre,
+                tema: temasTexto,
                 tipoJuego: 'laboratorio',
                 contextoPDF: laboratorioEstado.pdfTexto || "",
                 dificultad: laboratorioEstado.dificultad || "intermedio",
@@ -15124,12 +16051,13 @@ async function generarEjercicioLaboratorio(forzarNuevo = false, ordenManual = nu
                 preguntasPrevias: prevEjercicios
             });
 
-            if (data && Array.isArray(data.preguntas) && data.preguntas.length >= 3) {
+            if (data && Array.isArray(data.preguntas) && data.preguntas.length >= 2) {
                 laboratorioEstado.ejercicioActual = {
                     id: "ia_" + Date.now(),
-                    tema: tema,
+                    materia: materiaId,
+                    tema: temasTexto,
                     origen: "ia",
-                    titulo: data.titulo || "Ejercicio Práctico con IA",
+                    titulo: data.titulo || `Ejercicio Práctico: ${mat.nombre}`,
                     dificultad: data.dificultad || laboratorioEstado.dificultad || "Intermedia",
                     enunciado: data.enunciado || "",
                     datos: data.datos || "",
@@ -15145,7 +16073,7 @@ async function generarEjercicioLaboratorio(forzarNuevo = false, ordenManual = nu
                     }))
                 };
 
-                // Registrar en historial para que el próximo ejercicio sea 100% distinto
+                // Registrar en historial para evitar repeticiones
                 const resumenEj = `${data.titulo || ''}: ${(data.enunciado || '').slice(0, 100)}`;
                 if (!laboratorioEstado.historialEjercicios.includes(resumenEj)) {
                     laboratorioEstado.historialEjercicios.push(resumenEj);
@@ -15163,34 +16091,31 @@ async function generarEjercicioLaboratorio(forzarNuevo = false, ordenManual = nu
         }
     }
 
-    // 2. Generador algorítmico procedimental offline con exactitud matemática y variación continua
-    generarEjercicioProcedimental(tema, orden);
+    // 2. Generador algorítmico procedimental offline adaptativo según materia
+    generarEjercicioProcedimentalPorMateria(materiaId, orden);
 }
 
-function generarEjercicioProcedimental(tema, orden = "") {
+function generarEjercicioProcedimentalPorMateria(materiaId, orden = "") {
     let ej = null;
-    switch (tema) {
-        case "bayes":
-            ej = generarEjercicioBayesProcedural(orden);
-            break;
-        case "normal":
-            ej = generarEjercicioNormalProcedural(orden);
-            break;
-        case "discretas":
-            ej = generarEjercicioDiscretasProcedural(orden);
-            break;
-        case "integral":
-            ej = generarEjercicioIntegralProcedural(orden);
-            break;
-        case "descriptiva":
-        default:
-            ej = generarEjercicioDescriptivaProcedural(orden);
-            break;
+
+    if (materiaId === "contabilidad") {
+        ej = generarEjercicioContabilidadProcedural(orden);
+    } else if (materiaId === "matematicas") {
+        ej = generarEjercicioMatematicasProcedural(orden);
+    } else if (materiaId === "calculo") {
+        ej = generarEjercicioCalculoProcedural(orden);
+    } else if (materiaId === "estadistica") {
+        const primerTema = (laboratorioEstado.temasSeleccionados && laboratorioEstado.temasSeleccionados[0]) || "descriptiva";
+        if (primerTema === "bayes") ej = generarEjercicioBayesProcedural(orden);
+        else if (primerTema === "normal") ej = generarEjercicioNormalProcedural(orden);
+        else if (primerTema === "discretas") ej = generarEjercicioDiscretasProcedural(orden);
+        else ej = generarEjercicioDescriptivaProcedural(orden);
+    } else {
+        ej = generarEjercicioSTEMProcedural(materiaId, orden);
     }
 
     laboratorioEstado.ejercicioActual = ej;
 
-    // Registrar en historial procedimental
     if (ej && ej.titulo) {
         const resumenEj = `${ej.titulo}: ${(ej.enunciado || '').slice(0, 100)}`;
         if (!laboratorioEstado.historialEjercicios.includes(resumenEj)) {
@@ -15202,6 +16127,343 @@ function generarEjercicioProcedimental(tema, orden = "") {
     renderizarEjercicioActual();
     const origenMsg = orden ? `🎯 Ejercicio generado a medida para: "${orden.slice(0, 35)}..."` : "🎲 Ejercicio práctico preparado en la mesa de trabajo.";
     mostrarToast(origenMsg, "info");
+}
+
+function generarEjercicioContabilidadProcedural(orden = "") {
+    const escenarios = [
+        { cap: 400000, caja: 150000, merc: 250000, compra: 80000, banco: 70000, venta: 120000, cmv: 60000, pagoProv: 40000 },
+        { cap: 500000, caja: 200000, merc: 300000, compra: 100000, banco: 90000, venta: 150000, cmv: 75000, pagoProv: 50000 },
+        { cap: 600000, caja: 250000, merc: 350000, compra: 120000, banco: 100000, venta: 180000, cmv: 90000, pagoProv: 60000 }
+    ];
+    const m = escenarios[Math.floor(Math.random() * escenarios.length)];
+
+    const saldoCaja = (m.caja + m.venta) - (m.banco + m.pagoProv);
+    const saldoMerc = (m.merc + m.compra) - m.cmv;
+    const saldoProv = m.compra - m.pagoProv;
+    const totDebe = m.cap + m.compra + m.banco + m.venta + m.cmv + m.pagoProv;
+
+    // Configurar asientos base en el Libro Diario
+    contabilidadEstado.asientos = [
+        {
+            id: 1,
+            fecha: "01/03",
+            detalle: "Inicio de actividades: Aporte de socios",
+            filas: [
+                { id: "f1", fecha: "01/03", cuenta: "Caja", debe: m.caja, haber: 0 },
+                { id: "f2", fecha: "01/03", cuenta: "Mercaderías", debe: m.merc, haber: 0 },
+                { id: "f3", fecha: "01/03", cuenta: "Capital Social", debe: 0, haber: m.cap }
+            ]
+        },
+        {
+            id: 2,
+            fecha: "05/03",
+            detalle: "Compra de mercaderías en cta. cte. comercial",
+            filas: [
+                { id: "f4", fecha: "05/03", cuenta: "Mercaderías", debe: m.compra, haber: 0 },
+                { id: "f5", fecha: "05/03", cuenta: "Proveedores", debe: 0, haber: m.compra }
+            ]
+        },
+        {
+            id: 3,
+            fecha: "10/03",
+            detalle: "Apertura cta. cte. bancaria en Banco Nación",
+            filas: [
+                { id: "f6", fecha: "10/03", cuenta: "Banco Nación c/c", debe: m.banco, haber: 0 },
+                { id: "f7", fecha: "10/03", cuenta: "Caja", debe: 0, haber: m.banco }
+            ]
+        },
+        {
+            id: 4,
+            fecha: "15/03",
+            detalle: "Venta de mercaderías al contado y costo (CMV)",
+            filas: [
+                { id: "f8", fecha: "15/03", cuenta: "Caja", debe: m.venta, haber: 0 },
+                { id: "f9", fecha: "15/03", cuenta: "Ventas", debe: 0, haber: m.venta },
+                { id: "f10", fecha: "15/03", cuenta: "CMV", debe: m.cmv, haber: 0 },
+                { id: "f11", fecha: "15/03", cuenta: "Mercaderías", debe: 0, haber: m.cmv }
+            ]
+        },
+        {
+            id: 5,
+            fecha: "25/03",
+            detalle: "Pago en efectivo del 50% de la deuda con Proveedores",
+            filas: [
+                { id: "f12", fecha: "25/03", cuenta: "Proveedores", debe: m.pagoProv, haber: 0 },
+                { id: "f13", fecha: "25/03", cuenta: "Caja", debe: 0, haber: m.pagoProv }
+            ]
+        }
+    ];
+
+    renderizarLibroDiarioUI();
+    sincronizarLibroMayor();
+    sincronizarBalanceSumasYSaldos();
+
+    return {
+        id: "contab_" + Date.now(),
+        materia: "contabilidad",
+        tema: "asientos",
+        origen: "procedural",
+        titulo: "Registración Contable y Cuadre: 'El Progreso S.A.'",
+        dificultad: "Intermedia",
+        enunciado: "Registrá y verificá las operaciones del mes en el Libro Diario, mayorizá en las Cuentas T y confirmá que la partida doble cuadre perfectamente.",
+        datos: `1. 01/03: Inicio de actividades: Aporte de socios con $${m.caja.toLocaleString('es-AR')} en efectivo (Caja) y $${m.merc.toLocaleString('es-AR')} en mercaderías. Total Capital: $${m.cap.toLocaleString('es-AR')}.\n` +
+               `2. 05/03: Compra de mercaderías por $${m.compra.toLocaleString('es-AR')} en cuenta corriente comercial a Proveedores.\n` +
+               `3. 10/03: Apertura de cuenta corriente en Banco Nación depositando $${m.banco.toLocaleString('es-AR')} en efectivo.\n` +
+               `4. 15/03: Venta de mercaderías al contado por $${m.venta.toLocaleString('es-AR')}. El Costo de las Mercaderías Vendidas (CMV) es de $${m.cmv.toLocaleString('es-AR')}.\n` +
+               `5. 25/03: Pago en efectivo del 50% de la deuda con Proveedores ($${m.pagoProv.toLocaleString('es-AR')}).`,
+        datos_tipo: "lista",
+        narrativa: "La empresa comercial 'El Progreso S.A.' presenta sus operaciones comerciales de marzo. Utilizá la mesa de trabajo contable para asentar, mayorizar y verificar.",
+        preguntas: [
+            {
+                letra: "a",
+                texto: "¿Cuál es el Total del Debe registrado en el Libro Diario al finalizar las 5 operaciones?",
+                esperado: totDebe,
+                tolerancia: 50,
+                pista: "Sumá los débitos de los 5 asientos en el Libro Diario.",
+                explicacion: `Total Debe = $${m.cap} (asiento 1) + $${m.compra} (asiento 2) + $${m.banco} (asiento 3) + $${m.venta} (asiento 4a) + $${m.cmv} (asiento 4b) + $${m.pagoProv} (asiento 5) = $${totDebe}.`
+            },
+            {
+                letra: "b",
+                texto: "¿Cuál es el Saldo Deudor final de la cuenta 'Caja' tras todos los movimientos?",
+                esperado: saldoCaja,
+                tolerancia: 10,
+                pista: "Suma Debe de Caja menos Suma Haber de Caja.",
+                explicacion: `Caja Debe ($${m.caja} + $${m.venta}) - Caja Haber ($${m.banco} + $${m.pagoProv}) = $${saldoCaja}.`
+            },
+            {
+                letra: "c",
+                texto: "¿Cuál es el Saldo Deudor de la cuenta 'Mercaderías' luego de la venta y el CMV?",
+                esperado: saldoMerc,
+                tolerancia: 10,
+                pista: "Existencia inicial + compras - CMV.",
+                explicacion: `Existencia inicial ($${m.merc}) + Compras ($${m.compra}) - CMV ($${m.cmv}) = $${saldoMerc}.`
+            },
+            {
+                letra: "d",
+                texto: "¿Cuál es el Saldo Acreedor final de la cuenta 'Proveedores' tras el pago parcial?",
+                esperado: saldoProv,
+                tolerancia: 10,
+                pista: "Deuda original con proveedores menos el pago en efectivo.",
+                explicacion: `$${m.compra} - $${m.pagoProv} = $${saldoProv}.`
+            }
+        ]
+    };
+}
+
+function generarEjercicioMatematicasProcedural(orden = "") {
+    const vx = 3;
+    const vy = -1;
+    const x1 = 2;
+    const x2 = 4;
+
+    return {
+        id: "mat_" + Date.now(),
+        materia: "matematicas",
+        tema: "funciones",
+        origen: "procedural",
+        titulo: "Estudio de Función Cuadrática: f(x) = x² - 6x + 8",
+        dificultad: "Intermedia",
+        enunciado: "Analizá analítica y gráficamente la función cuadrática f(x) = x² - 6x + 8 utilizando el pizarrón y calculadora.",
+        datos: "Función cuadrática: f(x) = x² - 6x + 8\nParámetros: a = 1, b = -6, c = 8\nVértice: V = (xv, yv)\nDiscriminante: Δ = b² - 4ac",
+        datos_tipo: "parametros",
+        narrativa: "Encontrá las características notables de la parábola: coordenadas del vértice, raíces y valor de la ordenada al origen.",
+        preguntas: [
+            {
+                letra: "a",
+                texto: "¿Cuál es la coordenada X del vértice de la parábola: xv = -b / (2a)?",
+                esperado: vx,
+                tolerancia: 0.05,
+                pista: "xv = -(-6) / (2 · 1)",
+                explicacion: `xv = 6 / 2 = ${vx}.`
+            },
+            {
+                letra: "b",
+                texto: "¿Cuál es la coordenada Y del vértice de la parábola: yv = f(xv)?",
+                esperado: vy,
+                tolerancia: 0.05,
+                pista: "Reemplazá x = 3 en la función: 3² - 6·3 + 8.",
+                explicacion: `yv = 9 - 18 + 8 = ${vy}.`
+            },
+            {
+                letra: "c",
+                texto: "¿Cuál es la menor de las dos raíces reales x1?",
+                esperado: x1,
+                tolerancia: 0.05,
+                pista: "Aplicá la fórmula resolvente: [-b ± √(b² - 4ac)] / (2a).",
+                explicacion: `x1 = (6 - 2) / 2 = ${x1}.`
+            },
+            {
+                letra: "d",
+                texto: "¿Cuál es la mayor de las dos raíces reales x2?",
+                esperado: x2,
+                tolerancia: 0.05,
+                pista: "x2 = (6 + 2) / 2.",
+                explicacion: `x2 = 8 / 2 = ${x2}.`
+            }
+        ]
+    };
+}
+
+function generarEjercicioCalculoProcedural(orden = "") {
+    return {
+        id: "calc_" + Date.now(),
+        materia: "calculo",
+        tema: "derivadas",
+        origen: "procedural",
+        titulo: "Optimización y Extremos: f(x) = 2x³ - 3x² - 12x + 5",
+        dificultad: "Intermedia",
+        enunciado: "Encontrá los puntos críticos de la función aplicando el criterio de la primera y segunda derivada.",
+        datos: "Función polinómica: f(x) = 2x³ - 3x² - 12x + 5\nDerivada primera: f'(x) = 6x² - 6x - 12\nDerivada segunda: f''(x) = 12x - 6",
+        datos_tipo: "parametros",
+        narrativa: "Calculá las raíces de f'(x) = 0 y determiná los valores extremos locales.",
+        preguntas: [
+            {
+                letra: "a",
+                texto: "¿Cuál es el valor del punto crítico negativo donde f'(x) = 0?",
+                esperado: -1,
+                tolerancia: 0.05,
+                pista: "Resolvé 6(x² - x - 2) = 0.",
+                explicacion: "Las raíces de x² - x - 2 = 0 son x = -1 y x = 2."
+            },
+            {
+                letra: "b",
+                texto: "¿Cuál es el valor del punto crítico positivo donde f'(x) = 0?",
+                esperado: 2,
+                tolerancia: 0.05,
+                pista: "El punto crítico positivo es x = 2.",
+                explicacion: "x = 2 es el punto crítico positivo."
+            },
+            {
+                letra: "c",
+                texto: "¿Cuál es el valor del Máximo Local f(-1)?",
+                esperado: 12,
+                tolerancia: 0.1,
+                pista: "Evaluá f(-1) en la función original.",
+                explicacion: "f(-1) = 2(-1)³ - 3(-1)² - 12(-1) + 5 = 12."
+            },
+            {
+                letra: "d",
+                texto: "¿Cuál es el valor del Mínimo Local f(2)?",
+                esperado: -15,
+                tolerancia: 0.1,
+                pista: "Evaluá f(2) en la función original.",
+                explicacion: "f(2) = 2(8) - 3(4) - 12(2) + 5 = -15."
+            }
+        ]
+    };
+}
+
+function generarEjercicioSTEMProcedural(materiaId, orden = "") {
+    if (materiaId === "fisica") {
+        return {
+            id: "fis_" + Date.now(),
+            materia: "fisica",
+            tema: "cinematica",
+            origen: "procedural",
+            titulo: "Cinemática MRUV: Movimiento Acelerado",
+            dificultad: "Intermedia",
+            enunciado: "Un móvil se desplaza con movimiento rectilíneo uniformemente variado (MRUV).",
+            datos: "Velocidad inicial: v₀ = 10 m/s\nAceleración constante: a = 4 m/s²\nTiempo transcurrido: t = 5 s",
+            datos_tipo: "parametros",
+            narrativa: "Calculá la velocidad final alcanzada y la distancia total recorrida por el móvil.",
+            preguntas: [
+                {
+                    letra: "a",
+                    texto: "¿Cuál es la velocidad final (vf en m/s) a los 5 segundos?",
+                    esperado: 30,
+                    tolerancia: 0.1,
+                    pista: "vf = v₀ + a · t",
+                    explicacion: "vf = 10 + (4 · 5) = 30 m/s."
+                },
+                {
+                    letra: "b",
+                    texto: "¿Cuál es la distancia total recorrida (d en metros) en esos 5 segundos?",
+                    esperado: 100,
+                    tolerancia: 0.5,
+                    pista: "d = v₀ · t + (1/2) · a · t²",
+                    explicacion: "d = (10 · 5) + (0.5 · 4 · 25) = 50 + 50 = 100 m."
+                },
+                {
+                    letra: "c",
+                    texto: "¿Cuál es la velocidad media del recorrido en m/s: vm = d / t?",
+                    esperado: 20,
+                    tolerancia: 0.1,
+                    pista: "vm = (v₀ + vf) / 2 = 100 / 5",
+                    explicacion: "vm = 100 / 5 = 20 m/s."
+                }
+            ]
+        };
+    } else if (materiaId === "quimica") {
+        return {
+            id: "quim_" + Date.now(),
+            materia: "quimica",
+            tema: "estequiometria",
+            origen: "procedural",
+            titulo: "Estequiometría de Reacción: 2 H₂ + O₂ ➔ 2 H₂O",
+            dificultad: "Intermedia",
+            enunciado: "Se produce la síntesis de agua a partir de hidrógeno y oxígeno gaseoso.",
+            datos: "Ecuación balanceada: 2 H₂ + O₂ ➔ 2 H₂O\nMasas molares: M(H₂) = 2 g/mol, M(O₂) = 32 g/mol, M(H₂O) = 18 g/mol\nMasa inicial disponible de H₂: 8 gramos",
+            datos_tipo: "parametros",
+            narrativa: "Calculá los moles de reactivos y la cantidad máxima de agua que se puede obtener.",
+            preguntas: [
+                {
+                    letra: "a",
+                    texto: "¿Cuántos moles de gas hidrógeno (H₂) representan los 8 gramos?",
+                    esperado: 4,
+                    tolerancia: 0.05,
+                    pista: "n = masa / MasaMolar = 8 / 2",
+                    explicacion: "n(H₂) = 8 g / 2 g/mol = 4 moles."
+                },
+                {
+                    letra: "b",
+                    texto: "¿Cuántos moles de oxígeno (O₂) se requieren para reaccionar estequiométricamente con esos 4 moles de H₂?",
+                    esperado: 2,
+                    tolerancia: 0.05,
+                    pista: "Relación estequiométrica 2:1 -> 4 moles H₂ requieren 2 moles O₂.",
+                    explicacion: "4 moles H₂ · (1 mol O₂ / 2 moles H₂) = 2 moles O₂."
+                },
+                {
+                    letra: "c",
+                    texto: "¿Cuántos gramos de agua (H₂O) se forman si el rendimiento es del 100%?",
+                    esperado: 72,
+                    tolerancia: 0.1,
+                    pista: "Se forman 4 moles de H₂O a 18 g/mol cada uno.",
+                    explicacion: "4 moles · 18 g/mol = 72 gramos de H₂O."
+                }
+            ]
+        };
+    } else {
+        return {
+            id: "fin_" + Date.now(),
+            materia: "financiera",
+            tema: "interes_compuesto",
+            origen: "procedural",
+            titulo: "Matemática Financiera: Operaciones de Inversión",
+            dificultad: "Intermedia",
+            enunciado: "Se coloca un capital a interés durante un plazo determinado.",
+            datos: "Capital inicial: C = $100.000\nTasa de interés mensual: i = 5% (0.05)\nPlazo de la operación: n = 6 meses",
+            datos_tipo: "parametros",
+            narrativa: "Calculá el rendimiento a interés simple y a interés compuesto para comparar ambos regímenes de capitalización.",
+            preguntas: [
+                {
+                    letra: "a",
+                    texto: "¿Cuál es el Interés Simple total generado (I = C · i · n)?",
+                    esperado: 30000,
+                    tolerancia: 10,
+                    pista: "I = 100000 · 0.05 · 6",
+                    explicacion: "I = $30.000."
+                },
+                {
+                    letra: "b",
+                    texto: "¿Cuál es el Monto Final a régimen de Interés Compuesto M = C · (1 + i)⁶ (redondeado)?",
+                    esperado: 134010,
+                    tolerancia: 20,
+                    pista: "M = 100000 · (1.05)⁶",
+                    explicacion: "100000 · 1.340096 = $134.010."
+                }
+            ]
+        };
+    }
 }
 
 // Generadores Procedimentales Temáticos con Parámetros Aleatorios:
@@ -16187,31 +17449,36 @@ function configurarEventosLaboratorio() {
         });
     }
 
-    // Selector de tema de Estadística (radio cards)
-    if (dom.labTopicsGrid) {
-        dom.labTopicsGrid.querySelectorAll(".lab-topic-option").forEach(opt => {
-            opt.addEventListener("click", () => {
-                dom.labTopicsGrid.querySelectorAll(".lab-topic-option").forEach(o => o.classList.remove("is-selected"));
-                opt.classList.add("is-selected");
-                const radio = opt.querySelector('input[type="radio"]');
-                if (radio) {
-                    radio.checked = true;
-                    laboratorioEstado.temaSeleccionado = radio.value;
-                }
-            });
-        });
+    // Botones de selección rápida de subtemas
+    if (dom.labBtnSelectAllSubtopics) {
+        dom.labBtnSelectAllSubtopics.addEventListener("click", seleccionarTodosSubtemasLab);
+    }
+    if (dom.labBtnClearSubtopics) {
+        dom.labBtnClearSubtopics.addEventListener("click", limpiarSubtemasLab);
     }
 
     // Botón "Cargar y Preparar Laboratorio" del modal
     if (dom.labBtnCargarConfig) {
         dom.labBtnCargarConfig.addEventListener("click", () => {
-            const checkedRadio = document.querySelector('input[name="labTopicRadio"]:checked');
-            if (checkedRadio) {
-                laboratorioEstado.temaSeleccionado = checkedRadio.value;
-            }
             if (dom.labConfigOrderInput) {
                 laboratorioEstado.instruccionUsuario = dom.labConfigOrderInput.value.trim();
             }
+            if (!laboratorioEstado.temasSeleccionados || laboratorioEstado.temasSeleccionados.length === 0) {
+                const mat = CATALOGO_MATERIAS_LABORATORIO[laboratorioEstado.materiaSeleccionada] || CATALOGO_MATERIAS_LABORATORIO.contabilidad;
+                laboratorioEstado.temasSeleccionados = mat.subtemas.filter(s => s.default).map(s => s.id);
+            }
+            actualizarBadgesMateriaLabUI();
+
+            // Activar automáticamente la pestaña correspondiente
+            if (laboratorioEstado.materiaSeleccionada === "contabilidad") {
+                activarTabLaboratorio("contabilidad");
+            } else {
+                const mat = CATALOGO_MATERIAS_LABORATORIO[laboratorioEstado.materiaSeleccionada];
+                if (mat && mat.tabDefault) {
+                    activarTabLaboratorio(mat.tabDefault);
+                }
+            }
+
             cerrarModalConfigLab();
             generarEjercicioLaboratorio(true, laboratorioEstado.instruccionUsuario);
         });
@@ -16320,13 +17587,20 @@ function configurarEventosLaboratorio() {
         { btn: dom.labTabBtnFreq, id: "freq" },
         { btn: dom.labTabBtnProb, id: "prob" },
         { btn: dom.labTabBtnBayes, id: "bayes" },
-        { btn: dom.labTabBtnScratch, id: "scratch" }
+        { btn: dom.labTabBtnScratch, id: "scratch" },
+        { btn: dom.labTabBtnContabilidad, id: "contabilidad" }
     ];
 
     tabBtns.forEach(({ btn, id }) => {
         if (!btn) return;
         btn.addEventListener("click", () => activarTabLaboratorio(id));
     });
+
+    // Exponer funciones globales requeridas por atributos onclick inline en tablas dinámicas
+    window.eliminarAsientoContable = eliminarAsientoContable;
+    window.actualizarCeldaDiario = actualizarCeldaDiario;
+    window.eliminarFilaDeAsiento = eliminarFilaDeAsiento;
+    window.agregarFilaAAsiento = agregarFilaAAsiento;
 
     // Grilla de Frecuencias
     if (dom.labBtnAddRow) dom.labBtnAddRow.addEventListener("click", agregarFilaGrilla);
