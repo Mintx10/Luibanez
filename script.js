@@ -246,6 +246,7 @@ const dom = {
     bolilleroUploadPdfBtn: document.getElementById("bolilleroUploadPdfBtn"),
     bolilleroPdfInput: document.getElementById("bolilleroPdfInput"),
     bolilleroIACard: document.getElementById("bolilleroIACard"),
+    bolilleroIACounterBadge: document.getElementById("bolilleroIACounterBadge"),
     bolilleroIASourceBadge: document.getElementById("bolilleroIASourceBadge"),
     bolilleroIAGenerateBtn: document.getElementById("bolilleroIAGenerateBtn"),
     bolilleroIALoader: document.getElementById("bolilleroIALoader"),
@@ -1549,8 +1550,8 @@ function inicializarDrawerMenu() {
             if (versionClickCount >= 5) {
                 versionClickCount = 0;
                 if (esModoDevActivo()) {
-                    const salir = confirm("🛠️ Modo Desarrollador está ACTIVO.\n\n¿Deseás desactivarlo y volver al modo público bloqueado?");
-                    if (salir) desactivarModoDev();
+                    desactivarModoDev();
+                    mostrarToast("🔒 Modo Desarrollador desactivado", "info");
                 } else {
                     const pass = prompt("🔐 Acceso Desarrollador Luibañez\nIngresá la clave de acceso de Lucas:");
                     if (pass && (pass.toLowerCase().trim() === "lucas" || pass.trim() === "1234" || pass.toLowerCase().trim() === "mintx")) {
@@ -1904,6 +1905,7 @@ function renderResultado() {
     if (!estado.ronda.ultimoTemaId) {
         dom.resultSection.classList.add("hidden");
         if (dom.bolilleroIACard) dom.bolilleroIACard.classList.add("hidden");
+        if (dom.bolilleroIACounterBadge) dom.bolilleroIACounterBadge.style.display = "none";
         return;
     }
     const lista = obtenerListaSeleccionada();
@@ -1911,6 +1913,7 @@ function renderResultado() {
     if (!tema) {
         dom.resultSection.classList.add("hidden");
         if (dom.bolilleroIACard) dom.bolilleroIACard.classList.add("hidden");
+        if (dom.bolilleroIACounterBadge) dom.bolilleroIACounterBadge.style.display = "none";
         return;
     }
     dom.selectedTopic.textContent = tema.titulo;
@@ -1920,6 +1923,29 @@ function renderResultado() {
     if (dom.bolilleroIACard) {
         dom.bolilleroIACard.classList.remove("hidden");
         actualizarUIIndicadoresPDF();
+
+        const temaKey = (tema.id || tema.titulo).trim().toLowerCase();
+        const historial = historialPreguntasBolillero[temaKey] || [];
+        if (dom.bolilleroIACounterBadge) {
+            if (historial.length > 0) {
+                dom.bolilleroIACounterBadge.style.display = "inline-flex";
+                dom.bolilleroIACounterBadge.textContent = `Pregunta ${Math.min(historial.length, 5)}/5`;
+            } else {
+                dom.bolilleroIACounterBadge.style.display = "none";
+            }
+        }
+        if (dom.bolilleroIARetryBtn) {
+            if (historial.length >= 5) {
+                dom.bolilleroIARetryBtn.disabled = true;
+                dom.bolilleroIARetryBtn.innerHTML = "✅ Límite alcanzado (5/5)";
+            } else if (historial.length > 0) {
+                dom.bolilleroIARetryBtn.disabled = false;
+                dom.bolilleroIARetryBtn.innerHTML = `🔄 Repreguntar (${historial.length}/5)`;
+            } else {
+                dom.bolilleroIARetryBtn.disabled = false;
+                dom.bolilleroIARetryBtn.innerHTML = "🔄 Repreguntar (1/5)";
+            }
+        }
     }
 }
 
@@ -1949,7 +1975,7 @@ async function girarBolillero() {
     const temasDisponibles = lista.temas.filter(t => estado.ronda.disponibles.includes(t.id));
 
     if (temasDisponibles.length === 0) {
-        alert("¡Ya salieron todos los temas de esta lista! Restaurá el bolillero para volver a empezar.");
+        mostrarToast("🎉 ¡Ya salieron todos los temas! Restaurá el bolillero para volver a empezar.", "info");
         return;
     }
 
@@ -2083,10 +2109,10 @@ function agregarTema(titulo) {
 }
 
 function eliminarLista(id) {
-    if (!confirm("¿Eliminar esta lista?")) return;
     estado.listas = estado.listas.filter(l => l.id !== id);
     estado.listaSeleccionadaId = estado.listas.length ? estado.listas[0].id : null;
     actualizarInterfaz();
+    mostrarToast("🗑️ Lista eliminada con éxito", "info");
 }
 
 function eliminarTema(id) {
@@ -2580,11 +2606,11 @@ function poblarSelectCuentasAuth() {
 
 function crearOActualizarCuenta(apodo, avatar, tipoAvatar, fotoDataUrl, pin, email = "") {
     if (!apodo || apodo.trim().length === 0) {
-        alert("Por favor ingresá un apodo o nombre válido.");
+        mostrarToast("⚠️ Por favor ingresá un apodo o nombre válido.", "aviso");
         return null;
     }
     if (!pin || pin.length !== 4 || !/^\d{4}$/.test(pin)) {
-        alert("El PIN de seguridad debe contener exactamente 4 números.");
+        mostrarToast("⚠️ El PIN de seguridad debe contener exactamente 4 números.", "aviso");
         return null;
     }
 
@@ -2686,7 +2712,7 @@ function cerrarSesionPerfil() {
 function recuperarPin() {
     const cuentas = obtenerCuentasGuardadas();
     if (cuentas.length === 0) {
-        alert("No hay cuentas registradas en este dispositivo.");
+        mostrarToast("ℹ️ No hay cuentas registradas en este dispositivo.", "info");
         return;
     }
     const ident = prompt("Ingresá tu apodo o email para recuperar el PIN:");
@@ -2698,9 +2724,9 @@ function recuperarPin() {
     );
 
     if (encontrada) {
-        alert(`¡Cuenta encontrada para ${encontrada.apodo}! Tu PIN de 4 números es: ${encontrada.pin}`);
+        mostrarToast(`🔑 ¡Cuenta encontrada! Tu PIN es: ${encontrada.pin}`, 6000);
     } else {
-        alert("No se encontró ninguna cuenta con ese apodo o email.");
+        mostrarToast("⚠️ No se encontró ninguna cuenta con ese apodo o email.", "aviso");
     }
 }
 
@@ -2876,7 +2902,7 @@ function aplicarAvatarSeleccionado(tipo, valor, dataUrl) {
 
 function procesarFotoSubida(file) {
     if (!file || !file.type.startsWith("image/")) {
-        alert("Por favor seleccioná un archivo de imagen válido.");
+        mostrarToast("⚠️ Por favor seleccioná un archivo de imagen válido.", "aviso");
         return;
     }
 
@@ -3418,14 +3444,14 @@ function crearSalaOnline() {
         });
     } catch (err) {
         console.error("Error al crear sala online:", err);
-        alert("Ocurrió un error al crear la sala: " + err.message);
+        mostrarToast("⚠️ Error al crear la sala: " + err.message, "error");
     }
 }
 
 function unirseASalaOnline(codigoIngresado, passIngresado = "") {
     const codigo = (codigoIngresado || "").trim().toUpperCase();
     if (!codigo || codigo.length < 3) {
-        alert("Ingresá un código de sala válido.");
+        mostrarToast("⚠️ Ingresá un código de sala válido.", "aviso");
         return;
     }
 
@@ -3747,13 +3773,13 @@ function procesarMensajeMqttSala(data) {
 
     // Sala llena
     if (data.tipo === "SALA_LLENA" && data.targetJugadorId === perfilUsuario.id) {
-        alert("⚠️ La sala ya alcanzó el cupo máximo de 8 jugadores.");
+        mostrarToast("⚠️ La sala ya alcanzó el cupo máximo de 8 jugadores.", "aviso");
         salirDeSalaOnline();
     }
 
     // 4. Rechazo de password
     if (data.tipo === "RECHAZO_PASSWORD" && data.targetJugadorId === perfilUsuario.id) {
-        alert("La contraseña ingresada para esta sala es incorrecta.");
+        mostrarToast("🔒 La contraseña ingresada para esta sala es incorrecta.", "error");
         salirDeSalaOnline();
     }
 
@@ -4208,7 +4234,7 @@ async function iniciarCombateOnlineDesdeHost() {
     if (!onlineDueloEstado.esHost) return;
     detenerBroadcastingSalaPublica();
     if (onlineDueloEstado.jugadores.length < 1) {
-        alert("Se necesita al menos 1 jugador para iniciar la partida.");
+        mostrarToast("👥 Se necesita al menos 1 jugador para iniciar la partida.", "aviso");
         return;
     }
 
@@ -4724,8 +4750,7 @@ function cederTurnoOradorDesdeOrador() {
     const partida = dueloEstado.partida;
     if (partida.jugadorActualId !== perfilUsuario.id) return;
 
-    const seguro = confirm("¿Querés ceder tu turno? Se registrarán 0 puntos y se habilitará el Robo Relámpago inmediato para tus rivales.");
-    if (!seguro) return;
+    mostrarToast("⚡ Turno cedido. Se habilita el Robo Relámpago.", "aviso");
 
     pausarCronometroTurnoDuelo();
     reproducirSonidoDuelo("buzzer");
@@ -5031,7 +5056,7 @@ async function iniciarGrabacionVoz() {
             if (dom.dueloVoiceRecTimer) dom.dueloVoiceRecTimer.textContent = `${m}:${s}`;
         }, 1000);
     } catch (err) {
-        alert("No se pudo acceder al micrófono para grabar la nota de voz. Por favor verificá los permisos en el navegador.");
+        mostrarToast("🎙️ No se pudo acceder al micrófono. Verificá los permisos del navegador.", "aviso");
     }
 }
 
@@ -5262,7 +5287,7 @@ async function procesarYVincularPdfGlobal(file) {
         actualizarCardPdfEnCrearSala();
         mostrarToast(`✅ "${res.nombre}" vinculado para la sala y todos tus juegos!`);
     } catch (err) {
-        alert(err.message);
+        mostrarToast("⚠️ " + err.message, "error");
     }
 }
 
@@ -5296,11 +5321,11 @@ function agregarJugadorDuelo(nombre) {
     const limpio = nombre.trim();
     if (!limpio) return;
     if (dueloEstado.config.jugadores.some(n => n.toLowerCase() === limpio.toLowerCase())) {
-        alert("Ya existe un jugador con ese nombre.");
+        mostrarToast("⚠️ Ya existe un jugador con ese nombre.", "aviso");
         return;
     }
     if (dueloEstado.config.jugadores.length >= 10) {
-        alert("El límite para una partida es de 10 jugadores.");
+        mostrarToast("⚠️ El límite para una partida es de 10 jugadores.", "aviso");
         return;
     }
 
@@ -5315,7 +5340,7 @@ function agregarJugadorDuelo(nombre) {
 
 function eliminarJugadorDuelo(indice) {
     if (dueloEstado.config.jugadores.length <= 1) {
-        alert("Debe haber al menos 1 jugador.");
+        mostrarToast("⚠️ Debe haber al menos 1 jugador.", "aviso");
         return;
     }
     dueloEstado.config.jugadores.splice(indice, 1);
@@ -5353,7 +5378,7 @@ function toggleTodosLosComodines() {
 /* Partida de Duelo */
 function iniciarDueloPartida() {
     if (dueloEstado.config.jugadores.length < 2) {
-        alert("¡Para jugar un duelo se necesitan al menos 2 jugadores!");
+        mostrarToast("👥 ¡Para jugar un duelo se necesitan al menos 2 jugadores!", "aviso");
         if (dom.dueloPlayerInput) dom.dueloPlayerInput.focus();
         return;
     }
@@ -5362,7 +5387,7 @@ function iniciarDueloPartida() {
     const lista = estado.listas.find(l => l.id === listaId);
 
     if (!lista || !Array.isArray(lista.temas) || lista.temas.length === 0) {
-        alert("La materia seleccionada no tiene temas disponibles para sortear.");
+        mostrarToast("⚠️ La materia seleccionada no tiene temas disponibles para sortear.", "aviso");
         return;
     }
 
@@ -5442,7 +5467,7 @@ async function girarDobleRuletaDuelo() {
     const partida = dueloEstado.partida;
     if (!partida.activa || partida.girando) return;
     if (partida.temasDisponibles.length === 0) {
-        alert("¡Ya no quedan más temas disponibles en esta materia!");
+        mostrarToast("🏁 ¡Ya no quedan más temas disponibles en esta materia!", "info");
         finalizarDueloPartida();
         return;
     }
@@ -6081,7 +6106,7 @@ function avanzarSiguienteTemaDuelo() {
     if (dom.dueloOnlineRoboOverlay) dom.dueloOnlineRoboOverlay.classList.add("hidden");
 
     if (partida.temasDisponibles.length === 0) {
-        alert("🎉 ¡Se sortearon todos los temas de la materia! Fin del duelo.");
+        mostrarToast("🏆 ¡Se sortearon todos los temas de la materia! Fin del duelo.", "info");
         finalizarDueloPartida();
         return;
     }
@@ -6399,7 +6424,7 @@ function mostrarModalVictoriaDuelo(partida) {
         dom.victoryCopySummaryBtn.onclick = () => {
             const texto = generarResumenWhatsApp(partida);
             navigator.clipboard.writeText(texto).then(() => {
-                alert("¡Resumen de la partida copiado al portapapeles listo para WhatsApp! 📲");
+                mostrarToast("📋 ¡Resumen copiado listo para WhatsApp! 📲", "info");
             });
         };
     }
@@ -7070,23 +7095,22 @@ function copiarResumenPartida(partidaId) {
 
     const texto = generarResumenWhatsApp(partida);
     navigator.clipboard.writeText(texto).then(() => {
-        alert("¡Resumen de la partida copiado al portapapeles! Listo para pegar en WhatsApp 📲");
+        mostrarToast("📋 ¡Resumen copiado para WhatsApp! 📲", "info");
     });
 }
 
 function eliminarPartidaHistorial(partidaId) {
-    if (!confirm("¿Deseás eliminar esta partida del historial del Salón de la Fama?")) return;
     let historial = cargarHistorialDuelo();
     historial = historial.filter(p => p.id !== partidaId);
     guardarHistorialDuelo(historial);
     renderSalonDeLaFama();
+    mostrarToast("🗑️ Partida eliminada del historial", "info");
 }
 
 function borrarHistorialCompleto() {
-    if (!confirm("⚠️ ¿Estás seguro de que querés borrar TODO el historial del Salón de la Fama y reiniciar el medallero? Esta acción no se puede deshacer.")) return;
     localStorage.removeItem(DUELO_STORAGE_KEY);
     renderSalonDeLaFama();
-    alert("Historial del Salón de la Fama reiniciado con éxito.");
+    mostrarToast("🗑️ Historial del Salón de la Fama reiniciado con éxito.", "info");
 }
 
 function reproducirSonidoDuelo(tipo) {
@@ -7696,6 +7720,18 @@ async function solicitarPreguntaIABolillero() {
     const temaKey = (temaId || temaNombre).trim().toLowerCase();
     const preguntasPrevias = historialPreguntasBolillero[temaKey] || [];
 
+    if (preguntasPrevias.length >= 5) {
+        if (dom.bolilleroIACounterBadge) {
+            dom.bolilleroIACounterBadge.style.display = "inline-flex";
+            dom.bolilleroIACounterBadge.textContent = "Pregunta 5/5 (Límite)";
+        }
+        if (dom.bolilleroIARetryBtn) {
+            dom.bolilleroIARetryBtn.disabled = true;
+            dom.bolilleroIARetryBtn.innerHTML = "✅ Límite alcanzado (5/5)";
+        }
+        return;
+    }
+
     if (!dom.bolilleroIACard) return;
 
     dom.bolilleroIACard.classList.remove("hidden");
@@ -7723,12 +7759,8 @@ async function solicitarPreguntaIABolillero() {
 
         bolilleroIAPreguntaActiva = data;
         renderPreguntaIABolillero(data);
-        if (preguntasPrevias.length > 0) {
-            mostrarToast(`✨ Pregunta #${data.numeroPregunta || (preguntasPrevias.length + 1)} sobre "${temaNombre}" (nuevo enfoque generado)`);
-        }
     } catch (err) {
         console.warn("Fallo al consultar Gemini para Bolillero, usando fallback procedimental:", err.message);
-        mostrarToast("⚠️ Gemini sin conexión directa: usando banco procedimental variado");
 
         // Banco procedimental con múltiples ángulos para nunca repetir en fallback
         const fallbacks = [
@@ -7797,11 +7829,26 @@ async function solicitarPreguntaIABolillero() {
 function renderPreguntaIABolillero(data) {
     if (!dom.bolilleroIAContent || !dom.bolilleroIAPregunta || !dom.bolilleroIAOpciones) return;
 
-    if (data.numeroPregunta && data.numeroPregunta > 1) {
-        dom.bolilleroIAPregunta.innerHTML = `<span class="badge badge--accent" style="margin-bottom: 0.5rem; display: inline-block;">Pregunta #${data.numeroPregunta} • Nuevo enfoque</span><br>${data.pregunta}`;
-    } else {
-        dom.bolilleroIAPregunta.textContent = data.pregunta;
+    const numPregunta = Math.min(data.numeroPregunta || 1, 5);
+
+    // Actualizar badge fijo pegado arriba
+    if (dom.bolilleroIACounterBadge) {
+        dom.bolilleroIACounterBadge.style.display = "inline-flex";
+        dom.bolilleroIACounterBadge.textContent = `Pregunta ${numPregunta}/5`;
     }
+
+    // Actualizar botón de repregunta
+    if (dom.bolilleroIARetryBtn) {
+        if (numPregunta >= 5) {
+            dom.bolilleroIARetryBtn.disabled = true;
+            dom.bolilleroIARetryBtn.innerHTML = "✅ Límite alcanzado (5/5)";
+        } else {
+            dom.bolilleroIARetryBtn.disabled = false;
+            dom.bolilleroIARetryBtn.innerHTML = `🔄 Otra Pregunta (${numPregunta}/5)`;
+        }
+    }
+
+    dom.bolilleroIAPregunta.textContent = data.pregunta;
     dom.bolilleroIAOpciones.innerHTML = "";
 
     const letras = ["A", "B", "C", "D"];
@@ -7837,10 +7884,6 @@ function renderPreguntaIABolillero(data) {
                     </div>
                     <div>${data.explicacion}</div>
                 `;
-            }
-
-            if (esCorrecta) {
-                mostrarToast("🌟 ¡Excelente respuesta de examen oral!");
             }
         });
 
@@ -7987,7 +8030,7 @@ function registrarEventos() {
                 actualizarUIIndicadoresPDF();
                 mostrarToast(`✅ Material conectado: ${res.nombre}. ¡Ya alimenta a todos tus juegos!`);
             } catch (err) {
-                alert(err.message);
+                mostrarToast("⚠️ " + err.message, "error");
             }
         });
     }
@@ -8058,7 +8101,7 @@ function registrarEventos() {
                 actualizarUIIndicadoresPDF();
                 mostrarToast(`✅ Apuntes cargados: ${res.nombre} (${res.paginas} págs)`);
             } catch (err) {
-                alert(err.message);
+                mostrarToast("⚠️ " + err.message, "error");
             }
         });
     }
@@ -8088,7 +8131,7 @@ function registrarEventos() {
                 mostrarToast(`✅ Apunte activo para ${juegoActual.toUpperCase()}: ${res.nombre}`);
                 enriquecerJuegoActualConIA();
             } catch (err) {
-                alert(err.message);
+                mostrarToast("⚠️ " + err.message, "error");
             }
         });
     }
@@ -8129,7 +8172,7 @@ function registrarEventos() {
                 actualizarUIIndicadoresPDF();
                 mostrarToast(`✅ Material global vinculado: ${res.nombre} (${res.paginas} págs)`);
             } catch (err) {
-                alert(err.message);
+                mostrarToast("⚠️ " + err.message, "error");
             }
         });
     }
@@ -8368,10 +8411,7 @@ function seleccionarTemaManualBolillero(temaId, dispararIaInmediata = false) {
     }
 
     if (dispararIaInmediata) {
-        mostrarToast(`✨ Generando pregunta con IA sobre "${tema.titulo}"...`);
         solicitarPreguntaIABolillero();
-    } else {
-        mostrarToast(`🎯 Seleccionaste "${tema.titulo}". Podés generar una pregunta con IA abajo.`);
     }
 }
 
@@ -8494,7 +8534,7 @@ function seleccionarTemaManualBolillero(temaId, dispararIaInmediata = false) {
             const cuentaId = dom.authLoginSelect?.value;
             const pin = dom.authLoginPin?.value;
             if (!cuentaId) {
-                alert("Seleccioná una cuenta.");
+                mostrarToast("⚠️ Seleccioná una cuenta.", "aviso");
                 return;
             }
             iniciarSesionConPin(cuentaId, pin);
@@ -8665,7 +8705,7 @@ function seleccionarTemaManualBolillero(temaId, dispararIaInmediata = false) {
                 }).catch(() => {});
             } else {
                 navigator.clipboard.writeText(url).then(() => {
-                    alert("¡Enlace copiado al portapapeles listo para compartir!");
+                    mostrarToast("🔗 ¡Enlace copiado al portapapeles listo para compartir!", "info");
                 });
             }
         });
@@ -8904,9 +8944,7 @@ function seleccionarTemaManualBolillero(temaId, dispararIaInmediata = false) {
     if (dom.dueloSpinBtn) dom.dueloSpinBtn.addEventListener("click", girarDobleRuletaDuelo);
     if (dom.dueloEndMatchBtn) {
         dom.dueloEndMatchBtn.addEventListener("click", () => {
-            if (confirm("¿Estás seguro de que deseás finalizar el duelo ahora y ver el podio de campeones?")) {
-                finalizarDueloPartida(true);
-            }
+            finalizarDueloPartida(true);
         });
     }
 
@@ -9568,7 +9606,7 @@ function iniciarAplicacion() {
 // =========================================================
 // GESTOR DE VERSIONES Y ACTUALIZACIÓN AUTOMÁTICA
 // =========================================================
-const APP_BUILD_VERSION = "27.2";
+const APP_BUILD_VERSION = "27.3";
 
 async function forzarActualizacionCompleta(mostrarNotificacion = true) {
     const btnActualizar = document.getElementById("btnForzarActualizar");

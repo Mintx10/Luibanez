@@ -15,10 +15,10 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     
-    <link rel="icon" type="image/svg+xml" href="icon.svg?v=27.2">
-    <link rel="apple-touch-icon" href="icon-192.png?v=27.2">
-    <link rel="manifest" href="manifest.json?v=27.2">
-    <link rel="stylesheet" href="style.css?v=27.2">
+    <link rel="icon" type="image/svg+xml" href="icon.svg?v=27.3">
+    <link rel="apple-touch-icon" href="icon-192.png?v=27.3">
+    <link rel="manifest" href="manifest.json?v=27.3">
+    <link rel="stylesheet" href="style.css?v=27.3">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -535,6 +535,7 @@
                         <div class="bolillero-ia-header">
                             <div class="bolillero-ia-badge-wrap">
                                 <span class="badge badge--accent">✨ EXAMEN ORAL CON IA</span>
+                                <span id="bolilleroIACounterBadge" class="badge badge--warning" style="display: none; font-weight: 700; background: rgba(245, 158, 11, 0.18); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4);">Pregunta 1/5</span>
                                 <span id="bolilleroIASourceBadge" class="badge badge--success" style="display: none;">📄 Basado en tus apuntes PDF</span>
                             </div>
                             <button id="bolilleroIAGenerateBtn" class="button button--accent button--sm" type="button">
@@ -3476,7 +3477,7 @@
 </dialog>
 
 <script src="mqtt.min.js"></script>
-<script src="script.js?v=27.2" defer></script>
+<script src="script.js?v=27.3" defer></script>
 
 <!-- =========================================================
      MODAL DE PROMPT PARA GEMINI (CREAR JUEGOS DESDE PDF)
