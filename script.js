@@ -1376,6 +1376,10 @@ function cambiarVista(vista) {
                 iniciarDiscoveryLobbiesOnline();
             }
         }
+    } else if (vistaDestino === "home") {
+        if (typeof sincronizarShockRoomHome === "function") {
+            sincronizarShockRoomHome();
+        }
     } else if (vistaDestino === "fama") {
         renderSalonDeLaFama();
     } else if (vistaDestino === "bolillero") {
@@ -2667,7 +2671,7 @@ const CUENTA_PREDEFINIDA_IVAN = {
     carrera: "Medicina",
     avatar: "🩺",
     tipoAvatar: "imagen",
-    fotoDataUrl: "ivan_doctor.png",
+    fotoDataUrl: "ivan_avatar_head.png",
     pin: "1234",
     email: "ivan@medicina.edu",
     victorias: 15,
@@ -2971,7 +2975,7 @@ function obtenerCuentasGuardadas() {
                 ...CUENTA_PREDEFINIDA_IVAN,
                 ...cuentas[idxIvan],
                 username: "ivi",
-                fotoDataUrl: "ivan_doctor.png",
+                fotoDataUrl: "ivan_avatar_head.png",
                 pin: cuentas[idxIvan].pin || "1234",
                 carrera: "Medicina"
             };
@@ -3031,9 +3035,12 @@ function cargarPerfilUsuario() {
 
     // Si NO es la cuenta de Iván, garantizar que no haya nada de medicina
     if (esCuentaIvanActiva()) {
+        if (!perfilUsuario.fotoDataUrl || perfilUsuario.fotoDataUrl === "ivan_doctor.png") {
+            perfilUsuario.fotoDataUrl = "ivan_avatar_head.png";
+        }
         asegurarMateriasMedicinaIvan();
     } else {
-        if (perfilUsuario.fotoDataUrl === "ivan_doctor.png" && perfilUsuario.username !== "ivi") {
+        if ((perfilUsuario.fotoDataUrl === "ivan_doctor.png" || perfilUsuario.fotoDataUrl === "ivan_avatar_head.png") && perfilUsuario.username !== "ivi") {
             perfilUsuario.fotoDataUrl = "";
         }
         removerMateriasMedicinaSiNoEsIvan();
@@ -3138,24 +3145,49 @@ function actualizarUIAuthHeader() {
         const esIvan = esCuentaIvanActiva();
         actualizarNavExclusivoIvan(esIvan);
 
+        // Control de vista Home para Iván (Shock Room a pantalla completa) vs otros usuarios
+        const heroElem = document.querySelector("#viewHome .hero");
+        const portalHub = document.querySelector("#viewHome .portal-hub-container");
         const panelMed = document.getElementById("panelMedicinaIvan");
-        if (panelMed) {
-            panelMed.classList.toggle("hidden", !esIvan);
+        const shockRoom = document.getElementById("medShockRoomHome");
+
+        if (esIvan) {
+            if (heroElem) heroElem.classList.add("hidden");
+            if (portalHub) portalHub.classList.add("hidden");
+            if (panelMed) panelMed.classList.add("hidden");
+            if (shockRoom) {
+                shockRoom.classList.remove("hidden");
+                sincronizarShockRoomHome();
+            }
+            asegurarMateriasMedicinaIvan();
+        } else {
+            if (heroElem) heroElem.classList.remove("hidden");
+            if (portalHub) portalHub.classList.remove("hidden");
+            if (panelMed) panelMed.classList.add("hidden");
+            if (shockRoom) {
+                shockRoom.classList.add("hidden");
+                detenerEcgMonitorCanvas();
+            }
+            removerMateriasMedicinaSiNoEsIvan();
         }
+
         const medBtn = document.getElementById("userDropdownMedBtn");
         if (medBtn) {
             medBtn.classList.toggle("hidden", !esIvan);
         }
-        if (esIvan) {
-            asegurarMateriasMedicinaIvan();
-        } else {
-            removerMateriasMedicinaSiNoEsIvan();
-        }
     } else {
         actualizarNavExclusivoIvan(false);
+        const heroElem = document.querySelector("#viewHome .hero");
+        const portalHub = document.querySelector("#viewHome .portal-hub-container");
         const panelMed = document.getElementById("panelMedicinaIvan");
-        if (panelMed) {
-            panelMed.classList.add("hidden");
+        const shockRoom = document.getElementById("medShockRoomHome");
+
+        if (heroElem) heroElem.classList.remove("hidden");
+        if (portalHub) portalHub.classList.remove("hidden");
+        if (panelMed) panelMed.classList.add("hidden");
+        if (shockRoom) {
+            shockRoom.classList.add("hidden");
+            detenerEcgMonitorCanvas();
         }
         const medBtn = document.getElementById("userDropdownMedBtn");
         if (medBtn) {
@@ -3646,6 +3678,979 @@ let dificultadInternaActiva = 2; // 1: Jr, 2: JTP/Planta, 3: Ateneo Extremo
 let sistemaInternaActivo = "todos";
 let casoInternaActivoActual = null;
 let casoFarmaActivoActual = null;
+
+/* ==========================================================
+   HOSPITAL CLINICAL SHOCK ROOM & RESUCITACIÓN (DR. IVÁN)
+   ========================================================== */
+let casoShockRoomActivo = null;
+let ecgAnimationId = null;
+
+const BANCO_CASOS_SHOCK_ROOM = [
+    {
+        id: "SR-01",
+        cama: "BOX 01 · REANIMACIÓN CRÍTICA",
+        titulo: "IAMCEST Anteroseptal en Shock Cardiogénico e Hipoperfusión",
+        sindrome: "Emergencia Cardiovascular / Shock Cardiogénico",
+        edad: "Varón, 58 años",
+        ingreso: "Hace 14 minutos (SAME Cód. Rojo)",
+        motivoIngreso: "Ingresa trasladado por ambulancia con dolor precordial opresivo desgarrador retroesternal de 2 horas de evolución irradiado a mandíbula y brazo izquierdo, asociado a disnea súbita en reposo, diaforesis fría profusa y palidez mucocutánea intensa.",
+        antecedentes: "Hipertensión arterial mal controlada, tabaquista pesado (40 paquetes/año), dislipemia severa sin tratamiento. Niega alergias medicamentosas.",
+        signosVitales: {
+            fc: 124, fcRitmo: "TAQUICARDIA SINUSAL · ST ELEVADO", fcTrend: "▲ Taquicardia",
+            pa: "82/50", tam: "60", paTrend: "TAM: 60 mmHg (Baja)", paStatus: "danger",
+            spo2: 90, spo2Trend: "FiO2 21% (Hipoxia)", spo2Status: "warning",
+            fr: 28, frTrend: "▲ Taquipnea",
+            temp: "36.2", tempTrend: "Afebril",
+            glasgow: "13/15", glasgowNota: "AO:3 RV:4 RM:6 (Sopor)",
+            ritmoEcg: "st_elevado"
+        },
+        organos: {
+            cerebro: {
+                titulo: "Sistema Nervioso Central (SNC)",
+                estado: "Deprimido",
+                statusClass: "shock-status-badge--warn",
+                icon: "🧠",
+                hallazgos: "Glasgow 13/15. Paciente somnoliento con tendencia al estupor superficial pero responde a la voz. Pupilas isocóricas reactivas. Sin signos de foco neurológico motor o sensitivo."
+            },
+            pulmon: {
+                titulo: "Aparato Respiratorio / Pulmones",
+                estado: "Crítico",
+                statusClass: "shock-status-badge--crit",
+                icon: "🫁",
+                hallazgos: "FR 28 rpm. Tiraje intercostal leve. A la auscultación: rales crepitantes húmedos bilaterales en tercio medio y bases (patrón Killip & Kimball II-III por congestión venocapilar pulmonar aguda)."
+            },
+            corazon: {
+                titulo: "Aparato Cardiovascular",
+                estado: "Crítico",
+                statusClass: "shock-status-badge--crit",
+                icon: "🫀",
+                hallazgos: "R1 y R2 taquicárdicos, hipofonéticos. Presencia de R3 (galope ventricular izquierdo). Sin soplos valvulares primarios. Ingurgitación yugular 2/3 con colapso parcial. Pulsos periféricos filiformes y simétricos."
+            },
+            abdomen: {
+                titulo: "Abdomen & Gastrointestinal",
+                estado: "Compensado",
+                statusClass: "shock-status-badge--norm",
+                icon: "🩺",
+                hallazgos: "Abdomen blando, depresible, no doloroso a la palpación superficial ni profunda. Ruidos hidroaéreos presentes, normoactivos. Hígado al ras del reborde costal, sin signos de peritonismo."
+            },
+            renal: {
+                titulo: "Renal & Vascular Periférico",
+                estado: "Hipoperfusión Grave",
+                statusClass: "shock-status-badge--crit",
+                icon: "🩸",
+                hallazgos: "Diuresis por sonda vesical: 15 mL/h (oligoanuria aguda por bajo gasto). Extremidades frías, acrocianosis distal en lechos ungueales. Relleno capilar enlentecido: 5 segundos. Livideces en rodillas (Mottling 2)."
+            }
+        },
+        organoFocoDefault: "corazon",
+        laboratorio: [
+            { parametro: "Troponina T Ultrasensible", valor: "2.450 ng/L", ref: "< 14 ng/L", alerta: "CRÍTICO 🚨", flagClass: "shock-lab-flag--crit" },
+            { parametro: "CPK-MB masa", valor: "78 ng/mL", ref: "0 - 5 ng/mL", alerta: "CRÍTICO 🚨", flagClass: "shock-lab-flag--crit" },
+            { parametro: "Ácido Láctico sérico", valor: "4.8 mmol/L", ref: "0.5 - 1.6 mmol/L", alerta: "ALTO ⚠️", flagClass: "shock-lab-flag--crit" },
+            { parametro: "Gases Arteriales (pH / PaO2)", valor: "pH 7.28 | PaO2 64 mmHg", ref: "7.35-7.45 | > 80", alerta: "ACIDOSIS ⚠️", flagClass: "shock-lab-flag--crit" },
+            { parametro: "Bicarbonato (HCO3)", valor: "16 mEq/L", ref: "22 - 26 mEq/L", alerta: "BAJO ⚠️", flagClass: "shock-lab-flag--warn" },
+            { parametro: "Leucocitos", valor: "14.200 /mm³ (78% Neu)", ref: "4.500 - 10.000", alerta: "LEUCOCITOSIS", flagClass: "shock-lab-flag--warn" },
+            { parametro: "Hemoglobina / Hto", valor: "14.1 g/dL | 42%", ref: "13.0 - 17.0", alerta: "NORMAL", flagClass: "shock-lab-flag--norm" },
+            { parametro: "Plaquetas", valor: "220.000 /mm³", ref: "150.000 - 450.000", alerta: "NORMAL", flagClass: "shock-lab-flag--norm" },
+            { parametro: "Urea / Creatinina", valor: "58 mg/dL | 1.6 mg/dL", ref: "15-45 | 0.7-1.2", alerta: "ELEVADO ⚠️", flagClass: "shock-lab-flag--warn" },
+            { parametro: "Glucemia al Azar", valor: "188 mg/dL", ref: "70 - 110 mg/dL", alerta: "HIPERGLUCEMIA", flagClass: "shock-lab-flag--warn" }
+        ],
+        estudios: {
+            radiografia: {
+                titulo: "Radiografía de Tórax de Frente (Portátil)",
+                hallazgos: "Índice cardiotorácico aumentado (> 0.55, cardiomegalia). Congestión perihiliar bilateral con redistribución de flujo hacia vértices (alas de mariposa incipientes), líneas B de Kerley en bases pulmonares.",
+                impresion: "Signos radiológicos de congestión venocapilar pulmonar por Edema Agudo de Pulmón cardiogénico (Killip II-III)."
+            },
+            tomografia: {
+                titulo: "Angio-TC de Tórax & Grandes Vasos",
+                hallazgos: "Estudio solicitado para descarte de disección aórtica tipo A vs TEP masivo. Aorta torácica de calibre conservado sin flap intimal de disección ni hematoma intramural. Arterias pulmonares permeables sin defectos de repleción.",
+                impresion: "Se descarta disección aórtica aguda y tromboembolismo pulmonar. Compatible con causa miocárdica pura."
+            },
+            ecg: {
+                titulo: "Electrocardiograma 12D de Superficie",
+                hallazgos: "Ritmo sinusal a 124 lpm. Eje QRS a 0°. Elevación convexa marcada del segmento ST de 4 a 6 mm en derivaciones precordiales V1, V2, V3 y V4 con ondas T picudas. Infradesnivel especular recíproco en cara inferior (DII, DIII, aVF).",
+                impresion: "Infarto Agudo de Miocardio con Elevación del ST (IAMCEST) anteroseptal hiperagudo en shock cardiogénico."
+            }
+        },
+        diagnosticoOficial: "Infarto Agudo de Miocardio con Elevación del ST (IAMCEST) anteroseptal en Shock Cardiogénico (Killip & Kimball IV). Conducta inmediata: Activación inmediata de sala de hemodinamia para Angioplastia Coronaria Primaria (<90 min), doble antiagregación plaquetaria (AAS 300mg + Ticagrelor 180mg), anticoagulación con Heparina no fraccionada, soporte inotrópico y vasopresor con Noradrenalina titulada para PAM ≥ 65 mmHg y Dobutamina, oxigenoterapia por VNI / intubación según mecánica."
+    },
+    {
+        id: "SR-02",
+        cama: "BOX 02 · RESUCITACIÓN METABÓLICA",
+        titulo: "Cetoacidosis Diabética Severa (CAD) con Shock Hipovolémico y Acidosis Extrema",
+        sindrome: "Emergencia Endocrinológica / Acidosis Metabólica Grave",
+        edad: "Mujer, 23 años",
+        ingreso: "Hace 22 minutos (Guardia Médica)",
+        motivoIngreso: "Paciente traída por familiares por vómitos incoercibles de 24 horas de evolución, dolor abdominal difuso severo, polidipsia intensa, respiración muy agitada y rápida, y deterioro progresivo del estado de conciencia con tendencia al coma.",
+        antecedentes: "Diabetes Mellitus tipo 1 desde los 12 años tratada con Insulina Glargina y Lispro. Suspensión voluntaria de insulina en las últimas 48 horas por cuadro gastrointestinal intercurrente.",
+        signosVitales: {
+            fc: 136, fcRitmo: "TAQUICARDIA SINUSAL COMPENSATORIA", fcTrend: "▲ Taquicardia severa",
+            pa: "75/45", tam: "55", paTrend: "TAM: 55 mmHg (Shock)", paStatus: "danger",
+            spo2: 97, spo2Trend: "Aire ambiente", spo2Status: "normal",
+            fr: 34, frTrend: "▲ Kussmaul profunda",
+            temp: "37.1", tempTrend: "Normotérmica",
+            glasgow: "11/15", glasgowNota: "AO:2 RV:4 RM:5 (Estupor)",
+            ritmoEcg: "taquicardia"
+        },
+        organos: {
+            cerebro: {
+                titulo: "Sistema Nervioso Central (SNC)",
+                estado: "Estupor Metabólico",
+                statusClass: "shock-status-badge--crit",
+                icon: "🧠",
+                hallazgos: "Glasgow 11/15. Somnolienta, responde con palabras confusas al estímulo doloroso. Aliento cetónico característico ('manzanas podridas'). Pupilas intermedias reactivas."
+            },
+            pulmon: {
+                titulo: "Aparato Respiratorio / Pulmones",
+                estado: "Respiración de Kussmaul",
+                statusClass: "shock-status-badge--crit",
+                icon: "🫁",
+                hallazgos: "FR 34 rpm. Respiración hiperpneica profunda y rápida (Kussmaul) para compensación respiratoria de acidosis metabólica extrema. Sin ruidos sobreagregados pulmonares."
+            },
+            corazon: {
+                titulo: "Aparato Cardiovascular",
+                estado: "Taquicardia por Deshidratación",
+                statusClass: "shock-status-badge--warn",
+                icon: "🫀",
+                hallazgos: "Taquicardia regular a 136 lpm. R1 y R2 taquicárdicos sin soplos. Pulsos periféricos filiformes y débiles. Hipovolemia severa por diuresis osmótica masiva."
+            },
+            abdomen: {
+                titulo: "Abdomen & Gastrointestinal",
+                estado: "Dolor Pseudo-quirúrgico",
+                statusClass: "shock-status-badge--warn",
+                icon: "🩺",
+                hallazgos: "Abdomen doloroso en forma difusa a la palpación profunda pero blando, sin defensa peritoneal real (dolor abdominal por cetoacidosis / gastroparesia diabética). Ruidos hidroaéreos disminuidos."
+            },
+            renal: {
+                titulo: "Renal & Estado de Hidratación",
+                estado: "Deshidratación Extrema",
+                statusClass: "shock-status-badge--crit",
+                icon: "🩸",
+                hallazgos: "Mucosas orales secas sin saliva. Signo del pliegue positivo persistente. Oliguria severa (10 mL/h). Relleno capilar 4 segundos. Pérdida estimada de fluidos: 6 a 8 litros."
+            }
+        },
+        organoFocoDefault: "renal",
+        laboratorio: [
+            { parametro: "Glucemia Plasmática", valor: "620 mg/dL", ref: "70 - 110 mg/dL", alerta: "CRÍTICO 🚨", flagClass: "shock-lab-flag--crit" },
+            { parametro: "pH Arterial", valor: "6.98", ref: "7.35 - 7.45", alerta: "CRÍTICO 🚨", flagClass: "shock-lab-flag--crit" },
+            { parametro: "Bicarbonato (HCO3)", valor: "5.2 mEq/L", ref: "22 - 26 mEq/L", alerta: "CRÍTICO 🚨", flagClass: "shock-lab-flag--crit" },
+            { parametro: "Anion Gap", valor: "28 mEq/L", ref: "8 - 12 mEq/L", alerta: "ALTO ⚠️", flagClass: "shock-lab-flag--crit" },
+            { parametro: "Cetonemia / Cetonuria", valor: "++++ (4.8 mmol/L)", ref: "Negativo", alerta: "POSITIVO 🚨", flagClass: "shock-lab-flag--crit" },
+            { parametro: "Potasio sérico (K+)", valor: "5.8 mEq/L", ref: "3.5 - 5.0 mEq/L", alerta: "ELEVADO*", flagClass: "shock-lab-flag--warn" },
+            { parametro: "Sodio sérico medido", valor: "128 mEq/L (Correg: 136)", ref: "135 - 145", alerta: "PSEUDOHIPONATREMIA", flagClass: "shock-lab-flag--warn" },
+            { parametro: "Urea / Creatinina", valor: "74 mg/dL | 2.4 mg/dL", ref: "15-45 | 0.7-1.2", alerta: "FALLA PRERRENAL", flagClass: "shock-lab-flag--crit" },
+            { parametro: "Leucocitos", valor: "22.000 /mm³", ref: "4.500 - 10.000", alerta: "LEUCOCITOSIS", flagClass: "shock-lab-flag--warn" },
+            { parametro: "Ácido Láctico", valor: "3.2 mmol/L", ref: "0.5 - 1.6", alerta: "ELEVADO", flagClass: "shock-lab-flag--warn" }
+        ],
+        estudios: {
+            radiografia: {
+                titulo: "Radiografía de Tórax de Frente",
+                hallazgos: "Campos pulmonares libres de infiltrados neumónicos. Silueta cardíaca pequeña y alargada ('corazón en gota'), signo radiográfico de deshidratación intravascular severa.",
+                impresion: "Sin foco infeccioso pulmonar evidente. Compatible con depleción de volumen extremo."
+            },
+            tomografia: {
+                titulo: "TC de Abdomen y Pelvis",
+                hallazgos: "Estudio realizado para descartar pancreatitis aguda o perforación visceral como desencadenante. Sin líquido libre intrabdominal, páncreas de tamaño y densidad conservada.",
+                impresion: "Se descarta patología quirúrgica intraabdominal aguda."
+            },
+            ecg: {
+                titulo: "Electrocardiograma de 12 Derivaciones",
+                hallazgos: "Taquicardia sinusal a 136 lpm. Ondas T altas y simétricas en precordiales secundarias a hiperpotasemia celular inicial por acidosis severa.",
+                impresion: "Taquicardia sinusal con cambios de repolarización por hipercalemia extracelular y acidosis."
+            }
+        },
+        diagnosticoOficial: "Cetoacidosis Diabética Severa (CAD) con Shock Hipovolémico y Acidosis Metabólica Extrema (pH < 7.00, Anion Gap aumentado). Conducta inmediata: 1) Hidratación parenteral masiva agresiva con Solución Fisiológica al 0.9% (1.000-1.500 mL en la primera hora). 2) NO administrar insulina hasta asegurar potasio sérico > 3.3 mEq/L. 3) Iniciar bomba de Insulina Corriente IV continua a 0.1 UI/kg/h cuando comience la expansión. 4) Reposición precoz de Cloruro de Potasio (el potasio corporal total está severamente depletado a pesar del valor sérico). 5) Monitoreo horario de glucemia capilar y medio interno en UTI."
+    },
+    {
+        id: "SR-03",
+        cama: "BOX 03 · UNIDAD CARDIOVASCULAR",
+        titulo: "Tromboembolismo Pulmonar Masivo (TEP) con Cor Pulmonale Agudo y Shock Obstructivo",
+        sindrome: "Emergencia Vascular / Shock Obstructivo",
+        edad: "Mujer, 61 años",
+        ingreso: "Hace 10 minutos (SAME Cód. Rojo)",
+        motivoIngreso: "Paciente que ingresa en colapso hemodinámico tras presentar disnea súbita extrema en reposo, dolor pleurítico retroesternal agudo, síncope presenciado en su domicilio y sensación inminente de muerte.",
+        antecedentes: "Reemplazo total de cadera derecha hace 12 días con reposo prolongado en cama y profilaxis antitrombótica suspendida precozmente. Obesidad grado II.",
+        signosVitales: {
+            fc: 130, fcRitmo: "TAQUICARDIA SINUSAL · PATRÓN S1Q3T3", fcTrend: "▲ Taquicardia severa",
+            pa: "80/52", tam: "61", paTrend: "TAM: 61 mmHg (Shock)", paStatus: "danger",
+            spo2: 84, spo2Trend: "FiO2 50% (Hipoxemia severa)", spo2Status: "danger",
+            fr: 32, frTrend: "▲ Taquipnea severa",
+            temp: "36.8", tempTrend: "Afebril",
+            glasgow: "14/15", glasgowNota: "AO:4 RV:4 RM:6 (Angustia)",
+            ritmoEcg: "tep"
+        },
+        organos: {
+            cerebro: {
+                titulo: "Sistema Nervioso Central (SNC)",
+                estado: "Ansiedad & Hipoxia",
+                statusClass: "shock-status-badge--warn",
+                icon: "🧠",
+                hallazgos: "Glasgow 14/15. Paciente sumamente inquieta, taquipsíquica, con intensa sensación inminente de asfixia y muerte. Sin déficit focal."
+            },
+            pulmon: {
+                titulo: "Aparato Respiratorio / Pulmones",
+                estado: "Hipoxemia Refractaria",
+                statusClass: "shock-status-badge--crit",
+                icon: "🫁",
+                hallazgos: "FR 32 rpm. Pulmones limpios a la auscultación sin ruidos agregados a pesar de saturación de 84% con máscara con reservorio: clásica disociación clínico-auscultatoria del TEP."
+            },
+            corazon: {
+                titulo: "Aparato Cardiovascular",
+                estado: "Falla Ventricular Derecha",
+                statusClass: "shock-status-badge--crit",
+                icon: "🫀",
+                hallazgos: "Latido paraesternal izquierdo palpable (signo de Dressler). R2 pulmonar marcadamente hiperfonético. Soplo holosistólico tricuspídeo. Ingurgitación yugular 3/3 sin colapso inspiratorio."
+            },
+            abdomen: {
+                titulo: "Abdomen & Reflujo",
+                estado: "Congestión Hepática",
+                statusClass: "shock-status-badge--warn",
+                icon: "🩺",
+                hallazgos: "Abdomen blando. Hepatomegalia palpable dolorosa a 3 cm del reborde costal con reflujo hepatoyugular francamente positivo."
+            },
+            renal: {
+                titulo: "Miembros Inferiores & Vascular",
+                estado: "TVP Asimétrica",
+                statusClass: "shock-status-badge--crit",
+                icon: "🩸",
+                hallazgos: "Miembro inferior derecho con aumento de diámetro de 4 cm respecto al contralateral, calor local, edema duro con signo de Godet y dolor intenso a la dorsiflexión (Signo de Homans positivo)."
+            }
+        },
+        organoFocoDefault: "corazon",
+        laboratorio: [
+            { parametro: "Dímero D Ultrasensible", valor: "8.450 ng/mL", ref: "< 500 ng/mL", alerta: "CRÍTICO 🚨", flagClass: "shock-lab-flag--crit" },
+            { parametro: "Troponina I", valor: "0.85 ng/mL", ref: "< 0.04 ng/mL", alerta: "INJURIA VD 🚨", flagClass: "shock-lab-flag--crit" },
+            { parametro: "BNP (Péptido Natriurético)", valor: "980 pg/mL", ref: "< 100 pg/mL", alerta: "ALTO ⚠️", flagClass: "shock-lab-flag--crit" },
+            { parametro: "Gases Arteriales (PaO2)", valor: "PaO2 52 mmHg (FiO2 50%)", ref: "> 80 mmHg", alerta: "HIPOXEMIA GRAVE", flagClass: "shock-lab-flag--crit" },
+            { parametro: "PaCO2 / pH", valor: "PaCO2 26 mmHg | pH 7.48", ref: "35-45 | 7.35-7.45", alerta: "ALCALOSIS RESP", flagClass: "shock-lab-flag--warn" },
+            { parametro: "Ácido Láctico", valor: "3.9 mmol/L", ref: "0.5 - 1.6", alerta: "ALTO ⚠️", flagClass: "shock-lab-flag--warn" },
+            { parametro: "Plaquetas", valor: "195.000 /mm³", ref: "150.000 - 450.000", alerta: "NORMAL", flagClass: "shock-lab-flag--norm" },
+            { parametro: "Hemoglobina / Hto", valor: "13.4 g/dL | 40%", ref: "12 - 16", alerta: "NORMAL", flagClass: "shock-lab-flag--norm" },
+            { parametro: "Creatinina sérica", valor: "1.4 mg/dL", ref: "0.6 - 1.1", alerta: "ELEVADO", flagClass: "shock-lab-flag--warn" },
+            { parametro: "Coagulograma (TP / Quick)", valor: "TP 13.5s | Quick 82%", ref: "70 - 120%", alerta: "NORMAL", flagClass: "shock-lab-flag--norm" }
+        ],
+        estudios: {
+            radiografia: {
+                titulo: "Radiografía de Tórax (Portátil)",
+                hallazgos: "Oligohemia focal en campo medio derecho (signo de Westermark) y opacidad cuneiforme de base pleural en campo inferior derecho (Joroba de Hampton). Agrandamiento del tronco de la arteria pulmonar.",
+                impresion: "Signos radiológicos altamente sugestivos de embolia e infarto pulmonar."
+            },
+            tomografia: {
+                titulo: "Angio-TC de Tórax Protocolo TEP",
+                hallazgos: "Defecto de repleción intraluminal masivo que cabalga sobre la bifurcación del tronco de la arteria pulmonar ('émbolo en silla de montar') extendiéndose a ambas arterias lobares con oclusión casi total del lecho vascular derecho.",
+                impresion: "Tromboembolismo Pulmonar Masivo Bilateral con sobrecarga y dilatación aguda de cavidades derechas (relación VD/VI > 1.3)."
+            },
+            ecg: {
+                titulo: "Electrocardiograma de 12 Derivaciones",
+                hallazgos: "Taquicardia sinusal a 130 lpm. Presencia del clásico patrón de McGinn-White (S1Q3T3: onda S profunda en DI, onda Q patológica en DIII e inversión de onda T en DIII). Bloqueo incompleto de rama derecha e inversión de T en V1-V4.",
+                impresion: "Sobrecarga sistólica y dilatación ventricular derecha aguda (Cor Pulmonale)."
+            }
+        },
+        diagnosticoOficial: "Tromboembolismo Pulmonar Masivo de Alto Riesgo Hemodinámico con Shock Obstructivo y Falla Ventricular Derecha Aguda. Conducta inmediata: 1) Trombólisis sistémica de emergencia con rtPA (Alteplasa 100 mg en infusión continua de 2 horas o Tenecteplasa bolo). 2) Soporte hemodinámico con Noradrenalina titulada precozmente. 3) Oxigenoterapia con alto flujo. 4) Anticoagulación parenteral de rescate con Heparina no fraccionada en bolo e infusión continua. 5) Si hay contraindicación absoluta para fibrinolíticos: embolectomía quirúrgica o por catéter percutáneo de urgencia."
+    },
+    {
+        id: "SR-04",
+        cama: "BOX 04 · AISLAMIENTO / SEPSIS",
+        titulo: "Shock Séptico Refractario de Foco Abdominal (Peritonitis Perforativa)",
+        sindrome: "Emergencia Infecciosa / Shock Séptico Sepsis-3",
+        edad: "Varón, 71 años",
+        ingreso: "Hace 18 minutos (Shock Room)",
+        motivoIngreso: "Ingresa en camilla con deterioro agudo del estado general, fiebre de 39.4°C seguida de hipotermia y escalofríos, distensión y dolor abdominal intolerable generalizado en las últimas 12 horas, náuseas y anuria.",
+        antecedentes: "Enfermedad diverticular crónica del colon, hipertensión arterial y diabetes tipo 2. Uso frecuente de AINEs por lumbalgia.",
+        signosVitales: {
+            fc: 138, fcRitmo: "TAQUICARDIA SINUSAL HIPERDINÁMICA", fcTrend: "▲ Taquicardia extrema",
+            pa: "78/40", tam: "52", paTrend: "TAM: 52 mmHg (Shock Séptico)", paStatus: "danger",
+            spo2: 92, spo2Trend: "FiO2 35%", spo2Status: "warning",
+            fr: 30, frTrend: "▲ Taquipnea",
+            temp: "39.4", tempTrend: "Fiebre alta (SIRS)",
+            glasgow: "12/15", glasgowNota: "AO:3 RV:4 RM:5 (Confuso)",
+            ritmoEcg: "taquicardia"
+        },
+        organos: {
+            cerebro: {
+                titulo: "Sistema Nervioso Central (SNC)",
+                estado: "Encefalopatía Séptica",
+                statusClass: "shock-status-badge--crit",
+                icon: "🧠",
+                hallazgos: "Glasgow 12/15. Desorientado en tiempo y espacio, respuesta lenta a órdenes simples. Encefalopatía asociada a sepsis por hipoperfusión cerebral y tormenta de citoquinas."
+            },
+            pulmon: {
+                titulo: "Aparato Respiratorio / Pulmones",
+                estado: "Compensación & Distress",
+                statusClass: "shock-status-badge--warn",
+                icon: "🫁",
+                hallazgos: "FR 30 rpm. Tiraje subcostal. Murmullo vesicular disminuido en bases por hipomovilidad diafragmática refleja al dolor peritoneal. Sin consolidación focal."
+            },
+            corazon: {
+                titulo: "Aparato Cardiovascular",
+                estado: "Shock Vasopléjico",
+                statusClass: "shock-status-badge--crit",
+                icon: "🫀",
+                hallazgos: "Vasoplejía severa con PAM < 65 mmHg a pesar de infusión de 2.000 mL de solución fisiológica. Ruidos cardíacos taquicárdicos, galope ausente."
+            },
+            abdomen: {
+                titulo: "Abdomen & Peritonitis",
+                estado: "Abdomen en Tabla",
+                statusClass: "shock-status-badge--crit",
+                icon: "🩺",
+                hallazgos: "Vientre en tabla con contractura muscular involuntaria generalizada. Dolor exquisito a la descompresión brusca en los 4 cuadrantes (Signo de Blumberg francamente positivo bilateral). Silencio abdominal completo (íleo paralítico)."
+            },
+            renal: {
+                titulo: "Renal & Microcirculación",
+                estado: "Falla Multiorgánica",
+                statusClass: "shock-status-badge--crit",
+                icon: "🩸",
+                hallazgos: "Anuria completa en las últimas 2 horas (< 5 mL/h). Livideces reticulares en rodillas (Mottling score 3). Tiempo de relleno capilar 6 segundos. Falla multiorgánica aguda."
+            }
+        },
+        organoFocoDefault: "abdomen",
+        laboratorio: [
+            { parametro: "Ácido Láctico sérico", valor: "6.2 mmol/L", ref: "0.5 - 1.6 mmol/L", alerta: "CRÍTICO 🚨", flagClass: "shock-lab-flag--crit" },
+            { parametro: "Procalcitonina", valor: "45 ng/mL", ref: "< 0.5 ng/mL", alerta: "SEPSIS GRAVE 🚨", flagClass: "shock-lab-flag--crit" },
+            { parametro: "Leucocitos totales", valor: "24.500 /mm³ (22% cayados)", ref: "4.500 - 10.000", alerta: "DESVIACIÓN IZQ 🚨", flagClass: "shock-lab-flag--crit" },
+            { parametro: "Plaquetas", valor: "72.000 /mm³", ref: "150.000 - 450.000", alerta: "TROMBOCITOPENIA", flagClass: "shock-lab-flag--crit" },
+            { parametro: "Gases Arteriales (pH / HCO3)", valor: "pH 7.16 | HCO3 12 mEq/L", ref: "7.35-7.45 | 22-26", alerta: "ACIDOSIS MET 🚨", flagClass: "shock-lab-flag--crit" },
+            { parametro: "Creatinina sérica", valor: "3.4 mg/dL", ref: "0.7 - 1.2", alerta: "FALLA RENAL AGUDA", flagClass: "shock-lab-flag--crit" },
+            { parametro: "Bilirrubina Total", valor: "3.1 mg/dL", ref: "< 1.2 mg/dL", alerta: "DISFUNCIÓN HEPÁTICA", flagClass: "shock-lab-flag--warn" },
+            { parametro: "Coagulograma (Quick)", valor: "Quick 48% | KPTT 54s", ref: "70-120% | 25-38s", alerta: "COAGULOPATÍA", flagClass: "shock-lab-flag--warn" },
+            { parametro: "Glucemia", valor: "165 mg/dL", ref: "70 - 110 mg/dL", alerta: "ESTRÉS SÉPTICO", flagClass: "shock-lab-flag--warn" },
+            { parametro: "Score SOFA Calculado", valor: "14 Puntos", ref: "< 2 Puntos", alerta: "MORTALIDAD >50%", flagClass: "shock-lab-flag--crit" }
+        ],
+        estudios: {
+            radiografia: {
+                titulo: "Radiografía de Tórax y Abdomen de Pie",
+                hallazgos: "Presencia de aire libre subdiafragmático en semiluna bajo ambos hemidiafragmas ('Signo de Popper' / neumoperitoneo evidente). Borramiento de las líneas del psoas.",
+                impresion: "Neumoperitoneo masivo secundario a perforación de víscera hueca intraabdominal."
+            },
+            tomografia: {
+                titulo: "TC de Abdomen y Pelvis con Contraste",
+                hallazgos: "Neumoperitoneo masivo y abundante líquido libre denso en espacio subhepático, goteras paracólicas y pelvis menor (peritonitis fecal / purulenta). Engrosamiento y defecto focal de la pared en colon sigmoideo compatible con diverticulitis perforada Hinchey IV.",
+                impresion: "Perforación diverticular sigmoidea con peritonitis fecal generalizada y shock séptico."
+            },
+            ecg: {
+                titulo: "Electrocardiograma de 12 Derivaciones",
+                hallazgos: "Taquicardia sinusal regular a 138 lpm sin signos de isquemia coronaria primaria.",
+                impresion: "Taquicardia sinusal en respuesta a shock distributivo y tormenta inflamatoria sistémica."
+            }
+        },
+        diagnosticoOficial: "Shock Séptico Refractario con Falla Multiorgánica secundario a Peritonitis Fecal por Perforación Diverticular Sigmoidea (Hinchey IV). Conducta inmediata: 1) Resucitación con cristaloides balanceados (30 mL/kg) y soporte vasopresor de 1° línea con Noradrenalina titulada precozmente para PAM ≥ 65 mmHg. 2) Segunda línea: Vasopresina 0.03 UI/min + Hidrocortisona 200 mg/día. 3) Toma de hemocultivos x 2 e inicio de antibióticos empíricos de amplio espectro dentro de la 'hora de oro' (Meropenem 1 g c/8h + Vancomicina 15-20 mg/kg). 4) Pase urgente a quirófano para laparotomía exploradora y control del foco (Operación de Hartmann)."
+    },
+    {
+        id: "SR-05",
+        cama: "BOX 05 · TRAUMA SHOCK",
+        titulo: "Neumotórax Hipertensivo a Tensión con Shock Obstructivo Post-Traumático",
+        sindrome: "Emergencia de Trauma / Shock Obstructivo",
+        edad: "Varón, 32 años",
+        ingreso: "Hace 8 minutos (Trauma Cód. Rojo)",
+        motivoIngreso: "Paciente traído de urgencia tras colisión vehicular moto-auto con traumatismo torácico cerrado de alta energía. Ingresa en fallo ventilatorio extremo, con asfixia inminente, hipotensión profunda y cianosis central progresiva.",
+        antecedentes: "Joven previamente sano. Sin antecedentes de relevancia ni cirugías previas.",
+        signosVitales: {
+            fc: 142, fcRitmo: "TAQUICARDIA SINUSAL EXTREMA", fcTrend: "▲ Taquicardia extrema",
+            pa: "70/40", tam: "50", paTrend: "TAM: 50 mmHg (Colapso)", paStatus: "danger",
+            spo2: 78, spo2Trend: "FiO2 100% (Asfixia)", spo2Status: "danger",
+            fr: 36, frTrend: "▲ Disnea agónica",
+            temp: "36.4", tempTrend: "Normotérmico",
+            glasgow: "13/15", glasgowNota: "AO:3 RV:4 RM:6 (Agitado)",
+            ritmoEcg: "taquicardia"
+        },
+        organos: {
+            cerebro: {
+                titulo: "Sistema Nervioso Central (SNC)",
+                estado: "Agitación Hipóxica",
+                statusClass: "shock-status-badge--crit",
+                icon: "🧠",
+                hallazgos: "Glasgow 13/15. Agitación psicomotriz extrema secundaria a hipoxemia crítica y narcosis por retención de CO2. Pupilas reactivas."
+            },
+            pulmon: {
+                titulo: "Aparato Respiratorio / Pulmones",
+                estado: "Neumotórax a Tensión",
+                statusClass: "shock-status-badge--crit",
+                icon: "🫁",
+                hallazgos: "Hemitórax derecho inmóvil, hiperexpansivo. Abolición total del murmullo vesicular en todo el campo pulmonar derecho. Timpanismo metálico resonante a la percusión. Desviación traqueal visible hacia la izquierda."
+            },
+            corazon: {
+                titulo: "Aparato Cardiovascular",
+                estado: "Colapso de Retorno Venoso",
+                statusClass: "shock-status-badge--crit",
+                icon: "🫀",
+                hallazgos: "Ruidos cardíacos muy apagados y alejados. Ingurgitación yugular masiva bilateral por compresión y colapso de la vena cava superior e inferior. Pulsos filiformes imperceptibles."
+            },
+            abdomen: {
+                titulo: "Abdomen & Pelvis",
+                estado: "FAST Negativo",
+                statusClass: "shock-status-badge--norm",
+                icon: "🩺",
+                hallazgos: "Abdomen blando, sin defensa. Ecografía FAST en shock room descarta líquido libre intraabdominal y taponamiento cardíaco (espacio pericárdico libre)."
+            },
+            renal: {
+                titulo: "Piel & Miembros",
+                estado: "Cianosis Central",
+                statusClass: "shock-status-badge--crit",
+                icon: "🩸",
+                hallazgos: "Cianosis central peribucal y acrocianosis generalizada. Piel sudorosa y fría. Enfisema subcutáneo palpable en base de cuello y hemitórax derecho."
+            }
+        },
+        organoFocoDefault: "pulmon",
+        laboratorio: [
+            { parametro: "Gases Arteriales (pH)", valor: "pH 7.15", ref: "7.35 - 7.45", alerta: "CRÍTICO 🚨", flagClass: "shock-lab-flag--crit" },
+            { parametro: "PaO2 (Gasometría)", valor: "48 mmHg (con O2)", ref: "> 80 mmHg", alerta: "HIPOXEMIA GRAVE", flagClass: "shock-lab-flag--crit" },
+            { parametro: "PaCO2 (Gasometría)", valor: "62 mmHg", ref: "35 - 45 mmHg", alerta: "HIPERCAPNIA SEVERA", flagClass: "shock-lab-flag--crit" },
+            { parametro: "Ácido Láctico", valor: "4.2 mmol/L", ref: "0.5 - 1.6", alerta: "ALTO ⚠️", flagClass: "shock-lab-flag--crit" },
+            { parametro: "Hemoglobina / Hto", valor: "13.8 g/dL | 41%", ref: "13.0 - 17.0", alerta: "NORMAL", flagClass: "shock-lab-flag--norm" },
+            { parametro: "Plaquetas", valor: "240.000 /mm³", ref: "150.000 - 450.000", alerta: "NORMAL", flagClass: "shock-lab-flag--norm" },
+            { parametro: "Leucocitos", valor: "11.200 /mm³", ref: "4.500 - 10.000", alerta: "LEVE AUMENTO", flagClass: "shock-lab-flag--norm" },
+            { parametro: "Coagulograma (Quick)", valor: "Quick 88%", ref: "70 - 120%", alerta: "NORMAL", flagClass: "shock-lab-flag--norm" },
+            { parametro: "Urea / Creatinina", valor: "38 mg/dL | 1.0 mg/dL", ref: "15-45 | 0.7-1.2", alerta: "NORMAL", flagClass: "shock-lab-flag--norm" },
+            { parametro: "Glucemia", valor: "142 mg/dL", ref: "70 - 110 mg/dL", alerta: "LEVE AUMENTO", flagClass: "shock-lab-flag--warn" }
+        ],
+        estudios: {
+            radiografia: {
+                titulo: "Radiografía de Tórax Portátil en Camilla",
+                hallazgos: "Colapso completo del muñón pulmonar derecho hacia el hilio. Ausencia total de trama vascular en todo el hemitórax derecho con hiperclaridad. Aplanamiento e inversión del hemidiafragma derecho y desviación contralateral masiva del mediastino y corazón hacia la izquierda.",
+                impresion: "Neumotórax Hipertensivo Derecho con colapso vascular y mediastínico."
+            },
+            tomografia: {
+                titulo: "TC Multislice de Tórax",
+                hallazgos: "ESTUDIO CONTRAINDICADO FORMALMENTE: el paciente se encuentra inestable en shock; el diagnóstico de neumotórax hipertensivo es estrictamente clínico y requiere descompresión inmediata sin demoras.",
+                impresion: "Conducta de oro: no trasladar a tomografía con sospecha clínica de neumotórax hipertensivo."
+            },
+            ecg: {
+                titulo: "Electrocardiograma de 12 Derivaciones",
+                hallazgos: "Taquicardia sinusal a 142 lpm con bajo voltaje generalizado secundario a desplazamiento mediastínico y pérdida de retorno venoso.",
+                impresion: "Taquicardia sinusal extrema con bajo gasto."
+            }
+        },
+        diagnosticoOficial: "Neumotórax Hipertensivo / a Tensión Derecho con Shock Obstructivo y Colapso Cardiorrespiratorio Post-traumático. Conducta inmediata: 1) DESCOMPRESIÓN INMEDIATA CON AGUJA GRUESA (Cánula 14G) en el 2° espacio intercostal línea medioclavicular (o 5° espacio intercostal línea axilar anterior) del lado derecho para transformar el neumotórax a tensión en un neumotórax simple normotensivo. 2) Colocación reglada inmediata de Tubo de Drenaje Pleural (28-32 Fr) con trampa de agua bajo sello hermético. 3) Oxigenoterapia con alto flujo / intubación según estado hemodinámico post-descompresión."
+    },
+    {
+        id: "SR-06",
+        cama: "BOX 06 · UNIDAD DE STROKE",
+        titulo: "ACV Isquémico Agudo en Ventana con Déficit Motor Hemisférico Severo",
+        sindrome: "Emergencia Neurológica / Stroke en Ventana",
+        edad: "Mujer, 68 años",
+        ingreso: "Hace 16 minutos (Código Ictus)",
+        motivoIngreso: "Paciente traída de urgencia tras presentar inicio brusco de hemiplejía fascio-braquio-crural izquierda, parálisis facial central, afasia de comprensión/disartria severa y desviación conjugada de la mirada. Tiempo exacto de inicio: 75 minutos antes de la admisión.",
+        antecedentes: "Fibrilación auricular crónica anticoagulada de forma errática con acenocumarol. Hipertensión arterial.",
+        signosVitales: {
+            fc: 88, fcRitmo: "FIBRILACIÓN AURICULAR IRREGULAR", fcTrend: "Ritmo irregular",
+            pa: "195/105", tam: "135", paTrend: "TAM: 135 mmHg (HTA reactiva)", paStatus: "warning",
+            spo2: 96, spo2Trend: "Aire ambiente", spo2Status: "normal",
+            fr: 18, frTrend: "Eupneica",
+            temp: "36.7", tempTrend: "Normotérmica",
+            glasgow: "12/15", glasgowNota: "AO:4 RV:3 RM:5 (Afasia/Déficit)",
+            ritmoEcg: "fibrilacion"
+        },
+        organos: {
+            cerebro: {
+                titulo: "Sistema Nervioso Central (SNC)",
+                estado: "Déficit Hemisférico Severo",
+                statusClass: "shock-status-badge--crit",
+                icon: "🧠",
+                hallazgos: "Hemiplejía izquierda fláccida grado 0/5. Parálisis facial central izquierda. Desviación conjugada de ojos hacia la derecha ('mira hacia su lesión cerebral'). Heminegligencia y anosognosia. Escala NIHSS: 18 puntos (Stroke severo)."
+            },
+            pulmon: {
+                titulo: "Aparato Respiratorio / Pulmones",
+                estado: "Sin Compromiso",
+                statusClass: "shock-status-badge--norm",
+                icon: "🫁",
+                hallazgos: "FR 18 rpm. Vía aérea permeable con reflejo deglutorio presente. Murmullo vesicular conservado bilateralmente sin ruidos adventicios."
+            },
+            corazon: {
+                titulo: "Aparato Cardiovascular",
+                estado: "Fibrilación Auricular",
+                statusClass: "shock-status-badge--warn",
+                icon: "🫀",
+                hallazgos: "R1 variable, ruidos cardíacos arrítmicos compatibles con fibrilación auricular. Sin soplos cardíacos. Pulsos irregulares y asincrónicos."
+            },
+            abdomen: {
+                titulo: "Abdomen & Renal",
+                estado: "Normal",
+                statusClass: "shock-status-badge--norm",
+                icon: "🩺",
+                hallazgos: "Abdomen blando e indoloro. Sin visceromegalias. Ruidos hidroaéreos normales."
+            },
+            renal: {
+                titulo: "Vascular Periférico",
+                estado: "Compensado",
+                statusClass: "shock-status-badge--norm",
+                icon: "🩸",
+                hallazgos: "Extremidades normoperfundidas. Relleno capilar 2 segundos. Pulsos periféricos femorales y tibiales presentes pero irregulares."
+            }
+        },
+        organoFocoDefault: "cerebro",
+        laboratorio: [
+            { parametro: "Glucemia Capilar", valor: "108 mg/dL", ref: "70 - 110 mg/dL", alerta: "DESCARTA HIPOGLUC", flagClass: "shock-lab-flag--norm" },
+            { parametro: "RIN / INR", valor: "1.1 (Infraterapéutico)", ref: "2.0 - 3.0", alerta: "HABILITA RTPA ✅", flagClass: "shock-lab-flag--norm" },
+            { parametro: "Plaquetas", valor: "235.000 /mm³", ref: "150.000 - 450.000", alerta: "NORMAL", flagClass: "shock-lab-flag--norm" },
+            { parametro: "KPTT / TP", valor: "32s | Quick 85%", ref: "Normal", alerta: "NORMAL", flagClass: "shock-lab-flag--norm" },
+            { parametro: "Hemoglobina / Hto", valor: "13.2 g/dL | 39%", ref: "12.0 - 16.0", alerta: "NORMAL", flagClass: "shock-lab-flag--norm" },
+            { parametro: "Leucocitos", valor: "7.800 /mm³", ref: "4.500 - 10.000", alerta: "NORMAL", flagClass: "shock-lab-flag--norm" },
+            { parametro: "Creatinina / Urea", valor: "0.9 mg/dL | 32 mg/dL", ref: "Normal", alerta: "NORMAL", flagClass: "shock-lab-flag--norm" },
+            { parametro: "Troponina Ultrasensible", valor: "< 10 ng/L", ref: "< 14 ng/L", alerta: "NEGATIVO", flagClass: "shock-lab-flag--norm" },
+            { parametro: "Ionograma (Na / K)", valor: "Na 140 | K 4.1 mEq/L", ref: "Normal", alerta: "NORMAL", flagClass: "shock-lab-flag--norm" },
+            { parametro: "Escala NIHSS de Stroke", valor: "18 Puntos", ref: "0 Puntos", alerta: "STROKE SEVERO 🚨", flagClass: "shock-lab-flag--crit" }
+        ],
+        estudios: {
+            radiografia: {
+                titulo: "Radiografía de Tórax de Frente",
+                hallazgos: "Silueta cardíaca moderadamente agrandada con dilatación de la aurícula izquierda compatible con su antecedente de fibrilación auricular. Parénquima pulmonar sin infiltrados.",
+                impresion: "Cardiomegalia leve a expensas de cavidades izquierdas."
+            },
+            tomografia: {
+                titulo: "TC de Encéfalo sin Contraste de Urgencia",
+                hallazgos: "Ausencia de hemorragia intracerebral (se descarta ACV hemorrágico). Signo de la arteria cerebral media derecha hiperdensa ('signo de la cuerda' por trombo intraluminal agudo). Borramiento incipiente de la diferenciación sustancia gris-blanca en ínsula derecha. Escala ASPECTS: 8 puntos.",
+                impresion: "ACV Isquémico Agudo extenso de arteria cerebral media derecha en ventana terapéutica."
+            },
+            ecg: {
+                titulo: "Electrocardiograma de 12 Derivaciones",
+                hallazgos: "Fibrilación auricular con respuesta ventricular controlada a 88 lpm. Ausencia completa de ondas P, línea de base con ondulaciones fibrilatorias 'f' finas, intervalos R-R absolutamente irregulares.",
+                impresion: "Fibrilación Auricular (fuente cardioembólica del stroke)."
+            }
+        },
+        diagnosticoOficial: "Accidente Cerebrovascular Isquémico Agudo (ACV) Cardioembólico de Territorio de la Arteria Cerebral Media Derecha (NIHSS 18) en Ventana Terapéutica (< 4.5 horas). Conducta inmediata: 1) Control de presión arterial para trombolisis (objetivo < 185/110 mmHg con Labetalol 10-20 mg IV en bolo). 2) Iniciar Trombolisis Intravenosa con rtPA (Alteplasa 0.9 mg/kg, 10% en bolo inicial de 1 minuto y 90% restante en infusión de 60 minutos). 3) Activación urgente del equipo de Neurointervencionismo para Trombectomía Mecánica endovascular inmediata de rescate (oclusión de gran vaso M1 en ventana extendida). 4) Ingreso a Unidad de Cuidados Críticos de Stroke."
+    }
+];
+
+function iniciarEcgMonitorCanvas(ritmoTipo = "st_elevado") {
+    detenerEcgMonitorCanvas();
+    const canvas = document.getElementById("shockEcgMonitorCanvas");
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    const width = rect.width > 0 ? rect.width : 600;
+    const height = 95;
+    canvas.width = width * dpr;
+    canvas.height = height * dpr;
+    ctx.scale(dpr, dpr);
+
+    ctx.fillStyle = "#02140a";
+    ctx.fillRect(0, 0, width, height);
+    dibujarGrillaEcgMonitor(ctx, width, height);
+
+    let x = 0;
+    let lastY = height / 2;
+
+    function animar() {
+        const speed = ritmoTipo === "taquicardia" ? 2.8 : (ritmoTipo === "bradicardia" ? 1.6 : 2.2);
+        const nextX = x + speed;
+
+        ctx.fillStyle = "rgba(2, 20, 10, 0.08)";
+        ctx.fillRect(x, 0, speed + 14, height);
+        dibujarSegmentoGrillaEcg(ctx, x, speed + 14, height);
+
+        const baseY = height / 2;
+        let y = baseY;
+
+        const ciclo = ritmoTipo === "taquicardia" ? 90 : (ritmoTipo === "bradicardia" ? 220 : 130);
+        const pos = Math.floor(x % ciclo);
+
+        if (ritmoTipo === "st_elevado") {
+            if (pos >= 15 && pos < 30) {
+                y = baseY - Math.sin(((pos - 15) / 15) * Math.PI) * 5;
+            } else if (pos >= 38 && pos < 42) {
+                y = baseY + 6;
+            } else if (pos >= 42 && pos < 48) {
+                y = baseY - 36;
+            } else if (pos >= 48 && pos < 52) {
+                y = baseY - 12;
+            } else if (pos >= 52 && pos < 78) {
+                y = baseY - 14 - Math.sin(((pos - 52) / 26) * Math.PI) * 7;
+            } else if (pos >= 78 && pos < 88) {
+                y = baseY - (1 - (pos - 78) / 10) * 10;
+            }
+        } else if (ritmoTipo === "tep") {
+            if (pos >= 10 && pos < 22) {
+                y = baseY - Math.sin(((pos - 10) / 12) * Math.PI) * 6;
+            } else if (pos >= 28 && pos < 32) {
+                y = baseY + 4;
+            } else if (pos >= 32 && pos < 38) {
+                y = baseY - 30;
+            } else if (pos >= 38 && pos < 44) {
+                y = baseY + 14;
+            } else if (pos >= 52 && pos < 68) {
+                y = baseY + Math.sin(((pos - 52) / 16) * Math.PI) * 7;
+            }
+        } else if (ritmoTipo === "fibrilacion") {
+            const jitter = (Math.sin(pos * 0.9) + Math.cos(pos * 1.7)) * 2.5;
+            y = baseY + jitter;
+            if (pos >= 40 && pos < 45) {
+                y = baseY - 28;
+            } else if (pos >= 45 && pos < 50) {
+                y = baseY + 10;
+            } else if (pos >= 56 && pos < 70) {
+                y = baseY - Math.sin(((pos - 56) / 14) * Math.PI) * 4;
+            }
+        } else {
+            if (pos >= 15 && pos < 28) {
+                y = baseY - Math.sin(((pos - 15) / 13) * Math.PI) * 5;
+            } else if (pos >= 36 && pos < 40) {
+                y = baseY + 5;
+            } else if (pos >= 40 && pos < 45) {
+                y = baseY - 34;
+            } else if (pos >= 45 && pos < 50) {
+                y = baseY + 8;
+            } else if (pos >= 58 && pos < 78) {
+                y = baseY - Math.sin(((pos - 58) / 20) * Math.PI) * 7;
+            }
+        }
+
+        ctx.beginPath();
+        ctx.strokeStyle = "#4ade80";
+        ctx.lineWidth = 1.8;
+        ctx.shadowColor = "#22c55e";
+        ctx.shadowBlur = 8;
+        ctx.moveTo(x, lastY);
+        ctx.lineTo(nextX, y);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.fillStyle = "#86efac";
+        ctx.shadowColor = "#86efac";
+        ctx.shadowBlur = 12;
+        ctx.arc(nextX, y, 2.2, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.shadowBlur = 0;
+
+        lastY = y;
+        x = nextX;
+
+        if (x >= width) {
+            x = 0;
+            lastY = baseY;
+        }
+
+        ecgAnimationId = requestAnimationFrame(animar);
+    }
+
+    ecgAnimationId = requestAnimationFrame(animar);
+}
+
+function detenerEcgMonitorCanvas() {
+    if (ecgAnimationId) {
+        cancelAnimationFrame(ecgAnimationId);
+        ecgAnimationId = null;
+    }
+}
+
+function dibujarGrillaEcgMonitor(ctx, width, height) {
+    ctx.strokeStyle = "rgba(34, 197, 94, 0.12)";
+    ctx.lineWidth = 0.5;
+    const step = 15;
+    ctx.beginPath();
+    for (let gx = 0; gx < width; gx += step) {
+        ctx.moveTo(gx, 0);
+        ctx.lineTo(gx, height);
+    }
+    for (let gy = 0; gy < height; gy += step) {
+        ctx.moveTo(0, gy);
+        ctx.lineTo(width, gy);
+    }
+    ctx.stroke();
+}
+
+function dibujarSegmentoGrillaEcg(ctx, startX, widthSpan, height) {
+    ctx.strokeStyle = "rgba(34, 197, 94, 0.08)";
+    ctx.lineWidth = 0.5;
+    const step = 15;
+    ctx.beginPath();
+    const firstGx = Math.floor(startX / step) * step;
+    for (let gx = firstGx; gx < startX + widthSpan; gx += step) {
+        if (gx >= startX && gx <= startX + widthSpan) {
+            ctx.moveTo(gx, 0);
+            ctx.lineTo(gx, height);
+        }
+    }
+    for (let gy = 0; gy < height; gy += step) {
+        ctx.moveTo(startX, gy);
+        ctx.lineTo(startX + widthSpan, gy);
+    }
+    ctx.stroke();
+}
+
+function generarCasoShockRoomHome(forzarNuevo = false) {
+    if (!BANCO_CASOS_SHOCK_ROOM || BANCO_CASOS_SHOCK_ROOM.length === 0) return;
+
+    let caso = null;
+    if (forzarNuevo || !casoShockRoomActivo) {
+        const casosDisponibles = BANCO_CASOS_SHOCK_ROOM.filter(c => !casoShockRoomActivo || c.id !== casoShockRoomActivo.id);
+        caso = casosDisponibles[Math.floor(Math.random() * casosDisponibles.length)] || BANCO_CASOS_SHOCK_ROOM[0];
+        casoShockRoomActivo = caso;
+    } else {
+        caso = casoShockRoomActivo;
+    }
+
+    const bedTag = document.getElementById("shockBedCode");
+    if (bedTag) bedTag.textContent = caso.cama || "BOX 01";
+    const timeTag = document.getElementById("shockAdmitTime");
+    if (timeTag) timeTag.textContent = `⏱️ ${caso.ingreso || "Reciente"}`;
+    const patSummary = document.getElementById("shockPatientSummaryTitle");
+    if (patSummary) patSummary.textContent = `${caso.edad} · ${caso.titulo.split(" en ")[0] || "Urgencia"}`;
+    const synTag = document.getElementById("shockPatientSyndromeTag");
+    if (synTag) synTag.textContent = caso.sindrome || "Emergencia Médica";
+
+    const ecgLabel = document.getElementById("shockEcgRhythmLabel");
+    if (ecgLabel) ecgLabel.textContent = caso.signosVitales?.fcRitmo || "TAQUICARDIA SINUSAL";
+
+    const fcNum = document.getElementById("shockVitalFc");
+    if (fcNum) fcNum.textContent = caso.signosVitales?.fc || 120;
+    const fcTrend = document.getElementById("shockVitalFcTrend");
+    if (fcTrend) fcTrend.textContent = caso.signosVitales?.fcTrend || "▲ Taquicardia";
+
+    const paNum = document.getElementById("shockVitalPa");
+    if (paNum) paNum.textContent = caso.signosVitales?.pa || "80/50";
+    const tamElem = document.getElementById("shockVitalTam");
+    if (tamElem) {
+        tamElem.textContent = `TAM: ${caso.signosVitales?.tam || 60} mmHg`;
+        tamElem.className = `shock-metric-trend shock-metric-trend--${caso.signosVitales?.paStatus || "danger"}`;
+    }
+
+    const spo2Num = document.getElementById("shockVitalSpo2");
+    if (spo2Num) spo2Num.textContent = caso.signosVitales?.spo2 || 90;
+    const spo2Trend = document.getElementById("shockVitalSpo2Trend");
+    if (spo2Trend) {
+        spo2Trend.textContent = caso.signosVitales?.spo2Trend || "FiO2 21%";
+        spo2Trend.className = `shock-metric-trend shock-metric-trend--${caso.signosVitales?.spo2Status || "warning"}`;
+    }
+
+    const frNum = document.getElementById("shockVitalFr");
+    if (frNum) frNum.textContent = caso.signosVitales?.fr || 28;
+    const frTrend = document.getElementById("shockVitalFrTrend");
+    if (frTrend) frTrend.textContent = caso.signosVitales?.frTrend || "▲ Taquipnea";
+
+    const tempNum = document.getElementById("shockVitalTemp");
+    if (tempNum) tempNum.textContent = caso.signosVitales?.temp || "36.5";
+    const tempTrend = document.getElementById("shockVitalTempTrend");
+    if (tempTrend) tempTrend.textContent = caso.signosVitales?.tempTrend || "Normotérmico";
+
+    const glasgowNum = document.getElementById("shockVitalGlasgow");
+    if (glasgowNum) glasgowNum.textContent = (caso.signosVitales?.glasgow || "13").replace("/15", "");
+    const glasgowNote = document.getElementById("shockVitalGlasgowNote");
+    if (glasgowNote) glasgowNote.textContent = caso.signosVitales?.glasgowNota || "AO:3 RV:4 RM:6";
+
+    iniciarEcgMonitorCanvas(caso.signosVitales?.ritmoEcg || "st_elevado");
+
+    const caseTitle = document.getElementById("shockCaseTitle");
+    if (caseTitle) caseTitle.textContent = caso.titulo;
+    const patAge = document.getElementById("shockPatientAge");
+    if (patAge) patAge.textContent = caso.edad;
+    const patBed = document.getElementById("shockPatientBed");
+    if (patBed) patBed.textContent = caso.cama;
+    const caseEnf = document.getElementById("shockCaseEnfermedadActual");
+    if (caseEnf) caseEnf.textContent = caso.motivoIngreso;
+    const caseAnt = document.getElementById("shockCaseAntecedentes");
+    if (caseAnt) caseAnt.textContent = caso.antecedentes;
+
+    actualizarOrganoFocoShock(caso.organoFocoDefault || "corazon");
+
+    renderizarTablaLaboratorioShock(caso.laboratorio || []);
+
+    if (caso.estudios?.radiografia) {
+        const rxTitle = document.getElementById("shockRxTitle");
+        if (rxTitle) rxTitle.textContent = caso.estudios.radiografia.titulo || "Rx de Tórax";
+        const rxFind = document.getElementById("shockRxFindingsText");
+        if (rxFind) rxFind.textContent = caso.estudios.radiografia.hallazgos || "";
+        const rxImp = document.getElementById("shockRxImpressionText");
+        if (rxImp) rxImp.textContent = caso.estudios.radiografia.impresion || "";
+    }
+
+    if (caso.estudios?.tomografia) {
+        const tcTitle = document.getElementById("shockTcTitle");
+        if (tcTitle) tcTitle.textContent = caso.estudios.tomografia.titulo || "Tomografía Computada";
+        const tcFind = document.getElementById("shockTcFindingsText");
+        if (tcFind) tcFind.textContent = caso.estudios.tomografia.hallazgos || "";
+        const tcImp = document.getElementById("shockTcImpressionText");
+        if (tcImp) tcImp.textContent = caso.estudios.tomografia.impresion || "";
+    }
+
+    if (caso.estudios?.ecg) {
+        const ecgTitle = document.getElementById("shockEcgTitle");
+        if (ecgTitle) ecgTitle.textContent = caso.estudios.ecg.titulo || "Electrocardiograma 12D";
+        const ecgFind = document.getElementById("shockEcgFindingsText");
+        if (ecgFind) ecgFind.textContent = caso.estudios.ecg.hallazgos || "";
+        const ecgImp = document.getElementById("shockEcgImpressionText");
+        if (ecgImp) ecgImp.textContent = caso.estudios.ecg.impresion || "";
+    }
+
+    const inputDiag = document.getElementById("shockStudentDiagnosisInput");
+    if (inputDiag) inputDiag.value = "";
+    const feedbackPanel = document.getElementById("shockAiFeedbackPanel");
+    if (feedbackPanel) {
+        feedbackPanel.classList.add("hidden");
+        feedbackPanel.innerHTML = "";
+    }
+}
+
+function renderizarTablaLaboratorioShock(datosLab) {
+    const wrap = document.getElementById("shockLabTableWrap");
+    if (!wrap) return;
+
+    if (!datosLab || datosLab.length === 0) {
+        wrap.innerHTML = `<div style="padding:1rem;color:#94a3b8;font-size:0.8rem;text-align:center;">Sin datos de laboratorio disponibles.</div>`;
+        return;
+    }
+
+    const rows = datosLab.map(item => `
+        <tr>
+            <td style="font-weight:600;color:#f1f5f9;">${item.parametro}</td>
+            <td style="font-family:ui-monospace,monospace;font-weight:700;color:#38bdf8;">${item.valor}</td>
+            <td style="color:#64748b;font-size:0.68rem;">${item.ref}</td>
+            <td><span class="shock-lab-flag ${item.flagClass || "shock-lab-flag--norm"}">${item.alerta}</span></td>
+        </tr>
+    `).join("");
+
+    wrap.innerHTML = `
+        <table class="shock-lab-table">
+            <thead>
+                <tr>
+                    <th>Determinación</th>
+                    <th>Valor</th>
+                    <th>Referencia</th>
+                    <th>Estado</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${rows}
+            </tbody>
+        </table>
+    `;
+}
+
+function actualizarOrganoFocoShock(organoKey) {
+    if (!casoShockRoomActivo || !casoShockRoomActivo.organos) return;
+    const datos = casoShockRoomActivo.organos[organoKey] || casoShockRoomActivo.organos.corazon;
+    if (!datos) return;
+
+    document.querySelectorAll(".shock-organ-btn").forEach(btn => {
+        btn.classList.toggle("is-active", btn.dataset.organ === organoKey);
+    });
+
+    document.querySelectorAll(".shock-hotspot").forEach(spot => {
+        spot.classList.toggle("is-active", spot.dataset.organ === organoKey);
+    });
+
+    const iconElem = document.getElementById("shockOrganIcon");
+    if (iconElem) iconElem.textContent = datos.icon || "🩺";
+    const titleElem = document.getElementById("shockOrganTitle");
+    if (titleElem) titleElem.textContent = datos.titulo || "Exploración de Órgano";
+    const statusElem = document.getElementById("shockOrganStatus");
+    if (statusElem) {
+        statusElem.textContent = (datos.estado || "NORMAL").toUpperCase();
+        statusElem.className = `shock-status-badge ${datos.statusClass || "shock-status-badge--crit"}`;
+    }
+    const descElem = document.getElementById("shockOrganDesc");
+    if (descElem) descElem.textContent = datos.hallazgos || "Sin particularidades registradas en este foco.";
+}
+
+function sincronizarShockRoomHome() {
+    const esIvan = esCuentaIvanActiva();
+    const heroElem = document.querySelector("#viewHome .hero");
+    const portalHub = document.querySelector("#viewHome .portal-hub-container");
+    const panelMed = document.getElementById("panelMedicinaIvan");
+    const shockRoom = document.getElementById("medShockRoomHome");
+
+    if (esIvan) {
+        if (heroElem) heroElem.classList.add("hidden");
+        if (portalHub) portalHub.classList.add("hidden");
+        if (panelMed) panelMed.classList.add("hidden");
+        if (shockRoom) {
+            shockRoom.classList.remove("hidden");
+            if (!casoShockRoomActivo) {
+                generarCasoShockRoomHome();
+            } else if (!ecgAnimationId) {
+                iniciarEcgMonitorCanvas(casoShockRoomActivo.signosVitales?.ritmoEcg || "st_elevado");
+            }
+        }
+    } else {
+        if (heroElem) heroElem.classList.remove("hidden");
+        if (portalHub) portalHub.classList.remove("hidden");
+        if (panelMed) panelMed.classList.add("hidden");
+        if (shockRoom) {
+            shockRoom.classList.add("hidden");
+            detenerEcgMonitorCanvas();
+        }
+    }
+}
+
+function inicializarEventosShockRoom() {
+    document.addEventListener("click", (e) => {
+        const organBtn = e.target.closest(".shock-organ-btn");
+        if (organBtn && organBtn.dataset.organ) {
+            actualizarOrganoFocoShock(organBtn.dataset.organ);
+            return;
+        }
+
+        const hotspot = e.target.closest(".shock-hotspot");
+        if (hotspot && hotspot.dataset.organ) {
+            actualizarOrganoFocoShock(hotspot.dataset.organ);
+            return;
+        }
+
+        const studyTab = e.target.closest(".shock-tab-btn");
+        if (studyTab && studyTab.dataset.tab) {
+            const tabId = studyTab.dataset.tab;
+            document.querySelectorAll(".shock-tab-btn").forEach(t => t.classList.toggle("is-active", t === studyTab));
+            
+            const tabMap = {
+                lab: "shockTabContentLab",
+                rx: "shockTabContentRx",
+                tc: "shockTabContentTc",
+                ecg: "shockTabContentEcg"
+            };
+
+            Object.entries(tabMap).forEach(([key, elemId]) => {
+                const el = document.getElementById(elemId);
+                if (el) el.classList.toggle("hidden", key !== tabId);
+            });
+            return;
+        }
+
+        const mobTab = e.target.closest(".shock-mobile-tab-btn");
+        if (mobTab && mobTab.dataset.shockTab) {
+            const tabName = mobTab.dataset.shockTab;
+            document.querySelectorAll(".shock-mobile-tab-btn").forEach(t => t.classList.toggle("is-active", t === mobTab));
+            document.querySelectorAll(".shock-col[data-shock-panel]").forEach(col => {
+                col.classList.toggle("is-mobile-visible", col.dataset.shockPanel === tabName);
+            });
+            return;
+        }
+
+        const refreshBtn = e.target.closest("#shockRefreshPatientBtn");
+        if (refreshBtn) {
+            generarCasoShockRoomHome(true);
+            mostrarToast("🔄 Nuevo paciente ingresado a Shock Room", "info");
+            return;
+        }
+
+        const directBolilleroBtn = e.target.closest("#shockDirectOralBtn");
+        if (directBolilleroBtn) {
+            cargarMateriaMedicinaEnBolillero("interna");
+            return;
+        }
+
+        const tplBtn = e.target.closest("#shockTemplateBtn");
+        if (tplBtn) {
+            const inputDiag = document.getElementById("shockStudentDiagnosisInput");
+            if (inputDiag) {
+                inputDiag.value = `DIAGNÓSTICO PRINCIPAL: \nDIAGNÓSTICOS DIFERENCIALES: \nCONDUCTA INMEDIATA DE RESUCITACIÓN: `;
+                inputDiag.focus();
+                inputDiag.setSelectionRange(23, 23);
+            }
+            return;
+        }
+
+        const submitDiagBtn = e.target.closest("#shockSubmitDiagnosisBtn");
+        if (submitDiagBtn) {
+            evaluarDiagnosticoConIA("shock");
+            return;
+        }
+    });
+
+    const firstMobPanel = document.querySelector(".shock-col[data-shock-panel='vitals']");
+    if (firstMobPanel) firstMobPanel.classList.add("is-mobile-visible");
+}
 
 const BANCO_CASOS_INTERNA_AVANZADOS = [
     // 🫀 CARDIOLOGÍA
@@ -4777,9 +5782,16 @@ function generarDesafioFarma() {
    ========================================================== */
 async function evaluarDiagnosticoConIA(materia = "interna") {
     const esFarma = materia === "farma";
-    const inputElem = document.getElementById(esFarma ? "farmaStudentNotes" : "medStudentDiagnosisInput");
-    const btnElem = document.getElementById(esFarma ? "farmaSubmitDiagnosisBtn" : "medSubmitDiagnosisBtn");
-    const feedbackPanel = document.getElementById(esFarma ? "farmaAiEvaluationFeedback" : "medAiEvaluationFeedback");
+    const esShock = materia === "shock";
+    const inputElem = document.getElementById(
+        esShock ? "shockStudentDiagnosisInput" : (esFarma ? "farmaStudentNotes" : "medStudentDiagnosisInput")
+    );
+    const btnElem = document.getElementById(
+        esShock ? "shockSubmitDiagnosisBtn" : (esFarma ? "farmaSubmitDiagnosisBtn" : "medSubmitDiagnosisBtn")
+    );
+    const feedbackPanel = document.getElementById(
+        esShock ? "shockAiFeedbackPanel" : (esFarma ? "farmaAiEvaluationFeedback" : "medAiEvaluationFeedback")
+    );
 
     const textoEstudiante = (inputElem?.value || "").trim();
     if (!textoEstudiante) {
@@ -4797,9 +5809,12 @@ async function evaluarDiagnosticoConIA(materia = "interna") {
         return;
     }
 
-    let casoActivo = esFarma ? casoFarmaActivoActual : casoInternaActivoActual;
+    let casoActivo = esShock ? casoShockRoomActivo : (esFarma ? casoFarmaActivoActual : casoInternaActivoActual);
     if (!casoActivo) {
-        if (esFarma) {
+        if (esShock) {
+            casoShockRoomActivo = BANCO_CASOS_SHOCK_ROOM[0];
+            casoActivo = casoShockRoomActivo;
+        } else if (esFarma) {
             casoFarmaActivoActual = BANCO_DESAFIOS_FARMACOLOGIA[0];
             casoActivo = casoFarmaActivoActual;
         } else {
@@ -4829,13 +5844,20 @@ async function evaluarDiagnosticoConIA(materia = "interna") {
     let resultadoFinal = null;
 
     try {
+        let casoTexto = "";
+        if (esShock) {
+            casoTexto = `${casoActivo.id} (${casoActivo.cama}): ${casoActivo.titulo}. Motivo de Ingreso: ${casoActivo.motivoIngreso}. Signos Vitales: FC ${casoActivo.signosVitales?.fc} lpm, PA ${casoActivo.signosVitales?.pa}, SpO2 ${casoActivo.signosVitales?.spo2}%, FR ${casoActivo.signosVitales?.fr}, Temp ${casoActivo.signosVitales?.temp}°C, Glasgow ${casoActivo.signosVitales?.glasgow}. Laboratorio: ${(casoActivo.laboratorio || []).map(l => `${l.parametro}: ${l.valor} (${l.alerta})`).join(" | ")}. Rx: ${casoActivo.estudios?.radiografia?.hallazgos || ""}. TC: ${casoActivo.estudios?.tomografia?.hallazgos || ""}. ECG: ${casoActivo.estudios?.ecg?.hallazgos || ""}.`;
+        } else if (esFarma) {
+            casoTexto = `${casoActivo.id}: ${casoActivo.subtitulo}. Enunciado: ${casoActivo.texto}. Laboratorio: ${(casoActivo.laboratorio || []).join(" | ")}.`;
+        } else {
+            casoTexto = `${casoActivo.id} (${casoActivo.cama}): ${casoActivo.titulo}. Motivo de Ingreso: ${casoActivo.cuadro || casoActivo.enfermedadActual || ""}. Laboratorio: ${(casoActivo.laboratorio || []).map(l => typeof l === 'string' ? l : `${l.c1 || ''} ${l.c2 || ''}`).join(" | ")}. Examen: ${Array.isArray(casoActivo.examenFisico) ? casoActivo.examenFisico.join(" | ") : (casoActivo.examenFisico || "")}.`;
+        }
+
         const payload = {
             tipoJuego: "evaluacion_clinica",
-            materia: esFarma ? "Farmacología 2" : "Medicina Interna",
-            casoClinico: esFarma
-                ? `${casoActivo.id}: ${casoActivo.subtitulo}. Enunciado: ${casoActivo.texto}. Laboratorio: ${(casoActivo.laboratorio || []).join(" | ")}.`
-                : `${casoActivo.id} (${casoActivo.cama}): ${casoActivo.titulo}. Motivo de Ingreso: ${casoActivo.cuadro}. Laboratorio: ${(casoActivo.laboratorio || []).join(" | ")}. Examen: ${casoActivo.examenFisico || ""}.`,
-            diagnosticoOficial: casoActivo.discusion ? casoActivo.discusion.replace(/<[^>]*>?/gm, " ") : "",
+            materia: esShock ? "Shock Room / Medicina de Emergencias" : (esFarma ? "Farmacología 2" : "Medicina Interna"),
+            casoClinico: casoTexto,
+            diagnosticoOficial: (casoActivo.diagnosticoOficial || casoActivo.discusion || "").replace(/<[^>]*>?/gm, " "),
             diagnosticoEstudiante: textoEstudiante
         };
 
@@ -5513,6 +6535,11 @@ function inicializarEventosAuthYMedicina() {
 
     // Cargar PDFs previos guardados en localStorage
     cargarEstadoPdfsMedicina();
+
+    // Inicializar controles interactivos de Shock Room (Dr. Iván)
+    if (typeof inicializarEventosShockRoom === "function") {
+        inicializarEventosShockRoom();
+    }
 
     // Delegación global de seguridad para botones de evaluación clínica con IA
     document.addEventListener("click", (e) => {
@@ -12665,7 +13692,7 @@ function iniciarAplicacion() {
 // =========================================================
 // GESTOR DE VERSIONES Y ACTUALIZACIÓN AUTOMÁTICA
 // =========================================================
-const APP_BUILD_VERSION = "28.6";
+const APP_BUILD_VERSION = "28.7";
 
 async function forzarActualizacionCompleta(mostrarNotificacion = true) {
     const lastAttempt = parseInt(sessionStorage.getItem("last_auto_update_ts") || "0", 10);
