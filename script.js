@@ -11995,6 +11995,9 @@ function iniciarAplicacion() {
             // Cuando un nuevo Service Worker toma el control, recargar automáticamente sin tocar Ctrl+F5
             navigator.serviceWorker.addEventListener("controllerchange", () => {
                 if (!refreshing) {
+                    const lastCtrl = parseInt(sessionStorage.getItem("last_ctrl_change_ts") || "0", 10);
+                    if (Date.now() - lastCtrl < 15000) return;
+                    sessionStorage.setItem("last_ctrl_change_ts", Date.now().toString());
                     refreshing = true;
                     console.log("[PWA] Nuevo Service Worker activado. Recargando automáticamente...");
                     window.location.reload();
@@ -12506,9 +12509,16 @@ function iniciarAplicacion() {
 // =========================================================
 // GESTOR DE VERSIONES Y ACTUALIZACIÓN AUTOMÁTICA
 // =========================================================
-const APP_BUILD_VERSION = "28.3";
+const APP_BUILD_VERSION = "28.4";
 
 async function forzarActualizacionCompleta(mostrarNotificacion = true) {
+    const lastAttempt = parseInt(sessionStorage.getItem("last_auto_update_ts") || "0", 10);
+    if (Date.now() - lastAttempt < 25000) {
+        console.warn("[Auto-Update] Recarga reciente detectada. Evitando bucle infinito de actualización.");
+        return;
+    }
+    sessionStorage.setItem("last_auto_update_ts", Date.now().toString());
+
     const btnActualizar = document.getElementById("btnForzarActualizar");
     if (btnActualizar) {
         btnActualizar.disabled = true;
@@ -12561,6 +12571,9 @@ async function forzarActualizacionCompleta(mostrarNotificacion = true) {
 
 async function verificarActualizacionesDisponibles(silencioso = true) {
     if (!navigator.onLine) return;
+
+    const lastAttempt = parseInt(sessionStorage.getItem("last_auto_update_ts") || "0", 10);
+    if (Date.now() - lastAttempt < 25000) return;
 
     try {
         const resp = await fetch(`./version.json?_t=${Date.now()}`, { cache: "no-store" });
