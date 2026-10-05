@@ -1382,6 +1382,18 @@ function cambiarVista(vista) {
         comprobarYMostrarReglas("bolillero");
     } else if (vistaDestino === "laboratorio") {
         iniciarOReanudarLaboratorio();
+    } else if (vistaDestino === "med-interna") {
+        if (!casoInternaActivoActual && typeof generarCasoClinicoInterna === "function") {
+            generarCasoClinicoInterna();
+        }
+    } else if (vistaDestino === "farmacologia-2") {
+        if (!casoFarmaActivoActual && typeof generarDesafioFarma === "function") {
+            generarDesafioFarma();
+        }
+    } else if (vistaDestino === "salud-publica") {
+        if (typeof generarEjercicioTpSalud === "function") {
+            generarEjercicioTpSalud();
+        }
     }
 
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -1394,7 +1406,7 @@ function renderPerfilUsuarioDuelo() {
 function inicializarRutas() {
     const hash = window.location.hash.replace("#", "");
     const normalized = (hash === "duelo" || hash === "juntos") ? "juntos" : hash;
-    if (["solo", "juntos", "bolillero", "fama", "home", "laboratorio"].includes(normalized)) {
+    if (["solo", "juntos", "bolillero", "fama", "home", "laboratorio", "med-interna", "farmacologia-2", "salud-publica"].includes(normalized)) {
         cambiarVista(normalized);
     } else {
         cambiarVista("home");
@@ -4770,16 +4782,30 @@ async function evaluarDiagnosticoConIA(materia = "interna") {
     const feedbackPanel = document.getElementById(esFarma ? "farmaAiEvaluationFeedback" : "medAiEvaluationFeedback");
 
     const textoEstudiante = (inputElem?.value || "").trim();
-    if (!textoEstudiante || textoEstudiante.length < 15) {
-        mostrarToast("⚠️ Por favor redactá tu hipótesis diagnóstica y conducta terapéutica con al menos 15 caracteres.", "advertencia");
-        if (inputElem) inputElem.focus();
+    if (!textoEstudiante) {
+        mostrarToast("✍️ Por favor escribí tu resolución o planteo terapéutico en el recuadro antes de enviar.", "advertencia");
+        if (inputElem) {
+            inputElem.focus();
+            inputElem.scrollIntoView({ behavior: "smooth", block: "center" });
+            inputElem.style.borderColor = "#c084fc";
+            inputElem.style.boxShadow = "0 0 16px rgba(192, 132, 252, 0.5)";
+            setTimeout(() => {
+                inputElem.style.borderColor = "";
+                inputElem.style.boxShadow = "";
+            }, 2500);
+        }
         return;
     }
 
-    const casoActivo = esFarma ? casoFarmaActivoActual : casoInternaActivoActual;
+    let casoActivo = esFarma ? casoFarmaActivoActual : casoInternaActivoActual;
     if (!casoActivo) {
-        mostrarToast("Generá un caso antes de enviar la evaluación.", "advertencia");
-        return;
+        if (esFarma) {
+            casoFarmaActivoActual = BANCO_DESAFIOS_FARMACOLOGIA[0];
+            casoActivo = casoFarmaActivoActual;
+        } else {
+            casoInternaActivoActual = BANCO_CASOS_INTERNA_AVANZADOS[0];
+            casoActivo = casoInternaActivoActual;
+        }
     }
 
     const textoOriginalBoton = btnElem ? btnElem.innerHTML : "";
@@ -4968,9 +4994,45 @@ function evaluarDiagnosticoClinicoLocal(caso, textoEstudiante, materia) {
     };
 }
 
+const FICHERO_4X4_DROGAS = [
+    {
+        droga: "Bisoprolol / Carvedilol",
+        familia: "Beta-bloqueantes (Cardiovascular)",
+        mecanismo: "Antagonismo competitivo de receptores β1 miocárdicos (Bisoprolol selectivo; Carvedilol β1, β2 y α1 vasodilatador). Disminuyen AMPc intracelular y corriente If del nódulo sinusal.",
+        cinetica: "Biodisponibilidad: 80-90%. Metabolismo hepático y eliminación renal 50/50. t1/2: 10-12 horas (permite monodosis diaria).",
+        indicaciones: "Insuficiencia cardíaca con FEVI reducida (pilar del tratamiento pronóstico), HTA, cardiopatía isquémica, control de frecuencia en FA.",
+        adversos: "Bradicardia sinusal, bloqueo AV, broncoespasmo (por bloqueo β2), frialdad de extremidades, fatiga y enmascaramiento de hipoglucemias en diabéticos."
+    },
+    {
+        droga: "Enalapril / Ramipril",
+        familia: "Inhibidores de la ECA (IECA)",
+        mecanismo: "Inhiben competitivamente a la Enzima Convertidora de Angiotensina, impidiendo el paso de Angiotensina I a Angiotensina II y bloqueando la degradación de bradicininas.",
+        cinetica: "Profármaco que se biotransforma en el hígado a Enalaprilato activo. Eliminación renal predominante. Requiere ajuste estricto en falla renal.",
+        indicaciones: "Hipertensión arterial esencial, Insuficiencia cardíaca con FEVI deprimida, Nefroprotección en microalbuminuria diabética.",
+        adversos: "Tos seca nocturna refractaria (por acumulación de bradicinina y sustancia P), hiperpotasemia, angioedema (raro pero potencialmente mortal) e hipotensión de 1° dosis."
+    },
+    {
+        droga: "Ceftriaxona",
+        familia: "Cefalosporina de 3° Generación (Betalactámicos)",
+        mecanismo: "Bactericida tiempo-dependiente. Se une a las Proteínas Fijadoras de Penicilina (PBP-1 y PBP-3), inhibiendo la transpeptidación del peptidoglicano de la pared celular bacteriana.",
+        cinetica: "No se absorbe vía oral (solo IV/IM). Alta unión a proteínas (90%). Excelente penetración en LCR con meninges inflamadas. Eliminación dual (renal y biliar 40%). t1/2 prolongada: 8h.",
+        indicaciones: "Meningitis bacteriana aguda, Neumonía Adquirida en la Comunidad grave, Pielonefritis, Infecciones intraabdominales, Gonorrea.",
+        adversos: "Pseudolitiasis biliar reversible (barro biliar por precipitación con calcio), diarrea por C. difficile, reacciones de hipersensibilidad alérgica."
+    },
+    {
+        droga: "Sertralina / Escitalopram",
+        familia: "ISRS (Antidepresivos / SNC)",
+        mecanismo: "Inhibición selectiva del transportador de recaptación de serotonina presináptico (SERT), aumentando la disponibilidad de 5-HT en la hendidura sináptica y desensibilizando autorreceptores 5-HT1A.",
+        cinetica: "Buena absorción oral con alimentos. Metabolismo hepático CYP2C19 y CYP3A4. Semivida de eliminación: 26-30 horas. Requiere 2-4 semanas para efecto terapéutico pleno.",
+        indicaciones: "Trastorno depresivo mayor, Trastorno de ansiedad generalizada, Crisis de pánico, TOC, Fobia social.",
+        adversos: "Náuseas tempranas, disfunción sexual (anorgasmia, disminución de líbido), insomnio/somnolencia, prolongación leve del QTc (Escitalopram) y riesgo de Síndrome Serotoninérgico con IMAO/Tramadol."
+    }
+];
+
 function renderizarFichero4x4Farma() {
     const grid = document.getElementById("farmaFicheroGrid");
     if (!grid) return;
+    if (!Array.isArray(FICHERO_4X4_DROGAS)) return;
     grid.innerHTML = FICHERO_4X4_DROGAS.map(d => `
         <article class="med-fichero-card">
             <div class="med-fichero-card-header">
@@ -5373,6 +5435,22 @@ function inicializarEventosAuthYMedicina() {
 
     // Cargar PDFs previos guardados en localStorage
     cargarEstadoPdfsMedicina();
+
+    // Delegación global de seguridad para botones de evaluación clínica con IA
+    document.addEventListener("click", (e) => {
+        const btnFarma = e.target.closest("#farmaSubmitDiagnosisBtn");
+        if (btnFarma) {
+            e.preventDefault();
+            evaluarDiagnosticoConIA("farma");
+            return;
+        }
+        const btnMed = e.target.closest("#medSubmitDiagnosisBtn");
+        if (btnMed) {
+            e.preventDefault();
+            evaluarDiagnosticoConIA("interna");
+            return;
+        }
+    });
 }
 
 function inicializarDropzoneMultiPdf(materia, dropzoneId, clickId, inputId) {
@@ -12509,7 +12587,7 @@ function iniciarAplicacion() {
 // =========================================================
 // GESTOR DE VERSIONES Y ACTUALIZACIÓN AUTOMÁTICA
 // =========================================================
-const APP_BUILD_VERSION = "28.4";
+const APP_BUILD_VERSION = "28.5";
 
 async function forzarActualizacionCompleta(mostrarNotificacion = true) {
     const lastAttempt = parseInt(sessionStorage.getItem("last_auto_update_ts") || "0", 10);
