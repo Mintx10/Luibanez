@@ -1272,7 +1272,10 @@ function inicializarModoDev() {
    ========================================================== */
 function cambiarVista(vista) {
     const rawTarget = (vista === "duelo" || vista === "juntos") ? "juntos" : vista;
-    const vistasValidas = ["home", "solo", "juntos", "bolillero", "fama", "juegos", "laboratorio", "podio"];
+    const vistasValidas = [
+        "home", "solo", "juntos", "bolillero", "fama", "juegos", "laboratorio", "podio",
+        "med-interna", "farmacologia-2", "salud-publica"
+    ];
     const vistaDestino = vistasValidas.includes(rawTarget) ? rawTarget : "home";
 
     const vistas = [
@@ -1283,7 +1286,10 @@ function cambiarVista(vista) {
         { id: "fama", domView: dom.viewFama },
         { id: "juegos", domView: dom.viewJuegosEdu },
         { id: "laboratorio", domView: dom.viewLaboratorio },
-        { id: "podio", domView: dom.viewPodioOnline }
+        { id: "podio", domView: dom.viewPodioOnline },
+        { id: "med-interna", domView: document.getElementById("viewMedInterna") },
+        { id: "farmacologia-2", domView: document.getElementById("viewFarmacologia2") },
+        { id: "salud-publica", domView: document.getElementById("viewSaludPublica") }
     ];
 
     // 1. Alternar visibilidad de las vistas
@@ -1303,6 +1309,13 @@ function cambiarVista(vista) {
     if (dom.navDueloBtn) dom.navDueloBtn.classList.toggle("is-active", vistaDestino === "juntos");
     if (dom.navFamaBtn) dom.navFamaBtn.classList.toggle("is-active", vistaDestino === "fama");
 
+    const navMedInterna = document.getElementById("navMedInternaBtn");
+    const navFarma = document.getElementById("navFarmaBtn");
+    const navSalud = document.getElementById("navSaludBtn");
+    if (navMedInterna) navMedInterna.classList.toggle("is-active", vistaDestino === "med-interna");
+    if (navFarma) navFarma.classList.toggle("is-active", vistaDestino === "farmacologia-2");
+    if (navSalud) navSalud.classList.toggle("is-active", vistaDestino === "salud-publica");
+
     // 3. Sincronizar navegación en el Drawer lateral (Off-canvas)
     const drawerNavMap = {
         home: dom.drawerNavHome,
@@ -1310,7 +1323,10 @@ function cambiarVista(vista) {
         laboratorio: dom.drawerNavLaboratorio,
         juntos: dom.drawerNavJuntos,
         bolillero: dom.drawerNavBolillero,
-        fama: dom.drawerNavFama
+        fama: dom.drawerNavFama,
+        "med-interna": document.getElementById("drawerNavMedInterna"),
+        "farmacologia-2": document.getElementById("drawerNavFarma"),
+        "salud-publica": document.getElementById("drawerNavSalud")
     };
     Object.entries(drawerNavMap).forEach(([id, btn]) => {
         if (btn) btn.classList.toggle("is-active", id === vistaDestino);
@@ -3108,6 +3124,7 @@ function actualizarUIAuthHeader() {
 
         // Modo Medicina: EXCLUSIVO Y ÚNICO PARA IVÁN ('ivi')
         const esIvan = esCuentaIvanActiva();
+        actualizarNavExclusivoIvan(esIvan);
 
         const panelMed = document.getElementById("panelMedicinaIvan");
         if (panelMed) {
@@ -3123,6 +3140,7 @@ function actualizarUIAuthHeader() {
             removerMateriasMedicinaSiNoEsIvan();
         }
     } else {
+        actualizarNavExclusivoIvan(false);
         const panelMed = document.getElementById("panelMedicinaIvan");
         if (panelMed) {
             panelMed.classList.add("hidden");
@@ -3369,8 +3387,94 @@ function asegurarMateriasMedicinaIvan() {
     }
 }
 
+/* ==========================================================
+   PERSONALIZACIÓN EXCLUSIVA DE NAVEGACIÓN PARA DR. IVÁN ('ivi')
+   ========================================================== */
+function actualizarNavExclusivoIvan(esIvan) {
+    // 1. Desktop Top Navigation
+    const navHome = document.getElementById("navHomeBtn");
+    const navSolo = document.getElementById("navSoloBtn");
+    const navLab = document.getElementById("navLabBtn");
+    const navJuntos = document.getElementById("navJuntosBtn");
+    const navFama = document.getElementById("navFamaBtn");
+    const navMed = document.getElementById("navMedInternaBtn");
+    const navFarma = document.getElementById("navFarmaBtn");
+    const navSalud = document.getElementById("navSaludBtn");
+
+    if (esIvan) {
+        // En la cuenta de Iván: solo Luibañez, Estudiar Solo y las 3 materias
+        if (navHome) navHome.classList.add("hidden");
+        if (navSolo) navSolo.classList.remove("hidden");
+        if (navLab) navLab.classList.add("hidden");
+        if (navJuntos) navJuntos.classList.add("hidden");
+        if (navFama) navFama.classList.add("hidden");
+        if (navMed) navMed.classList.remove("hidden");
+        if (navFarma) navFarma.classList.remove("hidden");
+        if (navSalud) navSalud.classList.remove("hidden");
+    } else {
+        // Modo visitante o estándar: Luibañez estándar completo sin materias médicas
+        if (navHome) navHome.classList.remove("hidden");
+        if (navSolo) navSolo.classList.remove("hidden");
+        if (navLab) navLab.classList.remove("hidden");
+        if (navJuntos) navJuntos.classList.remove("hidden");
+        if (navFama) navFama.classList.remove("hidden");
+        if (navMed) navMed.classList.add("hidden");
+        if (navFarma) navFarma.classList.add("hidden");
+        if (navSalud) navSalud.classList.add("hidden");
+    }
+
+    // 2. Mobile Drawer Navigation
+    const drawerHome = document.getElementById("drawerNavHome");
+    const drawerSolo = document.getElementById("drawerNavSolo");
+    const drawerLab = document.getElementById("drawerNavLaboratorio");
+    const drawerJuntos = document.getElementById("drawerNavJuntos");
+    const drawerFama = document.getElementById("drawerNavFama");
+    const drawerMed = document.getElementById("drawerNavMedInterna");
+    const drawerFarma = document.getElementById("drawerNavFarma");
+    const drawerSalud = document.getElementById("drawerNavSalud");
+
+    if (esIvan) {
+        if (drawerHome) drawerHome.classList.add("hidden");
+        if (drawerSolo) drawerSolo.classList.remove("hidden");
+        if (drawerLab) drawerLab.classList.add("hidden");
+        if (drawerJuntos) drawerJuntos.classList.add("hidden");
+        if (drawerFama) drawerFama.classList.add("hidden");
+        if (drawerMed) drawerMed.classList.remove("hidden");
+        if (drawerFarma) drawerFarma.classList.remove("hidden");
+        if (drawerSalud) drawerSalud.classList.remove("hidden");
+    } else {
+        if (drawerHome) drawerHome.classList.remove("hidden");
+        if (drawerSolo) drawerSolo.classList.remove("hidden");
+        if (drawerLab) drawerLab.classList.remove("hidden");
+        if (drawerJuntos) drawerJuntos.classList.remove("hidden");
+        if (drawerFama) drawerFama.classList.remove("hidden");
+        if (drawerMed) drawerMed.classList.add("hidden");
+        if (drawerFarma) drawerFarma.classList.add("hidden");
+        if (drawerSalud) drawerSalud.classList.add("hidden");
+    }
+}
+
 function mostrarAnimacionBienvenidaIvan() {
     if (!dom.ivanWelcomeModal) return;
+    const videoElem = document.getElementById("ivanWelcomeVideo");
+    const imgElem = document.getElementById("ivanWelcomeImg");
+
+    // Detección automática de video de animación (si existe ivan_doctor.mp4 o webm)
+    if (videoElem && imgElem) {
+        const testVideo = document.createElement("video");
+        testVideo.src = "ivan_doctor.mp4";
+        testVideo.oncanplay = () => {
+            videoElem.src = "ivan_doctor.mp4";
+            videoElem.classList.remove("hidden");
+            imgElem.classList.add("hidden");
+            videoElem.play().catch(() => {});
+        };
+        testVideo.onerror = () => {
+            videoElem.classList.add("hidden");
+            imgElem.classList.remove("hidden");
+        };
+    }
+
     try {
         dom.ivanWelcomeModal.showModal();
         reproducirSonido("exito");
@@ -3379,150 +3483,617 @@ function mostrarAnimacionBienvenidaIvan() {
     }
 }
 
-function cargarMateriaMedicinaEnBolillero(subKey) {
-    let targetId = "lista_medicina_interna";
-    let nombreMateria = "Medicina Interna";
-    if (subKey === "farma") {
-        targetId = "lista_farmacologia_2";
-        nombreMateria = "Farmacología 2";
-    } else if (subKey === "salud") {
-        targetId = "lista_salud_publica";
-        nombreMateria = "Salud Pública";
-    }
+/* ==========================================================
+   GESTOR DE MULTI-PDF PERSISTENTE PARA CADA MATERIA MÉDICA
+   ========================================================== */
+const MED_MULTI_PDF_KEY = "luibanez_med_multipdf_v2";
 
-    asegurarMateriasMedicinaIvan();
+const estadoMultiPdfMedicina = {
+    interna: [], // [{ id, name, size, pages, text, timestamp }]
+    farma: [],
+    salud: []
+};
 
-    const listaEncontrada = estado.listas.find(l => l.id === targetId || l.nombre.toLowerCase().includes(subKey));
-    if (listaEncontrada) {
-        estado.listaSeleccionadaId = listaEncontrada.id;
-    } else if (estado.listas.length > 0) {
-        estado.listaSeleccionadaId = estado.listas[0].id;
-    }
-
-    reconstruirBolillero();
-    render();
-    cambiarVista("bolillero");
-    mostrarToast(`🎯 ¡Cargada materia: ${nombreMateria} en el Bolillero!`, "exito");
-}
-
-function abrirModalMedicinaClinica(tab = "interna") {
-    if (!dom.modalMedicinaClinica) return;
-    cambiarPestañaMedicina(tab);
+function cargarEstadoPdfsMedicina() {
     try {
-        dom.modalMedicinaClinica.showModal();
-    } catch {
-        dom.modalMedicinaClinica.setAttribute("open", "");
+        const guardado = localStorage.getItem(MED_MULTI_PDF_KEY);
+        if (guardado) {
+            const parsed = JSON.parse(guardado);
+            if (parsed.interna) estadoMultiPdfMedicina.interna = parsed.interna;
+            if (parsed.farma) estadoMultiPdfMedicina.farma = parsed.farma;
+            if (parsed.salud) estadoMultiPdfMedicina.salud = parsed.salud;
+        }
+    } catch (e) {
+        console.warn("No se pudo cargar estado Multi-PDF:", e);
+    }
+    renderizarListaPdfsMedicina("interna");
+    renderizarListaPdfsMedicina("farma");
+    renderizarListaPdfsMedicina("salud");
+}
+
+function guardarEstadoPdfsMedicina() {
+    try {
+        // Guardamos metadatos y extractos de texto optimizados
+        localStorage.setItem(MED_MULTI_PDF_KEY, JSON.stringify(estadoMultiPdfMedicina));
+    } catch (e) {
+        console.warn("Error guardando multi-PDF en localStorage:", e);
     }
 }
 
-function cambiarPestañaMedicina(tab) {
-    if (dom.medTabInterna) dom.medTabInterna.classList.toggle("is-active", tab === "interna");
-    if (dom.medTabFarma) dom.medTabFarma.classList.toggle("is-active", tab === "farma");
-    if (dom.medTabSalud) dom.medTabSalud.classList.toggle("is-active", tab === "salud");
+function renderizarListaPdfsMedicina(materia) {
+    const listElem = document.getElementById(`med${capitalizar(materia)}PdfList`);
+    const countElem = document.getElementById(`med${capitalizar(materia)}PdfCount`);
+    const clearBtn = document.getElementById(`med${capitalizar(materia)}ClearPdfsBtn`);
+    if (!listElem) return;
 
-    if (dom.medTabContentInterna) dom.medTabContentInterna.classList.toggle("hidden", tab !== "interna");
-    if (dom.medTabContentFarma) dom.medTabContentFarma.classList.toggle("hidden", tab !== "farma");
-    if (dom.medTabContentSalud) dom.medTabContentSalud.classList.toggle("hidden", tab !== "salud");
-
-    if (tab === "interna") {
-        renderizarCasoClinico(indiceCasoClinicoActual);
-    } else if (tab === "farma") {
-        const selectVal = dom.medSelectFamiliaFarma?.value || "beta_bloqueantes";
-        renderizarFichaFarma(selectVal);
+    const items = estadoMultiPdfMedicina[materia] || [];
+    if (countElem) {
+        countElem.textContent = `${items.length} material${items.length === 1 ? '' : 'es'} activo${items.length === 1 ? '' : 's'}`;
     }
-}
+    if (clearBtn) {
+        clearBtn.classList.toggle("hidden", items.length === 0);
+    }
 
-function renderizarCasoClinico(indice) {
-    if (!CASOS_CLINICOS_MEDICINA.length) return;
-    const caso = CASOS_CLINICOS_MEDICINA[indice % CASOS_CLINICOS_MEDICINA.length];
-
-    const espBadge = document.getElementById("medCasoEspecialidad");
-    const titElem = document.getElementById("medCasoTitulo");
-    const descElem = document.getElementById("medCasoDescripcion");
-    const vitElem = document.getElementById("medCasoVitales");
-    const antElem = document.getElementById("medCasoAntecedentes");
-    const fisioElem = document.getElementById("medCasoFisiopato");
-    const dxElem = document.getElementById("medCasoDiagnostico");
-    const ttoElem = document.getElementById("medCasoTratamiento");
-
-    if (espBadge) espBadge.textContent = caso.especialidad;
-    if (titElem) titElem.textContent = caso.titulo;
-    if (descElem) descElem.textContent = caso.descripcion;
-    if (vitElem) vitElem.textContent = caso.vitales;
-    if (antElem) antElem.textContent = caso.antecedentes;
-    if (fisioElem) fisioElem.innerHTML = caso.fisiopatologia;
-    if (dxElem) dxElem.innerHTML = caso.diagnostico;
-    if (ttoElem) ttoElem.innerHTML = caso.tratamiento;
-
-    // Colapsar details para que el estudiante pueda pensar antes de abrir
-    document.querySelectorAll(".med-reveal-item").forEach(d => d.removeAttribute("open"));
-}
-
-function renderizarFichaFarma(claveFamilia) {
-    const data = DATOS_FARMACOLOGIA_2[claveFamilia];
-    if (!data) return;
-
-    const titElem = document.getElementById("medFarmaDrogasTitulo");
-    const subElem = document.getElementById("medFarmaTipoBadge");
-    const dinElem = document.getElementById("medFarmaDinamia");
-    const cinElem = document.getElementById("medFarmaCinetica");
-    const usosElem = document.getElementById("medFarmaUsos");
-    const advElem = document.getElementById("medFarmaAdversos");
-
-    if (titElem) titElem.textContent = data.titulo;
-    if (subElem) subElem.textContent = data.subtitulo;
-    if (dinElem) dinElem.innerHTML = data.dinamia;
-    if (cinElem) cinElem.innerHTML = data.cinetica;
-    if (usosElem) usosElem.innerHTML = data.usos;
-    if (advElem) advElem.innerHTML = data.adversos;
-}
-
-function renderizarRespuestaTpSalud(claveTema, textoPersonalizado = "") {
-    if (!dom.medSaludOutputArea || !dom.medSaludOutputContent) return;
-
-    if (claveTema && RESPUESTAS_TP_SALUD_PUBLICA[claveTema]) {
-        const item = RESPUESTAS_TP_SALUD_PUBLICA[claveTema];
-        dom.medSaludOutputContent.textContent = `${item.titulo}\n\n${item.contenido}`;
-        dom.medSaludOutputArea.classList.remove("hidden");
-        dom.medSaludOutputArea.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    if (items.length === 0) {
+        listElem.innerHTML = `<li class="med-pdf-empty">No hay archivos cargados. El simulador usará casos y teoría avanzada del banco universitario.</li>`;
         return;
     }
 
-    if (textoPersonalizado.trim()) {
-        const estructurada = `📋 ANÁLISIS ESTRUCTURADO DE TRABAJO PRÁCTICO (SALUD PÚBLICA & EPIDEMIOLOGÍA)
-=============================================================================
+    listElem.innerHTML = items.map((doc, idx) => `
+        <li class="med-pdf-item">
+            <span aria-hidden="true">📄</span>
+            <span class="med-pdf-item-name" title="${doc.name}">${doc.name}</span>
+            <span class="med-pdf-item-meta">${doc.pages || 1} pág.</span>
+            <button type="button" class="med-pdf-item-remove" data-materia="${materia}" data-idx="${idx}" title="Quitar archivo">✕</button>
+        </li>
+    `).join("");
 
-1. IDENTIFICACIÓN DEL PROBLEMA SANITARIO:
-• Consigna: "${textoPersonalizado.trim()}"
-• Nivel de abordaje: Poblacional comunitario / Atención Primaria de la Salud (APS).
+    listElem.querySelectorAll(".med-pdf-item-remove").forEach(btn => {
+        btn.onclick = (e) => {
+            e.stopPropagation();
+            const mat = btn.dataset.materia;
+            const index = parseInt(btn.dataset.idx, 10);
+            if (!isNaN(index) && estadoMultiPdfMedicina[mat]) {
+                const removido = estadoMultiPdfMedicina[mat].splice(index, 1);
+                guardarEstadoPdfsMedicina();
+                renderizarListaPdfsMedicina(mat);
+                if (removido && removido[0]) {
+                    mostrarToast(`🗑️ Quitado: ${removido[0].name}`, "info");
+                }
+            }
+        };
+    });
+}
 
-2. MARCO TEÓRICO Y CONCEPTUALIZACIÓN:
-• Definición de eventos de salud-enfermedad relacionados.
-• Identificación de determinantes sociales (condiciones de vida, saneamiento, educación y acceso).
+function capitalizar(txt) {
+    if (txt === "interna") return "Interna";
+    if (txt === "farma") return "";
+    if (txt === "salud") return "";
+    return txt.charAt(0).toUpperCase() + txt.slice(1);
+}
 
-3. MÉTODO DE RESOLUCIÓN Y CÁLCULO EPIDEMIOLÓGICO:
-• Variables a recolectar: Casos observados (numerador), población en riesgo expuesta (denominador) y factor de expansión (10^k).
-• Medidas recomendadas: Tasa de Incidencia Acumulada o Razón de Prevalencia según temporalidad.
+async function procesarSubidaArchivosMedicina(files, materia) {
+    if (!files || !files.length) return;
+    mostrarToast(`📑 Procesando ${files.length} archivo(s)...`, "info");
+    let agregados = 0;
 
-4. PROPUESTA DE INTERVENCIÓN SANITARIA (APS):
-• Prevención Primaria: Talleres barriales, saneamiento y cobertura de vacunación.
-• Prevención Secundaria: Búsqueda activa comunitaria y diagnóstico temprano en CAPS.
-• Participación Comunitaria y articulación intersectorial (municipio, escuelas y centros barriales).`;
+    for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        try {
+            const data = await extraerTextoDeCualquierArchivo(file);
+            if (data && data.texto) {
+                estadoMultiPdfMedicina[materia].push({
+                    id: "doc_" + Date.now() + "_" + Math.random().toString(36).substr(2, 5),
+                    name: file.name,
+                    size: file.size,
+                    pages: data.paginas || 1,
+                    text: data.texto.slice(0, 50000), // Muestra rica de conceptos clave
+                    timestamp: Date.now()
+                });
+                agregados++;
+            }
+        } catch (err) {
+            console.error("Error leyendo archivo médico:", err);
+            mostrarToast(`⚠️ Error en ${file.name}: ${err.message}`, "error");
+        }
+    }
 
-        dom.medSaludOutputContent.textContent = estructurada;
-        dom.medSaludOutputArea.classList.remove("hidden");
-        dom.medSaludOutputArea.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    if (agregados > 0) {
+        guardarEstadoPdfsMedicina();
+        renderizarListaPdfsMedicina(materia);
+        mostrarToast(`✅ ¡${agregados} archivo(s) agregados a la biblioteca de ${materia.toUpperCase()}!`, "exito");
     }
 }
 
+/* ==========================================================
+   BANCO Y MOTOR DE CASOS CLÍNICOS AVANZADOS: MEDICINA INTERNA
+   ========================================================== */
+let dificultadInternaActiva = 2; // 1: Jr, 2: JTP/Planta, 3: Ateneo Extremo
+let sistemaInternaActivo = "todos";
+
+const BANCO_CASOS_INTERNA_AVANZADOS = [
+    {
+        id: "HC-49210",
+        cama: "Cama 14 · UCO",
+        edad: "Varón, 64 años",
+        ingreso: "Guardia de Emergencias",
+        sistema: "cardio",
+        dificultad: 2,
+        enfermedadActual: "Paciente que consulta por disnea progresiva de 72 horas de evolución que se intensificó en las últimas 6 horas hasta clase funcional IV/IV (ortopnea y disnea paroxística nocturna), acompañada de tos con expectoración asalmonada, frialdad distal y sudoración profusa.",
+        antecedentes: "Hipertensión arterial de 15 años de diagnóstico (tratada irregularmente con Enalapril 10mg/día). Diabetes Mellitus tipo 2 (Metformina 850mg c/12h). Tabaquista de 30 paquetes/año. No refiere alergias conocidas.",
+        examenFisico: [
+            "PA: 175/105 mmHg | FC: 118 lpm regular",
+            "FR: 28 rpm con tiraje intercostal | SpO2: 88% aire ambiente",
+            "Aparato Respiratorio: Rales crepitantes húmedos bilaterales hasta campos medios (patrón en marea ascendente). Sibilancias espiratorias aisladas.",
+            "Aparato Cardiovascular: R1 y R2 taquicárdicos, R3 galope audible en ápex. Ingurgitación yugular 2/3 con reflujo hepatoyugular positivo."
+        ],
+        laboratorio: [
+            { c1: "Hemograma: Hb 13.8 g/dL, Leucocitos 11.200 /mm³", c2: "Glucemia: 184 mg/dL" },
+            { c1: "Urea: 64 mg/dL | Creatinina: 1.6 mg/dL", c2: "Ionograma: Na 137, K 4.9 mEq/L" },
+            { c1: "Biomarcadores: Troponina I: 0.08 ng/mL (ligeramente elevada)", c2: "NT-proBNP: 6.850 pg/mL" },
+            { c1: "ECG: Taquicardia sinusal, HVI (Sokolow-Lyon 38mm), sobrecarga sistólica anterior sin ST elevado.", c2: "" }
+        ],
+        preguntas: [
+            "¿Cuál es el mecanismo fisiopatológico primario desencadenante y el perfil hemodinámico de Stevenson?",
+            "Planteá los 2 diagnósticos diferenciales más importantes y los criterios clínicos utilizados.",
+            "¿Cuál es la conducta terapéutica inmediata en los primeros 15 minutos y qué fármacos están contraindicados de entrada?"
+        ],
+        discusion: `<strong>1. Diagnóstico Principal & Fisiopatología:</strong> Edema Agudo de Pulmón (EAP) cardiogénico hipertensivo. Perfil B de Stevenson (<em>Caliente y Húmedo</em>). La crisis hipertensiva eleva abruptamente la poscarga ventricular izquierda, transmitiendo presiones retrógradas a los capilares pulmonares (> 25 mmHg) que superan la presión oncótica plasmática, produciendo trasudado alveolar masivo.<br>
+<strong>2. Diagnósticos Diferenciales:</strong> <em>TEP Agudo:</em> Ausencia de hipotensión o signos de fallo de VD aislado. <em>Crisis asmática / EPOC:</em> Descartados por ritmo de galope R3, NT-proBNP marcadamente elevado y esputo asalmonado.<br>
+<strong>3. Conducta Terapéutica Inmediata:</strong> VMNI (CPAP 8-10 cmH2O) + Nitroglicerina IV en infusión continua (10-20 mcg/min iniciales para vasodilatación arterial) + Furosemida 40-80 mg IV. <em>Contraindicaciones inmediatas:</em> Betabloqueantes en fase congestiva descompensada y morfina de rutina.`
+    },
+    {
+        id: "HC-51084",
+        cama: "Cama 07 · Terapia Intensiva",
+        edad: "Mujer, 23 años",
+        ingreso: "Shock Room",
+        sistema: "nefro",
+        dificultad: 3,
+        enfermedadActual: "Ingresa traída por familiares por deterioro progresivo del sensorio (estuporosa), respiración ruidosa profunda (patrón de Kussmaul), aliento cetónico marcado, dolor abdominal difuso tipo cólico y vómitos incoercibles de 24 horas de evolución.",
+        antecedentes: "Diabetes Mellitus tipo 1 diagnosticada a los 14 años. Suspendió esquema de insulina Glargina y Lispro hace 48 horas tras cuadro febril y disuria no tratada.",
+        examenFisico: [
+            "PA: 85/50 mmHg (hipotensión severa) | FC: 130 lpm regular",
+            "FR: 34 rpm (Kussmaul) | Temp: 38.3 °C | SpO2: 96% aire ambiente",
+            "Piel y mucosas: Sequedad extrema de mucosas, signo del pliegue positivo, frialdad periférica.",
+            "Abdomen: Doloroso a la palpación difusa sin defensa franca ni peritonismo (abdomen agudo metabólico)."
+        ],
+        laboratorio: [
+            { c1: "Glucemia: 540 mg/dL | Cetonemia: 4.8 mmol/L", c2: "Estado Ácido-Base: pH 7.08, pCO2 18 mmHg" },
+            { c1: "HCO3: 6 mEq/L | EB: -24 mEq/L", c2: "Anion Gap: 26 mEq/L (Severamente elevado)" },
+            { c1: "Ionograma: Na 130 mEq/L, K 5.8 mEq/L", c2: "Urea: 88 mg/dL | Creatinina: 2.1 mg/dL" },
+            { c1: "Orina completa: Cetonuria ++++, Glucosuria ++++", c2: "Sedimento: Leucocitos abundantes, piocitos" }
+        ],
+        preguntas: [
+            "Calculá el Sodio Corregido por glucemia y analizá por qué el potasio sérico está falsamente elevado pese al déficit corporal total.",
+            "¿Cuál es la secuencia rigurosa del tratamiento de rescate: cuándo se inicia la insulina y cuál es el criterio estricto respecto al potasio?",
+            "¿Cuándo se considera resuelta la Cetoacidosis y se realiza la transición a insulina subcutánea?"
+        ],
+        discusion: `<strong>1. Fisiopatología & Na/K:</strong> Na corregido = 130 + 1.6 × ((540 - 100)/100) = 137 mEq/L. La hiperpotasemia aparente es un artefacto de redistribución por acidemia severa (salida de K+ celular por intercambio H+/K+) y falta de acción de insulina sobre la Na+/K+ ATPasa, aun cuando el paciente tiene un déficit masivo de K+ corporal por diuresis osmótica.<br>
+<strong>2. Secuencia Terapéutica Cardinal:</strong> 1° Expansión agresiva con Cristaloides (Solución Fisiológica 0.9% 1000-1500 mL en la primera hora). 2° Si K+ > 5.3 mEq/L: iniciar Insulina corriente IV continua a 0.1 U/kg/h. Si K+ < 3.3 mEq/L: ¡PROHIBIDO iniciar insulina hasta reponer potasio (riesgo de paro cardíaco por hipopotasemia súbita)!<br>
+<strong>3. Criterios de Resolución:</strong> Glucemia < 200 mg/dL, HCO3 ≥ 18 mEq/L, pH venoso > 7.30 y Anion Gap normalizado (≤ 12). La insulina basal SC se administra 2 horas ANTES de suspender la infusión continua.`
+    },
+    {
+        id: "HC-60293",
+        cama: "Cama 21 · Sala General",
+        edad: "Varón, 68 años",
+        ingreso: "Derivación Ambulatoria",
+        sistema: "neumo",
+        dificultad: 1,
+        enfermedadActual: "Paciente con tos productiva con expectoración mucopurulenta y herrumbrosa de 5 días de evolución, dolor pleurítico en puntada de costado derecho y picos febriles de hasta 39°C acompañados de chuchos de frío intensos.",
+        antecedentes: "EPOC estadio GOLD B con uso de Salmeterol/Fluticasona. Ex-fumador (40 paq/año). Vacunación antigripal al día, neumococo no refiere.",
+        examenFisico: [
+            "PA: 120/75 mmHg | FC: 96 lpm | Temp: 38.6 °C",
+            "FR: 24 rpm | SpO2: 91% aire ambiente (previa habitual 94%)",
+            "Examen Respiratorio: Matidez a la percusión en base derecha, aumento de vibraciones vocales, soplo tubario y crepitantes teleinspiratorios localizados en lóbulo inferior derecho."
+        ],
+        laboratorio: [
+            { c1: "Leucocitos: 16.400 /mm³ (84% neutrófilos, 6% en cayado)", c2: "Eritrosedimentación: 78 mm/h | PCR: 145 mg/L" },
+            { c1: "Urea: 34 mg/dL | Creatinina: 0.9 mg/dL", c2: "Rx de Tórax: Opacidad alveolar homogénea con broncograma aéreo en lóbulo inferior derecho" }
+        ],
+        preguntas: [
+            "Definí el síndrome semiológico respiratorio presente y el score de estratificación de riesgo CURB-65 / CRB-65.",
+            "¿Cuál es el agente etiológico más probable y cuál el esquema antibiótico empírico de elección ambulatorio vs internación?",
+            "¿Qué criterios clínicos definen la falla de tratamiento inicial a las 48-72 horas?"
+        ],
+        discusion: `<strong>1. Síndrome & Estratificación:</strong> Síndrome de condensación pulmonar consolidativo con broncograma aéreo. Score CURB-65: Confusión (0), Urea > 42 mg/dL (0), FR ≥ 30 (0), PA baja (0), Edad ≥ 65 (1 punto: riesgo intermedio, internación en sala general aconsejada por comorbilidad EPOC).<br>
+<strong>2. Etiología y Tratamiento:</strong> <em>Streptococcus pneumoniae</em> (Neumococo). Tratamiento de 1° línea internación en piso: Ampicilina/Sulbactam 1.5g c/6h IV + Claritromicina 500mg c/12h VO/IV, o Ceftriaxona 1-2g/día + Macrólido.<br>
+<strong>3. Criterios de Falla:</strong> Persistencia de fiebre > 72h sin descenso de leucocitosis/PCR, progresión radiológica > 50% o deterioro hemodinámico (sospechar empiema pleural, resistencia bacteriana o sobreinfección hospitalaria).`
+    }
+];
+
+function generarCasoClinicoInterna(esUrgencia = false) {
+    let casosFiltrados = BANCO_CASOS_INTERNA_AVANZADOS;
+
+    if (!esUrgencia) {
+        if (sistemaInternaActivo !== "todos") {
+            const porSistema = casosFiltrados.filter(c => c.sistema === sistemaInternaActivo);
+            if (porSistema.length > 0) casosFiltrados = porSistema;
+        }
+        const porDiff = casosFiltrados.filter(c => c.dificultad === dificultadInternaActiva);
+        if (porDiff.length > 0) casosFiltrados = porDiff;
+    }
+
+    const casoElegido = casosFiltrados[Math.floor(Math.random() * casosFiltrados.length)];
+    if (!casoElegido) return;
+
+    // Verificar si hay PDFs cargados en Medicina Interna para integrar
+    const pdfsInterna = estadoMultiPdfMedicina.interna || [];
+    let customNotice = "";
+    if (pdfsInterna.length > 0) {
+        const nombresDocs = pdfsInterna.map(d => d.name).join(", ");
+        customNotice = `<br><span style="display:inline-block;margin-top:0.35rem;font-size:0.75rem;color:#38bdf8;">📑 Integrado con teoría de tus PDFs: ${nombresDocs}</span>`;
+    }
+
+    // Llenar la interfaz
+    const pId = document.getElementById("casePatientId");
+    const pMeta = document.getElementById("casePatientMeta");
+    const diffBadge = document.getElementById("caseDiffBadge");
+    const enfAct = document.getElementById("caseEnfermedadActual");
+    const antec = document.getElementById("caseAntecedentes");
+    const exFis = document.getElementById("caseExamenFisico");
+    const labTable = document.getElementById("caseLabTable");
+    const qList = document.getElementById("caseQuestionsList");
+    const discContent = document.getElementById("medDiscussionContent");
+    const discPanel = document.getElementById("medOfficialDiscussionPanel");
+    const revealBtn = document.getElementById("medRevealDiscussionBtn");
+
+    if (pId) pId.textContent = `${casoElegido.id} · ${casoElegido.cama}`;
+    if (pMeta) pMeta.innerHTML = `${casoElegido.edad} · ${casoElegido.ingreso}${customNotice}`;
+    if (diffBadge) {
+        const labels = { 1: "Nivel 1: Residente Jr.", 2: "Nivel 2: Médico de Planta", 3: "Nivel 3: Ateneo Complejo" };
+        diffBadge.textContent = labels[casoElegido.dificultad] || "Ateneo Clínico";
+    }
+    if (enfAct) enfAct.textContent = casoElegido.enfermedadActual;
+    if (antec) antec.textContent = casoElegido.antecedentes;
+
+    if (exFis) {
+        exFis.innerHTML = casoElegido.examenFisico.map(it => `<li>${it}</li>`).join("");
+    }
+
+    if (labTable && casoElegido.laboratorio) {
+        labTable.innerHTML = `<tbody>` + casoElegido.laboratorio.map(row => `
+            <tr>
+                <td>${row.c1}</td>
+                <td>${row.c2 || ''}</td>
+            </tr>
+        `).join("") + `</tbody>`;
+    }
+
+    if (qList && casoElegido.preguntas) {
+        qList.innerHTML = casoElegido.preguntas.map(q => `<li>${q}</li>`).join("");
+    }
+
+    if (discContent) {
+        discContent.innerHTML = casoElegido.discusion;
+    }
+
+    // Resetear panel de discusión oculto
+    if (discPanel) discPanel.classList.add("hidden");
+    if (revealBtn) revealBtn.textContent = "💡 Revelar Discusión Clínica y Resolución Razonada";
+
+    // Actualizar monitores simulados
+    const fcElem = document.getElementById("vitalFC");
+    const paElem = document.getElementById("vitalPA");
+    const spo2Elem = document.getElementById("vitalSPO2");
+    const frElem = document.getElementById("vitalFR");
+    if (casoElegido.sistema === "cardio") {
+        if (fcElem) fcElem.textContent = "118";
+        if (paElem) paElem.textContent = "175/105";
+        if (spo2Elem) spo2Elem.textContent = "88%";
+        if (frElem) frElem.textContent = "28";
+    } else if (casoElegido.sistema === "nefro") {
+        if (fcElem) fcElem.textContent = "130";
+        if (paElem) paElem.textContent = "85/50";
+        if (spo2Elem) spo2Elem.textContent = "96%";
+        if (frElem) frElem.textContent = "34";
+    } else {
+        if (fcElem) fcElem.textContent = "96";
+        if (paElem) paElem.textContent = "120/75";
+        if (spo2Elem) spo2Elem.textContent = "91%";
+        if (frElem) frElem.textContent = "24";
+    }
+
+    mostrarToast(`⚡ Caso generado: ${casoElegido.id} (${casoElegido.cama})`, "exito");
+}
+
+/* ==========================================================
+   BANCO Y MOTOR DE DESAFÍOS: FARMACOLOGÍA 2
+   ========================================================== */
+let dificultadFarmaActiva = 2; // 1: Cinética & Diana, 2: Ajuste & Interacciones, 3: Toxicología & Crisis
+let familiaFarmaActiva = "todas";
+
+const BANCO_DESAFIOS_FARMACOLOGIA = [
+    {
+        id: "DF-804",
+        subtitulo: "Dilema Cardiorrenal y Transporte P-gp",
+        dificultad: 2,
+        familia: "cardio",
+        texto: "Paciente femenina de 71 años con fibrilación auricular no valvular (tratada crónicamente con Digoxina 0.25 mg/día y Acenocumarol) y artrosis severa. Por dolor agudo se automedica Ibuprofeno 600 mg c/8h durante 10 días y el médico de guardia agrega Claritromicina 500 mg c/12h por neumonía atípica. Ingresa obnubilada con náuseas intensas, xantopsias (visión amarillenta) y mareos.",
+        laboratorio: [
+            "Digoxinemia: 3.4 ng/mL (Rango terapéutico estrecho: 0.5 - 0.9 ng/mL)",
+            "Creatinina: 2.2 mg/dL (Previa: 1.0 mg/dL - ClCr estimado: 24 mL/min)",
+            "Potasio sérico: 3.1 mEq/L (Hipopotasemia moderada por diuréticos previos)",
+            "ECG: Bradicardia extrema con extrasístoles ventriculares acopladas en bigeminismo y cubeta digitálica."
+        ],
+        preguntas: [
+            "¿Por qué la combinación Claritromicina + Ibuprofeno triplicó la digoxinemia a nivel de transportadores (P-gp) y prostaglandinas?",
+            "¿Cómo potencia la hipopotasemia la toxicidad de la digoxina en la subunidad alfa de la bomba Na+/K+ ATPasa?",
+            "¿Cuál es el esquema de rescate farmacológico de elección y por qué el Calcio IV está terminantemente contraindicado?"
+        ],
+        discusion: `<strong>1. Doble Interacción Farmacocinética:</strong><br>
+• <em>Claritromicina:</em> Inhibidor potente de la <strong>Glicoproteína P (P-gp)</strong> en el túbulo renal proximal y enterocito. Reduce la secreción activa tubular de digoxina en un 50% y duplica su biodisponibilidad.<br>
+• <em>Ibuprofeno:</em> Inhibición de COX-1/2, bloqueando las prostaglandinas vasodilatadoras renales (PGE2/PGI2). Genera vasoconstricción de la arteriola aferente y caída abrupta del filtrado glomerular, provocando retención masiva del fármaco.<br>
+<strong>2. Farmacodinamia & Hipopotasemia:</strong> La digoxina y el K+ compiten por el mismo dominio extracelular en la subunidad alfa de la bomba Na+/K+ ATPasa. En hipopotasemia, la digoxina se fija con afinidad máxima sin competencia, llevando a una sobrecarga patológica de Ca2+ intracelular (postdespolarizaciones tardías y arritmias mortales).<br>
+<strong>3. Tratamiento:</strong> Suspensión de drogas, corrección cuidadosa del potasio con KCl IV, y administración de <strong>Anticuerpos Fab antidigoxina (DigiFab)</strong>. El Calcio IV está contraindicado porque precipita contractura sostenida irreversible ("corazón de piedra").`
+    },
+    {
+        id: "DF-915",
+        subtitulo: "Crisis por Inhibidores CYP450 y Anticoagulación",
+        dificultad: 3,
+        familia: "cardio",
+        texto: "Varón de 58 años portador de válvula aórtica mecánica metálica anticoagulado con Warfarina (RIN habitual en rango: 2.5 - 3.5). Consulta por micosis ungular y tiña pedis; un profesional le prescribe Fluconazol 150 mg/semana e itraconazol oral. Al 6° día consulta por hematuria macroscópica franca, epistaxis bilateral y hematomas espontáneos múltiples.",
+        laboratorio: [
+            "RIN: 9.8 (Rango seguro de anticoagulación: 2.5 - 3.5)",
+            "KPTT: 72 segundos | Tiempo de Protrombina: > 120 seg",
+            "Hemoglobina: 9.8 g/dL (caída de 3.5 g/dL respecto al basal)",
+            "Función Hepática: Normal (Bilirrubina 0.8, TGO/TGP normales)"
+        ],
+        preguntas: [
+            "¿Qué isoenzima del Citocromo P450 metaboliza al enantiómero activo S-Warfarina y cómo actúa el azol?",
+            "¿Cuál es la conducta farmacológica inmediata para revertir la anticoagulación crítica con sangrado activo?",
+            "¿Por qué no se debe dar dosis excesivas de Vitamina K1 (Fitomenadiona) en pacientes con válvulas mecánicas?"
+        ],
+        discusion: `<strong>1. Mecanismo Enzimático CYP450:</strong> La Warfarina es una mezcla racémica donde el enantiómero S es 5 veces más potente que el R. La S-Warfarina se metaboliza exclusivamente por la isoenzima <strong>CYP2C9</strong>. Los azoles (Fluconazol/Itraconazol) son inhibidores directos muy potentes del CYP2C9, reduciendo drásticamente su aclaramiento hepático y cuadruplicando su semivida plasmática (t1/2).<br>
+<strong>2. Reversión Inmediata con Sangrado Activo:</strong> Complejo Protrombínico Concentrado (CCP de 4 factores: factores II, VII, IX, X) a dosis de 25-50 UI/kg IV, o Plasma Fresco Congelado (PFC) si no hay CCP, más Vitamina K1 (Fitomenadiona) 5-10 mg IV lenta en infusión.<br>
+<strong>3. Riesgo de Resistencia en Válvula Mecánica:</strong> Dosis excesivas de Vitamina K1 pueden generar resistencia a la anticoagulación oral por semanas una vez superada la urgencia, dejando al paciente desprotegido frente a una trombosis protésica valvular aguda.`
+    }
+];
+
+const FICHERO_4X4_DROGAS = [
+    {
+        droga: "Bisoprolol / Carvedilol",
+        familia: "Beta-bloqueantes (Cardiovascular)",
+        mecanismo: "Antagonismo competitivo de receptores β1 miocárdicos (Bisoprolol selectivo; Carvedilol β1, β2 y α1 vasodilatador). Disminuyen AMPc intracelular y corriente If del nódulo sinusal.",
+        cinetica: "Biodisponibilidad: 80-90%. Metabolismo hepático y eliminación renal 50/50. t1/2: 10-12 horas (permite monodosis diaria).",
+        indicaciones: "Insuficiencia cardíaca con FEVI reducida (pilar del tratamiento pronóstico), HTA, cardiopatía isquémica, control de frecuencia en FA.",
+        adversos: "Bradicardia sinusal, bloqueo AV, broncoespasmo (por bloqueo β2), frialdad de extremidades, fatiga y enmascaramiento de hipoglucemias en diabéticos."
+    },
+    {
+        droga: "Enalapril / Ramipril",
+        familia: "Inhibidores de la ECA (IECA)",
+        mecanismo: "Inhiben competitivamente a la Enzima Convertidora de Angiotensina, impidiendo el paso de Angiotensina I a Angiotensina II y bloqueando la degradación de bradicininas.",
+        cinetica: "Profármaco que se biotransforma en el hígado a Enalaprilato activo. Eliminación renal predominante. Requiere ajuste estricto en falla renal.",
+        indicaciones: "Hipertensión arterial esencial, Insuficiencia cardíaca con FEVI deprimida, Nefroprotección en microalbuminuria diabética.",
+        adversos: "Tos seca nocturna refractaria (por acumulación de bradicinina y sustancia P), hiperpotasemia, angioedema (raro pero potencialmente mortal) e hipotensión de 1° dosis."
+    },
+    {
+        droga: "Ceftriaxona",
+        familia: "Cefalosporina de 3° Generación (Betalactámicos)",
+        mecanismo: "Bactericida tiempo-dependiente. Se une a las Proteínas Fijadoras de Penicilina (PBP-1 y PBP-3), inhibiendo la transpeptidación del peptidoglicano de la pared celular bacteriana.",
+        cinetica: "No se absorbe vía oral (solo IV/IM). Alta unión a proteínas (90%). Excelente penetración en LCR con meninges inflamadas. Eliminación dual (renal y biliar 40%). t1/2 prolongada: 8h.",
+        indicaciones: "Meningitis bacteriana aguda, Neumonía Adquirida en la Comunidad grave, Pielonefritis, Infecciones intraabdominales, Gonorrea.",
+        adversos: "Pseudolitiasis biliar reversible (barro biliar por precipitación con calcio), diarrea por C. difficile, reacciones de hipersensibilidad alérgica."
+    },
+    {
+        droga: "Sertralina / Escitalopram",
+        familia: "ISRS (Antidepresivos / SNC)",
+        mecanismo: "Inhibición selectiva del transportador de recaptación de serotonina presináptico (SERT), aumentando la disponibilidad de 5-HT en la hendidura sináptica y desensibilizando autorreceptores 5-HT1A.",
+        cinetica: "Buena absorción oral con alimentos. Metabolismo hepático CYP2C19 y CYP3A4. Semivida de eliminación: 26-30 horas. Requiere 2-4 semanas para efecto terapéutico pleno.",
+        indicaciones: "Trastorno depresivo mayor, Trastorno de ansiedad generalizada, Crisis de pánico, TOC, Fobia social.",
+        adversos: "Náuseas tempranas, disfunción sexual (anorgasmia, disminución de líbido), insomnio/somnolencia, prolongación leve del QTc (Escitalopram) y riesgo de Síndrome Serotoninérgico con IMAO/Tramadol."
+    }
+];
+
+function generarDesafioFarma() {
+    let filtrados = BANCO_DESAFIOS_FARMACOLOGIA;
+    if (familiaFarmaActiva !== "todas") {
+        const porFam = filtrados.filter(d => d.familia === familiaFarmaActiva);
+        if (porFam.length > 0) filtrados = porFam;
+    }
+    const porDiff = filtrados.filter(d => d.dificultad === dificultadFarmaActiva);
+    if (porDiff.length > 0) filtrados = porDiff;
+
+    const desafio = filtrados[Math.floor(Math.random() * filtrados.length)] || BANCO_DESAFIOS_FARMACOLOGIA[0];
+
+    const pdfsFarma = estadoMultiPdfMedicina.farma || [];
+    let customNotice = "";
+    if (pdfsFarma.length > 0) {
+        customNotice = `<br><span style="display:inline-block;margin-top:0.35rem;font-size:0.75rem;color:#c084fc;">💊 Contrastado con tus textos de Farma: ${pdfsFarma.map(d => d.name).join(", ")}</span>`;
+    }
+
+    const cId = document.getElementById("farmaCaseId");
+    const cMeta = document.getElementById("farmaCaseMeta");
+    const diffBadge = document.getElementById("farmaDiffBadge");
+    const cText = document.getElementById("farmaCaseText");
+    const labList = document.getElementById("farmaCaseLabList");
+    const qList = document.getElementById("farmaQuestionsList");
+    const discPanel = document.getElementById("farmaDiscussionPanel");
+    const discContent = document.getElementById("farmaDiscussionContent");
+    const revealBtn = document.getElementById("farmaRevealDiscussionBtn");
+
+    if (cId) cId.textContent = `${desafio.id} · ${desafio.subtitulo}`;
+    if (cMeta) cMeta.innerHTML = `Desafío Farmacoterapéutico Universitario${customNotice}`;
+    if (diffBadge) {
+        const labels = { 1: "Nivel 1: Cinética & Diana", 2: "Nivel 2: Ajuste & Interacciones", 3: "Nivel 3: Toxicología & Crisis" };
+        diffBadge.textContent = labels[desafio.dificultad] || "Desafío Farmacológico";
+    }
+    if (cText) cText.textContent = desafio.texto;
+    if (labList && desafio.laboratorio) {
+        labList.innerHTML = desafio.laboratorio.map(it => `<li>${it}</li>`).join("");
+    }
+    if (qList && desafio.preguntas) {
+        qList.innerHTML = desafio.preguntas.map(it => `<li>${it}</li>`).join("");
+    }
+    if (discContent) {
+        discContent.innerHTML = desafio.discusion;
+    }
+    if (discPanel) discPanel.classList.add("hidden");
+    if (revealBtn) revealBtn.textContent = "💡 Revelar Análisis Farmacoterapéutico";
+
+    mostrarToast(`🧪 Desafío generado: ${desafio.id}`, "exito");
+}
+
+function renderizarFichero4x4Farma() {
+    const grid = document.getElementById("farmaFicheroGrid");
+    if (!grid) return;
+    grid.innerHTML = FICHERO_4X4_DROGAS.map(d => `
+        <article class="med-fichero-card">
+            <div class="med-fichero-card-header">
+                <span class="med-fichero-drug">${d.droga}</span>
+                <span class="badge badge--primary" style="font-size:0.7rem;">${d.familia}</span>
+            </div>
+            <div class="med-fichero-row"><strong>🔬 Diana & Mecanismo:</strong> ${d.mecanismo}</div>
+            <div class="med-fichero-row"><strong>⏳ Farmacocinética:</strong> ${d.cinetica}</div>
+            <div class="med-fichero-row"><strong>🎯 Indicaciones:</strong> ${d.indicaciones}</div>
+            <div class="med-fichero-row" style="color:#fca5a5;"><strong>⚠️ RAM & Riesgos:</strong> ${d.adversos}</div>
+        </article>
+    `).join("");
+}
+
+/* ==========================================================
+   TALLER DE TRABAJOS PRÁCTICOS (TPS): SALUD PÚBLICA
+   ========================================================== */
+let dificultadSaludActiva = 2; // 1: Bioestadística & Tasas, 2: Estrategias APS, 3: Brote Epidémico
+
+const BANCO_TPS_SALUD_PUBLICA = [
+    {
+        id: "TP N° 4 · Brote Epidémico",
+        subtitulo: "Investigación de Brote por Transmisión Alimentaria",
+        dificultad: 3,
+        texto: "En una localidad de 25.000 habitantes se notificaron en una semana 140 casos de gastroenteritis aguda febril con diarrea acuosa profusa. De la investigación epidemiológica de campo surge que 120 de los casos concurrieron a un almuerzo comunitario escolar donde asistieron 300 personas. Entre los 200 asistentes que no enfermaron, 50 consumieron mayonesa casera, mientras que entre los 100 que enfermaron en ese grupo, 90 la habían consumido.",
+        tabla: {
+            encabezados: ["Exposición (Mayonesa)", "Enfermos (Casos)", "Sanos (No casos)", "Total Asistentes"],
+            filas: [
+                ["Consumió Mayonesa (+)", "90 (a)", "50 (b)", "140 (a + b)"],
+                ["No consumió (-)", "10 (c)", "150 (d)", "160 (c + d)"],
+                ["Total", "100", "200", "300"]
+            ]
+        },
+        preguntas: [
+            "Calculá la Tasa de Ataque en Expuestos (TAe), la Tasa de Ataque en No Expuestos (TAne) y la Tasa de Ataque General (TAG).",
+            "Calculá el Riesgo Relativo (RR) y la Fracción Atribuible en Expuestos (FAE). ¿Qué conclusión sanitaria se extrae?",
+            "Formulá 3 intervenciones prioritarias según los niveles de prevención de Leavell y Clark para contener el brote."
+        ],
+        discusion: `<strong>1. Tasas de Ataque:</strong><br>
+• TA(expuestos) = 90 / 140 = <strong>64.29%</strong><br>
+• TA(no expuestos) = 10 / 160 = <strong>6.25%</strong><br>
+• TA(general) = 100 / 300 = <strong>33.33%</strong><br><br>
+<strong>2. Medidas de Asociación:</strong><br>
+• <strong>Riesgo Relativo (RR):</strong> 64.29% / 6.25% = <strong>10.28</strong>. Las personas que consumieron mayonesa casera tuvieron 10.28 veces más riesgo de enfermar que quienes no la consumieron (asociación causal concluyente).<br>
+• <strong>Fracción Atribuible en Expuestos (FAE):</strong> ((10.28 - 1) / 10.28) × 100 = <strong>90.27%</strong>. El 90.27% de las gastroenteritis en los expuestos se explica por dicho alimento.<br><br>
+<strong>3. Intervenciones en APS (Leavell & Clark):</strong><br>
+• <em>Prevención Primaria:</em> Decomiso de remanentes, inspección bromatológica de la cocina escolar, capacitación en Buenas Prácticas de Manufactura (BPM) y prohibición de mayonesas con huevo crudo en comedores.<br>
+• <em>Prevención Secundaria:</em> Búsqueda activa comunitaria, coprocultivo para aislamiento de Salmonella spp., e hidratación oral precoz (SRO) en el Centro de Salud.<br>
+• <em>Prevención Terciaria:</em> Derivación y monitoreo de pacientes con signos de alarma (deshidratación grave, bacteriemia).`
+    },
+    {
+        id: "TP N° 2 · Indicadores Demográficos",
+        subtitulo: "Cálculo de Tasas de Incidencia, Prevalencia y Letalidad",
+        dificultad: 1,
+        texto: "En un municipio con una población media de 80.000 habitantes durante el año 2025, se registraron 640 casos nuevos de Tuberculosis pulmonar. Al inicio del año ya existían 320 pacientes bajo tratamiento. Durante el año fallecieron 48 personas por Tuberculosis y un total de 560 personas por todas las causas.",
+        tabla: {
+            encabezados: ["Variable Sanitaria", "Valor Observado", "Población Base"],
+            filas: [
+                ["Casos nuevos de TBC en el año", "640", "80.000 hab."],
+                ["Casos existentes al inicio", "320", "80.000 hab."],
+                ["Defunciones totales por TBC", "48", "80.000 hab."],
+                ["Defunciones por todas las causas", "560", "80.000 hab."]
+            ]
+        },
+        preguntas: [
+            "Calculá la Tasa de Incidencia Acumulada de Tuberculosis por 100.000 habitantes.",
+            "Calculá la Prevalencia de Período y la Tasa de Letalidad de la Tuberculosis.",
+            "Calculá la Tasa Bruta de Mortalidad General (por mil habitantes) y la Tasa de Mortalidad Específica por TBC."
+        ],
+        discusion: `<strong>1. Tasa de Incidencia Acumulada:</strong><br>
+• IA = (640 / 80.000) × 100.000 = <strong>800 por 100.000 habitantes</strong> (0.8%).<br><br>
+<strong>2. Prevalencia de Período y Letalidad:</strong><br>
+• Prevalencia de Período = ((320 + 640) / 80.000) × 100 = <strong>1.2%</strong> (1.200 por 100.000 hab).<br>
+• <strong>Tasa de Letalidad:</strong> (48 defunciones / 960 enfermos totales) × 100 = <strong>5.0%</strong>. Expresa la gravedad de la patología entre quienes la padecen.<br><br>
+<strong>3. Mortalidad:</strong><br>
+• Mortalidad Bruta General = (560 / 80.000) × 1.000 = <strong>7.0 por mil habitantes</strong>.<br>
+• Mortalidad Específica por TBC = (48 / 80.000) × 100.000 = <strong>60 por 100.000 habitantes</strong>.`
+    }
+];
+
+function generarEjercicioTpSalud() {
+    const filtrados = BANCO_TPS_SALUD_PUBLICA.filter(t => t.dificultad === dificultadSaludActiva);
+    const tpElegido = filtrados[0] || BANCO_TPS_SALUD_PUBLICA[0];
+
+    const pdfsSalud = estadoMultiPdfMedicina.salud || [];
+    let customNotice = "";
+    if (pdfsSalud.length > 0) {
+        customNotice = `<br><span style="display:inline-block;margin-top:0.35rem;font-size:0.75rem;color:#6ee7b7;">📋 Contextualizado con tus Guías de TP: ${pdfsSalud.map(d => d.name).join(", ")}</span>`;
+    }
+
+    const tId = document.getElementById("saludTpId");
+    const tMeta = document.getElementById("saludTpMeta");
+    const diffBadge = document.getElementById("saludDiffBadge");
+    const tText = document.getElementById("saludTpText");
+    const tTable = document.getElementById("saludTpTable");
+    const qList = document.getElementById("saludQuestionsList");
+    const discPanel = document.getElementById("saludDiscussionPanel");
+    const discContent = document.getElementById("saludDiscussionContent");
+    const revealBtn = document.getElementById("saludRevealDiscussionBtn");
+
+    if (tId) tId.textContent = tpElegido.id;
+    if (tMeta) tMeta.innerHTML = `${tpElegido.subtitulo}${customNotice}`;
+    if (diffBadge) {
+        const labels = { 1: "Nivel 1: TP Bioestadística", 2: "Nivel 2: TP Estrategias APS", 3: "Nivel 3: TP Investigación de Brote" };
+        diffBadge.textContent = labels[tpElegido.dificultad] || "Trabajo Práctico";
+    }
+    if (tText) tText.textContent = tpElegido.texto;
+
+    if (tTable && tpElegido.tabla) {
+        let theadHtml = `<tr>` + tpElegido.tabla.encabezados.map(h => `<th>${h}</th>`).join("") + `</tr>`;
+        let tbodyHtml = tpElegido.tabla.filas.map(row => `<tr>` + row.map((cell, i) => i === 0 ? `<td><strong>${cell}</strong></td>` : `<td>${cell}</td>`).join("") + `</tr>`).join("");
+        tTable.innerHTML = `<thead>${theadHtml}</thead><tbody>${tbodyHtml}</tbody>`;
+    }
+
+    if (qList && tpElegido.preguntas) {
+        qList.innerHTML = tpElegido.preguntas.map(it => `<li>${it}</li>`).join("");
+    }
+
+    if (discContent) discContent.innerHTML = tpElegido.discusion;
+    if (discPanel) discPanel.classList.add("hidden");
+    if (revealBtn) revealBtn.textContent = "💡 Revelar Resolución Docente Paso a Paso";
+
+    mostrarToast(`📋 Consigna de TP cargada: ${tpElegido.id}`, "exito");
+}
+
+function calcularIndicadoresSaludTp() {
+    const pob = parseFloat(document.getElementById("calcPoblacion")?.value) || 100000;
+    const nuevos = parseFloat(document.getElementById("calcCasosNuevos")?.value) || 0;
+    const totales = parseFloat(document.getElementById("calcCasosTotales")?.value) || nuevos;
+    const muertes = parseFloat(document.getElementById("calcFallecidos")?.value) || 0;
+
+    const ia = pob > 0 ? ((nuevos / pob) * 1000).toFixed(2) : "0";
+    const prev = pob > 0 ? ((totales / pob) * 100).toFixed(2) : "0";
+    const letal = totales > 0 ? ((muertes / totales) * 100).toFixed(2) : "0";
+    const mort = pob > 0 ? ((muertes / pob) * 1000).toFixed(3) : "0";
+
+    const res = document.getElementById("calcResultDisplay");
+    if (res) {
+        res.innerHTML = `
+            <div class="med-calc-res-item"><span>Incidencia Acumulada:</span> <strong>${ia} por mil hab. (${((nuevos / pob) * 100).toFixed(3)}%)</strong></div>
+            <div class="med-calc-res-item"><span>Prevalencia de Período:</span> <strong>${prev}% (${((totales / pob) * 1000).toFixed(2)} por mil)</strong></div>
+            <div class="med-calc-res-item"><span>Tasa de Letalidad:</span> <strong>${letal}%</strong></div>
+            <div class="med-calc-res-item"><span>Tasa Mortalidad Causa:</span> <strong>${mort} por mil (${(parseFloat(mort) * 100).toFixed(1)} por 100.000 hab)</strong></div>
+        `;
+        mostrarToast("⚡ Indicadores de TP calculados", "exito");
+    }
+}
+
+/* ==========================================================
+   WIRING COMPLETO DE EVENTOS PARA CUENTA IVÁN Y VISTAS MÉDICAS
+   ========================================================== */
 function inicializarEventosAuthYMedicina() {
-    // Header Buttons (Desktop)
+    // 1. Botones de autenticación en Header y Drawer
     const btnLogin = document.getElementById("topNavLoginBtn");
     const btnRegister = document.getElementById("topNavRegisterBtn");
     if (btnLogin) btnLogin.onclick = (e) => { e.preventDefault(); abrirModalAuth("login"); };
     if (btnRegister) btnRegister.onclick = (e) => { e.preventDefault(); abrirModalAuth("register"); };
 
-    // Drawer Mobile Buttons
     const drawerLogin = document.getElementById("drawerLoginBtn");
     const drawerRegister = document.getElementById("drawerRegisterBtn");
     const drawerLogout = document.getElementById("drawerLogoutBtn");
@@ -3542,7 +4113,7 @@ function inicializarEventosAuthYMedicina() {
         cerrarSesionPerfil();
     };
 
-    // User Pill in Header (Desktop Dropdown)
+    // User Pill en Navbar
     const pill = document.getElementById("userHeaderPill");
     const dropdown = document.getElementById("userHeaderDropdown");
     if (pill) {
@@ -3573,104 +4144,227 @@ function inicializarEventosAuthYMedicina() {
     if (medBtn) medBtn.onclick = (e) => {
         e.preventDefault();
         if (dropdown) dropdown.classList.add("hidden");
-        abrirModalMedicinaClinica("interna");
+        cambiarVista("med-interna");
     };
 
-    // Modal Bienvenida Iván
+    // 2. Navegación directa a las 3 Materias desde Navbar
+    const navMed = document.getElementById("navMedInternaBtn");
+    const navFarma = document.getElementById("navFarmaBtn");
+    const navSalud = document.getElementById("navSaludBtn");
+    if (navMed) navMed.onclick = () => cambiarVista("med-interna");
+    if (navFarma) navFarma.onclick = () => cambiarVista("farmacologia-2");
+    if (navSalud) navSalud.onclick = () => cambiarVista("salud-publica");
+
+    const drawerMed = document.getElementById("drawerNavMedInterna");
+    const drawerFarma = document.getElementById("drawerNavFarma");
+    const drawerSalud = document.getElementById("drawerNavSalud");
+    if (drawerMed) drawerMed.onclick = () => { cambiarVista("med-interna"); cerrarDrawerMenu(); };
+    if (drawerFarma) drawerFarma.onclick = () => { cambiarVista("farmacologia-2"); cerrarDrawerMenu(); };
+    if (drawerSalud) drawerSalud.onclick = () => { cambiarVista("salud-publica"); cerrarDrawerMenu(); };
+
+    // 3. Modal de Bienvenida Dr. Iván
     const welcomeClose = document.getElementById("ivanWelcomeCloseBtn");
     const welcomeGo = document.getElementById("ivanWelcomeGoBtn");
     const welcomeModal = document.getElementById("ivanWelcomeModal");
     if (welcomeClose) welcomeClose.onclick = () => { if (welcomeModal) welcomeModal.close(); };
     if (welcomeGo) welcomeGo.onclick = () => {
         if (welcomeModal) welcomeModal.close();
-        const panelMed = document.getElementById("panelMedicinaIvan");
-        if (panelMed) panelMed.scrollIntoView({ behavior: "smooth", block: "start" });
+        cambiarVista("med-interna");
     };
 
-    // Botón Directo a Bolillero en Panel de Iván
-    const directBolillero = document.getElementById("medBtnDirectBolillero");
-    if (directBolillero) directBolillero.onclick = () => cargarMateriaMedicinaEnBolillero("interna");
-
-    // Botones en las 3 tarjetas de materias médicas
+    // Botones del panel de Medicina en Home
     document.querySelectorAll(".med-btn-launch").forEach(btn => {
         btn.onclick = () => {
             const action = btn.dataset.medAction;
             const sub = btn.dataset.medSub;
             if (action === "bolillero") {
                 cargarMateriaMedicinaEnBolillero(sub);
-            } else if (action === "clinica") {
-                abrirModalMedicinaClinica("interna");
-            } else if (action === "fichero") {
-                abrirModalMedicinaClinica("farma");
-            } else if (action === "tp") {
-                abrirModalMedicinaClinica("salud");
+            } else if (sub === "interna") {
+                cambiarVista("med-interna");
+            } else if (sub === "farma") {
+                cambiarVista("farmacologia-2");
+            } else if (sub === "salud") {
+                cambiarVista("salud-publica");
             }
         };
     });
 
-    // Modal de Herramientas Médicas
-    const medClose = document.getElementById("medClinicCloseBtn");
-    const medModal = document.getElementById("modalMedicinaClinica");
-    if (medClose) medClose.onclick = () => { if (medModal) medModal.close(); };
+    const directBolillero = document.getElementById("medBtnDirectBolillero");
+    if (directBolillero) directBolillero.onclick = () => cargarMateriaMedicinaEnBolillero("interna");
 
-    const tabInterna = document.getElementById("medTabInterna");
-    const tabFarma = document.getElementById("medTabFarma");
-    const tabSalud = document.getElementById("medTabSalud");
-    if (tabInterna) tabInterna.onclick = () => cambiarPestañaMedicina("interna");
-    if (tabFarma) tabFarma.onclick = () => cambiarPestañaMedicina("farma");
-    if (tabSalud) tabSalud.onclick = () => cambiarPestañaMedicina("salud");
+    // 4. Multi-PDF Event Listeners
+    inicializarDropzoneMultiPdf("interna", "medInternaDropzone", "medInternaDropzoneClick", "medInternaPdfInput");
+    inicializarDropzoneMultiPdf("farma", "farmaDropzone", "farmaDropzoneClick", "farmaPdfInput");
+    inicializarDropzoneMultiPdf("salud", "saludDropzone", "saludDropzoneClick", "saludPdfInput");
 
-    const genCaso = document.getElementById("medGenerarCasoBtn");
-    if (genCaso) {
-        genCaso.onclick = () => {
-            indiceCasoClinicoActual = (indiceCasoClinicoActual + 1) % CASOS_CLINICOS_MEDICINA.length;
-            renderizarCasoClinico(indiceCasoClinicoActual);
-            mostrarToast("🎲 ¡Nuevo caso clínico generado!", "info");
+    const clearInt = document.getElementById("medInternaClearPdfsBtn");
+    if (clearInt) clearInt.onclick = () => { estadoMultiPdfMedicina.interna = []; guardarEstadoPdfsMedicina(); renderizarListaPdfsMedicina("interna"); };
+    const clearFar = document.getElementById("farmaClearPdfsBtn");
+    if (clearFar) clearFar.onclick = () => { estadoMultiPdfMedicina.farma = []; guardarEstadoPdfsMedicina(); renderizarListaPdfsMedicina("farma"); };
+    const clearSal = document.getElementById("saludClearPdfsBtn");
+    if (clearSal) clearSal.onclick = () => { estadoMultiPdfMedicina.salud = []; guardarEstadoPdfsMedicina(); renderizarListaPdfsMedicina("salud"); };
+
+    // 5. Controles de Medicina Interna
+    const diffPillsInterna = document.querySelectorAll("#medInternaDiffPills .med-diff-pill");
+    diffPillsInterna.forEach(pill => {
+        pill.onclick = () => {
+            diffPillsInterna.forEach(p => p.classList.remove("is-active"));
+            pill.classList.add("is-active");
+            dificultadInternaActiva = parseInt(pill.dataset.level, 10) || 2;
+            generarCasoClinicoInterna();
         };
-    }
+    });
 
-    const selectFarma = document.getElementById("medSelectFamiliaFarma");
-    if (selectFarma) {
-        selectFarma.onchange = (e) => renderizarFichaFarma(e.target.value);
-    }
-
-    const resolverTp = document.getElementById("medSaludResolverBtn");
-    if (resolverTp) {
-        resolverTp.onclick = () => {
-            const txt = document.getElementById("medSaludTpInput")?.value || "";
-            if (!txt.trim()) {
-                mostrarToast("⚠️ Escribí o pegá la consigna del TP primero.", "aviso");
-                return;
-            }
-            renderizarRespuestaTpSalud(null, txt);
-            mostrarToast("✨ ¡Estructura de respuesta para TP lista!", "exito");
-        };
-    }
-
-    const quickFormula = document.getElementById("medSaludQuickFormulaBtn");
-    if (quickFormula) {
-        quickFormula.onclick = () => {
-            renderizarRespuestaTpSalud("incidencia_prevalencia");
-            mostrarToast("📐 Fórmulas epidemiológicas cargadas.", "info");
-        };
-    }
-
-    const copyBtn = document.getElementById("medSaludCopyBtn");
-    if (copyBtn) {
-        copyBtn.onclick = () => {
-            const outputElem = document.getElementById("medSaludOutputContent");
-            if (!outputElem) return;
-            navigator.clipboard.writeText(outputElem.textContent)
-                .then(() => mostrarToast("📋 ¡Copiado al portapapeles!", "exito"))
-                .catch(() => mostrarToast("⚠️ No se pudo copiar automáticamente.", "aviso"));
-        };
-    }
-
-    document.querySelectorAll(".med-tp-chip").forEach(chip => {
+    const sysChipsInterna = document.querySelectorAll("#medInternaSystemTags .med-system-chip");
+    sysChipsInterna.forEach(chip => {
         chip.onclick = () => {
-            const topic = chip.dataset.topic;
-            renderizarRespuestaTpSalud(topic);
+            sysChipsInterna.forEach(c => c.classList.remove("is-active"));
+            chip.classList.add("is-active");
+            sistemaInternaActivo = chip.dataset.system || "todos";
+            generarCasoClinicoInterna();
         };
+    });
+
+    const btnGenCaso = document.getElementById("medInternaGenerateCaseBtn");
+    if (btnGenCaso) btnGenCaso.onclick = () => generarCasoClinicoInterna();
+
+    const btnEmergencia = document.getElementById("medInternaQuickEmergencyBtn");
+    if (btnEmergencia) btnEmergencia.onclick = () => generarCasoClinicoInterna(true);
+
+    const btnRevInterna = document.getElementById("medRevealDiscussionBtn");
+    const panelDiscInterna = document.getElementById("medOfficialDiscussionPanel");
+    if (btnRevInterna && panelDiscInterna) {
+        btnRevInterna.onclick = () => {
+            const hidden = panelDiscInterna.classList.toggle("hidden");
+            btnRevInterna.textContent = hidden ? "💡 Revelar Discusión Clínica y Resolución Razonada" : "🔒 Ocultar Discusión";
+            if (!hidden) panelDiscInterna.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        };
+    }
+
+    const btnOralInterna = document.getElementById("medSendToOralExamBtn");
+    if (btnOralInterna) btnOralInterna.onclick = () => cargarMateriaMedicinaEnBolillero("interna");
+    const toBolilleroInterna = document.getElementById("medInternaToBolilleroBtn");
+    if (toBolilleroInterna) toBolilleroInterna.onclick = () => cargarMateriaMedicinaEnBolillero("interna");
+
+    // 6. Controles de Farmacología 2
+    const diffPillsFarma = document.querySelectorAll("#farmaDiffPills .med-diff-pill");
+    diffPillsFarma.forEach(pill => {
+        pill.onclick = () => {
+            diffPillsFarma.forEach(p => p.classList.remove("is-active"));
+            pill.classList.add("is-active");
+            dificultadFarmaActiva = parseInt(pill.dataset.level, 10) || 2;
+            generarDesafioFarma();
+        };
+    });
+
+    const famChipsFarma = document.querySelectorAll("#farmaFamilyTags .med-system-chip");
+    famChipsFarma.forEach(chip => {
+        chip.onclick = () => {
+            famChipsFarma.forEach(c => c.classList.remove("is-active"));
+            chip.classList.add("is-active");
+            familiaFarmaActiva = chip.dataset.family || "todas";
+            generarDesafioFarma();
+        };
+    });
+
+    const btnGenFarma = document.getElementById("farmaGenerateChallengeBtn");
+    if (btnGenFarma) btnGenFarma.onclick = () => generarDesafioFarma();
+
+    const btnToggle4x4 = document.getElementById("farmaToggle4x4Btn");
+    const fich4x4Cont = document.getElementById("farmaFichero4x4Container");
+    if (btnToggle4x4 && fich4x4Cont) {
+        renderizarFichero4x4Farma();
+        btnToggle4x4.onclick = () => {
+            const isHidden = fich4x4Cont.classList.toggle("hidden");
+            btnToggle4x4.textContent = isHidden ? "📑 Explorar Fichero 4x4" : "🔒 Ocultar Fichero 4x4";
+            if (!isHidden) fich4x4Cont.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        };
+    }
+
+    const btnRevFarma = document.getElementById("farmaRevealDiscussionBtn");
+    const panelDiscFarma = document.getElementById("farmaDiscussionPanel");
+    if (btnRevFarma && panelDiscFarma) {
+        btnRevFarma.onclick = () => {
+            const hidden = panelDiscFarma.classList.toggle("hidden");
+            btnRevFarma.textContent = hidden ? "💡 Revelar Análisis Farmacoterapéutico" : "🔒 Ocultar Análisis";
+            if (!hidden) panelDiscFarma.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        };
+    }
+
+    const btnOralFarma = document.getElementById("farmaSendToOralBtn");
+    if (btnOralFarma) btnOralFarma.onclick = () => cargarMateriaMedicinaEnBolillero("farma");
+    const toBolilleroFarma = document.getElementById("farmaToBolilleroBtn");
+    if (toBolilleroFarma) toBolilleroFarma.onclick = () => cargarMateriaMedicinaEnBolillero("farma");
+
+    // 7. Controles de Salud Pública (TPs)
+    const diffPillsSalud = document.querySelectorAll("#saludDiffPills .med-diff-pill");
+    diffPillsSalud.forEach(pill => {
+        pill.onclick = () => {
+            diffPillsSalud.forEach(p => p.classList.remove("is-active"));
+            pill.classList.add("is-active");
+            dificultadSaludActiva = parseInt(pill.dataset.level, 10) || 2;
+            generarEjercicioTpSalud();
+        };
+    });
+
+    const btnGenTp = document.getElementById("saludGenerateTpBtn");
+    if (btnGenTp) btnGenTp.onclick = () => generarEjercicioTpSalud();
+    const btnRandTp = document.getElementById("saludRandomTpBtn");
+    if (btnRandTp) btnRandTp.onclick = () => generarEjercicioTpSalud();
+
+    const btnRevSalud = document.getElementById("saludRevealDiscussionBtn");
+    const panelDiscSalud = document.getElementById("saludDiscussionPanel");
+    if (btnRevSalud && panelDiscSalud) {
+        btnRevSalud.onclick = () => {
+            const hidden = panelDiscSalud.classList.toggle("hidden");
+            btnRevSalud.textContent = hidden ? "💡 Revelar Resolución Docente Paso a Paso" : "🔒 Ocultar Resolución";
+            if (!hidden) panelDiscSalud.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        };
+    }
+
+    const btnOralSalud = document.getElementById("saludSendToOralBtn");
+    if (btnOralSalud) btnOralSalud.onclick = () => cargarMateriaMedicinaEnBolillero("salud");
+    const toBolilleroSalud = document.getElementById("saludToBolilleroBtn");
+    if (toBolilleroSalud) toBolilleroSalud.onclick = () => cargarMateriaMedicinaEnBolillero("salud");
+
+    const btnCalcularTp = document.getElementById("calcCalcularBtn");
+    if (btnCalcularTp) btnCalcularTp.onclick = () => calcularIndicadoresSaludTp();
+
+    // Cargar PDFs previos guardados en localStorage
+    cargarEstadoPdfsMedicina();
+}
+
+function inicializarDropzoneMultiPdf(materia, dropzoneId, clickId, inputId) {
+    const dropzone = document.getElementById(dropzoneId);
+    const clickZone = document.getElementById(clickId);
+    const input = document.getElementById(inputId);
+    if (!dropzone || !input) return;
+
+    if (clickZone) {
+        clickZone.onclick = () => input.click();
+    }
+
+    input.onchange = (e) => {
+        if (e.target.files && e.target.files.length > 0) {
+            procesarSubidaArchivosMedicina(e.target.files, materia);
+            e.target.value = "";
+        }
+    };
+
+    dropzone.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        dropzone.classList.add("is-dragover");
+    });
+    dropzone.addEventListener("dragleave", (e) => {
+        e.preventDefault();
+        dropzone.classList.remove("is-dragover");
+    });
+    dropzone.addEventListener("drop", (e) => {
+        e.preventDefault();
+        dropzone.classList.remove("is-dragover");
+        if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+            procesarSubidaArchivosMedicina(e.dataTransfer.files, materia);
+        }
     });
 }
 
@@ -10768,7 +11462,7 @@ function iniciarAplicacion() {
 // =========================================================
 // GESTOR DE VERSIONES Y ACTUALIZACIÓN AUTOMÁTICA
 // =========================================================
-const APP_BUILD_VERSION = "28.1";
+const APP_BUILD_VERSION = "28.2";
 
 async function forzarActualizacionCompleta(mostrarNotificacion = true) {
     const btnActualizar = document.getElementById("btnForzarActualizar");

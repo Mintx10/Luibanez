@@ -15,10 +15,10 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     
-    <link rel="icon" type="image/svg+xml" href="icon.svg?v=28.1">
-    <link rel="apple-touch-icon" href="icon-192.png?v=28.1">
-    <link rel="manifest" href="manifest.json?v=28.1">
-    <link rel="stylesheet" href="style.css?v=28.1">
+    <link rel="icon" type="image/svg+xml" href="icon.svg?v=28.2">
+    <link rel="apple-touch-icon" href="icon-192.png?v=28.2">
+    <link rel="manifest" href="manifest.json?v=28.2">
+    <link rel="stylesheet" href="style.css?v=28.2">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -63,6 +63,16 @@
             </button>
             <button id="navFamaBtn" class="nav-link" type="button" data-view="fama">
                 🏆 Salón de la Fama
+            </button>
+            <!-- Enlaces de Materias Médicas para Iván -->
+            <button id="navMedInternaBtn" class="nav-link nav-link--med hidden" type="button" data-view="med-interna" title="Medicina Interna">
+                🫀 Medicina Interna
+            </button>
+            <button id="navFarmaBtn" class="nav-link nav-link--farma hidden" type="button" data-view="farmacologia-2" title="Farmacología 2">
+                💊 Farmacología 2
+            </button>
+            <button id="navSaludBtn" class="nav-link nav-link--salud hidden" type="button" data-view="salud-publica" title="Salud Pública">
+                📊 Salud Pública
             </button>
         </nav>
     </div>
@@ -190,6 +200,19 @@
                 <button id="drawerNavFama" class="drawer-nav-item" type="button" data-view="fama">
                     <span class="drawer-nav-icon" aria-hidden="true">🏆</span>
                     <span class="drawer-nav-text">Salón de la Fama</span>
+                </button>
+                <!-- Materias Médicas de Iván en Menú Móvil -->
+                <button id="drawerNavMedInterna" class="drawer-nav-item drawer-nav-item--med hidden" type="button" data-view="med-interna">
+                    <span class="drawer-nav-icon" aria-hidden="true">🫀</span>
+                    <span class="drawer-nav-text">Medicina Interna</span>
+                </button>
+                <button id="drawerNavFarma" class="drawer-nav-item drawer-nav-item--farma hidden" type="button" data-view="farmacologia-2">
+                    <span class="drawer-nav-icon" aria-hidden="true">💊</span>
+                    <span class="drawer-nav-text">Farmacología 2</span>
+                </button>
+                <button id="drawerNavSalud" class="drawer-nav-item drawer-nav-item--salud hidden" type="button" data-view="salud-publica">
+                    <span class="drawer-nav-icon" aria-hidden="true">📊</span>
+                    <span class="drawer-nav-text">Salud Pública</span>
                 </button>
             </nav>
         </div>
@@ -3421,6 +3444,716 @@
     </section>
 
     <!-- =========================================================
+         VISTA MÉDICA 1: MEDICINA INTERNA (ATENEO DE CASOS CLÍNICOS)
+         ========================================================= -->
+    <section id="viewMedInterna" class="view view--hidden med-section med-section--interna" aria-label="Módulo de Medicina Interna">
+        <div class="med-container">
+            <!-- Header de Sala Hospitalaria y Monitor ECG -->
+            <header class="med-header med-header--interna">
+                <div class="med-header-top">
+                    <div class="med-badge-row">
+                        <span class="med-badge med-badge--red">🫀 DEPARTAMENTO DE MEDICINA INTERNA</span>
+                        <span class="med-badge med-badge--pulse">EN VIVO · GUARDIA Y ATENEO</span>
+                    </div>
+                    <div class="med-header-actions">
+                        <button id="medInternaToBolilleroBtn" class="button button--secondary button--sm" type="button">
+                            🎲 Bolillero Oral de Fisiopato
+                        </button>
+                    </div>
+                </div>
+
+                <div class="med-header-hero">
+                    <div>
+                        <h1 class="med-title">Medicina Interna</h1>
+                        <p class="med-subtitle">
+                            Fisiopatología cardinal, diagnóstico diferencial y conducta terapéutica basada en guías y casos de alta complejidad.
+                        </p>
+                    </div>
+
+                    <!-- Monitor de Signos Vitales Simulado -->
+                    <div class="med-vitals-monitor" title="Monitor de Terapia Intensiva">
+                        <div class="med-vitals-ecg">
+                            <svg class="med-ecg-svg" viewBox="0 0 200 40" preserveAspectRatio="none">
+                                <path class="med-ecg-line" d="M0,20 L30,20 L35,10 L40,32 L45,5 L50,25 L55,20 L90,20 L95,10 L100,32 L105,5 L110,25 L115,20 L150,20 L155,10 L160,32 L165,5 L170,25 L175,20 L200,20"></path>
+                            </svg>
+                        </div>
+                        <div class="med-vitals-readings">
+                            <div class="med-vital-item"><span class="med-vital-label">FC</span><strong class="med-vital-val" id="vitalFC">82</strong><small>lpm</small></div>
+                            <div class="med-vital-item"><span class="med-vital-label">PA</span><strong class="med-vital-val" id="vitalPA">125/80</strong><small>mmHg</small></div>
+                            <div class="med-vital-item"><span class="med-vital-label">SpO2</span><strong class="med-vital-val" id="vitalSPO2">98%</strong><small>aire amb.</small></div>
+                            <div class="med-vital-item"><span class="med-vital-label">FR</span><strong class="med-vital-val" id="vitalFR">16</strong><small>rpm</small></div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Grid Principal: Gestor Multi-PDF + Simulador de Casos -->
+            <div class="med-main-layout">
+                <!-- Columna Izquierda: Gestor Multi-PDF de Medicina Interna -->
+                <aside class="med-sidebar">
+                    <div class="med-card med-card--library">
+                        <div class="med-card-header">
+                            <span class="med-card-icon">📚</span>
+                            <div>
+                                <h3 class="med-card-title">Biblioteca de PDFs</h3>
+                                <p class="med-card-desc">Cargá tus libros, resúmenes y guías (Harrison, Farreras, consensos SAC/AHA).</p>
+                            </div>
+                        </div>
+
+                        <!-- Dropzone de Múltiples Archivos -->
+                        <div class="med-dropzone" id="medInternaDropzone">
+                            <input type="file" id="medInternaPdfInput" multiple accept=".pdf,.docx,.pptx,.txt,.md" class="hidden">
+                            <div class="med-dropzone-inner" id="medInternaDropzoneClick">
+                                <span class="med-dropzone-icon">📑</span>
+                                <strong>Subir varios PDFs o Apuntes</strong>
+                                <span class="med-dropzone-sub">Arrastrá varios archivos o hacé clic acá</span>
+                                <span class="med-dropzone-badge">PDF · DOCX · TXT · PPTX</span>
+                            </div>
+                        </div>
+
+                        <!-- Lista de PDFs Cargados -->
+                        <div class="med-pdf-list-header">
+                            <span class="med-pdf-count" id="medInternaPdfCount">0 materiales activos</span>
+                            <button id="medInternaClearPdfsBtn" class="button button--ghost button--xs hidden" type="button" style="color: #f87171;">Limpiar todos</button>
+                        </div>
+                        <ul class="med-pdf-list" id="medInternaPdfList">
+                            <li class="med-pdf-empty">No hay PDFs cargados aún. El simulador usará casos de alta complejidad del banco clínico.</li>
+                        </ul>
+                    </div>
+
+                    <!-- Foco Temático Clínico Rápido -->
+                    <div class="med-card med-card--systems">
+                        <h4 class="med-section-subtitle">🎯 Eje de Estudio Clínico</h4>
+                        <div class="med-systems-grid" id="medInternaSystemTags">
+                            <button class="med-system-chip is-active" data-system="todos">🏥 Todos / Del PDF</button>
+                            <button class="med-system-chip" data-system="cardio">🫀 Cardiología</button>
+                            <button class="med-system-chip" data-system="neumo">🫁 Neumonología</button>
+                            <button class="med-system-chip" data-system="gastro">🧪 Gastroenterología</button>
+                            <button class="med-system-chip" data-system="nefro">💧 Nefrología e Iones</button>
+                            <button class="med-system-chip" data-system="neuro">🧠 Neurología Clínica</button>
+                            <button class="med-system-chip" data-system="infecto">🦠 Infectología</button>
+                        </div>
+                    </div>
+                </aside>
+
+                <!-- Columna Derecha: Simulador de Casos Clínicos Avanzados -->
+                <main class="med-workspace">
+                    <div class="med-card med-card--case-generator">
+                        <div class="med-generator-top">
+                            <div>
+                                <span class="med-tag-badge">SIMULADOR HOSPITALARIO</span>
+                                <h2 class="med-workspace-title">Ateneo de Casos Clínicos Avanzados</h2>
+                                <p class="med-workspace-desc">
+                                    Casos con presentación real, signos vitales, laboratorio desglosado y discusión diagnóstica fundamentada.
+                                </p>
+                            </div>
+
+                            <!-- Selector de Dificultad Graduable -->
+                            <div class="med-difficulty-selector">
+                                <span class="med-diff-label">Dificultad del Caso:</span>
+                                <div class="med-diff-pills" id="medInternaDiffPills">
+                                    <button class="med-diff-pill" data-level="1" title="Cuadros clásicos con foco en fisiopatología">
+                                        🟢 Residente Jr.
+                                    </button>
+                                    <button class="med-diff-pill is-active" data-level="2" title="Diagnóstico diferencial complejo y scores">
+                                        🟡 Médico de Planta / JTP
+                                    </button>
+                                    <button class="med-diff-pill" data-level="3" title="Multicomorbilidad, shock y dilemas de tratamiento">
+                                        🔴 Ateneo Extremo
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Barra de Acciones de Generación -->
+                        <div class="med-generate-bar">
+                            <button id="medInternaGenerateCaseBtn" class="button button--primary button--lg med-pulse-btn" type="button">
+                                ⚡ Generar Caso Clínico Avanzado
+                            </button>
+                            <button id="medInternaQuickEmergencyBtn" class="button button--secondary button--sm" type="button">
+                                🚨 Urgencia de Guardia
+                            </button>
+                        </div>
+
+                        <!-- Contenedor del Caso Clínico Activo -->
+                        <article id="medInternaCaseDisplay" class="med-case-sheet">
+                            <!-- Estado inicial: Caso Clínico de referencia listo -->
+                            <div class="med-case-header-row">
+                                <div class="med-patient-badge">
+                                    <span class="med-patient-id" id="casePatientId">HC-49210 · Cama 14</span>
+                                    <span class="med-patient-meta" id="casePatientMeta">Varón, 64 años · Ingreso por Guardia Central</span>
+                                </div>
+                                <span class="badge badge--success" id="caseDiffBadge">Nivel 2: Médico de Planta</span>
+                            </div>
+
+                            <div class="med-case-body">
+                                <div class="med-case-section">
+                                    <h4 class="med-case-section-title">📋 Motivo de Consulta y Enfermedad Actual</h4>
+                                    <p id="caseEnfermedadActual" class="med-case-text">
+                                        Paciente que consulta por disnea progresiva de 72 horas de evolución que se intensificó en las últimas 6 horas hasta clase funcional IV/IV (ortopnea y disnea paroxística nocturna), acompañada de tos con expectoración asalmonada, frialdad distal y sudoración profusa.
+                                    </p>
+                                </div>
+
+                                <div class="med-case-section">
+                                    <h4 class="med-case-section-title">🏥 Antecedentes Patológicos & Medicación Previa</h4>
+                                    <p id="caseAntecedentes" class="med-case-text">
+                                        Hipertensión arterial de 15 años de diagnóstico (tratada irregularmente con Enalapril 10mg/día). Diabetes Mellitus tipo 2 (Metformina 850mg c/12h). Tabaquista de 30 paquetes/año. No refiere alergias medicamentosas conocidas.
+                                    </p>
+                                </div>
+
+                                <div class="med-case-grid-two">
+                                    <div class="med-case-section">
+                                        <h4 class="med-case-section-title">🩺 Examen Físico y Signos Vitales</h4>
+                                        <ul id="caseExamenFisico" class="med-vitals-list">
+                                            <li><strong>PA:</strong> 175/105 mmHg | <strong>FC:</strong> 118 lpm regular</li>
+                                            <li><strong>FR:</strong> 28 rpm (taquipnea y tiraje intercostal) | <strong>SpO2:</strong> 88% aire ambiente</li>
+                                            <li><strong>Aparato Respiratorio:</strong> Rales crepitantes húmedos bilaterales hasta campos medios (patrón en marea ascendente). Sibilancias espiratorias aisladas.</li>
+                                            <li><strong>Aparato Cardiovascular:</strong> R1 y R2 taquicárdicos, R3 galope audible en ápex. Ingurgitación yugular 2/3 con reflujo hepatoyugular positivo.</li>
+                                        </ul>
+                                    </div>
+
+                                    <div class="med-case-section">
+                                        <h4 class="med-case-section-title">🧪 Laboratorio & Complementarios</h4>
+                                        <div class="med-lab-table-wrap">
+                                            <table class="med-lab-table" id="caseLabTable">
+                                                <tbody>
+                                                    <tr><td><strong>Hemograma:</strong> Hb 13.8 g/dL, Leucocitos 11.200 /mm³</td><td><strong>Glucemia:</strong> 184 mg/dL</td></tr>
+                                                    <tr><td><strong>Urea:</strong> 64 mg/dL | <strong>Creatinina:</strong> 1.6 mg/dL</td><td><strong>Ionograma:</strong> Na 137, K 4.9 mEq/L</td></tr>
+                                                    <tr><td><strong>Biomarcadores:</strong> Troponina I: 0.08 ng/mL (ligeramente elevada) | <strong>NT-proBNP:</strong> 6.850 pg/mL</td></tr>
+                                                    <tr><td><strong>ECG:</strong> Taquicardia sinusal, signos de HVI (Sokolow-Lyon 38mm), sobrecarga sistólica anterior sin elevación del ST.</td></tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Preguntas de Razonamiento Clínico -->
+                                <div class="med-questions-box">
+                                    <h4 class="med-questions-title">🧠 Desafío de Razonamiento para el Estudiante</h4>
+                                    <ol class="med-questions-list" id="caseQuestionsList">
+                                        <li><strong>Fisiopatología:</strong> ¿Cuál es el mecanismo fisiopatológico primario desencadenante y el estado hemodinámico actual (perfil de Stevenson)?</li>
+                                        <li><strong>Diagnósticos Diferenciales:</strong> Planteá los 2 diagnósticos diferenciales más importantes y los criterios clínicos utilizados.</li>
+                                        <li><strong>Conducta Terapéutica Inmediata:</strong> ¿Cuál es la triple terapéutica de emergencia en los primeros 15 minutos y qué fármacos están contraindicados de entrada?</li>
+                                    </ol>
+                                </div>
+
+                                <!-- Espacio de Razonamiento del Alumno -->
+                                <div class="med-notes-space">
+                                    <label for="medStudentNotes">📝 Tu Hipótesis y Conducta Propuesta (Borrador de resolución):</label>
+                                    <textarea id="medStudentNotes" class="med-notes-textarea" placeholder="Escribí acá tu diagnóstico presuntivo, mecanismo fisiopatológico y esquema de drogas para comparar tu razonamiento con la discusión oficial..."></textarea>
+                                </div>
+
+                                <!-- Acciones y Revelar Resolución -->
+                                <div class="med-case-actions">
+                                    <button id="medRevealDiscussionBtn" class="button button--primary" type="button">
+                                        💡 Revelar Discusión Clínica y Resolución Razonada
+                                    </button>
+                                    <button id="medSendToOralExamBtn" class="button button--secondary" type="button">
+                                        🎤 Rendir este caso en Bolillero Oral
+                                    </button>
+                                </div>
+
+                                <!-- Panel Desplegable de Resolución Clínica Oficial -->
+                                <div id="medOfficialDiscussionPanel" class="med-discussion-panel hidden">
+                                    <div class="med-discussion-header">
+                                        <span class="med-badge med-badge--success">RESOLUCIÓN DE CÁTEDRA & FUNDAMENTO DE GUÍAS</span>
+                                        <h4>Discusión Razonada y Conducta Basada en la Evidencia</h4>
+                                    </div>
+                                    <div class="med-discussion-content" id="medDiscussionContent">
+                                        <p><strong>1. Diagnóstico Principal & Fisiopatología:</strong> Edema Agudo de Pulmón (EAP) cardiogénico hipertensivo. Perfil hemodinámico B de Stevenson (<em>Caliente y Húmedo</em>: congestión pulmonar con perfusión tisular conservada pero con marcada vasoconstricción y aumento agudo de la poscarga ventricular izquierda). La crisis hipertensiva genera elevación abrupta de las presiones de fin de diástole del VI, transmitiéndose retrogradamente a los capilares pulmonares (presión capilar > 25 mmHg), superando la presión oncótica plasmática y produciendo trasudado alveolar masivo.</p>
+                                        <p><strong>2. Diagnósticos Diferenciales:</strong> <em>a) Tromboembolismo Pulmonar Agudo (TEP):</em> Se descarta inicialmente por ausencia de shock obstructivo, presencia de hipertensión severa en vez de hipotensión, y signos francos de sobrecarga hídrica bilateral. <em>b) Crisis asmática / EPOC agudizado:</em> Descartado por ritmo de galope R3, NT-proBNP marcadamente elevado y estertores húmedos con esputo asalmonado.</p>
+                                        <p><strong>3. Conducta Terapéutica Inmediata:</strong>
+                                            <br>• <strong>Posición y Oxigenación:</strong> Sentado con piernas declives. VMNI (Ventilación Mecánica No Invasiva - CPAP/BiPAP a 8-10 cmH2O) para reducir el trabajo respiratorio y disminuir el retorno venoso.
+                                            <br>• <strong>Vasodilatador de 1° línea (Fármaco de elección):</strong> Nitroglicerina IV en infusión continua (comenzando a 10-20 mcg/min y titulando rápidamente) para reducir la poscarga y precarga. En crisis hipertensiva predomina sobre el diurético.
+                                            <br>• <strong>Diurético de Asa:</strong> Furosemida 40-80 mg IV lenta (para venodilatación temprana y depleción hídrica).
+                                            <br>• <strong>Contraindicaciones críticas inmediatas:</strong> No indicar betabloqueantes en la fase congestiva aguda descompensada; evitar morfina de rutina (aumenta intubación y mortalidad según consensos contemporáneos).
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </article>
+                    </div>
+                </main>
+            </div>
+        </div>
+    </section>
+
+    <!-- =========================================================
+         VISTA MÉDICA 2: FARMACOLOGÍA 2 (LABORATORIO & VADEMÉCUM)
+         ========================================================= -->
+    <section id="viewFarmacologia2" class="view view--hidden med-section med-section--farma" aria-label="Cátedra Farmacología 2">
+        <div class="med-container">
+            <!-- Header Molecular y Dianas Farmacológicas -->
+            <header class="med-header med-header--farma">
+                <div class="med-header-top">
+                    <div class="med-badge-row">
+                        <span class="med-badge med-badge--purple">💊 CÁTEDRA FARMACOLOGÍA 2</span>
+                        <span class="med-badge med-badge--neon">FARMACOCINÉTICA · FARMACODINAMIA · INTERACCIONES</span>
+                    </div>
+                    <div class="med-header-actions">
+                        <button id="farmaToBolilleroBtn" class="button button--secondary button--sm" type="button">
+                            🎲 Bolillero de Familias de Drogas
+                        </button>
+                    </div>
+                </div>
+
+                <div class="med-header-hero">
+                    <div>
+                        <h1 class="med-title">Farmacología 2</h1>
+                        <p class="med-subtitle">
+                            Mecanismos de acción a nivel receptor, curvas dosis-respuesta, constantes cinéticas (ADME), interacciones CYP450 y toxicología crítica.
+                        </p>
+                    </div>
+
+                    <!-- Pills de Receptores Moleculares -->
+                    <div class="med-receptors-strip">
+                        <span class="med-receptor-tag" title="Receptor adrenérgico beta 1 (Gs)">β1-Gs</span>
+                        <span class="med-receptor-tag" title="Receptor adrenérgico alfa 2 (Gi)">α2-Gi</span>
+                        <span class="med-receptor-tag" title="Receptor de Angiotensina II (Gq)">AT1-Gq</span>
+                        <span class="med-receptor-tag" title="Receptor GABA-A (Canal Cloro)">GABA-A</span>
+                        <span class="med-receptor-tag" title="Receptor Serotonina 5-HT3">5-HT3</span>
+                        <span class="med-receptor-tag" title="Bomba Protones H+/K+ ATPasa">H+/K+</span>
+                        <span class="med-receptor-tag" title="Canal de Sodio dependiente de voltaje">Nav1.5</span>
+                    </div>
+                </div>
+            </header>
+
+            <div class="med-main-layout">
+                <!-- Columna Izquierda: PDFs de Farmacología + Fichero 4x4 -->
+                <aside class="med-sidebar">
+                    <div class="med-card med-card--library">
+                        <div class="med-card-header">
+                            <span class="med-card-icon">🧪</span>
+                            <div>
+                                <h3 class="med-card-title">Vademécum & Libros</h3>
+                                <p class="med-card-desc">Cargá Goodman & Gilman, Flores, guías de prescripción o apuntes de cátedra.</p>
+                            </div>
+                        </div>
+
+                        <!-- Dropzone Farma -->
+                        <div class="med-dropzone" id="farmaDropzone">
+                            <input type="file" id="farmaPdfInput" multiple accept=".pdf,.docx,.pptx,.txt,.md" class="hidden">
+                            <div class="med-dropzone-inner" id="farmaDropzoneClick">
+                                <span class="med-dropzone-icon">💊</span>
+                                <strong>Subir PDFs de Farmacología</strong>
+                                <span class="med-dropzone-sub">Cargá varios archivos simultáneamente</span>
+                                <span class="med-dropzone-badge">Libros · Tablas · Dosis</span>
+                            </div>
+                        </div>
+
+                        <div class="med-pdf-list-header">
+                            <span class="med-pdf-count" id="farmaPdfCount">0 vademécums activos</span>
+                            <button id="farmaClearPdfsBtn" class="button button--ghost button--xs hidden" type="button" style="color: #f87171;">Limpiar</button>
+                        </div>
+                        <ul class="med-pdf-list" id="farmaPdfList">
+                            <li class="med-pdf-empty">No hay PDFs cargados. Se usarán desafíos farmacoterapéuticos del vademécum base.</li>
+                        </ul>
+                    </div>
+
+                    <!-- Familias de Drogas para Filtrar -->
+                    <div class="med-card med-card--systems">
+                        <h4 class="med-section-subtitle">💊 Familia Farmacológica</h4>
+                        <div class="med-systems-grid" id="farmaFamilyTags">
+                            <button class="med-system-chip is-active" data-family="todas">🧪 Todas / Del PDF</button>
+                            <button class="med-system-chip" data-family="cardio">🫀 Cardiovasculares & HTA</button>
+                            <button class="med-system-chip" data-family="antibio">🦠 Antibióticos & Antifúngicos</button>
+                            <button class="med-system-chip" data-family="snc">🧠 SNC & Psicofármacos</button>
+                            <button class="med-system-chip" data-family="autonomo">⚡ Sistema Autónomo</button>
+                            <button class="med-system-chip" data-family="aines">🔥 AINEs & Analgesia</button>
+                            <button class="med-system-chip" data-family="endocrino">🩸 Endocrino & Glucemia</button>
+                        </div>
+                    </div>
+                </aside>
+
+                <!-- Columna Derecha: Desafíos Farmacoterapéuticos & Fichas 4x4 -->
+                <main class="med-workspace">
+                    <div class="med-card med-card--case-generator">
+                        <div class="med-generator-top">
+                            <div>
+                                <span class="med-tag-badge med-tag-badge--purple">SIMULADOR FARMACOTERAPÉUTICO</span>
+                                <h2 class="med-workspace-title">Desafíos Farmacocinéticos & Prescripción</h2>
+                                <p class="med-workspace-desc">
+                                    Escenarios de interacciones metabólicas complejas, RAM severas, ajuste por falla de órganos y mecanismos moleculares.
+                                </p>
+                            </div>
+
+                            <!-- Selector de Dificultad Farma -->
+                            <div class="med-difficulty-selector">
+                                <span class="med-diff-label">Nivel de Desafío:</span>
+                                <div class="med-diff-pills" id="farmaDiffPills">
+                                    <button class="med-diff-pill" data-level="1" title="ADME, receptores y constantes cinéticas">
+                                        💊 Cinética & Diana
+                                    </button>
+                                    <button class="med-diff-pill is-active" data-level="2" title="Polifarmacia, aclaramiento y CYP450">
+                                        ⚖️ Ajuste & Interacciones
+                                    </button>
+                                    <button class="med-diff-pill" data-level="3" title="Toxicología, shock farmacológico y RAM letales">
+                                        ⚠️ Toxicología & Crisis
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="med-generate-bar">
+                            <button id="farmaGenerateChallengeBtn" class="button button--primary button--lg med-pulse-btn med-pulse-btn--purple" type="button">
+                                🧪 Generar Desafío Farmacoterapéutico
+                            </button>
+                            <button id="farmaToggle4x4Btn" class="button button--secondary button--sm" type="button">
+                                📑 Explorar Fichero 4x4
+                            </button>
+                        </div>
+
+                        <!-- Tarjeta del Desafío Farma Activo -->
+                        <article id="farmaChallengeDisplay" class="med-case-sheet med-case-sheet--farma">
+                            <div class="med-case-header-row">
+                                <div class="med-patient-badge">
+                                    <span class="med-patient-id" id="farmaCaseId">DF-804 · Dilema Cardiorrenal</span>
+                                    <span class="med-patient-meta" id="farmaCaseMeta">Paciente polimedicado · Ajuste de Dosis & Interacciones</span>
+                                </div>
+                                <span class="badge badge--primary" id="farmaDiffBadge">Nivel 2: Ajuste & Interacciones</span>
+                            </div>
+
+                            <div class="med-case-body">
+                                <div class="med-case-section">
+                                    <h4 class="med-case-section-title">💊 Esquema Farmacológico Actual & Nueva Situación Clínica</h4>
+                                    <p id="farmaCaseText" class="med-case-text">
+                                        Paciente femenina de 71 años con fibrilación auricular no valvular (tratada con <strong>Digoxina 0.25 mg/día</strong> y <strong>Acenocumarol</strong> según RIN) y artritis reumatoide. Por dolor articular intenso automedica <strong>Ibuprofeno 600 mg c/8h</strong> durante 10 días y le agregan <strong>Claritromicina 500 mg c/12h</strong> por infección respiratoria alta. Ingresa con náuseas intensas, xantopsias (visión amarillenta), palpitaciones y mareos.
+                                    </p>
+                                </div>
+
+                                <div class="med-case-section">
+                                    <h4 class="med-case-section-title">🔬 Datos de Laboratorio Farmacocinético</h4>
+                                    <ul id="farmaCaseLabList" class="med-vitals-list">
+                                        <li><strong>Digoxinemia:</strong> 3.4 ng/mL (Rango terapéutico normal: 0.5 - 0.9 ng/mL)</li>
+                                        <li><strong>Creatinina:</strong> 2.2 mg/dL (Previo: 1.0 mg/dL - ClCr estimado por Cockcroft-Gault: 24 mL/min)</li>
+                                        <li><strong>Potasio sérico:</strong> 3.1 mEq/L (Hipopotasemia moderada)</li>
+                                        <li><strong>ECG:</strong> Bradicardia con cubeta digitálica profunda y extrasístoles ventriculares bigeminadas.</li>
+                                    </ul>
+                                </div>
+
+                                <div class="med-questions-box">
+                                    <h4 class="med-questions-title">🧠 Preguntas Farmacológicas para Iván</h4>
+                                    <ol class="med-questions-list" id="farmaQuestionsList">
+                                        <li><strong>Mecanismo Molecular de Interacción:</strong> ¿Por qué la Claritromicina y el Ibuprofeno triplicaron la digoxinemia a nivel de transportadores (glicoproteína P) y hemodinámica renal?</li>
+                                        <li><strong>Farmacodinamia y Toxicidad:</strong> ¿Cómo potencia la hipopotasemia la toxicidad cardíaca de la digoxina sobre la bomba Na+/K+ ATPasa?</li>
+                                        <li><strong>Conducta Farmacoterapéutica:</strong> ¿Cuál es el tratamiento específico del cuadro de intoxicación grave y qué fármacos antiarrítmicos están contraindicados?</li>
+                                    </ol>
+                                </div>
+
+                                <div class="med-notes-space">
+                                    <label for="farmaStudentNotes">📝 Tu Resolución Farmacológica:</label>
+                                    <textarea id="farmaStudentNotes" class="med-notes-textarea" placeholder="Explicá la interacción a nivel de la Glicoproteína P, el rol de las prostaglandinas renales y el antídoto específico..."></textarea>
+                                </div>
+
+                                <div class="med-case-actions">
+                                    <button id="farmaRevealDiscussionBtn" class="button button--primary" type="button">
+                                        💡 Revelar Análisis Farmacoterapéutico
+                                    </button>
+                                    <button id="farmaSendToOralBtn" class="button button--secondary" type="button">
+                                        🎤 Practicar esta droga en Bolillero
+                                    </button>
+                                </div>
+
+                                <div id="farmaDiscussionPanel" class="med-discussion-panel hidden">
+                                    <div class="med-discussion-header">
+                                        <span class="med-badge med-badge--purple">ANÁLISIS FARMACOLÓGICO MOLECULAR</span>
+                                        <h4>Explicación Farmacodinámica & Cinética Detallada</h4>
+                                    </div>
+                                    <div class="med-discussion-content" id="farmaDiscussionContent">
+                                        <p><strong>1. Mecanismo de las Interacciones:</strong>
+                                            <br>• <em>Claritromicina:</em> Es un potente inhibidor de la <strong>Glicoproteína P (P-gp)</strong> en el epitelio tubular renal y enterocitos. La digoxina se elimina predominantemente por secreción tubular mediada por P-gp. Al inhibirla, disminuye su aclaramiento renal un 50% y aumenta su biodisponibilidad oral.
+                                            <br>• <em>Ibuprofeno:</em> Al inhibir COX-1 y COX-2, bloquea la síntesis de prostaglandinas vasodilatadoras renales ($PGE_2$ y $PGI_2$), causando vasoconstricción de la arteriola aferente y caída abrupta del filtrado glomerular (injuria renal aguda), acumulando digoxina.
+                                        </p>
+                                        <p><strong>2. Potenciación por Hipopotasemia:</strong> La digoxina compite con el $K^+$ por el mismo sitio de unión en la subunidad $\alpha$ de la bomba $Na^+/K^+$ ATPasa sarcolémica. En hipopotasemia, hay menor competencia, por lo que una mayor fracción de bombas es inhibida irreversiblemente, provocando sobrecarga masiva de $Ca^{2+}$ intracelular (postdespolarizaciones precoces y arritmias ventriculares gatilladas).</p>
+                                        <p><strong>3. Conducta Terapéutica:</strong>
+                                            <br>• Suspensión inmediata de digoxina y claritromicina.
+                                            <br>• Corrección urgente de la hipopotasemia con cloruro de potasio IV lento (salvo bloqueo AV avanzado).
+                                            <br>• Tratamiento de rescate de elección ante arritmias ventriculares o hiperpotasemia grave: <strong>Anticuerpos Fab antidigoxina específicos (DigiFab)</strong>.
+                                            <br>• <em>Antiarrítmico de elección:</em> Fenitoína o Lidocaína (Clase Ib). <em>Contraindicados:</em> Calcio IV (paro cardíaco en sístole - "corazón de piedra") y cardioversión eléctrica de rutina.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </article>
+
+                        <!-- Fichero 4x4 Desplegable -->
+                        <div id="farmaFichero4x4Container" class="med-fichero-wrapper hidden">
+                            <h3 class="med-fichero-title">📑 Fichero Farmacológico 4x4 (Matriz Rápida)</h3>
+                            <div class="med-fichero-grid" id="farmaFicheroGrid">
+                                <!-- Tarjetas generadas dinámicamente -->
+                            </div>
+                        </div>
+                    </div>
+                </main>
+            </div>
+        </div>
+    </section>
+
+    <!-- =========================================================
+         VISTA MÉDICA 3: SALUD PÚBLICA (SALA DE SITUACIÓN & TALLER TPS)
+         ========================================================= -->
+    <section id="viewSaludPublica" class="view view--hidden med-section med-section--salud" aria-label="Sala de Situación: Salud Pública">
+        <div class="med-container">
+            <!-- Header Epidemiológico y Panel de Indicadores -->
+            <header class="med-header med-header--salud">
+                <div class="med-header-top">
+                    <div class="med-badge-row">
+                        <span class="med-badge med-badge--emerald">📊 SALA DE SITUACIÓN · SALUD PÚBLICA</span>
+                        <span class="med-badge med-badge--green">TALLER DE TRABAJOS PRÁCTICOS & APS</span>
+                    </div>
+                    <div class="med-header-actions">
+                        <button id="saludToBolilleroBtn" class="button button--secondary button--sm" type="button">
+                            🎲 Bolillero de Temas de Salud Pública
+                        </button>
+                    </div>
+                </div>
+
+                <div class="med-header-hero">
+                    <div>
+                        <h1 class="med-title">Salud Pública</h1>
+                        <p class="med-subtitle">
+                            Entorno dedicado a la resolución de Trabajos Prácticos (TPs), bioestadística aplicada, diseño de estrategias de APS e investigación de brotes.
+                        </p>
+                    </div>
+
+                    <!-- Indicadores Demográficos en Vivo -->
+                    <div class="med-indicators-strip">
+                        <div class="med-indicator-card">
+                            <span class="med-indicator-label">T. Mortalidad Infantil</span>
+                            <strong class="med-indicator-val">8.4 ‰</strong>
+                            <small>por mil nacidos vivos</small>
+                        </div>
+                        <div class="med-indicator-card">
+                            <span class="med-indicator-label">Esperanza de Vida</span>
+                            <strong class="med-indicator-val">77.2</strong>
+                            <small>años al nacer</small>
+                        </div>
+                        <div class="med-indicator-card">
+                            <span class="med-indicator-label">T. Letalidad Dengue</span>
+                            <strong class="med-indicator-val">0.06%</strong>
+                            <small>bajo vigilancia</small>
+                        </div>
+                        <div class="med-indicator-card">
+                            <span class="med-indicator-label">Cobertura Triple Viral</span>
+                            <strong class="med-indicator-val">92.4%</strong>
+                            <small>meta: ≥95%</small>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <div class="med-main-layout">
+                <!-- Columna Izquierda: PDFs de TPs y Calculadora -->
+                <aside class="med-sidebar">
+                    <div class="med-card med-card--library">
+                        <div class="med-card-header">
+                            <span class="med-card-icon">📋</span>
+                            <div>
+                                <h3 class="med-card-title">Consignas y Guías de TPs</h3>
+                                <p class="med-card-desc">Cargá las guías prácticas de la cátedra, boletines epidemiológicos y censos.</p>
+                            </div>
+                        </div>
+
+                        <!-- Dropzone Salud Pública -->
+                        <div class="med-dropzone" id="saludDropzone">
+                            <input type="file" id="saludPdfInput" multiple accept=".pdf,.docx,.pptx,.txt,.md" class="hidden">
+                            <div class="med-dropzone-inner" id="saludDropzoneClick">
+                                <span class="med-dropzone-icon">📊</span>
+                                <strong>Subir PDFs de TPs y Cátedra</strong>
+                                <span class="med-dropzone-sub">Subí varias guías de trabajos prácticos</span>
+                                <span class="med-dropzone-badge">Guías TP · Boletines · Leyes</span>
+                            </div>
+                        </div>
+
+                        <div class="med-pdf-list-header">
+                            <span class="med-pdf-count" id="saludPdfCount">0 guías cargadas</span>
+                            <button id="saludClearPdfsBtn" class="button button--ghost button--xs hidden" type="button" style="color: #f87171;">Limpiar</button>
+                        </div>
+                        <ul class="med-pdf-list" id="saludPdfList">
+                            <li class="med-pdf-empty">No hay guías cargadas. El asistente generará ejercicios de TP del modelo oficial.</li>
+                        </ul>
+                    </div>
+
+                    <!-- Calculadora Rápida de Tasas e Indicadores -->
+                    <div class="med-card med-card--calculator">
+                        <h4 class="med-section-subtitle">📐 Calculadora Rápida para TPs</h4>
+                        <div class="med-calc-form">
+                            <div class="med-calc-field">
+                                <label>Población en Riesgo:</label>
+                                <input type="number" id="calcPoblacion" placeholder="Ej: 50000" value="100000">
+                            </div>
+                            <div class="med-calc-field">
+                                <label>Casos Nuevos (Período):</label>
+                                <input type="number" id="calcCasosNuevos" placeholder="Ej: 240" value="450">
+                            </div>
+                            <div class="med-calc-field">
+                                <label>Casos Totales (Existentes):</label>
+                                <input type="number" id="calcCasosTotales" placeholder="Ej: 1200" value="1800">
+                            </div>
+                            <div class="med-calc-field">
+                                <label>Fallecidos por la causa:</label>
+                                <input type="number" id="calcFallecidos" placeholder="Ej: 18" value="27">
+                            </div>
+                            <button id="calcCalcularBtn" class="button button--secondary button--sm button--full" type="button">
+                                ⚡ Calcular Indicadores del TP
+                            </button>
+                            <div id="calcResultDisplay" class="med-calc-results">
+                                <div class="med-calc-res-item"><span>Incidencia Acumulada:</span> <strong>4.5 por mil (0.45%)</strong></div>
+                                <div class="med-calc-res-item"><span>Prevalencia de Punto:</span> <strong>1.8% (18 por mil)</strong></div>
+                                <div class="med-calc-res-item"><span>Tasa de Letalidad:</span> <strong>1.5%</strong></div>
+                                <div class="med-calc-res-item"><span>Tasa Mortalidad Causa:</span> <strong>0.27 por mil</strong></div>
+                            </div>
+                        </div>
+                    </div>
+                </aside>
+
+                <!-- Columna Derecha: Taller de Resolución de Trabajos Prácticos -->
+                <main class="med-workspace">
+                    <div class="med-card med-card--case-generator">
+                        <div class="med-generator-top">
+                            <div>
+                                <span class="med-tag-badge med-tag-badge--emerald">TALLER PRÁCTICO UNIVERSITARIO</span>
+                                <h2 class="med-workspace-title">Resolución Asistida de Trabajos Prácticos (TPs)</h2>
+                                <p class="med-workspace-desc">
+                                    Enunciados con tablas de datos, cálculo de indicadores epidemiológicos y fundamentación de Atención Primaria.
+                                </p>
+                            </div>
+
+                            <!-- Selector de Dificultad / Tipo de TP -->
+                            <div class="med-difficulty-selector">
+                                <span class="med-diff-label">Tipo de TP / Dificultad:</span>
+                                <div class="med-diff-pills" id="saludDiffPills">
+                                    <button class="med-diff-pill" data-level="1" title="Cálculo de Incidencia, Prevalencia y Tasas">
+                                        📐 TP Bioestadística
+                                    </button>
+                                    <button class="med-diff-pill is-active" data-level="2" title="Estrategias de APS, Leavell & Clark y Lalonde">
+                                        🏘️ TP Estrategias APS
+                                    </button>
+                                    <button class="med-diff-pill" data-level="3" title="Investigación de Brotes, Riesgo Relativo y Odds Ratio">
+                                        🚨 TP Brote & Estudios
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="med-generate-bar">
+                            <button id="saludGenerateTpBtn" class="button button--primary button--lg med-pulse-btn med-pulse-btn--emerald" type="button">
+                                📋 Generar Consigna de TP Práctico
+                            </button>
+                            <button id="saludRandomTpBtn" class="button button--secondary button--sm" type="button">
+                                🎲 TP Rápido de Cátedra
+                            </button>
+                        </div>
+
+                        <!-- Consigna y Resolución de TP Activa -->
+                        <article id="saludTpDisplay" class="med-case-sheet med-case-sheet--salud">
+                            <div class="med-case-header-row">
+                                <div class="med-patient-badge">
+                                    <span class="med-patient-id" id="saludTpId">TP N° 4 · Cátedra de Salud Pública</span>
+                                    <span class="med-patient-meta" id="saludTpMeta">Investigación de Brote Epidémico & Análisis de Riesgo</span>
+                                </div>
+                                <span class="badge badge--success" id="saludDiffBadge">Nivel 3: Investigación de Brote</span>
+                            </div>
+
+                            <div class="med-case-body">
+                                <div class="med-case-section">
+                                    <h4 class="med-case-section-title">📌 Situación Epidemiológica Planteada en el TP</h4>
+                                    <p id="saludTpText" class="med-case-text">
+                                        En una localidad de 25.000 habitantes se notificaron en una semana 140 casos de gastroenteritis aguda febril con diarrea acuosa profusa. De la investigación epidemiológica de campo surge que 120 de los casos concurrieron a un almuerzo comunitario de una escuela donde asistieron 300 personas. Entre los 200 asistentes que no enfermaron, 50 consumieron mayonesa casera, mientras que entre los 100 que enfermaron en ese grupo, 90 la habían consumido.
+                                    </p>
+                                </div>
+
+                                <div class="med-case-section">
+                                    <h4 class="med-case-section-title">📊 Tabla de Contingencia 2x2 para el Trabajo Práctico</h4>
+                                    <div class="med-lab-table-wrap">
+                                        <table class="med-lab-table" id="saludTpTable">
+                                            <thead>
+                                                <tr>
+                                                    <th>Exposición (Mayonesa)</th>
+                                                    <th>Enfermos (Casos)</th>
+                                                    <th>Sanos (No casos)</th>
+                                                    <th>Total Expuestos / No expuestos</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td><strong>Consumió Mayonesa</strong></td>
+                                                    <td>90 (a)</td>
+                                                    <td>50 (b)</td>
+                                                    <td>140 (a + b)</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>No consumió Mayonesa</strong></td>
+                                                    <td>10 (c)</td>
+                                                    <td>150 (d)</td>
+                                                    <td>160 (c + d)</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>Total</strong></td>
+                                                    <td>100</td>
+                                                    <td>200</td>
+                                                    <td>300</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <div class="med-questions-box">
+                                    <h4 class="med-questions-title">📝 Consignas a Resolver en el TP</h4>
+                                    <ol class="med-questions-list" id="saludQuestionsList">
+                                        <li><strong>Cálculo de Tasas de Ataque:</strong> Calculá la Tasa de Ataque en expuestos ($TA_e$), la Tasa de Ataque en no expuestos ($TA_{ne}$) y la Tasa de Ataque General ($TAG$).</li>
+                                        <li><strong>Medida de Asociación:</strong> Calculá el Riesgo Relativo ($RR$) y la Fracción Atribuible en Expuestos ($FAE$). ¿Qué conclusión sanitaria se extrae?</li>
+                                        <li><strong>Medidas de Control en APS:</strong> Diseñá 3 intervenciones inmediatas según los niveles de prevención de Leavell y Clark para contener el brote y evitar recurrencias.</li>
+                                    </ol>
+                                </div>
+
+                                <div class="med-notes-space">
+                                    <label for="saludStudentNotes">📝 Espacio de Resolución de Iván para el TP:</label>
+                                    <textarea id="saludStudentNotes" class="med-notes-textarea" placeholder="Desarrollá acá los cálculos numéricos del TP (TAe, TAne, RR) y las medidas de prevención para comparar con la corrección docente..."></textarea>
+                                </div>
+
+                                <div class="med-case-actions">
+                                    <button id="saludRevealDiscussionBtn" class="button button--primary" type="button">
+                                        💡 Revelar Resolución Docente Paso a Paso
+                                    </button>
+                                    <button id="saludSendToOralBtn" class="button button--secondary" type="button">
+                                        🎤 Practicar este TP en Bolillero
+                                    </button>
+                                </div>
+
+                                <div id="saludDiscussionPanel" class="med-discussion-panel hidden">
+                                    <div class="med-discussion-header">
+                                        <span class="med-badge med-badge--emerald">CORRECCIÓN DOCENTE OFICIAL DEL TP</span>
+                                        <h4>Desarrollo Matemático & Fundamento Sanitario</h4>
+                                    </div>
+                                    <div class="med-discussion-content" id="saludDiscussionContent">
+                                        <p><strong>1. Tasas de Ataque:</strong>
+                                            <br>• $TA_{\text{expuestos}} = \frac{a}{a+b} = \frac{90}{140} = 64.29\%$
+                                            <br>• $TA_{\text{no expuestos}} = \frac{c}{c+d} = \frac{10}{160} = 6.25\%$
+                                            <br>• $TA_{\text{general}} = \frac{\text{Total enfermos}}{\text{Total asistentes}} = \frac{100}{300} = 33.33\%$
+                                        </p>
+                                        <p><strong>2. Riesgo Relativo (RR) y Fracción Atribuible (FAE):</strong>
+                                            <br>• $RR = \frac{TA_e}{TA_{ne}} = \frac{64.29\%}{6.25\%} = \mathbf{10.28}$
+                                            <br>• <em>Interpretación:</em> Las personas que consumieron la mayonesa casera tuvieron <strong>10.28 veces más riesgo</strong> de contraer gastroenteritis aguda que quienes no la consumieron, evidenciando una asociación causal contundente.
+                                            <br>• $FAE = \frac{RR - 1}{RR} \times 100 = \frac{10.28 - 1}{10.28} \times 100 = \mathbf{90.27\%}$. El 90.27% de los casos en los expuestos se atribuyen directamente al consumo del alimento contaminado.
+                                        </p>
+                                        <p><strong>3. Intervenciones en APS (Leavell & Clark):</strong>
+                                            <br>• <strong>Prevención Primaria:</strong> Decomiso inmediato del remanente del alimento; inspección bromatológica de la cocina escolar; capacitación en Buenas Prácticas de Manufactura (BPM) y prohibición de mayonesa con huevo crudo en comedores comunitarios.
+                                            <br>• <strong>Prevención Secundaria:</strong> Diagnóstico etiológico precoz (coprocultivo y detección de Salmonella/toxina estafilocócica); hidratación oral precoz (SRO) en el Centro de Salud para prevenir deshidratación severa.
+                                            <br>• <strong>Prevención Terciaria:</strong> Monitoreo de casos con diarrea disentérica para evitar complicaciones sistémicas (bacteriemia, síndrome urémico hemolítico).
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </article>
+                    </div>
+                </main>
+            </div>
+        </div>
+    </section>
+
+    <!-- =========================================================
          PIZARRÓN CIENTÍFICO FLOTANTE Y ARRASTRABLE (CUADRICULADO + REGLA + IA)
          ========================================================= -->
     <aside id="labFloatingWhiteboard" class="lab-floating-whiteboard hidden" role="region" aria-label="Pizarrón Científico Flotante">
@@ -3814,7 +4547,7 @@
 
             <div class="field">
                 <label for="authRegApodo">Apodo o Nombre</label>
-                <input id="authRegApodo" type="text" maxlength="20" placeholder="Ej: Lucas" required autocomplete="off">
+                <input id="authRegApodo" type="text" maxlength="20" placeholder="" required autocomplete="off">
             </div>
 
             <!-- Selector de Avatar en Registro -->
@@ -3830,7 +4563,7 @@
 
             <div class="field">
                 <label for="authRegPin">PIN de Seguridad (4 números)</label>
-                <input id="authRegPin" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="••••" required autocomplete="off">
+                <input id="authRegPin" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="" required autocomplete="off">
                 <span class="duelo-field-hint">Usalo para identificarte en cualquier partida.</span>
             </div>
 
@@ -3851,27 +4584,20 @@
 
         <!-- Panel Iniciar Sesión con Usuario y PIN -->
         <form id="authLoginForm" class="auth-panel hidden" autocomplete="off" onsubmit="return false;">
-            <p class="auth-desc">Ingresá tu usuario o elegí una cuenta guardada:</p>
+            <p class="auth-desc">Ingresá tu usuario y contraseña / PIN para acceder:</p>
 
             <div class="field">
                 <label for="authLoginUserInput">Usuario o Apodo</label>
-                <input id="authLoginUserInput" type="text" placeholder="Ej: ivi" autocomplete="username">
+                <input id="authLoginUserInput" type="text" placeholder="" autocomplete="username">
             </div>
 
             <div class="field">
                 <label for="authLoginPin">Contraseña / PIN</label>
-                <input id="authLoginPin" type="password" inputmode="numeric" maxlength="8" placeholder="••••" required autocomplete="current-password">
-            </div>
-
-            <div class="field" id="authLoginSavedAccountField" style="margin-top: -0.25rem;">
-                <label for="authLoginSelect" style="font-size: 0.78rem; color: var(--color-text-muted);">O elegí de las cuentas registradas en este equipo:</label>
-                <select id="authLoginSelect" class="duelo-select" style="font-size: 0.85rem; padding: 0.45rem 0.65rem;">
-                    <!-- Cuentas registradas cargadas dinámicamente -->
-                </select>
+                <input id="authLoginPin" type="password" inputmode="numeric" maxlength="8" placeholder="" required autocomplete="current-password">
             </div>
 
             <div id="authLoginError" class="auth-error-msg hidden">
-                ❌ Usuario o PIN incorrecto. Si sos Iván ingresá usuario: <strong>ivi</strong> y contraseña: <strong>1234</strong>.
+                ❌ Usuario o contraseña / PIN incorrectos. Por favor verificá tus datos.
             </div>
 
             <div class="auth-recover-link-row">
@@ -3897,7 +4623,8 @@
         <button id="ivanWelcomeCloseBtn" class="ivan-welcome-close-btn" type="button" aria-label="Cerrar">✕</button>
         <div class="ivan-welcome-aura" aria-hidden="true"></div>
         <div class="ivan-welcome-character-wrap">
-            <img class="ivan-welcome-img" src="ivan_doctor.png" alt="Dr. Iván">
+            <video id="ivanWelcomeVideo" class="ivan-welcome-video hidden" autoplay loop muted playsinline></video>
+            <img id="ivanWelcomeImg" class="ivan-welcome-img" src="ivan_doctor.png" alt="Dr. Iván">
         </div>
         <div class="ivan-welcome-content">
             <div class="ivan-welcome-badge">🩺 MODO MEDICINA ACTIVADO</div>
@@ -3912,7 +4639,7 @@
             </div>
             <div class="ivan-welcome-actions">
                 <button id="ivanWelcomeGoBtn" class="button button--primary ivan-welcome-btn" type="button">
-                    🚀 ¡A estudiar, colega! 🩺
+                    🚀 ¡A estudiar! 🩺
                 </button>
             </div>
         </div>
@@ -4272,7 +4999,7 @@
 </dialog>
 
 <script src="mqtt.min.js"></script>
-<script src="script.js?v=28.1" defer></script>
+<script src="script.js?v=28.2" defer></script>
 
 <!-- =========================================================
      MODAL DE PROMPT PARA GEMINI (CREAR JUEGOS DESDE PDF)
