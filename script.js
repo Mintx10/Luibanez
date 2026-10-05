@@ -3459,20 +3459,19 @@ function mostrarAnimacionBienvenidaIvan() {
     const videoElem = document.getElementById("ivanWelcomeVideo");
     const imgElem = document.getElementById("ivanWelcomeImg");
 
-    // Detección automática de video de animación (si existe ivan_doctor.mp4 o webm)
     if (videoElem && imgElem) {
-        const testVideo = document.createElement("video");
-        testVideo.src = "ivan_doctor.mp4";
-        testVideo.oncanplay = () => {
-            videoElem.src = "ivan_doctor.mp4";
-            videoElem.classList.remove("hidden");
-            imgElem.classList.add("hidden");
-            videoElem.play().catch(() => {});
-        };
-        testVideo.onerror = () => {
-            videoElem.classList.add("hidden");
-            imgElem.classList.remove("hidden");
-        };
+        videoElem.src = "ivan_doctor.mp4";
+        videoElem.load();
+        const p = videoElem.play();
+        if (p !== undefined) {
+            p.then(() => {
+                videoElem.classList.remove("hidden");
+                imgElem.classList.add("hidden");
+            }).catch(() => {
+                videoElem.classList.add("hidden");
+                imgElem.classList.remove("hidden");
+            });
+        }
     }
 
     try {
@@ -11462,7 +11461,7 @@ function iniciarAplicacion() {
 // =========================================================
 // GESTOR DE VERSIONES Y ACTUALIZACIÓN AUTOMÁTICA
 // =========================================================
-const APP_BUILD_VERSION = "28.2";
+const APP_BUILD_VERSION = "28.3";
 
 async function forzarActualizacionCompleta(mostrarNotificacion = true) {
     const btnActualizar = document.getElementById("btnForzarActualizar");
