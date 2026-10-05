@@ -13154,6 +13154,11 @@ function iniciarAplicacion() {
     try { registrarEventos(); } catch (e) { console.error("Error registrar eventos:", e); }
     try { inicializarEventosAuthYMedicina(); } catch (e) { console.error("Error eventos auth/medicina:", e); }
     try { inicializarRutas(); } catch (e) { console.error("Error inicializar rutas:", e); }
+    try {
+        if (typeof sincronizarShockRoomHome === "function") {
+            sincronizarShockRoomHome();
+        }
+    } catch (e) { console.error("Error sincronizar Shock Room:", e); }
 
     // Detección de link mágico de sala online (?room=XXXX o #duelo?room=XXXX)
     const urlParams = new URLSearchParams(window.location.search);
@@ -13692,7 +13697,7 @@ function iniciarAplicacion() {
 // =========================================================
 // GESTOR DE VERSIONES Y ACTUALIZACIÓN AUTOMÁTICA
 // =========================================================
-const APP_BUILD_VERSION = "28.7";
+const APP_BUILD_VERSION = "28.8";
 
 async function forzarActualizacionCompleta(mostrarNotificacion = true) {
     const lastAttempt = parseInt(sessionStorage.getItem("last_auto_update_ts") || "0", 10);
