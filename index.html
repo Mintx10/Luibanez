@@ -15,10 +15,10 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     
-    <link rel="icon" type="image/svg+xml" href="icon.svg?v=27.9">
-    <link rel="apple-touch-icon" href="icon-192.png?v=27.9">
-    <link rel="manifest" href="manifest.json?v=27.9">
-    <link rel="stylesheet" href="style.css?v=27.9">
+    <link rel="icon" type="image/svg+xml" href="icon.svg?v=28.0">
+    <link rel="apple-touch-icon" href="icon-192.png?v=28.0">
+    <link rel="manifest" href="manifest.json?v=28.0">
+    <link rel="stylesheet" href="style.css?v=28.0">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -91,6 +91,47 @@
             <span id="pillTimer" class="dynamic-island__timer">25:00</span>
             <span id="pillBadge" class="dynamic-island__badge">Estudio</span>
         </div>
+
+        <!-- Botones de Autenticación / Perfil de Usuario en Header -->
+        <div id="topNavAuthContainer" class="top-nav-auth-container">
+            <!-- Estado Deslogueado: Iniciar Sesión / Registrarse -->
+            <div id="topNavAuthGuest" class="top-nav-auth-guest">
+                <button id="btnHeaderLogin" class="button button--ghost button--sm btn-header-auth" type="button" title="Iniciar Sesión en tu cuenta">
+                    🔑 Iniciar Sesión
+                </button>
+                <button id="btnHeaderRegister" class="button button--primary button--sm btn-header-auth" type="button" title="Crear una cuenta nueva">
+                    ✨ Registrarse
+                </button>
+            </div>
+            <!-- Estado Logueado: Píldora de Perfil Activo (Iván 🩺 u otro) -->
+            <div id="topNavAuthUser" class="top-nav-auth-user hidden">
+                <div id="userHeaderProfilePill" class="user-header-pill" role="button" tabindex="0" title="Ver mi cuenta">
+                    <img id="userHeaderAvatarImg" class="user-header-avatar" src="ivan_doctor.png" alt="Avatar">
+                    <div class="user-header-info">
+                        <span id="userHeaderName" class="user-header-name">Iván</span>
+                        <span id="userHeaderCareer" class="user-header-career">Medicina 🩺</span>
+                    </div>
+                    <span class="user-header-chevron" aria-hidden="true">▾</span>
+                </div>
+                <!-- Menú desplegable de cuenta -->
+                <div id="userHeaderDropdown" class="user-header-dropdown hidden">
+                    <div class="user-dropdown-header">
+                        <strong id="userDropdownName">Iván</strong>
+                        <small id="userDropdownSub">Estudiante de Medicina</small>
+                    </div>
+                    <hr class="user-dropdown-divider">
+                    <button id="btnDropdownBolilleroMed" class="user-dropdown-item" type="button">
+                        🎯 Bolillero de Medicina
+                    </button>
+                    <button id="btnDropdownVerPerfil" class="user-dropdown-item" type="button">
+                        👤 Mi Perfil y Racha
+                    </button>
+                    <button id="btnDropdownLogout" class="user-dropdown-item user-dropdown-item--danger" type="button">
+                        🚪 Cerrar Sesión
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 </header>
 
@@ -110,6 +151,24 @@
     </div>
 
     <div class="drawer-menu__content">
+        <!-- Sección 0: Autenticación en Menú Móvil -->
+        <div class="drawer-section drawer-section--auth">
+            <div id="drawerAuthGuest" class="drawer-auth-guest">
+                <button id="btnDrawerLogin" class="button button--ghost button--full" type="button">🔑 Iniciar Sesión</button>
+                <button id="btnDrawerRegister" class="button button--primary button--full" type="button" style="margin-top: 0.4rem;">✨ Registrarse</button>
+            </div>
+            <div id="drawerAuthUser" class="drawer-auth-user hidden">
+                <div class="drawer-user-pill">
+                    <img id="drawerUserAvatarImg" class="drawer-user-avatar" src="ivan_doctor.png" alt="Avatar">
+                    <div>
+                        <strong id="drawerUserName">Iván</strong>
+                        <small id="drawerUserCareer" style="display:block; color: #38bdf8;">Medicina 🩺</small>
+                    </div>
+                </div>
+                <button id="btnDrawerLogout" class="button button--ghost button--sm button--full" style="color: #f87171; margin-top: 0.5rem;" type="button">🚪 Cerrar Sesión</button>
+            </div>
+        </div>
+
         <!-- Sección 1: Navegación de vistas -->
         <!-- Sección 1: Navegación Principal -->
         <div class="drawer-section">
@@ -288,6 +347,95 @@
                 </button>
             </div>
         </div>
+
+        <!-- Panel Exclusivo para Iván (Modo Medicina) - Se activa dinámicamente si el usuario activo es Iván / Medicina -->
+        <section id="panelMedicinaIvan" class="med-portal-container hidden" aria-labelledby="medPortalTitle">
+            <div class="med-portal-card">
+                <div class="med-portal-header">
+                    <div class="med-portal-avatar-wrap">
+                        <img src="ivan_doctor.png" alt="Dr. Iván" class="med-portal-avatar-img">
+                        <span class="med-portal-pulse-dot" title="Sesión de Medicina Activa"></span>
+                    </div>
+                    <div class="med-portal-intro">
+                        <div class="med-portal-tag">🩺 MODO ESTUDIANTE DE MEDICINA</div>
+                        <h2 id="medPortalTitle" class="med-portal-title">Mesa de Estudio de Dr. Iván</h2>
+                        <p class="med-portal-desc">
+                            Espacio exclusivo de preparación médica. Accedé al <strong>Bolillero directo</strong> de tus materias o abrí los entrenadores clínicos y ficheros especializados.
+                        </p>
+                    </div>
+                    <div class="med-portal-top-action">
+                        <button id="medBtnDirectBolillero" class="button button--primary button--sm" type="button">
+                            🎯 Bolillero de Estudio ➜
+                        </button>
+                    </div>
+                </div>
+
+                <div class="med-subjects-grid">
+                    <!-- Materia 1: Medicina Interna -->
+                    <article class="med-subject-card med-subject-card--interna">
+                        <div class="med-subject-badge">🫀 Fisiopato · Dx · Tto</div>
+                        <h3 class="med-subject-title">Medicina Interna</h3>
+                        <p class="med-subject-desc">
+                            Fisiopatología, diagnóstico diferencial y conducta terapéutica de las principales patologías.
+                        </p>
+                        <div class="med-subject-meta">
+                            <span class="med-meta-pill">📋 Casos Clínicos</span>
+                            <span class="med-meta-pill">⚡ Bolillero de Examen</span>
+                        </div>
+                        <div class="med-subject-actions">
+                            <button class="button button--primary button--sm med-btn-launch" data-med-action="bolillero" data-med-sub="interna" type="button">
+                                🎯 Bolillero Oral
+                            </button>
+                            <button class="button button--secondary button--sm med-btn-launch" data-med-action="clinica" data-med-sub="interna" type="button">
+                                🩺 Casos Clínicos
+                            </button>
+                        </div>
+                    </article>
+
+                    <!-- Materia 2: Farmacología 2 -->
+                    <article class="med-subject-card med-subject-card--farma">
+                        <div class="med-subject-badge">💊 Cinética · Dinamia · Drogas</div>
+                        <h3 class="med-subject-title">Farmacología 2</h3>
+                        <p class="med-subject-desc">
+                            Uso clínico, farmacocinética, farmacodinamia y efectos adversos de distintas familias de drogas.
+                        </p>
+                        <div class="med-subject-meta">
+                            <span class="med-meta-pill">📑 Fichas 4x4</span>
+                            <span class="med-meta-pill">⚡ Bolillero Drogas</span>
+                        </div>
+                        <div class="med-subject-actions">
+                            <button class="button button--primary button--sm med-btn-launch" data-med-action="bolillero" data-med-sub="farma" type="button">
+                                🎯 Bolillero Drogas
+                            </button>
+                            <button class="button button--secondary button--sm med-btn-launch" data-med-action="fichero" data-med-sub="farma" type="button">
+                                📑 Fichero 4x4
+                            </button>
+                        </div>
+                    </article>
+
+                    <!-- Materia 3: Salud Pública -->
+                    <article class="med-subject-card med-subject-card--salud">
+                        <div class="med-subject-badge">📊 Trabajos Prácticos & APS</div>
+                        <h3 class="med-subject-title">Salud Pública</h3>
+                        <p class="med-subject-desc">
+                            Resolución de Trabajos Prácticos (TPs), epidemiología comunitaria, bioestadística aplicada y APS.
+                        </p>
+                        <div class="med-subject-meta">
+                            <span class="med-meta-pill">📝 Taller de TPs</span>
+                            <span class="med-meta-pill">⚡ Bolillero de Temas</span>
+                        </div>
+                        <div class="med-subject-actions">
+                            <button class="button button--primary button--sm med-btn-launch" data-med-action="bolillero" data-med-sub="salud" type="button">
+                                🎯 Bolillero TPs
+                            </button>
+                            <button class="button button--secondary button--sm med-btn-launch" data-med-action="tp" data-med-sub="salud" type="button">
+                                📝 Asistente TPs
+                            </button>
+                        </div>
+                    </article>
+                </div>
+            </div>
+        </section>
 
         <!-- Portal Hub: 3 Grandes Accesos Directos a las Páginas de la App -->
         <div class="portal-hub-container" style="max-width: 1200px; margin: 2rem auto 0; padding: 0 1rem;">
@@ -3705,38 +3853,269 @@
             </div>
         </form>
 
-        <!-- Panel Iniciar Sesión con PIN -->
+        <!-- Panel Iniciar Sesión con Usuario y PIN -->
         <form id="authLoginForm" class="auth-panel hidden" autocomplete="off" onsubmit="return false;">
-            <p class="auth-desc">Ingresá con tu cuenta guardada:</p>
+            <p class="auth-desc">Ingresá tu usuario o elegí una cuenta guardada:</p>
 
             <div class="field">
-                <label for="authLoginSelect">Elegir Cuenta Guardada</label>
-                <select id="authLoginSelect" class="duelo-select">
+                <label for="authLoginUserInput">Usuario o Apodo</label>
+                <input id="authLoginUserInput" type="text" placeholder="Ej: ivi" autocomplete="username">
+            </div>
+
+            <div class="field">
+                <label for="authLoginPin">Contraseña / PIN</label>
+                <input id="authLoginPin" type="password" inputmode="numeric" maxlength="8" placeholder="••••" required autocomplete="current-password">
+            </div>
+
+            <div class="field" id="authLoginSavedAccountField" style="margin-top: -0.25rem;">
+                <label for="authLoginSelect" style="font-size: 0.78rem; color: var(--color-text-muted);">O elegí de las cuentas registradas en este equipo:</label>
+                <select id="authLoginSelect" class="duelo-select" style="font-size: 0.85rem; padding: 0.45rem 0.65rem;">
                     <!-- Cuentas registradas cargadas dinámicamente -->
                 </select>
             </div>
 
-            <div class="field">
-                <label for="authLoginPin">PIN de 4 dígitos</label>
-                <input id="authLoginPin" type="password" inputmode="numeric" maxlength="4" placeholder="••••" required autocomplete="off">
-            </div>
-
             <div id="authLoginError" class="auth-error-msg hidden">
-                ❌ PIN incorrecto. Intentá nuevamente.
+                ❌ Usuario o PIN incorrecto. Si sos Iván ingresá usuario: <strong>ivi</strong> y contraseña: <strong>1234</strong>.
             </div>
 
             <div class="auth-recover-link-row">
                 <button id="authForgotPinBtn" class="button button--ghost button--xs" type="button">
-                    ¿Olvidaste tu PIN?
+                    ¿Olvidaste tu contraseña o PIN?
                 </button>
             </div>
 
             <div class="modal__actions">
                 <button id="authSubmitLoginBtn" class="button button--primary button--full" type="submit">
-                    🔑 Ingresar a Mi Cuenta
+                    🔑 Iniciar Sesión
                 </button>
             </div>
         </form>
+    </div>
+</dialog>
+
+<!-- =========================================================
+     MODAL DE BIENVENIDA: PERSONAJE 3D (DR. IVÁN - MEDICINA)
+     ========================================================= -->
+<dialog id="ivanWelcomeModal" class="modal ivan-welcome-dialog" aria-labelledby="ivanWelcomeTitle">
+    <div class="ivan-welcome-card">
+        <button id="ivanWelcomeCloseBtn" class="ivan-welcome-close-btn" type="button" aria-label="Cerrar">✕</button>
+        <div class="ivan-welcome-aura" aria-hidden="true"></div>
+        <div class="ivan-welcome-character-wrap">
+            <img class="ivan-welcome-img" src="ivan_doctor.png" alt="Dr. Iván">
+        </div>
+        <div class="ivan-welcome-content">
+            <div class="ivan-welcome-badge">🩺 MODO MEDICINA ACTIVADO</div>
+            <h3 id="ivanWelcomeTitle" class="ivan-welcome-title">¡Hola, Iván! 👋</h3>
+            <div class="ivan-welcome-bubble">
+                <p class="ivan-welcome-bubble-msg">¿Listo para romperla hoy en la facu? Tus 3 materias ya están listas en tu mesa de trabajo:</p>
+                <div class="ivan-welcome-topics">
+                    <span class="ivan-topic-tag ivan-topic-tag--med">🫀 Medicina Interna</span>
+                    <span class="ivan-topic-tag ivan-topic-tag--farma">💊 Farmacología 2</span>
+                    <span class="ivan-topic-tag ivan-topic-tag--salud">📊 Salud Pública</span>
+                </div>
+            </div>
+            <div class="ivan-welcome-actions">
+                <button id="ivanWelcomeGoBtn" class="button button--primary ivan-welcome-btn" type="button">
+                    🚀 ¡A estudiar, colega! 🩺
+                </button>
+            </div>
+        </div>
+    </div>
+</dialog>
+
+<!-- =========================================================
+     MODAL DE HERRAMIENTAS MÉDICAS ESPECIALIZADAS (DR. IVÁN)
+     ========================================================= -->
+<dialog id="modalMedicinaClinica" class="modal med-clinic-modal" aria-labelledby="medClinicTitle">
+    <div class="modal__content med-clinic-modal-content">
+        <div class="modal__header">
+            <div class="med-clinic-header-info">
+                <span class="med-clinic-header-badge">🩺 CLÍNICA & FARMACOLOGÍA</span>
+                <h2 id="medClinicTitle" class="modal__title">Gabinete Médico Luibañez</h2>
+            </div>
+            <button id="medClinicCloseBtn" class="icon-button" type="button" aria-label="Cerrar">✕</button>
+        </div>
+
+        <!-- Pestañas de las 3 Materias -->
+        <div class="med-tabs">
+            <button id="medTabInterna" class="med-tab-btn is-active" type="button" data-tab="interna">
+                🫀 Medicina Interna (Casos)
+            </button>
+            <button id="medTabFarma" class="med-tab-btn" type="button" data-tab="farma">
+                💊 Farmacología 2 (Fichero 4x4)
+            </button>
+            <button id="medTabSalud" class="med-tab-btn" type="button" data-tab="salud">
+                📊 Salud Pública (Asistente TPs)
+            </button>
+        </div>
+
+        <!-- Tab 1: Medicina Interna (Casos Clínicos Fisiopato / Dx / Tto) -->
+        <div id="medTabContentInterna" class="med-tab-panel is-active">
+            <div class="med-panel-banner">
+                <div>
+                    <strong>🩺 Simulador de Casos Clínicos & Examen de Fisiopatología</strong>
+                    <p style="margin: 0.25rem 0 0; font-size: 0.88rem; color: var(--color-text-muted);">
+                        Generá casos clínicos de examen oral. Analizá la fisiopatología, diagnóstico presuntivo y diferenciales, e indicá el tratamiento médico.
+                    </p>
+                </div>
+                <button id="medGenerarCasoBtn" class="button button--primary button--sm" type="button">
+                    🎲 Generar Caso Clínico
+                </button>
+            </div>
+
+            <!-- Caso clínico activo -->
+            <div id="medCasoCard" class="med-case-card">
+                <div class="med-case-header">
+                    <span id="medCasoEspecialidad" class="badge badge--primary">Cardiología / Urgencias</span>
+                    <h3 id="medCasoTitulo" class="med-case-title">Paciente masculino de 58 años</h3>
+                </div>
+                <div class="med-case-body">
+                    <div class="med-case-field">
+                        <strong>Motivo de Consulta y Cuadro:</strong>
+                        <p id="medCasoDescripcion">Dolor precordial opresivo de 45 min de evolución, irradiado a mandíbula y brazo izquierdo, acompañado de diaforesis y disnea.</p>
+                    </div>
+                    <div class="med-case-grid">
+                        <div class="med-case-vital">
+                            <span class="med-vital-label">Signos Vitales:</span>
+                            <span id="medCasoVitales" class="med-vital-value">TA 150/95 · FC 102 lpm · FR 22 rpm · SatO2 93%</span>
+                        </div>
+                        <div class="med-case-vital">
+                            <span class="med-vital-label">Antecedentes:</span>
+                            <span id="medCasoAntecedentes" class="med-vital-value">HTA, Tabaquismo 30 paquetes/año, Dislipemia</span>
+                        </div>
+                    </div>
+
+                    <!-- Acordeón interactivo de resolución médica -->
+                    <div class="med-case-reveal-group">
+                        <details class="med-reveal-item">
+                            <summary>🧠 1. Fisiopatología Subyacente</summary>
+                            <div class="med-reveal-content" id="medCasoFisiopato">
+                                Rotura o erosión de placa aterosclerótica vulnerable coronaria con agregación plaquetaria, formación de trombo oclusivo agudo e isquemia miocárdica transmural.
+                            </div>
+                        </details>
+                        <details class="med-reveal-item">
+                            <summary>🎯 2. Diagnóstico Presuntivo & Diferenciales</summary>
+                            <div class="med-reveal-content" id="medCasoDiagnostico">
+                                <strong>Presuntivo:</strong> Síndrome Coronario Agudo con elevación del ST (SCACEST).<br>
+                                <strong>Diferenciales:</strong> Disección aórtica aguda, Tromboembolismo pulmonar (TEP), Pericarditis aguda, Neumotórax a tensión.
+                            </div>
+                        </details>
+                        <details class="med-reveal-item">
+                            <summary>💊 3. Tratamiento & Conducta Médica</summary>
+                            <div class="med-reveal-content" id="medCasoTratamiento">
+                                Reposo, monitoreo continuo y oxígeno si Sat &lt; 90%. Doble antiagregación (Aspirina 300 mg + Ticagrelor / Clopidogrel), anticoagulación (Enoxaparina / HNF). Terapia de reperfusión inmediata: Angioplastia coronaria primaria (&lt; 120 min) o Trombolíticos si no hay hemodinamia disponible. Manejo del dolor con nitratos / morfina.
+                            </div>
+                        </details>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 2: Farmacología 2 (Fichero 4x4) -->
+        <div id="medTabContentFarma" class="med-tab-panel hidden">
+            <div class="med-panel-banner">
+                <div>
+                    <strong>💊 Fichero Farmacológico 4x4</strong>
+                    <p style="margin: 0.25rem 0 0; font-size: 0.88rem; color: var(--color-text-muted);">
+                        Seleccioná una familia farmacológica para repasar sus 4 pilares: Farmacodinamia, Farmacocinética, Usos y Efectos Adversos.
+                    </p>
+                </div>
+                <div class="field" style="margin: 0; min-width: 200px;">
+                    <select id="medSelectFamiliaFarma" style="padding: 0.45rem; border-radius: var(--radius-sm); background: var(--color-surface); color: var(--color-text); border: 1px solid var(--color-border);">
+                        <option value="beta_bloqueantes">Antihipertensivos: Betabloqueantes</option>
+                        <option value="ieca_ara2">Antihipertensivos: IECA y ARA II</option>
+                        <option value="antibioticos_beta">Antibióticos: Betalactámicos</option>
+                        <option value="aines">Antiinflamatorios: AINEs y Coxibs</option>
+                        <option value="opioides">Analgésicos: Opioides Mayores y Menores</option>
+                        <option value="ansioliticos">Psicofármacos: Benzodiazepinas</option>
+                        <option value="antidepresivos">Psicofármacos: ISRS</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Ficha 4x4 Interactiva -->
+            <div id="medFichaFarmaCard" class="med-farma-matrix">
+                <div class="med-farma-header">
+                    <h3 id="medFarmaDrogasTitulo">Familia: Betabloqueantes (Atenolol, Propranolol, Bisoprolol, Carvedilol)</h3>
+                    <span id="medFarmaTipoBadge" class="badge badge--warning">Sistema Cardiovascular / SNA</span>
+                </div>
+                <div class="med-farma-quadrant-grid">
+                    <div class="med-quadrant-card med-quadrant--dinamia">
+                        <div class="med-quadrant-title">⚙️ 1. Farmacodinamia (Mecanismo)</div>
+                        <div id="medFarmaDinamia" class="med-quadrant-body">
+                            Antagonistas competitivos de receptores adrenérgicos β1 y β2. Efectos cronotrópico, inotrópico, dromotrópico y batmotrópico negativos. Disminución de la secreción de renina renal.
+                        </div>
+                    </div>
+                    <div class="med-quadrant-card med-quadrant--cinetica">
+                        <div class="med-quadrant-title">🧪 2. Farmacocinética (ADME)</div>
+                        <div id="medFarmaCinetica" class="med-quadrant-body">
+                            <strong>Absorción:</strong> Buena por VO, biodisponibilidad variable por primer paso hepático.<br>
+                            <strong>Liposolubilidad:</strong> Propranolol alta (cruza BHE), Atenolol baja (hidrofílico).<br>
+                            <strong>Metabolismo:</strong> Hepático (CYP2D6). Excreción renal o biliar según molécula.
+                        </div>
+                    </div>
+                    <div class="med-quadrant-card med-quadrant--usos">
+                        <div class="med-quadrant-title">🎯 3. Usos Clínicos & Indicaciones</div>
+                        <div id="medFarmaUsos" class="med-quadrant-body">
+                            Hipertensión arterial (segunda línea/coadyuvante), Cardiopatía isquémica / post-IAM, Insuficiencia cardíaca con FEVI reducida (Carvedilol, Bisoprolol), Arritmias supraventriculares, Profilaxis de migraña.
+                        </div>
+                    </div>
+                    <div class="med-quadrant-card med-quadrant--adversos">
+                        <div class="med-quadrant-title">⚠️ 4. Efectos Adversos & Contraindicaciones</div>
+                        <div id="medFarmaAdversos" class="med-quadrant-body">
+                            <strong>Adversos:</strong> Bradicardia, bloqueo AV, broncoespasmo (no selectivos), fatiga, frialdad de extremidades, disfunción eréctil.<br>
+                            <strong>Contraindicaciones:</strong> Asma bronquial / EPOC severo (no selectivos), bloqueo AV de 2do/3er grado, shock cardiogénico.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 3: Salud Pública (Asistente de Trabajos Prácticos) -->
+        <div id="medTabContentSalud" class="med-tab-panel hidden">
+            <div class="med-panel-banner">
+                <div>
+                    <strong>📊 Asistente de Trabajos Prácticos & Epidemiología</strong>
+                    <p style="margin: 0.25rem 0 0; font-size: 0.88rem; color: var(--color-text-muted);">
+                        Espacio optimizado para resolver consignas de Trabajos Prácticos, calcular indicadores de salud (morbimortalidad, prevalencia, incidencia) y formular intervenciones de APS.
+                    </p>
+                </div>
+            </div>
+
+            <div class="med-salud-workspace">
+                <div class="med-salud-input-card">
+                    <label for="medSaludTpInput" class="label">📝 Consigna o Problema del Trabajo Práctico:</label>
+                    <textarea id="medSaludTpInput" class="textarea" rows="4" placeholder="Pegá acá la consigna de tu TP de Salud Pública... Ej: 'Calcular tasa de incidencia acumulada en brote de dengue' o 'Diseñar estrategia comunitaria de APS para vacunación...'"></textarea>
+                    <div style="display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 0.5rem;">
+                        <button id="medSaludQuickFormulaBtn" class="button button--ghost button--sm" type="button">
+                            📐 Fórmulas Epidemiológicas
+                        </button>
+                        <button id="medSaludResolverBtn" class="button button--primary button--sm" type="button">
+                            ✨ Estructurar Respuesta de TP
+                        </button>
+                    </div>
+                </div>
+
+                <div id="medSaludOutputArea" class="med-salud-output hidden">
+                    <div class="med-salud-output-header">
+                        <strong>📋 Estructura Propuesta para el TP:</strong>
+                        <button id="medSaludCopyBtn" class="button button--ghost button--xs" type="button">📋 Copiar</button>
+                    </div>
+                    <div id="medSaludOutputContent" class="med-salud-output-text"></div>
+                </div>
+
+                <div class="med-salud-shortcuts">
+                    <span class="med-shortcuts-title">📌 Temas frecuentes en TPs de la Cátedra:</span>
+                    <div class="med-shortcut-chips">
+                        <button class="med-tp-chip" data-topic="tasa_mortalidad" type="button">Tasa de Mortalidad Infantil & Materna</button>
+                        <button class="med-tp-chip" data-topic="incidencia_prevalencia" type="button">Prevalencia vs. Incidencia Acumulada</button>
+                        <button class="med-tp-chip" data-topic="niveles_prevencion" type="button">Niveles de Leavell & Clark (Prevención 1°, 2°, 3°)</button>
+                        <button class="med-tp-chip" data-topic="aps_alma_ata" type="button">Atención Primaria de la Salud (Alma-Ata / APS Renovada)</button>
+                        <button class="med-tp-chip" data-topic="transicion_epidemiologica" type="button">Transición Epidemiológica & Demográfica</button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </dialog>
 
@@ -3897,7 +4276,7 @@
 </dialog>
 
 <script src="mqtt.min.js"></script>
-<script src="script.js?v=27.9" defer></script>
+<script src="script.js?v=28.0" defer></script>
 
 <!-- =========================================================
      MODAL DE PROMPT PARA GEMINI (CREAR JUEGOS DESDE PDF)

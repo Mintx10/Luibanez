@@ -21,9 +21,11 @@ const LOBBY_DISCOVERY_TOPIC = "luibanez/lobbies/discover";
 const perfilUsuario = {
     esInvitado: true,
     id: "guest_" + Math.random().toString(36).slice(2, 8),
+    username: "invitado",
     apodo: "Invitado",
+    carrera: "",
     avatar: "🦁",
-    tipoAvatar: "emoji", // "emoji" | "foto"
+    tipoAvatar: "emoji", // "emoji" | "foto" | "imagen"
     fotoDataUrl: "",
     victorias: 0,
     partidasJugadas: 0,
@@ -690,11 +692,57 @@ const dom = {
     authContinueGuestBtn: document.getElementById("authContinueGuestBtn"),
     authSubmitRegisterBtn: document.getElementById("authSubmitRegisterBtn"),
     authLoginForm: document.getElementById("authLoginForm"),
+    authLoginUserInput: document.getElementById("authLoginUserInput"),
     authLoginSelect: document.getElementById("authLoginSelect"),
     authLoginPin: document.getElementById("authLoginPin"),
     authLoginError: document.getElementById("authLoginError"),
     authForgotPinBtn: document.getElementById("authForgotPinBtn"),
     authSubmitLoginBtn: document.getElementById("authSubmitLoginBtn"),
+
+    /* Header & Drawer Auth Controls */
+    topNavAuthGuest: document.getElementById("topNavAuthGuest"),
+    topNavAuthUser: document.getElementById("topNavAuthUser"),
+    topNavLoginBtn: document.getElementById("topNavLoginBtn"),
+    topNavRegisterBtn: document.getElementById("topNavRegisterBtn"),
+    userHeaderPill: document.getElementById("userHeaderPill"),
+    userHeaderAvatar: document.getElementById("userHeaderAvatar"),
+    userHeaderName: document.getElementById("userHeaderName"),
+    userHeaderDropdown: document.getElementById("userHeaderDropdown"),
+    userDropdownName: document.getElementById("userDropdownName"),
+    userDropdownCareer: document.getElementById("userDropdownCareer"),
+    userDropdownProfileBtn: document.getElementById("userDropdownProfileBtn"),
+    userDropdownMedBtn: document.getElementById("userDropdownMedBtn"),
+    userDropdownLogoutBtn: document.getElementById("userDropdownLogoutBtn"),
+    drawerAuthGuest: document.getElementById("drawerAuthGuest"),
+    drawerAuthUser: document.getElementById("drawerAuthUser"),
+    drawerLoginBtn: document.getElementById("drawerLoginBtn"),
+    drawerRegisterBtn: document.getElementById("drawerRegisterBtn"),
+    drawerLogoutBtn: document.getElementById("drawerLogoutBtn"),
+
+    /* Bienvenida 3D Dr. Iván */
+    ivanWelcomeModal: document.getElementById("ivanWelcomeModal"),
+    ivanWelcomeCloseBtn: document.getElementById("ivanWelcomeCloseBtn"),
+    ivanWelcomeGoBtn: document.getElementById("ivanWelcomeGoBtn"),
+
+    /* Portal y Módulo Clínico de Medicina */
+    panelMedicinaIvan: document.getElementById("panelMedicinaIvan"),
+    medBtnDirectBolillero: document.getElementById("medBtnDirectBolillero"),
+    modalMedicinaClinica: document.getElementById("modalMedicinaClinica"),
+    medClinicCloseBtn: document.getElementById("medClinicCloseBtn"),
+    medTabInterna: document.getElementById("medTabInterna"),
+    medTabFarma: document.getElementById("medTabFarma"),
+    medTabSalud: document.getElementById("medTabSalud"),
+    medTabContentInterna: document.getElementById("medTabContentInterna"),
+    medTabContentFarma: document.getElementById("medTabContentFarma"),
+    medTabContentSalud: document.getElementById("medTabContentSalud"),
+    medGenerarCasoBtn: document.getElementById("medGenerarCasoBtn"),
+    medSelectFamiliaFarma: document.getElementById("medSelectFamiliaFarma"),
+    medSaludTpInput: document.getElementById("medSaludTpInput"),
+    medSaludQuickFormulaBtn: document.getElementById("medSaludQuickFormulaBtn"),
+    medSaludResolverBtn: document.getElementById("medSaludResolverBtn"),
+    medSaludOutputArea: document.getElementById("medSaludOutputArea"),
+    medSaludOutputContent: document.getElementById("medSaludOutputContent"),
+    medSaludCopyBtn: document.getElementById("medSaludCopyBtn"),
 
     /* Modal Selector de Avatares */
     avatarPickerModal: document.getElementById("avatarPickerModal"),
@@ -2579,14 +2627,329 @@ function guardarFormularioPomodoro(evento) {
 
 
 /* ==========================================================
-   MÓDULO 1: CUENTAS CON PIN & MODO INVITADO
+   MÓDULO 1: CUENTAS CON PIN, USUARIO IVÁN (MEDICINA) & HEADER AUTH
    ========================================================== */
+
+const CUENTA_PREDEFINIDA_IVAN = {
+    id: "acc_ivan_medicina",
+    username: "ivi",
+    apodo: "Iván",
+    nombre: "Iván",
+    carrera: "Medicina",
+    avatar: "🩺",
+    tipoAvatar: "imagen",
+    fotoDataUrl: "ivan_doctor.png",
+    pin: "1234",
+    email: "ivan@medicina.edu",
+    victorias: 15,
+    partidasJugadas: 24,
+    puntosTotales: 3400,
+    maxRachaHistorica: 12,
+    totalRobos: 6,
+    fechaCreacion: 1700000000000
+};
+
+const MATERIAS_MEDICINA_IVAN = [
+    {
+        id: "lista_medicina_interna",
+        nombre: "MEDICINA INTERNA (FISIOPATO - DX - TTO)",
+        temas: [
+            { id: "med_tema_1", titulo: "Insuficiencia Cardíaca Congestiva (ICC): Fisiopatología, estadios NYHA y manejo médico" },
+            { id: "med_tema_2", titulo: "Síndrome Coronario Agudo: SCACEST vs SCASEST, biomarcadores y reperfusión" },
+            { id: "med_tema_3", titulo: "Tromboembolismo Pulmonar (TEP): Fisiopatología, Score de Wells y dímero D" },
+            { id: "med_tema_4", titulo: "Neumonía Adquirida en la Comunidad (NAC): Criterios CURB-65 y tratamiento antibiótico" },
+            { id: "med_tema_5", titulo: "Accidente Cerebrovascular (ACV) Isquémico: Escala NIHSS y ventana de trombolisis" },
+            { id: "med_tema_6", titulo: "EPOC Exacerbado: Criterios de Anthonisen, gasometría y broncodilatadores" },
+            { id: "med_tema_7", titulo: "Cetoacidosis Diabética (CAD) vs Síndrome Hiperosmolar: Fisiopatología y corrección iónica" },
+            { id: "med_tema_8", titulo: "Cirrosis Descompensada: Hipertensión portal, ascitis, PBE y encefalopatía" },
+            { id: "med_tema_9", titulo: "Injuria Renal Aguda (IRA): Etiologías prerrenal, parenquimatosa y posrenal" },
+            { id: "med_tema_10", titulo: "Shock Séptico: Criterios SOFA/qSOFA, reanimación hídrica y vasopresores" }
+        ]
+    },
+    {
+        id: "lista_farmacologia_2",
+        nombre: "FARMACOLOGÍA 2 (CINÉTICA - DINAMIA - DROGAS)",
+        temas: [
+            { id: "farma_tema_1", titulo: "Betabloqueantes: Selectividad β1 vs β2, farmacocinética y efectos adversos" },
+            { id: "farma_tema_2", titulo: "IECA y ARA II: Mecanismo de acción, nefroprotección y contraindicaciones" },
+            { id: "farma_tema_3", titulo: "Antagonistas del Calcio: Dihidropiridinas vs No dihidropiridinas y usos clínicos" },
+            { id: "farma_tema_4", titulo: "Betalactámicos: Cefalosporinas, Carbapenemes y mecanismos de resistencia bacteriana" },
+            { id: "farma_tema_5", titulo: "Macrólidos y Quinolonas: Espectro antibacteriano, farmacocinética y riesgo de QT largo" },
+            { id: "farma_tema_6", titulo: "Aminoglucósidos: Cinética de eliminación, ototoxicidad y nefrotoxicidad" },
+            { id: "farma_tema_7", titulo: "Opioides Mayores y Menores: Receptores mu/kappa, efectos adversos y Naloxona" },
+            { id: "farma_tema_8", titulo: "AINEs y Coxibs: Inhibición COX-1 vs COX-2, gastropatía y toxicidad renal" },
+            { id: "farma_tema_9", titulo: "Anticoagulantes Orales: Antagonistas de Vit K vs DOACs (Apixabán, Rivaroxabán)" },
+            { id: "farma_tema_10", titulo: "Benzodiazepinas: Modulación alostérica GABA-A, tolerancia y Flumazenil" },
+            { id: "farma_tema_11", titulo: "Antidepresivos ISRS: Mecanismo serotoninérgico, interacciones y efectos secundarios" }
+        ]
+    },
+    {
+        id: "lista_salud_publica",
+        nombre: "SALUD PÚBLICA (TRABAJOS PRÁCTICOS & APS)",
+        temas: [
+            { id: "salud_tema_1", titulo: "Indicadores de Mortalidad: Tasa de Mortalidad Infantil (Neonatal/Postneonatal) y Materna" },
+            { id: "salud_tema_2", titulo: "Medidas de Frecuencia: Prevalencia de Punto vs Incidencia Acumulada y Densidad de Incidencia" },
+            { id: "salud_tema_3", titulo: "Historia Natural de la Enfermedad y Niveles de Prevención (Leavell & Clark)" },
+            { id: "salud_tema_4", titulo: "Atención Primaria de la Salud (APS): Declaración de Alma-Ata y APS Integral vs Selectiva" },
+            { id: "salud_tema_5", titulo: "Diseños de Estudios Epidemiológicos: Transversales, Casos y Controles, Cohortes y Ensayos" },
+            { id: "salud_tema_6", titulo: "Vigilancia Epidemiológica: Eventos de Notificación Obligatoria, canal endémico e investigación de brotes" },
+            { id: "salud_tema_7", titulo: "Transición Epidemiológica y Demográfica: Patrón de morbimortalidad y envejecimiento poblacional" },
+            { id: "salud_tema_8", titulo: "Determinantes Sociales de la Salud: Modelo de Dahlgren-Whitehead y equidad sanitaria" },
+            { id: "salud_tema_9", titulo: "Sistemas de Salud: Estructura del Modelo Sanitario Argentino (Público, Obras Sociales, Privado)" }
+        ]
+    }
+];
+
+const CASOS_CLINICOS_MEDICINA = [
+    {
+        especialidad: "Cardiología / Urgencias",
+        titulo: "Paciente masculino de 58 años",
+        descripcion: "Dolor precordial opresivo retroesternal de 45 min de evolución, de inicio en reposo, con irradiación a mandíbula y brazo izquierdo, acompañado de diaforesis profusa, náuseas y disnea leve.",
+        vitales: "TA 155/95 mmHg · FC 104 lpm · FR 22 rpm · SatO2 94% · T 36.8°C",
+        antecedentes: "Hipertensión arterial mal controlada (10 años), Tabaquismo activo (30 paquetes/año), Dislipemia mixta.",
+        fisiopatologia: "Rotura o erosión de placa ateromatosa vulnerable en arteria coronaria epicárdica con exposición del factor tisular subendotelial. Agregación plaquetaria inmediata y activación de la cascada de coagulación que forman un trombo oclusivo agudo transmural, provocando isquemia miocárdica severa y necrosis miocítica progresiva.",
+        diagnostico: "<strong>Diagnóstico Presuntivo:</strong> Síndrome Coronario Agudo con Elevación del Segmento ST (SCACEST) de cara anterior o inferior.<br><strong>Diagnósticos Diferenciales:</strong> Síndrome aórtico agudo (disección aórtica), Tromboembolismo pulmonar masivo (TEP), Pericarditis aguda con derrame, Neumotórax a tensión, Espasmo esofágico difuso.",
+        tratamiento: "<strong>Conducta Inmediata:</strong><br>• Monitoreo electrocardiográfico continuo y vía periférica.<br>• Oxigenoterapia sólo si SatO2 &lt; 90%.<br>• Doble antiagregación plaquetaria: Aspirina (carga 300 mg masticable) + Ticagrelor (carga 180 mg) o Clopidogrel (carga 600 mg).<br>• Anticoagulación parenteral: Enoxaparina 1 mg/kg SC o Heparina No Fraccionada (bolo + infusión).<br>• Nitroglicerina sublingual si TA &gt; 100 mmHg y no tomó inhibidores PDE5.<br>• <strong>Estrategia de Reperfusión Urgente:</strong> Angioplastia Coronaria Primaria (ATC) antes de 120 min del primer contacto médico. Si no se dispone de hemodinamia en tiempo, fibrinolíticos (Tenecteplasa / Alteplasa) dentro de los primeros 30 min."
+    },
+    {
+        especialidad: "Endocrinología / Terapia Intensiva",
+        titulo: "Paciente femenina de 23 años",
+        descripcion: "Ingresa por somnolencia, deshidratación severa con signo del pliegue positivo, vómitos reiterados, dolor abdominal difuso y polidipsia intensa en las últimas 48 horas tras discontinuar tratamiento.",
+        vitales: "TA 90/60 mmHg · FC 122 lpm · FR 28 rpm (Kussmaul) · SatO2 98% · Aliento cetónico característico",
+        antecedentes: "Diabetes Mellitus Tipo 1 desde los 12 años en tratamiento con insulina basal/bolo.",
+        fisiopatologia: "Déficit absoluto de insulina asociado a un aumento marcado de hormonas contrarreguladoras (glucagón, cortisol, catecolaminas y GH). Esto desencadena una lipólisis acelerada con liberación de ácidos grasos libres que sufren beta-oxidación hepática, produciendo acetoacetato y beta-hidroxibutirato en cantidades que desbordan los tampones plasmáticos, causando acidosis metabólica con anión gap elevado y deshidratación osmótica severa.",
+        diagnostico: "<strong>Diagnóstico Presuntivo:</strong> Cetoacidosis Diabética (CAD) moderada-severa.<br><strong>Diagnósticos Diferenciales:</strong> Estado Hiperglucémico Hiperosmolar, Acidosis láctica, Abdomen agudo quirúrgico, Intoxicación por salicilatos o metanol, Cetoacidosis alcohólica.",
+        tratamiento: "<strong>Pilares Terapéuticos:</strong><br>1. <strong>Expansión de Volumen:</strong> Solución Fisiológica 0.9% a 1000-1500 ml en la primera hora para restaurar perfusión tisular.<br>2. <strong>Control del Potasio:</strong> Si K &lt; 3.3 mEq/L, reponer potasio antes de administrar insulina. Si K entre 3.3 y 5.3 mEq/L, agregar KCl al plan de hidratación.<br>3. <strong>Insulinoterapia:</strong> Insulina corriente / regular en infusión IV continua a 0.1 UI/kg/hora. Cuando la glucemia alcance 200 mg/dL, rotar soluciones a Dextrosa al 5% para prevenir hipoglucemia mientras se cierra el anión gap.<br>4. <strong>Monitoreo:</strong> Gasometría, ionograma cada 2-4 horas y corrección de la causa desencadenante (infección o transgresión)."
+    },
+    {
+        especialidad: "Neumonología / Medicina General",
+        titulo: "Paciente masculino de 66 años",
+        descripcion: "Presenta tos productiva con esputo herrumbroso, fiebre alta con escalofríos de 3 días de evolución, dolor tipo puntada en hemitórax derecho que aumenta con la inspiración profunda y disnea progresiva.",
+        vitales: "TA 110/70 mmHg · FC 106 lpm · FR 26 rpm · SatO2 91% aire ambiente · T 38.9°C",
+        antecedentes: "EPOC grado moderado en uso de inhaladores, extabaquista, sin vacunación antigripal ni antineumocócica reciente.",
+        fisiopatologia: "Inhalación y colonización de la vía aérea distal por Streptococcus pneumoniae que burla los macrófagos alveolares. Se desencadena una respuesta inflamatoria alveolar aguda con vasodilatación capilar, extravasación de exudado fibrinoso, leucocitos polimorfonucleares y eritrocitos, consolidando el parénquima pulmonar y generando un shunt intrapulmonar con desequilibrio V/Q.",
+        diagnostico: "<strong>Diagnóstico Presuntivo:</strong> Neumonía Adquirida en la Comunidad (NAC) típica con consolidación lobar derecha.<br><strong>Estratificación de Riesgo:</strong> CURB-65 = 2 (Urea pendiente, FR &ge; 30 rpm dudosa, Edad &ge; 65), amerita internación hospitalaria.<br><strong>Diferenciales:</strong> Infarto pulmonar por TEP, Atelectasia por tapón mucoso o neoplasia, Insuficiencia cardíaca descompensada, Exacerbación de EPOC pura.",
+        tratamiento: "<strong>Conducta:</strong><br>• Internación en sala general de cuidados clínicos.<br>• Oxigenoterapia con cánula nasal para mantener SatO2 entre 92-95%.<br>• <strong>Esquema Antibiótico Empírico:</strong> Ampicilina-Sulbactam 1.5g c/6h IV + Claritromicina 500mg c/12h VO, o Ceftriaxona 2g/día IV + Azitromicina 500mg/día.<br>• Hidratación parenteral, analgesia con paracetamol para el dolor torácico, kinesioterapia respiratoria y profilaxis con HBPM."
+    },
+    {
+        especialidad: "Gastroenterología / Hepatología",
+        titulo: "Paciente masculino de 53 años",
+        descripcion: "Consulta por marcado aumento del perímetro abdominal con sensación de pesadez en hipocondrio derecho, ictericia escleral, febrícula (37.9°C) y dolor abdominal difuso en las últimas 24 horas.",
+        vitales: "TA 105/65 mmHg · FC 98 lpm · FR 18 rpm · SatO2 97% · T 37.9°C",
+        antecedentes: "Cirrosis hepática Child-Pugh B por consumo crónico de alcohol. Sin hemorragia digestiva previa.",
+        fisiopatologia: "La fibrosis hepática y distorsión de la arquitectura vascular generan hipertensión portal sinusoidal sostenida. La vasodilatación esplácnica inducida por óxido nítrico disminuye el volumen arterial circulante eficaz, activando el SRAA y el sistema simpático con retención ávida de sodio y agua (ascitis). La disminución de la función de filtro reticuloendotelial y el aumento de la permeabilidad intestinal facilitan la translocación de bacterias entéricas a los ganglios linfáticos mesentéricos y al líquido ascítico (infección monobacteriana espontánea).",
+        diagnostico: "<strong>Diagnóstico Presuntivo:</strong> Cirrosis hepática descompensada con Ascitis y sospecha clínica de Peritonitis Bacteriana Espontánea (PBE).<br><strong>Conducta Diagnóstica Inmediata:</strong> Paracentesis diagnóstica con recuento celular (positivo si PMN &gt; 250/mm³) y cultivo de líquido en frascos de hemocultivo.<br><strong>Diferenciales:</strong> Peritonitis secundaria (polimicrobiana por perforación), Carcinomatosis peritoneal, Ascitis quilosa o tuberculosa.",
+        tratamiento: "<strong>Tratamiento Médico:</strong><br>• Cefalosporina de 3ra generación: Cefotaxima 2g c/8h IV o Ceftriaxona 2g/día IV por 5 días.<br>• <strong>Albúmina Humana IV:</strong> 1.5 g/kg dentro de las primeras 6 horas y 1 g/kg al día 3, para prevenir el síndrome hepatorrenal y reducir la mortalidad.<br>• Restricción moderada de sodio (2g sal/día). Suspender transitoriamente diuréticos si hay deterioro de función renal.<br>• Profilaxis secundaria de por vida con Norfloxacino 400 mg/día o TMS."
+    },
+    {
+        especialidad: "Nefrología / Medicina Interna",
+        titulo: "Paciente femenina de 71 años",
+        descripcion: "Familiares refieren que en los últimos 4 días tuvo diarrea acuosa profusa de 6-8 deposiciones diarias. Desde hace 24 horas no orina (anuria) y se encuentra desorientada en tiempo y espacio.",
+        vitales: "TA 85/55 mmHg · FC 112 lpm (filiforme) · FR 20 rpm · SatO2 96% · Mucosas secas",
+        antecedentes: "Hipertensión y gonartrosis tratada con Enalapril 20 mg/día, Hidroclorotiazida y Diclofenac 75 mg c/12h.",
+        fisiopatologia: "Hipovolemia severa por pérdidas gastrointestinales que causa disminución del gasto cardíaco y del flujo plasmático renal. La administración de Enalapril (bloquea la vasoconstricción de la arteriola eferente) sumada al Diclofenac (inhibe la síntesis de prostaglandinas que vasodilatan la arteriola aferente) anula por completo los mecanismos compensadores de autorregulación hemodinámica intraglomerular, provocando una caída drástica de la presión de filtración y necrosis tubular aguda isquémica inminente.",
+        diagnostico: "<strong>Diagnóstico Presuntivo:</strong> Injuria Renal Aguda (IRA) prerrenal con riesgo de transformación a Parenquimatosa (NTA isquémica).<br><strong>Diferenciales:</strong> Nefritis intersticial inmunoalérgica por AINEs, Uropatía obstructiva posrenal aguda (globo vesical), Shock distributivo séptico.",
+        tratamiento: "<strong>Conducta Inmediata:</strong><br>• Suspensión inmediata de todos los fármacos nefrotóxicos y moduladores hemodinámicos (Enalapril, Diuréticos, AINEs).<br>• Resucitación con cristaloides isotónicos (Solución Ringer Lactato o Solución Fisiológica) guiada por parámetros dinámicos de volemia.<br>• Colocación de sonda vesical para monitoreo horario del débito urinario.<br>• Laboratorio urgente con sedimento urinario, sodio y creatinina en orina para calcular FENa (FENa &lt; 1% orienta a prerrenal; &gt; 2% a NTA)."
+    }
+];
+
+const DATOS_FARMACOLOGIA_2 = {
+    beta_bloqueantes: {
+        titulo: "Betabloqueantes (Atenolol, Propranolol, Bisoprolol, Carvedilol, Metoprolol)",
+        subtitulo: "Sistema Cardiovascular / SNA Simpático",
+        dinamia: "Antagonismo competitivo y selectivo o no selectivo de receptores adrenérgicos β1 y β2 cardíacos y vasculares. Provocan efectos cronotrópico negativo (FC ↓), inotrópico negativo (contractilidad ↓), dromotrópico negativo (conducción AV ↓) y batmotrópico negativo. Inhiben la liberación de renina por las células yuxtaglomerulares renales.",
+        cinetica: "<strong>Absorción:</strong> Alta biodisponibilidad VO pero con extenso primer paso hepático.<br><strong>Liposolubilidad:</strong> Propranolol muy liposoluble (atraviesa barrera hematoencefálica y placenta); Atenolol hidrosoluble (excreción renal casi exclusiva).<br><strong>Metabolismo:</strong> Hepático oxidativo (CYP2D6). Semivida: Propranolol 3-5h, Bisoprolol 10-12h.",
+        usos: "• Insuficiencia Cardíaca con FEVI reducida (Bisoprolol, Carvedilol, Metoprolol succinato - reducen mortalidad).<br>• Cardiopatía isquémica post-IAM y angina de pecho.<br>• Control de frecuencia en Fibrilación Auricular y arritmias supraventriculares.<br>• Hipertensión arterial en pacientes con co-indicación.<br>• Profilaxis de migraña y temblor esencial (Propranolol).",
+        adversos: "<strong>Efectos Adversos:</strong> Bradicardia sinusal, bloqueo auriculoventricular, broncoespasmo (especialmente los no cardioselectivos en asmáticos), frialdad distal de extremidades (fenómeno de Raynaud), astenia y disfunción eréctil. Enmascaran síntomas adrenérgicos de hipoglucemia en diabéticos.<br><strong>Contraindicaciones:</strong> Asma bronquial activa, bloqueo AV de 2° o 3° grado sin marcapasos, bradicardia severa (&lt; 50 lpm), shock cardiogénico e insuficiencia cardíaca aguda descompensada."
+    },
+    ieca_ara2: {
+        titulo: "IECA (Enalapril, Ramipril) y ARA II (Losartán, Valsartán, Telmisartán)",
+        subtitulo: "Sistema Renina-Angiotensina-Aldosterona (SRAA)",
+        dinamia: "<strong>IECA:</strong> Inhiben competitivamente a la Enzima Convertidora de Angiotensina (ECA/cininasa II), impidiendo la conversión de Angiotensina I a Angiotensina II y degradación de bradicininas.<br><strong>ARA II:</strong> Bloquean de forma competitiva y altamente selectiva los receptores AT1 de Angiotensina II. Ambos disminuyen la resistencia vascular periférica, la retención de agua/sodio por aldosterona y el remodelado ventricular patológico.",
+        cinetica: "<strong>Enalapril:</strong> Es un profármaco que requiere hidrólisis hepática a Enalaprilat. Excreción renal predominante (requiere ajuste en insuficiencia renal).<br><strong>Losartán:</strong> Metabolismo hepático a metabolito activo EXP3174 (10 a 40 veces más potente). Semivida de ARA II permite dosificación cada 12 o 24 horas.",
+        usos: "• Hipertensión arterial esencial (fármacos de primera línea).<br>• Insuficiencia cardíaca congestiva con fracción de eyección reducida (reducen remodelado y morbimortalidad).<br>• Nefroprotección en Diabetes Mellitus y enfermedad renal crónica con proteinuria (dilatación de arteriola eferente que baja presión intraglomerular).<br>• Post-infarto agudo de miocardio.",
+        adversos: "<strong>Efectos Adversos:</strong> Tos seca persistente (IECA, por acumulación de bradicininas en vía aérea; no ocurre en ARA II), hiperpotasemia, hipotensión de primera dosis, deterioro de la función renal si hay hipovolemia, y angioedema (raro pero potencialmente mortal).<br><strong>Contraindicaciones Absolutas:</strong> Embarazo (teratogénicos en 2do y 3er trimestre: disgenesia renal fetal y oligohidramnios), estenosis bilateral de arteria renal o estenosis de arteria de riñón único, antecedentes de angioedema."
+    },
+    antibioticos_beta: {
+        titulo: "Betalactámicos (Amoxicilina, Cefalosporinas 1°-4°, Meropenem, Pip/Tazo)",
+        subtitulo: "Antimicrobianos bactericidas tiempo-dependientes",
+        dinamia: "Inhiben la síntesis de la pared bacteriana de peptidoglicano mediante unión covalente e inactivación irreversible de las PBPs (Penicillin-Binding Proteins / transpeptidasas). Esto desestabiliza la pared osmótica e induce lisis bacteriana autolítica. Efecto bactericida dependiente del tiempo en que la concentración libre supera la CIM (T &gt; CIM).",
+        cinetica: "Distribución amplia en líquidos corporales. Cefalosporinas de 3ra generación (Ceftriaxona, Cefotaxima) y Carbapenemes cruzan adecuadamente la barrera hematoencefálica con meninges inflamadas. Eliminación renal casi universal por filtración y secreción tubular activa (excepción: Ceftriaxona que tiene excreción biliar importante). Semivida corta (1-2h), requiriendo dosis frecuentes o infusión continua.",
+        usos: "• Amoxi-Clavulánico: Infecciones respiratorias altas y bajas, mordeduras.<br>• Cefalexina / Cefazolina: Infecciones de piel y partes blandas (S. aureus sensible) y profilaxis quirúrgica.<br>• Ceftriaxona: Meningitis bacteriana, neumonía grave, pielonefritis, gonorrea.<br>• Meropenem y Pip/Tazo: Infecciones nosocomiales graves, neutropenia febril, sepsis polimicrobiana abdominal (cubren Pseudomonas aeruginosa).",
+        adversos: "<strong>Efectos Adversos:</strong> Reacciones de hipersensibilidad (exantemas cutáneos hasta anafilaxia grave y síndrome de Stevens-Johnson), diarrea asociada a antibióticos y colitis pseudomembranosa por Clostridioides difficile, nefritis intersticial aguda, convulsiones a altas dosis de carbapenemes en insuficiencia renal.<br><strong>Contraindicación:</strong> Alergia severa previa demostrada al grupo betalactámico."
+    },
+    aines: {
+        titulo: "AINEs y Coxibs (Ibuprofeno, Naproxeno, Diclofenac, Ketorolac, Celecoxib)",
+        subtitulo: "Analgésicos, Antiinflamatorios y Antipiréticos",
+        dinamia: "Inhibición de la enzima Ciclooxigenasa (COX-1 constitutiva y/o COX-2 inducible), bloqueando la biosíntesis de prostaglandinas inflamatorias (PGE2, PGI2) y tromboxano A2 (TXA2). Suprimen la sensibilización de nociceptores periféricos y reducen la respuesta pirógena en el hipotálamo.",
+        cinetica: "Rápida y completa absorción oral. Muy alta unión a proteínas plasmáticas (albúmina &gt; 98%), con potencial de desplazamiento de otros fármacos como anticoagulantes orales. Metabolismo hepático vía citocromo P450 y excreción urinaria de metabolitos conjugados.",
+        usos: "• Dolor inflamatorio agudo musculoesquelético, odontalgia, dismenorrea primaria.<br>• Tratamiento sintomático de cefaleas tensionales y migraña leve.<br>• Enfermedades reumáticas inflamatorias (artritis reumatoidea, osteoartritis, espondiloartritis).<br>• Cierre farmacológico del conducto arterioso permeable en neonatos (Indometacina / Ibuprofeno IV).",
+        adversos: "<strong>Gastrointestinales:</strong> Gastritis erosiva, úlceras pépticas y hemorragia digestiva alta (por pérdida de PGE2 protectora de mucosa).<br><strong>Renales:</strong> Injuria renal aguda por vasoconstricción de arteriola aferente, retención de sodio/agua, empeoramiento de HTA e hiperpotasemia.<br><strong>Cardiovasculares:</strong> Aumento de riesgo de trombosis e IAM (especialmente con Coxibs al inhibir prostaciclina endotelial sin bloquear TXA2 plaquetario).<br><strong>Contraindicaciones:</strong> Úlcera péptica activa, insuficiencia renal moderada-severa, insuficiencia cardíaca descompensada y tercer trimestre de gestación."
+    },
+    opioides: {
+        titulo: "Opioides Mayores y Menores (Morfina, Fentanilo, Tramadol, Oxicodona, Naloxona)",
+        subtitulo: "Analgésicos Centrales Narcóticos",
+        dinamia: "Agonistas sobre receptores opioides acoplados a proteína Gi/o (principalmente receptor μ / Mu, además de κ y δ) en asta dorsal medular, tronco encefálico y sistema límbico. Abren canales de K+ e inhiben canales de Ca2+ voltaje-dependientes, bloqueando la liberación de sustancia P y glutamato en la sinapsis del dolor.",
+        cinetica: "Morfina sufre extenso metabolismo de primer paso (biodisponibilidad VO ~25-30%); su metabolito morfina-6-glucurónido es activo y se acumula en falla renal. Fentanilo altamente liposoluble, ideal para vía transdérmica, transmucosa o IV en anestesia. Tramadol requiere metabolismo por CYP2D6 para activar su metabolito O-desmetiltramadol (agonismo opioide + inhibición de recaptación de serotonina y noradrenalina).",
+        usos: "• Dolor oncológico severo y cuidados paliativos.<br>• Dolor postoperatorio moderado a severo.<br>• Dolor agudo por infarto agudo de miocardio y edema agudo de pulmón (Morfina reduce precarga por venodilatación).<br>• Sedoanalgesia en pacientes críticos ventilados (Fentanilo).<br>• Antídoto de intoxicación: <strong>Naloxona</strong> (antagonista puro de receptores μ).",
+        adversos: "<strong>Efectos Adversos:</strong> Sedación, depresión respiratoria dosis-dependiente (principal causa de letalidad), constipación tenaz (no genera tolerancia), náuseas y vómitos por estimulación del área postrema, prurito por liberación de histamina, miosis pupilar en punta de alfiler, tolerancia y dependencia física.<br><strong>Precauciones:</strong> EPOC severo, hipertensión endocraneana, insuficiencia hepática o renal."
+    },
+    ansioliticos: {
+        titulo: "Benzodiazepinas (Diazepam, Clonazepam, Alprazolam, Lorazepam, Midazolam)",
+        subtitulo: "Psicofármacos Moduladores GABAérgicos",
+        dinamia: "Moduladores alostéricos positivos del receptor GABA-A en el SNC. Incrementan la frecuencia de apertura de los canales de cloro activados por GABA, hiperpolarizando la membrana neuronal e induciendo una potente inhibición sináptica. Generan 5 efectos farmacológicos: ansiolítico, sedante/hipnótico, miorrelajante, anticonvulsivante y amnesia anterógrada.",
+        cinetica: "Alta liposolubilidad y paso rápido al SNC. Se dividen según vida media:<br>• Larga (&gt; 24h): Diazepam, Clonazepam (metabolitos activos de larga duración).<br>• Intermedia (10-20h): Lorazepam, Alprazolam (Lorazepam se glucuroniza directamente sin depender de CYP hepático, seguro en ancianos y hepatópatas).<br>• Corta/Ultracorta (&lt; 6h): Midazolam (ideal para inducción anestésica y crisis convulsivas agudas).",
+        usos: "• Crisis de angustia y trastorno de pánico (Alprazolam, Clonazepam).<br>• Trastornos de ansiedad generalizada (ciclos cortos).<br>• Estatus epiléptico y convulsiones agudas (Diazepam IV / Lorazepam IV).<br>• Insomnio transitorio.<br>• Síndrome de abstinencia alcohólica (Diazepam).<br>• Antagonista específico en sobredosis: <strong>Flumazenil</strong>.",
+        adversos: "<strong>Efectos Adversos:</strong> Sedación residual diurna, ataxia, enlentecimiento psicomotor, caídas y fracturas en ancianos, amnesia anterógrada, desarrollo rápido de tolerancia a efectos hipnóticos y marcada dependencia física/psíquica con síndrome de abstinencia tras suspensión brusca.<br><strong>Contraindicaciones:</strong> Miastenia gravis, apnea obstructiva del sueño, insuficiencia respiratoria severa, glaucoma de ángulo estrecho."
+    },
+    antidepresivos: {
+        titulo: "ISRS (Sertralina, Escitalopram, Fluoxetina, Paroxetina, Citalopram)",
+        subtitulo: "Inhibidores Selectivos de la Recaptación de Serotonina",
+        dinamia: "Bloquean con alta afinidad y selectividad el transportador de recaptación de serotonina (SERT / 5-HTT) en la terminal presináptica. Esto incrementa de inmediato la disponibilidad de serotonina (5-HT) en la hendidura sináptica, desencadenando con el paso de las semanas (2 a 4 semanas) una desensibilización de autorreceptores 5-HT1A somatodendríticos y remodelado neurotrófico (BDNF).",
+        cinetica: "Buena biodisponibilidad por vía oral. Fluoxetina tiene la semivida más prolongada (su metabolito norfluoxetina persiste hasta 7-14 días), con menor riesgo de síndrome de discontinuación. Escitalopram es el más selectivo sobre SERT. Fluoxetina y Paroxetina son potentes inhibidores del citocromo CYP2D6 (interacción con betabloqueantes y tamoxifeno).",
+        usos: "• Trastorno Depresivo Mayor (fármacos de primera elección).<br>• Trastorno de Ansiedad Generalizada (TAG) y Trastorno de Pánico.<br>• Trastorno Obsesivo Compulsivo (TOC - requieren dosis más altas).<br>• Fobia Social y Trastorno por Estrés Postraumático (TEPT).<br>• Bulimia nerviosa (Fluoxetina aprobada a dosis de 60 mg).",
+        adversos: "<strong>Efectos Adversos:</strong> Disfunción sexual (disminución de la libido, anorgasmia y retraso eyaculatorio en hasta 40-50% de pacientes), náuseas, vómitos, insomnio o somnolencia inicial, ganancia de peso (más marcada con Paroxetina), hiponatremia por SIADH en adultos mayores.<br><strong>Riesgo Crítico:</strong> Síndrome Serotoninérgico si se asocian con IMAO, Tramadol o Linezolid (hipertermia, mioclonías, rigidez, hiperreflexia y confusión mental)."
+    }
+};
+
+const RESPUESTAS_TP_SALUD_PUBLICA = {
+    tasa_mortalidad: {
+        titulo: "Tasas de Mortalidad Infantil y Materna (Indicadores de Salud)",
+        contenido: `📊 ESTRUCTURA TÉCNICA PARA TRABAJO PRÁCTICO:
+
+1. DEFINICIÓN DEL INDICADOR:
+• Tasa de Mortalidad Infantil (TMI): Relaciona el número de defunciones de menores de 1 año de edad ocurridas en una población durante un año determinado, con el total de nacidos vivos registrados en el mismo período.
+• Se expresa habitualmente cada 1.000 nacidos vivos (NV).
+
+2. COMPONENTES Y FÓRMULAS:
+• TMI = (Total de defunciones de < 1 año / Total de Nacidos Vivos) × 1.000
+• Componente Neonatal (0 a 27 días): Vinculado a factores biológicos, control del embarazo y atención perinatal hospitalaria.
+• Componente Postneonatal (28 días a 11 meses): Fuertemente condicionado por factores socioeconómicos, nutrición, saneamiento básico y acceso a vacunación.
+• Razón de Mortalidad Materna (RMM) = (Muertes maternas por causas obstétricas / Nacidos Vivos) × 100.000 NV.
+
+3. INTERPRETACIÓN SANITARIA Y DE GESTIÓN:
+• La TMI es el indicador sociosanitario más sensible del nivel de desarrollo de una comunidad.
+• Si predomina la mortalidad postneonatal, la intervención prioritaria radica en agua potable, vivienda digna y controles de APS en el centro de salud. Si predomina la neonatal, se deben fortalecer las maternidades y la regionalización perinatológica.
+
+4. ESTRATEGIA COMUNITARIA (APS):
+• Captación precoz de embarazadas antes de las 13 semanas.
+• Promoción y protección de la lactancia materna exclusiva hasta los 6 meses.
+• Cumplimiento del Calendario Nacional de Vacunación.`
+    },
+    incidencia_prevalencia: {
+        titulo: "Prevalencia vs. Incidencia Acumulada",
+        contenido: `📊 ESTRUCTURA TÉCNICA PARA TRABAJO PRÁCTICO:
+
+1. DEFINICIONES OPERATIVAS:
+• Incidencia: Mide la aparición de CASOS NUEVOS de una enfermedad en una población susceptible en un período determinado. Cuantifica el RIESGO o VELOCIDAD de enfermar.
+• Prevalencia: Mide el número TOTAL de casos (antiguos + nuevos) presentes en un momento o período específico. Mide la CARGA de la enfermedad.
+
+2. FÓRMULAS DE CÁLCULO:
+• Incidencia Acumulada (IA) = (Casos nuevos en el período t / Población susceptible al inicio de t) × 10^k
+• Tasa o Densidad de Incidencia = (Casos nuevos / Suma de personas-tiempo de observación) × 10^k
+• Prevalencia de Punto (P) = (Total de personas enfermas en el punto t / Población total en el punto t) × 100
+
+3. RELACIÓN CLÍNICO-EPIDEMIOLÓGICA:
+• Prevalencia ≈ Incidencia × Duración media de la enfermedad (P = I × D).
+• Una nueva droga que cura la enfermedad disminuye la prevalencia.
+• Un nuevo tratamiento que prolonga la sobrevida sin curar aumenta la prevalencia (ej: terapia antirretroviral en VIH).
+
+4. APLICACIÓN PRÁCTICA EN EL TP:
+• Para evaluar el impacto de un factor de riesgo: Utilizar Incidencia (Estudios de Cohorte).
+• Para planificar recursos hospitalarios y fármacos crónicos: Utilizar Prevalencia.`
+    },
+    niveles_prevencion: {
+        titulo: "Niveles de Prevención de Leavell & Clark",
+        contenido: `📊 ESTRUCTURA TÉCNICA PARA TRABAJO PRÁCTICO:
+
+1. ESQUEMA DE HISTORIA NATURAL DE LA ENFERMEDAD:
+• Período Prepatogénico: Interacción entre Huésped, Agente y Medio Ambiente (Tríada Ecológica).
+• Período Patogénico: Desde el estímulo inicial, pasando por el horizonte clínico (etapa subclínica), hasta los signos/síntomas y el desenlace (cura, cronicidad, secuela o muerte).
+
+2. NIVELES DE INTERVENCIÓN SANITARIA:
+• Prevención Primaria (Período Prepatogénico):
+  - Promoción de la salud: Educación sanitaria, saneamiento ambiental, actividad física.
+  - Protección específica: Inmunizaciones (vacunas), quimioprofilaxis, fluoración del agua.
+• Prevención Secundaria (Período Patogénico inicial):
+  - Diagnóstico precoz y Tratamiento oportuno: Tamizajes/Screening masivo (PAP, Mamografía, FODA, Test rápido de VIH, medición de TA).
+  - Limitación del daño: Evitar que la patología progrese a secuelas irreversibles.
+• Prevención Terciaria (Período Patogénico avanzado):
+  - Rehabilitación física, psicológica y reinserción social laboral (ej: terapia post-ACV, kinesiología).
+• Prevención Cuaternaria (Moderno):
+  - Evitar el sobretratamiento médico, sobrediagnóstico y la iatrogenia farmacológica.`
+    },
+    aps_alma_ata: {
+        titulo: "Atención Primaria de la Salud (Alma-Ata / APS)",
+        contenido: `📊 ESTRUCTURA TÉCNICA PARA TRABAJO PRÁCTICO:
+
+1. DECLARACIÓN DE ALMA-ATA (1978):
+• Definición: La asistencia sanitaria esencial basada en métodos y tecnologías prácticos, científicamente fundados y socialmente aceptables, puesta al alcance de todos los individuos y familias de la comunidad mediante su plena participación.
+• Lema histórico: "Salud para todos en el año 2000".
+
+2. OCHO ELEMENTOS ESENCIALES DE LA APS:
+1) Educación sobre los principales problemas de salud y métodos de prevención.
+2) Promoción del suministro de alimentos y nutrición adecuada.
+3) Abastecimiento de agua potable y saneamiento básico.
+4) Asistencia materno-infantil y planificación familiar.
+5) Inmunización contra las principales enfermedades infecciosas.
+6) Prevención y control de enfermedades endémicas locales.
+7) Tratamiento apropiado de las enfermedades y traumatismos comunes.
+8) Suministro de medicamentos esenciales.
+
+3. ENFOQUES: APS INTEGRAL VS. SELECTIVA:
+• APS Integral: Filosofía de justicia social y derecho universal, transformación de determinantes sociales de la salud.
+• APS Selectiva: Paquete focalizado de bajo costo para países en desarrollo (estrategia GOBI-FFF: Crecimiento, Rehidratación oral, Lactancia, Inmunizaciones).`
+    },
+    transicion_epidemiologica: {
+        titulo: "Transición Epidemiológica y Demográfica",
+        contenido: `📊 ESTRUCTURA TÉCNICA PARA TRABAJO PRÁCTICO:
+
+1. TRANSICIÓN DEMOGRÁFICA:
+• Paso de un régimen demográfico tradicional (alta natalidad y alta mortalidad) a uno moderno (baja natalidad y baja mortalidad).
+• Genera el envejecimiento progresivo de la pirámide poblacional (estrechamiento de la base y engrosamiento de la cúspide).
+
+2. TRANSICIÓN EPIDEMIOLÓGICA (Modelo de Omran):
+• Desplazamiento del patrón predominante de morbimortalidad:
+  - De las enfermedades infectocontagiosas, perinatales y por desnutrición...
+  - Hacia las Enfermedades No Transmisibles (ENT) y de causa externa (Cardiovasculares, Cáncer, Diabetes, Traumatismos por tránsito).
+
+3. DESAFÍOS SANITARIOS EN AMÉRICA LATINA:
+• "Transición Incompleta o Doble Carga de Enfermedad":
+  Convivencia simultánea de enfermedades de la pobreza (Chagas, Dengue, TBC) con patologías crónico-degenerativas propias de países desarrollados.`
+    }
+};
+
+let indiceCasoClinicoActual = 0;
+
 function obtenerCuentasGuardadas() {
     try {
         const data = localStorage.getItem(ACCOUNTS_STORAGE_KEY);
-        return data ? JSON.parse(data) : [];
+        let cuentas = data ? JSON.parse(data) : [];
+        if (!Array.isArray(cuentas)) cuentas = [];
+        
+        // Garantizar que la cuenta de Iván ('ivi' / '1234') esté siempre presente
+        const idxIvan = cuentas.findIndex(c => 
+            c.id === CUENTA_PREDEFINIDA_IVAN.id || 
+            (c.username && c.username.toLowerCase() === "ivi") || 
+            (c.apodo && c.apodo.toLowerCase() === "iván") || 
+            (c.apodo && c.apodo.toLowerCase() === "ivan")
+        );
+        
+        if (idxIvan === -1) {
+            cuentas.unshift({ ...CUENTA_PREDEFINIDA_IVAN });
+        } else {
+            cuentas[idxIvan] = {
+                ...CUENTA_PREDEFINIDA_IVAN,
+                ...cuentas[idxIvan],
+                username: "ivi",
+                fotoDataUrl: "ivan_doctor.png",
+                pin: cuentas[idxIvan].pin || "1234",
+                carrera: "Medicina"
+            };
+        }
+        return cuentas;
     } catch {
-        return [];
+        return [{ ...CUENTA_PREDEFINIDA_IVAN }];
     }
 }
 
@@ -2605,6 +2968,7 @@ function cargarPerfilUsuario() {
         }
     } catch {}
     actualizarUIPerfilUsuario();
+    actualizarUIAuthHeader();
 }
 
 function guardarPerfilUsuario() {
@@ -2612,6 +2976,7 @@ function guardarPerfilUsuario() {
         localStorage.setItem(ACTIVE_USER_STORAGE_KEY, JSON.stringify(perfilUsuario));
     } catch {}
     actualizarUIPerfilUsuario();
+    actualizarUIAuthHeader();
 }
 
 function actualizarUIPerfilUsuario() {
@@ -2638,7 +3003,7 @@ function actualizarUIPerfilUsuario() {
         dom.dueloGuestAlert.classList.toggle("hidden", !perfilUsuario.esInvitado);
     }
     if (dom.dueloAuthModalBtn) {
-        dom.dueloAuthModalBtn.textContent = perfilUsuario.esInvitado ? "🔐 Crear Cuenta" : "👤 Mi Perfil";
+        dom.dueloAuthModalBtn.textContent = perfilUsuario.esInvitado ? "🔐 Iniciar Sesión / Registrarse" : "👤 Mi Perfil";
     }
 
     if (dom.dueloJoinNamePreview) {
@@ -2646,6 +3011,72 @@ function actualizarUIPerfilUsuario() {
     }
     if (dom.dueloJoinAvatarPreview) {
         dom.dueloJoinAvatarPreview.innerHTML = renderAvatarHTML(perfilUsuario, 0, false, 24);
+    }
+}
+
+function actualizarUIAuthHeader() {
+    const tieneSesion = !perfilUsuario.esInvitado && perfilUsuario.apodo && perfilUsuario.apodo !== "Invitado";
+
+    // Header Desktop
+    if (dom.topNavAuthGuest) dom.topNavAuthGuest.classList.toggle("hidden", tieneSesion);
+    if (dom.topNavAuthUser) dom.topNavAuthUser.classList.toggle("hidden", !tieneSesion);
+
+    // Drawer Mobile
+    if (dom.drawerAuthGuest) dom.drawerAuthGuest.classList.toggle("hidden", tieneSesion);
+    if (dom.drawerAuthUser) dom.drawerAuthUser.classList.toggle("hidden", !tieneSesion);
+
+    if (tieneSesion) {
+        const apodo = perfilUsuario.apodo || "Usuario";
+        const carrera = perfilUsuario.carrera || (apodo.toLowerCase().includes("iv") ? "Medicina" : "Estudiante");
+
+        if (dom.userHeaderAvatar) {
+            if (perfilUsuario.fotoDataUrl) {
+                dom.userHeaderAvatar.innerHTML = `<img src="${perfilUsuario.fotoDataUrl}" alt="${apodo}" class="user-header-avatar-img">`;
+            } else {
+                dom.userHeaderAvatar.textContent = perfilUsuario.avatar || "🩺";
+            }
+        }
+        if (dom.userHeaderName) {
+            dom.userHeaderName.textContent = apodo;
+        }
+
+        if (dom.userDropdownName) dom.userDropdownName.textContent = apodo;
+        if (dom.userDropdownCareer) dom.userDropdownCareer.textContent = carrera;
+
+        const drawerName = document.getElementById("drawerUserName");
+        const drawerCareer = document.getElementById("drawerUserCareer");
+        const drawerAvatar = document.getElementById("drawerUserAvatar");
+        if (drawerName) drawerName.textContent = apodo;
+        if (drawerCareer) drawerCareer.textContent = carrera;
+        if (drawerAvatar) {
+            if (perfilUsuario.fotoDataUrl) {
+                drawerAvatar.innerHTML = `<img src="${perfilUsuario.fotoDataUrl}" alt="${apodo}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+            } else {
+                drawerAvatar.textContent = perfilUsuario.avatar || "🩺";
+            }
+        }
+
+        // Modo Medicina para Iván
+        const esIvanMedicina = (perfilUsuario.username && perfilUsuario.username.toLowerCase() === "ivi") ||
+            apodo.toLowerCase().includes("iv") ||
+            (carrera && carrera.toLowerCase().includes("med"));
+
+        if (dom.panelMedicinaIvan) {
+            dom.panelMedicinaIvan.classList.toggle("hidden", !esIvanMedicina);
+        }
+        if (dom.userDropdownMedBtn) {
+            dom.userDropdownMedBtn.classList.toggle("hidden", !esIvanMedicina);
+        }
+        if (esIvanMedicina) {
+            asegurarMateriasMedicinaIvan();
+        }
+    } else {
+        if (dom.panelMedicinaIvan) {
+            dom.panelMedicinaIvan.classList.add("hidden");
+        }
+        if (dom.userDropdownMedBtn) {
+            dom.userDropdownMedBtn.classList.add("hidden");
+        }
     }
 }
 
@@ -2658,6 +3089,9 @@ function abrirModalAuth(pestaña = "register") {
     }
     if (dom.authRegAvatarPreview) {
         dom.authRegAvatarPreview.innerHTML = renderAvatarHTML(perfilUsuario, 0, false, 40);
+    }
+    if (dom.authLoginUserInput && pestaña === "login") {
+        setTimeout(() => dom.authLoginUserInput.focus(), 80);
     }
     dom.authAccountModal.showModal();
 }
@@ -2681,7 +3115,7 @@ function poblarSelectCuentasAuth() {
     cuentas.forEach(c => {
         const opt = document.createElement("option");
         opt.value = c.id;
-        opt.textContent = `${c.avatar || "👤"} ${c.apodo} (${c.victorias || 0} 👑)`;
+        opt.textContent = `${c.avatar || "👤"} ${c.apodo} (${c.carrera || "Estudiante"})`;
         dom.authLoginSelect.appendChild(opt);
     });
 }
@@ -2692,7 +3126,7 @@ function crearOActualizarCuenta(apodo, avatar, tipoAvatar, fotoDataUrl, pin, ema
         return null;
     }
     if (!pin || pin.length !== 4 || !/^\d{4}$/.test(pin)) {
-        mostrarToast("⚠️ El PIN de seguridad debe contener exactamente 4 números.", "aviso");
+        mostrarToast("⚠️ La contraseña o PIN debe contener 4 números.", "aviso");
         return null;
     }
 
@@ -2702,7 +3136,9 @@ function crearOActualizarCuenta(apodo, avatar, tipoAvatar, fotoDataUrl, pin, ema
     if (!cuenta) {
         cuenta = {
             id: "acc_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6),
+            username: apodo.trim().toLowerCase().replace(/\s+/g, ""),
             apodo: apodo.trim(),
+            carrera: apodo.toLowerCase().includes("iv") ? "Medicina" : "Universidad",
             avatar: avatar || "🦁",
             tipoAvatar: tipoAvatar || "emoji",
             fotoDataUrl: fotoDataUrl || "",
@@ -2735,7 +3171,9 @@ function crearOActualizarCuenta(apodo, avatar, tipoAvatar, fotoDataUrl, pin, ema
     // Activar perfil
     perfilUsuario.esInvitado = false;
     perfilUsuario.id = cuenta.id;
+    perfilUsuario.username = cuenta.username || cuenta.apodo;
     perfilUsuario.apodo = cuenta.apodo;
+    perfilUsuario.carrera = cuenta.carrera || "";
     perfilUsuario.avatar = cuenta.avatar;
     perfilUsuario.tipoAvatar = cuenta.tipoAvatar;
     perfilUsuario.fotoDataUrl = cuenta.fotoDataUrl;
@@ -2748,23 +3186,36 @@ function crearOActualizarCuenta(apodo, avatar, tipoAvatar, fotoDataUrl, pin, ema
 
     guardarPerfilUsuario();
     if (dom.authAccountModal) dom.authAccountModal.close();
+    mostrarToast(`✨ ¡Cuenta de ${cuenta.apodo} activada con éxito!`, "exito");
     return cuenta;
 }
 
-function iniciarSesionConPin(cuentaId, pinIngresado) {
+function iniciarSesionConPin(identificador, pinIngresado) {
     const cuentas = obtenerCuentasGuardadas();
-    const cuenta = cuentas.find(c => c.id === cuentaId);
-    if (!cuenta || cuenta.pin !== String(pinIngresado).trim()) {
+    const identClean = String(identificador || "").trim().toLowerCase();
+    const pinClean = String(pinIngresado || "").trim();
+
+    const cuenta = cuentas.find(c =>
+        c.id === identificador ||
+        (c.username && c.username.toLowerCase() === identClean) ||
+        (c.apodo && c.apodo.toLowerCase() === identClean) ||
+        (c.email && c.email.toLowerCase() === identClean)
+    );
+
+    if (!cuenta || String(cuenta.pin).trim() !== pinClean) {
         if (dom.authLoginError) dom.authLoginError.classList.remove("hidden");
+        mostrarToast("⚠️ Usuario o contraseña incorrectos. Para Iván ingresá 'ivi' y clave '1234'.", "aviso");
         return false;
     }
 
     perfilUsuario.esInvitado = false;
     perfilUsuario.id = cuenta.id;
+    perfilUsuario.username = cuenta.username || "ivi";
     perfilUsuario.apodo = cuenta.apodo;
     perfilUsuario.avatar = cuenta.avatar;
     perfilUsuario.tipoAvatar = cuenta.tipoAvatar;
     perfilUsuario.fotoDataUrl = cuenta.fotoDataUrl;
+    perfilUsuario.carrera = cuenta.carrera || "Medicina";
     perfilUsuario.victorias = cuenta.victorias;
     perfilUsuario.puntosTotales = cuenta.puntosTotales;
     perfilUsuario.maxRachaHistorica = cuenta.maxRachaHistorica;
@@ -2774,13 +3225,28 @@ function iniciarSesionConPin(cuentaId, pinIngresado) {
 
     guardarPerfilUsuario();
     if (dom.authAccountModal) dom.authAccountModal.close();
+
+    const esIvanMedicina = (cuenta.username && cuenta.username.toLowerCase() === "ivi") ||
+        (cuenta.apodo && cuenta.apodo.toLowerCase().includes("iv")) ||
+        cuenta.carrera === "Medicina";
+
+    if (esIvanMedicina) {
+        asegurarMateriasMedicinaIvan();
+        mostrarAnimacionBienvenidaIvan();
+        mostrarToast("🩺 ¡Bienvenido, Dr. Iván! Sesión iniciada y Modo Medicina activado.", "exito");
+    } else {
+        mostrarToast(`👋 ¡Bienvenido de nuevo, ${cuenta.apodo}!`, "exito");
+    }
+
     return true;
 }
 
 function cerrarSesionPerfil() {
     perfilUsuario.esInvitado = true;
     perfilUsuario.id = "guest_" + Math.random().toString(36).slice(2, 8);
+    perfilUsuario.username = "invitado";
     perfilUsuario.apodo = "Invitado";
+    perfilUsuario.carrera = "";
     perfilUsuario.avatar = "🦁";
     perfilUsuario.tipoAvatar = "emoji";
     perfilUsuario.fotoDataUrl = "";
@@ -2789,6 +3255,8 @@ function cerrarSesionPerfil() {
     perfilUsuario.pin = null;
     perfilUsuario.email = "";
     guardarPerfilUsuario();
+    if (dom.userHeaderDropdown) dom.userHeaderDropdown.classList.add("hidden");
+    mostrarToast("🔒 Sesión cerrada. Has vuelto al modo visitante.", "info");
 }
 
 function recuperarPin() {
@@ -2797,19 +3265,326 @@ function recuperarPin() {
         mostrarToast("ℹ️ No hay cuentas registradas en este dispositivo.", "info");
         return;
     }
-    const ident = prompt("Ingresá tu apodo o email para recuperar el PIN:");
+    const ident = prompt("Ingresá tu usuario ('ivi'), apodo o email para recuperar el PIN:");
     if (!ident) return;
 
     const encontrada = cuentas.find(c =>
+        (c.username && c.username.toLowerCase() === ident.trim().toLowerCase()) ||
         c.apodo.toLowerCase() === ident.trim().toLowerCase() ||
         (c.email && c.email.toLowerCase() === ident.trim().toLowerCase())
     );
 
     if (encontrada) {
-        mostrarToast(`🔑 ¡Cuenta encontrada! Tu PIN es: ${encontrada.pin}`, 6000);
+        mostrarToast(`🔑 ¡Cuenta encontrada! Usuario: ${encontrada.username || encontrada.apodo} • PIN/Contraseña: ${encontrada.pin}`, 8000);
     } else {
-        mostrarToast("⚠️ No se encontró ninguna cuenta con ese apodo o email.", "aviso");
+        mostrarToast("⚠️ No se encontró ninguna cuenta con ese usuario o email.", "aviso");
     }
+}
+
+function asegurarMateriasMedicinaIvan() {
+    let modifico = false;
+    MATERIAS_MEDICINA_IVAN.forEach(materia => {
+        const existe = estado.listas.some(l => 
+            l.id === materia.id || 
+            l.nombre.toLowerCase().trim() === materia.nombre.toLowerCase().trim() ||
+            l.nombre.toLowerCase().includes(materia.nombre.split(" ")[0].toLowerCase())
+        );
+        if (!existe) {
+            estado.listas.push(JSON.parse(JSON.stringify(materia)));
+            modifico = true;
+        }
+    });
+    if (modifico) {
+        if (!estado.listaSeleccionadaId) {
+            estado.listaSeleccionadaId = MATERIAS_MEDICINA_IVAN[0].id;
+        }
+        guardarDatos();
+        actualizarInterfaz();
+    }
+}
+
+function mostrarAnimacionBienvenidaIvan() {
+    if (!dom.ivanWelcomeModal) return;
+    try {
+        dom.ivanWelcomeModal.showModal();
+        reproducirSonido("exito");
+    } catch {
+        dom.ivanWelcomeModal.setAttribute("open", "");
+    }
+}
+
+function cargarMateriaMedicinaEnBolillero(subKey) {
+    let targetId = "lista_medicina_interna";
+    let nombreMateria = "Medicina Interna";
+    if (subKey === "farma") {
+        targetId = "lista_farmacologia_2";
+        nombreMateria = "Farmacología 2";
+    } else if (subKey === "salud") {
+        targetId = "lista_salud_publica";
+        nombreMateria = "Salud Pública";
+    }
+
+    asegurarMateriasMedicinaIvan();
+
+    const listaEncontrada = estado.listas.find(l => l.id === targetId || l.nombre.toLowerCase().includes(subKey));
+    if (listaEncontrada) {
+        estado.listaSeleccionadaId = listaEncontrada.id;
+    } else if (estado.listas.length > 0) {
+        estado.listaSeleccionadaId = estado.listas[0].id;
+    }
+
+    reconstruirBolillero();
+    render();
+    cambiarVista("bolillero");
+    mostrarToast(`🎯 ¡Cargada materia: ${nombreMateria} en el Bolillero!`, "exito");
+}
+
+function abrirModalMedicinaClinica(tab = "interna") {
+    if (!dom.modalMedicinaClinica) return;
+    cambiarPestañaMedicina(tab);
+    try {
+        dom.modalMedicinaClinica.showModal();
+    } catch {
+        dom.modalMedicinaClinica.setAttribute("open", "");
+    }
+}
+
+function cambiarPestañaMedicina(tab) {
+    if (dom.medTabInterna) dom.medTabInterna.classList.toggle("is-active", tab === "interna");
+    if (dom.medTabFarma) dom.medTabFarma.classList.toggle("is-active", tab === "farma");
+    if (dom.medTabSalud) dom.medTabSalud.classList.toggle("is-active", tab === "salud");
+
+    if (dom.medTabContentInterna) dom.medTabContentInterna.classList.toggle("hidden", tab !== "interna");
+    if (dom.medTabContentFarma) dom.medTabContentFarma.classList.toggle("hidden", tab !== "farma");
+    if (dom.medTabContentSalud) dom.medTabContentSalud.classList.toggle("hidden", tab !== "salud");
+
+    if (tab === "interna") {
+        renderizarCasoClinico(indiceCasoClinicoActual);
+    } else if (tab === "farma") {
+        const selectVal = dom.medSelectFamiliaFarma?.value || "beta_bloqueantes";
+        renderizarFichaFarma(selectVal);
+    }
+}
+
+function renderizarCasoClinico(indice) {
+    if (!CASOS_CLINICOS_MEDICINA.length) return;
+    const caso = CASOS_CLINICOS_MEDICINA[indice % CASOS_CLINICOS_MEDICINA.length];
+
+    const espBadge = document.getElementById("medCasoEspecialidad");
+    const titElem = document.getElementById("medCasoTitulo");
+    const descElem = document.getElementById("medCasoDescripcion");
+    const vitElem = document.getElementById("medCasoVitales");
+    const antElem = document.getElementById("medCasoAntecedentes");
+    const fisioElem = document.getElementById("medCasoFisiopato");
+    const dxElem = document.getElementById("medCasoDiagnostico");
+    const ttoElem = document.getElementById("medCasoTratamiento");
+
+    if (espBadge) espBadge.textContent = caso.especialidad;
+    if (titElem) titElem.textContent = caso.titulo;
+    if (descElem) descElem.textContent = caso.descripcion;
+    if (vitElem) vitElem.textContent = caso.vitales;
+    if (antElem) antElem.textContent = caso.antecedentes;
+    if (fisioElem) fisioElem.innerHTML = caso.fisiopatologia;
+    if (dxElem) dxElem.innerHTML = caso.diagnostico;
+    if (ttoElem) ttoElem.innerHTML = caso.tratamiento;
+
+    // Colapsar details para que el estudiante pueda pensar antes de abrir
+    document.querySelectorAll(".med-reveal-item").forEach(d => d.removeAttribute("open"));
+}
+
+function renderizarFichaFarma(claveFamilia) {
+    const data = DATOS_FARMACOLOGIA_2[claveFamilia];
+    if (!data) return;
+
+    const titElem = document.getElementById("medFarmaDrogasTitulo");
+    const subElem = document.getElementById("medFarmaTipoBadge");
+    const dinElem = document.getElementById("medFarmaDinamia");
+    const cinElem = document.getElementById("medFarmaCinetica");
+    const usosElem = document.getElementById("medFarmaUsos");
+    const advElem = document.getElementById("medFarmaAdversos");
+
+    if (titElem) titElem.textContent = data.titulo;
+    if (subElem) subElem.textContent = data.subtitulo;
+    if (dinElem) dinElem.innerHTML = data.dinamia;
+    if (cinElem) cinElem.innerHTML = data.cinetica;
+    if (usosElem) usosElem.innerHTML = data.usos;
+    if (advElem) advElem.innerHTML = data.adversos;
+}
+
+function renderizarRespuestaTpSalud(claveTema, textoPersonalizado = "") {
+    if (!dom.medSaludOutputArea || !dom.medSaludOutputContent) return;
+
+    if (claveTema && RESPUESTAS_TP_SALUD_PUBLICA[claveTema]) {
+        const item = RESPUESTAS_TP_SALUD_PUBLICA[claveTema];
+        dom.medSaludOutputContent.textContent = `${item.titulo}\n\n${item.contenido}`;
+        dom.medSaludOutputArea.classList.remove("hidden");
+        dom.medSaludOutputArea.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        return;
+    }
+
+    if (textoPersonalizado.trim()) {
+        const estructurada = `📋 ANÁLISIS ESTRUCTURADO DE TRABAJO PRÁCTICO (SALUD PÚBLICA & EPIDEMIOLOGÍA)
+=============================================================================
+
+1. IDENTIFICACIÓN DEL PROBLEMA SANITARIO:
+• Consigna: "${textoPersonalizado.trim()}"
+• Nivel de abordaje: Poblacional comunitario / Atención Primaria de la Salud (APS).
+
+2. MARCO TEÓRICO Y CONCEPTUALIZACIÓN:
+• Definición de eventos de salud-enfermedad relacionados.
+• Identificación de determinantes sociales (condiciones de vida, saneamiento, educación y acceso).
+
+3. MÉTODO DE RESOLUCIÓN Y CÁLCULO EPIDEMIOLÓGICO:
+• Variables a recolectar: Casos observados (numerador), población en riesgo expuesta (denominador) y factor de expansión (10^k).
+• Medidas recomendadas: Tasa de Incidencia Acumulada o Razón de Prevalencia según temporalidad.
+
+4. PROPUESTA DE INTERVENCIÓN SANITARIA (APS):
+• Prevención Primaria: Talleres barriales, saneamiento y cobertura de vacunación.
+• Prevención Secundaria: Búsqueda activa comunitaria y diagnóstico temprano en CAPS.
+• Participación Comunitaria y articulación intersectorial (municipio, escuelas y centros barriales).`;
+
+        dom.medSaludOutputContent.textContent = estructurada;
+        dom.medSaludOutputArea.classList.remove("hidden");
+        dom.medSaludOutputArea.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+}
+
+function inicializarEventosAuthYMedicina() {
+    // Header Buttons
+    if (dom.topNavLoginBtn) dom.topNavLoginBtn.addEventListener("click", () => abrirModalAuth("login"));
+    if (dom.topNavRegisterBtn) dom.topNavRegisterBtn.addEventListener("click", () => abrirModalAuth("register"));
+
+    // Dropdown de Usuario en Desktop
+    if (dom.userHeaderPill) {
+        dom.userHeaderPill.addEventListener("click", (e) => {
+            e.stopPropagation();
+            if (dom.userHeaderDropdown) {
+                dom.userHeaderDropdown.classList.toggle("hidden");
+            }
+        });
+    }
+
+    // Cerrar dropdown si se hace click afuera
+    document.addEventListener("click", (e) => {
+        if (dom.userHeaderDropdown && !dom.userHeaderDropdown.classList.contains("hidden")) {
+            if (!e.target.closest("#userHeaderPill")) {
+                dom.userHeaderDropdown.classList.add("hidden");
+            }
+        }
+    });
+
+    if (dom.userDropdownLogoutBtn) dom.userDropdownLogoutBtn.addEventListener("click", cerrarSesionPerfil);
+    if (dom.userDropdownProfileBtn) dom.userDropdownProfileBtn.addEventListener("click", () => {
+        if (dom.userHeaderDropdown) dom.userHeaderDropdown.classList.add("hidden");
+        cambiarVista("fama");
+    });
+    if (dom.userDropdownMedBtn) dom.userDropdownMedBtn.addEventListener("click", () => {
+        if (dom.userHeaderDropdown) dom.userHeaderDropdown.classList.add("hidden");
+        abrirModalMedicinaClinica("interna");
+    });
+
+    // Drawer Mobile Auth Buttons
+    if (dom.drawerLoginBtn) dom.drawerLoginBtn.addEventListener("click", () => {
+        if (typeof toggleDrawerMenu === "function") toggleDrawerMenu(false);
+        abrirModalAuth("login");
+    });
+    if (dom.drawerRegisterBtn) dom.drawerRegisterBtn.addEventListener("click", () => {
+        if (typeof toggleDrawerMenu === "function") toggleDrawerMenu(false);
+        abrirModalAuth("register");
+    });
+    if (dom.drawerLogoutBtn) dom.drawerLogoutBtn.addEventListener("click", () => {
+        if (typeof toggleDrawerMenu === "function") toggleDrawerMenu(false);
+        cerrarSesionPerfil();
+    });
+
+    // Modal Bienvenida Iván
+    if (dom.ivanWelcomeCloseBtn) dom.ivanWelcomeCloseBtn.addEventListener("click", () => dom.ivanWelcomeModal.close());
+    if (dom.ivanWelcomeGoBtn) dom.ivanWelcomeGoBtn.addEventListener("click", () => {
+        dom.ivanWelcomeModal.close();
+        if (dom.panelMedicinaIvan) {
+            dom.panelMedicinaIvan.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+    });
+
+    // Botón Directo a Bolillero en Panel de Iván
+    if (dom.medBtnDirectBolillero) {
+        dom.medBtnDirectBolillero.addEventListener("click", () => {
+            cargarMateriaMedicinaEnBolillero("interna");
+        });
+    }
+
+    // Botones en las 3 tarjetas de materias médicas
+    document.querySelectorAll(".med-btn-launch").forEach(btn => {
+        btn.addEventListener("click", () => {
+            const action = btn.dataset.medAction;
+            const sub = btn.dataset.medSub;
+            if (action === "bolillero") {
+                cargarMateriaMedicinaEnBolillero(sub);
+            } else if (action === "clinica") {
+                abrirModalMedicinaClinica("interna");
+            } else if (action === "fichero") {
+                abrirModalMedicinaClinica("farma");
+            } else if (action === "tp") {
+                abrirModalMedicinaClinica("salud");
+            }
+        });
+    });
+
+    // Modal de Herramientas Médicas
+    if (dom.medClinicCloseBtn) dom.medClinicCloseBtn.addEventListener("click", () => dom.modalMedicinaClinica.close());
+
+    if (dom.medTabInterna) dom.medTabInterna.addEventListener("click", () => cambiarPestañaMedicina("interna"));
+    if (dom.medTabFarma) dom.medTabFarma.addEventListener("click", () => cambiarPestañaMedicina("farma"));
+    if (dom.medTabSalud) dom.medTabSalud.addEventListener("click", () => cambiarPestañaMedicina("salud"));
+
+    if (dom.medGenerarCasoBtn) {
+        dom.medGenerarCasoBtn.addEventListener("click", () => {
+            indiceCasoClinicoActual = (indiceCasoClinicoActual + 1) % CASOS_CLINICOS_MEDICINA.length;
+            renderizarCasoClinico(indiceCasoClinicoActual);
+            mostrarToast("🎲 ¡Nuevo caso clínico generado!", "info");
+        });
+    }
+
+    if (dom.medSelectFamiliaFarma) {
+        dom.medSelectFamiliaFarma.addEventListener("change", (e) => {
+            renderizarFichaFarma(e.target.value);
+        });
+    }
+
+    if (dom.medSaludResolverBtn) {
+        dom.medSaludResolverBtn.addEventListener("click", () => {
+            const txt = dom.medSaludTpInput?.value || "";
+            if (!txt.trim()) {
+                mostrarToast("⚠️ Escribí o pegá la consigna del TP primero.", "aviso");
+                return;
+            }
+            renderizarRespuestaTpSalud(null, txt);
+            mostrarToast("✨ ¡Estructura de respuesta para TP lista!", "exito");
+        });
+    }
+
+    if (dom.medSaludQuickFormulaBtn) {
+        dom.medSaludQuickFormulaBtn.addEventListener("click", () => {
+            renderizarRespuestaTpSalud("incidencia_prevalencia");
+            mostrarToast("📐 Fórmulas epidemiológicas cargadas.", "info");
+        });
+    }
+
+    if (dom.medSaludCopyBtn) {
+        dom.medSaludCopyBtn.addEventListener("click", () => {
+            if (!dom.medSaludOutputContent) return;
+            navigator.clipboard.writeText(dom.medSaludOutputContent.textContent)
+                .then(() => mostrarToast("📋 ¡Copiado al portapapeles!", "exito"))
+                .catch(() => mostrarToast("⚠️ No se pudo copiar automáticamente.", "aviso"));
+        });
+    }
+
+    document.querySelectorAll(".med-tp-chip").forEach(chip => {
+        chip.addEventListener("click", () => {
+            const topic = chip.dataset.topic;
+            renderizarRespuestaTpSalud(topic);
+        });
+    });
 }
 
 /* ==========================================================
@@ -2921,7 +3696,7 @@ function renderAvatarHTML(jugador, racha = 0, esLider = false, size = 48) {
     const { frameClasses } = obtenerMarcoEvolutivo(vics, racha, esLider);
     const styleAttr = `style="width:${size}px; height:${size}px; font-size:${Math.round(size * 0.55)}px;"`;
 
-    if (jugador?.tipoAvatar === "foto" && jugador.fotoDataUrl) {
+    if ((jugador?.tipoAvatar === "foto" || jugador?.tipoAvatar === "imagen" || Boolean(jugador?.fotoDataUrl)) && jugador.fotoDataUrl) {
         return `<div class="duelo-avatar-circle ${frameClasses}" ${styleAttr}><img src="${jugador.fotoDataUrl}" alt="${jugador.apodo || 'Avatar'}"></div>`;
     }
     return `<div class="duelo-avatar-circle ${frameClasses}" ${styleAttr}>${jugador?.avatar || '👤'}</div>`;
@@ -8789,13 +9564,40 @@ function seleccionarTemaManualBolillero(temaId, dispararIaInmediata = false) {
     if (dom.authSubmitLoginBtn) {
         dom.authSubmitLoginBtn.addEventListener("click", (e) => {
             e.preventDefault();
-            const cuentaId = dom.authLoginSelect?.value;
+            const userInput = dom.authLoginUserInput?.value?.trim();
+            const selectVal = dom.authLoginSelect?.value;
+            const identificador = userInput || selectVal;
             const pin = dom.authLoginPin?.value;
-            if (!cuentaId) {
-                mostrarToast("⚠️ Seleccioná una cuenta.", "aviso");
+            if (!identificador) {
+                mostrarToast("⚠️ Ingresá tu nombre de usuario (ej: ivi) o seleccioná tu cuenta.", "aviso");
                 return;
             }
-            iniciarSesionConPin(cuentaId, pin);
+            if (!pin) {
+                mostrarToast("⚠️ Ingresá tu contraseña o PIN de 4 números.", "aviso");
+                return;
+            }
+            iniciarSesionConPin(identificador, pin);
+        });
+    }
+
+    if (dom.authLoginUserInput) {
+        dom.authLoginUserInput.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                if (dom.authLoginPin?.value) {
+                    dom.authSubmitLoginBtn?.click();
+                } else if (dom.authLoginPin) {
+                    dom.authLoginPin.focus();
+                }
+            }
+        });
+    }
+    if (dom.authLoginPin) {
+        dom.authLoginPin.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                dom.authSubmitLoginBtn?.click();
+            }
         });
     }
     if (dom.authForgotPinBtn) dom.authForgotPinBtn.addEventListener("click", recuperarPin);
@@ -9342,6 +10144,7 @@ function iniciarAplicacion() {
     try { renderSalonDeLaFama(); } catch (e) { console.error("Error salon de la fama:", e); }
     try { inicializarDrawerMenu(); } catch (e) { console.error("Error drawer menu:", e); }
     try { registrarEventos(); } catch (e) { console.error("Error registrar eventos:", e); }
+    try { inicializarEventosAuthYMedicina(); } catch (e) { console.error("Error eventos auth/medicina:", e); }
     try { inicializarRutas(); } catch (e) { console.error("Error inicializar rutas:", e); }
 
     // Detección de link mágico de sala online (?room=XXXX o #duelo?room=XXXX)
@@ -9878,7 +10681,7 @@ function iniciarAplicacion() {
 // =========================================================
 // GESTOR DE VERSIONES Y ACTUALIZACIÓN AUTOMÁTICA
 // =========================================================
-const APP_BUILD_VERSION = "27.9";
+const APP_BUILD_VERSION = "28.0";
 
 async function forzarActualizacionCompleta(mostrarNotificacion = true) {
     const btnActualizar = document.getElementById("btnForzarActualizar");
