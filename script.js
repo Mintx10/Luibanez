@@ -4941,56 +4941,134 @@ function renderizarResultadoEvaluacionIA(container, data) {
 
 function evaluarDiagnosticoClinicoLocal(caso, textoEstudiante, materia) {
     const textoNorm = (textoEstudiante || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-    const casoTexto = JSON.stringify(caso).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const nombreCaso = caso.titulo || caso.subtitulo || "Caso Clínico";
 
-    // Extraer palabras clave del texto de discusión
+    // 1. Extracción y análisis de conceptos clave de la resolución oficial
     const discusionLimpia = (caso.discusion || "").replace(/<[^>]*>?/gm, " ").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
     const palabrasClave = discusionLimpia.match(/\b[a-z]{5,}\b/g) || [];
     
-    // Contar coincidencias con palabras relevantes
-    const stopWords = new Set(["porque", "cuando", "donde", "paciente", "cuadro", "clinico", "administracion", "tratamiento", "presenta", "ademas", "durante", "produce", "debido", "inmediata", "deberia"]);
+    const stopWords = new Set([
+        "porque", "cuando", "donde", "paciente", "cuadro", "clinico", "administracion",
+        "tratamiento", "presenta", "ademas", "durante", "produce", "debido", "inmediata",
+        "deberia", "primer", "segundo", "tercer", "pueden", "generar", "llevar", "cuanto",
+        "tiempo", "forma", "horas", "dias", "nivel", "niveles"
+    ]);
     const terminosImportantes = [...new Set(palabrasClave.filter(w => !stopWords.has(w)))];
-    
+
+    // Contar coincidencias reales
     let coincidencias = 0;
     const aciertosDetectados = [];
     terminosImportantes.forEach(t => {
         if (textoNorm.includes(t)) {
             coincidencias++;
-            if (aciertosDetectados.length < 3) {
+            if (aciertosDetectados.length < 4) {
                 aciertosDetectados.push(`Mención precisa del concepto fisiopatológico / farmacológico: "${t}"`);
             }
         }
     });
 
-    // Ponderación de puntaje
-    const basePuntaje = 50;
-    const bonusLargo = Math.min(20, Math.floor(textoEstudiante.length / 25));
-    const bonusTerminos = Math.min(28, coincidencias * 5);
-    const puntajeFinal = Math.min(96, Math.max(45, basePuntaje + bonusLargo + bonusTerminos));
-    const esCertero = puntajeFinal >= 65;
+    // Detección de hipótesis descabelladas, sin correlato o frases de prueba
+    const tieneCancer = textoNorm.includes("cancer") || textoNorm.includes("oncolog") || textoNorm.includes("tumor");
+    const esCasoCancer = discusionLimpia.includes("cancer") || discusionLimpia.includes("oncolog") || discusionLimpia.includes("tumor");
+    const diceMuerte = textoNorm.includes("morir") || textoNorm.includes("muerte") || textoNorm.includes("letal");
 
-    let veredicto = "Aproximación Clínica Razonable";
-    if (puntajeFinal >= 88) veredicto = "Diagnóstico Sobresaliente y Conducta Precisa";
-    else if (puntajeFinal >= 75) veredicto = "Buen Enfoque con Criterio Fisiopatológico";
-    else if (puntajeFinal < 60) veredicto = "Enfoque Insuficiente o Diagnóstico Divergente";
+    // 2. CASO CERO ACIERTOS / ERROR CRÍTICO O DIAGNÓSTICO DISPARATADO (0/100)
+    if (coincidencias === 0) {
+        let motivoCritica = `Tu planteo ('"${textoEstudiante.length > 70 ? textoEstudiante.substring(0, 67) + "..." : textoEstudiante}"') NO guarda ninguna relación con la presentación clínica, los signos vitales ni el laboratorio de este paciente.`;
+        if (tieneCancer && !esCasoCancer) {
+            motivoCritica += ` Diagnosticaste patología oncológica ("cáncer") en un paciente que no presenta ningún antecedente, síndrome consuntivo ni biopsia que lo sugiera.`;
+        }
+        if (diceMuerte) {
+            motivoCritica += ` Afirmar fatalidad ("se va a morir") sin formular una hipótesis nosológica ni una intervención terapéutica constituye una conducta inaceptable en la práctica médica.`;
+        }
+        motivoCritica += ` El paciente presenta en realidad: <strong>${nombreCaso}</strong>. En un hospital real o examen universitario, este planteo implicaría desaprobación fulminante por riesgo iatrogénico.`;
 
+        return {
+            diagnosticoCorrecto: false,
+            puntaje: 0,
+            veredicto: "Desacierto Diagnóstico Total / Error Crítico (0/100)",
+            analisisFisiopatologico: motivoCritica,
+            aciertos: [
+                "Ninguno. No se identificó la patología del caso ni se formularon medidas terapéuticas válidas."
+            ],
+            erroresUOmitidos: [
+                "Diagnóstico completamente erróneo sin correlación clínica ni paraclínica",
+                "Omisión absoluta de los valores de laboratorio y electrocardiograma aportados",
+                "Falta de indicación de medidas de soporte vital y rescate farmacológico real",
+                tieneCancer && !esCasoCancer ? "Presunción infundada de neoplasia sin evidencia" : "Inconsistencia nosológica grave"
+            ],
+            conductaTerapeuticaSugerida: caso.discusion ? caso.discusion.replace(/<[^>]*>?/gm, " ").substring(0, 260) + "..." : "Consultar resolución oficial de cátedra.",
+            consejoDocente: "Dr. Iván: La cátedra exige rigurosidad científica implacable. Un médico jamás puede adivinar o diagnosticar por intuición sin contrastar los datos. Antes de emitir una conducta, lee los antecedentes, el examen físico y el laboratorio."
+        };
+    }
+
+    // 3. APROXIMACIÓN MUY INSUFICIENTE (1 coincidencia aislada - 25/100)
+    if (coincidencias === 1) {
+        return {
+            diagnosticoCorrecto: false,
+            puntaje: 25,
+            veredicto: "Aproximación Muy Insuficiente (25/100)",
+            analisisFisiopatologico: `Identificaste únicamente un término aislado (${aciertosDetectados[0]}), pero careces de desarrollo fisiopatológico. No se articula la relación de causa-efecto ni el protocolo terapéutico de primera línea para ${nombreCaso}.`,
+            aciertos: aciertosDetectados,
+            erroresUOmitidos: [
+                "Falta de formulación del síndrome cardinal completo",
+                "Omisión del mecanismo farmacológico o diana molecular principal",
+                "Plan terapéutico incompleto o insuficiente para estabilizar al paciente"
+            ],
+            conductaTerapeuticaSugerida: materia === "farma"
+                ? "Identificar el transportador/enzima afectada, ajustar según clearance y dosificar el antídoto específico."
+                : "Monitoreo invasivo continuo y terapia etiológica dirigida según guías clínicas.",
+            consejoDocente: "Dr. Iván: Nombrar un concepto no alcanza para aprobar un pase de sala. Necesitás fundamentar el por qué y el tratamiento de rescate inmediato."
+        };
+    }
+
+    // 4. ENFOQUE PARCIAL (2 coincidencias - 50/100)
+    if (coincidencias === 2) {
+        return {
+            diagnosticoCorrecto: false,
+            puntaje: 50,
+            veredicto: "Enfoque Parcial / Insuficiente para Criterio de Alta (50/100)",
+            analisisFisiopatologico: `Demuestras orientación general hacia ${nombreCaso}, pero con omisiones determinantes en la farmacovigilancia o en las contraindicaciones críticas del paciente.`,
+            aciertos: aciertosDetectados,
+            erroresUOmitidos: [
+                "Falta precisar interacciones farmacocinéticas o ajustes orgánicos",
+                "Monitoreo de parámetros de seguridad pendientes"
+            ],
+            conductaTerapeuticaSugerida: "Profundizar en la conducta razonada de cátedra y dosificación protocolizada.",
+            consejoDocente: "Dr. Iván: Buen inicio del razonamiento, pero en la práctica estas omisiones pueden generar descompensación. Ajustá la farmacocinética fina."
+        };
+    }
+
+    // 5. DIAGNÓSTICO CERTERO Y SÓLIDO (3 a 4 coincidencias - 78/100)
+    if (coincidencias < 5) {
+        return {
+            diagnosticoCorrecto: true,
+            puntaje: 78,
+            veredicto: "Diagnóstico Certero con Buen Razonamiento Clínico (78/100)",
+            analisisFisiopatologico: `¡Muy buen planteo! Identificaste los factores determinantes de ${nombreCaso}. Tu conducta terapéutica es coherente con las guías de cátedra.`,
+            aciertos: aciertosDetectados,
+            erroresUOmitidos: [
+                "Podrías afinar detalles sobre la ventana de monitoreo o dosis exactas"
+            ],
+            conductaTerapeuticaSugerida: materia === "farma"
+                ? "Ajustar dosis según función renal/hepática y verificar interacciones con la medicación de base."
+                : "Medidas de soporte hemodinámico y tratamiento de rescate según normativas vigentes.",
+            consejoDocente: "Excelente criterio diagnóstico, colega. Mantén este estándar de fundamentación en cada pase de guardia."
+        };
+    }
+
+    // 6. RESOLUCIÓN DE EXCELENCIA (5+ coincidencias - 95/100)
     return {
-        diagnosticoCorrecto: esCertero,
-        puntaje: puntajeFinal,
-        veredicto: veredicto,
-        analisisFisiopatologico: `Tu desarrollo demuestra ${esCertero ? "buena comprensión" : "aproximación inicial"} de los factores patogénicos. ${coincidencias > 0 ? `Identificaste ${coincidencias} conceptos clave del cuadro.` : "Conviene profundizar en la interrelación entre la clínica y la respuesta a los fármacos."}`,
-        aciertos: aciertosDetectados.length > 0 ? aciertosDetectados : [
-            "Estructuración de hipótesis diagnóstica",
-            "Planteo de esquema terapéutico inicial"
-        ],
+        diagnosticoCorrecto: true,
+        puntaje: 95,
+        veredicto: "Resolución de Excelencia · Nivel Médico de Planta (95/100)",
+        analisisFisiopatologico: `Resolución impecable. Dominas la fisiopatología, las dianas moleculares, la interacción farmacocinética y la conducta de rescate para ${nombreCaso}.`,
+        aciertos: aciertosDetectados,
         erroresUOmitidos: [
-            "Revisar contraindicaciones e interacciones farmacológicas asociadas a la función orgánica",
-            "Profundizar en la monitorización de signos vitales o parámetros de laboratorio objetivo"
+            "Sin omisiones de relevancia clínica detectadas en tu desarrollo"
         ],
-        conductaTerapeuticaSugerida: materia === "farma"
-            ? "Ajustar dosis según función renal/hepática y verificar interacciones con la farmacopea previa del paciente."
-            : "Medidas de soporte vital, estabilización hemodinámica y terapia etiológica dirigida según guías clínicas de cátedra.",
-        consejoDocente: "¡Muy buen ejercicio formativo, Dr. Iván! La práctica repetida de casos complejos con redacción propia afianza el juicio clínico definitivo para la guardia y el examen final."
+        conductaTerapeuticaSugerida: "Conducta óptima aplicada.",
+        consejoDocente: "Brillante, Dr. Iván. Un análisis exhaustivo y de máxima solvencia que salvaría la vida del paciente en un escenario real."
     };
 }
 
@@ -12587,7 +12665,7 @@ function iniciarAplicacion() {
 // =========================================================
 // GESTOR DE VERSIONES Y ACTUALIZACIÓN AUTOMÁTICA
 // =========================================================
-const APP_BUILD_VERSION = "28.5";
+const APP_BUILD_VERSION = "28.6";
 
 async function forzarActualizacionCompleta(mostrarNotificacion = true) {
     const lastAttempt = parseInt(sessionStorage.getItem("last_auto_update_ts") || "0", 10);

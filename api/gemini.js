@@ -535,8 +535,9 @@ Debes responder ÚNICAMENTE un objeto JSON con esta estructura exacta:
             const diagnosticoAlumno = body.diagnosticoEstudiante || instruccionUsuario || "";
 
             promptInstrucciones = `
-MODALIDAD: EVALUACIÓN CLÍNICA UNIVERSITARIA POR INTELIGENCIA ARTIFICIAL (DR. IVÁN / MEDICINA)
-Eres un Profesor Titular de Medicina Interna de un hospital universitario de máxima jerarquía y un evaluador clínico riguroso pero formativo.
+MODALIDAD: EVALUACIÓN CLÍNICA UNIVERSITARIA RIGUROSA POR INTELIGENCIA ARTIFICIAL (DR. IVÁN / MEDICINA)
+Eres un Profesor Titular de Medicina Interna y Farmacología Clínica de un hospital universitario de máxima jerarquía y un evaluador clínico IMPLACABLE, REALISTA y EXIGENTE.
+En medicina real, una mala hipótesis o una prescripción errónea cuesta vidas humanas; por lo tanto, evalúa la respuesta del estudiante con CERO COMPLACENCIA y con CRITERIO CLÍNICO CIENTÍFICO ESTRICTO.
 
 DATOS DEL CASO CLÍNICO:
 "${casoTexto}"
@@ -544,30 +545,48 @@ DATOS DEL CASO CLÍNICO:
 DIAGNÓSTICO OFICIAL & FUNDAMENTO DE CÁTEDRA:
 "${diagnosticoDocente}"
 
-RESPUESTA, DIAGNÓSTICO Y PLAN PLANTEADO POR EL ESTUDIANTE (DR. IVÁN):
+RESPUESTA, DIAGNÓSTICO Y PLAN PLANTEADO POR EL ESTUDIANTE:
 "${diagnosticoAlumno}"
 
-TU MISIÓN COMO EVALUADOR MÉDICO EXPERTO:
-1. Analiza el diagnóstico presuntivo planteado por el estudiante. ¿Identificó el síndrome o patología cardinal? (Acierto pleno, aproximado o desacierto).
-2. Analiza el razonamiento fisiopatológico y el plan terapéutico / farmacológico propuesto. ¿Las drogas indicadas son de primera línea? ¿Omitió contraindicaciones críticas?
-3. Asigna un puntaje justo de 0 a 100.
-4. Elabora un veredicto sintético, lista de aciertos concretos, omisiones o riesgos detectados y un consejo docente de cátedra.
+ESCALA DE CALIFICACIÓN ESTRICTA (0 A 100 PTS):
+1. DESACIERTO TOTAL / RESPUESTAS ERRÓNEAS O INVENTADAS (0 a 15 pts):
+   - Si el estudiante plantea un diagnóstico que NO corresponde al cuadro (ej: decir "tiene cáncer y se va a morir" ante una intoxicación o infarto, o respuestas al azar, chistes, o inventos sin leer):
+   - "diagnosticoCorrecto": false
+   - "puntaje": entre 0 y 10 puntos (MÁXIMO 15 si mencionó alguna palabra técnica aislada).
+   - "veredicto": "Desacierto Diagnóstico Total / Diagnóstico Completamente Erróneo"
+   - "aciertos": ["Ninguno. El planteo carece de sustento en los signos cardinales, antecedentes y laboratorio del paciente."]
+   - "analisisFisiopatologico": Explica de forma directa y severa por qué lo que dijo el estudiante es médicamente incorrecto, qué patología tiene en realidad el paciente y el grave peligro de semejante error en la guardia.
+   - "erroresUOmitidos": Lista detallada de los errores garrafales cometidos y los estudios que ignoró.
+
+2. APROXIMACIÓN DIVERGENTE O MUY INSUFICIENTE (16 a 45 pts):
+   - Si confunde el síndrome o sugiere drogas contraindicadas o conductas perjudiciales.
+   - "diagnosticoCorrecto": false, puntaje 20 a 45 pts.
+
+3. DIAGNÓSTICO PARCIALMENTE CORRECTO (46 a 69 pts):
+   - Identifica el problema general pero omite el mecanismo fisiopatológico clave o falla en la droga de rescate.
+   - "diagnosticoCorrecto": false (no alcanza el estándar clínico).
+
+4. DIAGNÓSTICO CORRECTO Y BUEN PLAN (70 a 85 pts):
+   - Identifica el síndrome cardinal, la etiología y el tratamiento de primera línea adecuado.
+   - "diagnosticoCorrecto": true.
+
+5. RAZONAMIENTO DE EXCELENCIA / MÉDICO DE PLANTA (86 a 100 pts):
+   - Diagnóstico certero, explicación molecular/fisiopatológica impecable, dosis/contraindicaciones y monitoreo estricto.
+   - "diagnosticoCorrecto": true.
 
 Debes responder ÚNICAMENTE un objeto JSON con esta estructura exacta:
 {
-  "diagnosticoCorrecto": true,
-  "puntaje": 92,
-  "veredicto": "Diagnóstico Certero con Excelente Razonamiento",
-  "analisisFisiopatologico": "Análisis conciso del mecanismo que sustenta el cuadro y cómo fue abordado.",
-  "aciertos": [
-    "Identificación precisa del síndrome clínico cardinal",
-    "Elección adecuada de la droga de rescate de primera línea"
-  ],
+  "diagnosticoCorrecto": false,
+  "puntaje": 5,
+  "veredicto": "Desacierto Diagnóstico Total",
+  "analisisFisiopatologico": "Crítica clínica directa analizando qué dijo el alumno y por qué contrasta tajantemente con la realidad del paciente.",
+  "aciertos": [],
   "erroresUOmitidos": [
-    "Faltó precisar la monitorización de función renal o ajuste de dosis"
+    "Falta total de correlación con los signos cardinales del paciente",
+    "Omisión completa de la fisiopatología en juego"
   ],
-  "conductaTerapeuticaSugerida": "Resumen de la conducta recomendada por guías clínicas actuales.",
-  "consejoDocente": "Consejo formativo directo para el Dr. Iván."
+  "conductaTerapeuticaSugerida": "Conducta médica y farmacológica real de cátedra.",
+  "consejoDocente": "Devolución formativa severa pero constructiva del Profesor Titular al Dr. Iván."
 }`;
         } else {
             // Bolillero / Examen Oral / Trivia general
