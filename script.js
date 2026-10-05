@@ -4494,10 +4494,16 @@ function renderizarTablaLaboratorioShock(datosLab) {
 
     const rows = datosLab.map(item => `
         <tr>
-            <td style="font-weight:600;color:#f1f5f9;">${item.parametro}</td>
-            <td style="font-family:ui-monospace,monospace;font-weight:700;color:#38bdf8;">${item.valor}</td>
-            <td style="color:#64748b;font-size:0.68rem;">${item.ref}</td>
-            <td><span class="shock-lab-flag ${item.flagClass || "shock-lab-flag--norm"}">${item.alerta}</span></td>
+            <td class="shock-lab-td-param">
+                <div class="shock-lab-param-title">${item.parametro}</div>
+                <div class="shock-lab-param-ref">Ref: ${item.ref}</div>
+            </td>
+            <td class="shock-lab-td-val">
+                <span class="shock-lab-val-text">${item.valor}</span>
+            </td>
+            <td class="shock-lab-td-status">
+                <span class="shock-lab-flag ${item.flagClass || "shock-lab-flag--norm"}">${item.alerta}</span>
+            </td>
         </tr>
     `).join("");
 
@@ -4505,10 +4511,9 @@ function renderizarTablaLaboratorioShock(datosLab) {
         <table class="shock-lab-table">
             <thead>
                 <tr>
-                    <th>Determinación</th>
-                    <th>Valor</th>
-                    <th>Referencia</th>
-                    <th>Estado</th>
+                    <th class="shock-lab-th-param">Determinación & Ref.</th>
+                    <th class="shock-lab-th-val">Valor</th>
+                    <th class="shock-lab-th-status">Estado</th>
                 </tr>
             </thead>
             <tbody>
@@ -4611,9 +4616,25 @@ function inicializarEventosShockRoom() {
         if (mobTab && mobTab.dataset.shockTab) {
             const tabName = mobTab.dataset.shockTab;
             document.querySelectorAll(".shock-mobile-tab-btn").forEach(t => t.classList.toggle("is-active", t === mobTab));
+            
+            // En móvil, tanto estudios como diagnóstico residen en la columna 3 ('studies')
+            const colTarget = (tabName === "dx") ? "studies" : tabName;
             document.querySelectorAll(".shock-col[data-shock-panel]").forEach(col => {
-                col.classList.toggle("is-mobile-visible", col.dataset.shockPanel === tabName);
+                col.classList.toggle("is-mobile-visible", col.dataset.shockPanel === colTarget);
             });
+
+            const colStudies = document.querySelector(".shock-col--studies");
+            if (colStudies) {
+                colStudies.classList.toggle("shock-mobile-show-studies-only", tabName === "studies");
+                colStudies.classList.toggle("shock-mobile-show-dx-only", tabName === "dx");
+            }
+
+            if (tabName === "dx") {
+                const diagInput = document.getElementById("shockStudentDiagnosisInput");
+                if (diagInput && !diagInput.value.trim()) {
+                    setTimeout(() => diagInput.focus(), 150);
+                }
+            }
             return;
         }
 
@@ -4650,6 +4671,8 @@ function inicializarEventosShockRoom() {
 
     const firstMobPanel = document.querySelector(".shock-col[data-shock-panel='vitals']");
     if (firstMobPanel) firstMobPanel.classList.add("is-mobile-visible");
+    const colStudiesInit = document.querySelector(".shock-col--studies");
+    if (colStudiesInit) colStudiesInit.classList.add("shock-mobile-show-studies-only");
 }
 
 const BANCO_CASOS_INTERNA_AVANZADOS = [
@@ -13697,7 +13720,7 @@ function iniciarAplicacion() {
 // =========================================================
 // GESTOR DE VERSIONES Y ACTUALIZACIÓN AUTOMÁTICA
 // =========================================================
-const APP_BUILD_VERSION = "28.9";
+const APP_BUILD_VERSION = "29.0";
 
 async function forzarActualizacionCompleta(mostrarNotificacion = true) {
     const lastAttempt = parseInt(sessionStorage.getItem("last_auto_update_ts") || "0", 10);
