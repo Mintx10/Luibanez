@@ -15,10 +15,10 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     
-    <link rel="icon" type="image/svg+xml" href="icon.svg?v=28.0">
-    <link rel="apple-touch-icon" href="icon-192.png?v=28.0">
-    <link rel="manifest" href="manifest.json?v=28.0">
-    <link rel="stylesheet" href="style.css?v=28.0">
+    <link rel="icon" type="image/svg+xml" href="icon.svg?v=28.1">
+    <link rel="apple-touch-icon" href="icon-192.png?v=28.1">
+    <link rel="manifest" href="manifest.json?v=28.1">
+    <link rel="stylesheet" href="style.css?v=28.1">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -94,39 +94,35 @@
 
         <!-- Botones de Autenticación / Perfil de Usuario en Header -->
         <div id="topNavAuthContainer" class="top-nav-auth-container">
-            <!-- Estado Deslogueado: Iniciar Sesión / Registrarse -->
+            <!-- Estado Deslogueado (DEFAULT): Iniciar Sesión / Registrarse -->
             <div id="topNavAuthGuest" class="top-nav-auth-guest">
-                <button id="btnHeaderLogin" class="button button--ghost button--sm btn-header-auth" type="button" title="Iniciar Sesión en tu cuenta">
+                <button id="topNavLoginBtn" class="auth-header-btn auth-header-btn--login" type="button" title="Iniciar Sesión en tu cuenta">
                     🔑 Iniciar Sesión
                 </button>
-                <button id="btnHeaderRegister" class="button button--primary button--sm btn-header-auth" type="button" title="Crear una cuenta nueva">
+                <button id="topNavRegisterBtn" class="auth-header-btn auth-header-btn--register" type="button" title="Crear una cuenta nueva">
                     ✨ Registrarse
                 </button>
             </div>
-            <!-- Estado Logueado: Píldora de Perfil Activo (Iván 🩺 u otro) -->
+            <!-- Estado Logueado: Píldora de Perfil Activo -->
             <div id="topNavAuthUser" class="top-nav-auth-user hidden">
-                <div id="userHeaderProfilePill" class="user-header-pill" role="button" tabindex="0" title="Ver mi cuenta">
-                    <img id="userHeaderAvatarImg" class="user-header-avatar" src="ivan_doctor.png" alt="Avatar">
-                    <div class="user-header-info">
-                        <span id="userHeaderName" class="user-header-name">Iván</span>
-                        <span id="userHeaderCareer" class="user-header-career">Medicina 🩺</span>
-                    </div>
-                    <span class="user-header-chevron" aria-hidden="true">▾</span>
+                <div id="userHeaderPill" class="user-header-pill" role="button" tabindex="0" title="Ver mi cuenta">
+                    <div id="userHeaderAvatar" class="user-header-avatar">👤</div>
+                    <span id="userHeaderName" class="user-header-name">Usuario</span>
+                    <span class="user-header-caret" aria-hidden="true">▾</span>
                 </div>
                 <!-- Menú desplegable de cuenta -->
                 <div id="userHeaderDropdown" class="user-header-dropdown hidden">
-                    <div class="user-dropdown-header">
-                        <strong id="userDropdownName">Iván</strong>
-                        <small id="userDropdownSub">Estudiante de Medicina</small>
+                    <div class="user-dropdown-info">
+                        <span id="userDropdownRole" class="user-dropdown-role">Perfil</span>
+                        <strong id="userDropdownName" class="user-dropdown-name">Usuario</strong>
                     </div>
-                    <hr class="user-dropdown-divider">
-                    <button id="btnDropdownBolilleroMed" class="user-dropdown-item" type="button">
-                        🎯 Bolillero de Medicina
+                    <button id="userDropdownMedBtn" class="user-dropdown-btn hidden" type="button">
+                        🩺 Gabinete Médico
                     </button>
-                    <button id="btnDropdownVerPerfil" class="user-dropdown-item" type="button">
+                    <button id="userDropdownProfileBtn" class="user-dropdown-btn" type="button">
                         👤 Mi Perfil y Racha
                     </button>
-                    <button id="btnDropdownLogout" class="user-dropdown-item user-dropdown-item--danger" type="button">
+                    <button id="userDropdownLogoutBtn" class="user-dropdown-btn user-dropdown-btn--logout" type="button">
                         🚪 Cerrar Sesión
                     </button>
                 </div>
@@ -154,18 +150,18 @@
         <!-- Sección 0: Autenticación en Menú Móvil -->
         <div class="drawer-section drawer-section--auth">
             <div id="drawerAuthGuest" class="drawer-auth-guest">
-                <button id="btnDrawerLogin" class="button button--ghost button--full" type="button">🔑 Iniciar Sesión</button>
-                <button id="btnDrawerRegister" class="button button--primary button--full" type="button" style="margin-top: 0.4rem;">✨ Registrarse</button>
+                <button id="drawerLoginBtn" class="button button--ghost button--full" type="button">🔑 Iniciar Sesión</button>
+                <button id="drawerRegisterBtn" class="button button--primary button--full" type="button" style="margin-top: 0.4rem;">✨ Registrarse</button>
             </div>
             <div id="drawerAuthUser" class="drawer-auth-user hidden">
-                <div class="drawer-user-pill">
-                    <img id="drawerUserAvatarImg" class="drawer-user-avatar" src="ivan_doctor.png" alt="Avatar">
+                <div class="drawer-user-pill" style="display:flex; align-items:center; gap:0.6rem; padding:0.6rem; background:rgba(255,255,255,0.06); border-radius:12px;">
+                    <div id="drawerUserAvatar" style="width:36px; height:36px; border-radius:50%; overflow:hidden; display:flex; align-items:center; justify-content:center; background:rgba(56,189,248,0.2); font-size:1.2rem;">👤</div>
                     <div>
-                        <strong id="drawerUserName">Iván</strong>
-                        <small id="drawerUserCareer" style="display:block; color: #38bdf8;">Medicina 🩺</small>
+                        <strong id="drawerUserName" style="display:block; font-size:0.95rem; color:#fff;">Usuario</strong>
+                        <small id="drawerUserCareer" style="display:block; color: #38bdf8; font-size:0.75rem;">Estudiante</small>
                     </div>
                 </div>
-                <button id="btnDrawerLogout" class="button button--ghost button--sm button--full" style="color: #f87171; margin-top: 0.5rem;" type="button">🚪 Cerrar Sesión</button>
+                <button id="drawerLogoutBtn" class="button button--ghost button--sm button--full" style="color: #f87171; margin-top: 0.5rem;" type="button">🚪 Cerrar Sesión</button>
             </div>
         </div>
 
@@ -4276,7 +4272,7 @@
 </dialog>
 
 <script src="mqtt.min.js"></script>
-<script src="script.js?v=28.0" defer></script>
+<script src="script.js?v=28.1" defer></script>
 
 <!-- =========================================================
      MODAL DE PROMPT PARA GEMINI (CREAR JUEGOS DESDE PDF)

@@ -709,6 +709,7 @@ const dom = {
     userHeaderName: document.getElementById("userHeaderName"),
     userHeaderDropdown: document.getElementById("userHeaderDropdown"),
     userDropdownName: document.getElementById("userDropdownName"),
+    userDropdownRole: document.getElementById("userDropdownRole"),
     userDropdownCareer: document.getElementById("userDropdownCareer"),
     userDropdownProfileBtn: document.getElementById("userDropdownProfileBtn"),
     userDropdownMedBtn: document.getElementById("userDropdownMedBtn"),
@@ -2959,14 +2960,57 @@ function guardarCuentas(cuentas) {
     } catch {}
 }
 
+function esCuentaIvanActiva() {
+    return !perfilUsuario.esInvitado && (
+        (perfilUsuario.username && perfilUsuario.username.toLowerCase() === "ivi") ||
+        perfilUsuario.id === CUENTA_PREDEFINIDA_IVAN.id
+    );
+}
+
+function removerMateriasMedicinaSiNoEsIvan() {
+    const idsMed = ["lista_medicina_interna", "lista_farmacologia_2", "lista_salud_publica"];
+    const habia = estado.listas.some(l => idsMed.includes(l.id) || l.nombre.includes("MEDICINA INTERNA") || l.nombre.includes("FARMACOLOGÍA 2") || l.nombre.includes("SALUD PÚBLICA"));
+    if (habia) {
+        estado.listas = estado.listas.filter(l => !idsMed.includes(l.id) && !l.nombre.includes("MEDICINA INTERNA") && !l.nombre.includes("FARMACOLOGÍA 2") && !l.nombre.includes("SALUD PÚBLICA"));
+        if (!estado.listas.some(l => l.id === estado.listaSeleccionadaId)) {
+            estado.listaSeleccionadaId = estado.listas.length > 0 ? estado.listas[0].id : null;
+        }
+        guardarDatos();
+        actualizarInterfaz();
+    }
+}
+
 function cargarPerfilUsuario() {
     try {
         const data = localStorage.getItem(ACTIVE_USER_STORAGE_KEY);
         if (data) {
             const perfil = JSON.parse(data);
-            Object.assign(perfilUsuario, perfil);
+            // Si el perfil guardado era un invitado o un test sin PIN, limpiar a visitante default
+            if (perfil && (perfil.esInvitado !== false || !perfil.pin || perfil.apodo === "Invitado" || perfil.apodo === "Lucas" || perfil.apodo === "Lucas Medicina")) {
+                perfilUsuario.esInvitado = true;
+                perfilUsuario.username = "";
+                perfilUsuario.apodo = "Invitado";
+                perfilUsuario.carrera = "";
+                perfilUsuario.fotoDataUrl = "";
+                perfilUsuario.avatar = "🦁";
+                perfilUsuario.pin = null;
+                localStorage.removeItem(ACTIVE_USER_STORAGE_KEY);
+            } else if (perfil && perfil.pin) {
+                Object.assign(perfilUsuario, perfil);
+            }
         }
     } catch {}
+
+    // Si NO es la cuenta de Iván, garantizar que no haya nada de medicina
+    if (esCuentaIvanActiva()) {
+        asegurarMateriasMedicinaIvan();
+    } else {
+        if (perfilUsuario.fotoDataUrl === "ivan_doctor.png" && perfilUsuario.username !== "ivi") {
+            perfilUsuario.fotoDataUrl = "";
+        }
+        removerMateriasMedicinaSiNoEsIvan();
+    }
+
     actualizarUIPerfilUsuario();
     actualizarUIAuthHeader();
 }
@@ -3015,33 +3059,39 @@ function actualizarUIPerfilUsuario() {
 }
 
 function actualizarUIAuthHeader() {
-    const tieneSesion = !perfilUsuario.esInvitado && perfilUsuario.apodo && perfilUsuario.apodo !== "Invitado";
+    const tieneSesion = !perfilUsuario.esInvitado && Boolean(perfilUsuario.pin) && perfilUsuario.apodo && perfilUsuario.apodo !== "Invitado";
 
     // Header Desktop
-    if (dom.topNavAuthGuest) dom.topNavAuthGuest.classList.toggle("hidden", tieneSesion);
-    if (dom.topNavAuthUser) dom.topNavAuthUser.classList.toggle("hidden", !tieneSesion);
+    const guestContainer = document.getElementById("topNavAuthGuest");
+    const userContainer = document.getElementById("topNavAuthUser");
+    if (guestContainer) guestContainer.classList.toggle("hidden", tieneSesion);
+    if (userContainer) userContainer.classList.toggle("hidden", !tieneSesion);
 
     // Drawer Mobile
-    if (dom.drawerAuthGuest) dom.drawerAuthGuest.classList.toggle("hidden", tieneSesion);
-    if (dom.drawerAuthUser) dom.drawerAuthUser.classList.toggle("hidden", !tieneSesion);
+    const drawerGuest = document.getElementById("drawerAuthGuest");
+    const drawerUser = document.getElementById("drawerAuthUser");
+    if (drawerGuest) drawerGuest.classList.toggle("hidden", tieneSesion);
+    if (drawerUser) drawerUser.classList.toggle("hidden", !tieneSesion);
 
     if (tieneSesion) {
         const apodo = perfilUsuario.apodo || "Usuario";
-        const carrera = perfilUsuario.carrera || (apodo.toLowerCase().includes("iv") ? "Medicina" : "Estudiante");
+        const carrera = perfilUsuario.carrera || "Estudiante";
 
-        if (dom.userHeaderAvatar) {
+        const userAvatar = document.getElementById("userHeaderAvatar");
+        if (userAvatar) {
             if (perfilUsuario.fotoDataUrl) {
-                dom.userHeaderAvatar.innerHTML = `<img src="${perfilUsuario.fotoDataUrl}" alt="${apodo}" class="user-header-avatar-img">`;
+                userAvatar.innerHTML = `<img src="${perfilUsuario.fotoDataUrl}" alt="${apodo}" class="user-header-avatar-img">`;
             } else {
-                dom.userHeaderAvatar.textContent = perfilUsuario.avatar || "🩺";
+                userAvatar.textContent = perfilUsuario.avatar || "👤";
             }
         }
-        if (dom.userHeaderName) {
-            dom.userHeaderName.textContent = apodo;
-        }
+        const userName = document.getElementById("userHeaderName");
+        if (userName) userName.textContent = apodo;
 
-        if (dom.userDropdownName) dom.userDropdownName.textContent = apodo;
-        if (dom.userDropdownCareer) dom.userDropdownCareer.textContent = carrera;
+        const dropdownName = document.getElementById("userDropdownName");
+        if (dropdownName) dropdownName.textContent = apodo;
+        const dropdownRole = document.getElementById("userDropdownRole");
+        if (dropdownRole) dropdownRole.textContent = carrera;
 
         const drawerName = document.getElementById("drawerUserName");
         const drawerCareer = document.getElementById("drawerUserCareer");
@@ -3052,48 +3102,63 @@ function actualizarUIAuthHeader() {
             if (perfilUsuario.fotoDataUrl) {
                 drawerAvatar.innerHTML = `<img src="${perfilUsuario.fotoDataUrl}" alt="${apodo}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
             } else {
-                drawerAvatar.textContent = perfilUsuario.avatar || "🩺";
+                drawerAvatar.textContent = perfilUsuario.avatar || "👤";
             }
         }
 
-        // Modo Medicina para Iván
-        const esIvanMedicina = (perfilUsuario.username && perfilUsuario.username.toLowerCase() === "ivi") ||
-            apodo.toLowerCase().includes("iv") ||
-            (carrera && carrera.toLowerCase().includes("med"));
+        // Modo Medicina: EXCLUSIVO Y ÚNICO PARA IVÁN ('ivi')
+        const esIvan = esCuentaIvanActiva();
 
-        if (dom.panelMedicinaIvan) {
-            dom.panelMedicinaIvan.classList.toggle("hidden", !esIvanMedicina);
+        const panelMed = document.getElementById("panelMedicinaIvan");
+        if (panelMed) {
+            panelMed.classList.toggle("hidden", !esIvan);
         }
-        if (dom.userDropdownMedBtn) {
-            dom.userDropdownMedBtn.classList.toggle("hidden", !esIvanMedicina);
+        const medBtn = document.getElementById("userDropdownMedBtn");
+        if (medBtn) {
+            medBtn.classList.toggle("hidden", !esIvan);
         }
-        if (esIvanMedicina) {
+        if (esIvan) {
             asegurarMateriasMedicinaIvan();
+        } else {
+            removerMateriasMedicinaSiNoEsIvan();
         }
     } else {
-        if (dom.panelMedicinaIvan) {
-            dom.panelMedicinaIvan.classList.add("hidden");
+        const panelMed = document.getElementById("panelMedicinaIvan");
+        if (panelMed) {
+            panelMed.classList.add("hidden");
         }
-        if (dom.userDropdownMedBtn) {
-            dom.userDropdownMedBtn.classList.add("hidden");
+        const medBtn = document.getElementById("userDropdownMedBtn");
+        if (medBtn) {
+            medBtn.classList.add("hidden");
         }
+        removerMateriasMedicinaSiNoEsIvan();
     }
 }
 
-function abrirModalAuth(pestaña = "register") {
+function abrirModalAuth(pestaña = "login") {
     if (!dom.authAccountModal) return;
     cambiarPestañaAuth(pestaña);
     poblarSelectCuentasAuth();
+    if (dom.authLoginUserInput && pestaña === "login") {
+        dom.authLoginUserInput.value = "";
+    }
+    if (dom.authLoginPin && pestaña === "login") {
+        dom.authLoginPin.value = "";
+    }
     if (dom.authRegApodo) {
         dom.authRegApodo.value = perfilUsuario.apodo !== "Invitado" ? perfilUsuario.apodo : "";
     }
     if (dom.authRegAvatarPreview) {
         dom.authRegAvatarPreview.innerHTML = renderAvatarHTML(perfilUsuario, 0, false, 40);
     }
+    try {
+        dom.authAccountModal.showModal();
+    } catch {
+        dom.authAccountModal.setAttribute("open", "");
+    }
     if (dom.authLoginUserInput && pestaña === "login") {
         setTimeout(() => dom.authLoginUserInput.focus(), 80);
     }
-    dom.authAccountModal.showModal();
 }
 
 function cambiarPestañaAuth(pestaña) {
@@ -3107,15 +3172,11 @@ function cambiarPestañaAuth(pestaña) {
 function poblarSelectCuentasAuth() {
     if (!dom.authLoginSelect) return;
     const cuentas = obtenerCuentasGuardadas();
-    dom.authLoginSelect.innerHTML = "";
-    if (cuentas.length === 0) {
-        dom.authLoginSelect.innerHTML = "<option value=''>No hay cuentas guardadas aún</option>";
-        return;
-    }
+    dom.authLoginSelect.innerHTML = "<option value=''>-- O seleccioná una cuenta registrada --</option>";
     cuentas.forEach(c => {
         const opt = document.createElement("option");
-        opt.value = c.id;
-        opt.textContent = `${c.avatar || "👤"} ${c.apodo} (${c.carrera || "Estudiante"})`;
+        opt.value = c.username || c.id;
+        opt.textContent = `${c.avatar || "👤"} ${c.apodo} (@${c.username || c.apodo.toLowerCase()})`;
         dom.authLoginSelect.appendChild(opt);
     });
 }
@@ -3126,7 +3187,7 @@ function crearOActualizarCuenta(apodo, avatar, tipoAvatar, fotoDataUrl, pin, ema
         return null;
     }
     if (!pin || pin.length !== 4 || !/^\d{4}$/.test(pin)) {
-        mostrarToast("⚠️ La contraseña o PIN debe contener 4 números.", "aviso");
+        mostrarToast("⚠️ La contraseña o PIN debe contener exactamente 4 números.", "aviso");
         return null;
     }
 
@@ -3138,7 +3199,7 @@ function crearOActualizarCuenta(apodo, avatar, tipoAvatar, fotoDataUrl, pin, ema
             id: "acc_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6),
             username: apodo.trim().toLowerCase().replace(/\s+/g, ""),
             apodo: apodo.trim(),
-            carrera: apodo.toLowerCase().includes("iv") ? "Medicina" : "Universidad",
+            carrera: "Estudiante Universitario",
             avatar: avatar || "🦁",
             tipoAvatar: tipoAvatar || "emoji",
             fotoDataUrl: fotoDataUrl || "",
@@ -3186,7 +3247,8 @@ function crearOActualizarCuenta(apodo, avatar, tipoAvatar, fotoDataUrl, pin, ema
 
     guardarPerfilUsuario();
     if (dom.authAccountModal) dom.authAccountModal.close();
-    mostrarToast(`✨ ¡Cuenta de ${cuenta.apodo} activada con éxito!`, "exito");
+    removerMateriasMedicinaSiNoEsIvan();
+    mostrarToast(`✨ ¡Cuenta de ${cuenta.apodo} creada con éxito!`, "exito");
     return cuenta;
 }
 
@@ -3212,39 +3274,39 @@ function iniciarSesionConPin(identificador, pinIngresado) {
     perfilUsuario.id = cuenta.id;
     perfilUsuario.username = cuenta.username || "ivi";
     perfilUsuario.apodo = cuenta.apodo;
-    perfilUsuario.avatar = cuenta.avatar;
-    perfilUsuario.tipoAvatar = cuenta.tipoAvatar;
-    perfilUsuario.fotoDataUrl = cuenta.fotoDataUrl;
-    perfilUsuario.carrera = cuenta.carrera || "Medicina";
-    perfilUsuario.victorias = cuenta.victorias;
-    perfilUsuario.puntosTotales = cuenta.puntosTotales;
-    perfilUsuario.maxRachaHistorica = cuenta.maxRachaHistorica;
-    perfilUsuario.totalRobos = cuenta.totalRobos;
+    perfilUsuario.avatar = cuenta.avatar || "👤";
+    perfilUsuario.tipoAvatar = cuenta.tipoAvatar || "emoji";
+    perfilUsuario.fotoDataUrl = cuenta.fotoDataUrl || "";
+    perfilUsuario.carrera = cuenta.carrera || "";
+    perfilUsuario.victorias = cuenta.victorias || 0;
+    perfilUsuario.puntosTotales = cuenta.puntosTotales || 0;
+    perfilUsuario.maxRachaHistorica = cuenta.maxRachaHistorica || 0;
+    perfilUsuario.totalRobos = cuenta.totalRobos || 0;
     perfilUsuario.pin = cuenta.pin;
-    perfilUsuario.email = cuenta.email;
+    perfilUsuario.email = cuenta.email || "";
 
     guardarPerfilUsuario();
     if (dom.authAccountModal) dom.authAccountModal.close();
 
-    const esIvanMedicina = (cuenta.username && cuenta.username.toLowerCase() === "ivi") ||
-        (cuenta.apodo && cuenta.apodo.toLowerCase().includes("iv")) ||
-        cuenta.carrera === "Medicina";
+    const esIvan = esCuentaIvanActiva();
 
-    if (esIvanMedicina) {
+    if (esIvan) {
         asegurarMateriasMedicinaIvan();
         mostrarAnimacionBienvenidaIvan();
         mostrarToast("🩺 ¡Bienvenido, Dr. Iván! Sesión iniciada y Modo Medicina activado.", "exito");
     } else {
+        removerMateriasMedicinaSiNoEsIvan();
         mostrarToast(`👋 ¡Bienvenido de nuevo, ${cuenta.apodo}!`, "exito");
     }
 
+    actualizarUIAuthHeader();
     return true;
 }
 
 function cerrarSesionPerfil() {
     perfilUsuario.esInvitado = true;
     perfilUsuario.id = "guest_" + Math.random().toString(36).slice(2, 8);
-    perfilUsuario.username = "invitado";
+    perfilUsuario.username = "";
     perfilUsuario.apodo = "Invitado";
     perfilUsuario.carrera = "";
     perfilUsuario.avatar = "🦁";
@@ -3254,8 +3316,12 @@ function cerrarSesionPerfil() {
     perfilUsuario.puntosTotales = 0;
     perfilUsuario.pin = null;
     perfilUsuario.email = "";
+    localStorage.removeItem(ACTIVE_USER_STORAGE_KEY);
     guardarPerfilUsuario();
-    if (dom.userHeaderDropdown) dom.userHeaderDropdown.classList.add("hidden");
+    const dropdown = document.getElementById("userHeaderDropdown");
+    if (dropdown) dropdown.classList.add("hidden");
+    removerMateriasMedicinaSiNoEsIvan();
+    actualizarUIAuthHeader();
     mostrarToast("🔒 Sesión cerrada. Has vuelto al modo visitante.", "info");
 }
 
@@ -3450,72 +3516,84 @@ function renderizarRespuestaTpSalud(claveTema, textoPersonalizado = "") {
 }
 
 function inicializarEventosAuthYMedicina() {
-    // Header Buttons
-    if (dom.topNavLoginBtn) dom.topNavLoginBtn.addEventListener("click", () => abrirModalAuth("login"));
-    if (dom.topNavRegisterBtn) dom.topNavRegisterBtn.addEventListener("click", () => abrirModalAuth("register"));
+    // Header Buttons (Desktop)
+    const btnLogin = document.getElementById("topNavLoginBtn");
+    const btnRegister = document.getElementById("topNavRegisterBtn");
+    if (btnLogin) btnLogin.onclick = (e) => { e.preventDefault(); abrirModalAuth("login"); };
+    if (btnRegister) btnRegister.onclick = (e) => { e.preventDefault(); abrirModalAuth("register"); };
 
-    // Dropdown de Usuario en Desktop
-    if (dom.userHeaderPill) {
-        dom.userHeaderPill.addEventListener("click", (e) => {
-            e.stopPropagation();
-            if (dom.userHeaderDropdown) {
-                dom.userHeaderDropdown.classList.toggle("hidden");
-            }
-        });
-    }
-
-    // Cerrar dropdown si se hace click afuera
-    document.addEventListener("click", (e) => {
-        if (dom.userHeaderDropdown && !dom.userHeaderDropdown.classList.contains("hidden")) {
-            if (!e.target.closest("#userHeaderPill")) {
-                dom.userHeaderDropdown.classList.add("hidden");
-            }
-        }
-    });
-
-    if (dom.userDropdownLogoutBtn) dom.userDropdownLogoutBtn.addEventListener("click", cerrarSesionPerfil);
-    if (dom.userDropdownProfileBtn) dom.userDropdownProfileBtn.addEventListener("click", () => {
-        if (dom.userHeaderDropdown) dom.userHeaderDropdown.classList.add("hidden");
-        cambiarVista("fama");
-    });
-    if (dom.userDropdownMedBtn) dom.userDropdownMedBtn.addEventListener("click", () => {
-        if (dom.userHeaderDropdown) dom.userHeaderDropdown.classList.add("hidden");
-        abrirModalMedicinaClinica("interna");
-    });
-
-    // Drawer Mobile Auth Buttons
-    if (dom.drawerLoginBtn) dom.drawerLoginBtn.addEventListener("click", () => {
+    // Drawer Mobile Buttons
+    const drawerLogin = document.getElementById("drawerLoginBtn");
+    const drawerRegister = document.getElementById("drawerRegisterBtn");
+    const drawerLogout = document.getElementById("drawerLogoutBtn");
+    if (drawerLogin) drawerLogin.onclick = (e) => {
+        e.preventDefault();
         if (typeof toggleDrawerMenu === "function") toggleDrawerMenu(false);
         abrirModalAuth("login");
-    });
-    if (dom.drawerRegisterBtn) dom.drawerRegisterBtn.addEventListener("click", () => {
+    };
+    if (drawerRegister) drawerRegister.onclick = (e) => {
+        e.preventDefault();
         if (typeof toggleDrawerMenu === "function") toggleDrawerMenu(false);
         abrirModalAuth("register");
-    });
-    if (dom.drawerLogoutBtn) dom.drawerLogoutBtn.addEventListener("click", () => {
+    };
+    if (drawerLogout) drawerLogout.onclick = (e) => {
+        e.preventDefault();
         if (typeof toggleDrawerMenu === "function") toggleDrawerMenu(false);
         cerrarSesionPerfil();
-    });
+    };
 
-    // Modal Bienvenida Iván
-    if (dom.ivanWelcomeCloseBtn) dom.ivanWelcomeCloseBtn.addEventListener("click", () => dom.ivanWelcomeModal.close());
-    if (dom.ivanWelcomeGoBtn) dom.ivanWelcomeGoBtn.addEventListener("click", () => {
-        dom.ivanWelcomeModal.close();
-        if (dom.panelMedicinaIvan) {
-            dom.panelMedicinaIvan.scrollIntoView({ behavior: "smooth", block: "start" });
+    // User Pill in Header (Desktop Dropdown)
+    const pill = document.getElementById("userHeaderPill");
+    const dropdown = document.getElementById("userHeaderDropdown");
+    if (pill) {
+        pill.onclick = (e) => {
+            e.stopPropagation();
+            if (dropdown) dropdown.classList.toggle("hidden");
+        };
+    }
+    document.addEventListener("click", (e) => {
+        if (dropdown && !dropdown.classList.contains("hidden")) {
+            if (!e.target.closest("#userHeaderPill")) {
+                dropdown.classList.add("hidden");
+            }
         }
     });
 
+    const logoutBtn = document.getElementById("userDropdownLogoutBtn");
+    if (logoutBtn) logoutBtn.onclick = (e) => { e.preventDefault(); cerrarSesionPerfil(); };
+
+    const profileBtn = document.getElementById("userDropdownProfileBtn");
+    if (profileBtn) profileBtn.onclick = (e) => {
+        e.preventDefault();
+        if (dropdown) dropdown.classList.add("hidden");
+        cambiarVista("fama");
+    };
+
+    const medBtn = document.getElementById("userDropdownMedBtn");
+    if (medBtn) medBtn.onclick = (e) => {
+        e.preventDefault();
+        if (dropdown) dropdown.classList.add("hidden");
+        abrirModalMedicinaClinica("interna");
+    };
+
+    // Modal Bienvenida Iván
+    const welcomeClose = document.getElementById("ivanWelcomeCloseBtn");
+    const welcomeGo = document.getElementById("ivanWelcomeGoBtn");
+    const welcomeModal = document.getElementById("ivanWelcomeModal");
+    if (welcomeClose) welcomeClose.onclick = () => { if (welcomeModal) welcomeModal.close(); };
+    if (welcomeGo) welcomeGo.onclick = () => {
+        if (welcomeModal) welcomeModal.close();
+        const panelMed = document.getElementById("panelMedicinaIvan");
+        if (panelMed) panelMed.scrollIntoView({ behavior: "smooth", block: "start" });
+    };
+
     // Botón Directo a Bolillero en Panel de Iván
-    if (dom.medBtnDirectBolillero) {
-        dom.medBtnDirectBolillero.addEventListener("click", () => {
-            cargarMateriaMedicinaEnBolillero("interna");
-        });
-    }
+    const directBolillero = document.getElementById("medBtnDirectBolillero");
+    if (directBolillero) directBolillero.onclick = () => cargarMateriaMedicinaEnBolillero("interna");
 
     // Botones en las 3 tarjetas de materias médicas
     document.querySelectorAll(".med-btn-launch").forEach(btn => {
-        btn.addEventListener("click", () => {
+        btn.onclick = () => {
             const action = btn.dataset.medAction;
             const sub = btn.dataset.medSub;
             if (action === "bolillero") {
@@ -3527,63 +3605,72 @@ function inicializarEventosAuthYMedicina() {
             } else if (action === "tp") {
                 abrirModalMedicinaClinica("salud");
             }
-        });
+        };
     });
 
     // Modal de Herramientas Médicas
-    if (dom.medClinicCloseBtn) dom.medClinicCloseBtn.addEventListener("click", () => dom.modalMedicinaClinica.close());
+    const medClose = document.getElementById("medClinicCloseBtn");
+    const medModal = document.getElementById("modalMedicinaClinica");
+    if (medClose) medClose.onclick = () => { if (medModal) medModal.close(); };
 
-    if (dom.medTabInterna) dom.medTabInterna.addEventListener("click", () => cambiarPestañaMedicina("interna"));
-    if (dom.medTabFarma) dom.medTabFarma.addEventListener("click", () => cambiarPestañaMedicina("farma"));
-    if (dom.medTabSalud) dom.medTabSalud.addEventListener("click", () => cambiarPestañaMedicina("salud"));
+    const tabInterna = document.getElementById("medTabInterna");
+    const tabFarma = document.getElementById("medTabFarma");
+    const tabSalud = document.getElementById("medTabSalud");
+    if (tabInterna) tabInterna.onclick = () => cambiarPestañaMedicina("interna");
+    if (tabFarma) tabFarma.onclick = () => cambiarPestañaMedicina("farma");
+    if (tabSalud) tabSalud.onclick = () => cambiarPestañaMedicina("salud");
 
-    if (dom.medGenerarCasoBtn) {
-        dom.medGenerarCasoBtn.addEventListener("click", () => {
+    const genCaso = document.getElementById("medGenerarCasoBtn");
+    if (genCaso) {
+        genCaso.onclick = () => {
             indiceCasoClinicoActual = (indiceCasoClinicoActual + 1) % CASOS_CLINICOS_MEDICINA.length;
             renderizarCasoClinico(indiceCasoClinicoActual);
             mostrarToast("🎲 ¡Nuevo caso clínico generado!", "info");
-        });
+        };
     }
 
-    if (dom.medSelectFamiliaFarma) {
-        dom.medSelectFamiliaFarma.addEventListener("change", (e) => {
-            renderizarFichaFarma(e.target.value);
-        });
+    const selectFarma = document.getElementById("medSelectFamiliaFarma");
+    if (selectFarma) {
+        selectFarma.onchange = (e) => renderizarFichaFarma(e.target.value);
     }
 
-    if (dom.medSaludResolverBtn) {
-        dom.medSaludResolverBtn.addEventListener("click", () => {
-            const txt = dom.medSaludTpInput?.value || "";
+    const resolverTp = document.getElementById("medSaludResolverBtn");
+    if (resolverTp) {
+        resolverTp.onclick = () => {
+            const txt = document.getElementById("medSaludTpInput")?.value || "";
             if (!txt.trim()) {
                 mostrarToast("⚠️ Escribí o pegá la consigna del TP primero.", "aviso");
                 return;
             }
             renderizarRespuestaTpSalud(null, txt);
             mostrarToast("✨ ¡Estructura de respuesta para TP lista!", "exito");
-        });
+        };
     }
 
-    if (dom.medSaludQuickFormulaBtn) {
-        dom.medSaludQuickFormulaBtn.addEventListener("click", () => {
+    const quickFormula = document.getElementById("medSaludQuickFormulaBtn");
+    if (quickFormula) {
+        quickFormula.onclick = () => {
             renderizarRespuestaTpSalud("incidencia_prevalencia");
             mostrarToast("📐 Fórmulas epidemiológicas cargadas.", "info");
-        });
+        };
     }
 
-    if (dom.medSaludCopyBtn) {
-        dom.medSaludCopyBtn.addEventListener("click", () => {
-            if (!dom.medSaludOutputContent) return;
-            navigator.clipboard.writeText(dom.medSaludOutputContent.textContent)
+    const copyBtn = document.getElementById("medSaludCopyBtn");
+    if (copyBtn) {
+        copyBtn.onclick = () => {
+            const outputElem = document.getElementById("medSaludOutputContent");
+            if (!outputElem) return;
+            navigator.clipboard.writeText(outputElem.textContent)
                 .then(() => mostrarToast("📋 ¡Copiado al portapapeles!", "exito"))
                 .catch(() => mostrarToast("⚠️ No se pudo copiar automáticamente.", "aviso"));
-        });
+        };
     }
 
     document.querySelectorAll(".med-tp-chip").forEach(chip => {
-        chip.addEventListener("click", () => {
+        chip.onclick = () => {
             const topic = chip.dataset.topic;
             renderizarRespuestaTpSalud(topic);
-        });
+        };
     });
 }
 
@@ -10681,7 +10768,7 @@ function iniciarAplicacion() {
 // =========================================================
 // GESTOR DE VERSIONES Y ACTUALIZACIÓN AUTOMÁTICA
 // =========================================================
-const APP_BUILD_VERSION = "28.0";
+const APP_BUILD_VERSION = "28.1";
 
 async function forzarActualizacionCompleta(mostrarNotificacion = true) {
     const btnActualizar = document.getElementById("btnForzarActualizar");

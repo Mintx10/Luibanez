@@ -12599,6 +12599,27 @@ body.modo-dev-activo .juntos-locked-notice {
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    position: relative;
+    z-index: 1020;
+}
+
+.top-nav-auth-guest {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.top-nav-auth-guest.hidden {
+    display: none !important;
+}
+
+.top-nav-auth-user {
+    display: flex;
+    align-items: center;
+}
+
+.top-nav-auth-user.hidden {
+    display: none !important;
 }
 
 .auth-header-btn {
