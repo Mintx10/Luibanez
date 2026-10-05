@@ -529,6 +529,46 @@ Debes responder ÚNICAMENTE un objeto JSON con esta estructura exacta:
   ],
   "consejo": "Consejo breve y alentador sobre el cálculo realizado"
 }`;
+        } else if (tipoJuego === 'evaluacion_clinica') {
+            const casoTexto = body.casoClinico || tema || "Caso clínico universitario";
+            const diagnosticoDocente = body.diagnosticoOficial || "";
+            const diagnosticoAlumno = body.diagnosticoEstudiante || instruccionUsuario || "";
+
+            promptInstrucciones = `
+MODALIDAD: EVALUACIÓN CLÍNICA UNIVERSITARIA POR INTELIGENCIA ARTIFICIAL (DR. IVÁN / MEDICINA)
+Eres un Profesor Titular de Medicina Interna de un hospital universitario de máxima jerarquía y un evaluador clínico riguroso pero formativo.
+
+DATOS DEL CASO CLÍNICO:
+"${casoTexto}"
+
+DIAGNÓSTICO OFICIAL & FUNDAMENTO DE CÁTEDRA:
+"${diagnosticoDocente}"
+
+RESPUESTA, DIAGNÓSTICO Y PLAN PLANTEADO POR EL ESTUDIANTE (DR. IVÁN):
+"${diagnosticoAlumno}"
+
+TU MISIÓN COMO EVALUADOR MÉDICO EXPERTO:
+1. Analiza el diagnóstico presuntivo planteado por el estudiante. ¿Identificó el síndrome o patología cardinal? (Acierto pleno, aproximado o desacierto).
+2. Analiza el razonamiento fisiopatológico y el plan terapéutico / farmacológico propuesto. ¿Las drogas indicadas son de primera línea? ¿Omitió contraindicaciones críticas?
+3. Asigna un puntaje justo de 0 a 100.
+4. Elabora un veredicto sintético, lista de aciertos concretos, omisiones o riesgos detectados y un consejo docente de cátedra.
+
+Debes responder ÚNICAMENTE un objeto JSON con esta estructura exacta:
+{
+  "diagnosticoCorrecto": true,
+  "puntaje": 92,
+  "veredicto": "Diagnóstico Certero con Excelente Razonamiento",
+  "analisisFisiopatologico": "Análisis conciso del mecanismo que sustenta el cuadro y cómo fue abordado.",
+  "aciertos": [
+    "Identificación precisa del síndrome clínico cardinal",
+    "Elección adecuada de la droga de rescate de primera línea"
+  ],
+  "erroresUOmitidos": [
+    "Faltó precisar la monitorización de función renal o ajuste de dosis"
+  ],
+  "conductaTerapeuticaSugerida": "Resumen de la conducta recomendada por guías clínicas actuales.",
+  "consejoDocente": "Consejo formativo directo para el Dr. Iván."
+}`;
         } else {
             // Bolillero / Examen Oral / Trivia general
             const angulosPedagogicos = [

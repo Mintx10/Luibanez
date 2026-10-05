@@ -3502,13 +3502,13 @@
 
                         <!-- Dropzone de Múltiples Archivos -->
                         <div class="med-dropzone" id="medInternaDropzone">
-                            <input type="file" id="medInternaPdfInput" multiple accept=".pdf,.docx,.pptx,.txt,.md" class="hidden">
-                            <div class="med-dropzone-inner" id="medInternaDropzoneClick">
+                            <input type="file" id="medInternaPdfInput" multiple accept=".pdf,.docx,.pptx,.txt,.md" class="med-file-input-hidden">
+                            <label for="medInternaPdfInput" class="med-dropzone-inner" id="medInternaDropzoneClick" style="cursor: pointer;">
                                 <span class="med-dropzone-icon">📑</span>
                                 <strong>Subir varios PDFs o Apuntes</strong>
                                 <span class="med-dropzone-sub">Arrastrá varios archivos o hacé clic acá</span>
                                 <span class="med-dropzone-badge">PDF · DOCX · TXT · PPTX</span>
-                            </div>
+                            </label>
                         </div>
 
                         <!-- Lista de PDFs Cargados -->
@@ -3637,10 +3637,25 @@
                                     </ol>
                                 </div>
 
-                                <!-- Espacio de Razonamiento del Alumno -->
-                                <div class="med-notes-space">
-                                    <label for="medStudentNotes">📝 Tu Hipótesis y Conducta Propuesta (Borrador de resolución):</label>
-                                    <textarea id="medStudentNotes" class="med-notes-textarea" placeholder="Escribí acá tu diagnóstico presuntivo, mecanismo fisiopatológico y esquema de drogas para comparar tu razonamiento con la discusión oficial..."></textarea>
+                                <!-- Espacio de Evaluación Diagnóstica con IA (Gemini) -->
+                                <div class="med-eval-section" id="medInternaEvalSection">
+                                    <div class="med-eval-header">
+                                        <label for="medStudentDiagnosisInput" class="med-eval-label">
+                                            <span style="font-size: 1.25rem;">🎯</span>
+                                            <strong>Tu Diagnóstico Presuntivo & Plan Terapéutico:</strong>
+                                        </label>
+                                        <span class="med-eval-hint">Escribí acá tu razonamiento clínico. La IA (Gemini) evaluará tu diagnóstico, fisiopatología y conducta terapéutica según guías oficiales.</span>
+                                    </div>
+                                    <textarea id="medStudentDiagnosisInput" class="med-eval-textarea" placeholder="Ej: Diagnóstico: Edema Agudo de Pulmón cardiogénico hipertensivo (Perfil Stevenson B). Conducta: VMNI con CPAP a 8 cmH2O, Nitroglicerina IV continua a 15 mcg/min y Furosemida 40mg IV. Evitar betabloqueantes en fase congestiva aguda..."></textarea>
+                                    
+                                    <div class="med-eval-actions-bar">
+                                        <button id="medSubmitDiagnosisBtn" class="button button--primary button--lg med-eval-submit-btn" type="button">
+                                            🚀 Enviar Diagnóstico para Evaluación por IA
+                                        </button>
+                                    </div>
+
+                                    <!-- Panel de Devolución y Puntaje de la IA (Gemini) -->
+                                    <div id="medAiEvaluationFeedback" class="med-ai-feedback-panel hidden" aria-live="polite"></div>
                                 </div>
 
                                 <!-- Acciones y Revelar Resolución -->
@@ -3732,13 +3747,13 @@
 
                         <!-- Dropzone Farma -->
                         <div class="med-dropzone" id="farmaDropzone">
-                            <input type="file" id="farmaPdfInput" multiple accept=".pdf,.docx,.pptx,.txt,.md" class="hidden">
-                            <div class="med-dropzone-inner" id="farmaDropzoneClick">
+                            <input type="file" id="farmaPdfInput" multiple accept=".pdf,.docx,.pptx,.txt,.md" class="med-file-input-hidden">
+                            <label for="farmaPdfInput" class="med-dropzone-inner" id="farmaDropzoneClick" style="cursor: pointer;">
                                 <span class="med-dropzone-icon">💊</span>
                                 <strong>Subir PDFs de Farmacología</strong>
                                 <span class="med-dropzone-sub">Cargá varios archivos simultáneamente</span>
                                 <span class="med-dropzone-badge">Libros · Tablas · Dosis</span>
-                            </div>
+                            </label>
                         </div>
 
                         <div class="med-pdf-list-header">
@@ -3840,9 +3855,24 @@
                                     </ol>
                                 </div>
 
-                                <div class="med-notes-space">
-                                    <label for="farmaStudentNotes">📝 Tu Resolución Farmacológica:</label>
-                                    <textarea id="farmaStudentNotes" class="med-notes-textarea" placeholder="Explicá la interacción a nivel de la Glicoproteína P, el rol de las prostaglandinas renales y el antídoto específico..."></textarea>
+                                <!-- Espacio de Evaluación Farmacoterapéutica con IA -->
+                                <div class="med-eval-section" id="farmaEvalSection">
+                                    <div class="med-eval-header">
+                                        <label for="farmaStudentNotes" class="med-eval-label">
+                                            <span style="font-size: 1.25rem;">💊</span>
+                                            <strong>Tu Resolución Farmacoterapéutica:</strong>
+                                        </label>
+                                        <span class="med-eval-hint">Detallá la interacción, cinética (P-gp/CYP), riesgo hemodinámico y rescate de elección. Gemini evaluará tu prescripción.</span>
+                                    </div>
+                                    <textarea id="farmaStudentNotes" class="med-eval-textarea" placeholder="Explicá la interacción a nivel de la Glicoproteína P, el rol de las prostaglandinas renales, la potenciación por hipopotasemia y el antídoto específico (Fab antidigoxina)..."></textarea>
+                                    
+                                    <div class="med-eval-actions-bar">
+                                        <button id="farmaSubmitDiagnosisBtn" class="button button--primary button--lg med-eval-submit-btn med-pulse-btn--purple" type="button">
+                                            🚀 Enviar Resolución Farmacológica a IA
+                                        </button>
+                                    </div>
+
+                                    <div id="farmaAiEvaluationFeedback" class="med-ai-feedback-panel hidden" aria-live="polite"></div>
                                 </div>
 
                                 <div class="med-case-actions">
@@ -3956,13 +3986,13 @@
 
                         <!-- Dropzone Salud Pública -->
                         <div class="med-dropzone" id="saludDropzone">
-                            <input type="file" id="saludPdfInput" multiple accept=".pdf,.docx,.pptx,.txt,.md" class="hidden">
-                            <div class="med-dropzone-inner" id="saludDropzoneClick">
+                            <input type="file" id="saludPdfInput" multiple accept=".pdf,.docx,.pptx,.txt,.md" class="med-file-input-hidden">
+                            <label for="saludPdfInput" class="med-dropzone-inner" id="saludDropzoneClick" style="cursor: pointer;">
                                 <span class="med-dropzone-icon">📊</span>
                                 <strong>Subir PDFs de TPs y Cátedra</strong>
                                 <span class="med-dropzone-sub">Subí varias guías de trabajos prácticos</span>
                                 <span class="med-dropzone-badge">Guías TP · Boletines · Leyes</span>
-                            </div>
+                            </label>
                         </div>
 
                         <div class="med-pdf-list-header">
@@ -4639,7 +4669,7 @@
             </div>
             <div class="ivan-welcome-actions">
                 <button id="ivanWelcomeGoBtn" class="button button--primary ivan-welcome-btn" type="button">
-                    🚀 ¡A estudiar! 🩺
+                    🚀 ¡A estudiar!
                 </button>
             </div>
         </div>

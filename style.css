@@ -12813,79 +12813,94 @@ body.modo-dev-activo .juntos-locked-notice {
 
 .ivan-welcome-card {
     position: relative;
-    max-width: 480px;
-    width: 100%;
-    background: linear-gradient(165deg, #0b1528 0%, #07101e 60%, #040b15 100%);
-    border: 1px solid rgba(56, 189, 248, 0.35);
-    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.7), 0 0 35px rgba(6, 182, 212, 0.25);
-    border-radius: 24px;
+    max-width: 580px;
+    width: 92vw;
+    max-height: 92vh;
+    background: linear-gradient(165deg, #091322 0%, #060e1a 60%, #03070e 100%);
+    border: 1.5px solid rgba(56, 189, 248, 0.45);
+    box-shadow: 0 25px 70px rgba(0, 0, 0, 0.85), 0 0 50px rgba(6, 182, 212, 0.35);
+    border-radius: 28px;
     padding: 2.25rem 2rem;
     display: flex;
     flex-direction: column;
     align-items: center;
     text-align: center;
-    overflow: hidden;
+    overflow-y: auto;
+    box-sizing: border-box;
 }
 
 .ivan-welcome-close-btn {
     position: absolute;
     top: 1rem;
     right: 1rem;
-    width: 32px;
-    height: 32px;
+    width: 34px;
+    height: 34px;
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.15);
     color: #94a3b8;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    font-size: 1rem;
+    font-size: 1.1rem;
     transition: all 0.2s ease;
     z-index: 10;
 }
 
 .ivan-welcome-close-btn:hover {
-    background: rgba(255, 255, 255, 0.18);
+    background: rgba(255, 255, 255, 0.2);
     color: #fff;
     transform: scale(1.08);
 }
 
 .ivan-welcome-aura {
     position: absolute;
-    top: 20px;
-    width: 190px;
-    height: 190px;
+    top: 25px;
+    width: 280px;
+    height: 280px;
     border-radius: 50%;
     background: radial-gradient(circle, rgba(6, 182, 212, 0.45) 0%, rgba(14, 165, 233, 0.2) 50%, transparent 75%);
-    filter: blur(20px);
+    filter: blur(35px);
     pointer-events: none;
     animation: doctorPulseAura 3s ease-in-out infinite alternate;
 }
 
 .ivan-welcome-character-wrap {
     position: relative;
-    width: 220px;
-    height: 220px;
+    width: 440px;
+    max-width: 96%;
+    height: 380px;
     margin: 0.5rem auto 1.25rem;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 24px;
+    border-radius: 28px;
     overflow: hidden;
-    background: radial-gradient(circle, rgba(14, 165, 233, 0.18) 0%, rgba(15, 23, 42, 0.75) 80%);
-    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.55), inset 0 0 25px rgba(56, 189, 248, 0.25);
-    border: 1px solid rgba(56, 189, 248, 0.35);
+    background: radial-gradient(circle, rgba(14, 165, 233, 0.28) 0%, rgba(15, 23, 42, 0.9) 75%);
+    box-shadow: 0 20px 55px rgba(0, 0, 0, 0.75), inset 0 0 40px rgba(56, 189, 248, 0.3);
+    border: 1.5px solid rgba(56, 189, 248, 0.5);
+    perspective: 1200px;
 }
 
 .ivan-welcome-img,
 .ivan-welcome-video {
     width: 100%;
     height: 100%;
-    object-fit: contain;
-    filter: drop-shadow(0 15px 25px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 15px rgba(56, 189, 248, 0.4));
-    animation: doctorBounceIn 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards, doctorFloat 3.5s ease-in-out 0.8s infinite alternate;
+    object-fit: cover;
+    transform: translateZ(20px) scale(1.02);
+    filter: drop-shadow(0 20px 35px rgba(0, 0, 0, 0.8)) drop-shadow(0 0 25px rgba(6, 182, 212, 0.45));
+    border-radius: 24px;
+    animation: doctorDepthZoom 6s ease-in-out infinite alternate;
+}
+
+@keyframes doctorDepthZoom {
+    0% {
+        transform: scale(1.0) translateZ(10px);
+    }
+    100% {
+        transform: scale(1.06) translateZ(35px);
+    }
 }
 
 @keyframes doctorBounceIn {
@@ -14481,5 +14496,399 @@ body.modo-dev-activo .juntos-locked-notice {
 
 .med-fichero-row strong {
     color: #e2e8f0;
+}
+
+/* =========================================================
+   INPUT DE ARCHIVO SEGURO & MULTI-PLATAFORMA (MOBILE COMPAT)
+   ========================================================= */
+.med-file-input-hidden {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+/* =========================================================
+   SECCIÓN DE EVALUACIÓN DIAGNÓSTICA CON IA (GEMINI)
+   ========================================================= */
+.med-eval-section {
+    background: rgba(15, 23, 42, 0.75);
+    border: 1.5px solid rgba(56, 189, 248, 0.35);
+    border-radius: 16px;
+    padding: 1.35rem;
+    margin: 1.5rem 0;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+}
+
+.med-eval-header {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    margin-bottom: 0.85rem;
+}
+
+.med-eval-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1rem;
+    color: #fff;
+}
+
+.med-eval-hint {
+    font-size: 0.8rem;
+    color: #94a3b8;
+    line-height: 1.4;
+}
+
+.med-eval-textarea {
+    width: 100%;
+    min-height: 110px;
+    background: rgba(3, 7, 18, 0.75);
+    border: 1.5px solid rgba(56, 189, 248, 0.3);
+    border-radius: 12px;
+    padding: 0.85rem 1rem;
+    color: #fff;
+    font-size: 0.92rem;
+    font-family: inherit;
+    line-height: 1.55;
+    resize: vertical;
+    box-sizing: border-box;
+    transition: all 0.25s ease;
+}
+
+.med-eval-textarea:focus {
+    outline: none;
+    border-color: #38bdf8;
+    box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.25);
+    background: rgba(3, 7, 18, 0.92);
+}
+
+.med-eval-actions-bar {
+    margin-top: 0.9rem;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.med-eval-submit-btn {
+    background: linear-gradient(135deg, #0284c7, #06b6d4) !important;
+    font-weight: 800 !important;
+    border-radius: 12px !important;
+    box-shadow: 0 4px 18px rgba(6, 182, 212, 0.4) !important;
+    padding: 0.85rem 1.6rem !important;
+    font-size: 0.95rem !important;
+    cursor: pointer !important;
+    transition: all 0.25s ease !important;
+    border: none !important;
+    color: #ffffff !important;
+}
+
+.med-eval-submit-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(6, 182, 212, 0.6) !important;
+}
+
+.med-ai-feedback-panel {
+    margin-top: 1.35rem;
+    border-radius: 16px;
+    background: rgba(10, 16, 28, 0.96);
+    border: 1.5px solid rgba(56, 189, 248, 0.4);
+    padding: 1.4rem;
+    animation: medSlideDown 0.4s ease-out;
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.6);
+}
+
+.med-ai-loading-state {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    color: #38bdf8;
+    font-size: 0.92rem;
+    font-weight: 600;
+    padding: 1rem 0;
+}
+
+.med-ai-spinner {
+    width: 24px;
+    height: 24px;
+    border: 3px solid rgba(56, 189, 248, 0.2);
+    border-top-color: #38bdf8;
+    border-radius: 50%;
+    animation: doctorSpin 0.8s linear infinite;
+}
+
+@keyframes doctorSpin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.med-ai-score-banner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 1.1rem;
+}
+
+.med-ai-score-badge {
+    font-size: 1.25rem;
+    font-weight: 900;
+    padding: 0.45rem 1rem;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.med-ai-score-badge--excellent {
+    background: rgba(34, 197, 94, 0.2);
+    border: 1.5px solid #22c55e;
+    color: #4ade80;
+}
+
+.med-ai-score-badge--good {
+    background: rgba(245, 158, 11, 0.2);
+    border: 1.5px solid #f59e0b;
+    color: #fbbf24;
+}
+
+.med-ai-score-badge--poor {
+    background: rgba(239, 68, 68, 0.2);
+    border: 1.5px solid #ef4444;
+    color: #f87171;
+}
+
+.med-ai-section-card {
+    background: rgba(15, 23, 42, 0.65);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 0.95rem 1.1rem;
+    margin-bottom: 0.85rem;
+}
+
+.med-ai-card-title {
+    font-size: 0.84rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin: 0 0 0.4rem;
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+.med-ai-card-text {
+    font-size: 0.88rem;
+    color: #cbd5e1;
+    line-height: 1.55;
+    margin: 0;
+}
+
+.med-ai-card-list {
+    margin: 0;
+    padding-left: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    font-size: 0.86rem;
+    color: #cbd5e1;
+    line-height: 1.45;
+}
+
+/* =========================================================
+   COMPREHENSIVE RESPONSIVE MOBILE FIXES (768px & 480px)
+   ========================================================= */
+@media (max-width: 768px) {
+    .ivan-welcome-card {
+        padding: 1.5rem 1.1rem;
+        border-radius: 20px;
+        max-width: 95vw;
+    }
+
+    .ivan-welcome-character-wrap {
+        width: 300px;
+        max-width: 92%;
+        height: 270px;
+        margin-bottom: 1rem;
+    }
+
+    .ivan-welcome-title {
+        font-size: 1.4rem;
+    }
+
+    .ivan-welcome-bubble {
+        padding: 0.85rem 1rem;
+        margin-bottom: 1.1rem;
+    }
+
+    .med-header-top {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.85rem;
+    }
+
+    .med-header-actions {
+        width: 100%;
+    }
+
+    .med-header-actions .button {
+        width: 100%;
+        min-height: 44px;
+        justify-content: center;
+    }
+
+    .med-header-hero {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+    }
+
+    .med-title {
+        font-size: 1.7rem;
+    }
+
+    .med-subtitle {
+        font-size: 0.88rem;
+    }
+
+    .med-vitals-monitor {
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .med-vitals-ecg {
+        width: 100%;
+    }
+
+    .med-vitals-readings {
+        flex-wrap: wrap;
+        justify-content: space-between;
+    }
+
+    .med-generator-top {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+    }
+
+    .med-diff-pills {
+        display: flex;
+        flex-wrap: wrap;
+        width: 100%;
+    }
+
+    .med-diff-pill {
+        flex: 1 1 auto;
+        text-align: center;
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.4rem 0.5rem;
+    }
+
+    .med-generate-bar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.65rem;
+        width: 100%;
+    }
+
+    .med-generate-bar .button {
+        width: 100%;
+        min-height: 48px;
+        justify-content: center;
+    }
+
+    .med-case-sheet {
+        padding: 1rem 0.85rem;
+        border-radius: 14px;
+    }
+
+    .med-case-header-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+
+    .med-case-grid-two {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .med-case-actions {
+        flex-direction: column;
+        gap: 0.65rem;
+    }
+
+    .med-case-actions .button {
+        width: 100%;
+        min-height: 46px;
+        justify-content: center;
+    }
+
+    .med-eval-actions-bar {
+        justify-content: stretch;
+    }
+
+    .med-eval-submit-btn {
+        width: 100%;
+        min-height: 48px;
+        justify-content: center;
+    }
+
+    .med-systems-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+    }
+
+    .med-system-chip {
+        flex: 1 1 calc(50% - 0.35rem);
+        min-height: 42px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+    }
+
+    .med-dropzone {
+        padding: 1.25rem 0.85rem;
+        min-height: 85px;
+    }
+}
+
+@media (max-width: 480px) {
+    .ivan-welcome-card {
+        padding: 1.25rem 0.85rem;
+    }
+
+    .ivan-welcome-character-wrap {
+        width: 300px;
+        max-width: 95%;
+        height: 270px;
+    }
+
+    .med-system-chip {
+        flex: 1 1 100%;
+    }
+
+    .med-title {
+        font-size: 1.5rem;
+    }
+
+    .med-workspace-title {
+        font-size: 1.25rem;
+    }
 }
 

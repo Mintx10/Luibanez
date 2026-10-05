@@ -3519,10 +3519,40 @@ function guardarEstadoPdfsMedicina() {
     }
 }
 
+function obtenerIdsMateria(materia) {
+    if (materia === "interna") {
+        return {
+            list: "medInternaPdfList",
+            count: "medInternaPdfCount",
+            clear: "medInternaClearPdfsBtn"
+        };
+    }
+    if (materia === "farma") {
+        return {
+            list: "farmaPdfList",
+            count: "farmaPdfCount",
+            clear: "farmaClearPdfsBtn"
+        };
+    }
+    if (materia === "salud") {
+        return {
+            list: "saludPdfList",
+            count: "saludPdfCount",
+            clear: "saludClearPdfsBtn"
+        };
+    }
+    return {
+        list: `med${materia}PdfList`,
+        count: `med${materia}PdfCount`,
+        clear: `med${materia}ClearPdfsBtn`
+    };
+}
+
 function renderizarListaPdfsMedicina(materia) {
-    const listElem = document.getElementById(`med${capitalizar(materia)}PdfList`);
-    const countElem = document.getElementById(`med${capitalizar(materia)}PdfCount`);
-    const clearBtn = document.getElementById(`med${capitalizar(materia)}ClearPdfsBtn`);
+    const ids = obtenerIdsMateria(materia);
+    const listElem = document.getElementById(ids.list);
+    const countElem = document.getElementById(ids.count);
+    const clearBtn = document.getElementById(ids.clear);
     if (!listElem) return;
 
     const items = estadoMultiPdfMedicina[materia] || [];
@@ -3564,13 +3594,6 @@ function renderizarListaPdfsMedicina(materia) {
     });
 }
 
-function capitalizar(txt) {
-    if (txt === "interna") return "Interna";
-    if (txt === "farma") return "";
-    if (txt === "salud") return "";
-    return txt.charAt(0).toUpperCase() + txt.slice(1);
-}
-
 async function procesarSubidaArchivosMedicina(files, materia) {
     if (!files || !files.length) return;
     mostrarToast(`📑 Procesando ${files.length} archivo(s)...`, "info");
@@ -3609,8 +3632,11 @@ async function procesarSubidaArchivosMedicina(files, materia) {
    ========================================================== */
 let dificultadInternaActiva = 2; // 1: Jr, 2: JTP/Planta, 3: Ateneo Extremo
 let sistemaInternaActivo = "todos";
+let casoInternaActivoActual = null;
+let casoFarmaActivoActual = null;
 
 const BANCO_CASOS_INTERNA_AVANZADOS = [
+    // 🫀 CARDIOLOGÍA
     {
         id: "HC-49210",
         cama: "Cama 14 · UCO",
@@ -3642,6 +3668,242 @@ const BANCO_CASOS_INTERNA_AVANZADOS = [
 <strong>3. Conducta Terapéutica Inmediata:</strong> VMNI (CPAP 8-10 cmH2O) + Nitroglicerina IV en infusión continua (10-20 mcg/min iniciales para vasodilatación arterial) + Furosemida 40-80 mg IV. <em>Contraindicaciones inmediatas:</em> Betabloqueantes en fase congestiva descompensada y morfina de rutina.`
     },
     {
+        id: "HC-48102",
+        cama: "Cama 02 · Shock Room UCO",
+        edad: "Varón, 59 años",
+        ingreso: "Código Infarto",
+        sistema: "cardio",
+        dificultad: 3,
+        enfermedadActual: "Ingresa con dolor precordial opresivo retroesternal de intensidad 10/10 de 3 horas de evolución irradiado a mandíbula y brazo izquierdo, acompañado de palidez terrosa, sudoración fría profusa, oliguria y somnolencia progresiva.",
+        antecedentes: "Dislipemia severa sin tratamiento, tabaquista actual de 40 paq/año, sedentarismo y antecedentes familiares de muerte súbita paterna a los 52 años.",
+        examenFisico: [
+            "PA: 75/45 mmHg (Hipotensión severa / Shock) | FC: 122 lpm taquicárdico filiforme",
+            "FR: 30 rpm | SpO2: 89% con máscara simple | Relleno capilar: 5 segundos",
+            "Cardiovascular: Soplo holosistólico nuevo grado IV/VI en ápex irradiado a axila (sospecha de insuficiencia mitral aguda por rotura de músculo papilar). R3 audible.",
+            "Respiratorio: Rales crepitantes bibasales difusos hasta vértices. Frialdad cadavérica en miembros inferiores."
+        ],
+        laboratorio: [
+            { c1: "Troponina I ultrasensible: 18.400 ng/L (Positiva masiva)", c2: "Ácido Láctico: 4.8 mmol/L (Hiperlactatemia severa)" },
+            { c1: "Urea: 82 mg/dL | Creatinina: 2.3 mg/dL", c2: "Gases arteriales: pH 7.24, HCO3 14 mEq/L, EB -11" },
+            { c1: "ECG: Supradesnivel del segmento ST de 4 mm de V1 a V6 con ondas Q incipientes.", c2: "Ecocardiograma rápido: FEVI 25%, aquinesia anteroapical, insuficiencia mitral masiva." }
+        ],
+        preguntas: [
+            "¿Cuál es la clasificación hemodinámica de Forrester y Stevenson para este cuadro de shock?",
+            "¿Cuál es la estrategia de reperfusión de emergencia y soporte hemodinámico de elección?",
+            "¿Por qué los nitratos y diuréticos en bolo están contraindicados con esta presión arterial?"
+        ],
+        discusion: `<strong>1. Diagnóstico & Hemodinamia:</strong> Shock Cardiogénico secundario a IAM con elevación del ST (IAMCEST) anterior extenso complicado con insuficiencia mitral aguda. Perfil C de Stevenson (<em>Frío y Húmedo</em>) / Forrester IV (Índice Cardíaco < 2.2 L/min/m² y PCP > 18 mmHg). Hipoperfusión tisular crítica con acidosis láctica.<br>
+<strong>2. Conducta Inmediata:</strong> Coronariografía y angioplastia primaria urgente (< 90 min) de la arteria descendente anterior. Asistencia ventilatoria invasiva temprana (IOT) y soporte inotrópico/vasopresor con <strong>Noradrenalina</strong> (para mantener PAM ≥ 65 mmHg) + <strong>Dobutamina</strong> o asistencia circulatoria mecánica (Balón de Contrapulsación Intraaórtico - BCIA / Impella) antes de la resolución quirúrgica del músculo papilar.<br>
+<strong>3. Fármacos Prohibidos:</strong> Nitroglicerina y Furosemida IV agravan el colapso hemodinámico letal al reducir la precarga en un ventrículo dependiente de volumen de llenado.`
+    },
+    {
+        id: "HC-47319",
+        cama: "Cama 18 · Sala Coronaria",
+        edad: "Mujer, 67 años",
+        ingreso: "Derivación por Guardia",
+        sistema: "cardio",
+        dificultad: 1,
+        enfermedadActual: "Cuadro de 2 semanas de evolución caracterizado por episodios repetidos de opresión precordial desencadenados a esfuerzos cada vez menores (caminar una cuadra), que en las últimas 24 horas se presentó en reposo con duración de 25 minutos y alivió parcialmente con reposo.",
+        antecedentes: "Diabetes Mellitus tipo 2 tratada con Linagliptina 5mg/día. Hipertensión arterial tratada con Losartán 50mg/día. Sobrepeso (IMC 29.4).",
+        examenFisico: [
+            "PA: 135/85 mmHg | FC: 78 lpm regular",
+            "FR: 16 rpm | SpO2: 98% aire ambiente | Afebril",
+            "Aparato Cardiovascular: R1 y R2 normofonéticos, sin soplos ni galope R3. Pulsos periféricos simétricos.",
+            "Aparato Respiratorio: Buena entrada de aire bilateral, sin ruidos agregados."
+        ],
+        laboratorio: [
+            { c1: "Hemograma: Hb 12.4 g/dL, Plaquetas 240.000 /mm³", c2: "Glucemia: 142 mg/dL | HbA1c: 7.6%" },
+            { c1: "Troponina ultrasensible T: 38 pg/mL (Curva plana seriada a las 0h y 3h)", c2: "Lipidograma: Colesterol Total 240 mg/dL, LDL 162 mg/dL" },
+            { c1: "ECG: Ritmo sinusal, infradesnivel del ST de 1.5 mm en cara lateral (V5-V6, DI y aVL) que normaliza tras dolor.", c2: "" }
+        ],
+        preguntas: [
+            "Estratificá el riesgo isquémico según Score GRACE o TIMI.",
+            "¿Cuál es la doble antiagregación y esquema antitrombótico indicado?",
+            "¿En qué ventana temporal se debe indicar la cinecoronariografía invasiva?"
+        ],
+        discusion: `<strong>1. Diagnóstico:</strong> Síndrome Coronario Agudo sin elevación del ST (SCASEST) / Angina Inestable de alto riesgo con cambios dinámicos del ECG.<br>
+<strong>2. Esquema Terapéutico:</strong> Doble antiagregación plaquetaria con Aspirina 100-300 mg de carga + Clopidogrel 300-600 mg (o Ticagrelor 180 mg) + Anticoagulación parenteral con Enoxaparina 1 mg/kg SC cada 12 horas + Atorvastatina 80 mg/día + Betabloqueante (Bisoprolol 2.5-5 mg) si no hay contraindicaciones.<br>
+<strong>3. Estrategia Invasiva:</strong> Cinecoronariografía invasiva precoz (< 24 horas) por presentar criterios de alto riesgo (cambios dinámicos del ST y angina de reposo prolongada).`
+    },
+
+    // 🫁 NEUMONOLOGÍA
+    {
+        id: "HC-60293",
+        cama: "Cama 21 · Sala General",
+        edad: "Varón, 68 años",
+        ingreso: "Derivación Ambulatoria",
+        sistema: "neumo",
+        dificultad: 1,
+        enfermedadActual: "Paciente con tos productiva con expectoración mucopurulenta y herrumbrosa de 5 días de evolución, dolor pleurítico en puntada de costado derecho y picos febriles de hasta 39°C acompañados de chuchos de frío intensos.",
+        antecedentes: "EPOC estadio GOLD B con uso de Salmeterol/Fluticasona. Ex-fumador (40 paq/año). Vacunación antigripal al día, neumococo no refiere.",
+        examenFisico: [
+            "PA: 120/75 mmHg | FC: 96 lpm | Temp: 38.6 °C",
+            "FR: 24 rpm | SpO2: 91% aire ambiente (previa habitual 94%)",
+            "Examen Respiratorio: Matidez a la percusión en base derecha, aumento de vibraciones vocales, soplo tubario y crepitantes teleinspiratorios localizados en lóbulo inferior derecho."
+        ],
+        laboratorio: [
+            { c1: "Leucocitos: 16.400 /mm³ (84% neutrófilos, 6% en cayado)", c2: "Eritrosedimentación: 78 mm/h | PCR: 145 mg/L" },
+            { c1: "Urea: 34 mg/dL | Creatinina: 0.9 mg/dL", c2: "Rx de Tórax: Opacidad alveolar homogénea con broncograma aéreo en lóbulo inferior derecho" }
+        ],
+        preguntas: [
+            "Definí el síndrome semiológico respiratorio presente y el score de estratificación de riesgo CURB-65 / CRB-65.",
+            "¿Cuál es el agente etiológico más probable y cuál el esquema antibiótico empírico de elección ambulatorio vs internación?",
+            "¿Qué criterios clínicos definen la falla de tratamiento inicial a las 48-72 horas?"
+        ],
+        discusion: `<strong>1. Síndrome & Estratificación:</strong> Síndrome de condensación pulmonar consolidativo con broncograma aéreo. Score CURB-65: Confusión (0), Urea > 42 mg/dL (0), FR ≥ 30 (0), PA baja (0), Edad ≥ 65 (1 punto: riesgo intermedio, internación en sala general aconsejada por comorbilidad EPOC).<br>
+<strong>2. Etiología y Tratamiento:</strong> <em>Streptococcus pneumoniae</em> (Neumococo). Tratamiento de 1° línea internación en piso: Ampicilina/Sulbactam 1.5g c/6h IV + Claritromicina 500mg c/12h VO/IV, o Ceftriaxona 1-2g/día + Macrólido.<br>
+<strong>3. Criterios de Falla:</strong> Persistencia de fiebre > 72h sin descenso de leucocitosis/PCR, progresión radiológica > 50% o deterioro hemodinámico (sospechar empiema pleural, resistencia bacteriana o sobreinfección hospitalaria).`
+    },
+    {
+        id: "HC-61405",
+        cama: "Cama 09 · Cuidados Intermedios",
+        edad: "Mujer, 45 años",
+        ingreso: "Guardia Central",
+        sistema: "neumo",
+        dificultad: 2,
+        enfermedadActual: "Mujer que consulta por disnea súbita de 12 horas de evolución que inició tras levantarse de la cama, dolor torácico pleurítico retroesternal de tipo opresivo, palpitaciones taquicárdicas y dos episodios de hemoptisis en esputo fresco.",
+        antecedentes: "Fractura de fémur izquierdo hace 3 semanas inmovilizada con yeso cruropédico. Usuaria de anticonceptivos orales combinados (etinilestradiol/levonorgestrel). Tabaquista de 15 cigarrillos/día.",
+        examenFisico: [
+            "PA: 105/65 mmHg (normotensa en reposo) | FC: 114 lpm taquicardia sinusal",
+            "FR: 30 rpm taquipneica | SpO2: 89% aire ambiente corregida a 94% con cánula nasal",
+            "Miembro inferior izquierdo: Edema asimétrico de pantorrilla con dolor a la compresión (signo de Homans positivo) y empastamiento gemelar.",
+            "Cardiopulmonar: R2 reforzado en foco pulmonar, sin estertores francos. Rx de tórax: Signo de Westermark (oligohemia regional) sin condensación alveolar."
+        ],
+        laboratorio: [
+            { c1: "Dímero D (ELISA): 4.850 ng/mL (Positivo marcadamente elevado)", c2: "Troponina I: 0.12 ng/mL (Elevación de biomarcador miocárdico)" },
+            { c1: "NT-proBNP: 1.450 pg/mL (Sobrecarga de cavidades derechas)", c2: "Gases arteriales: Hipoxemia (PaO2 58 mmHg) e hipocapnia (PaCO2 29 mmHg) con alcalosis respiratoria" },
+            { c1: "ECG: Patrón S1Q3T3 (McGinn-White), T invertidas de V1 a V4.", c2: "Angio-TC de Tórax: Defecto de repleción bilateral en ramas principales de arterias pulmonares." }
+        ],
+        preguntas: [
+            "Calculá la probabilidad pre-test según el Score de Wells / Ginebra y estratificá el riesgo según PESI.",
+            "¿Cuál es la diferencia de conducta entre un TEP de Riesgo Intermedio-Alto vs TEP Masivo de Alto Riesgo?",
+            "¿Cuál es el esquema de anticoagulación inicial de elección y cuándo se indica trombólisis sistémica?"
+        ],
+        discusion: `<strong>1. Diagnóstico & Estratificación:</strong> Tromboembolismo Pulmonar (TEP) submasivo de <strong>Riesgo Intermedio-Alto</strong> (Score de Wells > 6 puntos: alta probabilidad. Paciente normotensa pero con disfunción de VD por ecografía/angio-TC y biomarcadores positivos: Troponina y NT-proBNP elevados).<br>
+<strong>2. Conducta Terapéutica:</strong> Anticoagulación inmediata con Heparina de Bajo Peso Molecular (Enoxaparina 1 mg/kg SC c/12h) o Anticoagulantes Orales Directos (DOAC: Apixabán o Rivaroxabán a dosis de carga). Monitorización estricta en unidad de cuidados intensivos/intermedios.<br>
+<strong>3. Rol de la Trombólisis:</strong> La trombólisis sistémica con rtPA (Alteplasa 100 mg en 2h) NO está indicada de entrada en este estadio, sino que se mantiene en reserva de rescate inmediato si la paciente evoluciona a descompensación hemodinámica con hipotensión persistente (PAS < 90 mmHg o shock obstructivo).`
+    },
+    {
+        id: "HC-62910",
+        cama: "Cama 04 · Terapia Intensiva",
+        edad: "Varón, 52 años",
+        ingreso: "UTI Pediátrica/Adultos",
+        sistema: "neumo",
+        dificultad: 3,
+        enfermedadActual: "Paciente internado por neumonía bilateral viral grave que al 4° día presenta taquipnea extrema, aleteo nasal, cianosis periférica refractaria a oxigenoterapia de alto flujo (PAFI en caída abrupta) y colapso respiratorio inminente.",
+        antecedentes: "Obesidad mórbida (IMC 41), hipertensión arterial y síndrome de apnea-hipopnea obstructiva del sueño (SAHOS).",
+        examenFisico: [
+            "PA: 130/80 mmHg | FC: 128 lpm | Temp: 38.8 °C",
+            "FR: 38 rpm con uso de musculatura accesoria | SpO2: 81% con máscara de reservorio al 100%",
+            "Aparato Respiratorio: Crepitantes secos y húmedos bilaterales difusos en velcro.",
+            "Rx y TC de Tórax: Infiltrados alveolo-intersticiales bilaterales extensos en 'vidrio esmerilado' y consolidaciones dependientes con derrame pleural mínimo."
+        ],
+        laboratorio: [
+            { c1: "Gases Arteriales (con FiO2 1.0): PaO2 62 mmHg", c2: "Relación PaFi (PaO2/FiO2): 62 (SDRA Severo < 100)" },
+            { c1: "pH: 7.22 | PaCO2: 58 mmHg | HCO3: 23 mEq/L", c2: "Ferritina: 2.100 ng/mL | Dímero D: 6.200 ng/mL" },
+            { c1: "Presión capilar pulmonar (PCP estimada por eco): 12 mmHg (No cardiogénico)", c2: "FEVI: 60% conservada sin valvulopatías significativas" }
+        ],
+        preguntas: [
+            "¿Cuáles son los 4 criterios diagnósticos de Berlín para definir SDRA?",
+            "¿Cuáles son los pilares de la ventilación mecánica protectora (volumen corriente y presión meseta)?",
+            "¿Cuándo se indica la posición prona y cuál es su beneficio fisiológico sobre el reclutamiento alveolar?"
+        ],
+        discusion: `<strong>1. Diagnóstico:</strong> Síndrome de Distrés Respiratorio Agudo (SDRA) grave (Criterios de Berlín: tiempo agudo < 7 días, opacidades radiológicas bilaterales no explicadas por falla cardíaca o sobrecarga de volumen, y PaFi < 100 con PEEP ≥ 5 cmH2O).<br>
+<strong>2. Ventilación Mecánica Protectora:</strong> IOT inmediata. Volumen corriente (Vt) bajo a <strong>4-6 mL/kg de peso predicho</strong> (evita volutrauma), Presión meseta (Plateau) ≤ 30 cmH2O (evita barotrauma), y Presión de distensión (Driving Pressure) < 15 cmH2O con PEEP alta titulada.<br>
+<strong>3. Posición Prona:</strong> Indicada obligatoriamente en SDRA con PaFi < 150 durante al menos 16 horas continuas por día. Mejora la relación ventilación/perfusión (V/Q), homogeneiza el gradiente de presión pleural dorsal y reduce el estrés mecánico ventilatorio.`
+    },
+
+    // 🧪 GASTROENTEROLOGÍA
+    {
+        id: "HC-70112",
+        cama: "Cama 11 · Sala de Agudos",
+        edad: "Varón, 55 años",
+        ingreso: "Guardia Médica",
+        sistema: "gastro",
+        dificultad: 1,
+        enfermedadActual: "Paciente que consulta por dos episodios de hematemesis abundante en 'borra de café' y tres deposiciones melénicas fétidas, pastosas y negras como el alquitrán en las últimas 12 horas, acompañadas de mareos ortostáticos.",
+        antecedentes: "Consumo crónico de Diclofenac 75mg c/12h por lumbociatalgia en las últimas 3 semanas sin protector gástrico. No refiere consumo de alcohol ni antecedentes hepáticos conocidos.",
+        examenFisico: [
+            "PA acostado: 110/70 mmHg -> De pie: 90/55 mmHg (Ortostatismo positivo) | FC: 108 lpm",
+            "FR: 18 rpm | SpO2: 97% | Palidez mucocutánea moderada con sudoración fría.",
+            "Abdomen: Blando, depresible, dolor leve en epigastrio a la palpación profunda sin signos de peritonismo ni ascitis.",
+            "Tacto Rectal: Dedal de guante con restos francos de melena fétida."
+        ],
+        laboratorio: [
+            { c1: "Hematocrito: 26% | Hemoglobina: 8.5 g/dL (previa 14.2 g/dL)", c2: "Plaquetas: 210.000 /mm³ | TP / RIN: 1.1 normal" },
+            { c1: "Urea: 78 mg/dL (Azoemia prerrenal por digestión de sangre)", c2: "Creatinina: 1.0 mg/dL" },
+            { c1: "Score de Glasgow-Blatchford: 9 puntos (Alto riesgo de intervención endoscópica)", c2: "" }
+        ],
+        preguntas: [
+            "¿Cuál es la conducta inicial de resucitación hemodinámica y qué soluciones se deben infundir?",
+            "¿Cuál es el tratamiento farmacológico con IBP previo a la endoscopía digestiva alta?",
+            "Clasificá los hallazgos de úlcera según la escala de Forrest y la necesidad de hemostasia endoscópica."
+        ],
+        discusion: `<strong>1. Diagnóstico:</strong> Hemorragia Digestiva Alta (HDA) no variceal secundaria a úlcera gastroduodenal péptica inducida por AINEs.<br>
+<strong>2. Resucitación Inmediata:</strong> Colocación de 2 accesos venosos periféricos de grueso calibre (14-16G), infusión rápida de cristaloides (Solución Fisiológica o Ringer Lactato) para restaurar volumen intravascular. Transfusión de glóbulos rojos guiada por umbral restrictivo (Hb < 7 g/dL o < 8 g/dL si comorbilidad cardiovascular).<br>
+<strong>3. Farmacología & Endoscopía:</strong> Omeprazol o Pantoprazol IV en bolo de 80 mg seguido de infusión continua a 8 mg/h (o 40 mg c/12h). Endoscopía Digestiva Alta (VEDA) dentro de las 24 horas. Lesiones Forrest Ia (chorro), Ib (napa) y IIa (vaso visible) requieren tratamiento endoscópico combinado dual (inyección de adrenalina + método térmico o clips).`
+    },
+    {
+        id: "HC-71580",
+        cama: "Cama 08 · Terapia Intermedia",
+        edad: "Mujer, 48 años",
+        ingreso: "Guardia de Emergencias",
+        sistema: "gastro",
+        dificultad: 2,
+        enfermedadActual: "Mujer que consulta por dolor abdominal de inicio brusco e intensidad intolerable (10/10) localizado en epigastrio con irradiación 'en cinturón' hacia ambos hipocondrios y dorso, acompañado de vómitos alimentarios y biliosos incoercibles y distensión abdominal tras ingesta copiosa de comida rica en grasas.",
+        antecedentes: "Colelitiasis vesicular sintomática conocida de 2 años de diagnóstico (postergó colecistectomía programada). No consume alcohol.",
+        examenFisico: [
+            "PA: 100/60 mmHg | FC: 115 lpm taquicárdica | Temp: 38.1 °C",
+            "FR: 26 rpm | SpO2: 93% aire ambiente | Ictericia leve escleral.",
+            "Abdomen: RHA disminuidos, distensión marcada, dolor intenso en hemiabdomen superior con defensa voluntaria pero sin signo de Blumberg franco.",
+            "Signos cutáneos: Ausencia de signo de Cullen o Turner en este momento."
+        ],
+        laboratorio: [
+            { c1: "Amilasa sérica: 1.840 U/L (VN: < 100) | Lipasa sérica: 2.450 U/L (VN: < 60)", c2: "Leucocitos: 18.200 /mm³ con 80% neutrófilos" },
+            { c1: "Bilirrubina Total: 3.4 mg/dL (Directa: 2.6 mg/dL)", c2: "Fosfatasa Alcalina: 420 U/L | TGO: 380, TGP: 410 U/L" },
+            { c1: "Calcio sérico: 7.8 mg/dL (Hipocalcemia)", c2: "Hematocrito: 46% (Hemoconcentración por secuestro a 3° espacio)" }
+        ],
+        preguntas: [
+            "Confirmá los criterios diagnósticos de Pancreatitis Aguda de Atlanta y etiología.",
+            "¿Cuál es el esquema de hidratación parenteral guiada por metas en las primeras 24 horas?",
+            "¿Está indicada la antibioticoterapia profiláctica y cuándo se solicita la TC contrastada?"
+        ],
+        discusion: `<strong>1. Diagnóstico:</strong> Pancreatitis Aguda litiásica moderadamente grave a grave (cumple los 3 criterios de Atlanta: dolor típico en cinturón, amilasa/lipasa > 3 veces el límite superior normal y colestasis con elevación de transaminasas compatible con pasaje litiásico por colédoco).<br>
+<strong>2. Hidratación Guiada por Metas:</strong> Resucitación con <strong>Ringer Lactato</strong> a 200-250 mL/h (o 5-10 mL/kg/h en las primeras 12h) evaluando respuesta: hematocrito < 40%, diuresis > 0.5 mL/kg/h y urea en descenso. Evitar sobrehidratación nociva.<br>
+<strong>3. Errores Comunes de Guía:</strong> Los antibióticos profilácticos están CONTRAINDICADOS; no reducen necrosis infectada ni mortalidad. La TC abdominal contrastada NO se realiza en las primeras 48h (subestima necrosis) y debe solicitarse a las 72-96h si hay persistencia de fallo orgánico.`
+    },
+    {
+        id: "HC-72904",
+        cama: "Cama 05 · Terapia Intensiva",
+        edad: "Varón, 61 años",
+        ingreso: "Guardia Central",
+        sistema: "gastro",
+        dificultad: 3,
+        enfermedadActual: "Paciente con cirrosis hepática conocida traído por familiares por desorientación temporoespacial, inversión del ritmo del sueño (somnolencia diurna y agitación nocturna), flapping tremor positivo, distensión abdominal masiva a tensión y fiebre de 38.4°C en las últimas 24 horas.",
+        antecedentes: "Cirrosis de etiología enólica (Child-Pugh B previo). Episodios de ascitis tratados con Espironolactona 100mg y Furosemida 40mg. Suspendió medicación hace 1 semana.",
+        examenFisico: [
+            "PA: 95/55 mmHg | FC: 104 lpm | Temp: 38.4 °C | SpO2: 95%",
+            "Sensorio: Estuporoso, desorientado, asterixis (flapping) franca (Encefalopatía Hepática grado III según West Haven).",
+            "Inspección: Estigmas cirróticos (telangiectasias aracniformes en tórax, eritema palmar, ginecomastia, circulación colateral porto-cava).",
+            "Abdomen: Muy globuloso por ascitis a tensión, onda ascítica positiva, dolor difuso con leve defensa a la descompresión."
+        ],
+        laboratorio: [
+            { c1: "Punción del Líquido Ascítico: Aspecto turbio", c2: "Recuento celular: 850 leucocitos /mm³, 620 PMN /mm³ (73%)" },
+            { c1: "Gradiente de Albúmina Suero-Ascitis (GASA): 1.8 g/dL", c2: "Urea: 74 mg/dL | Creatinina: 1.8 mg/dL (Injuria Renal Aguda asociada)" },
+            { c1: "Bilirrubina: 4.8 mg/dL | Albúmina: 2.3 g/dL", c2: "RIN: 2.1 | Sodio sérico: 128 mEq/L (Hiponatremia dilucional)" }
+        ],
+        preguntas: [
+            "Confirmá el diagnóstico del líquido ascítico y el criterio cardinal de Peritonitis Bacteriana Espontánea (PBE).",
+            "¿Cuál es el esquema antibiótico de elección y la indicación estricta de albúmina humana para prevenir el síndrome hepatorrenal?",
+            "¿Cómo se maneja la Encefalopatía Hepática desencadenada por la infección?"
+        ],
+        discusion: `<strong>1. Diagnóstico:</strong> Cirrosis hepática descompensada con <strong>Peritonitis Bacteriana Espontánea (PBE)</strong> (confirmada por > 250 polimorfonucleares/mm³ en líquido ascítico) complicada con Encefalopatía Hepática grado III y Síndrome Hepatorrenal incipiente.<br>
+<strong>2. Tratamiento de PBE & Albúmina:</strong> <strong>Ceftriaxona 2 g/día IV</strong> durante 5 a 7 días. Indicación obligatoria de <strong>Albúmina Humana IV</strong>: 1.5 g/kg en las primeras 6 horas y 1 g/kg al día 3 (reduce la incidencia de síndrome hepatorrenal del 30% al 10% y disminuye la mortalidad drásticamente).<br>
+<strong>3. Manejo de la Encefalopatía:</strong> Tratar el factor desencadenante (PBE). Lactulosa por sonda nasogástrica (20-30 mL c/4-6h) buscando 2-3 deposiciones blandas por día para atrapar amonio entérico + Rifaximina 550 mg c/12h. Evitar sedantes y corregir hipopotasemia.`
+    },
+
+    // 💧 NEFROLOGÍA E IONES
+    {
         id: "HC-51084",
         cama: "Cama 07 · Terapia Intensiva",
         edad: "Mujer, 23 años",
@@ -3672,38 +3934,251 @@ const BANCO_CASOS_INTERNA_AVANZADOS = [
 <strong>3. Criterios de Resolución:</strong> Glucemia < 200 mg/dL, HCO3 ≥ 18 mEq/L, pH venoso > 7.30 y Anion Gap normalizado (≤ 12). La insulina basal SC se administra 2 horas ANTES de suspender la infusión continua.`
     },
     {
-        id: "HC-60293",
-        cama: "Cama 21 · Sala General",
-        edad: "Varón, 68 años",
-        ingreso: "Derivación Ambulatoria",
-        sistema: "neumo",
+        id: "HC-52410",
+        cama: "Cama 16 · Sala General",
+        edad: "Varón, 73 años",
+        ingreso: "Guardia Central",
+        sistema: "nefro",
         dificultad: 1,
-        enfermedadActual: "Paciente con tos productiva con expectoración mucopurulenta y herrumbrosa de 5 días de evolución, dolor pleurítico en puntada de costado derecho y picos febriles de hasta 39°C acompañados de chuchos de frío intensos.",
-        antecedentes: "EPOC estadio GOLD B con uso de Salmeterol/Fluticasona. Ex-fumador (40 paq/año). Vacunación antigripal al día, neumococo no refiere.",
+        enfermedadActual: "Paciente traído por astenia intensa, somnolencia y marcada oliguria (diuresis de 200 mL en las últimas 24 horas) tras cuadro de gastroenteritis aguda febril con abundantes deposiciones diarreicas acuosas y escasa ingesta de líquidos durante 4 días.",
+        antecedentes: "Hipertensión arterial tratada con Enalapril 20mg e Hidroclorotiazida 25mg. Artrosis tratada con Meloxicam 15mg. Función renal basal previa normal (Creatinina 0.9 mg/dL).",
         examenFisico: [
-            "PA: 120/75 mmHg | FC: 96 lpm | Temp: 38.6 °C",
-            "FR: 24 rpm | SpO2: 91% aire ambiente (previa habitual 94%)",
-            "Examen Respiratorio: Matidez a la percusión en base derecha, aumento de vibraciones vocales, soplo tubario y crepitantes teleinspiratorios localizados en lóbulo inferior derecho."
+            "PA: 90/60 mmHg (Hipotensión con ortostatismo) | FC: 102 lpm",
+            "FR: 18 rpm | SpO2: 97% | Afebril",
+            "Examen Clínico: Lengua tostada y seca, ojos hundidos, turgencia cutánea marcadamente disminuida, ausencia de edemas en miembros inferiores.",
+            "Yugulares: Colapsadas en decúbito dorsal a 0°."
         ],
         laboratorio: [
-            { c1: "Leucocitos: 16.400 /mm³ (84% neutrófilos, 6% en cayado)", c2: "Eritrosedimentación: 78 mm/h | PCR: 145 mg/L" },
-            { c1: "Urea: 34 mg/dL | Creatinina: 0.9 mg/dL", c2: "Rx de Tórax: Opacidad alveolar homogénea con broncograma aéreo en lóbulo inferior derecho" }
+            { c1: "Urea plasmática: 182 mg/dL | Creatinina plasmática: 3.4 mg/dL", c2: "Relación Urea/Creatinina: > 50 (Patrón prerrenal marcado)" },
+            { c1: "Ionograma plasmático: Na 142 mEq/L, K 5.2 mEq/L", c2: "Sodio urinario (NaU): 12 mEq/L (< 20 mEq/L)" },
+            { c1: "Fracción Excretada de Sodio (FeNa): 0.4% (< 1%)", c2: "Sedimento urinario: Cilindros hialinos transparentes sin cilindros granulosos pardos." }
         ],
         preguntas: [
-            "Definí el síndrome semiológico respiratorio presente y el score de estratificación de riesgo CURB-65 / CRB-65.",
-            "¿Cuál es el agente etiológico más probable y cuál el esquema antibiótico empírico de elección ambulatorio vs internación?",
-            "¿Qué criterios clínicos definen la falla de tratamiento inicial a las 48-72 horas?"
+            "Diferenciá los índices urinarios de Injuria Renal Aguda Prerrenal vs Necrosis Tubular Aguda (NTA).",
+            "¿Cuál es el rol deletéreo de los fármacos que recibía el paciente (IECA + Diurético + AINE)?",
+            "¿Cuál es la prueba terapéutica inicial para confirmar el origen prerrenal?"
         ],
-        discusion: `<strong>1. Síndrome & Estratificación:</strong> Síndrome de condensación pulmonar consolidativo con broncograma aéreo. Score CURB-65: Confusión (0), Urea > 42 mg/dL (0), FR ≥ 30 (0), PA baja (0), Edad ≥ 65 (1 punto: riesgo intermedio, internación en sala general aconsejada por comorbilidad EPOC).<br>
-<strong>2. Etiología y Tratamiento:</strong> <em>Streptococcus pneumoniae</em> (Neumococo). Tratamiento de 1° línea internación en piso: Ampicilina/Sulbactam 1.5g c/6h IV + Claritromicina 500mg c/12h VO/IV, o Ceftriaxona 1-2g/día + Macrólido.<br>
-<strong>3. Criterios de Falla:</strong> Persistencia de fiebre > 72h sin descenso de leucocitosis/PCR, progresión radiológica > 50% o deterioro hemodinámico (sospechar empiema pleural, resistencia bacteriana o sobreinfección hospitalaria).`
+        discusion: `<strong>1. Diagnóstico:</strong> Injuria Renal Aguda (IRA) funcional o prerrenal por hipovolemia severa (estadio KDIGO 3). Confirmado por FeNa < 1%, Sodio urinario < 20 mEq/L, relación Urea/Creatinina > 40 y sedimento urinario acelular (cilindros hialinos).<br>
+<strong>2. El Fenómeno 'Triple Whammy':</strong> El diurético produjo depleción de volumen; el AINE bloqueó las prostaglandinas impidiendo la vasodilatación de la arteriola aferente; el IECA bloqueó la angiotensina II impidiendo la vasoconstricción de la arteriola eferente. Como resultado, colapsó por completo la presión hidrostática intraglomerular.<br>
+<strong>3. Conducta Terapéutica:</strong> Suspensión inmediata de IECA, diurético y AINE. Expansión rápida con Solución Fisiológica isotónica (1000-2000 mL en 2-4h). Si la causa es prerrenal pura, la diuresis debe recuperarse prontamente y la creatinina descender un 50% en 24-48 horas.`
+    },
+    {
+        id: "HC-53891",
+        cama: "Cama 23 · Nefrología",
+        edad: "Varón, 34 años",
+        ingreso: "Consultorios Externos",
+        sistema: "nefro",
+        dificultad: 2,
+        enfermedadActual: "Paciente que consulta por edema progresivo de 3 semanas de evolución que comenzó en párpados al despertar y progresó a ambos miembros inferiores con fóvea ++++/4 hasta raíces de muslos, escroto y pared abdominal (anasarca), con orina espumosa y aumento de 9 kg de peso.",
+        antecedentes: "Sin antecedentes patológicos previos de relevancia. No consume medicación habitual.",
+        examenFisico: [
+            "PA: 125/80 mmHg | FC: 72 lpm regular | Temp: 36.6 °C",
+            "FR: 16 rpm | SpO2: 98% aire ambiente",
+            "Edemas: Anasarca marcado con signo de la fóvea profundo hasta abdomen. Matidez en bases pulmonares compatible con derrame pleural bilateral leve.",
+            "Cardiovascular: R1 y R2 normales, sin signos de falla de bomba."
+        ],
+        laboratorio: [
+            { c1: "Proteinuria en orina de 24 horas: 8.4 g/día (VN: < 0.15 g)", c2: "Albúmina sérica: 1.8 g/dL (Hipoalbuminemia severa)" },
+            { c1: "Proteínas Totales: 4.1 g/dL | Creatinina: 0.9 mg/dL", c2: "Colesterol Total: 420 mg/dL | Triglicéridos: 380 mg/dL" },
+            { c1: "Sedimento Urinario: Gotas de grasa birrefringentes ('cruces de Malta'), cilindros grasos.", c2: "Serologías: VHB, VHC, VIH y ANA/anti-ADN negativos." }
+        ],
+        preguntas: [
+            "Definí la tétrada clásica del Síndrome Nefrótico primario.",
+            "¿Cuáles son las etiologías histopatológicas más frecuentes en el adulto joven y qué estudio confirma el diagnóstico?",
+            "¿Por qué este paciente tiene alto riesgo protrombótico y qué complicación vascular debe sospecharse ante dolor lumbar súbito?"
+        ],
+        discusion: `<strong>1. Diagnóstico:</strong> Síndrome Nefrótico puro en rango masivo (Tétrada: Proteinuria > 3.5 g/24h, Hipoalbuminemia < 3.0 g/dL, Edemas generalizados y Dislipemia severa con lipiduria).<br>
+<strong>2. Etiología & Confirmación:</strong> En un adulto joven las causas primarias más frecuentes son Glomerulopatía Membranosa o Glomeruloesclerosis Focal y Segmentaria. La indicación indiscutible es la <strong>Punción Biopsia Renal (PBR)</strong> percutánea ecoguiada para microscopía óptica, inmunofluorescencia y electrónica.<br>
+<strong>3. Estado Protrombótico:</strong> La pérdida urinaria masiva de antitrombina III, proteínas C y S sumada al aumento hepático de fibrinógeno genera riesgo extremo de tromboembolismo. Ante dolor lumbar súbito, hematuria y deterioro de función renal se debe sospechar de inmediato <strong>Trombosis de la Vena Renal</strong>.`
+    },
+
+    // 🧠 NEUROLOGÍA CLÍNICA
+    {
+        id: "HC-80120",
+        cama: "Cama 12 · Neurología Guardia",
+        edad: "Varón, 66 años",
+        ingreso: "Guardia Central",
+        sistema: "neuro",
+        dificultad: 1,
+        enfermedadActual: "Paciente que mientras desayunaba presentó episodio súbito de dificultad para emitir palabras (afasia motora de Broca) y pérdida transitoria de visión en el ojo izquierdo como una 'cortina negra que desciende' (amaurosis fugax), con debilidad en mano derecha que duró 25 minutos y recuperó ad integrum.",
+        antecedentes: "Hipertensión arterial mal controlada, tabaquismo activo de 30 paquetes/año y dislipemia.",
+        examenFisico: [
+            "PA: 160/90 mmHg | FC: 80 lpm regular",
+            "Examen Neurológico actual: Vigil, lúcido, lenguaje fluido y comprensivo, fuerza 5/5 en los 4 miembros, pares craneales normales. NIHSS actual: 0 puntos.",
+            "Cuello: Soplo carotídeo sistólico audible en región submandibular izquierda."
+        ],
+        laboratorio: [
+            { c1: "Glucemia: 110 mg/dL | Hemograma: Normal", c2: "TC de Encéfalo sin contraste: Sin signos de sangrado ni lesiones isquémicas agudas" },
+            { c1: "Score ABCD2: 6 puntos (Edad 1, PA 1, Clínica 2, Duración 2) -> Alto Riesgo de ACV", c2: "Eco-Doppler de Vasos de Cuello: Placa ateromatosa ulcerada con estenosis del 75% en carótida interna izquierda." }
+        ],
+        preguntas: [
+            "Definí el cuadro clínico y el significado de la amaurosis fugax en el territorio carotídeo.",
+            "¿Cuál es el valor del Score ABCD2 y por qué el paciente debe internarse obligatoriamente?",
+            "¿Cuál es el esquema de antiagregación dual de rescate precoz (CHANCE/POINT) y la conducta quirúrgica indicada?"
+        ],
+        discusion: `<strong>1. Diagnóstico:</strong> Accidente Isquémico Transitorio (AIT) de territorio carotídeo izquierdo (sistema anterior) con amaurosis fugax ipsilateral por émbolo a la arteria oftálmica.<br>
+<strong>2. Score ABCD2 & Riesgo:</strong> Con 6 puntos presenta un riesgo del 18% de sufrir un ACV isquémico discapacitante en las siguientes 48 horas. La internación en unidad de ACV / monitoreo es mandataria para estudio urgente y prevención secundaria.<br>
+<strong>3. Tratamiento Inmediato:</strong> Doble antiagregación plaquetaria con Aspirina 100 mg + Clopidogrel (carga 300 mg y luego 75 mg/día) durante 21 días (ensayos CHANCE y POINT) + Atorvastatina 80 mg/día. Evaluación urgente por cirugía vascular para <strong>Endarterectomía carotídea</strong> dentro de las primeras 2 semanas por estenosis sintomática > 70%.`
+    },
+    {
+        id: "HC-81349",
+        cama: "Cama 01 · Unidad de ACV (Stroke)",
+        edad: "Mujer, 72 años",
+        ingreso: "Código ACV Guardia",
+        sistema: "neuro",
+        dificultad: 2,
+        enfermedadActual: "Paciente que hace exactamente 1 hora y 45 minutos presentó de forma brusca caída de la comisura labial derecha, imposibilidad para hablar (afasia global) y parálisis completa del brazo y pierna derechos (hemiplejía fascio-braquio-crural derecha). La familia activó inmediatamente el sistema de emergencias.",
+        antecedentes: "Fibrilación auricular no valvular diagnosticada hace 6 meses (había suspendido la anticoagulación por temor a hematomas hace 15 días).",
+        examenFisico: [
+            "PA: 165/95 mmHg | FC: 112 lpm arrítmico irregular (FA) | Temp: 36.7 °C",
+            "FR: 18 rpm | SpO2: 97% aire ambiente | Glucemia capilar rápida: 128 mg/dL",
+            "Neurológico: Despierta, no comprende órdenes ni emite lenguaje verbal. Desviación de la mirada conjugada hacia la izquierda. Parálisis facial central derecha, plejía 0/5 en miembro superior y 1/5 en inferior derecho. Hemihipoestesia derecha franca. NIHSS: 17 puntos."
+        ],
+        laboratorio: [
+            { c1: "TC de Encéfalo sin contraste inmediata: Ausencia de hemorragia intracraneana.", c2: "Score ASPECTS: 9/10 (Signo de la arteria cerebral media izquierda hiperdensa precoz)" },
+            { c1: "Plaquetas: 220.000 /mm³ | KPTT: 31 seg | TP / RIN: 1.15", c2: "Angio-TC de Vasos Intracraneales: Oclusión proximal del segmento M1 de arteria cerebral media izquierda." }
+        ],
+        preguntas: [
+            "¿La paciente se encuentra dentro de la ventana terapéutica para trombólisis endovenosa con rtPA / Tenecteplasa?",
+            "¿Cuáles son los límites de presión arterial para poder administrar el fibrinolítico de manera segura?",
+            "¿Cuál es el siguiente paso terapéutico neurointervencionista endovascular si persiste ocluida la arteria M1?"
+        ],
+        discusion: `<strong>1. Diagnóstico:</strong> Accidente Cerebrovascular (ACV) Isquémico agudo cardioembólico de territorio de arteria cerebral media izquierda en <strong>ventana terapéutica</strong> (1h 45m de evolución, ventana estándar ≤ 4.5 horas).<br>
+<strong>2. Trombólisis Endovenosa:</strong> rtPA (Alteplasa 0.9 mg/kg IV, 10% en bolo y el resto en 60 min) o Tenecteplasa 0.25 mg/kg IV. La PA actual (165/95 mmHg) es apta (el límite estricto es < 185/110 mmHg antes del inicio y < 180/105 mmHg durante las siguientes 24 horas).<br>
+<strong>3. Trombectomía Mecánica:</strong> Al confirmarse oclusión de gran vaso proximal (M1) en angio-TC y NIHSS ≥ 6, está formalmente indicada la <strong>Trombectomía Mecánica endovascular</strong> con stent retriever / aspiración directa en sala de hemodinamia antes de las 6 a 24 horas.`
+    },
+    {
+        id: "HC-82701",
+        cama: "Cama 03 · Shock Room UTI",
+        edad: "Varón, 38 años",
+        ingreso: "Emergencias SAMU",
+        sistema: "neuro",
+        dificultad: 3,
+        enfermedadActual: "Paciente traído por ambulancia tras presentar crisis convulsiva tónico-clónica generalizada continua de más de 25 minutos de duración sin recuperar el sensorio entre episodios, con mordedura lateral de lengua, sialorrea espumosa, cianosis y relajación de esfínteres.",
+        antecedentes: "Epilepsia focal secundaria a traumatismo craneoencefálico previo con fractura deprimida tratada con Fenitoína (incumplimiento terapéutico en las últimas 72 horas por consumo excesivo de alcohol).",
+        examenFisico: [
+            "PA: 155/100 mmHg | FC: 138 lpm taquicárdico | Temp: 38.6 °C (hipertermia por actividad muscular sostenida)",
+            "FR: 28 rpm irregular con estridor por secreciones | SpO2: 86% con máscara de reservorio",
+            "Examen Neurológico: En pleno episodio convulsivo activo con contracciones tónico-clónicas bilaterales, pupilas midriáticas poco reactivas, trismus mandibular."
+        ],
+        laboratorio: [
+            { c1: "Glucemia: 160 mg/dL | Lactato sérico: 6.8 mmol/L (Acidosis láctica masiva)", c2: "Gases arteriales: pH 7.12, pCO2 48, HCO3 15 mEq/L" },
+            { c1: "CPK Total: 2.800 U/L (Rabdomiólisis temprana en curso)", c2: "Ionograma: Na 140, K 4.6, Ca iónico 1.18 mmol/L" },
+            { c1: "Nivel sérico de Fenitoína: < 2.5 mcg/mL (Infraterapéutico, rango 10-20)", c2: "" }
+        ],
+        preguntas: [
+            "Definí el concepto de Status Epiléptico Convulsivo y los tiempos operacionales T1 (daño neuronal) y T2.",
+            "¿Cuál es la primera línea farmacológica inmediata y por qué vía se administra?",
+            "Si fracasa la primera y segunda línea, ¿cuál es el esquema de tercera línea en terapia intensiva?"
+        ],
+        discusion: `<strong>1. Diagnóstico:</strong> <strong>Status Epiléptico Convulsivo</strong> generalizado prolongado (Superó el tiempo T1 de 5 minutos donde la crisis no aborta espontáneamente y se aproxima a T2 de 30 minutos donde ocurre lesión neuronal excitotóxica irreversible por glutamato).<br>
+<strong>2. Secuencia Farmacológica de Rescate:</strong>
+<br>• <em>Fase 1 (0-5 min):</em> <strong>Lorazepam 4 mg IV</strong> en bolo lento (o Diazepam 10 mg IV o Midazolam 10 mg IM). Puede repetirse una dosis a los 5 minutos si persiste.
+<br>• <em>Fase 2 (10-20 min):</em> Fármaco antiepiléptico IV de segunda línea: <strong>Levetiracetam 60 mg/kg IV</strong> (hasta 4500 mg) o Valproato de Sodio 40 mg/kg IV o Fenitoína 20 mg/kg IV.<br>
+<strong>3. Tercera Línea (Status Refractario):</strong> Si persiste la actividad a los 30 minutos: IOT inmediata con intubación orotraqueal y anestesia general con infusión continua de <strong>Midazolam</strong> (0.2 mg/kg bolo + infusión) o <strong>Propofol</strong>, guiado por monitoreo electroencefalográfico continuo (EEG) buscando patrón de salva-supresión.`
+    },
+
+    // 🦠 INFECTOLOGÍA
+    {
+        id: "HC-90215",
+        cama: "Cama 15 · Sala General",
+        edad: "Mujer, 62 años",
+        ingreso: "Guardia Médica",
+        sistema: "infecto",
+        dificultad: 1,
+        enfermedadActual: "Paciente que consulta por fiebre alta con escalofríos y chuchos de frío intensos de 48 horas de evolución, dolor lumbar derecho punzante constante que empeora con el movimiento, náuseas, anorexia y disuria con tenesmo vesical previo.",
+        antecedentes: "Diabetes Mellitus tipo 2 tratada con Metformina. Historia de infecciones urinarias bajas a repetición tratadas empíricamente con antibióticos orales múltiples.",
+        examenFisico: [
+            "PA: 110/65 mmHg | FC: 104 lpm | Temp: 39.2 °C",
+            "FR: 22 rpm | SpO2: 97% aire ambiente",
+            "Abdomen y dorso: Puñopercusión lumbar derecha marcadamente positiva (signo de Giordano francamente positivo). Dolor a la palpación del punto ureteral superior y medio derecho.",
+            "Piel: Caliente, sudorosa, sin lesiones cutáneas ni petequias."
+        ],
+        laboratorio: [
+            { c1: "Leucocitos: 17.800 /mm³ (82% neutrófilos, 8% en cayado)", c2: "PCR: 168 mg/L | Eritrosedimentación: 82 mm/h" },
+            { c1: "Urea: 42 mg/dL | Creatinina: 1.1 mg/dL", c2: "Sedimento Urinario: Campo cubierto de leucocitos, piocitos abundantes, cilindros leucocitarios." },
+            { c1: "Orina completa: Nitritos positivos, Estearasa leucocitaria +++", c2: "Ecografía Renal: Riñón derecho con aumento de tamaño difuso, sin ectasia pielocalicial ni litiasis obstructiva." }
+        ],
+        preguntas: [
+            "¿Cuál es el diagnóstico sindromático y por qué se considera una infección urinaria complicada?",
+            "¿Qué germen bacteriano causa el 80% de estos cuadros y cuál es la sospecha de resistencia bacteriana (BLEE)?",
+            "¿Cuál es el esquema antibiótico empírico parenteral de elección mientras se espera el urocultivo?"
+        ],
+        discusion: `<strong>1. Diagnóstico:</strong> Pielonefritis aguda bacteriana derecha (ITU alta) <strong>complicada</strong> por presentarse en paciente diabética con síndrome de respuesta inflamatoria sistémica (SIRS).<br>
+<strong>2. Microbiología:</strong> <em>Escherichia coli</em> uropatógena (seguida de <em>Klebsiella pneumoniae</em> y <em>Proteus mirabilis</em>). Al tener antecedentes de múltiples tratamientos previos, existe elevado riesgo de cepas productoras de Betalactamasas de Espectro Extendido (BLEE).<br>
+<strong>3. Tratamiento Empírico:</strong> Internación en sala general. Si el riesgo de BLEE es bajo/moderado: <strong>Ceftriaxona 1-2 g/día IV</strong>. Si existen factores para BLEE o sepsis grave: <strong>Piperacilina/Tazobactam 4.5 g c/6h IV</strong> o un carbapenem (Ertapenem 1 g/día o Meropenem). Duración total: 10 a 14 días ajustados al antibiograma.`
+    },
+    {
+        id: "HC-91430",
+        cama: "Cama 06 · Terapia Intermedia / Aislamiento",
+        edad: "Varón, 29 años",
+        ingreso: "Shock Room",
+        sistema: "infecto",
+        dificultad: 2,
+        enfermedadActual: "Paciente joven traído por familiares por cuadro de 24 horas de evolución de cefalea holocraneana explosiva refractaria a analgésicos, fiebre de 39.5°C, fotofobia extrema, vómitos en chorro y tendencia al sueño con confusión progresiva.",
+        antecedentes: "Previamente sano. Historia de sinusitis bacteriana aguda hace 10 días tratada incompletamente.",
+        examenFisico: [
+            "PA: 125/80 mmHg | FC: 110 lpm | Temp: 39.4 °C | SpO2: 98%",
+            "Sensorio: Somnoliento, responde al llamado con lenguaje incoherente (Glasgow 12/15).",
+            "Signos Meníngeos: Rigidez de nuca franca (resistencia insuperable a la flexión del cuello), signo de Kernig positivo bilateral y signo de Brudzinski marcadamente positivo.",
+            "Piel: Sin petequias ni púrpura fulminans (hace menos probable meningococo)."
+        ],
+        laboratorio: [
+            { c1: "Punción Lumbar (LCR): Aspecto turbio y purulento a presión de apertura de 32 cmH2O", c2: "Citoquímico de LCR: 3.400 células/mm³ (92% polimorfonucleares)" },
+            { c1: "Proteínas en LCR: 280 mg/dL (Hiperproteinorraquia marcada)", c2: "Glucosa en LCR: 14 mg/dL vs Glucemia plasmática 120 mg/dL (Relación < 0.2: Hipoglucorraquia severa)" },
+            { c1: "Tinción de Gram en LCR: Diplococos Gram positivos lanceolados abundantes", c2: "Leucocitos en sangre: 21.000 /mm³" }
+        ],
+        preguntas: [
+            "¿Cuál es el agente etiológico más probable según el Gram de LCR y el antecedente de sinusitis?",
+            "¿Cuál es el esquema antibiótico empírico dual de elección para el adulto y por qué se indica Dexametasona?",
+            "¿En qué momento exacto debe administrarse la Dexametasona respecto a los antibióticos?"
+        ],
+        discusion: `<strong>1. Diagnóstico & Germen:</strong> Meningitis Bacteriana Aguda comunitaria por <em>Streptococcus pneumoniae</em> (Neumococo, diplococos Gram positivos). El foco paranasal previo actuó como puerta de entrada por contigüidad.<br>
+<strong>2. Dexametasona y Beneficio Clínico:</strong> <strong>Dexametasona 10 mg IV cada 6 horas</strong>. Reduce la inflamación subaracnoidea letal desencadenada por la lisis bacteriana, disminuyendo significativamente la sordera neurosensorial, las secuelas neurológicas y la mortalidad por neumococo.<br>
+<strong>3. Regla de Oro del Momento:</strong> La Dexametasona debe administrarse <strong>15 a 20 minutos ANTES o junto con la primera dosis de antibiótico</strong> (Ceftriaxona 2 g c/12h IV + Vancomicina 15-20 mg/kg c/12h para cubrir cepas de neumococo con resistencia intermedia a penicilina). Si se administra después del antibiótico, pierde por completo su beneficio protector.`
+    },
+    {
+        id: "HC-92840",
+        cama: "Cama 01 · Terapia Intensiva",
+        edad: "Varón, 71 años",
+        ingreso: "Quirófano / Shock Room",
+        sistema: "infecto",
+        dificultad: 3,
+        enfermedadActual: "Paciente en postoperatorio inmediato de laparotomía exploradora por diverticulitis aguda perforada con peritonitis fecal generalizada (Hinchey IV). Ingresa intubado en shock severo con necesidad de dosis crecientes de vasopresores a pesar de 3.000 mL de cristaloides infundidos.",
+        antecedentes: "Enfermedad diverticular crónica, insuficiencia cardíaca con FEVI 45% y diabetes tipo 2.",
+        examenFisico: [
+            "PA: 78/42 mmHg bajo Noradrenalina a 0.35 mcg/kg/min | PAM: 54 mmHg | FC: 132 lpm",
+            "Temp: 35.4 °C (Hipotermia por shock séptico grave) | Diuresis: 10 mL/h (Anuria)",
+            "Perfusión: Extremidades moteadas con livideces en rodillas (Mottling score 3), tiempo de relleno capilar 6 segundos.",
+            "Abdomen: Abdomen abierto contenido con bolsa de Bogotá / sistema de aspiración negativa."
+        ],
+        laboratorio: [
+            { c1: "Ácido Láctico sérico: 5.6 mmol/L (Grave hiperlactatemia tisular)", c2: "Gases arteriales: pH 7.16, HCO3 12 mEq/L, PaO2 78 mmHg" },
+            { c1: "Leucocitos: 3.200 /mm³ (Leucopenia grave con 22% de formas inmaduras en banda)", c2: "Plaquetas: 68.000 /mm³ (Trombocitopenia de consumo)" },
+            { c1: "Creatinina: 3.1 mg/dL | Bilirrubina Total: 2.8 mg/dL", c2: "Score SOFA: 14 puntos (Mortalidad estimada > 50%)" }
+        ],
+        preguntas: [
+            "Definí los criterios de Shock Séptico según las guías internacionales Sepsis-3.",
+            "¿Cuál es el vasopresor de primera línea y cuál es la droga de segunda línea si no se alcanza la PAM ≥ 65 mmHg?",
+            "¿Cuál es el esquema antibiótico empírico de amplio espectro para peritonitis fecal nosocomial / postquirúrgica?"
+        ],
+        discusion: `<strong>1. Diagnóstico:</strong> <strong>Shock Séptico</strong> refractario de foco intraabdominal (Sepsis-3: Sepsis con necesidad de vasopresores para mantener PAM ≥ 65 mmHg y lactato sérico > 2 mmol/L a pesar de una adecuada reanimación con volumen). Falla multiorgánica (hemodinámica, renal, metabólica y coagulopatía).<br>
+<strong>2. Soporte Hemodinámico:</strong>
+<br>• 1° Línea: <strong>Noradrenalina</strong> titulada hasta alcanzar PAM ≥ 65 mmHg.
+<br>• 2° Línea complementaria: <strong>Vasopresina</strong> a infusión fija de 0.03 UI/min para reducir los requerimientos adrenérgicos.
+<br>• Si persiste disfunción miocárdica séptica: agregar <strong>Dobutamina</strong>.
+<br>• Corticoterapia: <strong>Hidrocortisona 200 mg/día IV</strong> en infusión continua ante shock séptico refractario a vasopresores.<br>
+<strong>3. Antibioticoterapia Empírica:</strong> Meropenem 1 g c/8h IV (o Piperacilina/Tazobactam) + Vancomicina (o Teicoplanina) + Fluconazol o Equinocandina (por alto riesgo de peritonitis fúngica por <em>Candida</em> en perforación colónica).`
     }
 ];
 
 function generarCasoClinicoInterna(esUrgencia = false) {
     let casosFiltrados = BANCO_CASOS_INTERNA_AVANZADOS;
 
-    if (!esUrgencia) {
+    if (esUrgencia) {
+        const urgentes = casosFiltrados.filter(c => c.dificultad === 3 || c.cama.includes("Shock") || c.cama.includes("Terapia") || c.cama.includes("UCO"));
+        if (urgentes.length > 0) casosFiltrados = urgentes;
+    } else {
         if (sistemaInternaActivo !== "todos") {
             const porSistema = casosFiltrados.filter(c => c.sistema === sistemaInternaActivo);
             if (porSistema.length > 0) casosFiltrados = porSistema;
@@ -3712,8 +4187,8 @@ function generarCasoClinicoInterna(esUrgencia = false) {
         if (porDiff.length > 0) casosFiltrados = porDiff;
     }
 
-    const casoElegido = casosFiltrados[Math.floor(Math.random() * casosFiltrados.length)];
-    if (!casoElegido) return;
+    const casoElegido = casosFiltrados[Math.floor(Math.random() * casosFiltrados.length)] || BANCO_CASOS_INTERNA_AVANZADOS[0];
+    casoInternaActivoActual = casoElegido;
 
     // Verificar si hay PDFs cargados en Medicina Interna para integrar
     const pdfsInterna = estadoMultiPdfMedicina.interna || [];
@@ -3740,7 +4215,8 @@ function generarCasoClinicoInterna(esUrgencia = false) {
     if (pMeta) pMeta.innerHTML = `${casoElegido.edad} · ${casoElegido.ingreso}${customNotice}`;
     if (diffBadge) {
         const labels = { 1: "Nivel 1: Residente Jr.", 2: "Nivel 2: Médico de Planta", 3: "Nivel 3: Ateneo Complejo" };
-        diffBadge.textContent = labels[casoElegido.dificultad] || "Ateneo Clínico";
+        diffBadge.textContent = esUrgencia ? "🚨 Urgencia de Guardia" : (labels[casoElegido.dificultad] || "Ateneo Clínico");
+        diffBadge.className = esUrgencia ? "badge badge--danger" : (casoElegido.dificultad === 3 ? "badge badge--danger" : casoElegido.dificultad === 1 ? "badge badge--success" : "badge badge--warning");
     }
     if (enfAct) enfAct.textContent = casoElegido.enfermedadActual;
     if (antec) antec.textContent = casoElegido.antecedentes;
@@ -3770,14 +4246,24 @@ function generarCasoClinicoInterna(esUrgencia = false) {
     if (discPanel) discPanel.classList.add("hidden");
     if (revealBtn) revealBtn.textContent = "💡 Revelar Discusión Clínica y Resolución Razonada";
 
-    // Actualizar monitores simulados
+    // Limpiar input de diagnóstico del alumno y panel de feedback previo
+    const inputDiag = document.getElementById("medStudentDiagnosisInput");
+    if (inputDiag) inputDiag.value = "";
+    const feedbackPanel = document.getElementById("medAiEvaluationFeedback");
+    if (feedbackPanel) {
+        feedbackPanel.classList.add("hidden");
+        feedbackPanel.innerHTML = "";
+    }
+
+    // Actualizar monitores simulados según el cuadro clínico
     const fcElem = document.getElementById("vitalFC");
     const paElem = document.getElementById("vitalPA");
     const spo2Elem = document.getElementById("vitalSPO2");
     const frElem = document.getElementById("vitalFR");
+
     if (casoElegido.sistema === "cardio") {
-        if (fcElem) fcElem.textContent = "118";
-        if (paElem) paElem.textContent = "175/105";
+        if (fcElem) fcElem.textContent = casoElegido.dificultad === 3 ? "122" : "118";
+        if (paElem) paElem.textContent = casoElegido.dificultad === 3 ? "75/45" : "175/105";
         if (spo2Elem) spo2Elem.textContent = "88%";
         if (frElem) frElem.textContent = "28";
     } else if (casoElegido.sistema === "nefro") {
@@ -3785,11 +4271,26 @@ function generarCasoClinicoInterna(esUrgencia = false) {
         if (paElem) paElem.textContent = "85/50";
         if (spo2Elem) spo2Elem.textContent = "96%";
         if (frElem) frElem.textContent = "34";
-    } else {
-        if (fcElem) fcElem.textContent = "96";
-        if (paElem) paElem.textContent = "120/75";
-        if (spo2Elem) spo2Elem.textContent = "91%";
-        if (frElem) frElem.textContent = "24";
+    } else if (casoElegido.sistema === "neumo") {
+        if (fcElem) fcElem.textContent = "128";
+        if (paElem) paElem.textContent = "130/80";
+        if (spo2Elem) spo2Elem.textContent = "81%";
+        if (frElem) frElem.textContent = "38";
+    } else if (casoElegido.sistema === "gastro") {
+        if (fcElem) fcElem.textContent = "115";
+        if (paElem) paElem.textContent = "95/55";
+        if (spo2Elem) spo2Elem.textContent = "95%";
+        if (frElem) frElem.textContent = "22";
+    } else if (casoElegido.sistema === "neuro") {
+        if (fcElem) fcElem.textContent = "112";
+        if (paElem) paElem.textContent = "165/95";
+        if (spo2Elem) spo2Elem.textContent = "97%";
+        if (frElem) frElem.textContent = "18";
+    } else if (casoElegido.sistema === "infecto") {
+        if (fcElem) fcElem.textContent = "132";
+        if (paElem) paElem.textContent = "78/42";
+        if (spo2Elem) spo2Elem.textContent = "93%";
+        if (frElem) frElem.textContent = "30";
     }
 
     mostrarToast(`⚡ Caso generado: ${casoElegido.id} (${casoElegido.cama})`, "exito");
@@ -3802,6 +4303,28 @@ let dificultadFarmaActiva = 2; // 1: Cinética & Diana, 2: Ajuste & Interaccione
 let familiaFarmaActiva = "todas";
 
 const BANCO_DESAFIOS_FARMACOLOGIA = [
+    // --- CARDIOVASCULAR ---
+    {
+        id: "DF-CARDIO-1",
+        subtitulo: "Selectividad Beta y Regulación de Receptores",
+        dificultad: 1,
+        familia: "cardio",
+        texto: "Varón de 45 años hipertenso y asmático moderado bajo tratamiento con salbutamol a demanda. En un chequeo de rutina, un colega le inicia Propranolol 40 mg c/12h para control de cifras tensionales y temblor esencial leve. A las 48 horas consulta en guardia con crisis de broncoespasmo severo y sibilancias bilaterales diseminadas.",
+        laboratorio: [
+            "Espirometría en guardia: VEF1 48% del predicho (caída del 35% respecto a su basal)",
+            "Presión Arterial: 125/80 mmHg | Frecuencia Cardíaca: 54 lpm (bradicardia sinusal)",
+            "SatO2: 91% aire ambiente (corrige a 97% con cánula a 2 L/min)",
+            "Gases en sangre: pH 7.37, pCO2 42, pO2 65 mmHg"
+        ],
+        preguntas: [
+            "¿Cuál es la base molecular farmacodinámica del broncoespasmo inducido por propranolol frente a un betabloqueante cardioselectivo?",
+            "¿Qué alternativa betabloqueante selectiva β1 hubiera sido segura en este paciente?",
+            "¿Qué fenómeno farmacológico de 'up-regulation' ocurriría si se suspende un betabloqueante de forma abrupta tras semanas de uso?"
+        ],
+        discusion: `<strong>1. Mecanismo Farmacodinámico:</strong> El Propranolol es un betabloqueante no selectivo (afinidad idéntica por β1 y β2). El bloqueo de los receptores <strong>β2 del músculo liso bronquial</strong> impide la estimulación de la adenilato ciclasa y la síntesis de AMPc, provocando broncoconstricción refleja severa y anulando la respuesta al salbutamol.<br>
+<strong>2. Alternativa Selectiva:</strong> Si un betabloqueante es estrictamente necesario, se deben usar agentes <strong>β1-cardioselectivos</strong> (Bisoprolol, Atenolol o Nebivolol) a dosis bajas, aunque con precaución en asma severa.<br>
+<strong>3. Up-Regulation y Rebote:</strong> El bloqueo crónico induce aumento de la densidad de receptores β (up-regulation). La suspensión abrupta desencadena una crisis simpática por hipersensibilidad (taquicardia severa, rebote hipertensivo y angina).`
+    },
     {
         id: "DF-804",
         subtitulo: "Dilema Cardiorrenal y Transporte P-gp",
@@ -3845,41 +4368,336 @@ const BANCO_DESAFIOS_FARMACOLOGIA = [
         discusion: `<strong>1. Mecanismo Enzimático CYP450:</strong> La Warfarina es una mezcla racémica donde el enantiómero S es 5 veces más potente que el R. La S-Warfarina se metaboliza exclusivamente por la isoenzima <strong>CYP2C9</strong>. Los azoles (Fluconazol/Itraconazol) son inhibidores directos muy potentes del CYP2C9, reduciendo drásticamente su aclaramiento hepático y cuadruplicando su semivida plasmática (t1/2).<br>
 <strong>2. Reversión Inmediata con Sangrado Activo:</strong> Complejo Protrombínico Concentrado (CCP de 4 factores: factores II, VII, IX, X) a dosis de 25-50 UI/kg IV, o Plasma Fresco Congelado (PFC) si no hay CCP, más Vitamina K1 (Fitomenadiona) 5-10 mg IV lenta en infusión.<br>
 <strong>3. Riesgo de Resistencia en Válvula Mecánica:</strong> Dosis excesivas de Vitamina K1 pueden generar resistencia a la anticoagulación oral por semanas una vez superada la urgencia, dejando al paciente desprotegido frente a una trombosis protésica valvular aguda.`
-    }
-];
+    },
 
-const FICHERO_4X4_DROGAS = [
+    // --- SISTEMA NERVIOSO CENTRAL (SNC) ---
     {
-        droga: "Bisoprolol / Carvedilol",
-        familia: "Beta-bloqueantes (Cardiovascular)",
-        mecanismo: "Antagonismo competitivo de receptores β1 miocárdicos (Bisoprolol selectivo; Carvedilol β1, β2 y α1 vasodilatador). Disminuyen AMPc intracelular y corriente If del nódulo sinusal.",
-        cinetica: "Biodisponibilidad: 80-90%. Metabolismo hepático y eliminación renal 50/50. t1/2: 10-12 horas (permite monodosis diaria).",
-        indicaciones: "Insuficiencia cardíaca con FEVI reducida (pilar del tratamiento pronóstico), HTA, cardiopatía isquémica, control de frecuencia en FA.",
-        adversos: "Bradicardia sinusal, bloqueo AV, broncoespasmo (por bloqueo β2), frialdad de extremidades, fatiga y enmascaramiento de hipoglucemias en diabéticos."
+        id: "DF-SNC-1",
+        subtitulo: "Cinética de ISRS y Período de Latencia",
+        dificultad: 1,
+        familia: "snc",
+        texto: "Mujer de 32 años diagnosticada con Trastorno Depresivo Mayor e inicio de Sertralina 50 mg/día hace 5 días. Consulta angustiada manifestando que no siente mejoría de su estado de ánimo y que nota náuseas matinales y leve temblor distal, solicitando cambiar inmediatamente de psicofármaco.",
+        laboratorio: [
+            "Ionograma sérico: Na+ 139 mEq/L, K+ 4.1 mEq/L",
+            "ECG: Ritmo sinusal, QTc 410 ms (normal)",
+            "Perfil tiroideo (TSH): 2.1 uUI/mL (eutiroidea)"
+        ],
+        preguntas: [
+            "¿A qué se debe la discordancia temporal entre el bloqueo agudo del transportador SERT y el efecto clínico antidepresivo (latencia de 2 a 4 semanas)?",
+            "¿Por qué se producen las náuseas al inicio del tratamiento con ISRS?",
+            "¿Cuál es la conducta médica y explicación farmacológica adecuada para la paciente?"
+        ],
+        discusion: `<strong>1. Mecanismo de Latencia:</strong> Aunque el bloqueo del transportador <strong>SERT</strong> es inmediato (horas), el aumento inicial de serotonina estimula los autorreceptores presinápticos inhibitorios <strong>5-HT1A</strong> en el núcleo del rafe, frenando la liberación. El efecto antidepresivo clínico requiere de 2 a 4 semanas para lograr la <strong>desensibilización y down-regulation</strong> de estos autorreceptores y la estimulación de neurotrofinas (BDNF).<br>
+<strong>2. Náuseas Iniciales:</strong> La estimulación de receptores <strong>5-HT3</strong> en el área postrema y tracto digestivo provoca náuseas que suelen autolimitarse tras la primera semana.<br>
+<strong>3. Conducta:</strong> Contener a la paciente, explicar el período fisiológico de latencia terapéutica y mantener la dosis sin rotar el fármaco prematuramente.`
     },
     {
-        droga: "Enalapril / Ramipril",
-        familia: "Inhibidores de la ECA (IECA)",
-        mecanismo: "Inhiben competitivamente a la Enzima Convertidora de Angiotensina, impidiendo el paso de Angiotensina I a Angiotensina II y bloqueando la degradación de bradicininas.",
-        cinetica: "Profármaco que se biotransforma en el hígado a Enalaprilato activo. Eliminación renal predominante. Requiere ajuste estricto en falla renal.",
-        indicaciones: "Hipertensión arterial esencial, Insuficiencia cardíaca con FEVI deprimida, Nefroprotección en microalbuminuria diabética.",
-        adversos: "Tos seca nocturna refractaria (por acumulación de bradicinina y sustancia P), hiperpotasemia, angioedema (raro pero potencialmente mortal) e hipotensión de 1° dosis."
+        id: "DF-SNC-2",
+        subtitulo: "Síndrome Serotoninérgico vs Síndrome Neuroléptico",
+        dificultad: 2,
+        familia: "snc",
+        texto: "Varón de 39 años bajo tratamiento con Escitalopram 20 mg/día por depresión mayor. Tras una extracción dental compleja recibe Tramadol 100 mg c/8h y además toma Sumatriptán 50 mg por una crisis migrañosa. Ingresa con diaforesis profusa, agitación psicomotriz, clonus inducible en miembros inferiores e hipertermia de 39.4°C.",
+        laboratorio: [
+            "CPK total: 850 UI/L (leve elevación)",
+            "Leucocitos: 11.200 /mm³ sin desviación izquierda",
+            "Gasometría: Acidosis láctica leve compensada",
+            "Examen neurológico: Hiperreflexia rotuliana y aquílea masiva con clonus agotable bilateral y pupilas midriáticas reactivas."
+        ],
+        preguntas: [
+            "¿Cómo interactúan Tramadol, Escitalopram y Sumatriptán para desencadenar toxicidad serotoninérgica sinérgica?",
+            "¿Qué criterios clínicos diferencian el Síndrome Serotoninérgico del Síndrome Neuroléptico Maligno (SNM)?",
+            "¿Cuál es el antagonista de receptores de serotonina de elección para rescate?"
+        ],
+        discusion: `<strong>1. Triple Sinergia Serotoninérgica:</strong><br>
+• <em>Escitalopram:</em> Bloqueo selectivo de SERT.<br>
+• <em>Tramadol:</em> Analgésico opioide atípico que además bloquea la recaptación de 5-HT y noradrenalina.<br>
+• <em>Sumatriptán:</em> Agonista directo de receptores 5-HT1B/1D.<br>
+La convergencia produce sobreestimulación masiva de receptores <strong>5-HT2A y 5-HT1A</strong> postsinápticos.<br>
+<strong>2. Diagnóstico Diferencial con SNM:</strong> El Síndrome Serotoninérgico se caracteriza por <strong>hiperreflexia, clonus (signo cardinal) y temblor</strong> de instauración rápida (horas). El SNM (por bloqueo dopaminérgico con antipsicóticos) presenta rigidez en 'caño de plomo', hiporreflexia y elevación extrema de CPK (> 10.000) de desarrollo lento.<br>
+<strong>3. Rescate Farmacológico:</strong> Suspensión inmediata de serotonérgicos, enfriamiento activo, benzodiacepinas (Diazepam) para el temblor y administración de <strong>Ciproheptadina</strong> (antagonista 5-HT2A oral/por SNG).`
     },
     {
-        droga: "Ceftriaxona",
-        familia: "Cefalosporina de 3° Generación (Betalactámicos)",
-        mecanismo: "Bactericida tiempo-dependiente. Se une a las Proteínas Fijadoras de Penicilina (PBP-1 y PBP-3), inhibiendo la transpeptidación del peptidoglicano de la pared celular bacteriana.",
-        cinetica: "No se absorbe vía oral (solo IV/IM). Alta unión a proteínas (90%). Excelente penetración en LCR con meninges inflamadas. Eliminación dual (renal y biliar 40%). t1/2 prolongada: 8h.",
-        indicaciones: "Meningitis bacteriana aguda, Neumonía Adquirida en la Comunidad grave, Pielonefritis, Infecciones intraabdominales, Gonorrea.",
-        adversos: "Pseudolitiasis biliar reversible (barro biliar por precipitación con calcio), diarrea por C. difficile, reacciones de hipersensibilidad alérgica."
+        id: "DF-SNC-3",
+        subtitulo: "Cinética No Lineal de Fenitoína en Status Convulsivo",
+        dificultad: 3,
+        familia: "snc",
+        texto: "Mujer de 50 años con epilepsia focal estructural en tratamiento crónico con Fenitoína (Difenilhidantoína) 300 mg/día con niveles plasmáticos de 12 mcg/mL (rango terapéutico: 10 - 20 mcg/mL). Por presentar 2 crisis aisladas, su médico ambulatorio decide duplicar la dosis a 600 mg/día. Al 5° día es traída a guardia estuporosa, con ataxia cerebelosa severa, nistagmo multidireccional horizontal y vertical continuo.",
+        laboratorio: [
+            "Fenitoinemia actual: 44 mcg/mL (Rango terapéutico: 10 - 20 mcg/mL - Nivel tóxico crítico > 30)",
+            "Albúmina sérica: 3.2 g/dL (leve hipoalbuminemia)",
+            "ECG: Ensanchamiento leve del PR y bradicardia sinusal",
+            "TC cerebral sin contraste: Sin nuevas lesiones isquémicas ni hemorrágicas agudas."
+        ],
+        preguntas: [
+            "¿Por qué un incremento al doble de la dosis de fenitoína casi cuadruplicó su concentración plasmática (cinética de Michaelis-Menten / orden cero)?",
+            "¿Cómo influye la hipoalbuminemia en la fracción libre farmacológicamente activa de fenitoína?",
+            "¿Cuál es la conducta terapéutica y por qué la hemodiálisis no es efectiva para depurarla?"
+        ],
+        discusion: `<strong>1. Cinética de Saturación (Michaelis-Menten):</strong> La Fenitoína pasa de una cinética de primer orden (eliminación proporcional a la dosis) a una <strong>cinética de orden cero</strong> a concentraciones plasmáticas terapéuticas normales debido a la saturación completa de las enzimas hepáticas (CYP2C9 y CYP2C19). A partir de la saturación (Km), pequeños aumentos de dosis generan incrementos desproporcionados e impredecibles en la concentración plasmática y toxicidad severa.<br>
+<strong>2. Fracción Libre y Proteínas:</strong> La fenitoína tiene <strong>unión a albúmina del 90-95%</strong>. En hipoalbuminemia, la fracción libre activa aumenta sustancialmente; la concentración total subestima la toxicidad real.<br>
+<strong>3. Manejo:</strong> Suspensión inmediata de fenitoína y medidas de soporte. La hemodiálisis es ineficaz debido a su altísima unión proteica y gran volumen de distribución. Se debe rotar a fármacos de cinética lineal predecible (Levetiracetam o Valproato).`
+    },
+
+    // --- SISTEMA AUTÓNOMO ---
+    {
+        id: "DF-AUTO-1",
+        subtitulo: "Selectividad Muscarínica y Ojo Seco vs Glaucoma",
+        dificultad: 1,
+        familia: "autonomo",
+        texto: "Mujer de 64 años con vejiga hiperactiva a quien se le prescribe Oxibutinina 5 mg c/8h. A las 72 horas consulta por visión borrosa cercana severa, sequedad bucal extrema (xerostomía), constipación y un episodio de dolor ocular sordo unilateral con ojo rojo.",
+        laboratorio: [
+            "Presión intraocular (PIO): 34 mmHg en ojo derecho (normal: 10 - 21 mmHg)",
+            "Agudeza visual: Deterioro significativo para lectura cercana",
+            "Examen con lámpara de hendidura: Ángulo iridocorneal estrecho y midriasis media fija."
+        ],
+        preguntas: [
+            "¿Qué subtipos de receptores muscarínicos bloquea la oxibutinina y cómo explica la parálisis de la acomodación (cicloplejía) y la xerostomía?",
+            "¿Por qué los antimuscarínicos están estrictamente contraindicados en glaucoma de ángulo estrecho?",
+            "¿Qué alternativas farmacológicas modernas con menor perfil anticolinérgico existen para vejiga hiperactiva?"
+        ],
+        discusion: `<strong>1. Perfil Anticolinérgico:</strong> La Oxibutinina es un antagonista muscarínico no selectivo con afinidad por <strong>M1, M2 y M3</strong>. El bloqueo M3 en el músculo ciliar anula la contracción requerida para abombar el cristalino (cicloplejía / imposibilidad de visión cercana). El bloqueo M3 en glándulas salivales inhibe la secreción acuosa originando xerostomía.<br>
+<strong>2. Glaucoma de Ángulo Estrecho:</strong> La midriasis provocada por el bloqueo colinérgico del esfínter pupilar hace que el iris se repliegue hacia la periferia, ocluyendo la malla trabecular y bloqueando el drenaje del humor acuoso, precipitando una crisis de glaucoma agudo con riesgo de ceguera irreversible.<br>
+<strong>3. Alternativas Modernas:</strong> <em>Mirabegrón</em> (agonista selectivo β3 adrenérgico, sin efecto anticolinérgico) o antimuscarínicos con selectividad M3 vesicular preferencial (Solifenacina / Darifenacina).`
     },
     {
-        droga: "Sertralina / Escitalopram",
-        familia: "ISRS (Antidepresivos / SNC)",
-        mecanismo: "Inhibición selectiva del transportador de recaptación de serotonina presináptico (SERT), aumentando la disponibilidad de 5-HT en la hendidura sináptica y desensibilizando autorreceptores 5-HT1A.",
-        cinetica: "Buena absorción oral con alimentos. Metabolismo hepático CYP2C19 y CYP3A4. Semivida de eliminación: 26-30 horas. Requiere 2-4 semanas para efecto terapéutico pleno.",
-        indicaciones: "Trastorno depresivo mayor, Trastorno de ansiedad generalizada, Crisis de pánico, TOC, Fobia social.",
-        adversos: "Náuseas tempranas, disfunción sexual (anorgasmia, disminución de líbido), insomnio/somnolencia, prolongación leve del QTc (Escitalopram) y riesgo de Síndrome Serotoninérgico con IMAO/Tramadol."
+        id: "DF-AUTO-2",
+        subtitulo: "Toxicología: Síndrome Colinérgico por Organofosforados",
+        dificultad: 2,
+        familia: "autonomo",
+        texto: "Varón de 28 años, trabajador rural que ingresa a emergencias tras fumigar en invernáculo sin equipo de protección. Presenta broncorrea masiva con estertores húmedos bilaterales, sialorrea, miosis puntiforme arreactiva, fasciculaciones musculares en deltoides y gemelos, bradicardia a 42 lpm y diarrea incontinente.",
+        laboratorio: [
+            "Gases en sangre: Acidosis respiratoria hipoxémica (pO2 55, pCO2 56 mmHg)",
+            "Actividad de Colinesterasa plasmática/eritrocitaria: Inhibición del 85% respecto al valor basal",
+            "ECG: Bradicardia sinusal con extrasístoles y prolongación de intervalo PR"
+        ],
+        preguntas: [
+            "¿Cuál es el mecanismo bioquímico por el cual los organofosforados inhiben a la Acetilcolinesterasa y qué significa el fenómeno de 'envejecimiento' (aging) de la enzima?",
+            "¿Qué manifestaciones corresponden al tono muscarínico y cuáles al nicotínico?",
+            "¿Cuál es el esquema de atropinización inmediata y qué rol específico cumple la Pralidoxima?"
+        ],
+        discusion: `<strong>1. Mecanismo & Envejecimiento:</strong> Los organofosforados fosforilan covalentemente el residuo de serina en el sitio activo de la <strong>Acetilcolinesterasa (AChE)</strong>, impidiendo la hidrólisis de acetilcolina. El 'envejecimiento' es la escisión posterior de un grupo alquilo de la molécula fosforilada; una vez que ocurre (en horas), la unión se vuelve irreversible y los reactivadores ya no funcionan.<br>
+<strong>2. Cuadro Muscarínico vs Nicotínico:</strong><br>
+• <em>Muscarínico (M2/M3):</em> Miosis, broncorrea, broncoespasmo, bradicardia, sialorrea, vómitos, diarrea (regla nemotécnica DUMBELS).<br>
+• <em>Nicotínico (Nm/Nn):</em> Fasciculaciones, debilidad muscular progresiva y parálisis diafragmática.<br>
+<strong>3. Rescate Terapéutico:</strong> <strong>Atropina IV</strong> a dosis repetidas (1-2 mg c/5-10 min) hasta lograr signos de 'atropinización' (pulmón seco y FC > 80 lpm, ¡la miosis no es el parámetro de respuesta!). Se asocia <strong>Pralidoxima (oxima)</strong> precozmente antes del envejecimiento para reactivar la AChE sobre la placa neuromuscular.`
+    },
+    {
+        id: "DF-AUTO-3",
+        subtitulo: "Bloqueo Alfa previo a Beta en Feocromocitoma",
+        dificultad: 3,
+        familia: "autonomo",
+        texto: "Mujer de 38 años con sospecha de feocromocitoma adrenal que consulta por palpitaciones severas, cefalea pulsátil y sudoración paroxística. Un médico no avezado decide iniciar de urgencia Atenolol 50 mg IV para controlar la taquicardia de 135 lpm. Minutos después de la infusión, la paciente desarrolla encefalopatía hipertensiva hiperaguda con PA de 260/150 mmHg y edema agudo de pulmón.",
+        laboratorio: [
+            "Metanefrinas libres plasmáticas: 12 veces por encima del límite superior normal",
+            "Fondo de ojo de urgencia: Hemorragias en llama y exudados retinianos agudos",
+            "Troponina I ultrasensible: 180 ng/L (daño miocárdico por sobrecarga aguda de postcarga)"
+        ],
+        preguntas: [
+            "¿Cuál es el fundamento hemodinámico y de receptores por el cual el bloqueo beta aislado provocó una crisis hipertensiva catastrófica ('vasoconstricción alfa desopuesta')?",
+            "¿Cuál es la secuencia farmacológica obligatoria recomendada por guías para preparar a estos pacientes?",
+            "¿Qué droga alfa-bloqueante irreversible de acción prolongada o competitiva se debe emplear?"
+        ],
+        discusion: `<strong>1. Vasoconstricción Alfa Desopuesta:</strong> Las catecolaminas circulantes en exceso estimulan tanto receptores α1 (vasoconstricción periférica) como β2 (vasodilatación en lecho muscular). Al administrar un betabloqueante solo, se anula la vasodilatación mediada por β2 y se disminuye el inotropismo cardíaco sin oponer resistencia al tono α1 masivo, desatando una <strong>vasoconstricción arterial sistémica desenfrenada</strong> y pico tensional letal.<br>
+<strong>2. Regla de Oro Farmacológica:</strong> NUNCA betabloquear sin un <strong>bloqueo alfa-adrenérgico completo y previo de al menos 7 a 14 días</strong> de duración.<br>
+<strong>3. Drogas de Elección:</strong> <strong>Fenoxibenzamina</strong> (alfa-bloqueante no competitivo irreversible) o antagonistas α1 selectivos como <strong>Doxazosina / Prazosina</strong>. Solo cuando el lecho vascular está vasodilatado y la volemia repuesta, se agrega el betabloqueante para tratar la taquicardia residual.`
+    },
+
+    // --- AINES Y ANALGÉSICOS ---
+    {
+        id: "DF-AINES-1",
+        subtitulo: "Selectividad COX-1 vs COX-2 y Riesgo Cardiovascular",
+        dificultad: 1,
+        familia: "aines",
+        texto: "Varón de 62 años con antecedentes de infarto de miocardio previo y stent medicado hace 2 años. Por gonartrosis crónica, un familiar le aconseja tomar Celecoxib 200 mg/día 'porque no daña el estómago'. Consulta para saber si esta medicación es segura considerando sus antecedentes cardiovasculares.",
+        laboratorio: [
+            "Lipidograma: LDL 68 mg/dL (bajo estatina de alta potencia)",
+            "Función renal: Creatinina 0.9 mg/dL, Filtrado glomerular 88 mL/min",
+            "ECG: Necrosis transmural anteroseptal antigua sin cambios isquémicos dinámicos."
+        ],
+        preguntas: [
+            "¿Por qué los inhibidores selectivos de COX-2 (coxibs) alteran el balance hemostático endotelial entre Prostaciclina (PGI2) y Tromboxano A2 (TXA2)?",
+            "¿Por qué el Celecoxib está contraindicado en pacientes con enfermedad coronaria establecida?",
+            "¿Qué estrategia analgésica de menor riesgo cardiovascular es de elección?"
+        ],
+        discusion: `<strong>1. Desbalance PGI2 / TXA2:</strong> La COX-2 endotelial sintetiza <strong>Prostaciclina (PGI2)</strong>, potente vasodilatador e inhibidor de la agregación plaquetaria. La COX-1 plaquetaria sintetiza <strong>Tromboxano A2 (TXA2)</strong>, proagregante y vasoconstrictor. Los inhibidores selectivos COX-2 suprimen la PGI2 protectora sin inhibir el TXA2 plaquetario mediado por COX-1, inclinando la balanza hacia un estado protrombótico endotelial.<br>
+<strong>2. Contraindicación:</strong> Aumentan significativamente el riesgo relativo de reinfarto, trombosis de stent y ACV isquémico.<br>
+<strong>3. Alternativa Preferida:</strong> Paracetamol como primer escalón; si se requiere AINE por inflamación refractaria, <strong>Naproxeno</strong> (menor perfil de riesgo trombótico coronario al tener un tiempo de bloqueo de COX-1 más continuo) asociado a protección gástrica estricta (IBP).`
+    },
+    {
+        id: "DF-AINES-2",
+        subtitulo: "La Triple Amenaza Nefrotóxica: IECA + Diurético + AINE",
+        dificultad: 2,
+        familia: "aines",
+        texto: "Mujer de 76 años hipertensa tratada con Enalapril 20 mg/día e Hidroclorotiazida 25 mg/día. Por una lumbalgia aguda toma Diclofenac 75 mg c/12h por cuenta propia. Al 6° día acude al hospital con astenia profunda, anuria de 18 horas y ortostatismo.",
+        laboratorio: [
+            "Creatinina sérica: 4.8 mg/dL (Basal de 3 meses atrás: 0.9 mg/dL)",
+            "Urea: 142 mg/dL",
+            "Potasio sérico: 6.3 mEq/L (Hiperpotasemia severa con ondas T picudas en ECG)",
+            "Ecografía renal: Riñones de tamaño normal sin ectasia de la vía urinaria."
+        ],
+        preguntas: [
+            "¿Cómo descompensa hemodinámicamente el glomérulo la combinación simultánea de Diclofenac + Enalapril + Diurético (Triple Whammy)?",
+            "¿Por qué el AINE genera además hiperpotasemia refractaria a nivel del túbulo colector?",
+            "¿Cuáles son las medidas terapéuticas inmediatas?"
+        ],
+        discusion: `<strong>1. Fisiopatología de la Triple Amenaza ('Triple Whammy'):</strong><br>
+• <em>Diurético:</em> Produce contracción de volumen intravascular y reduce el flujo plasmático renal.<br>
+• <em>AINE (Diclofenac):</em> Inhibe la síntesis de PGE2/PGI2, anulando la vasodilatación compensatoria de la <strong>arteriola aferente</strong>.<br>
+• <em>IECA (Enalapril):</em> Inhibe la angiotensina II, bloqueando la vasoconstricción protectora de la <strong>arteriola eferente</strong>.<br>
+Resultado: Caída catastrófica e inmediata de la presión hidrostática intraglomerular y colapso del filtrado.<br>
+<strong>2. Hiperpotasemia:</strong> Los AINEs inducen un estado de <strong>hipoaldosteronismo hiporreninémico</strong> por bloqueo de prostaglandinas renales, sumado a la retención de K+ generada por el IECA.<br>
+<strong>3. Conducta Inmediata:</strong> Suspensión de todos los fármacos nefrotóxicos, hidratación isotónica cuidadosa con solución fisiológica y estabilización de membrana miocárdica por hiperpotasemia con Gluconato de Calcio IV e infusión de Insulina + Dextrosa.`
+    },
+    {
+        id: "DF-AINES-3",
+        subtitulo: "Toxicidad por Paracetamol y Vía del NAPQI",
+        dificultad: 3,
+        familia: "aines",
+        texto: "Joven de 22 años que ingiere 18 gramos de Paracetamol en un intento de autolisis. Es traído a la guardia 6 horas después del evento, lúcido, con náuseas leves y vómitos aislados, refiriendo encontrarse 'mucho mejor' que al principio.",
+        laboratorio: [
+            "Paracetamolemia a las 6 horas: 240 mcg/mL (Línea de tratamiento de Rumack-Matthew: > 150 mcg/mL)",
+            "Transaminasas (TGO / TGP): 45 UI/L y 52 UI/L (aún normales a las 6h post-ingesta)",
+            "Tiempo de Protrombina: 88% | Bilirrubina total: 0.9 mg/dL"
+        ],
+        preguntas: [
+            "¿Por qué las transaminasas normales a las 6 horas son un engaño clínico peligroso en la intoxicación por paracetamol?",
+            "¿Qué vía metabólica hepática genera el metabolito reactivo tóxico NAPQI y por qué se satura el glutatión?",
+            "¿Cuál es el antídoto específico, su mecanismo de acción y la ventana temporal ideal para prevenir necrosis centrolobulillar letal?"
+        ],
+        discusion: `<strong>1. Falsa Seguridad Inicial:</strong> La hepatotoxicidad por paracetamol evoluciona en fases: en las primeras 24 horas (Fase 1) solo hay síntomas digestivos inespecíficos con enzimas hepáticas normales. La citólisis masiva y necrosis centrolobulillar explotan entre las 48 y 72 horas (Fase 3). Guiarse por transaminasas normales tempranas es un error mortal.<br>
+<strong>2. Metabolismo y NAPQI:</strong> A dosis terapéuticas el 90% se conjuga con glucurónido y sulfato. Con sobredosis, esas vías se saturan y el citocromo <strong>CYP2E1</strong> desvía el fármaco a <strong>N-acetil-p-benzoquinona imina (NAPQI)</strong>, un electrófilo citotóxico. Cuando el glutatión hepático se agota (> 70%), el NAPQI se une a proteínas mitocondriales produciendo necrosis hepática fulminante.<br>
+<strong>3. Antídoto:</strong> <strong>N-Acetilcisteína (NAC)</strong>. Actúa como donante de grupos sulfhidrilo (reponiendo glutatión) y se conjuga directamente con NAPQI. Administrado dentro de las <strong>primeras 8 horas</strong>, la prevención de insuficiencia hepática aguda es cercana al 100%.`
+    },
+
+    // --- ANTIMICROBIANOS (ANTIBIÓTICOS) ---
+    {
+        id: "DF-ANTIBIO-1",
+        subtitulo: "PK/PD de Betalactámicos vs Aminoglucósidos",
+        dificultad: 1,
+        familia: "antibio",
+        texto: "En ateneo de infectología se debate el esquema antibiótico para una bacteriemia grave por Pseudomonas aeruginosa sensible. Se discute si infundir Meropenem en bolo cada 8h o en infusión extendida de 3 a 4 horas, y si Amikacina debe dosificarse en multidosis diaria o en monodosis única diaria consolidada.",
+        laboratorio: [
+            "CIM de Meropenem para el aislamiento: 2 mcg/mL",
+            "CIM de Amikacina para el aislamiento: 4 mcg/mL",
+            "ClCr estimado del paciente: 75 mL/min"
+        ],
+        preguntas: [
+            "¿Qué índice farmacocinético/farmacodinámico (PK/PD) predice la eficacia bactericida de los betalactámicos frente a los aminoglucósidos?",
+            "¿Por qué la infusión prolongada de Meropenem optimiza la eliminación bacteriana?",
+            "¿Por qué la monodosis diaria de Amikacina maximiza la eficacia y reduce la toxicidad renal y coclear?"
+        ],
+        discusion: `<strong>1. Índices PK/PD Cardinales:</strong><br>
+• <em>Betalactámicos (Meropenem):</em> Bactericidas <strong>tiempo-dependientes</strong>. Su parámetro de eficacia es el <strong>%T > CIM</strong> (porcentaje del intervalo en que la concentración libre supera la CIM del germen; meta: ≥ 40-70% del tiempo).<br>
+• <em>Aminoglucósidos (Amikacina):</em> Bactericidas <strong>concentración-dependientes</strong> con marcado efecto post-antibiótico (PAE). Su parámetro de eficacia es el <strong>Cmax / CIM</strong> (pico plasmático sobre la CIM; meta: ≥ 8-10).<br>
+<strong>2. Infusión Extendida:</strong> Al prolongar la infusión a 3-4 horas, se sostiene la meseta de concentración por encima de la CIM durante casi todo el intervalo de dosificación sin necesidad de subir la dosis total diaria.<br>
+<strong>3. Monodosis de Amikacina:</strong> Genera un pico plasmático muy elevado (máxima muerte bacteriana) seguido de un valle casi nulo antes de la siguiente dosis, permitiendo la depuración tubular renal y el lavado del fármaco en el oído interno, reduciendo la oto y nefrotoxicidad.`
+    },
+    {
+        id: "DF-ANTIBIO-2",
+        subtitulo: "Nefrotoxicidad por Vancomicina y Monitoreo de Valles",
+        dificultad: 2,
+        familia: "antibio",
+        texto: "Varón de 65 años internado por neumonía intrahospitalaria por SAMR en tratamiento con Vancomicina 1 g IV c/12h y Piperacilina-Tazobactam. Al 5° día su diuresis cae a 400 mL/día y la creatinina sube de 0.8 a 2.3 mg/dL. El dosaje de nivel valle de vancomicina regresa en 28 mcg/mL (rango meta: 15 - 20 mcg/mL).",
+        laboratorio: [
+            "Valle de Vancomicina: 28 mcg/mL",
+            "Creatinina actual: 2.3 mg/dL | Urea: 98 mg/dL",
+            "Sedimento urinario: Cilindros granulosos y células tubulares epiteliales",
+            "Fracción excretada de sodio (FeNa): 2.4% (Injuria tubular aguda intrínseca)"
+        ],
+        preguntas: [
+            "¿Por qué la combinación Vancomicina + Piperacilina/Tazobactam incrementa sinérgicamente el riesgo de injuria renal aguda?",
+            "¿Cómo se define el parámetro de monitoreo moderno AUC24/CIM para Vancomicina y cuál es su rango de seguridad?",
+            "¿Cuál es la conducta terapéutica inmediata y qué alternativa farmacológica oral o IV existe sin nefrotoxicidad?"
+        ],
+        discusion: `<strong>1. Sinergia Nefrotóxica:</strong> Múltiples ensayos clínicos han demostrado que asociar Piperacilina/Tazobactam a Vancomicina duplica o triplica la incidencia de necrosis tubular aguda por estrés oxidativo y daño mitocondrial en células tubulares renales proximales.<br>
+<strong>2. Parámetro PK/PD AUC24/CIM:</strong> Las guías actuales (IDSA) recomiendan guiar la vancomicina por <strong>AUC24/CIM entre 400 y 600</strong> en lugar de valles aislados mayores a 15-20 mcg/mL, ya que niveles valles > 20 mcg/mL aumentan drásticamente la nefrotoxicidad sin mayor beneficio clínico.<br>
+<strong>3. Conducta:</strong> Suspender Vancomicina de inmediato o rotar a <strong>Linezolid</strong> (oxazolidinona sin toxicidad renal con excelente penetración pulmonar) o <strong>Daptomicina</strong> (si no fuera neumonía, ya que el surfactante la inactiva).`
+    },
+    {
+        id: "DF-ANTIBIO-3",
+        subtitulo: "Manejo de Multirresistencia y Ajuste de Colistín",
+        dificultad: 3,
+        familia: "antibio",
+        texto: "Paciente de 54 años en UTI en shock séptico refractario por bacteriemia asociada a catéter por Klebsiella pneumoniae productora de carbapenemasa (KPC). El antibiograma informa resistencia a todos los betalactámicos y quinolonas, sensible únicamente a Colistín (Colistimetato sódico) y Ceftazidima-Avibactam.",
+        laboratorio: [
+            "Aclaramiento de creatinina (ClCr): 22 mL/min (injuria renal estadio KDIGO 3)",
+            "Lactato sérico: 4.8 mmol/L | Saturación venosa central: 58%",
+            "Leucocitosis: 24.500 /mm³ con 18% en banda"
+        ],
+        preguntas: [
+            "¿Por qué Ceftazidima-Avibactam es de elección frente a Colistín en términos de mortalidad y nefrotoxicidad?",
+            "¿Cuál es el mecanismo de acción de Avibactam frente a las carbapenemasas clase A (KPC)?",
+            "Si se tuviera que usar Colistimetato sódico en falla renal, ¿por qué es indispensable administrar una dosis de carga completa a pesar del filtrado disminuido?"
+        ],
+        discusion: `<strong>1. Superioridad Clínica de CAZ-AVI:</strong> Los estudios prospectivos demuestran una reducción de la mortalidad a 30 días del 50% frente a Colistín, con una tasa de nefrotoxicidad radicalmente inferior (Colistín genera hasta 40-50% de insuficiencia renal aguda grave por lisis de membrana tubular).<br>
+<strong>2. Mecanismo de Avibactam:</strong> Es un inhibidor no betalactámico de betalactamasas (diaza-biciclooctano). A diferencia de tazobactam o clavulánico, se une de forma <strong>reversible y covalente</strong> inhibiendo serina-carbapenemasas de clase A de Ambler (KPC) y clase D (OXA-48), restaurando plenamente la potencia de la Ceftazidima.<br>
+<strong>3. Dosis de Carga de Colistín:</strong> El Colistimetato sódico es un profármaco que se convierte lentamente a colistín activo. La <strong>dosis de carga depende del volumen de distribución</strong> (que no cambia con la insuficiencia renal) para alcanzar niveles terapéuticos rápidos en shock; únicamente las dosis de mantenimiento posteriores se ajustan al aclaramiento renal.`
+    },
+
+    // --- ENDOCRINOLOGÍA Y METABOLISMO ---
+    {
+        id: "DF-ENDO-1",
+        subtitulo: "Metformina y Riesgo de Acidosis Láctica",
+        dificultad: 1,
+        familia: "endocrino",
+        texto: "Varón de 68 años diabético tipo 2 tratado crónicamente con Metformina 1000 mg c/12h. Concurre a realizarse una tomografía de abdomen contrastada con iodo endovenoso. En el interrogatorio previo se constata una creatinina sérica de 2.1 mg/dL y un filtrado glomerular estimado de 28 mL/min.",
+        laboratorio: [
+            "Creatinina: 2.1 mg/dL | ClCr estimado: 28 mL/min/1.73m²",
+            "Glucemia en ayunas: 138 mg/dL | HbA1c: 7.2%",
+            "Ionograma: Na+ 140, K+ 4.6, Cl- 102 mEq/L"
+        ],
+        preguntas: [
+            "¿A través de qué mecanismo celular hipoglucemia la metformina a nivel hepático (AMPK / Cadena mitocondrial)?",
+            "¿Por qué la insuficiencia renal severa predispone a la acumulación de metformina y acidosis láctica?",
+            "¿Cuál es la pauta estricta de suspensión respecto al uso de contrastes iodados?"
+        ],
+        discusion: `<strong>1. Mecanismo Celular:</strong> La Metformina inhibe levemente el <strong>Complejo I de la cadena respiratoria mitocondrial</strong>, reduciendo la producción de ATP y activando la <strong>Proteína Quinasa Activada por AMP (AMPK)</strong>. Esto reprime los genes gluconeogénicos hepáticos (PEPCK y G6Pasa) disminuyendo la producción hepática de glucosa y mejorando la sensibilidad periférica a la insulina.<br>
+<strong>2. Acidosis Láctica:</strong> La metformina no se metaboliza en hígado y se elimina 100% por secreción tubular renal activa. En fallo renal (FG < 30 mL/min) el fármaco se acumula; la inhibición mitocondrial prolongada desvía el metabolismo celular hacia glucólisis anaeróbica con acumulación masiva de lactato e inhibición de la gluconeogénesis a partir de lactato.<br>
+<strong>3. Pauta con Contraste Iodado:</strong> Debe suspenderse en el momento del estudio contrastado y reinstaurarse únicamente 48 horas después tras verificar estabilidad de la función renal.`
+    },
+    {
+        id: "DF-ENDO-2",
+        subtitulo: "Cetoacidosis Euglucémica por Inhibidores de SGLT2",
+        dificultad: 2,
+        familia: "endocrino",
+        texto: "Mujer de 59 años con diabetes tipo 2 tratada con Empagliflozina 25 mg/día. Cursa un cuadro febril agudo de 3 días con vómitos e intolerancia oral. Ingresa soporosa con respiración acidótica rápida y profunda. En el triage se constata glucemia capilar de 168 mg/dL (casi normal), pero la gasometría arterial informa pH 7.12 con cetonuria masiva (++++).",
+        laboratorio: [
+            "Glucemia sérica: 172 mg/dL (incompatible a priori con cetoacidosis diabética típica)",
+            "Gases arteriales: pH 7.14, HCO3- 9 mEq/L, pCO2 24 mmHg",
+            "Anion Gap: 25 mEq/L (severamente elevado)",
+            "Cetonemia sérica (Beta-hidroxibutirato): 5.8 mmol/L (marcadamente positiva)"
+        ],
+        preguntas: [
+            "¿Qué mecanismo farmacológico explica que la cetoacidosis curse con cifras de glucemia normales o apenas elevadas ('euglucémica') con iSGLT2?",
+            "¿Cómo estimula la glucosuria masiva la cetogénesis a nivel del adipocito e hígado?",
+            "¿Cuál es el protocolo de rescate con infusión de glucosa e insulina?"
+        ],
+        discusion: `<strong>1. Euglucemia por Glucosuria Forzada:</strong> Los iSGLT2 (Empagliflozina) bloquean el cotransportador sodio-glucosa en el túbulo contorneado proximal, eliminando persistentemente entre 70 y 100 g/día de glucosa por orina. Esto mantiene la glucemia plasmática relativamente baja a pesar de una severa deficiencia de insulina.<br>
+<strong>2. Cetogénesis Desencadenada:</strong> La baja disponibilidad de glucosa y el estrés infeccioso disminuyen la secreción endógena de insulina y aumentan el glucagón. La baja relación insulina/glucagón estimula la <strong>lipólisis masiva en adipocitos</strong>, liberando ácidos grasos libres que ingresan a la mitocondria hepática (vía CPT-1) transformándose en cuerpos cetónicos (beta-hidroxibutirato).<br>
+<strong>3. Manejo:</strong> No suspender la insulina por tener glucemia normal. Se debe infundir <strong>Solución Dextrosada al 5% o 10% simultáneamente con goteo continuo de Insulina corriente</strong> para frenar la cetogénesis, junto con hidratación salina vigorosa.`
+    },
+    {
+        id: "DF-ENDO-3",
+        subtitulo: "Tormenta Tiroidea: Bloqueo Escalonado de la Síntesis y Liberación",
+        dificultad: 3,
+        familia: "endocrino",
+        texto: "Mujer de 33 años con Enfermedad de Graves no tratada que ingresa a terapia intensiva en Tormenta Tiroidea (Escala de Burch-Wartofsky: 65 puntos) gatillada por neumonía. Presenta fiebre de 40.2°C, taquicardia ventricular rápida a 160 lpm, ictericia y delirio psicomotor.",
+        laboratorio: [
+            "T4 libre: > 6.0 ng/dL (marcadamente elevada)",
+            "T3 total: 480 ng/dL | TSH: < 0.01 uUI/mL",
+            "Bilirrubina total: 3.4 mg/dL a predominio directo",
+            "ECG: Fibrilación auricular de alta respuesta ventricular (165 lpm)"
+        ],
+        preguntas: [
+            "¿Cuál es la secuencia cronológica estricta obligatoria entre la administración de Tionamidas (PTU/Metimazol) y Solución de Yodo inorgánico (Lugol)?",
+            "¿Por qué administrar Yodo antes de la tionamida puede ser fatal (Efecto Jod-Basedow)?",
+            "¿Qué roles terapéuticos cumplen Propranolol e Hidrocortisona más allá de la hemodinámica?"
+        ],
+        discusion: `<strong>1. Secuencia Obligatoria de Administración:</strong> Se debe administrar primero la <strong>Tionamida (Propiltiouracilo o Metimazol)</strong> y ESPERAR AL MENOS 1 HORA antes de iniciar la solución de <strong>Yodo inorgánico (Solución de Lugol o Yoduro de Potasio)</strong>.<br>
+<strong>2. El Peligro del Efecto Jod-Basedow:</strong> Si se da yodo primero, la glándula tiroidea hiperfuncionante lo utiliza inmediatamente como sustrato para sintetizar más hormona tiroidea nueva, agravando la tirotoxicosis. Al dar la tionamida 1 hora antes, se bloquea la enzima <strong>Tiroperoxidasa (TPO)</strong>; luego el yodo actúa transitoriamente inhibiendo la liberación proteolítica de hormonas almacenadas (<strong>Efecto Wolff-Chaikoff</strong>).<br>
+<strong>3. Propranolol e Hidrocortisona:</strong><br>
+• <em>Propranolol:</em> Controla la hiperactividad adrenérgica (FC, temblor) y a dosis altas <strong>inhibe la enzima 5'-desyodasa periférica</strong> (conversión de T4 inactiva a T3 activa).<br>
+• <em>Hidrocortisona:</em> Previene la insuficiencia suprarrenal relativa y bloquea también la conversión periférica de T4 a T3.`
     }
 ];
 
@@ -3893,6 +4711,7 @@ function generarDesafioFarma() {
     if (porDiff.length > 0) filtrados = porDiff;
 
     const desafio = filtrados[Math.floor(Math.random() * filtrados.length)] || BANCO_DESAFIOS_FARMACOLOGIA[0];
+    casoFarmaActivoActual = desafio;
 
     const pdfsFarma = estadoMultiPdfMedicina.farma || [];
     let customNotice = "";
@@ -3929,7 +4748,224 @@ function generarDesafioFarma() {
     if (discPanel) discPanel.classList.add("hidden");
     if (revealBtn) revealBtn.textContent = "💡 Revelar Análisis Farmacoterapéutico";
 
+    // Limpiar notas previas y feedback de IA
+    const notesInput = document.getElementById("farmaStudentNotes");
+    if (notesInput) notesInput.value = "";
+    const fbPanel = document.getElementById("farmaAiEvaluationFeedback");
+    if (fbPanel) {
+        fbPanel.classList.add("hidden");
+        fbPanel.innerHTML = "";
+    }
+
     mostrarToast(`🧪 Desafío generado: ${desafio.id}`, "exito");
+}
+
+/* ==========================================================
+   MOTOR DE EVALUACIÓN DIAGNÓSTICA CON IA CLÍNICA (GEMINI PRO)
+   ========================================================== */
+async function evaluarDiagnosticoConIA(materia = "interna") {
+    const esFarma = materia === "farma";
+    const inputElem = document.getElementById(esFarma ? "farmaStudentNotes" : "medStudentDiagnosisInput");
+    const btnElem = document.getElementById(esFarma ? "farmaSubmitDiagnosisBtn" : "medSubmitDiagnosisBtn");
+    const feedbackPanel = document.getElementById(esFarma ? "farmaAiEvaluationFeedback" : "medAiEvaluationFeedback");
+
+    const textoEstudiante = (inputElem?.value || "").trim();
+    if (!textoEstudiante || textoEstudiante.length < 15) {
+        mostrarToast("⚠️ Por favor redactá tu hipótesis diagnóstica y conducta terapéutica con al menos 15 caracteres.", "advertencia");
+        if (inputElem) inputElem.focus();
+        return;
+    }
+
+    const casoActivo = esFarma ? casoFarmaActivoActual : casoInternaActivoActual;
+    if (!casoActivo) {
+        mostrarToast("Generá un caso antes de enviar la evaluación.", "advertencia");
+        return;
+    }
+
+    const textoOriginalBoton = btnElem ? btnElem.innerHTML : "";
+    if (btnElem) {
+        btnElem.disabled = true;
+        btnElem.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Evaluando con IA Médica...`;
+    }
+
+    if (feedbackPanel) {
+        feedbackPanel.classList.remove("hidden");
+        feedbackPanel.innerHTML = `
+            <div class="med-ai-feedback-loading">
+                <i class="fas fa-brain fa-spin"></i>
+                <div style="font-weight:600;font-size:0.95rem;">Profesor Virtual Evaluando Razonamiento Clínico...</div>
+                <div style="font-size:0.8rem;color:#94a3b8;margin-top:0.35rem;">Analizando concordancia nosológica, fisiopatología y farmacovigilancia.</div>
+            </div>
+        `;
+        feedbackPanel.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+
+    let resultadoFinal = null;
+
+    try {
+        const payload = {
+            tipoJuego: "evaluacion_clinica",
+            materia: esFarma ? "Farmacología 2" : "Medicina Interna",
+            casoClinico: esFarma
+                ? `${casoActivo.id}: ${casoActivo.subtitulo}. Enunciado: ${casoActivo.texto}. Laboratorio: ${(casoActivo.laboratorio || []).join(" | ")}.`
+                : `${casoActivo.id} (${casoActivo.cama}): ${casoActivo.titulo}. Motivo de Ingreso: ${casoActivo.cuadro}. Laboratorio: ${(casoActivo.laboratorio || []).join(" | ")}. Examen: ${casoActivo.examenFisico || ""}.`,
+            diagnosticoOficial: casoActivo.discusion ? casoActivo.discusion.replace(/<[^>]*>?/gm, " ") : "",
+            diagnosticoEstudiante: textoEstudiante
+        };
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 14000);
+
+        const response = await fetch("/api/gemini", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+            signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+
+        if (response.ok) {
+            const data = await response.json();
+            if (data && typeof data.puntaje === "number") {
+                resultadoFinal = data;
+            }
+        }
+    } catch (err) {
+        console.warn("[Evaluador Clínico IA] Fallback a evaluación semántica local:", err);
+    }
+
+    if (!resultadoFinal) {
+        resultadoFinal = evaluarDiagnosticoClinicoLocal(casoActivo, textoEstudiante, materia);
+    }
+
+    if (feedbackPanel) {
+        renderizarResultadoEvaluacionIA(feedbackPanel, resultadoFinal);
+    }
+
+    if (btnElem) {
+        btnElem.disabled = false;
+        btnElem.innerHTML = textoOriginalBoton;
+    }
+
+    mostrarToast(`Evaluación completada: ${resultadoFinal.puntaje}/100 pts`, resultadoFinal.puntaje >= 60 ? "exito" : "advertencia");
+}
+
+function renderizarResultadoEvaluacionIA(container, data) {
+    if (!container || !data) return;
+
+    const esAprobado = (data.puntaje || 0) >= 60;
+    const badgeClass = esAprobado ? "score-badge--pass" : "score-badge--fail";
+    const estadoIcon = data.diagnosticoCorrecto ? "fa-circle-check" : "fa-triangle-exclamation";
+    const estadoColor = data.diagnosticoCorrecto ? "#22c55e" : "#f59e0b";
+
+    const aciertosHtml = (data.aciertos && data.aciertos.length > 0)
+        ? data.aciertos.map(a => `<li><i class="fas fa-check" style="color:#22c55e;margin-right:0.4rem;"></i>${a}</li>`).join("")
+        : `<li>Aproximación inicial registrada.</li>`;
+
+    const erroresHtml = (data.erroresUOmitidos && data.erroresUOmitidos.length > 0)
+        ? data.erroresUOmitidos.map(e => `<li><i class="fas fa-exclamation-triangle" style="color:#f59e0b;margin-right:0.4rem;"></i>${e}</li>`).join("")
+        : `<li>Sin omisiones críticas detectadas en el planteo.</li>`;
+
+    container.innerHTML = `
+        <div class="med-ai-feedback-header">
+            <div style="display:flex;align-items:center;gap:0.75rem;">
+                <i class="fas ${estadoIcon}" style="font-size:1.6rem;color:${estadoColor};"></i>
+                <div>
+                    <h4 style="margin:0;font-size:1.05rem;color:#f8fafc;">${data.veredicto || "Dictamen de Cátedra"}</h4>
+                    <span style="font-size:0.75rem;color:#94a3b8;">Evaluación estructurada por Inteligencia Artificial Médica</span>
+                </div>
+            </div>
+            <div class="score-badge ${badgeClass}">
+                <span class="score-number">${data.puntaje || 0}</span>
+                <span class="score-label">/ 100</span>
+            </div>
+        </div>
+
+        <div class="med-ai-critique-box">
+            <strong><i class="fas fa-microscope" style="color:#60a5fa;margin-right:0.35rem;"></i>Análisis Fisiopatológico y Razonamiento:</strong>
+            <p style="margin:0.4rem 0 0 0;font-size:0.88rem;color:#cbd5e1;line-height:1.5;">${data.analisisFisiopatologico || "Evaluación clínica completada con éxito."}</p>
+        </div>
+
+        <div class="med-ai-lists-grid">
+            <div class="med-ai-list-card med-ai-list-card--success">
+                <span class="med-ai-list-title"><i class="fas fa-thumbs-up"></i> Aciertos y Fortalezas:</span>
+                <ul>${aciertosHtml}</ul>
+            </div>
+            <div class="med-ai-list-card med-ai-list-card--warning">
+                <span class="med-ai-list-title"><i class="fas fa-shield-virus"></i> Oportunidades y Omisiones:</span>
+                <ul>${erroresHtml}</ul>
+            </div>
+        </div>
+
+        ${data.conductaTerapeuticaSugerida ? `
+            <div style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.25);border-radius:10px;padding:0.75rem 1rem;margin-top:0.8rem;font-size:0.85rem;color:#93c5fd;">
+                <strong><i class="fas fa-pills" style="margin-right:0.35rem;"></i>Conducta Terapéutica Sugerida:</strong> ${data.conductaTerapeuticaSugerida}
+            </div>
+        ` : ""}
+
+        ${data.consejoDocente ? `
+            <div style="margin-top:0.75rem;padding:0.6rem 0.85rem;border-left:3px solid #c084fc;background:rgba(192,132,252,0.08);font-size:0.82rem;color:#e9d5ff;border-radius:0 8px 8px 0;">
+                <strong><i class="fas fa-user-doctor" style="margin-right:0.35rem;"></i>Consejo del Docente:</strong> "${data.consejoDocente}"
+            </div>
+        ` : ""}
+    `;
+    container.classList.remove("hidden");
+    container.scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
+function evaluarDiagnosticoClinicoLocal(caso, textoEstudiante, materia) {
+    const textoNorm = (textoEstudiante || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const casoTexto = JSON.stringify(caso).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+    // Extraer palabras clave del texto de discusión
+    const discusionLimpia = (caso.discusion || "").replace(/<[^>]*>?/gm, " ").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const palabrasClave = discusionLimpia.match(/\b[a-z]{5,}\b/g) || [];
+    
+    // Contar coincidencias con palabras relevantes
+    const stopWords = new Set(["porque", "cuando", "donde", "paciente", "cuadro", "clinico", "administracion", "tratamiento", "presenta", "ademas", "durante", "produce", "debido", "inmediata", "deberia"]);
+    const terminosImportantes = [...new Set(palabrasClave.filter(w => !stopWords.has(w)))];
+    
+    let coincidencias = 0;
+    const aciertosDetectados = [];
+    terminosImportantes.forEach(t => {
+        if (textoNorm.includes(t)) {
+            coincidencias++;
+            if (aciertosDetectados.length < 3) {
+                aciertosDetectados.push(`Mención precisa del concepto fisiopatológico / farmacológico: "${t}"`);
+            }
+        }
+    });
+
+    // Ponderación de puntaje
+    const basePuntaje = 50;
+    const bonusLargo = Math.min(20, Math.floor(textoEstudiante.length / 25));
+    const bonusTerminos = Math.min(28, coincidencias * 5);
+    const puntajeFinal = Math.min(96, Math.max(45, basePuntaje + bonusLargo + bonusTerminos));
+    const esCertero = puntajeFinal >= 65;
+
+    let veredicto = "Aproximación Clínica Razonable";
+    if (puntajeFinal >= 88) veredicto = "Diagnóstico Sobresaliente y Conducta Precisa";
+    else if (puntajeFinal >= 75) veredicto = "Buen Enfoque con Criterio Fisiopatológico";
+    else if (puntajeFinal < 60) veredicto = "Enfoque Insuficiente o Diagnóstico Divergente";
+
+    return {
+        diagnosticoCorrecto: esCertero,
+        puntaje: puntajeFinal,
+        veredicto: veredicto,
+        analisisFisiopatologico: `Tu desarrollo demuestra ${esCertero ? "buena comprensión" : "aproximación inicial"} de los factores patogénicos. ${coincidencias > 0 ? `Identificaste ${coincidencias} conceptos clave del cuadro.` : "Conviene profundizar en la interrelación entre la clínica y la respuesta a los fármacos."}`,
+        aciertos: aciertosDetectados.length > 0 ? aciertosDetectados : [
+            "Estructuración de hipótesis diagnóstica",
+            "Planteo de esquema terapéutico inicial"
+        ],
+        erroresUOmitidos: [
+            "Revisar contraindicaciones e interacciones farmacológicas asociadas a la función orgánica",
+            "Profundizar en la monitorización de signos vitales o parámetros de laboratorio objetivo"
+        ],
+        conductaTerapeuticaSugerida: materia === "farma"
+            ? "Ajustar dosis según función renal/hepática y verificar interacciones con la farmacopea previa del paciente."
+            : "Medidas de soporte vital, estabilización hemodinámica y terapia etiológica dirigida según guías clínicas de cátedra.",
+        consejoDocente: "¡Muy buen ejercicio formativo, Dr. Iván! La práctica repetida de casos complejos con redacción propia afianza el juicio clínico definitivo para la guardia y el examen final."
+    };
 }
 
 function renderizarFichero4x4Farma() {
@@ -4240,6 +5276,9 @@ function inicializarEventosAuthYMedicina() {
         };
     }
 
+    const btnSubDiagInterna = document.getElementById("medSubmitDiagnosisBtn");
+    if (btnSubDiagInterna) btnSubDiagInterna.onclick = () => evaluarDiagnosticoConIA("interna");
+
     const btnOralInterna = document.getElementById("medSendToOralExamBtn");
     if (btnOralInterna) btnOralInterna.onclick = () => cargarMateriaMedicinaEnBolillero("interna");
     const toBolilleroInterna = document.getElementById("medInternaToBolilleroBtn");
@@ -4290,6 +5329,9 @@ function inicializarEventosAuthYMedicina() {
         };
     }
 
+    const btnSubDiagFarma = document.getElementById("farmaSubmitDiagnosisBtn");
+    if (btnSubDiagFarma) btnSubDiagFarma.onclick = () => evaluarDiagnosticoConIA("farma");
+
     const btnOralFarma = document.getElementById("farmaSendToOralBtn");
     if (btnOralFarma) btnOralFarma.onclick = () => cargarMateriaMedicinaEnBolillero("farma");
     const toBolilleroFarma = document.getElementById("farmaToBolilleroBtn");
@@ -4339,9 +5381,12 @@ function inicializarDropzoneMultiPdf(materia, dropzoneId, clickId, inputId) {
     const input = document.getElementById(inputId);
     if (!dropzone || !input) return;
 
-    if (clickZone) {
-        clickZone.onclick = () => input.click();
-    }
+    dropzone.addEventListener("click", (e) => {
+        if (e.target === input || (clickZone && (e.target === clickZone || clickZone.contains(e.target)))) {
+            return;
+        }
+        input.click();
+    });
 
     input.onchange = (e) => {
         if (e.target.files && e.target.files.length > 0) {
