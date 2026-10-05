@@ -13720,7 +13720,7 @@ function iniciarAplicacion() {
 // =========================================================
 // GESTOR DE VERSIONES Y ACTUALIZACIÓN AUTOMÁTICA
 // =========================================================
-const APP_BUILD_VERSION = "29.0";
+const APP_BUILD_VERSION = "29.1";
 
 async function forzarActualizacionCompleta(mostrarNotificacion = true) {
     const lastAttempt = parseInt(sessionStorage.getItem("last_auto_update_ts") || "0", 10);
@@ -16807,21 +16807,11 @@ const contabilidadEstado = {
     asientos: [
         {
             id: 1,
-            fecha: "01/03",
-            detalle: "Inicio de actividades: Aporte de socios",
+            fecha: "",
+            detalle: "",
             filas: [
-                { id: "f1", cuenta: "Caja", debe: 150000, haber: 0 },
-                { id: "f2", cuenta: "Mercaderías", debe: 250000, haber: 0 },
-                { id: "f3", cuenta: "Capital Social", debe: 0, haber: 400000 }
-            ]
-        },
-        {
-            id: 2,
-            fecha: "05/03",
-            detalle: "Compra de mercaderías en cta. cte. comercial",
-            filas: [
-                { id: "f4", cuenta: "Mercaderías", debe: 80000, haber: 0 },
-                { id: "f5", cuenta: "Proveedores", debe: 0, haber: 80000 }
+                { id: "f1", cuenta: "", debe: "", haber: "" },
+                { id: "f2", cuenta: "", debe: "", haber: "" }
             ]
         }
     ],
@@ -18359,18 +18349,20 @@ function inicializarModuloContabilidad() {
             contabilidadEstado.asientos = [
                 {
                     id: 1,
-                    fecha: "01/03",
-                    detalle: "Asiento inicial",
+                    fecha: "",
+                    detalle: "",
                     filas: [
-                        { id: "f1", cuenta: "Caja", debe: 0, haber: 0 },
-                        { id: "f2", cuenta: "Capital Social", debe: 0, haber: 0 }
+                        { id: "f1", cuenta: "", debe: "", haber: "" },
+                        { id: "f2", cuenta: "", debe: "", haber: "" }
                     ]
                 }
             ];
+            contabilidadEstado.mayores = {};
+            contabilidadEstado.balance = [];
             renderizarLibroDiarioUI();
-            sincronizarLibroMayor();
+            renderLibroMayorUI();
             sincronizarBalanceSumasYSaldos();
-            mostrarToast("🗑️ Libro Diario restablecido.", "info");
+            mostrarToast("🗑️ Libro Diario vaciado y listo para comenzar.", "info");
         });
     }
 
@@ -18450,9 +18442,9 @@ function renderizarLibroDiarioUI() {
         const headerRow = document.createElement("tr");
         headerRow.className = "lab-asiento-header-row";
         headerRow.innerHTML = `
-            <td colspan="4">
+            <td colspan="4" style="padding: 0.35rem 0.6rem;">
                 <strong>📝 Asiento N° ${asiento.id || aIdx + 1}</strong>: 
-                <span style="font-weight: normal; color: #cbd5e1;">${asiento.detalle || 'Operación comercial'}</span>
+                <input type="text" class="lab-diario-input" style="display:inline-block; width: calc(100% - 130px); margin-left: 0.4rem; padding: 0.2rem 0.45rem; font-size: 0.8rem; background: rgba(0,0,0,0.3); border-color: rgba(255,255,255,0.15);" value="${asiento.detalle || ''}" placeholder="Detalle / Leyenda de la operación (ej. Compra mercaderías)..." oninput="contabilidadEstado.asientos[${aIdx}].detalle = this.value">
             </td>
             <td style="text-align: center;">
                 <button type="button" class="button button--ghost button--xs" title="Eliminar este asiento completo" style="color: #f87171; padding: 0.15rem 0.35rem;" onclick="eliminarAsientoContable(${aIdx})">🗑️</button>
@@ -18467,16 +18459,16 @@ function renderizarLibroDiarioUI() {
 
             tr.innerHTML = `
                 <td>
-                    <input type="text" class="lab-diario-input" value="${fila.fecha || asiento.fecha || ''}" placeholder="dd/mm" onchange="actualizarCeldaDiario(${aIdx}, ${fIdx}, 'fecha', this.value)">
+                    <input type="text" class="lab-diario-input" value="${fila.fecha || asiento.fecha || ''}" placeholder="dd/mm" oninput="actualizarCeldaDiario(${aIdx}, ${fIdx}, 'fecha', this.value)">
                 </td>
                 <td>
-                    <input type="text" class="lab-diario-input" value="${fila.cuenta || ''}" placeholder="Nombre de la cuenta (ej. Caja, Mercaderías)" onchange="actualizarCeldaDiario(${aIdx}, ${fIdx}, 'cuenta', this.value)">
+                    <input type="text" class="lab-diario-input" value="${fila.cuenta || ''}" placeholder="Nombre de la cuenta (ej. Caja, Mercaderías)" oninput="actualizarCeldaDiario(${aIdx}, ${fIdx}, 'cuenta', this.value)">
                 </td>
                 <td>
-                    <input type="number" step="any" min="0" class="lab-diario-input lab-diario-input--number" value="${fila.debe ? fila.debe : ''}" placeholder="0.00" onchange="actualizarCeldaDiario(${aIdx}, ${fIdx}, 'debe', this.value)">
+                    <input type="number" step="any" min="0" class="lab-diario-input lab-diario-input--number" value="${fila.debe !== '' && fila.debe !== undefined && fila.debe !== null ? fila.debe : ''}" placeholder="0.00" oninput="actualizarCeldaDiario(${aIdx}, ${fIdx}, 'debe', this.value)">
                 </td>
                 <td>
-                    <input type="number" step="any" min="0" class="lab-diario-input lab-diario-input--number" value="${fila.haber ? fila.haber : ''}" placeholder="0.00" onchange="actualizarCeldaDiario(${aIdx}, ${fIdx}, 'haber', this.value)">
+                    <input type="number" step="any" min="0" class="lab-diario-input lab-diario-input--number" value="${fila.haber !== '' && fila.haber !== undefined && fila.haber !== null ? fila.haber : ''}" placeholder="0.00" oninput="actualizarCeldaDiario(${aIdx}, ${fIdx}, 'haber', this.value)">
                 </td>
                 <td class="lab-asiento-actions-cell">
                     <button type="button" class="button button--ghost button--xs" title="Quitar línea" style="color: #f87171; padding: 0.15rem 0.3rem;" onclick="eliminarFilaDeAsiento(${aIdx}, ${fIdx})">✕</button>
@@ -18509,8 +18501,8 @@ function agregarAsientoContable(fecha = null, detalle = null) {
         fecha: fechaDefecto,
         detalle: detalle || `Operación comercial N° ${nuevoId}`,
         filas: [
-            { id: "f_" + Date.now() + "_1", fecha: fechaDefecto, cuenta: "", debe: 0, haber: 0 },
-            { id: "f_" + Date.now() + "_2", fecha: fechaDefecto, cuenta: "", debe: 0, haber: 0 }
+            { id: "f_" + Date.now() + "_1", fecha: fechaDefecto, cuenta: "", debe: "", haber: "" },
+            { id: "f_" + Date.now() + "_2", fecha: fechaDefecto, cuenta: "", debe: "", haber: "" }
         ]
     });
 
@@ -18518,7 +18510,7 @@ function agregarAsientoContable(fecha = null, detalle = null) {
     mostrarToast(`➕ Asiento N° ${nuevoId} creado.`, "info");
 }
 
-function agregarFilaAAsiento(asientoIndex, cuenta = "", debe = 0, haber = 0) {
+function agregarFilaAAsiento(asientoIndex, cuenta = "", debe = "", haber = "") {
     const asiento = contabilidadEstado.asientos[asientoIndex];
     if (!asiento) return;
 
@@ -18526,8 +18518,8 @@ function agregarFilaAAsiento(asientoIndex, cuenta = "", debe = 0, haber = 0) {
         id: "f_" + Date.now(),
         fecha: asiento.fecha || "",
         cuenta: cuenta,
-        debe: Number(debe) || 0,
-        haber: Number(haber) || 0
+        debe: debe !== "" ? (Number(debe) || 0) : "",
+        haber: haber !== "" ? (Number(haber) || 0) : ""
     });
 
     renderizarLibroDiarioUI();
@@ -18564,9 +18556,9 @@ function actualizarCeldaDiario(asientoIndex, filaIndex, campo, valor) {
     if (!asiento || !asiento.filas[filaIndex]) return;
 
     if (campo === "debe" || campo === "haber") {
-        asiento.filas[filaIndex][campo] = Math.max(0, parseFloat(valor) || 0);
+        asiento.filas[filaIndex][campo] = valor === "" ? "" : Math.max(0, parseFloat(valor) || 0);
     } else {
-        asiento.filas[filaIndex][campo] = String(valor).trim();
+        asiento.filas[filaIndex][campo] = String(valor);
     }
 
     recalcularTotalesDiario();
@@ -18721,6 +18713,24 @@ function sincronizarBalanceSumasYSaldos() {
     let totSumHaber = 0;
     let totSalDeudor = 0;
     let totSalAcreedor = 0;
+
+    if (cuentas.length === 0) {
+        dom.labBalanceTableBody.innerHTML = `
+            <tr>
+                <td colspan="5" style="text-align: center; color: var(--color-text-muted); padding: 1.5rem;">
+                    Sin cuentas registradas aún. Completá los asientos en el Libro Diario y tocalos en 'Pasar a Libro Mayor' para balancear.
+                </td>
+            </tr>
+        `;
+        if (dom.labBalTotalSumasDebe) dom.labBalTotalSumasDebe.textContent = "$0.00";
+        if (dom.labBalTotalSumasHaber) dom.labBalTotalSumasHaber.textContent = "$0.00";
+        if (dom.labBalTotalSaldoDeudor) dom.labBalTotalSaldoDeudor.textContent = "$0.00";
+        if (dom.labBalTotalSaldoAcreedor) dom.labBalTotalSaldoAcreedor.textContent = "$0.00";
+        if (dom.labBalanceVerificationText) {
+            dom.labBalanceVerificationText.textContent = "Pendiente de completar el Libro Diario y Mayor.";
+        }
+        return;
+    }
 
     cuentas.forEach(nom => {
         const c = contabilidadEstado.mayores[nom];
@@ -20545,6 +20555,35 @@ function obtenerEtiquetaTema(tema) {
     return `${mat.icono} ${mat.nombre}`;
 }
 
+function prepararEstructuraVaciaMesaTrabajo(materiaId) {
+    if (materiaId === "contabilidad") {
+        contabilidadEstado.asientos = [
+            {
+                id: 1,
+                fecha: "",
+                detalle: "",
+                filas: [
+                    { id: "f1", fecha: "", cuenta: "", debe: "", haber: "" },
+                    { id: "f2", fecha: "", cuenta: "", debe: "", haber: "" }
+                ]
+            }
+        ];
+        contabilidadEstado.mayores = {};
+        contabilidadEstado.balance = [];
+        renderizarLibroDiarioUI();
+        renderLibroMayorUI();
+        sincronizarBalanceSumasYSaldos();
+    } else if (materiaId === "estadistica") {
+        laboratorioEstado.tablaDatos = [
+            { xi: "", fi: "" },
+            { xi: "", fi: "" },
+            { xi: "", fi: "" },
+            { xi: "", fi: "" }
+        ];
+        renderizarGrillaFrecuencias();
+    }
+}
+
 // ------------------------------------------
 // GENERADOR DE EJERCICIOS (IA + OFFLINE)
 // ------------------------------------------
@@ -20586,6 +20625,9 @@ async function generarEjercicioLaboratorio(forzarNuevo = false, ordenManual = nu
 
     // Actualizar Badges de Cabecera
     actualizarBadgesMateriaLabUI();
+
+    // Limpiar y preparar estructura vacía de la mesa de trabajo para que el alumno resuelva libremente
+    prepararEstructuraVaciaMesaTrabajo(materiaId);
 
     const temasTexto = (laboratorioEstado.temasSeleccionados && laboratorioEstado.temasSeleccionados.length > 0)
         ? laboratorioEstado.temasSeleccionados.map(id => {
@@ -20703,61 +20745,8 @@ function generarEjercicioContabilidadProcedural(orden = "") {
     const saldoProv = m.compra - m.pagoProv;
     const totDebe = m.cap + m.compra + m.banco + m.venta + m.cmv + m.pagoProv;
 
-    // Configurar asientos base en el Libro Diario
-    contabilidadEstado.asientos = [
-        {
-            id: 1,
-            fecha: "01/03",
-            detalle: "Inicio de actividades: Aporte de socios",
-            filas: [
-                { id: "f1", fecha: "01/03", cuenta: "Caja", debe: m.caja, haber: 0 },
-                { id: "f2", fecha: "01/03", cuenta: "Mercaderías", debe: m.merc, haber: 0 },
-                { id: "f3", fecha: "01/03", cuenta: "Capital Social", debe: 0, haber: m.cap }
-            ]
-        },
-        {
-            id: 2,
-            fecha: "05/03",
-            detalle: "Compra de mercaderías en cta. cte. comercial",
-            filas: [
-                { id: "f4", fecha: "05/03", cuenta: "Mercaderías", debe: m.compra, haber: 0 },
-                { id: "f5", fecha: "05/03", cuenta: "Proveedores", debe: 0, haber: m.compra }
-            ]
-        },
-        {
-            id: 3,
-            fecha: "10/03",
-            detalle: "Apertura cta. cte. bancaria en Banco Nación",
-            filas: [
-                { id: "f6", fecha: "10/03", cuenta: "Banco Nación c/c", debe: m.banco, haber: 0 },
-                { id: "f7", fecha: "10/03", cuenta: "Caja", debe: 0, haber: m.banco }
-            ]
-        },
-        {
-            id: 4,
-            fecha: "15/03",
-            detalle: "Venta de mercaderías al contado y costo (CMV)",
-            filas: [
-                { id: "f8", fecha: "15/03", cuenta: "Caja", debe: m.venta, haber: 0 },
-                { id: "f9", fecha: "15/03", cuenta: "Ventas", debe: 0, haber: m.venta },
-                { id: "f10", fecha: "15/03", cuenta: "CMV", debe: m.cmv, haber: 0 },
-                { id: "f11", fecha: "15/03", cuenta: "Mercaderías", debe: 0, haber: m.cmv }
-            ]
-        },
-        {
-            id: 5,
-            fecha: "25/03",
-            detalle: "Pago en efectivo del 50% de la deuda con Proveedores",
-            filas: [
-                { id: "f12", fecha: "25/03", cuenta: "Proveedores", debe: m.pagoProv, haber: 0 },
-                { id: "f13", fecha: "25/03", cuenta: "Caja", debe: 0, haber: m.pagoProv }
-            ]
-        }
-    ];
-
-    renderizarLibroDiarioUI();
-    sincronizarLibroMayor();
-    sincronizarBalanceSumasYSaldos();
+    // Estructura limpia y vacía: el alumno deduce y asienta las operaciones a su propio criterio
+    prepararEstructuraVaciaMesaTrabajo("contabilidad");
 
     return {
         id: "contab_" + Date.now(),
