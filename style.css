@@ -15125,11 +15125,17 @@ body.modo-dev-activo .juntos-locked-notice {
 
 .shock-hotspot {
     cursor: pointer;
-    transition: transform 0.2s ease;
+    outline: none;
 }
 
-.shock-hotspot:hover {
-    transform: scale(1.15);
+.shock-hotspot:hover .shock-hotspot-core {
+    stroke-width: 2.5;
+    filter: drop-shadow(0 0 6px #38bdf8);
+}
+
+.shock-hotspot:hover .shock-hotspot-pulse {
+    stroke-width: 2;
+    opacity: 0.9;
 }
 
 .shock-hotspot-pulse {
@@ -15149,6 +15155,7 @@ body.modo-dev-activo .juntos-locked-notice {
     fill: rgba(14, 165, 233, 0.75);
     stroke: #38bdf8;
     stroke-width: 1.5;
+    transition: stroke-width 0.2s ease, filter 0.2s ease, fill 0.2s ease;
 }
 
 .shock-hotspot-core--critical {
@@ -15165,17 +15172,43 @@ body.modo-dev-activo .juntos-locked-notice {
 .shock-hotspot.is-active .shock-hotspot-core {
     fill: #f59e0b;
     stroke: #fbbf24;
-    filter: drop-shadow(0 0 6px #f59e0b);
+    stroke-width: 2.8;
+    filter: drop-shadow(0 0 8px #f59e0b);
+}
+
+.shock-hotspot.is-active .shock-hotspot-pulse {
+    fill: rgba(245, 158, 11, 0.25);
+    stroke: rgba(251, 191, 36, 0.8);
 }
 
 @keyframes shockHotspotRipple {
-    0% { r: 9; opacity: 1; }
-    100% { r: 24; opacity: 0; }
+    0% {
+        opacity: 0.95;
+        stroke-width: 1.2px;
+    }
+    50% {
+        opacity: 0.35;
+        stroke-width: 2.8px;
+    }
+    100% {
+        opacity: 0.95;
+        stroke-width: 1.2px;
+    }
 }
 
 @keyframes shockHotspotRippleRed {
-    0% { r: 10; opacity: 1; }
-    100% { r: 26; opacity: 0; }
+    0% {
+        opacity: 1;
+        stroke-width: 1.5px;
+    }
+    50% {
+        opacity: 0.3;
+        stroke-width: 3.5px;
+    }
+    100% {
+        opacity: 1;
+        stroke-width: 1.5px;
+    }
 }
 
 /* Pastillas de Selección de Órganos */
@@ -15222,6 +15255,8 @@ body.modo-dev-activo .juntos-locked-notice {
     display: flex;
     flex-direction: column;
     gap: 0.4rem;
+    min-height: 110px;
+    box-sizing: border-box;
 }
 
 .shock-findings-header {
