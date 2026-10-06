@@ -15307,6 +15307,7 @@ body.modo-dev-activo .juntos-locked-notice {
 /* =========================================================
    CONSOLA DE HOSPITAL · SHOCK ROOM (LAYOUT DE 3 COLUMNAS)
    ========================================================= */
+.shock-room-console,
 .shock-dashboard-grid {
     display: grid;
     grid-template-columns: 1fr 2fr 1fr;
@@ -15315,6 +15316,9 @@ body.modo-dev-activo .juntos-locked-notice {
     width: 100%;
 }
 
+.column-monitor,
+.column-clinical-case,
+.column-evaluator,
 .shock-col {
     display: flex;
     flex-direction: column;
@@ -15565,15 +15569,105 @@ body.modo-dev-activo .juntos-locked-notice {
     color: #fbbf24;
 }
 
-/* Focos Anatómicos Compactos en Columna Izquierda */
-.shock-card--anatomy-compact {
+/* =========================================================
+   MAPA ANATÓMICO (COLUMNA 1 - INTERACTIVO)
+   ========================================================= */
+.shock-card--anatomy {
     background: rgba(15, 23, 42, 0.85);
-    border: 1px solid rgba(56, 189, 248, 0.2);
+    border: 1px solid rgba(56, 189, 248, 0.22);
     border-radius: 12px;
     padding: 0.85rem;
     display: flex;
     flex-direction: column;
     gap: 0.65rem;
+}
+
+.shock-anatomy-stage {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: radial-gradient(circle, rgba(14, 165, 233, 0.08) 0%, rgba(15, 23, 42, 0.95) 75%);
+    border: 1px solid rgba(56, 189, 248, 0.18);
+    border-radius: 10px;
+    padding: 0.5rem 0.4rem;
+    position: relative;
+}
+
+.shock-human-svg {
+    width: 100%;
+    max-width: 180px;
+    height: 230px;
+    filter: drop-shadow(0 0 12px rgba(56, 189, 248, 0.2));
+}
+
+.shock-hotspot {
+    cursor: pointer;
+    outline: none;
+}
+
+.shock-hotspot:hover .shock-hotspot-core {
+    stroke-width: 2.5;
+    filter: drop-shadow(0 0 6px #38bdf8);
+}
+
+.shock-hotspot:hover .shock-hotspot-pulse {
+    stroke-width: 2;
+    opacity: 0.9;
+}
+
+.shock-hotspot-pulse {
+    fill: rgba(56, 189, 248, 0.18);
+    stroke: rgba(56, 189, 248, 0.6);
+    stroke-width: 1.5;
+    animation: shockHotspotRipple 2s infinite ease-out;
+}
+
+.shock-hotspot-pulse--critical {
+    fill: rgba(239, 68, 68, 0.25);
+    stroke: rgba(239, 68, 68, 0.8);
+    animation: shockHotspotRippleRed 1.3s infinite ease-out;
+}
+
+.shock-hotspot-core {
+    fill: rgba(14, 165, 233, 0.75);
+    stroke: #38bdf8;
+    stroke-width: 1.5;
+    transition: stroke-width 0.2s ease, filter 0.2s ease, fill 0.2s ease;
+}
+
+.shock-hotspot-core--critical {
+    fill: rgba(239, 68, 68, 0.85);
+    stroke: #ef4444;
+}
+
+.shock-hotspot-icon {
+    font-size: 11px;
+    user-select: none;
+    pointer-events: none;
+}
+
+.shock-hotspot.is-active .shock-hotspot-core {
+    fill: #f59e0b;
+    stroke: #fbbf24;
+    stroke-width: 2.8;
+    filter: drop-shadow(0 0 8px #f59e0b);
+}
+
+.shock-hotspot.is-active .shock-hotspot-pulse {
+    fill: rgba(245, 158, 11, 0.25);
+    stroke: rgba(251, 191, 36, 0.8);
+}
+
+@keyframes shockHotspotRipple {
+    0% { opacity: 0.95; stroke-width: 1.2px; }
+    50% { opacity: 0.35; stroke-width: 2.8px; }
+    100% { opacity: 0.95; stroke-width: 1.2px; }
+}
+
+@keyframes shockHotspotRippleRed {
+    0% { opacity: 1; stroke-width: 1.5px; }
+    50% { opacity: 0.3; stroke-width: 3.5px; }
+    100% { opacity: 1; stroke-width: 1.5px; }
 }
 
 .shock-organ-pills {
@@ -16185,6 +16279,7 @@ body.modo-dev-activo .juntos-locked-notice {
 /* =========================================================
    COLUMNA 3: EVALUADOR CLÍNICO (FONDO --color-surface)
    ========================================================= */
+.column-evaluator .shock-diagnosis-station,
 .shock-col--dx .shock-diagnosis-station {
     background: var(--color-surface);
     border: 1px solid var(--color-border);
@@ -16197,6 +16292,7 @@ body.modo-dev-activo .juntos-locked-notice {
     min-height: 520px;
 }
 
+[data-theme="light"] .column-evaluator .shock-diagnosis-station,
 [data-theme="light"] .shock-col--dx .shock-diagnosis-station {
     background: #ffffff;
     border: 1px solid rgba(0, 0, 0, 0.08);
@@ -16249,6 +16345,7 @@ body.modo-dev-activo .juntos-locked-notice {
     line-height: 1.45;
 }
 
+.column-evaluator .shock-textarea,
 .shock-col--dx .shock-textarea {
     width: 100%;
     background: rgba(15, 23, 42, 0.6);
@@ -16265,12 +16362,14 @@ body.modo-dev-activo .juntos-locked-notice {
     transition: all 0.2s ease;
 }
 
+[data-theme="light"] .column-evaluator .shock-textarea,
 [data-theme="light"] .shock-col--dx .shock-textarea {
     background: #f8fafc;
     border: 1px solid rgba(0, 0, 0, 0.12);
     color: var(--color-text-main);
 }
 
+.column-evaluator .shock-textarea:focus,
 .shock-col--dx .shock-textarea:focus {
     outline: none;
     border-color: var(--color-primary);
@@ -16278,6 +16377,7 @@ body.modo-dev-activo .juntos-locked-notice {
     background: rgba(15, 23, 42, 0.85);
 }
 
+[data-theme="light"] .column-evaluator .shock-textarea:focus,
 [data-theme="light"] .shock-col--dx .shock-textarea:focus {
     background: #ffffff;
 }
@@ -16286,6 +16386,7 @@ body.modo-dev-activo .juntos-locked-notice {
     margin-top: auto;
 }
 
+.column-evaluator .shock-submit-btn,
 .shock-col--dx .shock-submit-btn {
     background: var(--color-primary);
     color: #ffffff;
@@ -16306,6 +16407,7 @@ body.modo-dev-activo .juntos-locked-notice {
     width: 100%;
 }
 
+.column-evaluator .shock-submit-btn:hover,
 .shock-col--dx .shock-submit-btn:hover {
     background: var(--color-primary-hover);
     transform: translateY(-2px);
@@ -16316,6 +16418,7 @@ body.modo-dev-activo .juntos-locked-notice {
    RESPONSIVIDAD (TABLETS Y SMARTPHONES)
    ========================================================= */
 @media (max-width: 1024px) {
+    .shock-room-console,
     .shock-dashboard-grid {
         grid-template-columns: 1fr;
         gap: 1rem;
@@ -16331,10 +16434,16 @@ body.modo-dev-activo .juntos-locked-notice {
         display: none;
     }
 
+    .column-monitor[data-shock-panel],
+    .column-clinical-case[data-shock-panel],
+    .column-evaluator[data-shock-panel],
     .shock-col[data-shock-panel] {
         display: none;
     }
 
+    .column-monitor[data-shock-panel].is-mobile-visible,
+    .column-clinical-case[data-shock-panel].is-mobile-visible,
+    .column-evaluator[data-shock-panel].is-mobile-visible,
     .shock-col[data-shock-panel].is-mobile-visible {
         display: flex;
     }

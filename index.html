@@ -15,10 +15,10 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     
-    <link rel="icon" type="image/svg+xml" href="icon.svg?v=29.3">
-    <link rel="apple-touch-icon" href="icon-192.png?v=29.3">
-    <link rel="manifest" href="manifest.json?v=29.3">
-    <link rel="stylesheet" href="style.css?v=29.3">
+    <link rel="icon" type="image/svg+xml" href="icon.svg?v=29.4">
+    <link rel="apple-touch-icon" href="icon-192.png?v=29.4">
+    <link rel="manifest" href="manifest.json?v=29.4">
+    <link rel="stylesheet" href="style.css?v=29.4">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -522,7 +522,7 @@
         </div>
 
         <!-- ==================== SHOCK ROOM COMMAND CENTER (EXCLUSIVO DR. IVÁN) ==================== -->
-        <section id="medShockRoomHome" class="med-shock-room-container shock-room-console hidden" aria-label="Shock Room y Centro de Resucitación Clínica">
+        <section id="medShockRoomHome" class="med-shock-room-container hidden" aria-label="Shock Room y Centro de Resucitación Clínica">
             <!-- Barra Superior de Triage y Estado de Guardia -->
             <div class="shock-triage-ribbon">
                 <div class="shock-triage-info">
@@ -552,14 +552,15 @@
                 <button class="shock-mobile-tab-btn" data-shock-tab="dx" role="tab" type="button">🩺 Dictamen IA</button>
             </div>
 
-            <!-- Cuadrícula Principal de la Consola Hospitalaria (3 Columnas: 1fr 2fr 1fr en PC) -->
-            <div class="shock-dashboard-grid">
+            <!-- Contenedor Principal con la clase 'shock-room-console' configurado con CSS Grid -->
+            <div id="shock-room" class="shock-room-console shock-dashboard-grid">
 
-                <!-- ==========================================
-                     COLUMNA 1: MONITOR MULTIPARAMÉTRICO (IZQUIERDA)
-                     Fondo oscuro uniforme (#0F172A), Geist Mono / Courier
-                     ========================================== -->
-                <aside class="shock-col shock-col--monitor is-mobile-visible" data-shock-panel="monitor">
+                <!-- ========================================================
+                     COLUMNA 1: MONITOR MULTIPARAMÉTRICO Y MAPA ANATÓMICO
+                     Clase 'column-monitor' (Fondo #0F172A, Monospace, Anatomía)
+                     ======================================================== -->
+                <div class="column-monitor shock-col is-mobile-visible" data-shock-panel="monitor">
+                    <!-- Bloque del Monitor Multiparamétrico -->
                     <div class="shock-monitor-box">
                         <div class="shock-monitor-topbar">
                             <div class="shock-monitor-badge">
@@ -651,13 +652,64 @@
                         </div>
                     </div>
 
-                    <!-- Focos Anatómicos & Examen Rápido -->
-                    <div class="shock-card shock-card--anatomy-compact">
+                    <!-- Bloque del Mapa Anatómico Humano Interactivo & Focos -->
+                    <div class="shock-card shock-card--anatomy">
                         <div class="shock-card-header">
                             <span class="shock-card-icon">🧍‍♂️</span>
-                            <h4 class="shock-card-title">Focos Anatómicos</h4>
-                            <span class="shock-card-hint">Examen Físico</span>
+                            <h3 class="shock-card-title">Mapa Anatómico & Focos</h3>
+                            <span class="shock-card-hint">Tocá un órgano</span>
                         </div>
+                        
+                        <!-- Silueta Humana SVG Interactiva con Hotspots -->
+                        <div class="shock-anatomy-stage">
+                            <svg class="shock-human-svg" viewBox="0 0 200 320" preserveAspectRatio="xMidYMid meet" aria-label="Silueta anatómica interactiva">
+                                <defs>
+                                    <linearGradient id="bodyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%" stop-color="#1e293b"/>
+                                        <stop offset="100%" stop-color="#0f172a"/>
+                                    </linearGradient>
+                                </defs>
+                                <g class="shock-body-silhouette" fill="url(#bodyGrad)" stroke="rgba(56, 189, 248, 0.4)" stroke-width="1.5">
+                                    <ellipse cx="100" cy="38" rx="22" ry="26" />
+                                    <path d="M92 63 L92 75 L108 75 L108 63 Z" />
+                                    <path d="M52 82 C65 74, 135 74, 148 82 C160 88, 162 130, 155 160 C150 180, 140 200, 140 215 L60 215 C60 200, 50 180, 45 160 C38 130, 40 88, 52 82 Z" />
+                                    <path d="M48 85 C35 105, 30 145, 26 190 C24 208, 22 225, 25 235 C28 238, 33 234, 35 220 C39 190, 44 140, 52 110 Z" />
+                                    <path d="M152 85 C165 105, 170 145, 174 190 C176 208, 178 225, 175 235 C172 238, 167 234, 165 220 C161 190, 156 140, 148 110 Z" />
+                                    <path d="M60 215 L140 215 C138 235, 132 265, 128 310 C125 315, 115 315, 112 305 L104 250 L96 250 L88 305 C85 315, 75 315, 72 310 C68 265, 62 235, 60 215 Z" />
+                                </g>
+                                <path d="M100 75 L100 215" stroke="rgba(56, 189, 248, 0.15)" stroke-dasharray="2,3" />
+                                <ellipse cx="100" cy="118" rx="28" ry="18" fill="none" stroke="rgba(56, 189, 248, 0.15)" stroke-dasharray="2,3" />
+
+                                <!-- Hotspots Clínicos -->
+                                <g class="shock-hotspot" data-organ="cerebro" transform="translate(100, 38)" role="button" tabindex="0" aria-label="Explorar Cerebro">
+                                    <circle class="shock-hotspot-pulse" r="16" />
+                                    <circle class="shock-hotspot-core" r="9" />
+                                    <text y="4" text-anchor="middle" class="shock-hotspot-icon">🧠</text>
+                                </g>
+                                <g class="shock-hotspot" data-organ="pulmon" transform="translate(78, 114)" role="button" tabindex="0" aria-label="Explorar Pulmones">
+                                    <circle class="shock-hotspot-pulse" r="18" />
+                                    <circle class="shock-hotspot-core" r="10" />
+                                    <text y="4" text-anchor="middle" class="shock-hotspot-icon">🫁</text>
+                                </g>
+                                <g class="shock-hotspot is-active" data-organ="corazon" transform="translate(118, 128)" role="button" tabindex="0" aria-label="Explorar Corazón">
+                                    <circle class="shock-hotspot-pulse shock-hotspot-pulse--critical" r="19" />
+                                    <circle class="shock-hotspot-core shock-hotspot-core--critical" r="11" />
+                                    <text y="4" text-anchor="middle" class="shock-hotspot-icon">🫀</text>
+                                </g>
+                                <g class="shock-hotspot" data-organ="abdomen" transform="translate(100, 172)" role="button" tabindex="0" aria-label="Explorar Abdomen">
+                                    <circle class="shock-hotspot-pulse" r="16" />
+                                    <circle class="shock-hotspot-core" r="9" />
+                                    <text y="4" text-anchor="middle" class="shock-hotspot-icon">🩺</text>
+                                </g>
+                                <g class="shock-hotspot" data-organ="renal" transform="translate(100, 235)" role="button" tabindex="0" aria-label="Explorar Renal y Vascular">
+                                    <circle class="shock-hotspot-pulse" r="16" />
+                                    <circle class="shock-hotspot-core" r="9" />
+                                    <text y="4" text-anchor="middle" class="shock-hotspot-icon">🩸</text>
+                                </g>
+                            </svg>
+                        </div>
+
+                        <!-- Selector Rápido de Órganos por Botones -->
                         <div class="shock-organ-pills" role="group" aria-label="Focos anatómicos">
                             <button class="shock-organ-btn" data-organ="cerebro" type="button">🧠 SNC</button>
                             <button class="shock-organ-btn" data-organ="pulmon" type="button">🫁 Tórax</button>
@@ -665,6 +717,8 @@
                             <button class="shock-organ-btn" data-organ="abdomen" type="button">🩺 Abdomen</button>
                             <button class="shock-organ-btn" data-organ="renal" type="button">🩸 Renal</button>
                         </div>
+
+                        <!-- Tarjeta de Hallazgo del Órgano Seleccionado -->
                         <div id="shockOrganFindingsCard" class="shock-organ-findings-card">
                             <div class="shock-findings-header">
                                 <span id="shockOrganIcon" class="shock-findings-icon">🫀</span>
@@ -678,13 +732,13 @@
                             </p>
                         </div>
                     </div>
-                </aside>
+                </div>
 
-                <!-- ==========================================
-                     COLUMNA 2: CASO Y ESTUDIOS (SISTEMA DE PESTAÑAS)
-                     Tabs dinámicas: [Historia Clínica], [Laboratorios], [Imágenes (Rx/TC/ECG)]
-                     ========================================== -->
-                <main class="shock-col shock-col--center" data-shock-panel="caso">
+                <!-- ========================================================
+                     COLUMNA 2: HISTORIA CLÍNICA & ESTUDIOS (column-clinical-case)
+                     Tabs: [Historia Clínica], [Laboratorios], [Imágenes (Rx/TC/ECG)]
+                     ======================================================== -->
+                <div class="column-clinical-case shock-col" data-shock-panel="caso">
                     <div class="shock-case-console-card">
                         <!-- Navegación de Pestañas con Bordes Limpios -->
                         <div class="shock-tabs-nav" role="tablist" aria-label="Ficha y Estudios del Paciente">
@@ -865,13 +919,12 @@
                             </div>
                         </div>
                     </div>
-                </main>
+                </div>
 
-                <!-- ==========================================
-                     COLUMNA 3: EVALUADOR CLÍNICO (DERECHA)
-                     Fondo limpio (--color-surface), bordes de 12px, botón Dictaminar con IA
-                     ========================================== -->
-                <aside class="shock-col shock-col--dx" data-shock-panel="dx">
+                <!-- ========================================================
+                     COLUMNA 3: EVALUADOR CLÍNICO (column-evaluator)
+                     ======================================================== -->
+                <div class="column-evaluator shock-col" data-shock-panel="dx">
                     <div class="shock-diagnosis-station">
                         <div class="shock-dx-header">
                             <div>
@@ -901,7 +954,7 @@
                             <!-- Feedback inyectado por motor de IA -->
                         </div>
                     </div>
-                </aside>
+                </div>
 
             </div>
         </section>
@@ -5427,7 +5480,7 @@
 </dialog>
 
 <script src="mqtt.min.js"></script>
-<script src="script.js?v=29.3" defer></script>
+<script src="script.js?v=29.4" defer></script>
 
 <!-- =========================================================
      MODAL DE PROMPT PARA GEMINI (CREAR JUEGOS DESDE PDF)
