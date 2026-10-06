@@ -491,13 +491,16 @@ body.mode-lite .bomba-wire-slot.is-cut .wire-half--right {
 .top-nav__links {
     display: flex;
     align-items: center;
-    gap: 0.4rem;
+    justify-content: center;
+    gap: 0.45rem;
+    margin: 0 auto;
 }
 
 .nav-link {
     display: inline-flex;
     align-items: center;
-    gap: 0.35rem;
+    justify-content: center;
+    gap: 0.4rem;
     padding: 0.45rem 0.95rem;
     border-radius: var(--radius-pill);
     font-size: 0.85rem;
@@ -506,6 +509,8 @@ body.mode-lite .bomba-wire-slot.is-cut .wire-half--right {
     background: transparent;
     border: 1px solid transparent;
     cursor: pointer;
+    line-height: 1.25;
+    white-space: nowrap;
     transition: all var(--transition);
 }
 
@@ -525,6 +530,7 @@ body.mode-lite .bomba-wire-slot.is-cut .wire-half--right {
     display: flex;
     align-items: center;
     gap: 0.75rem;
+    flex-shrink: 0;
 }
 
 /* Botón Sol/Luna */
@@ -999,17 +1005,41 @@ body.mode-lite .bomba-wire-slot.is-cut .wire-half--right {
 }
 
 .module-card__icon {
-    width: 2.5rem;
-    height: 2.5rem;
-    border-radius: 0.6rem;
-    display: grid;
-    place-items: center;
-    font-size: 1.25rem;
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.35rem;
+    line-height: 1;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.portal-card__icon {
+    width: 3.25rem !important;
+    height: 3.25rem !important;
+    border-radius: 12px !important;
+    font-size: 1.75rem !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    line-height: 1 !important;
+    margin: 0 !important;
+    flex-shrink: 0 !important;
 }
 
 .module-card__icon--primary {
     background: rgba(79,140,255,0.15);
     color: var(--color-primary);
+}
+
+.module-card__icon--lab {
+    background: rgba(16, 185, 129, 0.15);
+    border: 1px solid rgba(16, 185, 129, 0.35);
+    color: #34d399;
 }
 
 .module-card__icon--pomodoro {
@@ -1675,65 +1705,84 @@ input:focus {
     display: block;
 }
 
-/* Disco Giratorio Tecnológico */
+/* Disco Giratorio Tecnológico (Sin divisiones ni sectores de casino - Halo de Energía Continuo) */
 .tech-wheel-disc {
     width: 100%;
     height: 100%;
     border-radius: 50%;
     position: relative;
     overflow: hidden;
-    border: 3px solid rgba(56, 189, 248, 0.5);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15), 0 0 0 8px rgba(37, 99, 235, 0.12), inset 0 0 25px rgba(56, 189, 248, 0.2);
+    border: 2.5px solid rgba(56, 189, 248, 0.55);
+    box-shadow: 0 10px 32px rgba(0, 0, 0, 0.35), 0 0 0 6px rgba(37, 99, 235, 0.15), inset 0 0 30px rgba(56, 189, 248, 0.2);
     transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-    background: 
-        radial-gradient(circle at 50% 50%, transparent 46%, rgba(56, 189, 248, 0.22) 47%, transparent 48%, transparent 70%, rgba(37, 99, 235, 0.3) 71%, transparent 72%, transparent 90%, rgba(56, 189, 248, 0.4) 91%, transparent 92%),
-        repeating-conic-gradient(from 0deg, rgba(56, 189, 248, 0.25) 0deg 0.8deg, transparent 0.8deg 15deg),
-        conic-gradient(
-            from 0deg,
-            #1e293b 0deg 45deg,
-            #0f172a 45deg 90deg,
-            #1e293b 90deg 135deg,
-            #0f172a 135deg 180deg,
-            #1e293b 180deg 225deg,
-            #0f172a 225deg 270deg,
-            #1e293b 270deg 315deg,
-            #0f172a 315deg 360deg
-        );
+    /* Fondo espacial limpio sin divisiones de ruleta */
+    background: radial-gradient(circle at 50% 50%, #0f172a 0%, #0b1329 45%, #020617 100%);
 }
 
 [data-theme="dark"] .tech-wheel-disc {
-    border-color: rgba(56, 189, 248, 0.6);
-    box-shadow: 0 16px 45px rgba(0, 0, 0, 0.7), 0 0 0 8px rgba(37, 99, 235, 0.2), inset 0 0 35px rgba(56, 189, 248, 0.25);
-    background: 
-        radial-gradient(circle at 50% 50%, transparent 46%, rgba(56, 189, 248, 0.3) 47%, transparent 48%, transparent 70%, rgba(37, 99, 235, 0.45) 71%, transparent 72%, transparent 90%, rgba(56, 189, 248, 0.5) 91%, transparent 92%),
-        repeating-conic-gradient(from 0deg, rgba(56, 189, 248, 0.35) 0deg 0.8deg, transparent 0.8deg 15deg),
-        conic-gradient(
-            from 0deg,
-            #0b1329 0deg 45deg,
-            #020617 45deg 90deg,
-            #0f172a 90deg 135deg,
-            #020617 135deg 180deg,
-            #0b1329 180deg 225deg,
-            #020617 225deg 270deg,
-            #0f172a 270deg 315deg,
-            #020617 315deg 360deg
-        );
+    border-color: rgba(56, 189, 248, 0.65);
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.75), 0 0 0 6px rgba(37, 99, 235, 0.25), inset 0 0 40px rgba(56, 189, 248, 0.28);
+    background: radial-gradient(circle at 50% 50%, #0b1329 0%, #060b18 50%, #01040a 100%);
 }
 
-.tech-disc-orbit {
-    position: absolute;
-    inset: 16px;
-    border-radius: 50%;
-    border: 1px dashed rgba(56, 189, 248, 0.4);
-    pointer-events: none;
-}
-
-.tech-disc-grid {
+/* Haz de energía rotatorio continuo (Sin líneas de casino) */
+.tech-disc-smooth-beam {
     position: absolute;
     inset: 0;
     border-radius: 50%;
-    background: radial-gradient(circle, transparent 60%, rgba(37, 99, 235, 0.18) 100%);
+    background: conic-gradient(
+        from 0deg,
+        rgba(56, 189, 248, 0.02) 0deg,
+        rgba(56, 189, 248, 0.25) 120deg,
+        rgba(37, 99, 235, 0.6) 240deg,
+        rgba(56, 189, 248, 0.85) 350deg,
+        rgba(56, 189, 248, 0.02) 360deg
+    );
+    filter: blur(1.5px);
     pointer-events: none;
+}
+
+/* Anillo Orbital de Precisión */
+.tech-disc-orbit {
+    position: absolute;
+    inset: 14px;
+    border-radius: 50%;
+    border: 1.5px dashed rgba(56, 189, 248, 0.45);
+    box-shadow: inset 0 0 15px rgba(56, 189, 248, 0.15);
+    pointer-events: none;
+}
+
+/* Puntos cardinales limpios (Solo 4 puntos tecnológicos discretos en lugar de ranuras de ruleta) */
+.tech-disc-cardinal-markers {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.tech-disc-cardinal-markers::before,
+.tech-disc-cardinal-markers::after {
+    content: '';
+    position: absolute;
+    border-radius: 50%;
+    background: #38bdf8;
+    box-shadow: 0 0 8px #38bdf8;
+}
+
+.tech-disc-cardinal-markers::before {
+    top: 5px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 6px;
+    height: 6px;
+}
+
+.tech-disc-cardinal-markers::after {
+    top: 50%;
+    right: 5px;
+    transform: translateY(-50%);
+    width: 6px;
+    height: 6px;
 }
 
 /* Animación de Giro Vertiginoso y Desaceleración Ultra Realista */
@@ -1866,12 +1915,18 @@ input:focus {
     position: relative;
     width: 100%;
     max-width: 580px;
+    min-height: 120px;
     margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
     overflow: hidden;
     border-radius: var(--border-radius-lg, 12px);
     border: 1.5px solid var(--color-border);
     background: rgba(15, 23, 42, 0.03);
     box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.06);
+    padding: 1.5rem 1.25rem;
 }
 
 [data-theme="dark"] .classic-roulette-container {
@@ -1881,17 +1936,21 @@ input:focus {
 }
 
 .classic-rolling-display {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    min-height: 90px;
-    padding: 1.25rem 1.5rem;
-    text-align: center;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    width: 100% !important;
+    min-height: auto !important;
+    max-height: none !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
     font-family: var(--font-heading, 'Satoshi', sans-serif);
-    font-size: clamp(1.2rem, 2.2vw, 1.6rem);
+    font-size: clamp(1.2rem, 2.5vw, 1.75rem);
     font-weight: 700;
     color: var(--color-text-main, #1e293b);
+    line-height: 1.35;
+    word-break: break-word;
     transition: transform 0.08s ease, filter 0.08s ease, color 0.15s ease;
 }
 
@@ -1899,13 +1958,13 @@ input:focus {
     color: #f1f5f9;
 }
 
-/* Display de Texto en Ambos Modos */
-.rolling-display {
+/* Display de Texto en Modo Tecnológico */
+.tech-rolling-display {
     display: flex;
     align-items: center;
     justify-content: center;
     width: 100%;
-    max-height: 80px;
+    max-height: 75px;
     padding: 0.25rem;
     text-align: center;
     font-family: var(--font-heading, 'Satoshi', sans-serif);
@@ -1920,7 +1979,7 @@ input:focus {
     transition: all 0.15s ease;
 }
 
-[data-theme="dark"] .rolling-display {
+[data-theme="dark"] .tech-rolling-display {
     color: #f1f5f9;
 }
 
