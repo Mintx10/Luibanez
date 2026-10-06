@@ -15,10 +15,10 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     
-    <link rel="icon" type="image/svg+xml" href="icon.svg?v=29.8">
-    <link rel="apple-touch-icon" href="icon-192.png?v=29.8">
-    <link rel="manifest" href="manifest.json?v=29.8">
-    <link rel="stylesheet" href="style.css?v=29.8">
+    <link rel="icon" type="image/svg+xml" href="icon.svg?v=29.9">
+    <link rel="apple-touch-icon" href="icon-192.png?v=29.9">
+    <link rel="manifest" href="manifest.json?v=29.9">
+    <link rel="stylesheet" href="style.css?v=29.9">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1133,37 +1133,72 @@
                     <ul id="topicsGrid" class="topics-grid" aria-label="Temas de estudio"></ul>
                 </section>
 
-                <!-- Bolillero con Ruleta Giratoria Circular Interactiva -->
-                <section class="draw-section" aria-labelledby="draw-title">
-                    <h3 id="draw-title" class="panel__title">Bolillero</h3>
+                <!-- Bolillero con Ruleta Giratoria Circular Interactiva o Cápsula Clásica -->
+                <section class="draw-section" id="bolilleroDrawSection" aria-labelledby="draw-title" data-bolillero-mode="tech">
+                    <div class="draw-header-bar">
+                        <h3 id="draw-title" class="panel__title">Bolillero</h3>
+
+                        <!-- Selector de Modo de Visualización del Bolillero -->
+                        <div class="bolillero-mode-switcher" role="radiogroup" aria-label="Estilo de interfaz del bolillero">
+                            <button type="button" class="bolillero-mode-btn is-active" id="btnBolilleroTech" data-bolillero-mode="tech" role="radio" aria-checked="true" title="Ruleta Circular Tecnológica">
+                                <span class="mode-btn-icon" aria-hidden="true">⚡</span>
+                                <span class="mode-btn-label">Ruleta Tech</span>
+                            </button>
+                            <button type="button" class="bolillero-mode-btn" id="btnBolilleroClassic" data-bolillero-mode="classic" role="radio" aria-checked="false" title="Cápsula Clásica">
+                                <span class="mode-btn-icon" aria-hidden="true">📟</span>
+                                <span class="mode-btn-label">Cápsula Clásica</span>
+                            </button>
+                        </div>
+                    </div>
+
                     <div class="draw-machine roulette-stage">
-                        <!-- Ruleta Circular 360° -->
-                        <div class="roulette-wheel-wrapper">
-                            <!-- Puntero superior de selección -->
-                            <div class="roulette-pointer" aria-hidden="true">
-                                <span class="pointer-triangle">▼</span>
-                            </div>
+                        <!-- 1. VISTA RULETA TECNOLÓGICA -->
+                        <div class="bolillero-view bolillero-view--tech" id="bolilleroTechStage">
+                            <div class="roulette-wheel-wrapper tech-wheel-wrapper">
+                                <!-- Puntero Retículo Láser Superior -->
+                                <div class="tech-wheel-pointer" aria-hidden="true">
+                                    <div class="tech-laser-pip"></div>
+                                    <svg class="tech-pointer-svg" viewBox="0 0 24 24" width="22" height="22">
+                                        <polygon points="12,20 4,4 20,4" fill="currentColor"/>
+                                    </svg>
+                                </div>
 
-                            <!-- Rueda giratoria CSS con sectores alternados -->
-                            <div class="roulette-wheel-disc" id="rouletteWheelDisc">
-                                <div class="roulette-sectors" id="rouletteSectors"></div>
-                            </div>
+                                <!-- Rueda giratoria tecnológica con acentos cibernéticos -->
+                                <div class="roulette-wheel-disc tech-wheel-disc" id="rouletteWheelDisc">
+                                    <div class="tech-disc-grid" aria-hidden="true"></div>
+                                    <div class="tech-disc-orbit" aria-hidden="true"></div>
+                                    <div class="tech-disc-ticks" aria-hidden="true"></div>
+                                </div>
 
-                            <!-- Centro del Bolillero (Hub central con display dinámico) -->
-                            <div class="roulette-center-hub">
-                                <div class="roulette-hub-inner">
-                                    <span class="roulette-hub-icon" aria-hidden="true">🎲</span>
-                                    <div id="rollingDisplay" class="rolling-display" role="status" aria-live="polite" aria-atomic="true">
-                                        —
+                                <!-- Hub Central Tecnológico -->
+                                <div class="roulette-center-hub tech-center-hub">
+                                    <div class="roulette-hub-inner tech-hub-inner">
+                                        <div class="tech-hud-badge" aria-hidden="true">
+                                            <span class="tech-hud-pulse"></span>
+                                            <span class="tech-hud-title">SISTEMA ACTIVO</span>
+                                        </div>
+                                        <div id="rollingDisplay" class="rolling-display tech-rolling-display" role="status" aria-live="polite" aria-atomic="true">
+                                            —
+                                        </div>
+                                        <div class="tech-hud-footer" aria-hidden="true">MOTOR ALEATORIO</div>
                                     </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 2. VISTA CÁPSULA CLÁSICA -->
+                        <div class="bolillero-view bolillero-view--classic" id="bolilleroClassicStage">
+                            <div class="roulette-container classic-roulette-container">
+                                <div id="rollingDisplayClassic" class="rolling-display classic-rolling-display" role="status" aria-live="polite" aria-atomic="true">
+                                    —
                                 </div>
                             </div>
                         </div>
 
                         <!-- Botón de Giro con Acceso Rápido -->
                         <button id="spinButton" class="spin-button roulette-spin-cta" type="button" title="Presioná la barra espaciadora para girar">
-                            <span class="spin-btn-icon" aria-hidden="true">🎰</span>
-                            <span class="spin-btn-label">GIRAR RULETA</span>
+                            <span class="spin-btn-icon" aria-hidden="true">⚡</span>
+                            <span class="spin-btn-label">GIRAR BOLILLERO</span>
                         </button>
                     </div>
                 </section>
@@ -5532,7 +5567,7 @@
 </dialog>
 
 <script src="mqtt.min.js"></script>
-<script src="script.js?v=29.8" defer></script>
+<script src="script.js?v=29.9" defer></script>
 
 <!-- =========================================================
      MODAL DE PROMPT PARA GEMINI (CREAR JUEGOS DESDE PDF)

@@ -2142,11 +2142,30 @@ async function girarBolillero() {
         return;
     }
 
+function actualizarDisplaysBolillero(texto, estadoClase = null) {
+    const displays = [
+        dom.rollingDisplay,
+        document.getElementById("rollingDisplayClassic")
+    ].filter(Boolean);
+
+    displays.forEach(d => {
+        d.textContent = texto;
+        if (estadoClase === "spinning") {
+            d.classList.remove("is-winner");
+            d.classList.add("is-spinning");
+        } else if (estadoClase === "winner") {
+            d.classList.remove("is-spinning");
+            d.classList.add("is-winner");
+        } else if (estadoClase === "reset") {
+            d.classList.remove("is-spinning", "is-winner");
+        }
+    });
+}
+
     estado.interfaz.girando = true;
     renderEstadoBotones();
     dom.resultSection.classList.add("hidden");
-    dom.rollingDisplay.classList.remove("is-winner");
-    dom.rollingDisplay.classList.add("is-spinning");
+    actualizarDisplaysBolillero("...", "spinning");
 
     const wheelDisc = document.getElementById("rouletteWheelDisc");
     if (wheelDisc) {
@@ -2164,7 +2183,7 @@ async function girarBolillero() {
         if (transcurrido >= duracion) break;
 
         const temaAleatorio = temasDisponibles[Math.floor(Math.random() * temasDisponibles.length)];
-        dom.rollingDisplay.textContent = temaAleatorio.titulo;
+        actualizarDisplaysBolillero(temaAleatorio.titulo);
 
         const progreso = transcurrido / duracion;
         intervalo = 45 + (progreso * progreso * 300);
@@ -2175,10 +2194,7 @@ async function girarBolillero() {
     const ganador = temasDisponibles[Math.floor(Math.random() * temasDisponibles.length)];
     
     estado.ronda.ultimoTemaId = ganador.id;
-    dom.rollingDisplay.textContent = ganador.titulo;
-    
-    dom.rollingDisplay.classList.remove("is-spinning");
-    dom.rollingDisplay.classList.add("is-winner");
+    actualizarDisplaysBolillero(ganador.titulo, "winner");
 
     if (wheelDisc) {
         wheelDisc.classList.remove("is-spinning");
@@ -2197,8 +2213,7 @@ async function girarBolillero() {
 
 function restaurarBolillero() {
     reconstruirBolillero();
-    dom.rollingDisplay.textContent = "—";
-    dom.rollingDisplay.classList.remove("is-winner");
+    actualizarDisplaysBolillero("—", "reset");
     actualizarContextoPomodoro(null);
     render();
 }
@@ -12552,7 +12567,7 @@ function seleccionarTemaManualBolillero(temaId, dispararIaInmediata = false) {
 
     // Marcar como último tema seleccionado
     estado.ronda.ultimoTemaId = temaId;
-    if (dom.rollingDisplay) dom.rollingDisplay.textContent = tema.titulo;
+    actualizarDisplaysBolillero(tema.titulo);
     renderResultado();
 
     // Desplazar a la sección de resultado / pregunta IA
@@ -12564,6 +12579,46 @@ function seleccionarTemaManualBolillero(temaId, dispararIaInmediata = false) {
     if (dispararIaInmediata) {
         solicitarPreguntaIABolillero();
     }
+}
+
+function inicializarModoBolillero() {
+    const section = document.getElementById("bolilleroDrawSection");
+    const btns = document.querySelectorAll(".bolillero-mode-btn");
+    if (!section || btns.length === 0) return;
+
+    const guardarModo = (modo) => {
+        try {
+            localStorage.setItem("luibanez_bolillero_mode", modo);
+        } catch (_) {}
+    };
+
+    const cargarModo = () => {
+        try {
+            return localStorage.getItem("luibanez_bolillero_mode") || "tech";
+        } catch (_) {
+            return "tech";
+        }
+    };
+
+    const aplicarModo = (modo) => {
+        const modoFinal = modo === "classic" ? "classic" : "tech";
+        section.setAttribute("data-bolillero-mode", modoFinal);
+        btns.forEach(btn => {
+            const isActive = btn.dataset.bolilleroMode === modoFinal;
+            btn.classList.toggle("is-active", isActive);
+            btn.setAttribute("aria-checked", isActive ? "true" : "false");
+        });
+        guardarModo(modoFinal);
+    };
+
+    btns.forEach(btn => {
+        btn.addEventListener("click", () => {
+            const modo = btn.dataset.bolilleroMode;
+            if (modo) aplicarModo(modo);
+        });
+    });
+
+    aplicarModo(cargarModo());
 }
 
     dom.topicsGrid.addEventListener("click", (e) => {
@@ -12585,6 +12640,7 @@ function seleccionarTemaManualBolillero(temaId, dispararIaInmediata = false) {
     if (dom.spinButton) dom.spinButton.addEventListener("click", girarBolillero);
     if (dom.drawAgainButton) dom.drawAgainButton.addEventListener("click", girarBolillero);
     if (dom.restoreRoundButton) dom.restoreRoundButton.addEventListener("click", restaurarBolillero);
+    inicializarModoBolillero();
 
     if (dom.importButton && dom.importFileInput) {
         dom.importButton.addEventListener("click", () => dom.importFileInput.click());
@@ -13807,7 +13863,7 @@ function iniciarAplicacion() {
 // =========================================================
 // GESTOR DE VERSIONES Y ACTUALIZACIÓN AUTOMÁTICA
 // =========================================================
-const APP_BUILD_VERSION = "29.8";
+const APP_BUILD_VERSION = "29.9";
 
 async function forzarActualizacionCompleta(mostrarNotificacion = true) {
     const lastAttempt = parseInt(sessionStorage.getItem("last_auto_update_ts") || "0", 10);
