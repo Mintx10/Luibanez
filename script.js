@@ -4481,6 +4481,18 @@ function generarCasoShockRoomHome(forzarNuevo = false) {
         feedbackPanel.classList.add("hidden");
         feedbackPanel.innerHTML = "";
     }
+
+    // Restablecer pestaña activa a Historia Clínica por defecto
+    const tabHistoriaBtn = document.querySelector(".shock-tab-btn[data-tab='historia']");
+    if (tabHistoriaBtn) {
+        document.querySelectorAll(".shock-tab-btn").forEach(t => t.classList.toggle("is-active", t === tabHistoriaBtn));
+        const historiaPane = document.getElementById("shockTabContentHistoria");
+        const labPane = document.getElementById("shockTabContentLab");
+        const imgPane = document.getElementById("shockTabContentImagenes");
+        if (historiaPane) historiaPane.classList.remove("hidden");
+        if (labPane) labPane.classList.add("hidden");
+        if (imgPane) imgPane.classList.add("hidden");
+    }
 }
 
 function renderizarTablaLaboratorioShock(datosLab) {
@@ -4599,7 +4611,9 @@ function inicializarEventosShockRoom() {
             document.querySelectorAll(".shock-tab-btn").forEach(t => t.classList.toggle("is-active", t === studyTab));
             
             const tabMap = {
+                historia: "shockTabContentHistoria",
                 lab: "shockTabContentLab",
+                imagenes: "shockTabContentImagenes",
                 rx: "shockTabContentRx",
                 tc: "shockTabContentTc",
                 ecg: "shockTabContentEcg"
@@ -4612,22 +4626,38 @@ function inicializarEventosShockRoom() {
             return;
         }
 
+        const imgSubtab = e.target.closest(".shock-img-subtab-btn");
+        if (imgSubtab && imgSubtab.dataset.imgSubtab) {
+            const subId = imgSubtab.dataset.imgSubtab;
+            document.querySelectorAll(".shock-img-subtab-btn").forEach(t => t.classList.toggle("is-active", t === imgSubtab));
+            
+            const subMap = {
+                rx: "shockTabContentRx",
+                tc: "shockTabContentTc",
+                ecg: "shockTabContentEcg"
+            };
+
+            Object.entries(subMap).forEach(([key, elemId]) => {
+                const el = document.getElementById(elemId);
+                if (el) el.classList.toggle("hidden", key !== subId);
+            });
+            return;
+        }
+
         const mobTab = e.target.closest(".shock-mobile-tab-btn");
         if (mobTab && mobTab.dataset.shockTab) {
             const tabName = mobTab.dataset.shockTab;
             document.querySelectorAll(".shock-mobile-tab-btn").forEach(t => t.classList.toggle("is-active", t === mobTab));
             
-            // En móvil, tanto estudios como diagnóstico residen en la columna 3 ('studies')
-            const colTarget = (tabName === "dx") ? "studies" : tabName;
+            // En móvil alternamos visibilidad entre las 3 columnas de la consola
             document.querySelectorAll(".shock-col[data-shock-panel]").forEach(col => {
-                col.classList.toggle("is-mobile-visible", col.dataset.shockPanel === colTarget);
+                const panel = col.dataset.shockPanel;
+                const isMatch = (panel === tabName) ||
+                                (tabName === "monitor" && (panel === "monitor" || panel === "vitals" || panel === "anatomy")) ||
+                                (tabName === "caso" && (panel === "caso" || panel === "center" || panel === "studies")) ||
+                                (tabName === "dx" && panel === "dx");
+                col.classList.toggle("is-mobile-visible", isMatch);
             });
-
-            const colStudies = document.querySelector(".shock-col--studies");
-            if (colStudies) {
-                colStudies.classList.toggle("shock-mobile-show-studies-only", tabName === "studies");
-                colStudies.classList.toggle("shock-mobile-show-dx-only", tabName === "dx");
-            }
 
             if (tabName === "dx") {
                 const diagInput = document.getElementById("shockStudentDiagnosisInput");
@@ -4669,10 +4699,9 @@ function inicializarEventosShockRoom() {
         }
     });
 
-    const firstMobPanel = document.querySelector(".shock-col[data-shock-panel='vitals']");
+    const firstMobPanel = document.querySelector(".shock-col[data-shock-panel='monitor']") || 
+                          document.querySelector(".shock-col[data-shock-panel='vitals']");
     if (firstMobPanel) firstMobPanel.classList.add("is-mobile-visible");
-    const colStudiesInit = document.querySelector(".shock-col--studies");
-    if (colStudiesInit) colStudiesInit.classList.add("shock-mobile-show-studies-only");
 }
 
 const BANCO_CASOS_INTERNA_AVANZADOS = [
@@ -13720,7 +13749,7 @@ function iniciarAplicacion() {
 // =========================================================
 // GESTOR DE VERSIONES Y ACTUALIZACIÓN AUTOMÁTICA
 // =========================================================
-const APP_BUILD_VERSION = "29.2";
+const APP_BUILD_VERSION = "29.3";
 
 async function forzarActualizacionCompleta(mostrarNotificacion = true) {
     const lastAttempt = parseInt(sessionStorage.getItem("last_auto_update_ts") || "0", 10);

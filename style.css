@@ -15304,11 +15304,13 @@ body.modo-dev-activo .juntos-locked-notice {
     box-shadow: 0 0 10px rgba(14, 165, 233, 0.4);
 }
 
-/* Grid del Dashboard: 3 Columnas */
+/* =========================================================
+   CONSOLA DE HOSPITAL · SHOCK ROOM (LAYOUT DE 3 COLUMNAS)
+   ========================================================= */
 .shock-dashboard-grid {
     display: grid;
-    grid-template-columns: 275px 1fr 390px;
-    gap: 1rem;
+    grid-template-columns: 1fr 2fr 1fr;
+    gap: 1.25rem;
     align-items: start;
     width: 100%;
 }
@@ -15320,7 +15322,7 @@ body.modo-dev-activo .juntos-locked-notice {
     min-width: 0;
 }
 
-/* Tarjetas base de Shock Room */
+/* Base de Tarjetas */
 .shock-card {
     background: rgba(15, 23, 42, 0.85);
     border: 1px solid rgba(56, 189, 248, 0.22);
@@ -15361,114 +15363,219 @@ body.modo-dev-activo .juntos-locked-notice {
     padding: 0.1rem 0.4rem;
 }
 
-/* Contenedor del Cuerpo Humano SVG */
-.shock-anatomy-stage {
+/* =========================================================
+   COLUMNA 1: MONITOR MULTIPARAMÉTRICO (FONDO #0F172A)
+   ========================================================= */
+.shock-monitor-box {
+    background: #0F172A;
+    border: 1.5px solid rgba(56, 189, 248, 0.3);
+    border-radius: 12px;
+    padding: 0.9rem;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55), inset 0 0 20px rgba(0, 0, 0, 0.8);
     display: flex;
-    justify-content: center;
-    align-items: center;
-    background: radial-gradient(circle, rgba(14, 165, 233, 0.08) 0%, rgba(15, 23, 42, 0.95) 75%);
-    border: 1px solid rgba(56, 189, 248, 0.18);
-    border-radius: 10px;
-    padding: 0.75rem 0.5rem;
+    flex-direction: column;
+    gap: 0.65rem;
     position: relative;
+    overflow: hidden;
 }
 
-.shock-human-svg {
+[data-theme="light"] .shock-monitor-box {
+    background: #0F172A; /* Mantiene fondo oscuro uniforme estilo monitor médico real */
+    border: 1.5px solid rgba(56, 189, 248, 0.4);
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.35);
+}
+
+.shock-monitor-topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'Geist Mono', 'SF Mono', ui-monospace, Menlo, Monaco, Consolas, 'Courier New', monospace;
+    font-size: 0.72rem;
+    border-bottom: 1px solid rgba(56, 189, 248, 0.2);
+    padding-bottom: 0.4rem;
+}
+
+.shock-monitor-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: #22c55e;
+    font-weight: 700;
+}
+
+.shock-ecg-green-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #22c55e;
+    box-shadow: 0 0 8px #22c55e;
+    animation: ecgBlink 1s infinite;
+}
+
+@keyframes ecgBlink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+}
+
+.shock-monitor-rhythm {
+    color: #facc15;
+    font-weight: 700;
+}
+
+.shock-monitor-speed {
+    color: #64748b;
+}
+
+.shock-ecg-canvas-wrap {
+    background: radial-gradient(circle, rgba(6, 78, 59, 0.25) 0%, rgba(2, 20, 10, 0.95) 100%);
+    border: 1px solid rgba(34, 197, 94, 0.25);
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+    height: 90px;
+    display: flex;
+    align-items: center;
+}
+
+#shockEcgMonitorCanvas {
     width: 100%;
-    max-width: 190px;
-    height: 280px;
-    filter: drop-shadow(0 0 12px rgba(56, 189, 248, 0.2));
+    height: 100%;
+    display: block;
 }
 
-.shock-hotspot {
-    cursor: pointer;
-    outline: none;
+/* Cuadrícula de Métricas LED en Monitor */
+.shock-monitor-vitals-console {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.55rem;
 }
 
-.shock-hotspot:hover .shock-hotspot-core {
-    stroke-width: 2.5;
-    filter: drop-shadow(0 0 6px #38bdf8);
+.shock-vital-metric {
+    background: #090e17;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    padding: 0.6rem 0.65rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    transition: all 0.2s ease;
 }
 
-.shock-hotspot:hover .shock-hotspot-pulse {
-    stroke-width: 2;
-    opacity: 0.9;
+.shock-vital-metric:hover {
+    border-color: rgba(56, 189, 248, 0.35);
+    background: #0d1522;
 }
 
-.shock-hotspot-pulse {
-    fill: rgba(56, 189, 248, 0.18);
-    stroke: rgba(56, 189, 248, 0.6);
-    stroke-width: 1.5;
-    animation: shockHotspotRipple 2s infinite ease-out;
+.shock-metric-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
 }
 
-.shock-hotspot-pulse--critical {
-    fill: rgba(239, 68, 68, 0.25);
-    stroke: rgba(239, 68, 68, 0.8);
-    animation: shockHotspotRippleRed 1.3s infinite ease-out;
+.shock-metric-label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
 }
 
-.shock-hotspot-core {
-    fill: rgba(14, 165, 233, 0.75);
-    stroke: #38bdf8;
-    stroke-width: 1.5;
-    transition: stroke-width 0.2s ease, filter 0.2s ease, fill 0.2s ease;
+.vital-pulse-icon {
+    animation: heartbeatPulse 1s infinite;
 }
 
-.shock-hotspot-core--critical {
-    fill: rgba(239, 68, 68, 0.85);
-    stroke: #ef4444;
+@keyframes heartbeatPulse {
+    0%, 100% { transform: scale(1); }
+    15% { transform: scale(1.25); }
+    30% { transform: scale(1); }
+    45% { transform: scale(1.15); }
 }
 
-.shock-hotspot-icon {
-    font-size: 11px;
-    user-select: none;
-    pointer-events: none;
+.shock-metric-val-wrap {
+    display: flex;
+    align-items: baseline;
+    gap: 0.25rem;
+    margin: 0.1rem 0;
 }
 
-.shock-hotspot.is-active .shock-hotspot-core {
-    fill: #f59e0b;
-    stroke: #fbbf24;
-    stroke-width: 2.8;
-    filter: drop-shadow(0 0 8px #f59e0b);
+.shock-metric-num {
+    font-family: 'Geist Mono', 'SF Mono', ui-monospace, Menlo, Monaco, Consolas, 'Courier New', monospace;
+    font-size: 1.75rem;
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
 }
 
-.shock-hotspot.is-active .shock-hotspot-pulse {
-    fill: rgba(245, 158, 11, 0.25);
-    stroke: rgba(251, 191, 36, 0.8);
+/* Colores Brillantes Emulando Monitor Clínico Real */
+.shock-vital-metric--fc .shock-metric-num {
+    color: #22c55e;
+    text-shadow: 0 0 12px rgba(34, 197, 94, 0.55);
 }
 
-@keyframes shockHotspotRipple {
-    0% {
-        opacity: 0.95;
-        stroke-width: 1.2px;
-    }
-    50% {
-        opacity: 0.35;
-        stroke-width: 2.8px;
-    }
-    100% {
-        opacity: 0.95;
-        stroke-width: 1.2px;
-    }
+.shock-vital-metric--pa .shock-metric-num {
+    color: #ef4444;
+    text-shadow: 0 0 12px rgba(239, 68, 68, 0.55);
 }
 
-@keyframes shockHotspotRippleRed {
-    0% {
-        opacity: 1;
-        stroke-width: 1.5px;
-    }
-    50% {
-        opacity: 0.3;
-        stroke-width: 3.5px;
-    }
-    100% {
-        opacity: 1;
-        stroke-width: 1.5px;
-    }
+.shock-vital-metric--spo2 .shock-metric-num {
+    color: #38bdf8;
+    text-shadow: 0 0 12px rgba(56, 189, 248, 0.55);
 }
 
-/* Pastillas de Selección de Órganos */
+.shock-vital-metric--fr .shock-metric-num {
+    color: #fbbf24;
+    text-shadow: 0 0 12px rgba(251, 191, 36, 0.55);
+}
+
+.shock-vital-metric--glasgow .shock-metric-num {
+    color: #a78bfa;
+    text-shadow: 0 0 12px rgba(167, 139, 250, 0.55);
+}
+
+.shock-vital-metric--temp .shock-metric-num {
+    color: #f472b6;
+    text-shadow: 0 0 12px rgba(244, 114, 182, 0.55);
+}
+
+.shock-metric-unit {
+    font-size: 0.65rem;
+    color: #64748b;
+    font-family: var(--font-body);
+}
+
+.shock-metric-trend {
+    font-size: 0.65rem;
+    color: #94a3b8;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+.shock-metric-trend--danger {
+    color: #f87171;
+    font-weight: 700;
+}
+
+.shock-metric-trend--warning {
+    color: #fbbf24;
+}
+
+/* Focos Anatómicos Compactos en Columna Izquierda */
+.shock-card--anatomy-compact {
+    background: rgba(15, 23, 42, 0.85);
+    border: 1px solid rgba(56, 189, 248, 0.2);
+    border-radius: 12px;
+    padding: 0.85rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+}
+
 .shock-organ-pills {
     display: flex;
     gap: 0.35rem;
@@ -15496,14 +15603,13 @@ body.modo-dev-activo .juntos-locked-notice {
 }
 
 .shock-organ-btn.is-active {
-    background: #0284c7;
+    background: var(--color-primary);
     color: #fff;
     border-color: #38bdf8;
-    box-shadow: 0 0 8px rgba(14, 165, 233, 0.4);
+    box-shadow: 0 0 8px rgba(37, 99, 235, 0.4);
     font-weight: 700;
 }
 
-/* Tarjeta de Hallazgo del Órgano */
 .shock-organ-findings-card {
     background: rgba(30, 41, 59, 0.5);
     border-left: 3px solid #38bdf8;
@@ -15511,8 +15617,7 @@ body.modo-dev-activo .juntos-locked-notice {
     padding: 0.65rem 0.75rem;
     display: flex;
     flex-direction: column;
-    gap: 0.4rem;
-    min-height: 110px;
+    gap: 0.35rem;
     box-sizing: border-box;
 }
 
@@ -15566,193 +15671,128 @@ body.modo-dev-activo .juntos-locked-notice {
     line-height: 1.45;
 }
 
-/* Monitor Multiparamétrico */
-.shock-monitor-box {
-    background: #030712;
-    border: 1.5px solid rgba(34, 197, 94, 0.4);
+/* =========================================================
+   COLUMNA 2: CASO Y ESTUDIOS (SISTEMA DE PESTAÑAS)
+   ========================================================= */
+.shock-case-console-card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
     border-radius: 12px;
-    padding: 0.75rem;
-    box-shadow: 0 0 25px rgba(34, 197, 94, 0.12), inset 0 0 20px rgba(0, 0, 0, 0.8);
+    box-shadow: var(--shadow-subtle);
+    overflow: hidden;
     display: flex;
     flex-direction: column;
-    gap: 0.6rem;
-    position: relative;
-    overflow: hidden;
+    min-height: 520px;
 }
 
-.shock-monitor-topbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-family: ui-monospace, monospace;
-    font-size: 0.72rem;
-    border-bottom: 1px solid rgba(34, 197, 94, 0.2);
-    padding-bottom: 0.4rem;
+[data-theme="light"] .shock-case-console-card {
+    background: #ffffff;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
 }
 
-.shock-monitor-badge {
+.shock-tabs-nav {
     display: flex;
-    align-items: center;
+    background: rgba(15, 23, 42, 0.6);
+    border-bottom: 1px solid var(--color-border);
+    padding: 0.4rem 0.65rem 0;
     gap: 0.4rem;
-    color: #22c55e;
+    overflow-x: auto;
+}
+
+[data-theme="light"] .shock-tabs-nav {
+    background: #f1f5f9;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.shock-tab-btn {
+    font-family: var(--font-body);
     font-weight: 700;
-}
-
-.shock-ecg-green-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background-color: #22c55e;
-    box-shadow: 0 0 8px #22c55e;
-    animation: ecgBlink 1s infinite;
-}
-
-@keyframes ecgBlink {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.3; }
-}
-
-.shock-monitor-rhythm {
-    color: #facc15;
-    font-weight: 700;
-}
-
-.shock-monitor-speed {
-    color: #64748b;
-}
-
-.shock-ecg-canvas-wrap {
-    background: radial-gradient(circle, rgba(6, 78, 59, 0.25) 0%, rgba(2, 20, 10, 0.95) 100%);
-    border: 1px solid rgba(34, 197, 94, 0.25);
-    border-radius: 8px;
-    overflow: hidden;
-    position: relative;
-    height: 95px;
-    display: flex;
-    align-items: center;
-}
-
-#shockEcgMonitorCanvas {
-    width: 100%;
-    height: 100%;
-    display: block;
-}
-
-/* Fila de Métricas LED */
-.shock-vitals-strip {
-    display: grid;
-    grid-template-columns: repeat(6, 1fr);
-    gap: 0.45rem;
-}
-
-.shock-vital-metric {
-    background: rgba(15, 23, 42, 0.9);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 8px;
-    padding: 0.45rem 0.35rem;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-}
-
-.shock-metric-label {
-    font-size: 0.65rem;
-    font-weight: 700;
-    color: #94a3b8;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    display: flex;
-    align-items: center;
-    gap: 0.2rem;
-}
-
-.vital-pulse-icon {
-    animation: heartbeatPulse 1s infinite;
-}
-
-@keyframes heartbeatPulse {
-    0%, 100% { transform: scale(1); }
-    15% { transform: scale(1.25); }
-    30% { transform: scale(1); }
-    45% { transform: scale(1.15); }
-}
-
-.shock-metric-val-wrap {
-    display: flex;
-    align-items: baseline;
-    gap: 0.2rem;
-    margin: 0.1rem 0;
-}
-
-.shock-metric-num {
-    font-size: 1.35rem;
-    font-weight: 900;
-    font-family: ui-monospace, monospace;
-    line-height: 1.1;
-}
-
-.shock-vital-metric--fc .shock-metric-num { color: #22c55e; }
-.shock-vital-metric--pa .shock-metric-num { color: #f87171; }
-.shock-vital-metric--spo2 .shock-metric-num { color: #38bdf8; }
-.shock-vital-metric--fr .shock-metric-num { color: #fbbf24; }
-.shock-vital-metric--temp .shock-metric-num { color: #f472b6; }
-.shock-vital-metric--glasgow .shock-metric-num { color: #a78bfa; }
-
-.shock-metric-unit {
-    font-size: 0.62rem;
-    color: #64748b;
-    font-family: sans-serif;
-}
-
-.shock-metric-trend {
-    font-size: 0.62rem;
-    color: #94a3b8;
+    font-size: 0.85rem;
+    padding: 0.65rem 1.15rem;
+    border: 1px solid transparent;
+    border-bottom: none;
+    border-radius: 8px 8px 0 0;
+    background: transparent;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 100%;
 }
 
-.shock-metric-trend--danger { color: #f87171; font-weight: 700; }
-.shock-metric-trend--warning { color: #fbbf24; }
+.shock-tab-btn:hover {
+    color: var(--color-text);
+    background: rgba(255, 255, 255, 0.05);
+}
 
-/* Ficha del Paciente */
-.shock-patient-record-card {
-    background: rgba(15, 23, 42, 0.85);
-    border: 1px solid rgba(56, 189, 248, 0.2);
-    border-radius: 12px;
-    padding: 1rem;
+[data-theme="light"] .shock-tab-btn:hover {
+    color: var(--color-text-main);
+    background: rgba(0, 0, 0, 0.04);
+}
+
+.shock-tab-btn.is-active {
+    color: #ffffff;
+    background: var(--color-primary);
+    box-shadow: 0 3px 10px rgba(37, 99, 235, 0.3);
+}
+
+.shock-tab-pane {
+    padding: 1.15rem;
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+    gap: 1rem;
+    animation: fadeInShock 0.22s ease-out;
+}
+
+.shock-tab-pane.hidden {
+    display: none !important;
+}
+
+@keyframes fadeInShock {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Ficha del Paciente (Historia Clínica) */
+.shock-patient-record-card {
+    background: rgba(15, 23, 42, 0.4);
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    padding: 1rem 1.15rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+
+[data-theme="light"] .shock-patient-record-card {
+    background: #f8fafc;
+    border: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 .shock-record-header {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--color-border);
+    padding-bottom: 0.6rem;
     gap: 0.5rem;
     flex-wrap: wrap;
 }
 
 .shock-record-tag {
-    font-size: 0.65rem;
+    font-size: 0.68rem;
     font-weight: 800;
-    color: #38bdf8;
+    color: var(--color-primary);
     letter-spacing: 0.05em;
     display: block;
 }
 
 .shock-case-title {
     margin: 0.2rem 0 0;
-    font-size: 1.05rem;
+    font-family: var(--font-heading);
+    font-size: 1.18rem;
     font-weight: 800;
-    color: #f8fafc;
+    color: var(--color-text);
 }
 
 .shock-record-meta {
@@ -15763,104 +15803,57 @@ body.modo-dev-activo .juntos-locked-notice {
 .shock-pill-subtle {
     font-size: 0.72rem;
     background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    border: 1px solid var(--color-border);
     border-radius: 6px;
-    padding: 0.15rem 0.45rem;
-    color: #cbd5e1;
+    padding: 0.2rem 0.5rem;
+    color: var(--color-text-secondary);
+}
+
+[data-theme="light"] .shock-pill-subtle {
+    background: #ffffff;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    color: var(--color-text-main);
 }
 
 .shock-record-section {
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
+    gap: 0.35rem;
 }
 
 .shock-section-heading {
-    font-size: 0.72rem;
+    font-size: 0.75rem;
     font-weight: 700;
-    color: #94a3b8;
+    color: var(--color-text-muted);
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.04em;
 }
 
 .shock-record-text {
     margin: 0;
-    font-size: 0.82rem;
-    line-height: 1.45;
-    color: #e2e8f0;
+    font-size: 0.88rem;
+    line-height: 1.55;
+    color: var(--color-text);
 }
 
 .shock-record-section--antecedentes {
-    background: rgba(30, 41, 59, 0.4);
+    background: rgba(15, 23, 42, 0.5);
     border-radius: 8px;
-    padding: 0.6rem 0.75rem;
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 0.75rem 0.85rem;
+    border: 1px solid var(--color-border);
 }
 
-/* Columna 3: Estudios & Diagnóstico */
+[data-theme="light"] .shock-record-section--antecedentes {
+    background: #ffffff;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+/* Contenedor de Estudios & Subpestañas de Imágenes */
 .shock-studies-box {
-    background: rgba(15, 23, 42, 0.85);
-    border: 1px solid rgba(56, 189, 248, 0.22);
-    border-radius: 12px;
-    padding: 0.75rem;
     display: flex;
     flex-direction: column;
-    gap: 0.65rem;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
-    max-width: 100%;
-    box-sizing: border-box;
-}
-
-.shock-studies-tabs {
-    display: flex;
-    gap: 0.25rem;
-    background: rgba(30, 41, 59, 0.6);
-    padding: 0.25rem;
-    border-radius: 8px;
-    max-width: 100%;
-    box-sizing: border-box;
-    overflow-x: auto;
-    scrollbar-width: none;
-}
-
-.shock-studies-tabs::-webkit-scrollbar {
-    display: none;
-}
-
-.shock-tab-btn {
-    flex: 1 1 0;
-    min-width: 0;
-    background: transparent;
-    border: none;
-    color: #94a3b8;
-    font-size: 0.7rem;
-    font-weight: 700;
-    padding: 0.38rem 0.2rem;
-    border-radius: 6px;
-    cursor: pointer;
-    text-align: center;
-    transition: all 0.15s ease;
-    white-space: nowrap;
-}
-
-.shock-tab-btn:hover {
-    color: #fff;
-    background: rgba(255, 255, 255, 0.06);
-}
-
-.shock-tab-btn.is-active {
-    background: #0284c7;
-    color: #fff;
-    box-shadow: 0 2px 6px rgba(2, 132, 199, 0.4);
-}
-
-.shock-study-view {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    min-height: 240px;
-    max-width: 100%;
-    box-sizing: border-box;
+    gap: 0.75rem;
+    width: 100%;
 }
 
 .shock-study-meta-bar {
@@ -15868,140 +15861,212 @@ body.modo-dev-activo .juntos-locked-notice {
     justify-content: space-between;
     align-items: center;
     gap: 0.4rem;
-    font-size: 0.75rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
-    padding-bottom: 0.35rem;
+    font-size: 0.78rem;
+    border-bottom: 1px solid var(--color-border);
+    padding-bottom: 0.4rem;
 }
 
 .shock-study-title {
     font-weight: 700;
-    color: #f1f5f9;
-    font-size: 0.75rem;
+    color: var(--color-text);
+    font-size: 0.82rem;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
 .shock-badge-lab-status {
-    font-size: 0.65rem;
-    background: rgba(56, 189, 248, 0.15);
-    color: #38bdf8;
-    border: 1px solid rgba(56, 189, 248, 0.3);
-    padding: 0.1rem 0.4rem;
+    font-size: 0.68rem;
+    background: rgba(37, 99, 235, 0.12);
+    color: var(--color-primary);
+    border: 1px solid rgba(37, 99, 235, 0.25);
+    padding: 0.12rem 0.45rem;
     border-radius: 4px;
     white-space: nowrap;
     flex-shrink: 0;
+    font-weight: 600;
 }
 
-/* Tabla de Laboratorio Compacta y 100% Adaptable (Cero scroll horizontal) */
+/* Tabla de Laboratorio Compacta y Fluida */
 .shock-lab-table-wrap {
-    max-height: 240px;
+    max-height: 380px;
     overflow-y: auto;
     overflow-x: hidden;
     width: 100%;
     box-sizing: border-box;
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--color-border);
     border-radius: 8px;
     background: rgba(10, 15, 30, 0.6);
+}
+
+[data-theme="light"] .shock-lab-table-wrap {
+    background: #f8fafc;
+    border: 1px solid rgba(0, 0, 0, 0.08);
 }
 
 .shock-lab-table {
     width: 100%;
     table-layout: fixed;
     border-collapse: collapse;
-    font-size: 0.72rem;
+    font-size: 0.76rem;
 }
 
 .shock-lab-table th {
     background: rgba(30, 41, 59, 0.85);
     color: #94a3b8;
     font-weight: 700;
-    padding: 0.35rem 0.4rem;
+    padding: 0.45rem 0.5rem;
     text-align: left;
     position: sticky;
     top: 0;
     z-index: 2;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    font-size: 0.66rem;
+    border-bottom: 1px solid var(--color-border);
+    font-size: 0.7rem;
     text-transform: uppercase;
     box-sizing: border-box;
 }
 
+[data-theme="light"] .shock-lab-table th {
+    background: #e2e8f0;
+    color: var(--color-text-main);
+}
+
 .shock-lab-table td {
-    padding: 0.35rem 0.4rem;
+    padding: 0.45rem 0.5rem;
     border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-    color: #cbd5e1;
+    color: var(--color-text);
     box-sizing: border-box;
     vertical-align: middle;
 }
 
+[data-theme="light"] .shock-lab-table td {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    color: var(--color-text-main);
+}
+
 .shock-lab-table tr:hover {
-    background: rgba(56, 189, 248, 0.06);
+    background: rgba(37, 99, 235, 0.06);
 }
 
 .shock-lab-th-param,
 .shock-lab-td-param {
-    width: 48%;
+    width: 46%;
 }
 
 .shock-lab-param-title {
     font-weight: 600;
-    color: #f1f5f9;
-    font-size: 0.72rem;
+    color: var(--color-text);
+    font-size: 0.76rem;
     line-height: 1.25;
     word-break: break-word;
 }
 
 .shock-lab-param-ref {
-    color: #64748b;
-    font-size: 0.63rem;
-    font-family: ui-monospace, monospace;
-    margin-top: 1px;
-    line-height: 1.2;
+    color: var(--color-text-muted);
+    font-size: 0.65rem;
+    font-family: 'Geist Mono', 'SF Mono', monospace;
+    margin-top: 2px;
 }
 
 .shock-lab-th-val,
 .shock-lab-td-val {
-    width: 27%;
-    font-family: ui-monospace, monospace;
+    width: 28%;
+    font-family: 'Geist Mono', 'SF Mono', monospace;
     font-weight: 700;
-    color: #38bdf8;
-    font-size: 0.72rem;
+    color: var(--color-primary);
+    font-size: 0.76rem;
     word-break: break-word;
 }
 
 .shock-lab-th-status,
 .shock-lab-td-status {
-    width: 25%;
+    width: 26%;
     text-align: right;
 }
 
 .shock-lab-flag {
-    font-size: 0.6rem;
+    font-size: 0.62rem;
     font-weight: 800;
-    padding: 0.12rem 0.35rem;
+    padding: 0.12rem 0.4rem;
     border-radius: 4px;
     display: inline-block;
     white-space: nowrap;
     text-align: center;
     max-width: 100%;
-    box-sizing: border-box;
 }
 
 .shock-lab-flag--crit { background: rgba(239, 68, 68, 0.25); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4); }
 .shock-lab-flag--warn { background: rgba(245, 158, 11, 0.25); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4); }
 .shock-lab-flag--norm { background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3); }
 
-/* Visores de Imágenes: Rx / TC */
+/* Subpestañas de Imágenes */
+.shock-image-subtabs {
+    display: flex;
+    gap: 0.4rem;
+    background: rgba(15, 23, 42, 0.5);
+    border: 1px solid var(--color-border);
+    padding: 0.35rem;
+    border-radius: 8px;
+    margin-bottom: 0.85rem;
+}
+
+[data-theme="light"] .shock-image-subtabs {
+    background: #f8fafc;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.shock-img-subtab-btn {
+    flex: 1;
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 0.8rem;
+    padding: 0.45rem 0.65rem;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    transition: all 0.18s ease;
+    text-align: center;
+}
+
+.shock-img-subtab-btn:hover {
+    color: var(--color-text);
+    background: rgba(255, 255, 255, 0.06);
+}
+
+[data-theme="light"] .shock-img-subtab-btn:hover {
+    color: var(--color-text-main);
+    background: rgba(0, 0, 0, 0.04);
+}
+
+.shock-img-subtab-btn.is-active {
+    background: rgba(37, 99, 235, 0.15);
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+    font-weight: 700;
+}
+
+.shock-study-view {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    animation: fadeInShock 0.2s ease-out;
+}
+
+.shock-study-view.hidden {
+    display: none !important;
+}
+
 .shock-img-viewer-card {
     display: flex;
     flex-direction: column;
-    gap: 0.6rem;
+    gap: 0.75rem;
 }
 
 .shock-xray-frame {
     background: #020617;
-    border: 1px solid rgba(56, 189, 248, 0.3);
+    border: 1px solid rgba(56, 189, 248, 0.25);
     border-radius: 8px;
     padding: 0.5rem;
     position: relative;
@@ -16019,9 +16084,9 @@ body.modo-dev-activo .juntos-locked-notice {
     top: 6px;
     left: 8px;
     font-size: 0.62rem;
-    font-family: ui-monospace, monospace;
-    color: rgba(255, 255, 255, 0.7);
-    background: rgba(0, 0, 0, 0.65);
+    font-family: 'Geist Mono', 'SF Mono', monospace;
+    color: rgba(255, 255, 255, 0.8);
+    background: rgba(0, 0, 0, 0.75);
     padding: 0.15rem 0.4rem;
     border-radius: 4px;
     pointer-events: none;
@@ -16036,7 +16101,7 @@ body.modo-dev-activo .juntos-locked-notice {
 
 .shock-xray-svg {
     width: 100%;
-    max-height: 125px;
+    max-height: 140px;
     border-radius: 4px;
     display: block;
 }
@@ -16044,35 +16109,41 @@ body.modo-dev-activo .juntos-locked-notice {
 .shock-study-desc-box {
     background: rgba(30, 41, 59, 0.5);
     border-radius: 8px;
-    padding: 0.6rem 0.75rem;
-    font-size: 0.75rem;
-    line-height: 1.45;
-    color: #cbd5e1;
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    padding: 0.75rem 0.85rem;
+    font-size: 0.8rem;
+    line-height: 1.5;
+    color: var(--color-text-secondary);
+    border: 1px solid var(--color-border);
     display: flex;
     flex-direction: column;
-    gap: 0.35rem;
+    gap: 0.4rem;
+}
+
+[data-theme="light"] .shock-study-desc-box {
+    background: #f8fafc;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    color: var(--color-text-main);
 }
 
 .shock-study-desc-box strong {
-    color: #f1f5f9;
+    color: var(--color-text);
 }
 
 .shock-study-conclusion {
-    background: rgba(14, 165, 233, 0.12);
-    border: 1px solid rgba(14, 165, 233, 0.3);
+    background: rgba(37, 99, 235, 0.1);
+    border: 1px solid rgba(37, 99, 235, 0.25);
     border-radius: 6px;
-    padding: 0.4rem 0.55rem;
+    padding: 0.45rem 0.65rem;
     display: flex;
-    gap: 0.35rem;
+    gap: 0.4rem;
     align-items: baseline;
-    font-size: 0.75rem;
-    color: #e0f2fe;
+    font-size: 0.8rem;
+    color: var(--color-text);
 }
 
 .shock-conclusion-tag {
     font-weight: 800;
-    color: #38bdf8;
+    color: var(--color-primary);
     flex-shrink: 0;
 }
 
@@ -16080,7 +16151,7 @@ body.modo-dev-activo .juntos-locked-notice {
 .shock-ecg-paper-box {
     display: flex;
     flex-direction: column;
-    gap: 0.6rem;
+    gap: 0.65rem;
 }
 
 .shock-ecg-grid-preview {
@@ -16097,30 +16168,39 @@ body.modo-dev-activo .juntos-locked-notice {
     top: 6px;
     left: 8px;
     font-size: 0.62rem;
-    font-family: ui-monospace, monospace;
+    font-family: 'Geist Mono', 'SF Mono', monospace;
     font-weight: 800;
     color: #9f1239;
-    background: rgba(255, 255, 255, 0.85);
+    background: rgba(255, 255, 255, 0.9);
     padding: 0.1rem 0.35rem;
     border-radius: 4px;
 }
 
 .shock-ecg-vector-svg {
     width: 100%;
-    height: 75px;
+    height: 85px;
     display: block;
 }
 
-/* Estación de Dictamen Diagnóstico */
-.shock-diagnosis-station {
-    background: rgba(15, 23, 42, 0.85);
-    border: 1.5px solid rgba(192, 132, 252, 0.3);
+/* =========================================================
+   COLUMNA 3: EVALUADOR CLÍNICO (FONDO --color-surface)
+   ========================================================= */
+.shock-col--dx .shock-diagnosis-station {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
     border-radius: 12px;
-    padding: 0.85rem;
+    padding: 1.25rem;
+    box-shadow: var(--shadow-subtle);
     display: flex;
     flex-direction: column;
-    gap: 0.6rem;
-    box-shadow: 0 4px 18px rgba(168, 85, 247, 0.1);
+    gap: 0.85rem;
+    min-height: 520px;
+}
+
+[data-theme="light"] .shock-col--dx .shock-diagnosis-station {
+    background: #ffffff;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
 }
 
 .shock-dx-header {
@@ -16130,87 +16210,115 @@ body.modo-dev-activo .juntos-locked-notice {
 }
 
 .shock-dx-badge {
-    font-size: 0.65rem;
+    font-size: 0.72rem;
     font-weight: 800;
-    color: #c084fc;
-    letter-spacing: 0.05em;
-    display: block;
+    color: var(--color-primary);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
 }
 
 .shock-dx-title {
-    margin: 0.1rem 0 0;
-    font-size: 0.95rem;
-    font-weight: 800;
-    color: #f8fafc;
+    margin: 0.2rem 0 0;
+    font-family: var(--font-heading);
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--color-text);
 }
 
 .shock-template-btn {
-    background: rgba(192, 132, 252, 0.15);
-    border: 1px solid rgba(192, 132, 252, 0.35);
-    color: #d8b4fe;
-    font-size: 0.72rem;
+    background: rgba(37, 99, 235, 0.1);
+    border: 1px solid rgba(37, 99, 235, 0.3);
+    color: var(--color-primary);
+    font-size: 0.75rem;
     font-weight: 700;
-    padding: 0.25rem 0.55rem;
+    padding: 0.3rem 0.65rem;
     border-radius: 6px;
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: all 0.18s ease;
 }
 
 .shock-template-btn:hover {
-    background: rgba(192, 132, 252, 0.3);
-    color: #fff;
+    background: rgba(37, 99, 235, 0.2);
+    transform: translateY(-1px);
 }
 
 .shock-dx-subtitle {
     margin: 0;
-    font-size: 0.75rem;
-    color: #94a3b8;
-    line-height: 1.4;
+    font-size: 0.78rem;
+    color: var(--color-text-muted);
+    line-height: 1.45;
 }
 
-.shock-textarea {
+.shock-col--dx .shock-textarea {
     width: 100%;
-    background: rgba(3, 7, 18, 0.7);
-    border: 1px solid rgba(192, 132, 252, 0.35);
-    border-radius: 8px;
-    padding: 0.65rem 0.75rem;
-    color: #f1f5f9;
-    font-size: 0.82rem;
-    font-family: inherit;
-    line-height: 1.45;
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    padding: 0.85rem 1rem;
+    color: var(--color-text);
+    font-family: var(--font-body);
+    font-size: 0.88rem;
+    line-height: 1.5;
+    min-height: 140px;
     resize: vertical;
     box-sizing: border-box;
     transition: all 0.2s ease;
 }
 
-.shock-textarea:focus {
+[data-theme="light"] .shock-col--dx .shock-textarea {
+    background: #f8fafc;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    color: var(--color-text-main);
+}
+
+.shock-col--dx .shock-textarea:focus {
     outline: none;
-    border-color: #c084fc;
-    box-shadow: 0 0 14px rgba(192, 132, 252, 0.35);
-    background: rgba(3, 7, 18, 0.9);
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+    background: rgba(15, 23, 42, 0.85);
 }
 
-.shock-submit-btn {
-    background: linear-gradient(135deg, #7c3aed, #9333ea);
-    font-weight: 800;
-    font-size: 0.85rem;
-    padding: 0.65rem 1rem;
-    border-radius: 8px;
-    box-shadow: 0 4px 14px rgba(147, 51, 234, 0.35);
+[data-theme="light"] .shock-col--dx .shock-textarea:focus {
+    background: #ffffff;
+}
+
+.shock-submit-bar {
+    margin-top: auto;
+}
+
+.shock-col--dx .shock-submit-btn {
+    background: var(--color-primary);
+    color: #ffffff;
+    border: none;
+    border-radius: 12px;
+    padding: 0.9rem 1.25rem;
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+    font-weight: 700;
     cursor: pointer;
-    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25);
+    transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    min-height: 48px;
+    width: 100%;
 }
 
-.shock-submit-btn:hover {
-    filter: brightness(1.15);
-    transform: translateY(-1px);
-    box-shadow: 0 6px 18px rgba(147, 51, 234, 0.45);
+.shock-col--dx .shock-submit-btn:hover {
+    background: var(--color-primary-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(37, 99, 235, 0.38);
 }
 
-/* Responsividad en Tablets y Celulares */
-@media (max-width: 1023px) {
+/* =========================================================
+   RESPONSIVIDAD (TABLETS Y SMARTPHONES)
+   ========================================================= */
+@media (max-width: 1024px) {
     .shock-dashboard-grid {
         grid-template-columns: 1fr;
+        gap: 1rem;
     }
 
     .shock-mobile-tabs {
@@ -16223,7 +16331,6 @@ body.modo-dev-activo .juntos-locked-notice {
         display: none;
     }
 
-    /* En pantallas móviles controlamos la visibilidad de las columnas mediante pestañas */
     .shock-col[data-shock-panel] {
         display: none;
     }
@@ -16232,33 +16339,10 @@ body.modo-dev-activo .juntos-locked-notice {
         display: flex;
     }
 
-    /* En móvil, la columna de estudios contiene tanto estudios como diagnóstico.
-       Mostramos u ocultamos el bloque correspondiente según la pestaña activa: */
-    .shock-col--studies:not(.shock-mobile-show-dx-only) .shock-diagnosis-station {
-        display: none !important;
-    }
-
-    .shock-col--studies:not(.shock-mobile-show-dx-only) .shock-studies-box {
-        display: flex !important;
-    }
-
-    .shock-col--studies.shock-mobile-show-dx-only .shock-studies-box {
-        display: none !important;
-    }
-
-    .shock-col--studies.shock-mobile-show-dx-only .shock-diagnosis-station {
-        display: flex !important;
-        animation: fadeInShock 0.25s ease;
-    }
-
-    .shock-vitals-strip {
-        grid-template-columns: repeat(3, 1fr);
-        gap: 0.4rem;
-    }
-
     .shock-triage-ribbon {
         flex-direction: column;
         align-items: flex-start;
+        gap: 0.75rem;
     }
 
     .shock-triage-actions {
@@ -16272,39 +16356,17 @@ body.modo-dev-activo .juntos-locked-notice {
         padding: 0.5rem 0.4rem 1.5rem;
     }
 
-    .shock-studies-box {
-        padding: 0.5rem 0.4rem;
-    }
-
-    .shock-diagnosis-station {
-        padding: 0.65rem 0.5rem;
-    }
-
-    .shock-lab-th-param,
-    .shock-lab-td-param {
-        padding: 0.35rem 0.25rem;
-    }
-
-    .shock-lab-th-val,
-    .shock-lab-td-val {
-        padding: 0.35rem 0.2rem;
-    }
-
-    .shock-lab-th-status,
-    .shock-lab-td-status {
-        padding: 0.35rem 0.2rem;
-    }
-
-    .shock-vitals-strip {
-        grid-template-columns: repeat(3, 1fr);
+    .shock-monitor-vitals-console {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.4rem;
     }
 
     .shock-metric-num {
-        font-size: 1.15rem;
+        font-size: 1.45rem;
     }
 
-    .shock-human-svg {
-        height: 240px;
+    .shock-col--dx .shock-diagnosis-station {
+        padding: 1rem;
     }
 }
 
