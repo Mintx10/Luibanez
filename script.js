@@ -2148,6 +2148,12 @@ async function girarBolillero() {
     dom.rollingDisplay.classList.remove("is-winner");
     dom.rollingDisplay.classList.add("is-spinning");
 
+    const wheelDisc = document.getElementById("rouletteWheelDisc");
+    if (wheelDisc) {
+        wheelDisc.classList.remove("is-landed");
+        wheelDisc.classList.add("is-spinning");
+    }
+
     const esLite = window.bolilleroPerfMode === "lite";
     const duracion = esLite ? 200 : 3000;
     const inicio = performance.now();
@@ -2173,6 +2179,13 @@ async function girarBolillero() {
     
     dom.rollingDisplay.classList.remove("is-spinning");
     dom.rollingDisplay.classList.add("is-winner");
+
+    if (wheelDisc) {
+        wheelDisc.classList.remove("is-spinning");
+        // Micro-impacto (pop de rebote)
+        wheelDisc.classList.add("is-landed");
+        setTimeout(() => wheelDisc.classList.remove("is-landed"), 500);
+    }
 
     // Eliminar automáticamente de los disponibles de la ronda
     estado.ronda.disponibles = estado.ronda.disponibles.filter(id => id !== ganador.id);
@@ -13794,7 +13807,7 @@ function iniciarAplicacion() {
 // =========================================================
 // GESTOR DE VERSIONES Y ACTUALIZACIÓN AUTOMÁTICA
 // =========================================================
-const APP_BUILD_VERSION = "29.7";
+const APP_BUILD_VERSION = "29.8";
 
 async function forzarActualizacionCompleta(mostrarNotificacion = true) {
     const lastAttempt = parseInt(sessionStorage.getItem("last_auto_update_ts") || "0", 10);
