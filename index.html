@@ -15,14 +15,15 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     
-    <link rel="icon" type="image/svg+xml" href="icon.svg?v=29.1">
-    <link rel="apple-touch-icon" href="icon-192.png?v=29.1">
-    <link rel="manifest" href="manifest.json?v=29.1">
-    <link rel="stylesheet" href="style.css?v=29.1">
+    <link rel="icon" type="image/svg+xml" href="icon.svg?v=29.2">
+    <link rel="apple-touch-icon" href="icon-192.png?v=29.2">
+    <link rel="manifest" href="manifest.json?v=29.2">
+    <link rel="stylesheet" href="style.css?v=29.2">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://api.fontshare.com/v2/css?f[]=satoshi@700,800,900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -960,71 +961,83 @@
                 </p>
             </div>
 
-            <!-- Cuadrículas una al lado de la otra (CSS Grid Adaptable) -->
-            <div class="solo-grid modules-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.35rem;">
+            <!-- Cuadrículas de Modos de Juego (CSS Grid Adaptable) -->
+            <div class="solo-grid game-modes-grid">
                 
-                <!-- Cuadrícula 1: Bolillero Individual (Sección Central) -->
-                <article class="module-card module-card--active module-card--solo" id="cardSoloBolillero" style="border-color: rgba(56, 189, 248, 0.45); background: linear-gradient(180deg, rgba(23, 26, 34, 0.95), rgba(15, 20, 30, 0.95));">
+                <!-- Modo 1: Bolillero Individual -->
+                <article class="module-card game-mode-card module-card--active" id="cardSoloBolillero">
                     <div class="module-card__header">
                         <div class="module-card__icon module-card__icon--primary">🎲</div>
                         <span class="badge badge--success">Sorteo Clásico</span>
                     </div>
-                    <h3 class="module-card__title">Bolillero Individual</h3>
-                    <p class="module-card__desc">
-                        Sorteá temas de tus materias al azar con ruleta animada, desaceleración fluida, gestión de listas, importación y filtro automático de temas ya sorteados.
-                    </p>
-                    <div class="module-card__actions" style="margin-top: auto; padding-top: 1rem;">
+                    <div class="game-mode-card__content">
+                        <h3 class="module-card__title">Bolillero Individual</h3>
+                        <p class="game-mode-card__tagline">Sorteo aleatorio de temas con ruleta fluida y filtrado inteligente.</p>
+                        <div class="game-mode-card__details">
+                            <p>Sorteá unidades y temas al azar con desaceleración realista, gestión y carga de listas completas y filtro automático de ítems ya evaluados.</p>
+                        </div>
+                    </div>
+                    <div class="module-card__actions">
                         <button id="soloOpenBolilleroBtn" class="button button--primary button--full" type="button">
                             Abrir Bolillero 🎲
                         </button>
                     </div>
                 </article>
 
-                <!-- Cuadrícula 2: Desactivá la Bomba (Solo) -->
-                <article class="module-card module-card--active module-card--solo" id="cardSoloBomba">
+                <!-- Modo 2: Desactivá la Bomba -->
+                <article class="module-card game-mode-card module-card--active" id="cardSoloBomba">
                     <div class="module-card__header">
                         <div class="module-card__icon module-card__icon--danger">💣</div>
                         <span class="badge badge--danger">Bomba Solo</span>
                     </div>
-                    <h3 class="module-card__title">Desactivá la Bomba</h3>
-                    <p class="module-card__desc">
-                        Cortá los cables resolviendo 3 fases conceptuales: fundamentos teóricos, deducción lógica y síntesis maestra antes de que el tiempo expire.
-                    </p>
-                    <div class="module-card__actions" style="margin-top: auto; padding-top: 1rem;">
+                    <div class="game-mode-card__content">
+                        <h3 class="module-card__title">Desactivá la Bomba</h3>
+                        <p class="game-mode-card__tagline">Desafío contrarreloj de 3 fases teóricas generadas con IA.</p>
+                        <div class="game-mode-card__details">
+                            <p>Cortá los cables respondiendo correctamente fundamentos teóricos, deducción lógica y síntesis conceptual antes de la detonación.</p>
+                        </div>
+                    </div>
+                    <div class="module-card__actions">
                         <button id="soloOpenBombaBtn" class="button button--secondary button--full" type="button">
                             Practicar Bomba 💣
                         </button>
                     </div>
                 </article>
 
-                <!-- Cuadrícula 3: Caza al Impostor (Solo) -->
-                <article class="module-card module-card--active module-card--solo" id="cardSoloImpostor">
+                <!-- Modo 3: Caza al Impostor -->
+                <article class="module-card game-mode-card module-card--active" id="cardSoloImpostor">
                     <div class="module-card__header">
                         <div class="module-card__icon module-card__icon--impostor">🕵️‍♂️</div>
                         <span class="badge badge--warning">Reflejos & Conceptos</span>
                     </div>
-                    <h3 class="module-card__title">Caza al Impostor</h3>
-                    <p class="module-card__desc">
-                        Tarjetas dinámicas con afirmaciones y fórmulas: detectá el error conceptual infiltrado antes de que termine el tiempo y sumá rachas 🔥.
-                    </p>
-                    <div class="module-card__actions" style="margin-top: auto; padding-top: 1rem;">
+                    <div class="game-mode-card__content">
+                        <h3 class="module-card__title">Caza al Impostor</h3>
+                        <p class="game-mode-card__tagline">Detectá la afirmación o fórmula infiltrada errónea contra reloj.</p>
+                        <div class="game-mode-card__details">
+                            <p>Auditoría de alta velocidad con afirmaciones técnicas: encontrá el error conceptual camuflado y acumulá rachas de maestría.</p>
+                        </div>
+                    </div>
+                    <div class="module-card__actions">
                         <button id="soloOpenImpostorBtn" class="button button--secondary button--full" type="button">
                             Cazar Impostor 🕵️‍♂️
                         </button>
                     </div>
                 </article>
 
-                <!-- Cuadrícula 4: Memotest Conectado (Solo) -->
-                <article class="module-card module-card--active module-card--solo" id="cardSoloMemotest">
+                <!-- Modo 4: Memotest Conectado -->
+                <article class="module-card game-mode-card module-card--active" id="cardSoloMemotest">
                     <div class="module-card__header">
                         <div class="module-card__icon module-card__icon--memotest">🧠</div>
                         <span class="badge badge--accent">Memoria & Fórmulas</span>
                     </div>
-                    <h3 class="module-card__title">Memotest Conectado</h3>
-                    <p class="module-card__desc">
-                        Tablero interactivo contra reloj: conectá cada Concepto o Problema con su Fórmula o Definición matemática correspondiente.
-                    </p>
-                    <div class="module-card__actions" style="margin-top: auto; padding-top: 1rem;">
+                    <div class="game-mode-card__content">
+                        <h3 class="module-card__title">Memotest Conectado</h3>
+                        <p class="game-mode-card__tagline">Emparejá conceptos clave con sus definiciones y fórmulas exactas.</p>
+                        <div class="game-mode-card__details">
+                            <p>Tablero dinámico de memoria y asociación cognitiva: conectá definiciones, fórmulas y teoremas con sus conceptos correspondientes.</p>
+                        </div>
+                    </div>
+                    <div class="module-card__actions">
                         <button id="soloOpenMemotestBtn" class="button button--primary button--full" type="button">
                             Jugar Memotest 🧠
                         </button>
@@ -5446,7 +5459,7 @@
 </dialog>
 
 <script src="mqtt.min.js"></script>
-<script src="script.js?v=29.1" defer></script>
+<script src="script.js?v=29.2" defer></script>
 
 <!-- =========================================================
      MODAL DE PROMPT PARA GEMINI (CREAR JUEGOS DESDE PDF)
