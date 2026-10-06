@@ -13794,7 +13794,7 @@ function iniciarAplicacion() {
 // =========================================================
 // GESTOR DE VERSIONES Y ACTUALIZACIÓN AUTOMÁTICA
 // =========================================================
-const APP_BUILD_VERSION = "29.6";
+const APP_BUILD_VERSION = "29.7";
 
 async function forzarActualizacionCompleta(mostrarNotificacion = true) {
     const lastAttempt = parseInt(sessionStorage.getItem("last_auto_update_ts") || "0", 10);
@@ -16929,7 +16929,7 @@ const laboratorioEstado = {
         drawing: false,
         lastX: 0,
         lastY: 0,
-        color: "#38bdf8",
+        color: "#1e293b",
         tool: "pen",
         size: 2
     },
