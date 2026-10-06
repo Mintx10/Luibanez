@@ -3060,6 +3060,7 @@ function guardarPerfilUsuario() {
 
 function actualizarUIPerfilUsuario() {
     const { frameClasses, tierName } = obtenerMarcoEvolutivo(perfilUsuario.victorias || 0);
+    const rachaDias = perfilUsuario.maxRachaHistorica || perfilUsuario.victorias || 0;
 
     if (dom.dueloUserAvatarWrap) {
         dom.dueloUserAvatarWrap.innerHTML = renderAvatarHTML(perfilUsuario, 0, false, 48);
@@ -3078,6 +3079,35 @@ function actualizarUIPerfilUsuario() {
             dom.dueloUserMetaDisplay.textContent = `Cuenta Verificada • ${perfilUsuario.victorias || 0} victorias 👑`;
         }
     }
+
+    const streakDisplay = document.getElementById("dueloUserStreakDisplay");
+    if (streakDisplay) {
+        streakDisplay.textContent = String(rachaDias);
+    }
+
+    // Actualizar Tarjeta de Perfil & Racha en Salón de la Fama
+    const famaAvatarWrap = document.getElementById("famaProfileAvatarWrap");
+    if (famaAvatarWrap) {
+        famaAvatarWrap.innerHTML = renderAvatarHTML(perfilUsuario, 0, false, 52);
+    }
+    const famaUsername = document.getElementById("famaProfileUsername");
+    if (famaUsername) {
+        famaUsername.textContent = perfilUsuario.apodo || "Invitado";
+    }
+    const famaTierBadge = document.getElementById("famaProfileTierBadge");
+    if (famaTierBadge) {
+        famaTierBadge.textContent = tierName;
+        famaTierBadge.className = `badge badge--${(perfilUsuario.victorias || 0) >= 10 ? "accent" : "warning"} profile-tier-badge`;
+    }
+    const famaMeta = document.getElementById("famaProfileMeta");
+    if (famaMeta) {
+        famaMeta.textContent = perfilUsuario.esInvitado ? "Estudiante Invitado • Sin PIN" : `Duelista Oficial • ${perfilUsuario.victorias || 0} victorias acumuladas`;
+    }
+    const famaStreakNum = document.getElementById("famaProfileStreakNum");
+    if (famaStreakNum) {
+        famaStreakNum.textContent = String(rachaDias);
+    }
+
     if (dom.dueloGuestAlert) {
         dom.dueloGuestAlert.classList.toggle("hidden", !perfilUsuario.esInvitado);
     }
@@ -11043,17 +11073,32 @@ function renderSalonDeLaFama() {
         } else {
             rankingCampeones.forEach((c, idx) => {
                 const tr = document.createElement("tr");
-                const medallas = ["🥇 1°", "🥈 2°", "🥉 3°"];
-                const puestoStr = medallas[idx] || `${idx + 1}°`;
+                let rankBadgeHtml = `<span class="fama-rank-cell fama-rank-cell--default">${idx + 1}°</span>`;
+                if (idx === 0) {
+                    rankBadgeHtml = `<span class="fama-rank-cell fama-rank-cell--gold" title="1° Puesto - Medalla de Oro">🥇</span>`;
+                } else if (idx === 1) {
+                    rankBadgeHtml = `<span class="fama-rank-cell fama-rank-cell--silver" title="2° Puesto - Medalla de Plata">🥈</span>`;
+                } else if (idx === 2) {
+                    rankBadgeHtml = `<span class="fama-rank-cell fama-rank-cell--bronze" title="3° Puesto - Medalla de Bronce">🥉</span>`;
+                }
+
+                const avatarMini = c.fotoDataUrl 
+                    ? `<span class="fama-table-avatar"><img src="${c.fotoDataUrl}" alt="${c.nombre}"></span>` 
+                    : `<span class="fama-table-avatar">${c.avatar || "👤"}</span>`;
 
                 tr.innerHTML = `
-                    <td><strong>${puestoStr}</strong></td>
-                    <td><strong>${c.nombre}</strong></td>
-                    <td style="color: #fbbf24; font-weight: 800;">${c.victorias}</td>
-                    <td>${c.platas}</td>
-                    <td>${c.bronces}</td>
-                    <td><strong>${c.puntosTotales}</strong></td>
-                    <td>${c.maxRachaHistorica > 1 ? c.maxRachaHistorica + " 🔥" : c.maxRachaHistorica}</td>
+                    <td class="fama-col-rank">${rankBadgeHtml}</td>
+                    <td class="fama-col-player">
+                        <div class="fama-player-cell">
+                            ${avatarMini}
+                            <span class="fama-player-name">${c.nombre}</span>
+                        </div>
+                    </td>
+                    <td><span class="fama-stat-gold">${c.victorias}</span></td>
+                    <td><span class="fama-stat-subtle">${c.platas}</span></td>
+                    <td><span class="fama-stat-subtle">${c.bronces}</span></td>
+                    <td><span class="fama-stat-score">${c.puntosTotales}</span></td>
+                    <td><span class="fama-streak-pill">${c.maxRachaHistorica > 1 ? `<span class="streak-mini-flame">🔥</span> ${c.maxRachaHistorica}` : (c.maxRachaHistorica || 0)}</span></td>
                     <td>${c.totalRobos > 0 ? c.totalRobos + " ⚡" : c.totalRobos}</td>
                 `;
                 dom.famaLeaderboardBody.appendChild(tr);
@@ -13749,7 +13794,7 @@ function iniciarAplicacion() {
 // =========================================================
 // GESTOR DE VERSIONES Y ACTUALIZACIÓN AUTOMÁTICA
 // =========================================================
-const APP_BUILD_VERSION = "29.5";
+const APP_BUILD_VERSION = "29.6";
 
 async function forzarActualizacionCompleta(mostrarNotificacion = true) {
     const lastAttempt = parseInt(sessionStorage.getItem("last_auto_update_ts") || "0", 10);
@@ -15836,14 +15881,28 @@ function renderTablaFamaMultiverso(partidas, tabFiltro) {
 
     ranking.forEach((j, i) => {
         const tr = document.createElement("tr");
+        let rankBadgeHtml = `<span class="fama-rank-cell fama-rank-cell--default">#${i + 1}</span>`;
+        if (i === 0) {
+            rankBadgeHtml = `<span class="fama-rank-cell fama-rank-cell--gold" title="Líder del Multiverso">👑</span>`;
+        } else if (i === 1) {
+            rankBadgeHtml = `<span class="fama-rank-cell fama-rank-cell--silver">🥈</span>`;
+        } else if (i === 2) {
+            rankBadgeHtml = `<span class="fama-rank-cell fama-rank-cell--bronze">🥉</span>`;
+        }
+
         tr.innerHTML = `
-            <td><strong>#${i + 1}</strong></td>
-            <td><strong>${j.nombre}</strong> ${i === 0 ? '👑' : ''}</td>
-            <td><span class="badge badge--success">${j.victorias}</span></td>
-            <td>${j.partidas - j.victorias}</td>
-            <td>0</td>
-            <td><strong>${j.puntos}</strong></td>
-            <td>🔥 x${Math.min(5, j.victorias + 1)}</td>
+            <td class="fama-col-rank">${rankBadgeHtml}</td>
+            <td class="fama-col-player">
+                <div class="fama-player-cell">
+                    <span class="fama-table-avatar">👤</span>
+                    <span class="fama-player-name">${j.nombre}</span>
+                </div>
+            </td>
+            <td><span class="fama-stat-gold">${j.victorias}</span></td>
+            <td><span class="fama-stat-subtle">${j.partidas - j.victorias}</span></td>
+            <td><span class="fama-stat-subtle">0</span></td>
+            <td><span class="fama-stat-score">${j.puntos}</span></td>
+            <td><span class="fama-streak-pill"><span class="streak-mini-flame">🔥</span> x${Math.min(5, j.victorias + 1)}</span></td>
             <td>${tabFiltro}</td>
         `;
         dom.famaLeaderboardBody.appendChild(tr);

@@ -15,10 +15,10 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     
-    <link rel="icon" type="image/svg+xml" href="icon.svg?v=29.5">
-    <link rel="apple-touch-icon" href="icon-192.png?v=29.5">
-    <link rel="manifest" href="manifest.json?v=29.5">
-    <link rel="stylesheet" href="style.css?v=29.5">
+    <link rel="icon" type="image/svg+xml" href="icon.svg?v=29.6">
+    <link rel="apple-touch-icon" href="icon-192.png?v=29.6">
+    <link rel="manifest" href="manifest.json?v=29.6">
+    <link rel="stylesheet" href="style.css?v=29.6">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1233,6 +1233,15 @@
                             <span class="badge badge--warning" id="dueloUserRankBadge">Novato</span>
                         </div>
                         <span class="duelo-user-meta" id="dueloUserMetaDisplay">Modo Invitado (Sin PIN)</span>
+                    </div>
+                </div>
+                <div class="duelo-user-center-streak">
+                    <div class="profile-card-streak-badge profile-card-streak-badge--sm" title="Racha histórica de estudio">
+                        <div class="streak-flame-icon" aria-hidden="true">🔥</div>
+                        <div class="streak-data">
+                            <strong class="streak-number" id="dueloUserStreakDisplay">0</strong>
+                            <span class="streak-label">Racha</span>
+                        </div>
                     </div>
                 </div>
                 <div class="duelo-user-actions">
@@ -2856,6 +2865,29 @@
                     <button id="famaClearHistoryBtn" class="button button--ghost button--danger-text" type="button">
                         🗑️ Borrar Todo el Historial
                     </button>
+                </div>
+
+                <!-- Tarjeta de Perfil Premium & Racha de Fuego Estilo Duolingo -->
+                <div class="fama-profile-streak-card" id="famaProfileStreakCard">
+                    <div class="profile-card-left">
+                        <div class="profile-card-avatar-cell" id="famaProfileAvatarWrap">
+                            <div class="profile-avatar-circle" id="famaProfileAvatar">👤</div>
+                        </div>
+                        <div class="profile-card-user-info">
+                            <div class="profile-card-name-row">
+                                <span class="profile-card-username" id="famaProfileUsername">Invitado</span>
+                                <span class="badge badge--warning profile-tier-badge" id="famaProfileTierBadge">Novato</span>
+                            </div>
+                            <span class="profile-card-meta" id="famaProfileMeta">Estudiante en Luibañez</span>
+                        </div>
+                    </div>
+                    <div class="profile-card-streak-badge">
+                        <div class="streak-flame-icon" aria-hidden="true">🔥</div>
+                        <div class="streak-data">
+                            <strong class="streak-number" id="famaProfileStreakNum">0</strong>
+                            <span class="streak-label">Días de Racha</span>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -5480,7 +5512,7 @@
 </dialog>
 
 <script src="mqtt.min.js"></script>
-<script src="script.js?v=29.5" defer></script>
+<script src="script.js?v=29.6" defer></script>
 
 <!-- =========================================================
      MODAL DE PROMPT PARA GEMINI (CREAR JUEGOS DESDE PDF)
