@@ -18754,4 +18754,221 @@ body.modo-dev-activo .juntos-locked-notice {
     }
 }
 
+/* =========================================================
+   FASE 6: SALÓN DE LA FAMA, PERFIL DE USUARIO Y CUENTAS / AVATAR
+   ========================================================= */
+
+.avatar-custom-emoji-input {
+    font-size: 1.4rem;
+    text-align: center;
+    font-family: monospace;
+}
+
+/* Light Theme Overrides para Salón de la Fama */
+[data-theme="light"] .fama-profile-streak-card {
+    background: #ffffff;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="light"] .profile-avatar-circle {
+    background: #f8fafc;
+    border-color: rgba(0, 0, 0, 0.12);
+}
+
+[data-theme="light"] .profile-card-username {
+    color: #0f172a;
+}
+
+[data-theme="light"] .profile-card-meta {
+    color: #64748b;
+}
+
+[data-theme="light"] .profile-card-streak-badge {
+    background: rgba(249, 115, 22, 0.08);
+    border-color: rgba(249, 115, 22, 0.25);
+}
+
+[data-theme="light"] .streak-number {
+    color: #ea580c;
+}
+
+[data-theme="light"] .streak-label {
+    color: #64748b;
+}
+
+[data-theme="light"] .fama-stat-card {
+    background: #ffffff;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="light"] .fama-stat-num {
+    color: #d97706;
+}
+
+[data-theme="light"] .fama-stat-label {
+    color: #64748b;
+}
+
+[data-theme="light"] .fama-tabs-nav {
+    background: #f1f5f9;
+    padding: 0.35rem;
+    border-radius: var(--radius-pill);
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    gap: 0.35rem;
+}
+
+[data-theme="light"] .fama-tab-btn {
+    background: transparent;
+    border: 1px solid transparent;
+    color: #475569;
+}
+
+[data-theme="light"] .fama-tab-btn:hover {
+    background: rgba(255, 255, 255, 0.6);
+    color: #0f172a;
+}
+
+[data-theme="light"] .fama-tab-btn.is-active {
+    background: #ffffff;
+    border-color: rgba(0, 0, 0, 0.08);
+    color: #4f46e5;
+    font-weight: 700;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .fama-table-wrapper {
+    background: #ffffff;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="light"] .fama-table th {
+    background: #f8fafc;
+    color: #475569;
+    border-bottom: 2px solid rgba(0, 0, 0, 0.06);
+}
+
+[data-theme="light"] .fama-table td {
+    color: #1e293b;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="light"] .fama-table tbody tr:nth-child(even) td {
+    background: #f8fafc;
+}
+
+[data-theme="light"] .fama-table tbody tr:hover td {
+    background: rgba(99, 102, 241, 0.06);
+}
+
+[data-theme="light"] .fama-table-avatar {
+    background: #f1f5f9;
+    border-color: rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .fama-player-name {
+    color: #0f172a;
+}
+
+[data-theme="light"] .fama-stat-score {
+    color: #4f46e5;
+}
+
+[data-theme="light"] .fama-stat-gold {
+    color: #d97706;
+}
+
+[data-theme="light"] .fama-rank-cell--default {
+    background: #f1f5f9;
+    border-color: rgba(0, 0, 0, 0.1);
+    color: #64748b;
+}
+
+[data-theme="light"] .fama-match-card {
+    background: #ffffff;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="light"] .fama-match-card.is-winner {
+    border-color: #f59e0b;
+    box-shadow: 0 0 25px rgba(245, 158, 11, 0.15), 0 4px 16px rgba(0, 0, 0, 0.06);
+}
+
+[data-theme="light"] .fama-winner-title {
+    color: #d97706;
+}
+
+[data-theme="light"] .fama-details-toggle {
+    background: #f8fafc;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .fama-details-toggle summary {
+    color: #334155;
+}
+
+[data-theme="light"] .fama-details-table td {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    color: #1e293b;
+}
+
+/* Light Theme Overrides para Modales de Cuenta, Avatar y Zoom */
+[data-theme="light"] .auth-modal-card,
+[data-theme="light"] .avatar-picker-dialog,
+[data-theme="light"] .photo-zoom-card {
+    background: #ffffff;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+}
+
+[data-theme="light"] .auth-tab-btn,
+[data-theme="light"] .avatar-tab-btn {
+    background: #f1f5f9;
+    border-color: rgba(0, 0, 0, 0.08);
+    color: #475569;
+}
+
+[data-theme="light"] .auth-tab-btn.is-active,
+[data-theme="light"] .avatar-tab-btn.is-active {
+    background: #4f46e5;
+    border-color: #4f46e5;
+    color: #ffffff;
+}
+
+[data-theme="light"] .emoji-cat-pill {
+    background: #f1f5f9;
+    border-color: rgba(0, 0, 0, 0.08);
+    color: #475569;
+}
+
+[data-theme="light"] .emoji-cat-pill.is-active {
+    background: #4f46e5;
+    border-color: #4f46e5;
+    color: #ffffff;
+}
+
+[data-theme="light"] .avatar-emojis-grid {
+    background: #f8fafc;
+    border-color: rgba(0, 0, 0, 0.08);
+    scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+}
+
+[data-theme="light"] .avatar-emojis-grid::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="light"] .avatar-emoji-item-btn:hover {
+    background: rgba(0, 0, 0, 0.06);
+    border-color: rgba(0, 0, 0, 0.12);
+}
+
+[data-theme="light"] .avatar-crop-circle {
+    background: #f8fafc;
+    border-color: #4f46e5;
+}
+
+
 
