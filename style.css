@@ -19612,50 +19612,262 @@ body.modo-dev-activo .juntos-locked-notice {
 /* =========================================================
    PERFECCIONAMIENTO UI/UX: MODALES DE CONFIGURACIÓN DE JUEGOS
    (BOLILLERO, BOMBA, IMPOSTOR, MEMOTEST Y LABORATORIO)
+/* =========================================================
+   PERFECCIONAMIENTO UI/UX: MODALES DE CONFIGURACIÓN DE JUEGOS
+   (BOLILLERO, BOMBA, IMPOSTOR, MEMOTEST Y LABORATORIO)
+   Arquitectura Simplificada, Baja Fricción y Vista Ergonómica
    ========================================================= */
 
-/* Disposición de 2 Columnas Limpias en Desktop */
-@media (min-width: 820px) {
-    .modal.lab-config-dialog .lab-config-modal-body {
-        display: grid !important;
-        grid-template-columns: 1.15fr 0.85fr !important;
-        gap: 1.5rem !important;
-        align-items: start !important;
-        overflow-y: auto !important;
-        max-height: calc(88vh - 140px) !important;
-        padding-right: 0.5rem !important;
-    }
-
-    .modal.lab-config-dialog .lab-config-col {
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-    }
+.modal.lab-config-dialog {
+    max-width: 600px !important;
+    border-radius: var(--radius-lg, 18px) !important;
+    overflow: hidden;
 }
 
-/* Scroll ergonómico y espaciado en móviles */
+/* Cuerpo Simplificado del Modal */
+.modal.lab-config-dialog .setup-simplified-body {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.85rem !important;
+    overflow-y: auto !important;
+    max-height: calc(88vh - 130px) !important;
+    padding: 0.35rem 0.35rem 0.75rem !important;
+}
+
 @media (max-width: 819px) {
     .modal.lab-config-dialog {
         width: 95vw !important;
         max-width: 95vw !important;
-        max-height: 92vh !important;
+        max-height: 90vh !important;
         margin: auto !important;
     }
 
-    .modal.lab-config-dialog .lab-config-modal-body {
-        display: flex !important;
-        flex-direction: column !important;
-        gap: 1.25rem !important;
-        overflow-y: auto !important;
-        max-height: calc(92vh - 130px) !important;
-        padding: 0.2rem 0.25rem 1rem !important;
+    .modal.lab-config-dialog .setup-simplified-body {
+        max-height: calc(90vh - 120px) !important;
+        gap: 0.75rem !important;
+        padding: 0.2rem 0.2rem 0.65rem !important;
     }
 }
 
-/* Botones de Chips y Contadores en Modales */
+/* Slim Uploader Horizontal */
+.setup-slim-uploader {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.75rem !important;
+    padding: 0.55rem 0.85rem !important;
+    background: rgba(15, 23, 42, 0.65) !important;
+    border: 1.5px dashed rgba(56, 189, 248, 0.4) !important;
+    border-radius: var(--radius-md, 12px) !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    min-height: 52px !important;
+}
+
+.setup-slim-uploader:hover,
+.setup-slim-uploader.is-dragover {
+    border-color: #38bdf8 !important;
+    background: rgba(56, 189, 248, 0.12) !important;
+    box-shadow: 0 0 15px rgba(56, 189, 248, 0.25) !important;
+}
+
+.setup-slim-uploader__icon {
+    font-size: 1.35rem;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.setup-slim-uploader__info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    text-align: left;
+}
+
+.setup-slim-uploader__info .lab-upload-title {
+    font-size: 0.86rem;
+    color: #f8fafc;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin: 0;
+}
+
+.setup-slim-uploader__hint {
+    font-size: 0.72rem;
+    color: var(--color-text-muted);
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.setup-slim-uploader__action {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #38bdf8;
+    background: rgba(56, 189, 248, 0.14);
+    border: 1px solid rgba(56, 189, 248, 0.35);
+    padding: 0.25rem 0.65rem;
+    border-radius: 9999px;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+}
+
+.setup-slim-uploader:hover .setup-slim-uploader__action {
+    background: #38bdf8;
+    color: #0b1329;
+}
+
+.setup-slim-uploader__remove {
+    color: #f87171 !important;
+    padding: 0.15rem 0.45rem !important;
+    font-size: 0.72rem !important;
+}
+
+/* Grilla de Ajustes Rápidos */
+.setup-quick-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    background: rgba(15, 23, 42, 0.45);
+    padding: 0.75rem 0.85rem;
+    border-radius: var(--radius-md, 12px);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.setup-quick-control {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+.setup-control-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.setup-control-header .lab-section-label {
+    margin-bottom: 0 !important;
+    font-size: 0.8rem !important;
+    color: var(--color-text) !important;
+}
+
+.setup-custom-count-input {
+    width: 58px;
+    padding: 0.22rem 0.45rem;
+    background: rgba(15, 23, 42, 0.85);
+    border: 1px solid rgba(56, 189, 248, 0.35);
+    border-radius: 6px;
+    color: #fff;
+    font-size: 0.82rem;
+    text-align: center;
+}
+
+/* Acordeón de Opciones Avanzadas */
+.setup-advanced-accordion {
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-md, 12px);
+    background: rgba(15, 23, 42, 0.35);
+    overflow: hidden;
+    transition: all 0.25s ease;
+}
+
+.setup-advanced-accordion__summary {
+    padding: 0.6rem 0.85rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    user-select: none;
+    list-style: none;
+    transition: all 0.2s ease;
+}
+
+.setup-advanced-accordion__summary::-webkit-details-marker {
+    display: none;
+}
+
+.setup-advanced-accordion__summary:hover {
+    color: var(--color-text);
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.setup-advanced-accordion[open] .setup-advanced-accordion__summary {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    color: var(--color-text);
+}
+
+.setup-accordion-chevron {
+    font-size: 0.85rem;
+    transition: transform 0.2s ease;
+}
+
+.setup-advanced-accordion[open] .setup-accordion-chevron {
+    transform: rotate(180deg);
+}
+
+.setup-advanced-accordion__content {
+    padding: 0.75rem 0.85rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+/* Comodines en Chips Compactos */
+.setup-comodines-chip-group {
+    display: flex;
+    gap: 0.45rem;
+    flex-wrap: wrap;
+}
+
+.setup-comodin-chip {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0.45rem !important;
+    padding: 0.35rem 0.7rem !important;
+    border-radius: 9999px !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    background: rgba(15, 23, 42, 0.65) !important;
+    cursor: pointer !important;
+    font-size: 0.78rem !important;
+    transition: all 0.2s ease !important;
+    user-select: none !important;
+}
+
+.setup-comodin-chip.is-active {
+    border-color: rgba(16, 185, 129, 0.6) !important;
+    background: rgba(16, 185, 129, 0.16) !important;
+    color: #34d399 !important;
+}
+
+.setup-comodin-chip .bomba-setup-badge {
+    font-size: 0.65rem !important;
+    padding: 0.12rem 0.45rem !important;
+    border-radius: 9999px !important;
+}
+
+.bolillero-manual-add-inline {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding-top: 0.35rem;
+    border-top: 1px dashed rgba(255, 255, 255, 0.08);
+    flex-wrap: wrap;
+}
+
+/* Botones de Chips y Contadores */
 .bolillero-count-chip {
-    min-width: 38px;
-    height: 34px;
+    min-width: 36px;
+    height: 32px;
     font-weight: 700 !important;
     border-radius: 8px !important;
 }
@@ -19666,21 +19878,7 @@ body.modo-dev-activo .juntos-locked-notice {
     box-shadow: 0 0 10px rgba(37, 99, 235, 0.4) !important;
 }
 
-/* Card de agregado manual */
-.bolillero-manual-add-box {
-    background: rgba(15, 23, 42, 0.5);
-    border: 1px dashed rgba(56, 189, 248, 0.3);
-    border-radius: var(--radius-md);
-    padding: 1rem;
-    text-align: center;
-    transition: all 0.2s ease;
-}
-
-.bolillero-manual-add-box:hover {
-    border-color: #38bdf8;
-    background: rgba(15, 23, 42, 0.7);
-}
-
+/* Light Theme Overrides */
 [data-theme="light"] .modal.lab-config-dialog {
     background: #ffffff;
     border-color: rgba(0, 0, 0, 0.12);
@@ -19692,17 +19890,53 @@ body.modo-dev-activo .juntos-locked-notice {
     color: #0f172a;
 }
 
-[data-theme="light"] .modal.lab-config-dialog .lab-section-label {
-    color: #1e293b;
+[data-theme="light"] .setup-slim-uploader {
+    background: #f8fafc !important;
+    border-color: rgba(56, 189, 248, 0.5) !important;
 }
 
-[data-theme="light"] .lab-upload-dropzone {
-    background: #f8fafc;
-    border-color: rgba(56, 189, 248, 0.5);
-}
-
-[data-theme="light"] .lab-upload-title {
+[data-theme="light"] .setup-slim-uploader__info .lab-upload-title {
     color: #0f172a;
+}
+
+[data-theme="light"] .setup-quick-grid {
+    background: #f8fafc;
+    border-color: rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .setup-control-header .lab-section-label {
+    color: #1e293b !important;
+}
+
+[data-theme="light"] .setup-custom-count-input {
+    background: #ffffff;
+    border-color: rgba(0, 0, 0, 0.2);
+    color: #0f172a;
+}
+
+[data-theme="light"] .setup-advanced-accordion {
+    background: #f8fafc;
+    border-color: rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .setup-advanced-accordion[open] .setup-advanced-accordion__summary {
+    border-bottom-color: rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .setup-comodin-chip {
+    background: #ffffff !important;
+    border-color: rgba(0, 0, 0, 0.12) !important;
+    color: #334155 !important;
+}
+
+[data-theme="light"] .setup-comodin-chip.is-active {
+    background: #ecfdf5 !important;
+    border-color: #10b981 !important;
+    color: #047857 !important;
+}
+
+[data-theme="light"] .bolillero-manual-add-inline {
+    border-top-color: rgba(0, 0, 0, 0.08);
 }
 
 [data-theme="light"] .lab-config-textarea {
@@ -19716,14 +19950,6 @@ body.modo-dev-activo .juntos-locked-notice {
     border-color: #0284c7;
 }
 
-[data-theme="light"] .bolillero-manual-add-box {
-    background: #f8fafc;
-    border-color: rgba(0, 0, 0, 0.15);
-}
-
-[data-theme="light"] .bolillero-manual-add-box strong {
-    color: #0f172a !important;
-}
 
 
 
