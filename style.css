@@ -18970,5 +18970,349 @@ body.modo-dev-activo .juntos-locked-notice {
     border-color: #4f46e5;
 }
 
+/* =========================================================
+   FASE 7: MÓDULOS DE MEDICINA (INTERNA, FARMACOLOGÍA, SALUD PÚBLICA) Y SHOCK ROOM
+   ========================================================= */
+
+.med-eval-icon {
+    font-size: 1.25rem;
+}
+
+.med-dropzone-inner {
+    cursor: pointer;
+}
+
+/* Light Mode Overrides para Encabezados Hospitalarios y Monitores */
+[data-theme="light"] .med-header--interna {
+    background: linear-gradient(135deg, #ffffff 0%, #fef2f2 60%, rgba(254, 226, 226, 0.6) 100%);
+    border-color: rgba(239, 68, 68, 0.25);
+    box-shadow: 0 10px 30px rgba(239, 68, 68, 0.08);
+}
+
+[data-theme="light"] .med-header--farma {
+    background: linear-gradient(135deg, #ffffff 0%, #faf5ff 60%, rgba(243, 232, 255, 0.6) 100%);
+    border-color: rgba(168, 85, 247, 0.25);
+    box-shadow: 0 10px 30px rgba(168, 85, 247, 0.08);
+}
+
+[data-theme="light"] .med-header--salud {
+    background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 60%, rgba(220, 252, 231, 0.6) 100%);
+    border-color: rgba(16, 185, 129, 0.25);
+    box-shadow: 0 10px 30px rgba(16, 185, 129, 0.08);
+}
+
+[data-theme="light"] .med-title {
+    color: #0f172a;
+}
+
+[data-theme="light"] .med-subtitle {
+    color: #475569;
+}
+
+[data-theme="light"] .med-vitals-monitor {
+    background: #ffffff;
+    border-color: rgba(239, 68, 68, 0.3);
+    box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.03), 0 4px 16px rgba(239, 68, 68, 0.08);
+}
+
+[data-theme="light"] .med-vital-label {
+    color: #475569;
+}
+
+[data-theme="light"] .med-vital-val {
+    color: #dc2626;
+}
+
+[data-theme="light"] .med-vital-item small {
+    color: #64748b;
+}
+
+[data-theme="light"] .med-receptor-tag {
+    background: #f3e8ff;
+    border-color: rgba(168, 85, 247, 0.35);
+    color: #7e22ce;
+}
+
+[data-theme="light"] .med-receptor-tag:hover {
+    background: #e9d5ff;
+}
+
+[data-theme="light"] .med-indicator-card {
+    background: #ffffff;
+    border-color: rgba(16, 185, 129, 0.25);
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.06);
+}
+
+[data-theme="light"] .med-indicator-label {
+    color: #475569;
+}
+
+[data-theme="light"] .med-indicator-val {
+    color: #059669;
+}
+
+[data-theme="light"] .med-indicator-card small {
+    color: #64748b;
+}
+
+/* Tarjetas Médicas, Sidebar y Dropzone en Tema Claro */
+[data-theme="light"] .med-card {
+    background: #ffffff;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="light"] .med-card-title {
+    color: #0f172a;
+}
+
+[data-theme="light"] .med-card-desc {
+    color: #64748b;
+}
+
+[data-theme="light"] .med-dropzone {
+    background: #f8fafc;
+    border-color: rgba(14, 165, 233, 0.35);
+}
+
+[data-theme="light"] .med-dropzone:hover,
+[data-theme="light"] .med-dropzone.is-dragover {
+    background: #f0f9ff;
+    border-color: #0284c7;
+}
+
+[data-theme="light"] .med-dropzone-inner strong {
+    color: #0f172a;
+}
+
+[data-theme="light"] .med-dropzone-sub {
+    color: #64748b;
+}
+
+[data-theme="light"] .med-pdf-list-header {
+    color: #334155;
+}
+
+[data-theme="light"] .med-pdf-empty {
+    background: #f8fafc;
+    color: #64748b;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="light"] .med-pdf-item {
+    background: #f8fafc;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    color: #1e293b;
+}
+
+[data-theme="light"] .med-system-chip {
+    background: #f1f5f9;
+    border-color: rgba(0, 0, 0, 0.08);
+    color: #475569;
+}
+
+[data-theme="light"] .med-system-chip:hover {
+    background: #e0f2fe;
+    color: #0369a1;
+    border-color: #38bdf8;
+}
+
+[data-theme="light"] .med-system-chip.is-active {
+    background: #0284c7;
+    color: #ffffff;
+    border-color: #0284c7;
+}
+
+[data-theme="light"] .med-workspace-title {
+    color: #0f172a;
+}
+
+[data-theme="light"] .med-workspace-desc {
+    color: #475569;
+}
+
+[data-theme="light"] .med-diff-pills {
+    background: #f1f5f9;
+    border-color: rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .med-diff-pill {
+    color: #475569;
+}
+
+[data-theme="light"] .med-diff-pill:hover {
+    background: rgba(0, 0, 0, 0.05);
+    color: #0f172a;
+}
+
+[data-theme="light"] .med-diff-pill.is-active {
+    background: #0284c7;
+    color: #ffffff;
+}
+
+/* Ficha del Caso Clínico, Desafíos y Evaluación */
+[data-theme="light"] .med-case-sheet {
+    background: #ffffff;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+}
+
+[data-theme="light"] .med-case-sheet--farma {
+    border-color: rgba(168, 85, 247, 0.25);
+}
+
+[data-theme="light"] .med-case-sheet--salud {
+    border-color: rgba(16, 185, 129, 0.25);
+}
+
+[data-theme="light"] .med-patient-id {
+    color: #0f172a;
+}
+
+[data-theme="light"] .med-patient-meta {
+    color: #64748b;
+}
+
+[data-theme="light"] .med-case-header-row {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .med-case-text {
+    color: #1e293b;
+}
+
+[data-theme="light"] .med-vitals-list {
+    color: #334155;
+}
+
+[data-theme="light"] .med-lab-table-wrap {
+    background: #f8fafc;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .med-lab-table {
+    color: #1e293b;
+}
+
+[data-theme="light"] .med-lab-table td {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+[data-theme="light"] .med-questions-box {
+    background: #f0f9ff;
+    border-color: rgba(14, 165, 233, 0.3);
+}
+
+[data-theme="light"] .med-questions-title {
+    color: #0369a1;
+}
+
+[data-theme="light"] .med-questions-list {
+    color: #1e293b;
+}
+
+[data-theme="light"] .med-notes-textarea {
+    background: #f8fafc;
+    border-color: rgba(0, 0, 0, 0.12);
+    color: #0f172a;
+}
+
+[data-theme="light"] .med-notes-textarea:focus {
+    background: #ffffff;
+    border-color: #0284c7;
+}
+
+[data-theme="light"] .med-discussion-panel {
+    background: #ecfdf5;
+    border-color: rgba(16, 185, 129, 0.35);
+}
+
+[data-theme="light"] .med-discussion-header h4 {
+    color: #065f46;
+}
+
+[data-theme="light"] .med-discussion-content {
+    color: #1e293b;
+}
+
+[data-theme="light"] .med-calc-field label {
+    color: #475569;
+}
+
+[data-theme="light"] .med-calc-field input {
+    background: #f8fafc;
+    border-color: rgba(0, 0, 0, 0.12);
+    color: #0f172a;
+}
+
+[data-theme="light"] .med-calc-results {
+    background: #f0fdf4;
+    border-color: rgba(16, 185, 129, 0.25);
+    color: #1e293b;
+}
+
+[data-theme="light"] .med-calc-res-item strong {
+    color: #059669;
+}
+
+[data-theme="light"] .med-fichero-wrapper {
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .med-fichero-title {
+    color: #0f172a;
+}
+
+[data-theme="light"] .med-fichero-card {
+    background: #ffffff;
+    border: 1px solid rgba(168, 85, 247, 0.2);
+    box-shadow: 0 4px 16px rgba(168, 85, 247, 0.05);
+}
+
+[data-theme="light"] .med-fichero-drug {
+    color: #7e22ce;
+}
+
+[data-theme="light"] .med-fichero-row {
+    color: #475569;
+}
+
+[data-theme="light"] .med-fichero-row strong {
+    color: #0f172a;
+}
+
+[data-theme="light"] .med-eval-section {
+    background: #f0f9ff;
+    border-color: rgba(56, 189, 248, 0.4);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="light"] .med-eval-label {
+    color: #0f172a;
+}
+
+[data-theme="light"] .med-eval-hint {
+    color: #475569;
+}
+
+[data-theme="light"] .med-eval-textarea {
+    background: #ffffff;
+    border-color: rgba(56, 189, 248, 0.4);
+    color: #0f172a;
+}
+
+[data-theme="light"] .med-eval-textarea:focus {
+    background: #ffffff;
+    border-color: #0284c7;
+}
+
+[data-theme="light"] .med-ai-feedback-panel {
+    background: #ffffff;
+    border-color: rgba(56, 189, 248, 0.4);
+    color: #1e293b;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+}
+
+
 
 

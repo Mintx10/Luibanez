@@ -15,10 +15,10 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     
-    <link rel="icon" type="image/svg+xml" href="icon.svg?v=29.16">
-    <link rel="apple-touch-icon" href="icon-192.png?v=29.16">
-    <link rel="manifest" href="manifest.json?v=29.16">
-    <link rel="stylesheet" href="style.css?v=29.16">
+    <link rel="icon" type="image/svg+xml" href="icon.svg?v=29.17">
+    <link rel="apple-touch-icon" href="icon-192.png?v=29.17">
+    <link rel="manifest" href="manifest.json?v=29.17">
+    <link rel="stylesheet" href="style.css?v=29.17">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -4057,7 +4057,7 @@
                         <!-- Dropzone de Múltiples Archivos -->
                         <div class="med-dropzone" id="medInternaDropzone">
                             <input type="file" id="medInternaPdfInput" multiple accept=".pdf,.docx,.pptx,.txt,.md" class="med-file-input-hidden">
-                            <label for="medInternaPdfInput" class="med-dropzone-inner" id="medInternaDropzoneClick" style="cursor: pointer;">
+                            <label for="medInternaPdfInput" class="med-dropzone-inner" id="medInternaDropzoneClick">
                                 <span class="med-dropzone-icon">📑</span>
                                 <strong>Subir varios PDFs o Apuntes</strong>
                                 <span class="med-dropzone-sub">Arrastrá varios archivos o hacé clic acá</span>
@@ -4068,7 +4068,7 @@
                         <!-- Lista de PDFs Cargados -->
                         <div class="med-pdf-list-header">
                             <span class="med-pdf-count" id="medInternaPdfCount">0 materiales activos</span>
-                            <button id="medInternaClearPdfsBtn" class="button button--ghost button--xs hidden" type="button" style="color: #f87171;">Limpiar todos</button>
+                            <button id="medInternaClearPdfsBtn" class="button button--ghost button--xs button--danger-text hidden" type="button">Limpiar todos</button>
                         </div>
                         <ul class="med-pdf-list" id="medInternaPdfList">
                             <li class="med-pdf-empty">No hay PDFs cargados aún. El simulador usará casos de alta complejidad del banco clínico.</li>
@@ -4195,7 +4195,7 @@
                                 <div class="med-eval-section" id="medInternaEvalSection">
                                     <div class="med-eval-header">
                                         <label for="medStudentDiagnosisInput" class="med-eval-label">
-                                            <span style="font-size: 1.25rem;">🎯</span>
+                                            <span class="med-eval-icon">🎯</span>
                                             <strong>Tu Diagnóstico Presuntivo & Plan Terapéutico:</strong>
                                         </label>
                                         <span class="med-eval-hint">Escribí acá tu razonamiento clínico. La IA (Gemini) evaluará tu diagnóstico, fisiopatología y conducta terapéutica según guías oficiales.</span>
@@ -4302,7 +4302,7 @@
                         <!-- Dropzone Farma -->
                         <div class="med-dropzone" id="farmaDropzone">
                             <input type="file" id="farmaPdfInput" multiple accept=".pdf,.docx,.pptx,.txt,.md" class="med-file-input-hidden">
-                            <label for="farmaPdfInput" class="med-dropzone-inner" id="farmaDropzoneClick" style="cursor: pointer;">
+                            <label for="farmaPdfInput" class="med-dropzone-inner" id="farmaDropzoneClick">
                                 <span class="med-dropzone-icon">💊</span>
                                 <strong>Subir PDFs de Farmacología</strong>
                                 <span class="med-dropzone-sub">Cargá varios archivos simultáneamente</span>
@@ -4312,7 +4312,7 @@
 
                         <div class="med-pdf-list-header">
                             <span class="med-pdf-count" id="farmaPdfCount">0 vademécums activos</span>
-                            <button id="farmaClearPdfsBtn" class="button button--ghost button--xs hidden" type="button" style="color: #f87171;">Limpiar</button>
+                            <button id="farmaClearPdfsBtn" class="button button--ghost button--xs button--danger-text hidden" type="button">Limpiar</button>
                         </div>
                         <ul class="med-pdf-list" id="farmaPdfList">
                             <li class="med-pdf-empty">No hay PDFs cargados. Se usarán desafíos farmacoterapéuticos del vademécum base.</li>
@@ -4413,7 +4413,7 @@
                                 <div class="med-eval-section" id="farmaEvalSection">
                                     <div class="med-eval-header">
                                         <label for="farmaStudentNotes" class="med-eval-label">
-                                            <span style="font-size: 1.25rem;">💊</span>
+                                            <span class="med-eval-icon">💊</span>
                                             <strong>Tu Resolución Farmacoterapéutica:</strong>
                                         </label>
                                         <span class="med-eval-hint">Detallá la interacción, cinética (P-gp/CYP), riesgo hemodinámico y rescate de elección. Gemini evaluará tu prescripción.</span>
@@ -4541,7 +4541,7 @@
                         <!-- Dropzone Salud Pública -->
                         <div class="med-dropzone" id="saludDropzone">
                             <input type="file" id="saludPdfInput" multiple accept=".pdf,.docx,.pptx,.txt,.md" class="med-file-input-hidden">
-                            <label for="saludPdfInput" class="med-dropzone-inner" id="saludDropzoneClick" style="cursor: pointer;">
+                            <label for="saludPdfInput" class="med-dropzone-inner" id="saludDropzoneClick">
                                 <span class="med-dropzone-icon">📊</span>
                                 <strong>Subir PDFs de TPs y Cátedra</strong>
                                 <span class="med-dropzone-sub">Subí varias guías de trabajos prácticos</span>
@@ -4551,7 +4551,7 @@
 
                         <div class="med-pdf-list-header">
                             <span class="med-pdf-count" id="saludPdfCount">0 guías cargadas</span>
-                            <button id="saludClearPdfsBtn" class="button button--ghost button--xs hidden" type="button" style="color: #f87171;">Limpiar</button>
+                            <button id="saludClearPdfsBtn" class="button button--ghost button--xs button--danger-text hidden" type="button">Limpiar</button>
                         </div>
                         <ul class="med-pdf-list" id="saludPdfList">
                             <li class="med-pdf-empty">No hay guías cargadas. El asistente generará ejercicios de TP del modelo oficial.</li>
@@ -5584,7 +5584,7 @@
 </dialog>
 
 <script src="mqtt.min.js"></script>
-<script src="script.js?v=29.16" defer></script>
+<script src="script.js?v=29.17" defer></script>
 
 <!-- =========================================================
      MODAL DE PROMPT PARA GEMINI (CREAR JUEGOS DESDE PDF)
