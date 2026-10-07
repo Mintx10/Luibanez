@@ -15,10 +15,10 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     
-    <link rel="icon" type="image/svg+xml" href="icon.svg?v=29.11">
-    <link rel="apple-touch-icon" href="icon-192.png?v=29.11">
-    <link rel="manifest" href="manifest.json?v=29.11">
-    <link rel="stylesheet" href="style.css?v=29.11">
+    <link rel="icon" type="image/svg+xml" href="icon.svg?v=29.12">
+    <link rel="apple-touch-icon" href="icon-192.png?v=29.12">
+    <link rel="manifest" href="manifest.json?v=29.12">
+    <link rel="stylesheet" href="style.css?v=29.12">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -959,22 +959,22 @@
 
     <!-- ==================== VISTA 2: ESTUDIAR SOLO (PÁGINA DEDICADA CON CUADRÍCULAS) ==================== -->
     <section id="viewSolo" class="view view--hidden" aria-label="Página de Estudiar Solo">
-        <div class="modules-hub" style="max-width: 1200px; margin: 0 auto; padding: 1rem 1rem 3rem;">
+        <div class="solo-hub-container">
             
             <!-- Encabezado de la Página Solo -->
-            <div class="page-header" style="margin-bottom: 2rem; padding-bottom: 1.25rem; border-bottom: 1px solid var(--color-border);">
-                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem;">
-                    <div class="hub-category-badge badge badge--success" style="margin-bottom: 0;">
+            <div class="solo-page-header">
+                <div class="solo-page-header__top">
+                    <div class="hub-category-badge badge badge--success">
                         <span>👤 APARTADO SOLO — ESTUDIO Y PRÁCTICA INDIVIDUAL</span>
                     </div>
                     <button id="soloRulesBtn" class="rules-trigger-btn" type="button" title="Ver guía de modos de estudio">
                         <span>❓</span><span>Guía de Modos</span>
                     </button>
                 </div>
-                <h1 class="page-title" style="font-size: 2.2rem; font-weight: 800; color: #fff; margin: 0.25rem 0 0.5rem;">
+                <h1 class="page-title solo-page-title">
                     Entrená a tu ritmo
                 </h1>
-                <p class="page-subtitle" style="color: var(--color-text-muted); font-size: 1rem; max-width: 750px; line-height: 1.5;">
+                <p class="page-subtitle solo-page-subtitle">
                     Secciones organizadas en cuadrículas una al lado de la otra. Configurá tus listas de temas, cargá tus apuntes con IA y practicá desafíos teóricos y conceptuales.
                 </p>
             </div>
@@ -983,17 +983,20 @@
             <div class="solo-grid game-modes-grid">
                 
                 <!-- Modo 1: Bolillero Individual -->
-                <article class="module-card game-mode-card module-card--active" id="cardSoloBolillero">
+                <article class="module-card game-mode-card game-mode-card--bolillero module-card--active" id="cardSoloBolillero">
                     <div class="module-card__header">
                         <div class="module-card__icon module-card__icon--primary">🎲</div>
                         <span class="badge badge--success">Sorteo Clásico</span>
                     </div>
                     <div class="game-mode-card__content">
-                        <h3 class="module-card__title">Bolillero Individual</h3>
-                        <p class="game-mode-card__tagline">Sorteo aleatorio de temas con ruleta fluida y filtrado inteligente.</p>
-                        <div class="game-mode-card__details">
-                            <p>Sorteá unidades y temas al azar con desaceleración realista, gestión y carga de listas completas y filtro automático de ítems ya evaluados.</p>
+                        <div class="game-mode-card__badge-row">
+                            <span class="game-mode-chip">⏱️ Ritmo Libre</span>
+                            <span class="game-mode-chip">📋 Listas & IA</span>
                         </div>
+                        <h3 class="module-card__title">Bolillero Individual</h3>
+                        <p class="game-mode-card__desc">
+                            Sorteá unidades y temas al azar con ruleta fluida o cápsula clásica, desaceleración realista y examen oral asistido por IA.
+                        </p>
                     </div>
                     <div class="module-card__actions">
                         <button id="soloOpenBolilleroBtn" class="button button--primary button--full" type="button">
@@ -1003,60 +1006,69 @@
                 </article>
 
                 <!-- Modo 2: Desactivá la Bomba -->
-                <article class="module-card game-mode-card module-card--active" id="cardSoloBomba">
+                <article class="module-card game-mode-card game-mode-card--bomba module-card--active" id="cardSoloBomba">
                     <div class="module-card__header">
                         <div class="module-card__icon module-card__icon--danger">💣</div>
                         <span class="badge badge--danger">Bomba Solo</span>
                     </div>
                     <div class="game-mode-card__content">
-                        <h3 class="module-card__title">Desactivá la Bomba</h3>
-                        <p class="game-mode-card__tagline">Desafío contrarreloj de 3 fases teóricas generadas con IA.</p>
-                        <div class="game-mode-card__details">
-                            <p>Cortá los cables respondiendo correctamente fundamentos teóricos, deducción lógica y síntesis conceptual antes de la detonación.</p>
+                        <div class="game-mode-card__badge-row">
+                            <span class="game-mode-chip">⏱️ 3 Minutos</span>
+                            <span class="game-mode-chip">⚡ 3 Cables</span>
                         </div>
+                        <h3 class="module-card__title">Desactivá la Bomba</h3>
+                        <p class="game-mode-card__desc">
+                            Desafío contrarreloj: cortá los cables correctos respondiendo fundamentos teóricos, deducción lógica y síntesis antes de la detonación.
+                        </p>
                     </div>
                     <div class="module-card__actions">
-                        <button id="soloOpenBombaBtn" class="button button--secondary button--full" type="button">
+                        <button id="soloOpenBombaBtn" class="button button--danger button--full" type="button">
                             Practicar Bomba 💣
                         </button>
                     </div>
                 </article>
 
                 <!-- Modo 3: Caza al Impostor -->
-                <article class="module-card game-mode-card module-card--active" id="cardSoloImpostor">
+                <article class="module-card game-mode-card game-mode-card--impostor module-card--active" id="cardSoloImpostor">
                     <div class="module-card__header">
                         <div class="module-card__icon module-card__icon--impostor">🕵️‍♂️</div>
                         <span class="badge badge--warning">Reflejos & Conceptos</span>
                     </div>
                     <div class="game-mode-card__content">
-                        <h3 class="module-card__title">Caza al Impostor</h3>
-                        <p class="game-mode-card__tagline">Detectá la afirmación o fórmula infiltrada errónea contra reloj.</p>
-                        <div class="game-mode-card__details">
-                            <p>Auditoría de alta velocidad con afirmaciones técnicas: encontrá el error conceptual camuflado y acumulá rachas de maestría.</p>
+                        <div class="game-mode-card__badge-row">
+                            <span class="game-mode-chip">⏱️ 2 Minutos</span>
+                            <span class="game-mode-chip">🔍 Auditoría</span>
                         </div>
+                        <h3 class="module-card__title">Caza al Impostor</h3>
+                        <p class="game-mode-card__desc">
+                            Auditoría rápida de conceptos técnicos: detectá la afirmación o fórmula infiltrada errónea antes que se agote el tiempo.
+                        </p>
                     </div>
                     <div class="module-card__actions">
-                        <button id="soloOpenImpostorBtn" class="button button--secondary button--full" type="button">
+                        <button id="soloOpenImpostorBtn" class="button button--impostor button--full" type="button">
                             Cazar Impostor 🕵️‍♂️
                         </button>
                     </div>
                 </article>
 
                 <!-- Modo 4: Memotest Conectado -->
-                <article class="module-card game-mode-card module-card--active" id="cardSoloMemotest">
+                <article class="module-card game-mode-card game-mode-card--memotest module-card--active" id="cardSoloMemotest">
                     <div class="module-card__header">
                         <div class="module-card__icon module-card__icon--memotest">🧠</div>
                         <span class="badge badge--accent">Memoria & Fórmulas</span>
                     </div>
                     <div class="game-mode-card__content">
-                        <h3 class="module-card__title">Memotest Conectado</h3>
-                        <p class="game-mode-card__tagline">Emparejá conceptos clave con sus definiciones y fórmulas exactas.</p>
-                        <div class="game-mode-card__details">
-                            <p>Tablero dinámico de memoria y asociación cognitiva: conectá definiciones, fórmulas y teoremas con sus conceptos correspondientes.</p>
+                        <div class="game-mode-card__badge-row">
+                            <span class="game-mode-chip">⏱️ 4 Minutos</span>
+                            <span class="game-mode-chip">🧩 Asociación</span>
                         </div>
+                        <h3 class="module-card__title">Memotest Conectado</h3>
+                        <p class="game-mode-card__desc">
+                            Tablero dinámico de memoria: conectá definiciones, fórmulas y teoremas con sus conceptos correspondientes en el menor número de intentos.
+                        </p>
                     </div>
                     <div class="module-card__actions">
-                        <button id="soloOpenMemotestBtn" class="button button--primary button--full" type="button">
+                        <button id="soloOpenMemotestBtn" class="button button--accent button--full" type="button">
                             Jugar Memotest 🧠
                         </button>
                     </div>
@@ -1114,11 +1126,13 @@
 
                 <!-- Panel de temas (Compacto) -->
                 <section class="panel" aria-labelledby="topics-title">
-                    <div class="panel__header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
-                        <h3 id="topics-title" class="panel__title" style="margin: 0;">Temas de la lista</h3>
-                        <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+                    <div class="panel__header bolillero-topics-header">
+                        <div class="panel__title-wrap">
+                            <h3 id="topics-title" class="panel__title">Temas de la lista</h3>
+                        </div>
+                        <div class="panel__actions-wrap">
                             <!-- Botón Principal: Cargar Archivo / Generar Palabras con IA -->
-                            <button id="bolilleroOpenSetupBtn" class="button button--primary button--sm" type="button" title="Configurar bolillero con IA o cargar archivo de estudio" style="background: linear-gradient(135deg, #0284c7, #0ea5e9); font-weight: 600; box-shadow: 0 0 12px rgba(14, 165, 233, 0.35);">
+                            <button id="bolilleroOpenSetupBtn" class="button button--primary button--sm button--ai-glow" type="button" title="Configurar bolillero con IA o cargar archivo de estudio">
                                 ✨ Generar Palabras / Cargar Archivo
                             </button>
                             <!-- Botón Manual: Agregar Palabra a Mano -->
@@ -1127,6 +1141,12 @@
                             </button>
                         </div>
                     </div>
+
+                    <!-- Buscador Reactivo de Temas -->
+                    <div class="topics-search-bar">
+                        <input id="topicSearchInput" class="topic-search-field" type="search" placeholder="🔍 Filtrar o buscar tema en esta lista..." aria-label="Filtrar temas de la lista">
+                    </div>
+
                     <ul id="topicsGrid" class="topics-grid" aria-label="Temas de estudio"></ul>
                 </section>
 
@@ -5564,7 +5584,7 @@
 </dialog>
 
 <script src="mqtt.min.js"></script>
-<script src="script.js?v=29.11" defer></script>
+<script src="script.js?v=29.12" defer></script>
 
 <!-- =========================================================
      MODAL DE PROMPT PARA GEMINI (CREAR JUEGOS DESDE PDF)

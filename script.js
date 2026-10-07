@@ -1817,6 +1817,8 @@ function actualizarDrawerListas() {
 function seleccionarLista(id) {
     if (!id) return;
     estado.listaSeleccionadaId = id;
+    const searchInput = document.getElementById("topicSearchInput");
+    if (searchInput) searchInput.value = "";
     guardarDatos();
     reconstruirBolillero();
     render();
@@ -2047,6 +2049,9 @@ function renderTemas() {
     const lista = obtenerListaSeleccionada();
     if (!lista) return;
 
+    const searchInput = document.getElementById("topicSearchInput");
+    const query = searchInput ? searchInput.value.toLowerCase().trim() : "";
+
     const fragment = document.createDocumentFragment();
     lista.temas.forEach(tema => {
         const tarjeta = dom.topicCardTemplate.content.firstElementChild.cloneNode(true);
@@ -2059,6 +2064,9 @@ function renderTemas() {
         }
 
         tarjeta.querySelector(".topic-card__title").textContent = tema.titulo;
+        if (query && !tema.titulo.toLowerCase().includes(query)) {
+            tarjeta.style.display = "none";
+        }
         fragment.appendChild(tarjeta);
     });
     dom.topicsGrid.appendChild(fragment);
@@ -2124,24 +2132,6 @@ function renderEstadoBotones() {
     if (dom.importButton) dom.importButton.disabled = estado.interfaz.girando;
 }
 
-/* ==========================================================
-   ANIMACIÓN DE RULETA PLACENTERA
-   ========================================================== */
-async function girarBolillero() {
-    if (estado.interfaz.girando) return;
-
-    const lista = obtenerListaSeleccionada();
-    if (!lista || !Array.isArray(lista.temas) || lista.temas.length === 0) {
-        mostrarToast("📋 Primero elegí o creá una lista con temas para girar el bolillero.");
-        return;
-    }
-    const temasDisponibles = lista.temas.filter(t => estado.ronda.disponibles.includes(t.id));
-
-    if (temasDisponibles.length === 0) {
-        mostrarToast("🎉 ¡Ya salieron todos los temas! Restaurá el bolillero para volver a empezar.", "info");
-        return;
-    }
-
 function actualizarDisplaysBolillero(texto, estadoClase = null) {
     const displays = [
         dom.rollingDisplay,
@@ -2161,6 +2151,24 @@ function actualizarDisplaysBolillero(texto, estadoClase = null) {
         }
     });
 }
+
+/* ==========================================================
+   ANIMACIÓN DE RULETA PLACENTERA
+   ========================================================== */
+async function girarBolillero() {
+    if (estado.interfaz.girando) return;
+
+    const lista = obtenerListaSeleccionada();
+    if (!lista || !Array.isArray(lista.temas) || lista.temas.length === 0) {
+        mostrarToast("📋 Primero elegí o creá una lista con temas para girar el bolillero.");
+        return;
+    }
+    const temasDisponibles = lista.temas.filter(t => estado.ronda.disponibles.includes(t.id));
+
+    if (temasDisponibles.length === 0) {
+        mostrarToast("🎉 ¡Ya salieron todos los temas! Restaurá el bolillero para volver a empezar.", "info");
+        return;
+    }
 
     estado.interfaz.girando = true;
     renderEstadoBotones();
@@ -12642,6 +12650,18 @@ function inicializarModoBolillero() {
     if (dom.restoreRoundButton) dom.restoreRoundButton.addEventListener("click", restaurarBolillero);
     inicializarModoBolillero();
 
+    const topicSearchInput = document.getElementById("topicSearchInput");
+    if (topicSearchInput) {
+        topicSearchInput.addEventListener("input", (e) => {
+            const query = e.target.value.toLowerCase().trim();
+            const cards = dom.topicsGrid.querySelectorAll(".topic-card");
+            cards.forEach(card => {
+                const title = (card.querySelector(".topic-card__title")?.textContent || "").toLowerCase();
+                card.style.display = title.includes(query) ? "" : "none";
+            });
+        });
+    }
+
     if (dom.importButton && dom.importFileInput) {
         dom.importButton.addEventListener("click", () => dom.importFileInput.click());
     }
@@ -13863,7 +13883,7 @@ function iniciarAplicacion() {
 // =========================================================
 // GESTOR DE VERSIONES Y ACTUALIZACIÓN AUTOMÁTICA
 // =========================================================
-const APP_BUILD_VERSION = "29.11";
+const APP_BUILD_VERSION = "29.12";
 
 async function forzarActualizacionCompleta(mostrarNotificacion = true) {
     const lastAttempt = parseInt(sessionStorage.getItem("last_auto_update_ts") || "0", 10);
