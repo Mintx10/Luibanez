@@ -15,10 +15,10 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     
-    <link rel="icon" type="image/svg+xml" href="icon.svg?v=29.10">
-    <link rel="apple-touch-icon" href="icon-192.png?v=29.10">
-    <link rel="manifest" href="manifest.json?v=29.10">
-    <link rel="stylesheet" href="style.css?v=29.10">
+    <link rel="icon" type="image/svg+xml" href="icon.svg?v=29.11">
+    <link rel="apple-touch-icon" href="icon-192.png?v=29.11">
+    <link rel="manifest" href="manifest.json?v=29.11">
+    <link rel="stylesheet" href="style.css?v=29.11">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -460,20 +460,21 @@
         </section>
 
         <!-- Portal Hub: 3 Grandes Accesos Directos a las Páginas de la App -->
-        <div class="portal-hub-container" style="max-width: 1200px; margin: 2rem auto 0; padding: 0 1rem;">
-            <div class="modules-grid" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+        <!-- Portal Hub: 3 Grandes Accesos Directos a las Páginas de la App -->
+        <div class="portal-hub-container">
+            <div class="portal-hub-grid">
                 
                 <!-- Tarjeta Portal 1: Estudiar Solo -->
-                <article class="module-card module-card--active module-card--solo portal-hub-card" style="border-color: rgba(56, 189, 248, 0.35); padding: 1.85rem;">
-                    <div class="module-card__header portal-card__header">
+                <article class="portal-hub-card portal-hub-card--solo">
+                    <div class="portal-card__header">
                         <div class="module-card__icon module-card__icon--primary portal-card__icon">👤</div>
                         <span class="badge badge--success">Página Dedicada</span>
                     </div>
-                    <h3 class="module-card__title" style="font-size: 1.45rem;">Estudiar Solo</h3>
-                    <p class="module-card__desc" style="font-size: 0.95rem; line-height: 1.5;">
+                    <h3 class="portal-card__title">Estudiar Solo</h3>
+                    <p class="portal-card__desc">
                         Tu espacio de entrenamiento individual con las 4 modalidades en cuadrícula: <strong>Bolillero Individual</strong>, <strong>Desactivá la Bomba</strong>, <strong>Caza al Impostor</strong> y <strong>Memotest Conectado</strong>.
                     </p>
-                    <div class="module-card__actions" style="margin-top: auto; padding-top: 1rem;">
+                    <div class="portal-card__actions">
                         <button id="homeGoToSoloBtn" class="button button--primary button--full" type="button">
                             Entrar a Estudiar Solo ➜
                         </button>
@@ -481,40 +482,34 @@
                 </article>
 
                 <!-- Tarjeta Portal 2: Estudiar Juntos -->
-                <article class="module-card module-card--duel module-card--active portal-hub-card" style="position: relative; overflow: hidden; border-color: rgba(99, 102, 241, 0.45); padding: 1.85rem;">
-                    <div class="module-card__header portal-card__header">
-                        <div class="module-card__icon module-card__icon--duel portal-card__icon">
-                            🤝
-                        </div>
-                        <span class="badge badge--accent">
-                            ✨ Multijugador Online
-                        </span>
+                <article class="portal-hub-card portal-hub-card--juntos">
+                    <div class="portal-card__header">
+                        <div class="module-card__icon module-card__icon--duel portal-card__icon">🤝</div>
+                        <span class="badge badge--accent">✨ Multijugador Online</span>
                     </div>
-                    <h3 class="module-card__title" style="font-size: 1.45rem;">
-                        Estudiar Juntos
-                    </h3>
-                    <p class="module-card__desc" style="font-size: 0.95rem; line-height: 1.5; color: var(--color-text-muted);">
+                    <h3 class="portal-card__title">Estudiar Juntos</h3>
+                    <p class="portal-card__desc">
                         Salas sincrónicas entre celulares y PC con Link Mágico y PIN: modalidades <strong>Versus competitivo</strong> y <strong>Cooperativo en equipo</strong> (Bomba compartida, Memotest en equipo y Repaso grupal).
                     </p>
-                    <div class="module-card__actions" style="margin-top: auto; padding-top: 1rem;">
+                    <div class="portal-card__actions">
                         <button id="homeGoToJuntosBtn" class="button button--primary button--full" type="button" title="Entrar a Estudiar Juntos">
                             🤝 Entrar a Estudiar Juntos ➜
                         </button>
                     </div>
                 </article>
 
-                <!-- Tarjeta Portal 3: Laboratorio de Prácticas (Con Badge Nuevo) -->
-                <article id="homeCardLaboratorio" class="module-card module-card--active portal-hub-card" style="border-color: rgba(16, 185, 129, 0.45); padding: 1.85rem; background: linear-gradient(145deg, rgba(15, 23, 42, 0.75), rgba(6, 78, 59, 0.2)); cursor: pointer;">
-                    <div class="module-card__header portal-card__header">
+                <!-- Tarjeta Portal 3: Laboratorio de Prácticas -->
+                <article id="homeCardLaboratorio" class="portal-hub-card portal-hub-card--lab">
+                    <div class="portal-card__header">
                         <div class="module-card__icon module-card__icon--lab portal-card__icon">🔬</div>
-                        <span class="badge badge--success" style="background: rgba(16, 185, 129, 0.2); border: 1px solid #10b981; color: #34d399; font-weight: 800; animation: pulseGlow 2s infinite;">✨ ¡NUEVO!</span>
+                        <span class="badge badge--success badge--pulse">✨ ¡NUEVO!</span>
                     </div>
-                    <h3 class="module-card__title" style="font-size: 1.45rem;">Laboratorio de Prácticas</h3>
-                    <p class="module-card__desc" style="font-size: 0.95rem; line-height: 1.5;">
+                    <h3 class="portal-card__title">Laboratorio de Prácticas</h3>
+                    <p class="portal-card__desc">
                         Mesa de trabajo interactiva para materias numéricas: <strong>Casos de estudio paso a paso</strong>, <strong>Constructor de Tablas de Frecuencia</strong>, <strong>Calculadora de Probabilidades (Normal, Binomial, Poisson)</strong>, <strong>Matriz de Bayes</strong> y <strong>Pizarrón</strong>.
                     </p>
-                    <div class="module-card__actions" style="margin-top: auto; padding-top: 1rem;">
-                        <button id="homeGoToLabBtn" class="button button--primary button--full" type="button" style="background: linear-gradient(135deg, #059669, #10b981);">
+                    <div class="portal-card__actions">
+                        <button id="homeGoToLabBtn" class="button button--primary button--full button--lab" type="button">
                             🔬 Entrar al Laboratorio ➜
                         </button>
                     </div>
@@ -5569,7 +5564,7 @@
 </dialog>
 
 <script src="mqtt.min.js"></script>
-<script src="script.js?v=29.10" defer></script>
+<script src="script.js?v=29.11" defer></script>
 
 <!-- =========================================================
      MODAL DE PROMPT PARA GEMINI (CREAR JUEGOS DESDE PDF)
