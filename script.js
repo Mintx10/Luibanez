@@ -11772,16 +11772,37 @@ async function cargarApuntesGuardados() {
         sincronizarApuntesEstadoLegacy();
         actualizarUIIndicadoresPDF();
 
-        // Sincronización en segundo plano con la base de datos Supabase
-        if (supabaseService.isAvailable()) {
-            setTimeout(() => {
-                supabaseService.sincronizarColeccionDesdeNube().catch(() => {});
-            }, 800);
-        }
+        // Sincronización en segundo plano con Supabase (asegurando carga del SDK)
+        asegurarSincronizacionNube();
     } catch (e) {
         console.warn("No se pudieron cargar los apuntes guardados:", e);
     }
 }
+
+async function asegurarSincronizacionNube() {
+    try {
+        let intentos = 0;
+        while ((typeof window === "undefined" || !window.supabase) && intentos < 25) {
+            await new Promise(r => setTimeout(r, 200));
+            intentos++;
+        }
+        if (supabaseService.isAvailable()) {
+            // 1. Si hay documentos locales, respaldarlos de inmediato en Supabase
+            if (apuntesColeccion.length > 0) {
+                await supabaseService.sincronizarColeccionConNube(apuntesColeccion);
+            }
+            // 2. Traer novedades desde la nube
+            await supabaseService.sincronizarColeccionDesdeNube();
+            // 3. Respaldar perfil del estudiante
+            if (perfilUsuario && perfilUsuario.id) {
+                await supabaseService.guardarPerfil(perfilUsuario);
+            }
+        }
+    } catch (err) {
+        console.warn("[Supabase] Sincronización inicial:", err);
+    }
+}
+window.sincronizarConNubeAhora = asegurarSincronizacionNube;
 
 async function guardarColeccionEnStorage() {
     try {
