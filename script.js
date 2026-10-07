@@ -3122,6 +3122,9 @@ function guardarPerfilUsuario() {
     } catch {}
     actualizarUIPerfilUsuario();
     actualizarUIAuthHeader();
+    if (window.supabaseService && typeof window.supabaseService.guardarPerfil === "function") {
+        window.supabaseService.guardarPerfil(perfilUsuario).catch(() => {});
+    }
 }
 
 function actualizarUIPerfilUsuario() {
@@ -11529,6 +11532,197 @@ async function obtenerApunteDeIDB(clave) {
     }
 }
 
+/* ==========================================================
+   MÓDULO DE BASE DE DATOS EN LA NUBE SUPABASE (LOCAL-FIRST)
+   ========================================================== */
+const SUPABASE_CONFIG = {
+    url: "https://xyaykxkytjnzykcjkopj.supabase.co",
+    publishableKey: "sb_publishable_R2Q2WhCk7zlwxnkT1iTtDA_8Wu5vjph"
+};
+
+let _supabaseClientInstance = null;
+
+function obtenerSupabaseClient() {
+    if (_supabaseClientInstance) return _supabaseClientInstance;
+    try {
+        if (typeof window !== "undefined" && window.supabase && typeof window.supabase.createClient === "function") {
+            _supabaseClientInstance = window.supabase.createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.publishableKey);
+            return _supabaseClientInstance;
+        }
+    } catch (e) {
+        console.warn("[Supabase] No se pudo inicializar cliente:", e);
+    }
+    return null;
+}
+
+function generarHashTexto(str) {
+    if (!str || typeof str !== "string") return "empty";
+    let hash = 5381;
+    for (let i = 0; i < str.length; i++) {
+        hash = ((hash << 5) + hash) + str.charCodeAt(i);
+        hash = hash & hash;
+    }
+    return "h_" + Math.abs(hash).toString(36);
+}
+
+const supabaseService = {
+    isAvailable() {
+        return !!obtenerSupabaseClient() && (typeof navigator === "undefined" || navigator.onLine !== false);
+    },
+
+    async sincronizarColeccionConNube(coleccion) {
+        const client = obtenerSupabaseClient();
+        if (!client || !Array.isArray(coleccion) || coleccion.length === 0) return;
+        try {
+            const filas = coleccion.map(doc => ({
+                id: String(doc.id),
+                nombre: doc.nombre || "Documento",
+                paginas: Number(doc.paginas) || 1,
+                palabras: Number(doc.palabras) || 0,
+                texto: doc.texto || "",
+                activo: doc.activo !== false,
+                user_id: (perfilUsuario && perfilUsuario.id) ? String(perfilUsuario.id) : "guest",
+                updated_at: new Date().toISOString()
+            }));
+
+            const { error } = await client.from("documentos_pdf").upsert(filas, { onConflict: "id" });
+            if (error) {
+                // Silencioso si la tabla no fue creada aún
+                if (error.code !== "42P01" && error.code !== "PGRST204" && error.code !== "PGRST200") {
+                    console.warn("[Supabase] Sincronización de documentos:", error.message);
+                }
+            } else {
+                console.log("[Supabase] Documentos sincronizados en la nube:", filas.length);
+            }
+        } catch (err) {
+            console.warn("[Supabase] Fallo no crítico al sincronizar documentos:", err);
+        }
+    },
+
+    async sincronizarColeccionDesdeNube() {
+        const client = obtenerSupabaseClient();
+        if (!client) return;
+        try {
+            const { data, error } = await client
+                .from("documentos_pdf")
+                .select("id, nombre, paginas, palabras, texto, activo, updated_at")
+                .order("created_at", { ascending: false })
+                .limit(50);
+
+            if (error || !Array.isArray(data)) return;
+
+            let huboCambios = false;
+            for (const row of data) {
+                if (!row || !row.id || !row.texto) continue;
+                const existe = apuntesColeccion.some(d => d.id === row.id || d.nombre === row.nombre);
+                if (!existe) {
+                    apuntesColeccion.push({
+                        id: row.id,
+                        nombre: row.nombre,
+                        paginas: row.paginas || 1,
+                        palabras: row.palabras || (row.texto ? row.texto.split(/\s+/).filter(Boolean).length : 0),
+                        texto: row.texto,
+                        icono: "☁️",
+                        tipoLabel: "Nube",
+                        metaDetalle: `${row.paginas || 1} pág(s) (Nube)`,
+                        activo: row.activo !== false,
+                        timestamp: Date.now()
+                    });
+                    huboCambios = true;
+                }
+            }
+
+            if (huboCambios) {
+                await guardarColeccionEnStorage();
+                actualizarUIIndicadoresPDF();
+                mostrarToast(`☁️ Se sincronizaron documentos desde tu nube de Supabase.`, "info");
+            }
+        } catch (err) {
+            console.warn("[Supabase] No se pudieron descargar documentos de la nube:", err);
+        }
+    },
+
+    async eliminarDocumento(docId) {
+        const client = obtenerSupabaseClient();
+        if (!client || !docId) return;
+        try {
+            await client.from("documentos_pdf").delete().eq("id", String(docId));
+        } catch (err) {
+            console.warn("[Supabase] No se pudo eliminar documento en nube:", err);
+        }
+    },
+
+    async guardarPerfil(perfil) {
+        const client = obtenerSupabaseClient();
+        if (!client || !perfil || !perfil.id) return;
+        try {
+            const fila = {
+                id: String(perfil.id),
+                apodo: perfil.apodo || "Estudiante",
+                username: perfil.username || "",
+                carrera: perfil.carrera || "",
+                avatar: perfil.avatar || "🦁",
+                tipo_avatar: perfil.tipoAvatar || "emoji",
+                foto_data_url: perfil.fotoDataUrl || "",
+                victorias: perfil.victorias || 0,
+                partidas_jugadas: perfil.partidasJugadas || 0,
+                puntos_totales: perfil.puntosTotales || 0,
+                max_racha_historica: perfil.maxRachaHistorica || 0,
+                total_robos: perfil.totalRobos || 0,
+                updated_at: new Date().toISOString()
+            };
+            const { error } = await client.from("perfiles").upsert([fila], { onConflict: "id" });
+            if (error && error.code !== "42P01" && error.code !== "PGRST204" && error.code !== "PGRST200") {
+                console.warn("[Supabase] Guardar perfil:", error.message);
+            }
+        } catch (err) {
+            console.warn("[Supabase] No se pudo guardar perfil en nube:", err);
+        }
+    },
+
+    async obtenerPreguntaCache(hashContexto, tipoJuego, dificultad) {
+        const client = obtenerSupabaseClient();
+        if (!client || !hashContexto) return null;
+        try {
+            let query = client
+                .from("preguntas_cache")
+                .select("pregunta")
+                .eq("hash_contexto", hashContexto)
+                .eq("tipo_juego", tipoJuego);
+            if (dificultad) {
+                query = query.eq("dificultad", dificultad);
+            }
+            const { data, error } = await query.order("created_at", { ascending: false }).limit(5);
+
+            if (!error && Array.isArray(data) && data.length > 0) {
+                const pick = data[Math.floor(Math.random() * data.length)];
+                return pick.pregunta;
+            }
+        } catch (err) {
+            console.warn("[Supabase] Error al consultar caché de preguntas:", err);
+        }
+        return null;
+    },
+
+    async guardarPreguntaCache(hashContexto, tipoJuego, dificultad, pregunta) {
+        const client = obtenerSupabaseClient();
+        if (!client || !hashContexto || !pregunta) return;
+        try {
+            await client.from("preguntas_cache").insert([{
+                hash_contexto: hashContexto,
+                tipo_juego: tipoJuego,
+                dificultad: dificultad || "universitario",
+                pregunta: pregunta,
+                created_at: new Date().toISOString()
+            }]);
+        } catch (err) {
+            // Ignorar silenciosamente si no existe tabla aún
+        }
+    }
+};
+
+window.supabaseService = supabaseService;
+
 // Cargar apuntes persistidos desde IndexedDB (o fallback localStorage)
 async function cargarApuntesGuardados() {
     try {
@@ -11577,6 +11771,13 @@ async function cargarApuntesGuardados() {
         }
         sincronizarApuntesEstadoLegacy();
         actualizarUIIndicadoresPDF();
+
+        // Sincronización en segundo plano con la base de datos Supabase
+        if (supabaseService.isAvailable()) {
+            setTimeout(() => {
+                supabaseService.sincronizarColeccionDesdeNube().catch(() => {});
+            }, 800);
+        }
     } catch (e) {
         console.warn("No se pudieron cargar los apuntes guardados:", e);
     }
@@ -11596,6 +11797,11 @@ async function guardarColeccionEnStorage() {
             activo: d.activo
         }));
         localStorage.setItem(APUNTES_COLECCION_KEY + "_meta", JSON.stringify(metadata));
+
+        // Sincronizar en segundo plano con Supabase si está disponible
+        if (supabaseService.isAvailable()) {
+            supabaseService.sincronizarColeccionConNube(apuntesColeccion).catch(() => {});
+        }
     } catch (e) {
         console.warn("No se pudo guardar la colección en storage:", e);
     }
@@ -11646,6 +11852,9 @@ async function eliminarDocumentoColeccion(docId) {
     const eliminado = apuntesColeccion.splice(index, 1)[0];
     await guardarColeccionEnStorage();
     actualizarUIIndicadoresPDF();
+    if (supabaseService.isAvailable()) {
+        supabaseService.eliminarDocumento(docId).catch(() => {});
+    }
     mostrarToast(`🗑️ "${eliminado.nombre}" quitado de la biblioteca.`, "info");
 }
 window.eliminarDocumentoColeccion = eliminarDocumentoColeccion;
@@ -11889,7 +12098,7 @@ async function procesarArchivoPDF(file) {
     }
 }
 
-// Función Central Reutilizable para Consultar la Serverless Function de Gemini
+// Función Central Reutilizable para Consultar la Serverless Function de Gemini con Caché en Supabase
 async function generarPreguntaIA({ materia, tema, tipoJuego = 'bolillero', contextoPDF = null, dificultad = 'universitario', cantidadTemas = 10, preguntasPrevias = [], instruccionUsuario = '' }) {
     // Si no se proveyó contexto explícito, buscar apunte cargado
     if (!contextoPDF) {
@@ -11897,6 +12106,19 @@ async function generarPreguntaIA({ materia, tema, tipoJuego = 'bolillero', conte
         if (apunte && apunte.texto) {
             contextoPDF = apunte.texto;
         }
+    }
+
+    const hashContexto = generarHashTexto((contextoPDF || "") + "::" + (materia || "") + "::" + (tema || ""));
+
+    // Optimización con caché de Supabase: si no hay requerimientos específicos y existe en nube, responder de inmediato
+    if (supabaseService.isAvailable() && (!preguntasPrevias || preguntasPrevias.length === 0) && !instruccionUsuario) {
+        try {
+            const cached = await supabaseService.obtenerPreguntaCache(hashContexto, tipoJuego, dificultad);
+            if (cached) {
+                console.log("[Supabase] Pregunta servida desde caché en la nube.");
+                return cached;
+            }
+        } catch (_) {}
     }
 
     const payload = {
@@ -11924,6 +12146,12 @@ async function generarPreguntaIA({ materia, tema, tipoJuego = 'bolillero', conte
     }
 
     const json = await resp.json();
+
+    // Guardar en caché de la nube para próximas sesiones y compas
+    if (supabaseService.isAvailable() && json.data) {
+        supabaseService.guardarPreguntaCache(hashContexto, tipoJuego, dificultad, json.data).catch(() => {});
+    }
+
     return json.data;
 }
 
@@ -14186,7 +14414,7 @@ function iniciarAplicacion() {
 // =========================================================
 // GESTOR DE VERSIONES Y ACTUALIZACIÓN AUTOMÁTICA
 // =========================================================
-const APP_BUILD_VERSION = "29.21";
+const APP_BUILD_VERSION = "29.22";
 
 async function forzarActualizacionCompleta(mostrarNotificacion = true) {
     const lastAttempt = parseInt(sessionStorage.getItem("last_auto_update_ts") || "0", 10);
