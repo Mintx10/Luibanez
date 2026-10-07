@@ -6997,6 +6997,28 @@ dialog:not([open]),
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.button--config-bomba {
+    font-weight: 600 !important;
+    border-color: rgba(239, 68, 68, 0.4) !important;
+    background: rgba(239, 68, 68, 0.12) !important;
+    color: #f87171 !important;
+}
+
+.button--config-impostor {
+    font-weight: 600 !important;
+    border-color: rgba(234, 179, 8, 0.4) !important;
+    background: rgba(234, 179, 8, 0.12) !important;
+    color: #facc15 !important;
+}
+
+.button--config-memotest {
+    font-weight: 600 !important;
+    border-color: rgba(56, 189, 248, 0.4) !important;
+    background: rgba(56, 189, 248, 0.12) !important;
+    color: #38bdf8 !important;
 }
 
 /* Barra de Triatlón */
@@ -7464,6 +7486,18 @@ dialog:not([open]),
     transform: translateY(-2px);
     box-shadow: 0 4px 16px rgba(56, 189, 248, 0.2);
 }
+
+[data-theme="light"] .bomba-option-btn {
+    background: #ffffff;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    color: var(--color-text);
+}
+
+[data-theme="light"] .bomba-option-btn:hover {
+    background: #f1f5f9;
+    border-color: var(--color-primary);
+}
+
 .bomba-theory-context {
     background: rgba(15, 23, 42, 0.8);
     border: 1px solid rgba(56, 189, 248, 0.3);
@@ -7474,6 +7508,12 @@ dialog:not([open]),
     font-size: 0.95rem;
     line-height: 1.5;
     color: #e2e8f0;
+}
+
+[data-theme="light"] .bomba-theory-context {
+    background: #f8fafc;
+    border-color: rgba(37, 99, 235, 0.3);
+    color: var(--color-text);
 }
 .bomba-option-btn.is-correct {
     border-color: #10b981 !important;
@@ -7672,7 +7712,7 @@ dialog:not([open]),
     margin-bottom: 1.25rem;
 }
 .impostor-hud__stat {
-    background: #11141c;
+    background: var(--color-card);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
     padding: 0.65rem 0.85rem;
@@ -7680,6 +7720,12 @@ dialog:not([open]),
     flex-direction: column;
     gap: 0.25rem;
 }
+
+[data-theme="light"] .impostor-hud__stat {
+    background: #f1f5f9;
+    border-color: rgba(0, 0, 0, 0.08);
+}
+
 .impostor-hud__label {
     font-size: 0.72rem;
     text-transform: uppercase;
@@ -7689,6 +7735,7 @@ dialog:not([open]),
 .impostor-hud__value {
     font-size: 1.25rem;
     font-weight: 800;
+    color: var(--color-text);
 }
 .impostor-timer-bar-wrap {
     height: 10px;
@@ -7710,6 +7757,7 @@ dialog:not([open]),
     font-size: 1.15rem;
     font-weight: 700;
     margin-top: 0.5rem;
+    color: var(--color-text);
 }
 .impostor-cards-grid {
     display: grid;
@@ -7718,8 +7766,8 @@ dialog:not([open]),
     margin-bottom: 1.25rem;
 }
 .impostor-card {
-    background: #171b26;
-    border: 2px solid rgba(255, 255, 255, 0.1);
+    background: var(--color-card);
+    border: 2px solid var(--color-border);
     border-radius: var(--radius-lg);
     padding: 1.25rem;
     cursor: pointer;
@@ -7727,11 +7775,24 @@ dialog:not([open]),
     position: relative;
     overflow: hidden;
 }
+
+[data-theme="light"] .impostor-card {
+    background: #ffffff;
+    border-color: rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow-sm);
+}
+
 .impostor-card:hover {
     border-color: #38bdf8;
     transform: translateY(-3px);
     box-shadow: 0 8px 24px rgba(56, 189, 248, 0.18);
 }
+
+[data-theme="light"] .impostor-card:hover {
+    border-color: var(--color-primary);
+    background: #f8fafc;
+}
+
 .impostor-card__num {
     font-size: 0.75rem;
     font-weight: 700;
@@ -7741,7 +7802,7 @@ dialog:not([open]),
 .impostor-card__text {
     font-size: 0.95rem;
     line-height: 1.45;
-    color: #f1f5f9;
+    color: var(--color-text);
 }
 .impostor-card.is-caught {
     border-color: #ef4444;
@@ -7819,7 +7880,7 @@ dialog:not([open]),
     margin-bottom: 1.25rem;
 }
 .memotest-hud__stat {
-    background: #11141c;
+    background: var(--color-card);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
     padding: 0.65rem 0.85rem;
@@ -7827,6 +7888,12 @@ dialog:not([open]),
     flex-direction: column;
     gap: 0.25rem;
 }
+
+[data-theme="light"] .memotest-hud__stat {
+    background: #f1f5f9;
+    border-color: rgba(0, 0, 0, 0.08);
+}
+
 .memotest-hud__label {
     font-size: 0.72rem;
     text-transform: uppercase;
@@ -7836,7 +7903,34 @@ dialog:not([open]),
 .memotest-hud__value {
     font-size: 1.25rem;
     font-weight: 800;
+    color: var(--color-text);
 }
+
+/* Barra de progreso de conexiones */
+.memotest-progress-wrap {
+    width: 100%;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-pill);
+    overflow: hidden;
+    margin-bottom: 0.85rem;
+}
+
+[data-theme="light"] .memotest-progress-wrap {
+    background: rgba(0, 0, 0, 0.08);
+}
+
+.memotest-progress-bar {
+    width: 0%;
+    height: 100%;
+    background: linear-gradient(90deg, #38bdf8, #8b5cf6, #10b981);
+    transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.memotest-comodines-tray {
+    margin-bottom: 1.25rem;
+}
+
 .memotest-instructions {
     background: rgba(56, 189, 248, 0.08);
     border: 1px solid rgba(56, 189, 248, 0.2);
@@ -7846,6 +7940,13 @@ dialog:not([open]),
     color: #93c5fd;
     margin-bottom: 1.25rem;
 }
+
+[data-theme="light"] .memotest-instructions {
+    background: rgba(2, 132, 199, 0.06);
+    border-color: rgba(2, 132, 199, 0.25);
+    color: #0369a1;
+}
+
 .memotest-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
@@ -7978,12 +8079,44 @@ dialog:not([open]),
     overflow: hidden;
 }
 
+[data-theme="light"] .memotest-card__face-back {
+    background: linear-gradient(145deg, #f1f5f9, #e2e8f0);
+    border: 1.5px solid rgba(0, 0, 0, 0.12);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .memotest-card__face-front {
+    background: #ffffff;
+    border-color: rgba(37, 99, 235, 0.4);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .memotest-card--concepto .memotest-card__face-front {
+    background: #f0f9ff;
+    border-color: #0284c7;
+}
+
+[data-theme="light"] .memotest-card--formula .memotest-card__face-front {
+    background: #faf5ff;
+    border-color: #9333ea;
+}
+
+[data-theme="light"] .memotest-card__text {
+    color: var(--color-text);
+}
+
 /* Pareja Acertada (MATCH) */
 .memotest-card.is-matched .memotest-card__face-front {
     border-color: #10b981 !important;
     background: linear-gradient(145deg, #063826, #09261a) !important;
     box-shadow: 0 0 25px rgba(16, 185, 129, 0.5), inset 0 0 15px rgba(16, 185, 129, 0.3) !important;
     cursor: default;
+}
+
+[data-theme="light"] .memotest-card.is-matched .memotest-card__face-front {
+    background: linear-gradient(145deg, #dcfce7, #bbf7d0) !important;
+    border-color: #16a34a !important;
+    box-shadow: 0 0 20px rgba(22, 163, 74, 0.35) !important;
 }
 .memotest-card.is-matched {
     animation: memotestMatchSparkle 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;

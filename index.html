@@ -15,10 +15,10 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     
-    <link rel="icon" type="image/svg+xml" href="icon.svg?v=29.12">
-    <link rel="apple-touch-icon" href="icon-192.png?v=29.12">
-    <link rel="manifest" href="manifest.json?v=29.12">
-    <link rel="stylesheet" href="style.css?v=29.12">
+    <link rel="icon" type="image/svg+xml" href="icon.svg?v=29.13">
+    <link rel="apple-touch-icon" href="icon-192.png?v=29.13">
+    <link rel="manifest" href="manifest.json?v=29.13">
+    <link rel="stylesheet" href="style.css?v=29.13">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -2536,14 +2536,14 @@
                     </div>
                 </div>
 
-                <div class="juegos-edu-topbar__right" style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
-                    <button id="bombaOpenConfigBtn" class="button button--secondary button--sm" type="button" title="Configurar tiempo, dificultad, comodines y archivo con IA" style="font-weight: 600; border-color: rgba(239, 68, 68, 0.4); background: rgba(239, 68, 68, 0.1);">
+                <div class="juegos-edu-topbar__right">
+                    <button id="bombaOpenConfigBtn" class="button button--secondary button--sm button--config-bomba" type="button" title="Configurar tiempo, dificultad, comodines y archivo con IA">
                         ⚙️ Configurar Desafío IA
                     </button>
-                    <button id="impostorOpenConfigBtn" class="button button--secondary button--sm hidden" type="button" title="Configurar casos, tiempo y archivo con IA" style="font-weight: 600; border-color: rgba(234, 179, 8, 0.4); background: rgba(234, 179, 8, 0.1); color: #fde047;">
+                    <button id="impostorOpenConfigBtn" class="button button--secondary button--sm button--config-impostor hidden" type="button" title="Configurar casos, tiempo y archivo con IA">
                         ⚙️ Configurar Misión IA
                     </button>
-                    <button id="memotestOpenConfigBtn" class="button button--secondary button--sm hidden" type="button" title="Configurar pares, tiempo y archivo con IA" style="font-weight: 600; border-color: rgba(56, 189, 248, 0.4); background: rgba(56, 189, 248, 0.1); color: #38bdf8;">
+                    <button id="memotestOpenConfigBtn" class="button button--secondary button--sm button--config-memotest hidden" type="button" title="Configurar pares, tiempo y archivo con IA">
                         ⚙️ Configurar Memotest IA
                     </button>
                     <button id="juegosRulesBtn" class="rules-trigger-btn" type="button" title="Ver reglas y controles de este juego">
@@ -2766,7 +2766,7 @@
                             <span id="impostorSetupStatusText">Preparando material temático...</span>
                         </div>
 
-                        <button id="impostorStartGameBtn" class="button button--primary button--lg" style="width: 100%; justify-content: center; font-size: 1.05rem;" type="button">
+                        <button id="impostorStartGameBtn" class="button button--primary button--lg button--full" type="button">
                             🚀 Comenzar Investigación
                         </button>
                     </div>
@@ -2872,12 +2872,12 @@
                     </header>
 
                     <!-- Barra de progreso visual de conexiones -->
-                    <div class="memotest-progress-wrap" style="width: 100%; height: 6px; background: rgba(255,255,255,0.08); border-radius: 999px; overflow: hidden; margin-bottom: 0.75rem;">
-                        <div class="memotest-progress-bar" id="memotestProgressBar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #38bdf8, #8b5cf6, #10b981); transition: width 0.4s ease;"></div>
+                    <div class="memotest-progress-wrap">
+                        <div class="memotest-progress-bar" id="memotestProgressBar"></div>
                     </div>
 
                     <!-- Bandeja de Comodines para Memotest (Cartas Grandes 3D) -->
-                    <div class="memotest-comodines-tray" id="memotestComodinesTray" style="margin-bottom: 1rem;">
+                    <div class="memotest-comodines-tray" id="memotestComodinesTray">
                         <div class="comodines-tray-header">
                             <span class="comodines-tray-label">⚡ PODERES DE MEMORIA & RAYOS X</span>
                             <span class="comodines-tray-hint">Tocá una carta para activarla</span>
@@ -5584,7 +5584,7 @@
 </dialog>
 
 <script src="mqtt.min.js"></script>
-<script src="script.js?v=29.12" defer></script>
+<script src="script.js?v=29.13" defer></script>
 
 <!-- =========================================================
      MODAL DE PROMPT PARA GEMINI (CREAR JUEGOS DESDE PDF)
