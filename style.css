@@ -20234,6 +20234,159 @@ body.modo-dev-activo .juntos-locked-notice {
     border-color: #0284c7 !important;
 }
 
+/* ========================================================
+   BANDEJA MULTI-PDF Y LISTA DE DOCUMENTOS (v29.21)
+   ======================================================== */
+.setup-multi-pdf-tray {
+    background: rgba(15, 23, 42, 0.55);
+    border: 1px solid rgba(56, 189, 248, 0.25);
+    border-radius: var(--radius-md, 12px);
+    padding: 0.65rem 0.85rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.setup-multi-pdf-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.setup-multi-pdf-stats {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.setup-multi-pdf-icon {
+    font-size: 1.25rem;
+    line-height: 1;
+}
+
+.setup-multi-pdf-count {
+    font-size: 0.84rem;
+    color: #f8fafc;
+    display: block;
+    line-height: 1.2;
+}
+
+.setup-multi-pdf-meta {
+    font-size: 0.72rem;
+    color: var(--color-text-muted);
+    display: block;
+}
+
+.setup-multi-pdf-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    max-height: 170px;
+    overflow-y: auto;
+    padding-right: 0.2rem;
+}
+
+.setup-multi-pdf-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.35rem 0.55rem;
+    background: rgba(15, 23, 42, 0.75);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: var(--radius-sm, 8px);
+    transition: all 0.15s ease;
+}
+
+.setup-multi-pdf-item:hover {
+    border-color: rgba(56, 189, 248, 0.3);
+}
+
+.setup-multi-pdf-item.is-inactive {
+    opacity: 0.55;
+    background: rgba(15, 23, 42, 0.35);
+}
+
+.setup-multi-pdf-item__left {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 0;
+    flex: 1;
+}
+
+.setup-multi-pdf-item__checkbox {
+    cursor: pointer;
+    accent-color: #0284c7;
+    width: 15px;
+    height: 15px;
+    flex-shrink: 0;
+}
+
+.setup-multi-pdf-item__info {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    flex: 1;
+}
+
+.setup-multi-pdf-item__name {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #f8fafc;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.setup-multi-pdf-item__meta {
+    font-size: 0.68rem;
+    color: var(--color-text-muted);
+}
+
+.setup-multi-pdf-item__remove {
+    background: transparent;
+    border: none;
+    color: #ef4444;
+    font-size: 0.8rem;
+    padding: 0.2rem 0.4rem;
+    cursor: pointer;
+    border-radius: 4px;
+    line-height: 1;
+    transition: background 0.15s ease;
+}
+
+.setup-multi-pdf-item__remove:hover {
+    background: rgba(239, 68, 68, 0.15);
+}
+
+/* Light Mode Overrides */
+[data-theme="light"] .setup-multi-pdf-tray {
+    background: #f8fafc;
+    border-color: rgba(56, 189, 248, 0.35);
+}
+
+[data-theme="light"] .setup-multi-pdf-header {
+    border-bottom-color: rgba(0, 0, 0, 0.06);
+}
+
+[data-theme="light"] .setup-multi-pdf-count {
+    color: #0f172a;
+}
+
+[data-theme="light"] .setup-multi-pdf-item {
+    background: #ffffff;
+    border-color: rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .setup-multi-pdf-item__name {
+    color: #0f172a;
+}
+
 
 
 

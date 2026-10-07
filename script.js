@@ -9354,24 +9354,13 @@ function actualizarCardPdfEnCrearSala() {
 }
 
 // Función global unificada para procesar y vincular PDF a nivel general en la app
-async function procesarYVincularPdfGlobal(file) {
-    if (!file) return;
-    mostrarToast("📑 Procesando nuevo material de estudio con PDF.js...");
-    try {
-        const res = await procesarArchivoPDF(file);
-        apuntesEstado.global = res;
-        apuntesEstado.bomba = res;
-        apuntesEstado.bolillero = res;
-        apuntesEstado.impostor = res;
-        apuntesEstado.memotest = res;
-        onlineDueloEstado.fuenteMaterial = "pdf";
-        await guardarApuntesEnStorage();
-        actualizarUIIndicadoresPDF();
-        actualizarCardPdfEnCrearSala();
-        mostrarToast(`✅ "${res.nombre}" vinculado para la sala y todos tus juegos!`);
-    } catch (err) {
-        mostrarToast("⚠️ " + err.message, "error");
-    }
+async function procesarYVincularPdfGlobal(fileOrFiles) {
+    if (!fileOrFiles) return;
+    const arr = Array.isArray(fileOrFiles) ? fileOrFiles : (fileOrFiles instanceof FileList ? Array.from(fileOrFiles) : [fileOrFiles]);
+    if (arr.length === 0) return;
+    await procesarArchivosGenerico(arr, "la Sala Online");
+    onlineDueloEstado.fuenteMaterial = "pdf";
+    actualizarCardPdfEnCrearSala();
 }
 
 function renderDueloPlayersChips() {
@@ -11433,14 +11422,57 @@ window.enviarMensajeMQTT = enviarMensajeMQTT;
    ========================================================== */
 
 const APUNTES_STORAGE_KEY = "luibanez_apuntes_pdf_v1";
+const APUNTES_COLECCION_KEY = "luibanez_apuntes_coleccion_v1";
+
+// Colección Global de Documentos Activos en Luibañez
+const apuntesColeccion = []; // Array de { id, nombre, paginas, palabras, texto, icono, tipoLabel, metaDetalle, activo: true, timestamp }
 
 const apuntesEstado = {
-    global: null,   // { nombre, paginas, palabras, texto }
+    global: null,   // Objeto consolidado virtual para retrocompatibilidad
     bolillero: null,
     bomba: null,
     impostor: null,
     memotest: null
 };
+
+function obtenerContextoConsolidadoApuntes() {
+    const activos = apuntesColeccion.filter(d => d.activo !== false);
+    if (activos.length === 0) return null;
+
+    const textoCombinado = activos.map((doc, idx) => {
+        return `=== DOCUMENTO ${idx + 1}: ${doc.nombre} ===\n${doc.texto}`;
+    }).join("\n\n");
+
+    const paginasTotal = activos.reduce((acc, d) => acc + (d.paginas || 1), 0);
+    const palabrasTotal = activos.reduce((acc, d) => acc + (d.palabras || (d.texto ? d.texto.split(/\s+/).filter(Boolean).length : 0)), 0);
+    const nombres = activos.map(d => d.nombre).join(" + ");
+
+    return {
+        nombre: nombres,
+        texto: textoCombinado,
+        paginas: paginasTotal,
+        palabras: palabrasTotal,
+        totalDocs: apuntesColeccion.length,
+        activosDocs: activos.length
+    };
+}
+
+function sincronizarApuntesEstadoLegacy() {
+    const consolidado = obtenerContextoConsolidadoApuntes();
+    if (consolidado) {
+        apuntesEstado.global = consolidado;
+        apuntesEstado.bolillero = consolidado;
+        apuntesEstado.bomba = consolidado;
+        apuntesEstado.impostor = consolidado;
+        apuntesEstado.memotest = consolidado;
+    } else {
+        apuntesEstado.global = null;
+        apuntesEstado.bolillero = null;
+        apuntesEstado.bomba = null;
+        apuntesEstado.impostor = null;
+        apuntesEstado.memotest = null;
+    }
+}
 
 /* ==========================================================
    PERSISTENCIA ROBUSTA DE APUNTES CON INDEXEDDB (SIN LÍMITES)
@@ -11500,52 +11532,230 @@ async function obtenerApunteDeIDB(clave) {
 // Cargar apuntes persistidos desde IndexedDB (o fallback localStorage)
 async function cargarApuntesGuardados() {
     try {
-        const idbData = await obtenerApunteDeIDB("apuntesEstado");
-        if (idbData && typeof idbData === "object") {
-            Object.assign(apuntesEstado, idbData);
-            actualizarUIIndicadoresPDF();
-            return;
+        const idbColeccion = await obtenerApunteDeIDB("apuntesColeccion");
+        if (Array.isArray(idbColeccion) && idbColeccion.length > 0) {
+            apuntesColeccion.length = 0;
+            apuntesColeccion.push(...idbColeccion);
+        } else {
+            // Migración retroactiva si existía un apunte individual previo
+            const idbData = await obtenerApunteDeIDB("apuntesEstado");
+            const legado = idbData?.global || idbData?.bolillero || idbData?.bomba;
+            if (legado && legado.texto) {
+                apuntesColeccion.push({
+                    id: "doc_legacy_" + Date.now(),
+                    nombre: legado.nombre || "Apunte Anterior",
+                    paginas: legado.paginas || 1,
+                    palabras: legado.palabras || 0,
+                    texto: legado.texto,
+                    icono: "📄",
+                    tipoLabel: "PDF",
+                    metaDetalle: `${legado.paginas || 1} págs`,
+                    activo: true,
+                    timestamp: Date.now()
+                });
+            } else {
+                const guardado = localStorage.getItem(APUNTES_STORAGE_KEY);
+                if (guardado) {
+                    const data = JSON.parse(guardado);
+                    const leg = data.global || data.bolillero || data.bomba;
+                    if (leg && leg.texto) {
+                        apuntesColeccion.push({
+                            id: "doc_ls_" + Date.now(),
+                            nombre: leg.nombre || "Apunte Anterior",
+                            paginas: leg.paginas || 1,
+                            palabras: leg.palabras || 0,
+                            texto: leg.texto,
+                            icono: "📄",
+                            tipoLabel: "PDF",
+                            metaDetalle: `${leg.paginas || 1} págs`,
+                            activo: true,
+                            timestamp: Date.now()
+                        });
+                    }
+                }
+            }
         }
-
-        const guardado = localStorage.getItem(APUNTES_STORAGE_KEY);
-        if (guardado) {
-            const data = JSON.parse(guardado);
-            Object.assign(apuntesEstado, data);
-            actualizarUIIndicadoresPDF();
-        }
+        sincronizarApuntesEstadoLegacy();
+        actualizarUIIndicadoresPDF();
     } catch (e) {
         console.warn("No se pudieron cargar los apuntes guardados:", e);
     }
 }
 
-async function guardarApuntesEnStorage() {
-    // 1. Guardar en IndexedDB (soporta cientos de megas sin errores de cuota)
-    await guardarApunteEnIDB("apuntesEstado", apuntesEstado);
-
-    // 2. Guardar metadata liviana en localStorage
+async function guardarColeccionEnStorage() {
     try {
-        const metadata = {};
-        for (const k in apuntesEstado) {
-            if (apuntesEstado[k]) {
-                metadata[k] = {
-                    nombre: apuntesEstado[k].nombre,
-                    paginas: apuntesEstado[k].paginas,
-                    palabras: apuntesEstado[k].palabras
-                };
-            } else {
-                metadata[k] = null;
-            }
-        }
-        localStorage.setItem(APUNTES_STORAGE_KEY + "_meta", JSON.stringify(metadata));
+        await guardarApunteEnIDB("apuntesColeccion", apuntesColeccion);
+        sincronizarApuntesEstadoLegacy();
+        await guardarApunteEnIDB("apuntesEstado", apuntesEstado);
+
+        const metadata = apuntesColeccion.map(d => ({
+            id: d.id,
+            nombre: d.nombre,
+            paginas: d.paginas,
+            palabras: d.palabras,
+            activo: d.activo
+        }));
+        localStorage.setItem(APUNTES_COLECCION_KEY + "_meta", JSON.stringify(metadata));
     } catch (e) {
-        console.warn("No se pudo guardar metadata en localStorage:", e);
+        console.warn("No se pudo guardar la colección en storage:", e);
     }
+}
+window.guardarApuntesEnStorage = guardarColeccionEnStorage;
+
+async function agregarDocumentosAColeccion(nuevosDocs) {
+    if (!Array.isArray(nuevosDocs)) nuevosDocs = [nuevosDocs];
+    for (const doc of nuevosDocs) {
+        if (!doc || !doc.texto) continue;
+        const indexExistente = apuntesColeccion.findIndex(d => d.nombre === doc.nombre);
+        const item = {
+            id: doc.id || ("doc_" + Date.now() + "_" + Math.random().toString(36).substr(2, 5)),
+            nombre: doc.nombre || "Documento sin título",
+            paginas: doc.paginas || 1,
+            palabras: doc.palabras || (doc.texto ? doc.texto.split(/\s+/).filter(Boolean).length : 0),
+            texto: doc.texto,
+            icono: doc.icono || "📄",
+            tipoLabel: doc.tipoLabel || "PDF",
+            metaDetalle: doc.metaDetalle || `${doc.paginas || 1} pág(s)`,
+            activo: doc.activo !== false,
+            timestamp: Date.now()
+        };
+        if (indexExistente >= 0) {
+            apuntesColeccion[indexExistente] = item;
+        } else {
+            apuntesColeccion.push(item);
+        }
+    }
+    await guardarColeccionEnStorage();
+    actualizarUIIndicadoresPDF();
+}
+
+async function toggleDocumentoActivo(docId) {
+    const doc = apuntesColeccion.find(d => d.id === docId);
+    if (!doc) return;
+    doc.activo = !doc.activo;
+    await guardarColeccionEnStorage();
+    actualizarUIIndicadoresPDF();
+    const estadoTxt = doc.activo ? "activado para los desafíos" : "desactivado temporalmente";
+    mostrarToast(`📄 "${doc.nombre}" ${estadoTxt}.`, "info");
+}
+window.toggleDocumentoActivo = toggleDocumentoActivo;
+
+async function eliminarDocumentoColeccion(docId) {
+    const index = apuntesColeccion.findIndex(d => d.id === docId);
+    if (index === -1) return;
+    const eliminado = apuntesColeccion.splice(index, 1)[0];
+    await guardarColeccionEnStorage();
+    actualizarUIIndicadoresPDF();
+    mostrarToast(`🗑️ "${eliminado.nombre}" quitado de la biblioteca.`, "info");
+}
+window.eliminarDocumentoColeccion = eliminarDocumentoColeccion;
+
+async function procesarArchivosGenerico(files, moduloLabel = "Juegos") {
+    const arrFiles = Array.from(files || []);
+    if (arrFiles.length === 0) return;
+
+    mostrarToast(`📂 Procesando ${arrFiles.length} documento(s) para ${moduloLabel}...`, "info");
+    const docsProcesados = [];
+
+    for (let i = 0; i < arrFiles.length; i++) {
+        const file = arrFiles[i];
+        try {
+            if (arrFiles.length > 1) {
+                mostrarToast(`📄 Extrayendo (${i + 1}/${arrFiles.length}): ${file.name}...`, "info");
+            }
+            const res = await extraerTextoDeCualquierArchivo(file);
+            if (res && res.texto) {
+                docsProcesados.push(res);
+            }
+        } catch (err) {
+            console.error(`Error al extraer ${file.name}:`, err);
+            mostrarToast(`⚠️ Error en "${file.name}": ${err.message || "No se pudo leer"}`, "error");
+        }
+    }
+
+    if (docsProcesados.length > 0) {
+        await agregarDocumentosAColeccion(docsProcesados);
+        mostrarToast(`✅ ${docsProcesados.length} documento(s) sumado(s) exitosamente a tu biblioteca.`, "exito");
+    }
+}
+window.procesarArchivosGenerico = procesarArchivosGenerico;
+
+function renderizarBandejaMultiPdf(trayId, countId, metaId, listId, dropzoneId) {
+    const tray = document.getElementById(trayId);
+    const countElem = document.getElementById(countId);
+    const metaElem = document.getElementById(metaId);
+    const listElem = document.getElementById(listId);
+    const dropzone = document.getElementById(dropzoneId);
+
+    if (!tray || !listElem) return;
+
+    if (apuntesColeccion.length === 0) {
+        tray.classList.add("hidden");
+        if (dropzone) dropzone.classList.remove("hidden");
+        return;
+    }
+
+    // Hay documentos: mostrar bandeja y ocultar dropzone principal vacío
+    tray.classList.remove("hidden");
+    if (dropzone) dropzone.classList.add("hidden");
+
+    const activos = apuntesColeccion.filter(d => d.activo !== false);
+    const totalPags = activos.reduce((acc, d) => acc + (d.paginas || 1), 0);
+
+    if (countElem) {
+        countElem.textContent = `${activos.length} de ${apuntesColeccion.length} documentos activos`;
+    }
+    if (metaElem) {
+        metaElem.textContent = `${totalPags} páginas acumuladas listas para IA`;
+    }
+
+    listElem.innerHTML = "";
+    apuntesColeccion.forEach(doc => {
+        const item = document.createElement("div");
+        item.className = `setup-multi-pdf-item ${doc.activo !== false ? "" : "is-inactive"}`;
+        item.innerHTML = `
+            <div class="setup-multi-pdf-item__left">
+                <input type="checkbox" class="setup-multi-pdf-item__checkbox" ${doc.activo !== false ? "checked" : ""} title="${doc.activo !== false ? "Desmarcar para excluir de las preguntas" : "Marcar para incluir en las preguntas"}">
+                <span class="setup-multi-pdf-item__icon">${doc.icono || "📄"}</span>
+                <div class="setup-multi-pdf-item__info">
+                    <span class="setup-multi-pdf-item__name" title="${doc.nombre}">${doc.nombre}</span>
+                    <span class="setup-multi-pdf-item__meta">${doc.paginas || 1} pág(s) • ${doc.palabras || 0} palabras</span>
+                </div>
+            </div>
+            <button type="button" class="setup-multi-pdf-item__remove" title="Quitar este documento">✕</button>
+        `;
+
+        const chk = item.querySelector(".setup-multi-pdf-item__checkbox");
+        if (chk) {
+            chk.addEventListener("click", (e) => {
+                e.stopPropagation();
+                toggleDocumentoActivo(doc.id);
+            });
+        }
+
+        const removeBtn = item.querySelector(".setup-multi-pdf-item__remove");
+        if (removeBtn) {
+            removeBtn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                eliminarDocumentoColeccion(doc.id);
+            });
+        }
+
+        listElem.appendChild(item);
+    });
 }
 
 function actualizarUIIndicadoresPDF() {
     actualizarCardPdfEnCrearSala();
-    const apunteActivo = apuntesEstado.global || apuntesEstado.bolillero || apuntesEstado.bomba;
-    
+    sincronizarApuntesEstadoLegacy();
+    const apunteActivo = apuntesEstado.global;
+
+    // Renderizar bandejas multi-PDF en los 4 juegos
+    renderizarBandejaMultiPdf("bolilleroMultiPdfTray", "bolilleroMultiPdfCount", "bolilleroMultiPdfMeta", "bolilleroMultiPdfList", "bolilleroUploadDropzone");
+    renderizarBandejaMultiPdf("bombaMultiPdfTray", "bombaMultiPdfCount", "bombaMultiPdfMeta", "bombaMultiPdfList", "bombaUploadDropzone");
+    renderizarBandejaMultiPdf("impostorMultiPdfTray", "impostorMultiPdfCount", "impostorMultiPdfMeta", "impostorMultiPdfList", "impostorUploadDropzone");
+    renderizarBandejaMultiPdf("memotestMultiPdfTray", "memotestMultiPdfCount", "memotestMultiPdfMeta", "memotestMultiPdfList", "memotestUploadDropzone");
+
     // 1. Centro Principal de Apuntes en Inicio (viewHome)
     if (dom.mainPdfHubEmpty && dom.mainPdfHubActive) {
         if (apunteActivo && apunteActivo.nombre) {
@@ -11553,7 +11763,7 @@ function actualizarUIIndicadoresPDF() {
             dom.mainPdfHubActive.classList.remove("hidden");
             if (dom.mainPdfFileName) dom.mainPdfFileName.textContent = apunteActivo.nombre;
             if (dom.mainPdfFileStats) {
-                dom.mainPdfFileStats.textContent = `${apunteActivo.paginas || 1} páginas • ${apunteActivo.palabras || 0} palabras • Guardado en base de datos local`;
+                dom.mainPdfFileStats.textContent = `${apunteActivo.activosDocs || 1} documento(s) activo(s) • ${apunteActivo.paginas || 1} páginas • Guardado en base de datos local`;
             }
         } else {
             dom.mainPdfHubEmpty.classList.remove("hidden");
@@ -11573,10 +11783,10 @@ function actualizarUIIndicadoresPDF() {
         }
     }
 
-    // 3. Barra de Apuntes en Juegos Educativos (Bomba, Impostor, Memotest)
+    // 3. Barra de Apuntes en Juegos Educativos
     if (dom.juegosApuntesStatus) {
         if (apunteActivo) {
-            dom.juegosApuntesStatus.textContent = `📄 ${apunteActivo.nombre} (${apunteActivo.paginas} págs, ${apunteActivo.palabras} palabras)`;
+            dom.juegosApuntesStatus.textContent = `📚 ${apunteActivo.activosDocs || 1} doc(s) activos: ${apunteActivo.nombre} (${apunteActivo.paginas} págs, ${apunteActivo.palabras} palabras)`;
             dom.juegosApuntesStatus.classList.add("has-pdf");
             if (dom.juegosRemovePdfBtn) dom.juegosRemovePdfBtn.classList.remove("hidden");
         } else {
@@ -11590,7 +11800,7 @@ function actualizarUIIndicadoresPDF() {
     if (dom.bolilleroIASourceBadge) {
         if (apunteActivo) {
             dom.bolilleroIASourceBadge.style.display = "inline-block";
-            dom.bolilleroIASourceBadge.textContent = `📄 Basado en: ${apunteActivo.nombre}`;
+            dom.bolilleroIASourceBadge.textContent = `📚 Basado en ${apunteActivo.activosDocs || 1} doc(s): ${apunteActivo.nombre}`;
         } else {
             dom.bolilleroIASourceBadge.style.display = "none";
         }
@@ -11599,9 +11809,9 @@ function actualizarUIIndicadoresPDF() {
     // 5. Tarjeta en Estudiar Solo
     if (dom.soloPdfCardDesc) {
         if (apunteActivo) {
-            dom.soloPdfCardDesc.innerHTML = `<strong style="color: #34d399;">📄 Archivo activo:</strong> ${apunteActivo.nombre} (${apunteActivo.paginas} págs). Los juegos de la plataforma ya están usando este material para formular desafíos.`;
+            dom.soloPdfCardDesc.innerHTML = `<strong style="color: #34d399;">📚 Archivos activos (${apunteActivo.activosDocs || 1}):</strong> ${apunteActivo.nombre} (${apunteActivo.paginas} págs). Los juegos de la plataforma están usando este material para formular desafíos.`;
         } else {
-            dom.soloPdfCardDesc.textContent = "Cargá el resumen o programa en PDF de tu materia. La IA de Google Gemini extraerá los conceptos y adaptará las preguntas de todos tus juegos automáticamente.";
+            dom.soloPdfCardDesc.textContent = "Cargá uno o varios resúmenes en PDF de tu materia. La IA de Google Gemini extraerá los conceptos y adaptará las preguntas de todos tus juegos automáticamente.";
         }
     }
 }
@@ -12250,24 +12460,21 @@ function registrarEventos() {
 
     if (dueloPdfInput) {
         dueloPdfInput.addEventListener("change", async (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                await procesarYVincularPdfGlobal(file);
+            const files = Array.from(e.target.files || []);
+            if (files.length) {
+                await procesarYVincularPdfGlobal(files);
             }
+            e.target.value = "";
         });
     }
 
     if (dueloRemoveBtn) {
         dueloRemoveBtn.addEventListener("click", async () => {
-            apuntesEstado.global = null;
-            apuntesEstado.bomba = null;
-            apuntesEstado.bolillero = null;
-            apuntesEstado.impostor = null;
-            apuntesEstado.memotest = null;
-            await guardarApuntesEnStorage();
+            apuntesColeccion.length = 0;
+            await guardarColeccionEnStorage();
             actualizarUIIndicadoresPDF();
             actualizarDropdownListasDuelo();
-            mostrarToast("🗑️ Archivo PDF desvinculado de la sala.");
+            mostrarToast("🗑️ Archivos PDF desvinculados de la sala.", "info");
         });
     }
 
@@ -13555,8 +13762,9 @@ function iniciarAplicacion() {
             dom.bolilleroPdfFileInput.click();
         });
         dom.bolilleroPdfFileInput.addEventListener("change", (e) => {
-            const file = e.target.files?.[0];
-            if (file) procesarArchivoBolillero(file);
+            const files = Array.from(e.target.files || []);
+            if (files.length) procesarArchivoBolillero(files);
+            e.target.value = "";
         });
         dom.bolilleroUploadDropzone.addEventListener("dragover", (e) => {
             e.preventDefault();
@@ -13568,9 +13776,13 @@ function iniciarAplicacion() {
         dom.bolilleroUploadDropzone.addEventListener("drop", (e) => {
             e.preventDefault();
             dom.bolilleroUploadDropzone.classList.remove("is-dragover");
-            const file = e.dataTransfer.files?.[0];
-            if (file) procesarArchivoBolillero(file);
+            const files = Array.from(e.dataTransfer.files || []);
+            if (files.length) procesarArchivoBolillero(files);
         });
+    }
+    const bolilleroAddMorePdfBtn = document.getElementById("bolilleroAddMorePdfBtn");
+    if (bolilleroAddMorePdfBtn && dom.bolilleroPdfFileInput) {
+        bolilleroAddMorePdfBtn.addEventListener("click", () => dom.bolilleroPdfFileInput.click());
     }
     if (dom.bolilleroBtnQuitarPdf) {
         dom.bolilleroBtnQuitarPdf.addEventListener("click", (e) => {
@@ -13650,8 +13862,9 @@ function iniciarAplicacion() {
             dom.bombaPdfFileInput.click();
         });
         dom.bombaPdfFileInput.addEventListener("change", (e) => {
-            const file = e.target.files?.[0];
-            if (file) procesarArchivoBomba(file);
+            const files = Array.from(e.target.files || []);
+            if (files.length) procesarArchivoBomba(files);
+            e.target.value = "";
         });
         dom.bombaUploadDropzone.addEventListener("dragover", (e) => {
             e.preventDefault();
@@ -13663,9 +13876,13 @@ function iniciarAplicacion() {
         dom.bombaUploadDropzone.addEventListener("drop", (e) => {
             e.preventDefault();
             dom.bombaUploadDropzone.classList.remove("is-dragover");
-            const file = e.dataTransfer.files?.[0];
-            if (file) procesarArchivoBomba(file);
+            const files = Array.from(e.dataTransfer.files || []);
+            if (files.length) procesarArchivoBomba(files);
         });
+    }
+    const bombaAddMorePdfBtn = document.getElementById("bombaAddMorePdfBtn");
+    if (bombaAddMorePdfBtn && dom.bombaPdfFileInput) {
+        bombaAddMorePdfBtn.addEventListener("click", () => dom.bombaPdfFileInput.click());
     }
     if (dom.bombaBtnQuitarPdf) {
         dom.bombaBtnQuitarPdf.addEventListener("click", (e) => {
@@ -13764,8 +13981,9 @@ function iniciarAplicacion() {
             dom.impostorPdfFileInput.click();
         });
         dom.impostorPdfFileInput.addEventListener("change", (e) => {
-            const file = e.target.files?.[0];
-            if (file) procesarArchivoImpostor(file);
+            const files = Array.from(e.target.files || []);
+            if (files.length) procesarArchivoImpostor(files);
+            e.target.value = "";
         });
         dom.impostorUploadDropzone.addEventListener("dragover", (e) => {
             e.preventDefault();
@@ -13777,9 +13995,13 @@ function iniciarAplicacion() {
         dom.impostorUploadDropzone.addEventListener("drop", (e) => {
             e.preventDefault();
             dom.impostorUploadDropzone.classList.remove("is-dragover");
-            const file = e.dataTransfer.files?.[0];
-            if (file) procesarArchivoImpostor(file);
+            const files = Array.from(e.dataTransfer.files || []);
+            if (files.length) procesarArchivoImpostor(files);
         });
+    }
+    const impostorAddMorePdfBtn = document.getElementById("impostorAddMorePdfBtn");
+    if (impostorAddMorePdfBtn && dom.impostorPdfFileInput) {
+        impostorAddMorePdfBtn.addEventListener("click", () => dom.impostorPdfFileInput.click());
     }
     if (dom.impostorBtnQuitarPdf) {
         dom.impostorBtnQuitarPdf.addEventListener("click", (e) => {
@@ -13863,8 +14085,9 @@ function iniciarAplicacion() {
             dom.memotestPdfFileInput.click();
         });
         dom.memotestPdfFileInput.addEventListener("change", (e) => {
-            const file = e.target.files?.[0];
-            if (file) procesarArchivoMemotest(file);
+            const files = Array.from(e.target.files || []);
+            if (files.length) procesarArchivoMemotest(files);
+            e.target.value = "";
         });
         dom.memotestUploadDropzone.addEventListener("dragover", (e) => {
             e.preventDefault();
@@ -13876,9 +14099,13 @@ function iniciarAplicacion() {
         dom.memotestUploadDropzone.addEventListener("drop", (e) => {
             e.preventDefault();
             dom.memotestUploadDropzone.classList.remove("is-dragover");
-            const file = e.dataTransfer.files?.[0];
-            if (file) procesarArchivoMemotest(file);
+            const files = Array.from(e.dataTransfer.files || []);
+            if (files.length) procesarArchivoMemotest(files);
         });
+    }
+    const memotestAddMorePdfBtn = document.getElementById("memotestAddMorePdfBtn");
+    if (memotestAddMorePdfBtn && dom.memotestPdfFileInput) {
+        memotestAddMorePdfBtn.addEventListener("click", () => dom.memotestPdfFileInput.click());
     }
     if (dom.memotestBtnQuitarPdf) {
         dom.memotestBtnQuitarPdf.addEventListener("click", (e) => {
@@ -13959,7 +14186,7 @@ function iniciarAplicacion() {
 // =========================================================
 // GESTOR DE VERSIONES Y ACTUALIZACIÓN AUTOMÁTICA
 // =========================================================
-const APP_BUILD_VERSION = "29.20";
+const APP_BUILD_VERSION = "29.21";
 
 async function forzarActualizacionCompleta(mostrarNotificacion = true) {
     const lastAttempt = parseInt(sessionStorage.getItem("last_auto_update_ts") || "0", 10);
@@ -19947,46 +20174,27 @@ function cerrarModalConfigBolillero() {
     }
 }
 
-async function procesarArchivoBolillero(file) {
-    if (!file) return;
-    mostrarToast("📄 Procesando archivo para Bolillero...", "info");
-    try {
-        const res = await extraerTextoDeCualquierArchivo(file);
-        bolilleroSetupEstado.archivoTexto = res.texto;
-        bolilleroSetupEstado.archivoNombre = res.nombre;
-        bolilleroSetupEstado.archivoPaginas = res.paginas;
-
-        if (dom.bolilleroLoadedPdfInfo) dom.bolilleroLoadedPdfInfo.classList.remove("hidden");
-        if (dom.bolilleroLoadedPdfIcon) dom.bolilleroLoadedPdfIcon.textContent = res.icono;
-        if (dom.bolilleroLoadedPdfName) dom.bolilleroLoadedPdfName.textContent = res.nombre;
-        if (dom.bolilleroLoadedPdfMeta) dom.bolilleroLoadedPdfMeta.textContent = res.metaDetalle;
-        if (dom.bolilleroUploadTitle) dom.bolilleroUploadTitle.textContent = `${res.tipoLabel} cargado con éxito`;
-        if (dom.bolilleroUploadHint) dom.bolilleroUploadHint.textContent = "Hacé clic en 'Generar Bolillero con IA' para extraer las bolillas.";
-
-        apuntesEstado.bolillero = {
-            nombre: res.nombre,
-            texto: res.texto,
-            paginas: res.paginas,
-            fecha: new Date().toISOString()
-        };
-        guardarApuntesEnStorage().catch(() => {});
-
-        mostrarToast(`✅ ${res.tipoLabel} "${res.nombre}" conectado al Bolillero.`, "exito");
-    } catch (err) {
-        console.error("Error al procesar archivo en Bolillero:", err);
-        mostrarToast("⚠️ No se pudo procesar el archivo. Probá con otro formato.", "error");
+async function procesarArchivoBolillero(fileOrFiles) {
+    if (!fileOrFiles) return;
+    const arr = Array.isArray(fileOrFiles) ? fileOrFiles : (fileOrFiles instanceof FileList ? Array.from(fileOrFiles) : [fileOrFiles]);
+    await procesarArchivosGenerico(arr, "Bolillero");
+    const consolidado = obtenerContextoConsolidadoApuntes();
+    if (consolidado) {
+        bolilleroSetupEstado.archivoTexto = consolidado.texto;
+        bolilleroSetupEstado.archivoNombre = consolidado.nombre;
+        bolilleroSetupEstado.archivoPaginas = consolidado.paginas;
     }
 }
 
-function limpiarArchivoBolillero() {
+async function limpiarArchivoBolillero() {
     bolilleroSetupEstado.archivoTexto = "";
     bolilleroSetupEstado.archivoNombre = "";
     bolilleroSetupEstado.archivoPaginas = 0;
     if (dom.bolilleroPdfFileInput) dom.bolilleroPdfFileInput.value = "";
-    if (dom.bolilleroLoadedPdfInfo) dom.bolilleroLoadedPdfInfo.classList.add("hidden");
-    if (dom.bolilleroUploadTitle) dom.bolilleroUploadTitle.textContent = "Subir Material de Estudio";
-    if (dom.bolilleroUploadHint) dom.bolilleroUploadHint.textContent = "Hacé clic o arrastrá acá tus apuntes, libro o programa de la materia.";
-    mostrarToast("🗑️ Archivo desvinculado del Bolillero.", "info");
+    apuntesColeccion.length = 0;
+    await guardarColeccionEnStorage();
+    actualizarUIIndicadoresPDF();
+    mostrarToast("🗑️ Todos los archivos desvinculados de la biblioteca.", "info");
 }
 
 function sincronizarDificultadBolilleroUI() {
@@ -20156,46 +20364,27 @@ function cerrarModalConfigBomba() {
     }
 }
 
-async function procesarArchivoBomba(file) {
-    if (!file) return;
-    mostrarToast("💣 Vinculando material para el artificiero...", "info");
-    try {
-        const res = await extraerTextoDeCualquierArchivo(file);
-        bombaSetupEstado.archivoTexto = res.texto;
-        bombaSetupEstado.archivoNombre = res.nombre;
-        bombaSetupEstado.archivoPaginas = res.paginas;
-
-        if (dom.bombaLoadedPdfInfo) dom.bombaLoadedPdfInfo.classList.remove("hidden");
-        if (dom.bombaLoadedPdfIcon) dom.bombaLoadedPdfIcon.textContent = res.icono;
-        if (dom.bombaLoadedPdfName) dom.bombaLoadedPdfName.textContent = res.nombre;
-        if (dom.bombaLoadedPdfMeta) dom.bombaLoadedPdfMeta.textContent = res.metaDetalle;
-        if (dom.bombaUploadTitle) dom.bombaUploadTitle.textContent = `${res.tipoLabel} cargado con éxito`;
-        if (dom.bombaUploadHint) dom.bombaUploadHint.textContent = "Listo para calibrar las preguntas de la bomba.";
-
-        apuntesEstado.bomba = {
-            nombre: res.nombre,
-            texto: res.texto,
-            paginas: res.paginas,
-            fecha: new Date().toISOString()
-        };
-        guardarApuntesEnStorage().catch(() => {});
-
-        mostrarToast(`✅ ${res.tipoLabel} "${res.nombre}" vinculado a la Bomba.`, "exito");
-    } catch (err) {
-        console.error("Error al procesar archivo en Bomba:", err);
-        mostrarToast("⚠️ No se pudo procesar el archivo para la Bomba.", "error");
+async function procesarArchivoBomba(fileOrFiles) {
+    if (!fileOrFiles) return;
+    const arr = Array.isArray(fileOrFiles) ? fileOrFiles : (fileOrFiles instanceof FileList ? Array.from(fileOrFiles) : [fileOrFiles]);
+    await procesarArchivosGenerico(arr, "la Bomba");
+    const consolidado = obtenerContextoConsolidadoApuntes();
+    if (consolidado) {
+        bombaSetupEstado.archivoTexto = consolidado.texto;
+        bombaSetupEstado.archivoNombre = consolidado.nombre;
+        bombaSetupEstado.archivoPaginas = consolidado.paginas;
     }
 }
 
-function limpiarArchivoBomba() {
+async function limpiarArchivoBomba() {
     bombaSetupEstado.archivoTexto = "";
     bombaSetupEstado.archivoNombre = "";
     bombaSetupEstado.archivoPaginas = 0;
     if (dom.bombaPdfFileInput) dom.bombaPdfFileInput.value = "";
-    if (dom.bombaLoadedPdfInfo) dom.bombaLoadedPdfInfo.classList.add("hidden");
-    if (dom.bombaUploadTitle) dom.bombaUploadTitle.textContent = "Subir Material de Estudio";
-    if (dom.bombaUploadHint) dom.bombaUploadHint.textContent = "Hacé clic o arrastrá apuntes, manuales o temas para calibrar las preguntas.";
-    mostrarToast("🗑️ Archivo desvinculado de la Bomba.", "info");
+    apuntesColeccion.length = 0;
+    await guardarColeccionEnStorage();
+    actualizarUIIndicadoresPDF();
+    mostrarToast("🗑️ Archivos desvinculados de la Bomba.", "info");
 }
 
 function sincronizarDificultadBombaUI() {
@@ -20460,45 +20649,27 @@ function cerrarModalConfigImpostor() {
     }
 }
 
-async function procesarArchivoImpostor(file) {
-    if (!file) return;
-    mostrarToast("🕵️‍♂️ Analizando material para formular casos sospechosos...", "info");
-    try {
-        const res = await extraerTextoDeCualquierArchivo(file);
-        impostorSetupEstado.archivoTexto = res.texto;
-        impostorSetupEstado.archivoNombre = res.nombre;
-        impostorSetupEstado.archivoPaginas = res.paginas;
-
-        if (dom.impostorLoadedPdfInfo) dom.impostorLoadedPdfInfo.classList.remove("hidden");
-        if (dom.impostorLoadedPdfIcon) dom.impostorLoadedPdfIcon.textContent = res.icono;
-        if (dom.impostorLoadedPdfName) dom.impostorLoadedPdfName.textContent = res.nombre;
-        if (dom.impostorLoadedPdfMeta) dom.impostorLoadedPdfMeta.textContent = res.metaDetalle;
-        if (dom.impostorUploadTitle) dom.impostorUploadTitle.textContent = `${res.tipoLabel} cargado con éxito`;
-        if (dom.impostorUploadHint) dom.impostorUploadHint.textContent = "Listo para calibrar las sospechas y casos.";
-
-        apuntesEstado.impostor = {
-            nombre: res.nombre,
-            texto: res.texto,
-            paginas: res.paginas
-        };
-        mostrarToast(`✅ ${res.tipoLabel} "${res.nombre}" vinculado a Caza al Impostor.`, "exito");
-    } catch (err) {
-        console.error("Error al procesar archivo en Impostor:", err);
-        mostrarToast(`⚠️ Error: ${err.message || 'No se pudo leer el archivo'}`, "aviso");
+async function procesarArchivoImpostor(fileOrFiles) {
+    if (!fileOrFiles) return;
+    const arr = Array.isArray(fileOrFiles) ? fileOrFiles : (fileOrFiles instanceof FileList ? Array.from(fileOrFiles) : [fileOrFiles]);
+    await procesarArchivosGenerico(arr, "Caza al Impostor");
+    const consolidado = obtenerContextoConsolidadoApuntes();
+    if (consolidado) {
+        impostorSetupEstado.archivoTexto = consolidado.texto;
+        impostorSetupEstado.archivoNombre = consolidado.nombre;
+        impostorSetupEstado.archivoPaginas = consolidado.paginas;
     }
 }
 
-function limpiarArchivoImpostor() {
+async function limpiarArchivoImpostor() {
     impostorSetupEstado.archivoTexto = "";
     impostorSetupEstado.archivoNombre = "";
     impostorSetupEstado.archivoPaginas = 0;
-    delete apuntesEstado.impostor;
-
     if (dom.impostorPdfFileInput) dom.impostorPdfFileInput.value = "";
-    if (dom.impostorLoadedPdfInfo) dom.impostorLoadedPdfInfo.classList.add("hidden");
-    if (dom.impostorUploadTitle) dom.impostorUploadTitle.textContent = "Subir Material de Estudio";
-    if (dom.impostorUploadHint) dom.impostorUploadHint.textContent = "Hacé clic o arrastrá apuntes, manuales o temas para calibrar las sospechas.";
-    mostrarToast("🗑️ Material desvinculado de Caza al Impostor.", "info");
+    apuntesColeccion.length = 0;
+    await guardarColeccionEnStorage();
+    actualizarUIIndicadoresPDF();
+    mostrarToast("🗑️ Archivos desvinculados de Caza al Impostor.", "info");
 }
 
 function sincronizarDificultadImpostorUI() {
@@ -20645,45 +20816,27 @@ function cerrarModalConfigMemotest() {
     }
 }
 
-async function procesarArchivoMemotest(file) {
-    if (!file) return;
-    mostrarToast("🧠 Extrayendo conceptos y definiciones para el Memotest...", "info");
-    try {
-        const res = await extraerTextoDeCualquierArchivo(file);
-        memotestSetupEstado.archivoTexto = res.texto;
-        memotestSetupEstado.archivoNombre = res.nombre;
-        memotestSetupEstado.archivoPaginas = res.paginas;
-
-        if (dom.memotestLoadedPdfInfo) dom.memotestLoadedPdfInfo.classList.remove("hidden");
-        if (dom.memotestLoadedPdfIcon) dom.memotestLoadedPdfIcon.textContent = res.icono;
-        if (dom.memotestLoadedPdfName) dom.memotestLoadedPdfName.textContent = res.nombre;
-        if (dom.memotestLoadedPdfMeta) dom.memotestLoadedPdfMeta.textContent = res.metaDetalle;
-        if (dom.memotestUploadTitle) dom.memotestUploadTitle.textContent = `${res.tipoLabel} cargado con éxito`;
-        if (dom.memotestUploadHint) dom.memotestUploadHint.textContent = "Listo para armar las parejas del tablero.";
-
-        apuntesEstado.memotest = {
-            nombre: res.nombre,
-            texto: res.texto,
-            paginas: res.paginas
-        };
-        mostrarToast(`✅ ${res.tipoLabel} "${res.nombre}" vinculado al Memotest.`, "exito");
-    } catch (err) {
-        console.error("Error al procesar archivo en Memotest:", err);
-        mostrarToast(`⚠️ Error: ${err.message || 'No se pudo leer el archivo'}`, "aviso");
+async function procesarArchivoMemotest(fileOrFiles) {
+    if (!fileOrFiles) return;
+    const arr = Array.isArray(fileOrFiles) ? fileOrFiles : (fileOrFiles instanceof FileList ? Array.from(fileOrFiles) : [fileOrFiles]);
+    await procesarArchivosGenerico(arr, "Memotest");
+    const consolidado = obtenerContextoConsolidadoApuntes();
+    if (consolidado) {
+        memotestSetupEstado.archivoTexto = consolidado.texto;
+        memotestSetupEstado.archivoNombre = consolidado.nombre;
+        memotestSetupEstado.archivoPaginas = consolidado.paginas;
     }
 }
 
-function limpiarArchivoMemotest() {
+async function limpiarArchivoMemotest() {
     memotestSetupEstado.archivoTexto = "";
     memotestSetupEstado.archivoNombre = "";
     memotestSetupEstado.archivoPaginas = 0;
-    delete apuntesEstado.memotest;
-
     if (dom.memotestPdfFileInput) dom.memotestPdfFileInput.value = "";
-    if (dom.memotestLoadedPdfInfo) dom.memotestLoadedPdfInfo.classList.add("hidden");
-    if (dom.memotestUploadTitle) dom.memotestUploadTitle.textContent = "Subir Material de Estudio";
-    if (dom.memotestUploadHint) dom.memotestUploadHint.textContent = "Hacé clic o arrastrá apuntes para emparejar conceptos.";
-    mostrarToast("🗑️ Material desvinculado de Memotest.", "info");
+    apuntesColeccion.length = 0;
+    await guardarColeccionEnStorage();
+    actualizarUIIndicadoresPDF();
+    mostrarToast("🗑️ Archivos desvinculados del Memotest.", "info");
 }
 
 function sincronizarDificultadMemotestUI() {

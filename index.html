@@ -15,10 +15,10 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     
-    <link rel="icon" type="image/svg+xml" href="icon.svg?v=29.20">
-    <link rel="apple-touch-icon" href="icon-192.png?v=29.20">
-    <link rel="manifest" href="manifest.json?v=29.20">
-    <link rel="stylesheet" href="style.css?v=29.20">
+    <link rel="icon" type="image/svg+xml" href="icon.svg?v=29.21">
+    <link rel="apple-touch-icon" href="icon-192.png?v=29.21">
+    <link rel="manifest" href="manifest.json?v=29.21">
+    <link rel="stylesheet" href="style.css?v=29.21">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1664,9 +1664,9 @@
                                             </div>
                                         </div>
                                         <div class="duelo-pdf-card-actions">
-                                            <input type="file" id="dueloOnlinePdfInput" accept=".pdf,.txt,.md" style="display: none;">
+                                            <input type="file" id="dueloOnlinePdfInput" multiple accept=".pdf,.docx,.pptx,.txt,.md,.csv" style="display: none;">
                                             <button type="button" class="button button--secondary button--sm" id="dueloUploadPdfBtn">
-                                                📂 Cambiar PDF
+                                                ➕ Sumar / Cambiar PDF
                                             </button>
                                             <button type="button" class="button button--ghost button--sm hidden" id="dueloRemovePdfBtn" title="Desvincular PDF y usar temario predeterminado">
                                                 🗑️
@@ -5637,7 +5637,7 @@
 </dialog>
 
 <script src="mqtt.min.js"></script>
-<script src="script.js?v=29.20" defer></script>
+<script src="script.js?v=29.21" defer></script>
 
 <!-- =========================================================
      MODAL DE PROMPT PARA GEMINI (CREAR JUEGOS DESDE PDF)
@@ -5734,13 +5734,13 @@
         </header>
 
         <div class="modal__body lab-config-modal-body setup-simplified-body">
-            <!-- SLIM UPLOADER -->
+            <!-- SLIM UPLOADER & MULTI-PDF TRAY -->
             <div class="setup-slim-uploader lab-upload-dropzone" id="bolilleroUploadDropzone" tabindex="0" role="button" aria-label="Cargar material de estudio">
-                <input type="file" id="bolilleroPdfFileInput" accept=".pdf,.docx,.pptx,.txt,.md,.csv" class="hidden">
+                <input type="file" id="bolilleroPdfFileInput" multiple accept=".pdf,.docx,.pptx,.txt,.md,.csv" class="hidden">
                 <div class="setup-slim-uploader__icon">📂</div>
                 <div class="setup-slim-uploader__info">
                     <strong class="lab-upload-title" id="bolilleroUploadTitle">Subir Material de Estudio</strong>
-                    <span class="setup-slim-uploader__hint lab-upload-hint" id="bolilleroUploadHint">PDF, DOCX, TXT o apuntes (opcional)</span>
+                    <span class="setup-slim-uploader__hint lab-upload-hint" id="bolilleroUploadHint">Podés seleccionar 1 o varios PDFs, Word o apuntes</span>
                     <div class="lab-loaded-pdf-info hidden" id="bolilleroLoadedPdfInfo">
                         <span class="lab-loaded-pdf-icon" id="bolilleroLoadedPdfIcon">📄</span>
                         <div class="lab-loaded-pdf-text">
@@ -5751,6 +5751,23 @@
                     </div>
                 </div>
                 <span class="setup-slim-uploader__action">Examinar</span>
+            </div>
+
+            <!-- BANDEJA DE MÚLTIPLES DOCUMENTOS CARGADOS -->
+            <div class="setup-multi-pdf-tray hidden" id="bolilleroMultiPdfTray">
+                <div class="setup-multi-pdf-header">
+                    <div class="setup-multi-pdf-stats">
+                        <span class="setup-multi-pdf-icon">📚</span>
+                        <div>
+                            <strong class="setup-multi-pdf-count" id="bolilleroMultiPdfCount">0 documentos cargados</strong>
+                            <span class="setup-multi-pdf-meta" id="bolilleroMultiPdfMeta">0 páginas acumuladas</span>
+                        </div>
+                    </div>
+                    <button type="button" class="button button--secondary button--xs setup-multi-pdf-add-btn" id="bolilleroAddMorePdfBtn">
+                        ➕ Sumar otro PDF
+                    </button>
+                </div>
+                <div class="setup-multi-pdf-list" id="bolilleroMultiPdfList"></div>
             </div>
 
             <!-- CONTROLES ESENCIALES (CANTIDAD + DIFICULTAD) -->
@@ -5842,13 +5859,13 @@
         </header>
 
         <div class="modal__body lab-config-modal-body setup-simplified-body">
-            <!-- SLIM UPLOADER -->
+            <!-- SLIM UPLOADER & MULTI-PDF TRAY -->
             <div class="setup-slim-uploader lab-upload-dropzone" id="bombaUploadDropzone" tabindex="0" role="button" aria-label="Cargar material de estudio">
-                <input type="file" id="bombaPdfFileInput" accept=".pdf,.docx,.pptx,.txt,.md,.csv" class="hidden">
+                <input type="file" id="bombaPdfFileInput" multiple accept=".pdf,.docx,.pptx,.txt,.md,.csv" class="hidden">
                 <div class="setup-slim-uploader__icon">📂</div>
                 <div class="setup-slim-uploader__info">
                     <strong class="lab-upload-title" id="bombaUploadTitle">Subir Material de Estudio</strong>
-                    <span class="setup-slim-uploader__hint lab-upload-hint" id="bombaUploadHint">PDF, DOCX, TXT o apuntes (opcional)</span>
+                    <span class="setup-slim-uploader__hint lab-upload-hint" id="bombaUploadHint">Podés seleccionar 1 o varios PDFs, Word o apuntes</span>
                     <div class="lab-loaded-pdf-info hidden" id="bombaLoadedPdfInfo">
                         <span class="lab-loaded-pdf-icon" id="bombaLoadedPdfIcon">📄</span>
                         <div class="lab-loaded-pdf-text">
@@ -5859,6 +5876,23 @@
                     </div>
                 </div>
                 <span class="setup-slim-uploader__action">Examinar</span>
+            </div>
+
+            <!-- BANDEJA DE MÚLTIPLES DOCUMENTOS CARGADOS -->
+            <div class="setup-multi-pdf-tray hidden" id="bombaMultiPdfTray">
+                <div class="setup-multi-pdf-header">
+                    <div class="setup-multi-pdf-stats">
+                        <span class="setup-multi-pdf-icon">📚</span>
+                        <div>
+                            <strong class="setup-multi-pdf-count" id="bombaMultiPdfCount">0 documentos cargados</strong>
+                            <span class="setup-multi-pdf-meta" id="bombaMultiPdfMeta">0 páginas acumuladas</span>
+                        </div>
+                    </div>
+                    <button type="button" class="button button--secondary button--xs setup-multi-pdf-add-btn" id="bombaAddMorePdfBtn">
+                        ➕ Sumar otro PDF
+                    </button>
+                </div>
+                <div class="setup-multi-pdf-list" id="bombaMultiPdfList"></div>
             </div>
 
             <!-- CONTROLES ESENCIALES (TIEMPO + DIFICULTAD) -->
@@ -5992,13 +6026,13 @@
         </header>
 
         <div class="modal__body lab-config-modal-body setup-simplified-body">
-            <!-- SLIM UPLOADER -->
+            <!-- SLIM UPLOADER & MULTI-PDF TRAY -->
             <div class="setup-slim-uploader lab-upload-dropzone" id="impostorUploadDropzone" tabindex="0" role="button" aria-label="Cargar material de estudio">
-                <input type="file" id="impostorPdfFileInput" accept=".pdf,.docx,.pptx,.txt,.md,.csv" class="hidden">
+                <input type="file" id="impostorPdfFileInput" multiple accept=".pdf,.docx,.pptx,.txt,.md,.csv" class="hidden">
                 <div class="setup-slim-uploader__icon">📂</div>
                 <div class="setup-slim-uploader__info">
                     <strong class="lab-upload-title" id="impostorUploadTitle">Subir Material de Estudio</strong>
-                    <span class="setup-slim-uploader__hint lab-upload-hint" id="impostorUploadHint">PDF, DOCX, TXT o apuntes (opcional)</span>
+                    <span class="setup-slim-uploader__hint lab-upload-hint" id="impostorUploadHint">Podés seleccionar 1 o varios PDFs, Word o apuntes</span>
                     <div class="lab-loaded-pdf-info hidden" id="impostorLoadedPdfInfo">
                         <span class="lab-loaded-pdf-icon" id="impostorLoadedPdfIcon">📄</span>
                         <div class="lab-loaded-pdf-text">
@@ -6009,6 +6043,23 @@
                     </div>
                 </div>
                 <span class="setup-slim-uploader__action">Examinar</span>
+            </div>
+
+            <!-- BANDEJA DE MÚLTIPLES DOCUMENTOS CARGADOS -->
+            <div class="setup-multi-pdf-tray hidden" id="impostorMultiPdfTray">
+                <div class="setup-multi-pdf-header">
+                    <div class="setup-multi-pdf-stats">
+                        <span class="setup-multi-pdf-icon">📚</span>
+                        <div>
+                            <strong class="setup-multi-pdf-count" id="impostorMultiPdfCount">0 documentos cargados</strong>
+                            <span class="setup-multi-pdf-meta" id="impostorMultiPdfMeta">0 páginas acumuladas</span>
+                        </div>
+                    </div>
+                    <button type="button" class="button button--secondary button--xs setup-multi-pdf-add-btn" id="impostorAddMorePdfBtn">
+                        ➕ Sumar otro PDF
+                    </button>
+                </div>
+                <div class="setup-multi-pdf-list" id="impostorMultiPdfList"></div>
             </div>
 
             <!-- CONTROLES ESENCIALES (RONDAS + TIEMPO + DIFICULTAD) -->
@@ -6156,13 +6207,13 @@
         </header>
 
         <div class="modal__body lab-config-modal-body setup-simplified-body">
-            <!-- SLIM UPLOADER -->
+            <!-- SLIM UPLOADER & MULTI-PDF TRAY -->
             <div class="setup-slim-uploader lab-upload-dropzone" id="memotestUploadDropzone" tabindex="0" role="button" aria-label="Cargar material de estudio">
-                <input type="file" id="memotestPdfFileInput" accept=".pdf,.docx,.pptx,.txt,.md,.csv" class="hidden">
+                <input type="file" id="memotestPdfFileInput" multiple accept=".pdf,.docx,.pptx,.txt,.md,.csv" class="hidden">
                 <div class="setup-slim-uploader__icon">📂</div>
                 <div class="setup-slim-uploader__info">
                     <strong class="lab-upload-title" id="memotestUploadTitle">Subir Material de Estudio</strong>
-                    <span class="setup-slim-uploader__hint lab-upload-hint" id="memotestUploadHint">PDF, DOCX, TXT o apuntes (opcional)</span>
+                    <span class="setup-slim-uploader__hint lab-upload-hint" id="memotestUploadHint">Podés seleccionar 1 o varios PDFs, Word o apuntes</span>
                     <div class="lab-loaded-pdf-info hidden" id="memotestLoadedPdfInfo">
                         <span class="lab-loaded-pdf-icon" id="memotestLoadedPdfIcon">📄</span>
                         <div class="lab-loaded-pdf-text">
@@ -6173,6 +6224,23 @@
                     </div>
                 </div>
                 <span class="setup-slim-uploader__action">Examinar</span>
+            </div>
+
+            <!-- BANDEJA DE MÚLTIPLES DOCUMENTOS CARGADOS -->
+            <div class="setup-multi-pdf-tray hidden" id="memotestMultiPdfTray">
+                <div class="setup-multi-pdf-header">
+                    <div class="setup-multi-pdf-stats">
+                        <span class="setup-multi-pdf-icon">📚</span>
+                        <div>
+                            <strong class="setup-multi-pdf-count" id="memotestMultiPdfCount">0 documentos cargados</strong>
+                            <span class="setup-multi-pdf-meta" id="memotestMultiPdfMeta">0 páginas acumuladas</span>
+                        </div>
+                    </div>
+                    <button type="button" class="button button--secondary button--xs setup-multi-pdf-add-btn" id="memotestAddMorePdfBtn">
+                        ➕ Sumar otro PDF
+                    </button>
+                </div>
+                <div class="setup-multi-pdf-list" id="memotestMultiPdfList"></div>
             </div>
 
             <!-- CONTROLES ESENCIALES (PARES + TIEMPO + DIFICULTAD) -->
