@@ -14830,6 +14830,301 @@ body.modo-dev-activo .juntos-locked-notice {
 }
 
 /* =========================================================
+   FASE 5: LABORATORIO DE PRÁCTICAS Y CONFIGURACIÓN MODAL (v29.15)
+   ========================================================= */
+
+.button--gradient-emerald {
+    background: linear-gradient(135deg, #059669, #10b981) !important;
+    border-color: #059669 !important;
+    color: #ffffff !important;
+    font-weight: 700;
+}
+.button--gradient-emerald:hover {
+    background: linear-gradient(135deg, #047857, #059669) !important;
+    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
+    transform: translateY(-1px);
+}
+
+.button--gradient-orange {
+    background: linear-gradient(135deg, #f97316, #ea580c) !important;
+    border-color: #ea580c !important;
+    color: #ffffff !important;
+    font-weight: 700;
+}
+.button--gradient-orange:hover {
+    background: linear-gradient(135deg, #ea580c, #c2410c) !important;
+    box-shadow: 0 4px 14px rgba(234, 88, 12, 0.35);
+    transform: translateY(-1px);
+}
+
+.button--gradient-sky {
+    background: linear-gradient(135deg, #0284c7, #38bdf8) !important;
+    border-color: #0284c7 !important;
+    color: #ffffff !important;
+    font-weight: 700;
+}
+.button--gradient-sky:hover {
+    background: linear-gradient(135deg, #0369a1, #0284c7) !important;
+    box-shadow: 0 4px 14px rgba(2, 132, 199, 0.35);
+    transform: translateY(-1px);
+}
+
+.button--outline-cyan {
+    color: #38bdf8 !important;
+    border: 1px solid rgba(56, 189, 248, 0.4) !important;
+}
+.button--outline-cyan:hover {
+    background: rgba(56, 189, 248, 0.15) !important;
+    color: #ffffff !important;
+}
+
+.button--danger-text {
+    color: #f87171 !important;
+}
+.button--danger-text:hover {
+    background: rgba(239, 68, 68, 0.12) !important;
+    color: #ef4444 !important;
+}
+
+.button--push-right {
+    margin-left: auto;
+}
+
+.color--cyan { color: #38bdf8 !important; }
+.color--emerald { color: #34d399 !important; }
+
+.lab-matrix-inv-desc {
+    font-size: 0.72rem;
+    color: var(--color-text-muted);
+}
+
+.lab-physics-calc-label {
+    font-size: 0.72rem;
+    color: var(--color-text-muted);
+}
+
+.lab-physics-calc-results {
+    display: flex;
+    gap: 0.6rem;
+    margin-top: 0.2rem;
+    align-items: center;
+}
+
+/* =========================================================
+   SOPORTE DE TEMA CLARO PARA LABORATORIO & MODAL DE CONFIGURACIÓN
+   ========================================================= */
+
+[data-theme="light"] .lab-case-card {
+    background: #ffffff;
+    border-color: rgba(0, 0, 0, 0.08);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="light"] .lab-case-title {
+    color: var(--color-text);
+}
+
+[data-theme="light"] .lab-case-narrative {
+    color: var(--color-text-secondary);
+}
+
+[data-theme="light"] .lab-tabs-nav {
+    background: #f1f5f9;
+    border-color: rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .lab-tab-btn {
+    color: var(--color-text-muted);
+}
+
+[data-theme="light"] .lab-tab-btn:hover {
+    color: var(--color-text);
+    background: rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="light"] .lab-tab-btn.is-active {
+    background: #ffffff;
+    color: #0284c7;
+    border-color: rgba(2, 132, 199, 0.3);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+[data-theme="light"] .lab-tab-content-wrapper {
+    background: #ffffff;
+    border-color: rgba(0, 0, 0, 0.08);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.03);
+}
+
+[data-theme="light"] .lab-stat-card {
+    background: #ffffff;
+    border-color: rgba(0, 0, 0, 0.08);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="light"] .lab-stat-name {
+    color: var(--color-text-muted);
+}
+
+[data-theme="light"] .lab-stat-value {
+    color: var(--color-text);
+}
+
+[data-theme="light"] .lab-stats-calc-panel {
+    background: #f8fafc;
+    border-color: rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .lab-stats-panel-title {
+    color: var(--color-text);
+}
+
+[data-theme="light"] .lab-gauss-container {
+    background: #f8fafc;
+    border-color: rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .lab-calc-result-box {
+    background: #ffffff;
+    border-color: rgba(0, 0, 0, 0.08);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="light"] .lab-grid-table th {
+    background: #f1f5f9;
+    color: var(--color-text-secondary);
+    border-color: rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .lab-grid-table td {
+    border-color: rgba(0, 0, 0, 0.06);
+    color: var(--color-text);
+}
+
+[data-theme="light"] .lab-grid-table tfoot td {
+    background: #f8fafc;
+    border-color: rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .lab-partida-doble-bar {
+    background: #f0fdf4;
+    border-color: rgba(16, 185, 129, 0.3);
+    color: #065f46;
+}
+
+[data-theme="light"] .lab-mini-calc {
+    background: #ffffff;
+    border-color: rgba(0, 0, 0, 0.08);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+}
+
+[data-theme="light"] .lab-calc-screen {
+    background: #f8fafc;
+    border-color: rgba(0, 0, 0, 0.1);
+    color: var(--color-text);
+}
+
+[data-theme="light"] .lab-ckey {
+    background: #f1f5f9;
+    border-color: rgba(0, 0, 0, 0.08);
+    color: var(--color-text);
+}
+
+[data-theme="light"] .lab-ckey:hover {
+    background: #e2e8f0;
+}
+
+/* Modal de Configuración en Modo Claro */
+[data-theme="light"] #labConfigModal.lab-config-dialog {
+    background: #ffffff;
+    border-color: rgba(0, 0, 0, 0.1);
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.15);
+}
+
+[data-theme="light"] .lab-config-header {
+    border-bottom-color: rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] #labConfigModalTitle {
+    color: var(--color-text);
+}
+
+[data-theme="light"] .lab-config-subtitle {
+    color: var(--color-text-secondary);
+}
+
+[data-theme="light"] .lab-subject-card {
+    background: #ffffff;
+    border-color: rgba(0, 0, 0, 0.08);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="light"] .lab-subject-card:hover {
+    background: #f8fafc;
+    border-color: #0284c7;
+    box-shadow: 0 6px 20px rgba(2, 132, 199, 0.12);
+}
+
+[data-theme="light"] .lab-subject-card.is-active {
+    background: #f0f9ff;
+    border-color: #0284c7;
+    box-shadow: 0 0 0 2px #0284c7;
+}
+
+[data-theme="light"] .lab-subject-card__title {
+    color: var(--color-text);
+}
+
+[data-theme="light"] .lab-subject-card__desc {
+    color: var(--color-text-muted);
+}
+
+[data-theme="light"] .lab-materia-banner {
+    background: #f0f9ff;
+    border-color: rgba(2, 132, 199, 0.25);
+}
+
+[data-theme="light"] .lab-materia-banner-title {
+    color: var(--color-text);
+}
+
+[data-theme="light"] .lab-materia-banner-desc {
+    color: var(--color-text-secondary);
+}
+
+[data-theme="light"] .lab-materia-subtopics-card {
+    background: #ffffff;
+    border-color: rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .lab-material-prompt-card {
+    background: #ffffff;
+    border-color: rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .lab-upload-dropzone-compact {
+    background: #f8fafc;
+    border-color: rgba(0, 0, 0, 0.12);
+    color: var(--color-text);
+}
+
+[data-theme="light"] .lab-upload-dropzone-compact:hover {
+    background: #f1f5f9;
+    border-color: #0284c7;
+}
+
+[data-theme="light"] .lab-diff-btn {
+    background: #ffffff;
+    border-color: rgba(0, 0, 0, 0.1);
+    color: var(--color-text);
+}
+
+[data-theme="light"] .lab-diff-btn.is-active {
+    background: #f0fdf4;
+    border-color: #10b981;
+    color: #047857;
+}
+
+/* =========================================================
    TOP NAV & DRAWER AUTHENTICATION CONTROLS
    ========================================================= */
 .top-nav-auth-container {
