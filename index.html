@@ -15,10 +15,10 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     
-    <link rel="icon" type="image/svg+xml" href="icon.svg?v=29.13">
-    <link rel="apple-touch-icon" href="icon-192.png?v=29.13">
-    <link rel="manifest" href="manifest.json?v=29.13">
-    <link rel="stylesheet" href="style.css?v=29.13">
+    <link rel="icon" type="image/svg+xml" href="icon.svg?v=29.14">
+    <link rel="apple-touch-icon" href="icon-192.png?v=29.14">
+    <link rel="manifest" href="manifest.json?v=29.14">
+    <link rel="stylesheet" href="style.css?v=29.14">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1377,7 +1377,7 @@
                         <div class="empty-state-icon">👥</div>
                         <h3 class="empty-state-title">No hay salas activas en este momento</h3>
                         <p class="empty-state-desc">¡Sé el primero en crear una sala y empezá a estudiar con tus compañeros!</p>
-                        <button type="button" id="dueloEmptyCreateBtn" class="button button--primary button--md" style="margin-top: 1rem;">
+                        <button type="button" id="dueloEmptyCreateBtn" class="button button--primary button--md">
                             ➕ Crear Sala
                         </button>
                     </div>
@@ -1385,9 +1385,9 @@
 
                 <!-- Modal Flotante: Crear Sala Online Multijugador -->
                 <dialog id="dueloCreateRoomModal" class="modal duelo-create-modal" aria-labelledby="dueloCreateModalTitle">
-                    <div class="modal__header" style="padding-bottom: 0.75rem; border-bottom: 1px solid var(--color-border); margin-bottom: 1rem;">
-                        <div style="display: flex; align-items: center; gap: 0.6rem;">
-                            <span style="font-size: 1.5rem;">👑</span>
+                    <div class="modal__header duelo-modal-header">
+                        <div class="duelo-modal-header-brand">
+                            <span class="duelo-modal-header-icon">👑</span>
                             <h2 class="modal__title" id="dueloCreateModalTitle">Crear Sala Multijugador</h2>
                         </div>
                         <button type="button" id="dueloCloseCreateModalBtn" class="icon-button" aria-label="Cerrar modal">✕</button>
@@ -1413,7 +1413,7 @@
                                     <div class="duelo-game-card__body">
                                         <div class="duelo-game-card__top">
                                             <strong class="duelo-game-card__title">Desactivá la Bomba</strong>
-                                            <span class="badge badge--danger" style="font-size: 0.65rem; padding: 2px 6px;">Tensión</span>
+                                            <span class="badge badge--danger badge--micro">Tensión</span>
                                         </div>
                                         <p class="duelo-game-card__desc">Cables, reloj crítico y deducción teórica bajo extrema presión.</p>
                                     </div>
@@ -1427,7 +1427,7 @@
                                     <div class="duelo-game-card__body">
                                         <div class="duelo-game-card__top">
                                             <strong class="duelo-game-card__title">Bolillero de Estudio</strong>
-                                            <span class="badge badge--accent" style="font-size: 0.65rem; padding: 2px 6px;">Ruleta</span>
+                                            <span class="badge badge--accent badge--micro">Ruleta</span>
                                         </div>
                                         <p class="duelo-game-card__desc">Sorteo de temas en vivo, turnos al azar, votaciones grupales y podio.</p>
                                     </div>
@@ -1441,7 +1441,7 @@
                                     <div class="duelo-game-card__body">
                                         <div class="duelo-game-card__top">
                                             <strong class="duelo-game-card__title">Caza al Impostor</strong>
-                                            <span class="badge badge--warning" style="font-size: 0.65rem; padding: 2px 6px;">Falacias</span>
+                                            <span class="badge badge--warning badge--micro">Falacias</span>
                                         </div>
                                         <p class="duelo-game-card__desc">Descubrí la afirmación tramposa infiltrada entre definiciones reales.</p>
                                     </div>
@@ -1455,7 +1455,7 @@
                                     <div class="duelo-game-card__body">
                                         <div class="duelo-game-card__top">
                                             <strong class="duelo-game-card__title">Memotest Teórico</strong>
-                                            <span class="badge badge--success" style="font-size: 0.65rem; padding: 2px 6px;">Memoria</span>
+                                            <span class="badge badge--success badge--micro">Memoria</span>
                                         </div>
                                         <p class="duelo-game-card__desc">Asociá axiomas, fórmulas y conceptos teóricos en parejas sincronizadas.</p>
                                     </div>
@@ -1469,7 +1469,7 @@
                                     <div class="duelo-game-card__body">
                                         <div class="duelo-game-card__top">
                                             <strong class="duelo-game-card__title">Triatlón Académico</strong>
-                                            <span class="badge badge--gold" style="font-size: 0.65rem; padding: 2px 6px;">3 Rondas</span>
+                                            <span class="badge badge--gold badge--micro">3 Rondas</span>
                                         </div>
                                         <p class="duelo-game-card__desc">La prueba olímpica: Bomba + Impostor + Memotest con puntajes combinados.</p>
                                     </div>
@@ -1486,7 +1486,7 @@
                         </div>
 
                         <!-- ==================== PASO 2: ELEGÍ LA MODALIDAD ==================== -->
-                        <div class="duelo-wizard-step is-active" id="dueloStep2Modo" style="margin-top: 1.5rem;">
+                        <div class="duelo-wizard-step is-active" id="dueloStep2Modo">
                             <div class="duelo-wizard-header">
                                 <span class="duelo-step-badge">Paso 2</span>
                                 <h3 class="duelo-step-title">🤝 Elegí la Modalidad de Partida</h3>
@@ -1519,11 +1519,11 @@
                                 <option value="versus" selected>⚔️ Versus Competitivo</option>
                                 <option value="coop">🤝 Cooperativo en Equipo</option>
                             </select>
-                            <span class="duelo-field-hint" id="dueloOnlineModoHint" style="margin-top: 0.35rem; display: block;">Compitan entre todos con podio en vivo y robo relámpago.</span>
+                            <span class="duelo-field-hint" id="dueloOnlineModoHint">Compitan entre todos con podio en vivo y robo relámpago.</span>
                         </div>
 
                         <!-- ==================== PASO 3: OPCIONES Y CREAR SALA ==================== -->
-                        <div class="duelo-wizard-step is-active" id="dueloStep3Opciones" style="margin-top: 1.5rem;">
+                        <div class="duelo-wizard-step is-active" id="dueloStep3Opciones">
                             <div class="duelo-wizard-header">
                                 <span class="duelo-step-badge">Paso 3</span>
                                 <h3 class="duelo-step-title">⚙️ Opciones y Crear Sala Online</h3>
@@ -1532,23 +1532,23 @@
                             <div class="duelo-setup-summary-banner" id="dueloSetupSummaryBanner">
                                 <span class="summary-icon" id="dueloSummaryIcon">💣</span>
                                 <div class="summary-text">
-                                    <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
-                                        <strong id="dueloSummaryGameTitle" style="font-size: 1.05rem; color: #fff;">Desactivá la Bomba</strong>
+                                    <div class="duelo-summary-headline">
+                                        <strong id="dueloSummaryGameTitle" class="duelo-summary-game-title">Desactivá la Bomba</strong>
                                         <span class="badge badge--accent" id="dueloSummaryModeTitle">⚔️ Versus Competitivo</span>
                                     </div>
-                                    <span style="font-size: 0.8rem; color: var(--color-text-muted);">Capacidad máxima: hasta 8 jugadores sincronizados</span>
+                                    <span class="duelo-summary-capacity">Capacidad máxima: hasta 8 jugadores sincronizados</span>
                                 </div>
                             </div>
 
                             <!-- ========================================================
                                  CENTRO DE MATERIAL DE ESTUDIO (MODERNO SIN MENÚ VIEJO)
                                  ======================================================== -->
-                            <div class="duelo-material-centerpiece" id="dueloMaterialCenterpiece" style="margin-top: 1.25rem;">
-                                <div class="duelo-material-header" style="margin-bottom: 0.65rem;">
-                                    <label class="duelo-field-label" style="font-weight: 700; color: #fff; font-size: 0.95rem; display: block;">
+                            <div class="duelo-material-centerpiece" id="dueloMaterialCenterpiece">
+                                <div class="duelo-material-header">
+                                    <label class="duelo-field-label">
                                         📚 Material de Estudio para la Partida
                                     </label>
-                                    <span style="font-size: 0.8rem; color: var(--color-text-muted);">
+                                    <span class="duelo-material-sub">
                                         Elegí el contenido que alimentará las preguntas y desafíos de toda la sala:
                                     </span>
                                 </div>
@@ -1933,12 +1933,12 @@
                                 </div>
                             </div>
 
-                            <div class="field" style="margin-top: 1.25rem;">
-                                <label for="dueloCreateRoomName" style="font-weight: 700; color: #fff;">🏷️ Nombre de la Sala</label>
+                            <div class="field duelo-room-name-field">
+                                <label for="dueloCreateRoomName" class="duelo-field-label">🏷️ Nombre de la Sala</label>
                                 <input id="dueloCreateRoomName" type="text" placeholder="Ej: La Bomba del Profe" maxlength="30" value="Sala de Repaso">
                             </div>
 
-                            <div class="field" style="margin-top: 0.75rem;">
+                            <div class="field duelo-public-room-toggle">
                                 <label class="duelo-switch-row" for="dueloCreateRoomIsPublic">
                                     <input type="checkbox" id="dueloCreateRoomIsPublic" checked>
                                     <span class="duelo-switch-box" aria-hidden="true"></span>
@@ -1949,7 +1949,7 @@
                                 </label>
                             </div>
 
-                            <button id="dueloCreateRoomBtn" class="button button--primary button--full button--lg button--create-room-glow" type="button" style="margin-top: 1.5rem; font-size: 1.1rem; box-shadow: 0 4px 24px rgba(99, 102, 241, 0.45);">
+                            <button id="dueloCreateRoomBtn" class="button button--primary button--full button--lg button--create-room-glow" type="button">
                                 ✨ Crear Sala y Abrir Lobby Online
                             </button>
                         </div>
@@ -1958,9 +1958,9 @@
 
                 <!-- Modal Flotante: Unirse con Código PIN -->
                 <dialog id="dueloJoinByPinModal" class="modal duelo-pin-modal" aria-labelledby="dueloJoinPinModalTitle">
-                    <div class="modal__header" style="padding-bottom: 0.75rem; border-bottom: 1px solid var(--color-border); margin-bottom: 1rem;">
-                        <div style="display: flex; align-items: center; gap: 0.6rem;">
-                            <span style="font-size: 1.5rem;">🔑</span>
+                    <div class="modal__header duelo-modal-header">
+                        <div class="duelo-modal-header-brand">
+                            <span class="duelo-modal-header-icon">🔑</span>
                             <h2 class="modal__title" id="dueloJoinPinModalTitle">Unirse con Código PIN</h2>
                         </div>
                         <button type="button" id="dueloClosePinModalBtn" class="icon-button" aria-label="Cerrar modal">✕</button>
@@ -1968,9 +1968,9 @@
 
                     <p class="duelo-card-desc">Ingresá el PIN de 5 letras que te pasaron o abrí el Link Mágico directo en tu navegador:</p>
 
-                    <div class="field" style="margin-bottom: 1.25rem;">
-                        <label for="dueloJoinRoomCode" style="font-weight: 700; color: #fff;">Código PIN de Sala (5 letras)</label>
-                        <input id="dueloJoinRoomCode" class="duelo-join-code-input" type="text" maxlength="8" placeholder="LUIB7" autocomplete="off" autocorrect="off" autocapitalize="characters" style="text-transform: uppercase; font-family: monospace; font-size: 1.6rem; text-align: center; letter-spacing: 0.25em; font-weight: 800;">
+                    <div class="field duelo-pin-input-field">
+                        <label for="dueloJoinRoomCode" class="duelo-field-label">Código PIN de Sala (5 letras)</label>
+                        <input id="dueloJoinRoomCode" class="duelo-join-code-input" type="text" maxlength="8" placeholder="LUIB7" autocomplete="off" autocorrect="off" autocapitalize="characters">
                     </div>
 
                     <div class="field">
@@ -1978,15 +1978,15 @@
                         <input id="dueloJoinRoomPass" type="password" maxlength="20" placeholder="Dejar vacío si no tiene clave" autocomplete="off">
                     </div>
 
-                    <div class="duelo-join-player-preview" style="margin-top: 1rem;">
+                    <div class="duelo-join-player-preview">
                         <span class="duelo-join-label">Te unirás como:</span>
                         <div class="duelo-join-badge">
-                            <span id="dueloJoinAvatarPreview" style="font-size: 1.4rem;">👤</span>
-                            <strong id="dueloJoinNamePreview" style="font-size: 1.05rem;">Invitado</strong>
+                            <span id="dueloJoinAvatarPreview" class="duelo-join-avatar">👤</span>
+                            <strong id="dueloJoinNamePreview" class="duelo-join-name">Invitado</strong>
                         </div>
                     </div>
 
-                    <button id="dueloJoinRoomBtn" class="button button--secondary button--full button--lg" type="button" style="margin-top: 1.5rem; font-size: 1.05rem;">
+                    <button id="dueloJoinRoomBtn" class="button button--secondary button--full button--lg" type="button">
                         🚀 Entrar a la Sala
                     </button>
                 </dialog>
@@ -5584,7 +5584,7 @@
 </dialog>
 
 <script src="mqtt.min.js"></script>
-<script src="script.js?v=29.13" defer></script>
+<script src="script.js?v=29.14" defer></script>
 
 <!-- =========================================================
      MODAL DE PROMPT PARA GEMINI (CREAR JUEGOS DESDE PDF)

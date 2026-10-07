@@ -12894,6 +12894,432 @@ body.modo-dev-activo .juntos-locked-notice {
     }
 }
 
+/* =========================================================
+   FASE 4: MULTIJUGADOR ONLINE Y PODIO MODERNO (v29.14)
+   ========================================================= */
+
+.badge--micro {
+    font-size: 0.65rem;
+    padding: 2px 6px;
+    letter-spacing: 0.02em;
+}
+
+.duelo-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--color-border);
+    margin-bottom: 1rem;
+}
+
+.duelo-modal-header-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.duelo-modal-header-icon {
+    font-size: 1.5rem;
+    line-height: 1;
+}
+
+.duelo-summary-headline {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.duelo-summary-game-title {
+    font-size: 1.05rem;
+    color: var(--color-text);
+    font-weight: 700;
+}
+
+.duelo-summary-capacity {
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+}
+
+.duelo-material-header {
+    margin-bottom: 0.65rem;
+}
+
+.duelo-material-sub {
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+}
+
+.duelo-room-name-field {
+    margin-top: 1.25rem;
+}
+
+.duelo-public-room-toggle {
+    margin-top: 0.75rem;
+}
+
+.duelo-pin-input-field {
+    margin-bottom: 1.25rem;
+}
+
+.duelo-join-avatar {
+    font-size: 1.4rem;
+}
+
+.duelo-join-name {
+    font-size: 1.05rem;
+    color: var(--color-text);
+}
+
+.button--create-room-glow {
+    margin-top: 1.5rem;
+    font-size: 1.1rem;
+    box-shadow: 0 4px 24px rgba(99, 102, 241, 0.45);
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;
+}
+
+.button--create-room-glow:hover {
+    box-shadow: 0 6px 30px rgba(99, 102, 241, 0.6);
+    transform: translateY(-2px);
+}
+
+/* =========================================================
+   SOPORTE COMPLETO DE TEMA CLARO PARA MULTIJUGADOR & PODIO
+   ========================================================= */
+
+[data-theme="light"] .duelo-wizard-step {
+    background: #ffffff;
+    border-color: rgba(0, 0, 0, 0.08);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+}
+
+[data-theme="light"] .duelo-step-title {
+    color: var(--color-text);
+}
+
+[data-theme="light"] .duelo-game-card {
+    background: #ffffff;
+    border-color: rgba(0, 0, 0, 0.08);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="light"] .duelo-game-card:hover {
+    background: #f8fafc;
+    border-color: #6366f1;
+    box-shadow: 0 6px 18px rgba(99, 102, 241, 0.12);
+}
+
+[data-theme="light"] .duelo-game-card.is-selected {
+    border-color: #6366f1;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(168, 85, 247, 0.05));
+    box-shadow: 0 0 0 1px #6366f1, 0 6px 18px rgba(99, 102, 241, 0.15);
+}
+
+[data-theme="light"] .duelo-game-card__icon-wrap {
+    background: #f1f5f9;
+    border-color: rgba(0, 0, 0, 0.06);
+}
+
+[data-theme="light"] .duelo-game-card__title {
+    color: var(--color-text);
+}
+
+[data-theme="light"] .duelo-game-card.is-selected .duelo-game-card__title {
+    color: #4f46e5;
+}
+
+[data-theme="light"] .duelo-format-card {
+    background: #ffffff;
+    border-color: rgba(0, 0, 0, 0.08);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="light"] .duelo-format-card:hover {
+    border-color: #6366f1;
+    background: #f8fafc;
+}
+
+[data-theme="light"] .duelo-format-card.is-selected {
+    border-color: #0284c7;
+    background: linear-gradient(135deg, rgba(2, 132, 199, 0.08), rgba(99, 102, 241, 0.06));
+    box-shadow: 0 0 0 1px #0284c7, 0 6px 18px rgba(2, 132, 199, 0.12);
+}
+
+[data-theme="light"] .duelo-format-card__title {
+    color: var(--color-text);
+}
+
+[data-theme="light"] .duelo-format-card.is-selected .duelo-format-card__title {
+    color: #0369a1;
+}
+
+[data-theme="light"] .duelo-material-chip {
+    background: #ffffff;
+    border-color: rgba(0, 0, 0, 0.08);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="light"] .duelo-material-chip:hover {
+    border-color: #6366f1;
+    background: #f8fafc;
+}
+
+[data-theme="light"] .duelo-material-chip.is-active {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(139, 92, 246, 0.06));
+    border-color: #6366f1;
+    box-shadow: 0 0 0 1px #6366f1, 0 4px 14px rgba(99, 102, 241, 0.12);
+}
+
+[data-theme="light"] .duelo-material-chip strong {
+    color: var(--color-text);
+}
+
+[data-theme="light"] .duelo-pdf-card-box {
+    background: #ffffff;
+    border-color: rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .duelo-pdf-card-box:hover {
+    background: #f8fafc;
+    border-color: #6366f1;
+}
+
+[data-theme="light"] .duelo-pdf-card-details strong {
+    color: var(--color-text);
+}
+
+[data-theme="light"] .duelo-join-code-input {
+    background: #ffffff;
+    border-color: rgba(99, 102, 241, 0.45);
+    color: #2563eb;
+    box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="light"] .duelo-join-code-input:focus {
+    background: #ffffff;
+    border-color: #4f46e5;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+}
+
+/* Temas del Lobby en Light Mode */
+[data-theme="light"] .duelo-lobby-box {
+    box-shadow: 0 15px 45px rgba(0, 0, 0, 0.08), inset 0 1px 0 #ffffff;
+}
+
+[data-theme="light"] .lobby-theme--bomba {
+    background: radial-gradient(circle at 50% 0%, rgba(239, 68, 68, 0.1) 0%, #ffffff 70%), linear-gradient(180deg, #fff5f5 0%, #ffffff 100%);
+    border-color: rgba(239, 68, 68, 0.35);
+    box-shadow: 0 10px 40px rgba(239, 68, 68, 0.08), 0 4px 16px rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="light"] .lobby-theme--bolillero {
+    background: radial-gradient(circle at 50% 0%, rgba(168, 85, 247, 0.1) 0%, #ffffff 70%), linear-gradient(180deg, #faf5ff 0%, #ffffff 100%);
+    border-color: rgba(168, 85, 247, 0.35);
+    box-shadow: 0 10px 40px rgba(168, 85, 247, 0.08), 0 4px 16px rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="light"] .lobby-theme--impostor {
+    background: radial-gradient(circle at 50% 0%, rgba(234, 179, 8, 0.1) 0%, #ffffff 70%), linear-gradient(180deg, #fefce8 0%, #ffffff 100%);
+    border-color: rgba(234, 179, 8, 0.35);
+    box-shadow: 0 10px 40px rgba(234, 179, 8, 0.08), 0 4px 16px rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="light"] .lobby-theme--memotest {
+    background: radial-gradient(circle at 50% 0%, rgba(56, 189, 248, 0.1) 0%, #ffffff 70%), linear-gradient(180deg, #f0f9ff 0%, #ffffff 100%);
+    border-color: rgba(56, 189, 248, 0.35);
+    box-shadow: 0 10px 40px rgba(56, 189, 248, 0.08), 0 4px 16px rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="light"] .lobby-theme--triatlon {
+    background: radial-gradient(circle at 50% 0%, rgba(245, 158, 11, 0.1) 0%, #ffffff 70%), linear-gradient(180deg, #fffbeb 0%, #ffffff 100%);
+    border-color: rgba(245, 158, 11, 0.35);
+    box-shadow: 0 10px 40px rgba(245, 158, 11, 0.08), 0 4px 16px rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="light"] .duelo-lobby-game-title {
+    color: var(--color-text);
+}
+
+[data-theme="light"] .duelo-lobby-box__header {
+    border-bottom-color: rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .duelo-lobby-pin-display {
+    background: #ffffff;
+    border-color: rgba(2, 132, 199, 0.4);
+    box-shadow: 0 2px 10px rgba(2, 132, 199, 0.12);
+}
+
+[data-theme="light"] .duelo-lobby-pin-val {
+    color: #0284c7;
+    text-shadow: none;
+}
+
+[data-theme="light"] .duelo-magic-link-input-wrap input {
+    background: #ffffff;
+    border-color: var(--color-border);
+    color: #0284c7;
+}
+
+[data-theme="light"] .duelo-online-player-chip {
+    background: #ffffff;
+    border-color: rgba(0, 0, 0, 0.08);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="light"] .duelo-online-player-chip__name {
+    color: var(--color-text);
+}
+
+[data-theme="light"] .duelo-online-player-chip.is-host {
+    border-color: rgba(234, 179, 8, 0.6);
+    background: rgba(254, 240, 138, 0.2);
+}
+
+[data-theme="light"] .duelo-online-player-chip.is-self {
+    border-color: rgba(2, 132, 199, 0.6);
+    box-shadow: 0 0 16px rgba(2, 132, 199, 0.15);
+}
+
+/* Arena Duelo en Light Mode */
+[data-theme="light"] .duelo-roulette-display {
+    background: #ffffff;
+    border-color: rgba(0, 0, 0, 0.1);
+    box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.05);
+    color: var(--color-text);
+}
+
+[data-theme="light"] .duelo-roulette-display.is-spinning {
+    border-color: #4f46e5;
+    box-shadow: 0 0 16px rgba(99, 102, 241, 0.2);
+}
+
+[data-theme="light"] .duelo-roulette-display.is-winner {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(16, 185, 129, 0.08));
+    border-color: #10b981;
+    color: #065f46;
+}
+
+[data-theme="light"] .duelo-topic-active-card {
+    background: #ffffff;
+    border-color: rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .duelo-active-topic-title {
+    color: var(--color-text);
+}
+
+[data-theme="light"] .duelo-active-topic-desc {
+    color: var(--color-text-secondary);
+}
+
+[data-theme="light"] .duelo-fin-ronda-card {
+    background: #ffffff;
+    border-color: rgba(245, 158, 11, 0.4);
+}
+
+[data-theme="light"] #dueloFinRondaTitulo {
+    color: var(--color-text) !important;
+}
+
+/* Podio Online en Light Mode */
+[data-theme="light"] .podio-online-title {
+    background: linear-gradient(135deg, #0f172a 30%, #d97706 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+[data-theme="light"] .podio-badge {
+    background: #ffffff;
+    border-color: rgba(0, 0, 0, 0.1);
+    color: var(--color-text);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="light"] .podio-stage-wrapper {
+    background: radial-gradient(circle at 50% 100%, #e2e8f0 0%, #f8fafc 70%);
+    border-color: rgba(0, 0, 0, 0.08);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06), inset 0 1px 0 #ffffff;
+}
+
+[data-theme="light"] .podio-step-avatar {
+    background: #ffffff;
+    border-color: rgba(0, 0, 0, 0.12);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .podio-online-step--1 .podio-step-avatar {
+    border-color: #f59e0b;
+    box-shadow: 0 0 20px rgba(245, 158, 11, 0.35), 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .podio-online-step--2 .podio-step-avatar {
+    border-color: #64748b;
+    box-shadow: 0 0 12px rgba(100, 116, 139, 0.25);
+}
+
+[data-theme="light"] .podio-online-step--3 .podio-step-avatar {
+    border-color: #b45309;
+    box-shadow: 0 0 12px rgba(180, 83, 9, 0.25);
+}
+
+[data-theme="light"] .podio-step-name {
+    color: var(--color-text);
+}
+
+[data-theme="light"] .podio-online-step--1 .podio-step-points {
+    color: #b45309;
+    text-shadow: none;
+}
+
+[data-theme="light"] .podio-online-step--2 .podio-step-points {
+    color: #475569;
+}
+
+[data-theme="light"] .podio-online-step--3 .podio-step-points {
+    color: #92400e;
+}
+
+[data-theme="light"] .podio-coop-card {
+    background: #ffffff;
+    border-color: rgba(16, 185, 129, 0.35);
+    box-shadow: 0 10px 30px rgba(16, 185, 129, 0.08);
+}
+
+[data-theme="light"] .podio-coop-card.is-defeat {
+    border-color: rgba(239, 68, 68, 0.35);
+    box-shadow: 0 10px 30px rgba(239, 68, 68, 0.08);
+}
+
+[data-theme="light"] .podio-coop-title {
+    color: var(--color-text);
+}
+
+[data-theme="light"] .podio-coop-desc {
+    color: var(--color-text-secondary);
+}
+
+[data-theme="light"] .podio-coop-score-box {
+    background: rgba(16, 185, 129, 0.08);
+    color: #047857;
+}
+
+[data-theme="light"] .podio-honor-chip {
+    background: #ffffff;
+    border-color: rgba(0, 0, 0, 0.08);
+    color: var(--color-text);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="light"] .podio-honor-chip strong {
+    color: #b45309;
+}
+
+[data-theme="light"] .podio-table th {
+    background: #f1f5f9;
+    color: var(--color-text-muted);
+}
 
 /* =========================================================
    MÓDULO: EXACTAS Y CONTABILIDAD EN EL LABORATORIO (v27.6)
