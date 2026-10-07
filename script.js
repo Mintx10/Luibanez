@@ -1681,6 +1681,36 @@ function inicializarDrawerMenu() {
         }
     });
 
+    // Selector de Estilo del Drawer: Simple vs Detallado
+    const drawerLayoutSimpleBtn = document.getElementById("drawerLayoutSimpleBtn");
+    const drawerLayoutDetailedBtn = document.getElementById("drawerLayoutDetailedBtn");
+
+    function aplicarModoDrawer(modo, guardar = true) {
+        const esSimple = modo === "simple";
+        if (dom.drawerMenu) {
+            dom.drawerMenu.setAttribute("data-drawer-mode", esSimple ? "simple" : "detailed");
+        }
+        if (drawerLayoutSimpleBtn) {
+            drawerLayoutSimpleBtn.classList.toggle("is-active", esSimple);
+            drawerLayoutSimpleBtn.setAttribute("aria-checked", esSimple ? "true" : "false");
+        }
+        if (drawerLayoutDetailedBtn) {
+            drawerLayoutDetailedBtn.classList.toggle("is-active", !esSimple);
+            drawerLayoutDetailedBtn.setAttribute("aria-checked", !esSimple ? "true" : "false");
+        }
+        if (guardar) {
+            try { localStorage.setItem("luibanez_drawer_mode", esSimple ? "simple" : "detailed"); } catch (e) {}
+        }
+    }
+
+    if (drawerLayoutSimpleBtn) drawerLayoutSimpleBtn.addEventListener("click", () => aplicarModoDrawer("simple"));
+    if (drawerLayoutDetailedBtn) drawerLayoutDetailedBtn.addEventListener("click", () => aplicarModoDrawer("detailed"));
+
+    try {
+        const drawerModoGuardado = localStorage.getItem("luibanez_drawer_mode") || "detailed";
+        aplicarModoDrawer(drawerModoGuardado, false);
+    } catch (e) {}
+
     actualizarDrawerListas();
 
     // Botón manual de actualización rápida en el menú lateral
@@ -12385,6 +12415,9 @@ function registrarEventos() {
     // Botones Hero y Portal Hub desde Inicio (viewHome)
     if (dom.heroGoSoloBtn) dom.heroGoSoloBtn.addEventListener("click", () => cambiarVista("solo"));
     if (dom.heroGoJuntosBtn) dom.heroGoJuntosBtn.addEventListener("click", () => cambiarVista("juntos"));
+    const heroGoLabBtn = document.getElementById("heroGoLabBtn");
+    if (heroGoLabBtn) heroGoLabBtn.addEventListener("click", () => cambiarVista("laboratorio"));
+
     if (dom.homeGoToSoloBtn) dom.homeGoToSoloBtn.addEventListener("click", () => cambiarVista("solo"));
     if (dom.homeGoToJuntosBtn) dom.homeGoToJuntosBtn.addEventListener("click", () => cambiarVista("juntos"));
     if (dom.homeGoToFamaBtn) dom.homeGoToFamaBtn.addEventListener("click", () => cambiarVista("fama"));
@@ -12396,6 +12429,46 @@ function registrarEventos() {
             cambiarVista("laboratorio");
         });
     }
+
+    // Modo de Vista del Inicio: Simple vs Detallado
+    const homeViewSimpleBtn = document.getElementById("homeViewSimpleBtn");
+    const homeViewDetailedBtn = document.getElementById("homeViewDetailedBtn");
+    const homeSimpleGrid = document.getElementById("homeSimpleGrid");
+    const homeDetailedGrid = document.getElementById("homeDetailedGrid");
+    const homeSimpleSoloBtn = document.getElementById("homeSimpleSoloBtn");
+    const homeSimpleJuntosBtn = document.getElementById("homeSimpleJuntosBtn");
+    const homeSimpleLabBtn = document.getElementById("homeSimpleLabBtn");
+
+    function aplicarModoVistaHome(modo, guardar = true) {
+        const esSimple = modo === "simple";
+        if (homeViewSimpleBtn) {
+            homeViewSimpleBtn.classList.toggle("is-active", esSimple);
+            homeViewSimpleBtn.setAttribute("aria-checked", esSimple ? "true" : "false");
+        }
+        if (homeViewDetailedBtn) {
+            homeViewDetailedBtn.classList.toggle("is-active", !esSimple);
+            homeViewDetailedBtn.setAttribute("aria-checked", !esSimple ? "true" : "false");
+        }
+        if (homeSimpleGrid) homeSimpleGrid.classList.toggle("hidden", !esSimple);
+        if (homeDetailedGrid) homeDetailedGrid.classList.toggle("hidden", esSimple);
+
+        if (guardar) {
+            try { localStorage.setItem("luibanez_home_view_mode", esSimple ? "simple" : "detailed"); } catch (e) {}
+        }
+    }
+
+    if (homeViewSimpleBtn) homeViewSimpleBtn.addEventListener("click", () => aplicarModoVistaHome("simple"));
+    if (homeViewDetailedBtn) homeViewDetailedBtn.addEventListener("click", () => aplicarModoVistaHome("detailed"));
+
+    if (homeSimpleSoloBtn) homeSimpleSoloBtn.addEventListener("click", () => cambiarVista("solo"));
+    if (homeSimpleJuntosBtn) homeSimpleJuntosBtn.addEventListener("click", () => cambiarVista("juntos"));
+    if (homeSimpleLabBtn) homeSimpleLabBtn.addEventListener("click", () => cambiarVista("laboratorio"));
+
+    // Restaurar preferencia de vista del inicio
+    try {
+        const modoGuardado = localStorage.getItem("luibanez_home_view_mode") || "detailed";
+        aplicarModoVistaHome(modoGuardado, false);
+    } catch (e) {}
 
     // Botón de salir de Modo Desarrollador dentro de viewJuntos
     const btnSalirModoDev = document.getElementById("btnSalirModoDev");
@@ -13883,7 +13956,7 @@ function iniciarAplicacion() {
 // =========================================================
 // GESTOR DE VERSIONES Y ACTUALIZACIÓN AUTOMÁTICA
 // =========================================================
-const APP_BUILD_VERSION = "29.17";
+const APP_BUILD_VERSION = "29.18";
 
 async function forzarActualizacionCompleta(mostrarNotificacion = true) {
     const lastAttempt = parseInt(sessionStorage.getItem("last_auto_update_ts") || "0", 10);

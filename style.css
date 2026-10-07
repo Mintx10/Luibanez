@@ -19313,6 +19313,420 @@ body.modo-dev-activo .juntos-locked-notice {
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
 }
 
+/* =========================================================
+   SELECTOR DE VISTA EN MENÚ LATERAL (SIMPLE VS DETALLADO)
+   ========================================================= */
+.drawer-layout-switcher {
+    padding: 0.75rem 0.9rem;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+}
+
+[data-theme="light"] .drawer-layout-switcher {
+    background: #f8fafc;
+    border-color: rgba(0, 0, 0, 0.08);
+}
+
+.drawer-layout-switcher__label {
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+}
+
+.drawer-layout-segmented {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.35rem;
+    background: rgba(0, 0, 0, 0.25);
+    padding: 0.25rem;
+    border-radius: var(--radius-pill);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="light"] .drawer-layout-segmented {
+    background: #e2e8f0;
+    border-color: rgba(0, 0, 0, 0.06);
+}
+
+.drawer-layout-seg-btn {
+    border: none;
+    background: transparent;
+    color: var(--color-text-muted);
+    font-size: 0.82rem;
+    font-weight: 700;
+    padding: 0.45rem 0.65rem;
+    border-radius: var(--radius-pill);
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.3rem;
+}
+
+.drawer-layout-seg-btn:hover {
+    color: var(--color-text);
+}
+
+.drawer-layout-seg-btn.is-active {
+    background: var(--color-primary);
+    color: #ffffff;
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.35);
+}
+
+/* En modo simple en el drawer, ocultamos las secciones de juegos específicos */
+.drawer-menu[data-drawer-mode="simple"] #drawerSectionSolo,
+.drawer-menu[data-drawer-mode="simple"] #drawerSectionDuelo {
+    display: none !important;
+}
+
+/* =========================================================
+   SELECTOR DE VISTA EN INICIO (SIMPLE VS DETALLADO)
+   ========================================================= */
+.home-view-control-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding: 0.85rem 1.25rem;
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    backdrop-filter: blur(8px);
+    flex-wrap: wrap;
+    gap: 0.85rem;
+}
+
+[data-theme="light"] .home-view-control-bar {
+    background: #ffffff;
+    border-color: rgba(0, 0, 0, 0.08);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.03);
+}
+
+.home-view-control-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+.home-view-control-tag {
+    font-size: 0.72rem;
+    font-weight: 800;
+    color: var(--color-primary);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.home-view-control-hint {
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+}
+
+.home-view-segmented {
+    display: inline-flex;
+    gap: 0.35rem;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 0.3rem;
+    border-radius: var(--radius-pill);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+[data-theme="light"] .home-view-segmented {
+    background: #f1f5f9;
+    border-color: rgba(0, 0, 0, 0.08);
+}
+
+.home-view-seg-btn {
+    border: none;
+    background: transparent;
+    color: var(--color-text-secondary);
+    font-size: 0.88rem;
+    font-weight: 700;
+    padding: 0.5rem 1.1rem;
+    border-radius: var(--radius-pill);
+    cursor: pointer;
+    transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.home-view-seg-btn:hover {
+    color: var(--color-text);
+}
+
+.home-view-seg-btn.is-active {
+    background: var(--color-primary);
+    color: #ffffff;
+    box-shadow: 0 2px 10px rgba(37, 99, 235, 0.35);
+}
+
+/* =========================================================
+   VISTA SIMPLE DEL INICIO: BANNERS ERGONÓMICOS (TIPO FOTO 3)
+   ========================================================= */
+.home-simple-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1.15rem;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.home-simple-banner {
+    width: 100%;
+    min-height: 84px;
+    padding: 1.25rem 1.6rem;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+    overflow: hidden;
+    color: #ffffff;
+    box-shadow: var(--shadow-sm);
+}
+
+.home-simple-banner::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 6px;
+    height: 100%;
+    transition: width 0.25s ease;
+}
+
+.home-simple-banner:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
+}
+
+.home-simple-banner:hover::before {
+    width: 10px;
+}
+
+/* Banner Solo */
+.home-simple-banner--solo {
+    background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 60%, #3b82f6 100%);
+    border-color: rgba(59, 130, 246, 0.4);
+}
+.home-simple-banner--solo::before {
+    background: #60a5fa;
+}
+
+/* Banner Juntos */
+.home-simple-banner--juntos {
+    background: linear-gradient(135deg, #2e1065 0%, #4c1d95 60%, #6d28d9 100%);
+    border-color: rgba(147, 51, 234, 0.4);
+}
+.home-simple-banner--juntos::before {
+    background: #c084fc;
+}
+
+/* Banner Laboratorio */
+.home-simple-banner--lab {
+    background: linear-gradient(135deg, #064e3b 0%, #047857 60%, #059669 100%);
+    border-color: rgba(16, 185, 129, 0.4);
+}
+.home-simple-banner--lab::before {
+    background: #34d399;
+}
+
+.home-simple-banner__content {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+}
+
+.home-simple-banner__icon {
+    font-size: 2.1rem;
+    line-height: 1;
+    filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.3));
+}
+
+.home-simple-banner__texts {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.home-simple-banner__title {
+    font-family: var(--font-heading);
+    font-size: 1.35rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    color: #ffffff;
+}
+
+.home-simple-banner__sub {
+    font-size: 0.88rem;
+    color: rgba(255, 255, 255, 0.82);
+    font-weight: 500;
+}
+
+.home-simple-banner__arrow {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: rgba(255, 255, 255, 0.9);
+    transition: transform 0.2s ease;
+}
+
+.home-simple-banner:hover .home-simple-banner__arrow {
+    transform: translateX(5px);
+}
+
+/* Botón Laboratorio en Hero Actions */
+.button--lab-hero {
+    background: linear-gradient(135deg, rgba(5, 150, 105, 0.8), rgba(16, 185, 129, 0.8)) !important;
+    color: #ffffff !important;
+    border-color: rgba(16, 185, 129, 0.5) !important;
+}
+
+.button--lab-hero:hover {
+    background: linear-gradient(135deg, #059669, #10b981) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(16, 185, 129, 0.35) !important;
+}
+
+/* Light Theme Overrides para Banners Simples */
+[data-theme="light"] .home-simple-banner--solo {
+    background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
+    box-shadow: 0 6px 20px rgba(37, 99, 235, 0.2);
+}
+
+[data-theme="light"] .home-simple-banner--juntos {
+    background: linear-gradient(135deg, #6d28d9 0%, #7c3aed 100%);
+    box-shadow: 0 6px 20px rgba(109, 40, 217, 0.2);
+}
+
+/* =========================================================
+   PERFECCIONAMIENTO UI/UX: MODALES DE CONFIGURACIÓN DE JUEGOS
+   (BOLILLERO, BOMBA, IMPOSTOR, MEMOTEST Y LABORATORIO)
+   ========================================================= */
+
+/* Disposición de 2 Columnas Limpias en Desktop */
+@media (min-width: 820px) {
+    .modal.lab-config-dialog .lab-config-modal-body {
+        display: grid !important;
+        grid-template-columns: 1.15fr 0.85fr !important;
+        gap: 1.5rem !important;
+        align-items: start !important;
+        overflow-y: auto !important;
+        max-height: calc(88vh - 140px) !important;
+        padding-right: 0.5rem !important;
+    }
+
+    .modal.lab-config-dialog .lab-config-col {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+}
+
+/* Scroll ergonómico y espaciado en móviles */
+@media (max-width: 819px) {
+    .modal.lab-config-dialog {
+        width: 95vw !important;
+        max-width: 95vw !important;
+        max-height: 92vh !important;
+        margin: auto !important;
+    }
+
+    .modal.lab-config-dialog .lab-config-modal-body {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 1.25rem !important;
+        overflow-y: auto !important;
+        max-height: calc(92vh - 130px) !important;
+        padding: 0.2rem 0.25rem 1rem !important;
+    }
+}
+
+/* Botones de Chips y Contadores en Modales */
+.bolillero-count-chip {
+    min-width: 38px;
+    height: 34px;
+    font-weight: 700 !important;
+    border-radius: 8px !important;
+}
+
+.bolillero-count-chip.is-active {
+    background: var(--color-primary) !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 10px rgba(37, 99, 235, 0.4) !important;
+}
+
+/* Card de agregado manual */
+.bolillero-manual-add-box {
+    background: rgba(15, 23, 42, 0.5);
+    border: 1px dashed rgba(56, 189, 248, 0.3);
+    border-radius: var(--radius-md);
+    padding: 1rem;
+    text-align: center;
+    transition: all 0.2s ease;
+}
+
+.bolillero-manual-add-box:hover {
+    border-color: #38bdf8;
+    background: rgba(15, 23, 42, 0.7);
+}
+
+[data-theme="light"] .modal.lab-config-dialog {
+    background: #ffffff;
+    border-color: rgba(0, 0, 0, 0.12);
+    color: #0f172a;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.15);
+}
+
+[data-theme="light"] .modal.lab-config-dialog .lab-config-header-text .modal__title {
+    color: #0f172a;
+}
+
+[data-theme="light"] .modal.lab-config-dialog .lab-section-label {
+    color: #1e293b;
+}
+
+[data-theme="light"] .lab-upload-dropzone {
+    background: #f8fafc;
+    border-color: rgba(56, 189, 248, 0.5);
+}
+
+[data-theme="light"] .lab-upload-title {
+    color: #0f172a;
+}
+
+[data-theme="light"] .lab-config-textarea {
+    background: #f8fafc;
+    border-color: rgba(0, 0, 0, 0.12);
+    color: #0f172a;
+}
+
+[data-theme="light"] .lab-config-textarea:focus {
+    background: #ffffff;
+    border-color: #0284c7;
+}
+
+[data-theme="light"] .bolillero-manual-add-box {
+    background: #f8fafc;
+    border-color: rgba(0, 0, 0, 0.15);
+}
+
+[data-theme="light"] .bolillero-manual-add-box strong {
+    color: #0f172a !important;
+}
+
+
+
 
 
 

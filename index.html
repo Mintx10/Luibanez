@@ -15,10 +15,10 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     
-    <link rel="icon" type="image/svg+xml" href="icon.svg?v=29.17">
-    <link rel="apple-touch-icon" href="icon-192.png?v=29.17">
-    <link rel="manifest" href="manifest.json?v=29.17">
-    <link rel="stylesheet" href="style.css?v=29.17">
+    <link rel="icon" type="image/svg+xml" href="icon.svg?v=29.18">
+    <link rel="apple-touch-icon" href="icon-192.png?v=29.18">
+    <link rel="manifest" href="manifest.json?v=29.18">
+    <link rel="stylesheet" href="style.css?v=29.18">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -178,9 +178,22 @@
             </div>
         </div>
 
+        <!-- Selector de Estilo de Menú: Simple vs Detallado -->
+        <div class="drawer-layout-switcher">
+            <span class="drawer-layout-switcher__label">ESTILO DE MENÚ</span>
+            <div class="drawer-layout-segmented" role="radiogroup" aria-label="Estilo de vista del menú">
+                <button type="button" id="drawerLayoutSimpleBtn" class="drawer-layout-seg-btn" role="radio" aria-checked="false" title="Ver menú resumido con accesos principales">
+                    <span>⚡ Simple</span>
+                </button>
+                <button type="button" id="drawerLayoutDetailedBtn" class="drawer-layout-seg-btn is-active" role="radio" aria-checked="true" title="Ver menú detallado con todas las modalidades y juegos">
+                    <span>📑 Detallado</span>
+                </button>
+            </div>
+        </div>
+
         <!-- Sección 1: Navegación de vistas -->
         <!-- Sección 1: Navegación Principal -->
-        <div class="drawer-section">
+        <div class="drawer-section drawer-section--principal" id="drawerSectionPrincipal">
             <span class="drawer-section__label">Principal</span>
             <nav class="drawer-nav" aria-label="Navegación principal en menú móvil">
                 <button id="drawerNavHome" class="drawer-nav-item is-active" type="button" data-view="home">
@@ -221,7 +234,7 @@
         </div>
 
         <!-- Sección 2: 👤 MODO SOLO (Estudio Individual) -->
-        <div class="drawer-section drawer-section--solo">
+        <div class="drawer-section drawer-section--solo" id="drawerSectionSolo">
             <div class="drawer-section__header-badge">
                 <span class="drawer-section__label">👤 Modo Solo (Individual)</span>
                 <span class="badge badge--success">Práctica</span>
@@ -247,7 +260,7 @@
         </div>
 
         <!-- Sección 3: ⚔️ MODO DUELO (Multijugador Online) -->
-        <div class="drawer-section drawer-section--duelo">
+        <div class="drawer-section drawer-section--duelo" id="drawerSectionDuelo">
             <div class="drawer-section__header-badge">
                 <span class="drawer-section__label">⚔️ Modo Duelo (Online)</span>
                 <span class="badge badge--accent">Multijugador</span>
@@ -367,6 +380,9 @@
                 <button id="heroGoJuntosBtn" class="button button--secondary button--lg" type="button" title="Ir a Estudiar Juntos">
                     🤝 Entrar a Estudiar Juntos
                 </button>
+                <button id="heroGoLabBtn" class="button button--secondary button--lg button--lab-hero" type="button" title="Ir al Laboratorio de Prácticas">
+                    🔬 Laboratorio Práctico
+                </button>
             </div>
         </div>
 
@@ -460,9 +476,61 @@
         </section>
 
         <!-- Portal Hub: 3 Grandes Accesos Directos a las Páginas de la App -->
-        <!-- Portal Hub: 3 Grandes Accesos Directos a las Páginas de la App -->
         <div class="portal-hub-container">
-            <div class="portal-hub-grid">
+            <!-- Barra Superior de Selección de Vista: Diseño Simple vs Detallado -->
+            <div class="home-view-control-bar">
+                <div class="home-view-control-info">
+                    <span class="home-view-control-tag">MODO DE VISTA</span>
+                    <span class="home-view-control-hint">Elegí cómo ver los accesos del inicio</span>
+                </div>
+                <div class="home-view-segmented" role="radiogroup" aria-label="Modo de vista del inicio">
+                    <button type="button" id="homeViewSimpleBtn" class="home-view-seg-btn" role="radio" aria-checked="false">
+                        <span>⚡ Diseño Simple</span>
+                    </button>
+                    <button type="button" id="homeViewDetailedBtn" class="home-view-seg-btn is-active" role="radio" aria-checked="true">
+                        <span>📑 Diseño Detallado</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 1. VISTA SIMPLE: 3 Botones / Banners Rápidos y Limpios -->
+            <div class="home-simple-grid hidden" id="homeSimpleGrid">
+                <button type="button" class="home-simple-banner home-simple-banner--solo" id="homeSimpleSoloBtn">
+                    <div class="home-simple-banner__content">
+                        <span class="home-simple-banner__icon">👤</span>
+                        <div class="home-simple-banner__texts">
+                            <strong class="home-simple-banner__title">Entrar a Estudiar Solo</strong>
+                            <span class="home-simple-banner__sub">Bolillero, Bomba, Impostor y Memotest</span>
+                        </div>
+                    </div>
+                    <span class="home-simple-banner__arrow">➜</span>
+                </button>
+
+                <button type="button" class="home-simple-banner home-simple-banner--juntos" id="homeSimpleJuntosBtn">
+                    <div class="home-simple-banner__content">
+                        <span class="home-simple-banner__icon">🤝</span>
+                        <div class="home-simple-banner__texts">
+                            <strong class="home-simple-banner__title">Entrar a Estudiar Juntos</strong>
+                            <span class="home-simple-banner__sub">Multijugador Online Versus y Cooperativo</span>
+                        </div>
+                    </div>
+                    <span class="home-simple-banner__arrow">➜</span>
+                </button>
+
+                <button type="button" class="home-simple-banner home-simple-banner--lab" id="homeSimpleLabBtn">
+                    <div class="home-simple-banner__content">
+                        <span class="home-simple-banner__icon">🔬</span>
+                        <div class="home-simple-banner__texts">
+                            <strong class="home-simple-banner__title">Laboratorio de Prácticas</strong>
+                            <span class="home-simple-banner__sub">Estadística, Contabilidad, Gauss y Bayes</span>
+                        </div>
+                    </div>
+                    <span class="home-simple-banner__arrow">➜</span>
+                </button>
+            </div>
+
+            <!-- 2. VISTA DETALLADA: Las 3 Tarjetas Portal Completas -->
+            <div class="portal-hub-grid" id="homeDetailedGrid">
                 
                 <!-- Tarjeta Portal 1: Estudiar Solo -->
                 <article class="portal-hub-card portal-hub-card--solo">
@@ -5584,7 +5652,7 @@
 </dialog>
 
 <script src="mqtt.min.js"></script>
-<script src="script.js?v=29.17" defer></script>
+<script src="script.js?v=29.18" defer></script>
 
 <!-- =========================================================
      MODAL DE PROMPT PARA GEMINI (CREAR JUEGOS DESDE PDF)
