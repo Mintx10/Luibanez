@@ -18,7 +18,7 @@
     <link rel="icon" type="image/svg+xml" href="icon.svg?v=29.31">
     <link rel="apple-touch-icon" href="icon-192.png?v=29.31">
     <link rel="manifest" href="manifest.json?v=29.31">
-    <link rel="stylesheet" href="style.css?v=29.31">
+    <link rel="stylesheet" href="style.css?v=29.32">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -3385,125 +3385,97 @@
                             </div>
                         </div>
 
-                        <!-- WIDGET 2: CALCULADORA DE PROBABILIDADES Y CIENTÍFICA -->
+                        <!-- WIDGET 2: CALCULADORA DE DISTRIBUCIONES DE PROBABILIDAD (SUITE COMPLETA) -->
                         <div id="labWidgetProb" class="lab-tab-pane hidden" role="tabpanel">
-                            <!-- Sub-navegación de distribuciones -->
-                            <div class="lab-subtabs-nav">
-                                <button class="lab-subtab-btn is-active" type="button" data-subtab="normal">🔔 Distribución Normal</button>
-                                <button class="lab-subtab-btn" type="button" data-subtab="binomial">🎲 Binomial</button>
-                                <button class="lab-subtab-btn" type="button" data-subtab="poisson">⏱️ Poisson</button>
-                                <button class="lab-subtab-btn" type="button" data-subtab="calc">🔢 Teclado Científico</button>
+                            <!-- Navegación de distribuciones (Scroll horizontal táctil) -->
+                            <div class="lab-dist-nav-scroll" id="labDistNavScroll" role="tablist">
+                                <button class="lab-dist-pill-btn is-active" type="button" data-dist="normal">🔔 Normal</button>
+                                <button class="lab-dist-pill-btn" type="button" data-dist="t">📉 t-Student</button>
+                                <button class="lab-dist-pill-btn" type="button" data-dist="chi2">📐 Chi-cuadrado (χ²)</button>
+                                <button class="lab-dist-pill-btn" type="button" data-dist="f">⚖️ F-Fisher</button>
+                                <button class="lab-dist-pill-btn" type="button" data-dist="binomial">🪙 Binomial</button>
+                                <button class="lab-dist-pill-btn" type="button" data-dist="poisson">⏱️ Poisson</button>
+                                <button class="lab-dist-pill-btn" type="button" data-dist="hyper">📦 Hipergeométrica</button>
+                                <button class="lab-dist-pill-btn" type="button" data-dist="calc">🔢 Mini Calculadora</button>
                             </div>
 
-                            <!-- Sub-panel Distribución Normal -->
-                            <div id="labSubpanelNormal" class="lab-subpanel is-active">
-                                <div class="lab-calc-inputs-row">
-                                    <div class="lab-input-group">
-                                        <label for="labNormMean">Media (μ):</label>
-                                        <input type="number" id="labNormMean" class="input input--sm" value="0" step="any">
-                                    </div>
-                                    <div class="lab-input-group">
-                                        <label for="labNormStd">Desvío Estándar (σ):</label>
-                                        <input type="number" id="labNormStd" class="input input--sm" value="1" step="any" min="0.0001">
-                                    </div>
-                                    <div class="lab-input-group">
-                                        <label for="labNormX">Valor (X):</label>
-                                        <input type="number" id="labNormX" class="input input--sm" value="1.96" step="any">
-                                    </div>
-                                    <div class="lab-input-group">
-                                        <label for="labNormTail">Área / Probabilidad:</label>
-                                        <select id="labNormTail" class="input input--select input--sm">
-                                            <option value="left" selected>P(X ≤ x) [Cola Izquierda]</option>
-                                            <option value="right">P(X ≥ x) [Cola Derecha]</option>
-                                            <option value="two">P(-|x| ≤ X ≤ |x|) [Bilateral]</option>
-                                        </select>
-                                    </div>
+                            <!-- Contenedor Principal de la Calculadora de Distribuciones -->
+                            <div id="labDistMainContainer" class="lab-dist-container">
+                                <!-- Selector de Modo Dual: Valor -> P(X) vs P(X) -> Valor -->
+                                <div class="lab-dist-segment" id="labDistSegment">
+                                    <button type="button" id="labDistModeVP" class="lab-dist-segment-btn is-active" data-mode="vp">Valor ➔ P(X)</button>
+                                    <button type="button" id="labDistModePV" class="lab-dist-segment-btn" data-mode="pv">P(X) ➔ Valor</button>
                                 </div>
 
-                                <!-- Gráfico SVG Interactivo de Campana de Gauss -->
-                                <div class="lab-gauss-container">
-                                    <svg id="labGaussSvg" class="lab-gauss-svg" viewBox="0 0 600 240" preserveAspectRatio="none">
-                                        <!-- Curva y sombreado SVG inyectado dinámicamente -->
+                                <!-- Parámetros Dinámicos de la Distribución -->
+                                <div class="lab-dist-params-row" id="labDistParamsRow">
+                                    <!-- Inyectado dinámicamente por buildParamsUI() -->
+                                </div>
+
+                                <!-- Gráfico SVG Interactivo con Curva / Barras y Sombreado de Colas -->
+                                <div class="lab-dist-curve-box">
+                                    <svg id="labDistSvg" viewBox="0 0 340 165" class="lab-dist-svg">
+                                        <defs>
+                                            <linearGradient id="labDistGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                                                <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.6" />
+                                                <stop offset="100%" stop-color="#38bdf8" stop-opacity="0.1" />
+                                            </linearGradient>
+                                        </defs>
+                                        <path id="labDistShadeA" class="shadeA" d=""></path>
+                                        <path id="labDistShadeB" class="shadeB" d=""></path>
+                                        <path id="labDistCurveLine" class="curve-line" d=""></path>
+                                        <g id="labDistBarsGroup"></g>
+                                        <line class="baseline" x1="10" y1="140" x2="330" y2="140"></line>
+                                        <g id="labDistZlines"></g>
+                                        <g id="labDistTicks"></g>
                                     </svg>
                                 </div>
 
-                                <!-- Resultados de la Distribución Normal -->
-                                <div class="lab-calc-result-box">
-                                    <div class="lab-res-item">
-                                        <span class="lab-res-label">Valor Estandarizado (Z):</span>
-                                        <strong class="lab-res-val" id="labNormZVal">1.960</strong>
-                                    </div>
-                                    <div class="lab-res-item">
-                                        <span class="lab-res-label">Probabilidad P:</span>
-                                        <strong class="lab-res-val lab-res-val--highlight" id="labNormPVal">0.9750 (97.50%)</strong>
-                                    </div>
-                                    <button id="labBtnCopyNormToInput" class="button button--secondary button--xs" type="button">
-                                        📥 Copiar P a Checkpoint
-                                    </button>
+                                <!-- Selector de Región / Colas de Probabilidad -->
+                                <div class="lab-dist-pills" id="labDistTailPills">
+                                    <!-- Inyectado dinámicamente según simetría y tipo discreto/continuo -->
                                 </div>
-                            </div>
 
-                            <!-- Sub-panel Binomial -->
-                            <div id="labSubpanelBinomial" class="lab-subpanel hidden">
-                                <div class="lab-calc-inputs-row">
-                                    <div class="lab-input-group">
-                                        <label for="labBinoN">Ensayos (n):</label>
-                                        <input type="number" id="labBinoN" class="input input--sm" value="10" min="1" max="500">
-                                    </div>
-                                    <div class="lab-input-group">
-                                        <label for="labBinoP">Probabilidad de éxito (p):</label>
-                                        <input type="number" id="labBinoP" class="input input--sm" value="0.5" step="0.01" min="0" max="1">
-                                    </div>
-                                    <div class="lab-input-group">
-                                        <label for="labBinoK">Éxitos buscados (k):</label>
-                                        <input type="number" id="labBinoK" class="input input--sm" value="5" min="0">
-                                    </div>
+                                <!-- Fila de Entrada Principal con Stepper (+/-) -->
+                                <div class="lab-dist-input-row">
+                                    <button type="button" class="lab-dist-stepper" id="labDistSignToggle" title="Cambiar Signo (±)">±</button>
+                                    <button type="button" class="lab-dist-stepper" id="labDistStepDown" title="Decrementar (−)">−</button>
+                                    <input type="text" id="labDistMainInput" class="lab-dist-main-input is-value" value="1.96" inputmode="decimal" placeholder="Valor">
+                                    <button type="button" class="lab-dist-stepper" id="labDistStepUp" title="Incrementar (+)">+</button>
                                 </div>
-                                <div class="lab-calc-result-box" style="margin-top: 1rem;">
-                                    <div class="lab-res-item">
-                                        <span class="lab-res-label">P(X = k) [Exacta]:</span>
-                                        <strong class="lab-res-val" id="labBinoExactVal">0.2461</strong>
+
+                                <!-- Valores Preestablecidos Rápidos (Presets) -->
+                                <div class="lab-dist-presets" id="labDistPresets">
+                                    <button type="button" class="lab-dist-preset-btn" data-val="1.645">1.645 (90%)</button>
+                                    <button type="button" class="lab-dist-preset-btn" data-val="1.96">1.960 (95%)</button>
+                                    <button type="button" class="lab-dist-preset-btn" data-val="2.576">2.576 (99%)</button>
+                                    <button type="button" class="lab-dist-preset-btn" data-val="0.05">p=0.05</button>
+                                    <button type="button" class="lab-dist-preset-btn" data-val="0.01">p=0.01</button>
+                                </div>
+
+                                <!-- Tarjeta de Resultados Prominente -->
+                                <div class="lab-dist-result-card" id="labDistResultCard">
+                                    <div class="lab-dist-res-header">
+                                        <span class="lab-dist-res-label" id="labDistResLabel">PROBABILIDAD CALCULADA</span>
+                                        <span class="lab-dist-res-formula" id="labDistResFormula">P(X ≤ 1.9600)</span>
                                     </div>
-                                    <div class="lab-res-item">
-                                        <span class="lab-res-label">P(X ≤ k) [Acumulada]:</span>
-                                        <strong class="lab-res-val" id="labBinoLeVal">0.6230</strong>
+                                    <div class="lab-dist-res-val-box">
+                                        <strong class="lab-dist-res-value is-prob" id="labDistResValue">0.9750</strong>
+                                        <span class="lab-dist-res-pct" id="labDistResPct">(97.50%)</span>
                                     </div>
-                                    <div class="lab-res-item">
-                                        <span class="lab-res-label">P(X ≥ k) [Mayor o igual]:</span>
-                                        <strong class="lab-res-val lab-res-val--highlight" id="labBinoGeVal">0.6230</strong>
+                                    <div class="lab-dist-res-actions">
+                                        <button type="button" id="labBtnCopyDistToCheckpoint" class="button button--secondary button--xs" title="Copiar valor calculado al campo de respuesta">
+                                            📥 Copiar al Checkpoint Actual
+                                        </button>
                                     </div>
                                 </div>
                             </div>
 
-                            <!-- Sub-panel Poisson -->
-                            <div id="labSubpanelPoisson" class="lab-subpanel hidden">
-                                <div class="lab-calc-inputs-row">
-                                    <div class="lab-input-group">
-                                        <label for="labPoisLambda">Tasa media (λ):</label>
-                                        <input type="number" id="labPoisLambda" class="input input--sm" value="3" step="0.1" min="0.001">
-                                    </div>
-                                    <div class="lab-input-group">
-                                        <label for="labPoisK">Ocurrencias (k):</label>
-                                        <input type="number" id="labPoisK" class="input input--sm" value="2" min="0">
-                                    </div>
-                                </div>
-                                <div class="lab-calc-result-box" style="margin-top: 1rem;">
-                                    <div class="lab-res-item">
-                                        <span class="lab-res-label">P(X = k):</span>
-                                        <strong class="lab-res-val" id="labPoisExactVal">0.2240</strong>
-                                    </div>
-                                    <div class="lab-res-item">
-                                        <span class="lab-res-label">P(X ≤ k):</span>
-                                        <strong class="lab-res-val" id="labPoisLeVal">0.4232</strong>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Sub-panel Calculadora Científica -->
+                            <!-- Sub-panel Mini-Calculadora Científica (Alternativo) -->
                             <div id="labSubpanelCalc" class="lab-subpanel hidden">
                                 <div class="lab-mini-calc">
                                     <input type="text" id="labCalcScreen" class="lab-calc-screen" readonly value="0">
-                                     <div class="lab-calc-keys">
+                                    <div class="lab-calc-keys">
                                         <button class="lab-ckey" type="button" data-key="clear">AC</button>
                                         <button class="lab-ckey" type="button" data-key="del">⌫</button>
                                         <button class="lab-ckey" type="button" data-key="sqrt">√</button>
@@ -6027,7 +5999,7 @@
 
 <script src="mqtt.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="script.js?v=29.31" defer></script>
+<script src="script.js?v=29.32" defer></script>
 
 <!-- =========================================================
      MODAL DE PROMPT PARA GEMINI (CREAR JUEGOS DESDE PDF)

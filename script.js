@@ -960,6 +960,28 @@ const dom = {
     labPoisLeVal: document.getElementById("labPoisLeVal"),
     labCalcScreen: document.getElementById("labCalcScreen"),
 
+    /* Suite Completa de Distribuciones de Probabilidad */
+    labDistNavScroll: document.getElementById("labDistNavScroll"),
+    labDistMainContainer: document.getElementById("labDistMainContainer"),
+    labDistSegment: document.getElementById("labDistSegment"),
+    labDistModeVP: document.getElementById("labDistModeVP"),
+    labDistModePV: document.getElementById("labDistModePV"),
+    labDistParamsRow: document.getElementById("labDistParamsRow"),
+    labDistSvg: document.getElementById("labDistSvg"),
+    labDistTailPills: document.getElementById("labDistTailPills"),
+    labDistSignToggle: document.getElementById("labDistSignToggle"),
+    labDistStepDown: document.getElementById("labDistStepDown"),
+    labDistMainInput: document.getElementById("labDistMainInput"),
+    labDistStepUp: document.getElementById("labDistStepUp"),
+    labDistPresets: document.getElementById("labDistPresets"),
+    labDistResultCard: document.getElementById("labDistResultCard"),
+    labDistResLabel: document.getElementById("labDistResLabel"),
+    labDistResFormula: document.getElementById("labDistResFormula"),
+    labDistResValue: document.getElementById("labDistResValue"),
+    labDistResPct: document.getElementById("labDistResPct"),
+    labBtnCopyDistToCheckpoint: document.getElementById("labBtnCopyDistToCheckpoint"),
+    labSubpanelCalc: document.getElementById("labSubpanelCalc"),
+
     /* Matriz de Bayes */
     labBayesEvAName: document.getElementById("labBayesEvAName"),
     labBayesEvBName: document.getElementById("labBayesEvBName"),
@@ -17653,20 +17675,37 @@ function irASeccionEstudio(idSeccion, navId) {
    CATÁLOGO MULTIDISCIPLINARIO: CIENCIAS EXACTAS Y CONTABILIDAD
    ========================================================== */
 const CATALOGO_MATERIAS_LABORATORIO = {
+    estadistica: {
+        id: "estadistica",
+        nombre: "Estadística y Probabilidad",
+        icono: "📊",
+        badge: "Exactas",
+        descripcion: "Tablas de frecuencia, probabilidad, campana de Gauss, Poisson, Binomial y Bayes.",
+        tabDefault: "freq",
+        subtemas: [
+            { id: "frecuencias", nombre: "Tablas de Frecuencia y Gráficos", desc: "Intervalos, marcas de clase, fi, Fi, hi y porcentajes.", icono: "📋", default: true },
+            { id: "descriptiva", nombre: "Medidas de Posición y Dispersión", desc: "Media muestral, mediana, moda, varianza (s²), desvío (s) y CV.", icono: "📊", default: true },
+            { id: "normal", nombre: "Distribución Normal (Gauss / Z)", desc: "Estandarización Z, áreas bajo la curva y cuantiles inversos.", icono: "🔔", default: true },
+            { id: "discretas", nombre: "Distribuciones Discretas (Binomial y Poisson)", desc: "Ensayos Bernoulli, tasas λ y probabilidades acumuladas.", icono: "🪙", default: false },
+            { id: "hipergeometrica", nombre: "Distribución Hipergeométrica", desc: "Muestreo sin reposición de poblaciones finitas N, K, n.", icono: "📦", default: false },
+            { id: "inferencia", nombre: "Distribuciones t-Student, χ² y Fisher", desc: "Grados de libertad, cuantiles y regiones críticas.", icono: "📉", default: false },
+            { id: "bayes", nombre: "Probabilidad Condicional y Teorema de Bayes", desc: "Tablas 2x2, sensibilidad, especificidad y falsos positivos.", icono: "🎲", default: false }
+        ]
+    },
     contabilidad: {
         id: "contabilidad",
         nombre: "Contabilidad y Sistemas Contables",
         icono: "💼",
         badge: "Económicas",
-        descripcion: "Libro Diario, Cuentas T, Balance de Comprobación y Asientos.",
+        descripcion: "Libro Diario, Cuentas T, Balance de Comprobación, CMV y Variaciones Patrimoniales.",
         tabDefault: "contabilidad",
         subtemas: [
-            { id: "asientos", nombre: "Asientos Contables y Libro Diario", desc: "Registro cronológico de operaciones en el Debe y Haber.", icono: "📝", default: true },
-            { id: "mayor", nombre: "Libro Mayor (Cuentas T)", desc: "Saldos deudores y acreedores por cada cuenta.", icono: "⚖️", default: true },
-            { id: "balance", nombre: "Balance General y Sumas y Saldos", desc: "Comprobación de igualdad patrimonial y cuadre.", icono: "📑", default: true },
-            { id: "ajustes", nombre: "Ajustes al Cierre y Amortizaciones", desc: "Depreciaciones de bienes de uso y devengamientos.", icono: "🔧", default: false },
-            { id: "resultados", nombre: "Resultados (R+ / R-) y Ventas", desc: "Costo de mercaderías vendidas (CMV) y utilidad bruta.", icono: "📈", default: false },
-            { id: "conciliacion", nombre: "Conciliación Bancaria y Arqueo", desc: "Control de extractos bancarios y diferencias de caja.", icono: "🏦", default: false }
+            { id: "asientos", nombre: "Asientos Contables y Libro Diario", desc: "Registro cronológico de operaciones en el Debe y Haber con partida doble.", icono: "📝", default: true },
+            { id: "mayor", nombre: "Libro Mayor (Cuentas T)", desc: "Mayorización, saldos deudores y acreedores por cada cuenta.", icono: "⚖️", default: true },
+            { id: "balance", nombre: "Balance de Comprobación de Sumas y Saldos", desc: "Verificación de igualdad patrimonial y cuadre A = P + PN.", icono: "📑", default: true },
+            { id: "variaciones", nombre: "Variaciones Patrimoniales", desc: "Permutativas y modificativas (ingresos R+ y egresos R-).", icono: "🔄", default: false },
+            { id: "resultados", nombre: "Determinación del CMV y Utilidad Bruta", desc: "Costo de mercaderías vendidas (Ei + C - Ef) y utilidad de ventas.", icono: "📈", default: false },
+            { id: "conciliacion", nombre: "Fondo Fijo, Arqueo y Conciliación", desc: "Control de extractos bancarios, arqueo de caja y reposición.", icono: "🏦", default: false }
         ]
     },
     matematicas: {
@@ -17699,22 +17738,6 @@ const CATALOGO_MATERIAS_LABORATORIO = {
             { id: "integrales", nombre: "Integrales Indefinidas y Definidas", desc: "Regla de Barrow y áreas bajo la curva.", icono: "∫", default: false },
             { id: "metodos_integracion", nombre: "Métodos de Integración", desc: "Sustitución y partes.", icono: "🧩", default: false },
             { id: "series", nombre: "Ecuaciones Diferenciales y Series", desc: "Criterios de convergencia y separación de variables.", icono: "♾️", default: false }
-        ]
-    },
-    estadistica: {
-        id: "estadistica",
-        nombre: "Estadística y Probabilidad",
-        icono: "📊",
-        badge: "Exactas",
-        descripcion: "Tablas de frecuencia, probabilidad, campana de Gauss y Bayes.",
-        tabDefault: "freq",
-        subtemas: [
-            { id: "descriptiva", nombre: "Estadística Descriptiva y Promedios", desc: "Media, mediana, moda y medidas de posición.", icono: "📊", default: true },
-            { id: "frecuencias", nombre: "Tablas de Frecuencia y Gráficos", desc: "Frecuencia absoluta, relativa y acumulada.", icono: "📋", default: true },
-            { id: "dispersion", nombre: "Dispersión (Varianza, Desvío y CV)", desc: "Amplitud y variabilidad de la muestra.", icono: "🎯", default: false },
-            { id: "bayes", nombre: "Probabilidad y Teorema de Bayes", desc: "Probabilidad condicional y tablas 2x2.", icono: "🎲", default: false },
-            { id: "normal", nombre: "Distribución Normal (Gauss / Z)", desc: "Estandarización y cálculo de áreas z.", icono: "🔔", default: false },
-            { id: "discretas", nombre: "Distribución Binomial y Poisson", desc: "Variables discretas y probabilidades acumuladas.", icono: "🪙", default: false }
         ]
     },
     fisica: {
@@ -17831,8 +17854,8 @@ const contabilidadEstado = {
 
 const laboratorioEstado = {
     iniciado: false,
-    materiaSeleccionada: "contabilidad",
-    temasSeleccionados: ["asientos", "mayor", "balance"],
+    materiaSeleccionada: "estadistica",
+    temasSeleccionados: ["frecuencias", "descriptiva", "normal"],
     temaSeleccionado: "descriptiva", // Compatibilidad hacia atrás
     dificultad: "intermedio", // "facil" | "intermedio" | "dificil" | "extremo"
     pdfTexto: "",
@@ -17845,8 +17868,15 @@ const laboratorioEstado = {
     pistasReveladas: {},
     solucionesReveladas: {},
     xpTotal: 0,
-    tabActiva: "contabilidad",
+    tabActiva: "freq",
     distribucionActiva: "normal",
+    calcProb: {
+        distKey: "normal",
+        mode: "vp", // "vp" (Valor -> P(X)) o "pv" (P(X) -> Valor)
+        tail: "left",
+        valor: 1.96,
+        prob: 0.9750
+    },
     scratchState: {
         drawing: false,
         lastX: 0,
@@ -17868,18 +17898,152 @@ const laboratorioEstado = {
 };
 
 // ==========================================
-// MOTOR MATEMÁTICO DE PROBABILIDAD (PURO JS)
+// MOTOR MATEMÁTICO DE PROBABILIDAD AVANZADO (PURO JS)
+// Inspirado en distribucionesdeprobabilidad1-maker / Calculadora
 // ==========================================
 
+function lgamma(x) {
+    const g = 7;
+    const c = [
+        0.99999999999980993, 676.5203681218851, -1259.1392167224028,
+        771.32342877765313, -176.61502916214059, 12.507343278686905,
+        -0.13857109526572012, 9.9843695780195716e-6, 1.5056327351493116e-7
+    ];
+    if (x < 0.5) {
+        return Math.log(Math.PI / Math.sin(Math.PI * x)) - lgamma(1 - x);
+    }
+    x -= 1;
+    let a = c[0];
+    const t = x + g + 0.5;
+    for (let i = 1; i < g + 2; i++) {
+        a += c[i] / (x + i);
+    }
+    return 0.5 * Math.log(2 * Math.PI) + (x + 0.5) * Math.log(t) - t + Math.log(a);
+}
+
+function logChoose(n, k) {
+    if (k < 0 || k > n || n < 0) return -Infinity;
+    return lgamma(n + 1) - lgamma(k + 1) - lgamma(n - k + 1);
+}
+
 function labErf(x) {
-    // Aproximación de Abramowitz & Stegun 7.1.26 (error < 1.5e-7)
-    const a1 = 0.254829592, a2 = -0.284496736, a3 = 1.421413741, a4 = -1.453152027, a5 = 1.061405429;
-    const p = 0.3275911;
-    const sign = x < 0 ? -1 : 1;
+    const sign = x >= 0 ? 1 : -1;
     x = Math.abs(x);
-    const t = 1.0 / (1.0 + p * x);
-    const y = 1.0 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * Math.exp(-x * x);
+    const a1 = 0.254829592, a2 = -0.284496736, a3 = 1.421413741, a4 = -1.453152027, a5 = 1.061405429, p = 0.3275911;
+    const t = 1 / (1 + p * x);
+    const y = 1 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * Math.exp(-x * x);
     return sign * y;
+}
+
+function gammaSeries(a, x) {
+    if (x <= 0) return 0;
+    const gln = lgamma(a);
+    let ap = a, sum = 1 / a, del = sum;
+    for (let n = 1; n <= 200; n++) {
+        ap += 1;
+        del *= x / ap;
+        sum += del;
+        if (Math.abs(del) < Math.abs(sum) * 1e-14) break;
+    }
+    return sum * Math.exp(-x + a * Math.log(x) - gln);
+}
+
+function gammaCF(a, x) {
+    const gln = lgamma(a);
+    let b = x + 1 - a, c = 1e300, d = 1 / b, h = d;
+    for (let i = 1; i <= 200; i++) {
+        const an = -i * (i - a);
+        b += 2;
+        d = an * d + b;
+        if (Math.abs(d) < 1e-300) d = 1e-300;
+        c = b + an / c;
+        if (Math.abs(c) < 1e-300) c = 1e-300;
+        d = 1 / d;
+        const del = d * c;
+        h *= del;
+        if (Math.abs(del - 1) < 1e-14) break;
+    }
+    return Math.exp(-x + a * Math.log(x) - gln) * h;
+}
+
+function gammaP(a, x) {
+    if (x <= 0 || a <= 0) return 0;
+    return x < a + 1 ? gammaSeries(a, x) : 1 - gammaCF(a, x);
+}
+
+function betacf(x, a, b) {
+    const MAXIT = 200, EPS = 3e-14, FPMIN = 1e-300;
+    const qab = a + b, qap = a + 1, qam = a - 1;
+    let c = 1, d = 1 - qab * x / qap;
+    if (Math.abs(d) < FPMIN) d = FPMIN;
+    d = 1 / d;
+    let h = d;
+    for (let m = 1; m <= MAXIT; m++) {
+        const m2 = 2 * m;
+        let aa = m * (b - m) * x / ((qam + m2) * (a + m2));
+        d = 1 + aa * d;
+        if (Math.abs(d) < FPMIN) d = FPMIN;
+        c = 1 + aa / c;
+        if (Math.abs(c) < FPMIN) c = FPMIN;
+        d = 1 / d;
+        h *= d * c;
+        aa = -(a + m) * (qab + m) * x / ((a + m2) * (qap + m2));
+        d = 1 + aa * d;
+        if (Math.abs(d) < FPMIN) d = FPMIN;
+        c = 1 + aa / c;
+        if (Math.abs(c) < FPMIN) c = FPMIN;
+        d = 1 / d;
+        const del = d * c;
+        h *= del;
+        if (Math.abs(del - 1) < EPS) break;
+    }
+    return h;
+}
+
+function betai(x, a, b) {
+    if (x <= 0) return 0;
+    if (x >= 1) return 1;
+    const bt = Math.exp(lgamma(a + b) - lgamma(a) - lgamma(b) + a * Math.log(x) + b * Math.log(1 - x));
+    return x < (a + 1) / (a + b + 2) ? bt * betacf(x, a, b) / a : 1 - bt * betacf(1 - x, b, a) / b;
+}
+
+function bisectGeneric(f, target, lo, hi, increasing, iters = 85) {
+    for (let i = 0; i < iters; i++) {
+        const mid = (lo + hi) / 2;
+        const fm = f(mid);
+        if (increasing) {
+            if (fm < target) lo = mid; else hi = mid;
+        } else {
+            if (fm > target) lo = mid; else hi = mid;
+        }
+    }
+    return (lo + hi) / 2;
+}
+
+function tCDF(t, df) {
+    const x = df / (df + t * t);
+    const ib = betai(x, df / 2, 0.5);
+    return t >= 0 ? 1 - 0.5 * ib : 0.5 * ib;
+}
+function tPDF(t, df) {
+    return Math.exp(lgamma((df + 1) / 2) - lgamma(df / 2)) / Math.sqrt(df * Math.PI) * Math.pow(1 + t * t / df, -(df + 1) / 2);
+}
+
+function chi2CDF(x, df) {
+    return x <= 0 ? 0 : gammaP(df / 2, x / 2);
+}
+function chi2PDF(x, df) {
+    return x <= 0 ? 0 : Math.exp((df / 2 - 1) * Math.log(x) - x / 2 - (df / 2) * Math.log(2) - lgamma(df / 2));
+}
+
+function fCDF(x, d1, d2) {
+    if (x <= 0) return 0;
+    const xt = d1 * x / (d1 * x + d2);
+    return betai(xt, d1 / 2, d2 / 2);
+}
+function fPDF(x, d1, d2) {
+    if (x <= 0) return 0;
+    return Math.exp(lgamma((d1 + d2) / 2) - lgamma(d1 / 2) - lgamma(d2 / 2) + (d1 / 2) * Math.log(d1 / d2) + (d1 / 2 - 1) * Math.log(x) - ((d1 + d2) / 2) * Math.log(1 + d1 * x / d2));
 }
 
 function labNormalCDF(x, mu = 0, sigma = 1) {
@@ -17887,147 +18051,137 @@ function labNormalCDF(x, mu = 0, sigma = 1) {
     const z = (x - mu) / (sigma * Math.SQRT2);
     return 0.5 * (1 + labErf(z));
 }
-
-function labFactorialLog(n) {
-    let sum = 0;
-    for (let i = 2; i <= n; i++) sum += Math.log(i);
-    return sum;
+function labNormalPDF(x, mu = 0, sigma = 1) {
+    if (sigma <= 0) sigma = 1e-6;
+    return Math.exp(-0.5 * Math.pow((x - mu) / sigma, 2)) / (sigma * Math.sqrt(2 * Math.PI));
 }
 
 function labCombinatoria(n, k) {
     if (k < 0 || k > n) return 0;
-    if (k === 0 || k === n) return 1;
-    return Math.round(Math.exp(labFactorialLog(n) - labFactorialLog(k) - labFactorialLog(n - k)));
+    return Math.round(Math.exp(logChoose(n, k)));
 }
-
 function labBinomialPMF(n, p, k) {
     if (k < 0 || k > n) return 0;
-    return labCombinatoria(n, k) * Math.pow(p, k) * Math.pow(1 - p, n - k);
+    if (p <= 0) return k === 0 ? 1 : 0;
+    if (p >= 1) return k === n ? 1 : 0;
+    return Math.exp(logChoose(n, k) + k * Math.log(p) + (n - k) * Math.log(1 - p));
 }
-
 function labPoissonPMF(lambda, k) {
     if (k < 0 || lambda <= 0) return 0;
-    return Math.exp(-lambda + k * Math.log(lambda) - labFactorialLog(k));
+    return Math.exp(-lambda + k * Math.log(lambda) - lgamma(k + 1));
+}
+function labHyperPMF(N, K, n, k) {
+    if (k < 0 || k > n || k > K || (n - k) > (N - K)) return 0;
+    return Math.exp(logChoose(K, k) + logChoose(N - K, n - k) - logChoose(N, n));
 }
 
-// ==========================================
-// RENDERIZADOR SVG DE LA CAMPANA DE GAUSS
-// ==========================================
-
-function renderizarCampanaGaussSVG(mu, sigma, x, cola = "left") {
-    if (!dom.labGaussSvg) return;
-    if (sigma <= 0) sigma = 1e-4;
-
-    const width = 600;
-    const height = 180;
-    const padX = 40;
-    const padYBottom = 30;
-    const padYTop = 15;
-    const graphW = width - (padX * 2);
-    const graphH = height - padYBottom - padYTop;
-
-    const xMin = mu - (3.5 * sigma);
-    const xMax = mu + (3.5 * sigma);
-    const peakPdf = 1 / (sigma * Math.sqrt(2 * Math.PI));
-
-    function toSvgX(val) {
-        return padX + ((val - xMin) / (xMax - xMin)) * graphW;
+/* Definición de Modelos Estadísticos del Laboratorio */
+const DIST_MODELS = {
+    normal: {
+        type: 'continuous',
+        name: 'Normal',
+        sym: 'x',
+        symmetric: true,
+        defaultValue: 1.96,
+        valueLabel: 'Valor de x',
+        params: [
+            { key: 'mu', label: 'μ (media)', default: 0, step: 0.1, alwaysFilled: true },
+            { key: 'sigma', label: 'σ (desvío)', default: 1, step: 0.1, min: 0.0001, alwaysFilled: true }
+        ],
+        center: function(p) { return p.mu; },
+        cdf: function(x, p) { return labNormalCDF(x, p.mu, p.sigma); },
+        pdf: function(x, p) { return labNormalPDF(x, p.mu, p.sigma); },
+        bounds: function(p, tail) { return (tail === 'central' || tail === 'two') ? [p.mu, p.mu + 60 * p.sigma] : [p.mu - 60 * p.sigma, p.mu + 60 * p.sigma]; },
+        nonneg: false
+    },
+    t: {
+        type: 'continuous',
+        name: 't de Student',
+        sym: 't',
+        symmetric: true,
+        defaultValue: 2.228,
+        valueLabel: 'Valor de t',
+        params: [
+            { key: 'df', label: 'ν (g.l.)', default: 10, step: 1, min: 1, integer: true }
+        ],
+        center: function() { return 0; },
+        cdf: function(x, p) { return tCDF(x, p.df); },
+        pdf: function(x, p) { return tPDF(x, p.df); },
+        bounds: function(p, tail) { return (tail === 'central' || tail === 'two') ? [0, 2000] : [-2000, 2000]; },
+        nonneg: false
+    },
+    chi2: {
+        type: 'continuous',
+        name: 'Chi-cuadrado (χ²)',
+        sym: 'χ²',
+        symmetric: false,
+        defaultValue: 11.07,
+        valueLabel: 'Valor de χ²',
+        params: [
+            { key: 'df', label: 'ν (g.l.)', default: 5, step: 1, min: 1, integer: true }
+        ],
+        cdf: function(x, p) { return chi2CDF(x, p.df); },
+        pdf: function(x, p) { return chi2PDF(x, p.df); },
+        bounds: function(p) { return [0, Math.max(1000, p.df * 60 + 1000)]; },
+        nonneg: true
+    },
+    f: {
+        type: 'continuous',
+        name: 'F de Fisher',
+        sym: 'F',
+        symmetric: false,
+        defaultValue: 3.33,
+        valueLabel: 'Valor de F',
+        params: [
+            { key: 'df1', label: 'ν1 (g.l. 1)', default: 5, step: 1, min: 1, integer: true },
+            { key: 'df2', label: 'ν2 (g.l. 2)', default: 10, step: 1, min: 1, integer: true }
+        ],
+        cdf: function(x, p) { return fCDF(x, p.df1, p.df2); },
+        pdf: function(x, p) { return fPDF(x, p.df1, p.df2); },
+        bounds: function() { return [0, 1e6]; },
+        nonneg: true
+    },
+    binomial: {
+        type: 'discrete',
+        name: 'Binomial',
+        sym: 'k',
+        defaultValue: 12,
+        valueLabel: 'x (éxitos)',
+        params: [
+            { key: 'n', label: 'n (ensayos)', default: 20, step: 1, min: 1, integer: true },
+            { key: 'pr', label: 'p (éxito)', default: 0.5, step: 0.01, min: 0, max: 1 }
+        ],
+        pmf: function(k, p) { return labBinomialPMF(p.n, p.pr, k); },
+        maxK: function(p) { return p.n; }
+    },
+    poisson: {
+        type: 'discrete',
+        name: 'Poisson',
+        sym: 'k',
+        defaultValue: 6,
+        valueLabel: 'x (eventos)',
+        params: [
+            { key: 'lambda', label: 'λ (tasa media)', default: 4, step: 0.1, min: 0.0001 }
+        ],
+        pmf: function(k, p) { return labPoissonPMF(p.lambda, k); },
+        maxK: function(p) { return Math.min(3000, Math.ceil(p.lambda + 20 * Math.sqrt(p.lambda) + 50)); }
+    },
+    hyper: {
+        type: 'discrete',
+        name: 'Hipergeométrica',
+        sym: 'k',
+        defaultValue: 5,
+        valueLabel: 'x (éxitos en muestra)',
+        params: [
+            { key: 'N', label: 'N (población)', default: 50, step: 1, min: 1, integer: true },
+            { key: 'K', label: 'K (éxitos en pob.)', default: 20, step: 1, min: 0, integer: true },
+            { key: 'n', label: 'n (muestra)', default: 10, step: 1, min: 0, integer: true }
+        ],
+        pmf: function(k, p) { return labHyperPMF(p.N, p.K, p.n, k); },
+        maxK: function(p) { return Math.min(p.n, p.K); }
     }
+};
 
-    function toSvgY(pdfVal) {
-        return height - padYBottom - (pdfVal / peakPdf) * graphH;
-    }
-
-    // Puntos de la curva
-    const numPoints = 120;
-    const points = [];
-    for (let i = 0; i <= numPoints; i++) {
-        const currX = xMin + (i / numPoints) * (xMax - xMin);
-        const z = (currX - mu) / sigma;
-        const pdf = (1 / (sigma * Math.sqrt(2 * Math.PI))) * Math.exp(-0.5 * z * z);
-        points.push({ x: toSvgX(currX), y: toSvgY(pdf), val: currX });
-    }
-
-    // Path de la línea de la campana
-    let pathD = `M ${points[0].x} ${points[0].y}`;
-    for (let i = 1; i < points.length; i++) {
-        pathD += ` L ${points[i].x} ${points[i].y}`;
-    }
-
-    // Polígono de área sombreada según cola seleccionada
-    let shadePoints = [];
-    const baselineY = height - padYBottom;
-
-    if (cola === "left") {
-        const sub = points.filter(p => p.val <= x);
-        if (sub.length > 0) {
-            shadePoints.push(`${sub[0].x},${baselineY}`);
-            sub.forEach(p => shadePoints.push(`${p.x},${p.y}`));
-            const lastX = toSvgX(Math.min(x, xMax));
-            const zAtX = (x - mu) / sigma;
-            const pdfAtX = (1 / (sigma * Math.sqrt(2 * Math.PI))) * Math.exp(-0.5 * zAtX * zAtX);
-            shadePoints.push(`${lastX},${toSvgY(pdfAtX)}`);
-            shadePoints.push(`${lastX},${baselineY}`);
-        }
-    } else if (cola === "right") {
-        const sub = points.filter(p => p.val >= x);
-        if (sub.length > 0) {
-            const firstX = toSvgX(Math.max(x, xMin));
-            const zAtX = (x - mu) / sigma;
-            const pdfAtX = (1 / (sigma * Math.sqrt(2 * Math.PI))) * Math.exp(-0.5 * zAtX * zAtX);
-            shadePoints.push(`${firstX},${baselineY}`);
-            shadePoints.push(`${firstX},${toSvgY(pdfAtX)}`);
-            sub.forEach(p => shadePoints.push(`${p.x},${p.y}`));
-            shadePoints.push(`${sub[sub.length - 1].x},${baselineY}`);
-        }
-    } else {
-        // Bilateral
-        const delta = Math.abs(x - mu);
-        const low = mu - delta;
-        const high = mu + delta;
-        const sub = points.filter(p => p.val >= low && p.val <= high);
-        if (sub.length > 0) {
-            shadePoints.push(`${toSvgX(low)},${baselineY}`);
-            sub.forEach(p => shadePoints.push(`${p.x},${p.y}`));
-            shadePoints.push(`${toSvgX(high)},${baselineY}`);
-        }
-    }
-
-    const shadePolygon = shadePoints.length > 0
-        ? `<polygon points="${shadePoints.join(" ")}" fill="rgba(56, 189, 248, 0.35)" />`
-        : "";
-
-    // Línea de la Media (μ)
-    const muSvgX = toSvgX(mu);
-    const meanLine = `
-        <line x1="${muSvgX}" y1="${padYTop}" x2="${muSvgX}" y2="${baselineY}" stroke="#34d399" stroke-dasharray="4 4" stroke-width="1.5" />
-        <text x="${muSvgX}" y="${baselineY + 18}" fill="#34d399" font-size="11" text-anchor="middle" font-weight="bold">μ=${mu}</text>
-    `;
-
-    // Línea de X
-    const xSvgX = Math.max(padX, Math.min(width - padX, toSvgX(x)));
-    const xLine = `
-        <line x1="${xSvgX}" y1="${padYTop + 10}" x2="${xSvgX}" y2="${baselineY}" stroke="#38bdf8" stroke-width="2" />
-        <circle cx="${xSvgX}" cy="${baselineY}" r="4" fill="#38bdf8" />
-        <text x="${xSvgX}" y="${baselineY + 20}" fill="#38bdf8" font-size="11" text-anchor="middle" font-weight="bold">X=${x}</text>
-    `;
-
-    dom.labGaussSvg.innerHTML = `
-        <defs>
-            <linearGradient id="gaussGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.8" />
-                <stop offset="100%" stop-color="#38bdf8" stop-opacity="0.1" />
-            </linearGradient>
-        </defs>
-        <!-- Eje Base X -->
-        <line x1="${padX}" y1="${baselineY}" x2="${width - padX}" y2="${baselineY}" stroke="rgba(255,255,255,0.2)" stroke-width="1" />
-        ${shadePolygon}
-        <!-- Trazo de la Campana -->
-        <path d="${pathD}" fill="none" stroke="#60a5fa" stroke-width="2.5" />
-        ${meanLine}
-        ${xLine}
-    `;
-}
 
 // ==========================================
 // CONTROLADOR DE LA TABLA DE FRECUENCIAS
@@ -18282,60 +18436,636 @@ function limpiarGrillaFrecuencias() {
 }
 
 // ==========================================
-// CONTROLADOR DE CALCULADORA DE PROBABILIDAD
+// CONTROLADOR DE CALCULADORA DE DISTRIBUCIONES (SUITE COMPLETA)
 // ==========================================
 
-function actualizarCalculosNormalUI() {
-    const mu = parseFloat(dom.labNormMean?.value) || 0;
-    const std = parseFloat(dom.labNormStd?.value) || 1;
-    const x = parseFloat(dom.labNormX?.value) || 0;
-    const tail = dom.labNormTail?.value || "left";
+function inicializarCalculadoraDistribuciones() {
+    if (!dom.labWidgetProb) return;
 
-    const z = (x - mu) / std;
-    let prob = 0;
+    // 1. Selector horizontal de distribuciones
+    if (dom.labDistNavScroll) {
+        dom.labDistNavScroll.querySelectorAll(".lab-dist-pill-btn").forEach(btn => {
+            btn.addEventListener("click", () => {
+                const distKey = btn.getAttribute("data-dist");
+                if (distKey === "calc") {
+                    // Mostrar panel de calculadora científica
+                    if (dom.labDistMainContainer) dom.labDistMainContainer.classList.add("hidden");
+                    if (dom.labSubpanelCalc) dom.labSubpanelCalc.classList.remove("hidden");
+                    dom.labDistNavScroll.querySelectorAll(".lab-dist-pill-btn").forEach(b => b.classList.remove("is-active"));
+                    btn.classList.add("is-active");
+                } else {
+                    if (dom.labDistMainContainer) dom.labDistMainContainer.classList.remove("hidden");
+                    if (dom.labSubpanelCalc) dom.labSubpanelCalc.classList.add("hidden");
+                    seleccionarDistribucionLab(distKey);
+                }
+            });
+        });
+    }
 
-    if (tail === "left") {
-        prob = labNormalCDF(x, mu, std);
-    } else if (tail === "right") {
-        prob = 1 - labNormalCDF(x, mu, std);
+    // 2. Modos: Valor -> P(X) vs P(X) -> Valor
+    if (dom.labDistModeVP) {
+        dom.labDistModeVP.addEventListener("click", () => cambiarModoDistLab("vp"));
+    }
+    if (dom.labDistModePV) {
+        dom.labDistModePV.addEventListener("click", () => cambiarModoDistLab("pv"));
+    }
+
+    // 3. Steppers y controles de input
+    if (dom.labDistSignToggle) {
+        dom.labDistSignToggle.addEventListener("click", () => {
+            if (!dom.labDistMainInput) return;
+            let val = parseFloat(dom.labDistMainInput.value);
+            if (!isNaN(val)) {
+                dom.labDistMainInput.value = String(-val);
+                recalcularYRenderizarDistribucion();
+            }
+        });
+    }
+    if (dom.labDistStepDown) {
+        dom.labDistStepDown.addEventListener("click", () => ajustarPasoDistInput(-1));
+    }
+    if (dom.labDistStepUp) {
+        dom.labDistStepUp.addEventListener("click", () => ajustarPasoDistInput(1));
+    }
+    if (dom.labDistMainInput) {
+        dom.labDistMainInput.addEventListener("input", recalcularYRenderizarDistribucion);
+        dom.labDistMainInput.addEventListener("change", recalcularYRenderizarDistribucion);
+    }
+
+    // 4. Presets rápidos
+    if (dom.labDistPresets) {
+        dom.labDistPresets.querySelectorAll(".lab-dist-preset-btn").forEach(btn => {
+            btn.addEventListener("click", () => {
+                const pVal = btn.getAttribute("data-val");
+                if (pVal && dom.labDistMainInput) {
+                    dom.labDistMainInput.value = pVal;
+                    recalcularYRenderizarDistribucion();
+                }
+            });
+        });
+    }
+
+    // 5. Botón de Copiar a Checkpoint
+    if (dom.labBtnCopyDistToCheckpoint) {
+        dom.labBtnCopyDistToCheckpoint.addEventListener("click", copiarValorDistACheckpoint);
+    }
+
+    // Inicializar estado con la distribución activa
+    const distKeyInicial = (laboratorioEstado.calcProb && laboratorioEstado.calcProb.distKey) || "normal";
+    seleccionarDistribucionLab(distKeyInicial);
+}
+
+function seleccionarDistribucionLab(distKey, paramsOverride = null, valueOverride = null, tailOverride = null) {
+    if (!DIST_MODELS[distKey]) distKey = "normal";
+    if (!laboratorioEstado.calcProb) {
+        laboratorioEstado.calcProb = { distKey: "normal", mode: "vp", tail: "left", valor: 1.96, prob: 0.9750 };
+    }
+    laboratorioEstado.calcProb.distKey = distKey;
+    laboratorioEstado.distribucionActiva = distKey;
+
+    const dist = DIST_MODELS[distKey];
+
+    // Actualizar botones de navegación
+    if (dom.labDistNavScroll) {
+        dom.labDistNavScroll.querySelectorAll(".lab-dist-pill-btn").forEach(b => {
+            b.classList.toggle("is-active", b.getAttribute("data-dist") === distKey);
+        });
+    }
+
+    // Botón de signo solo visible para distribuciones continuas simétricas
+    if (dom.labDistSignToggle) {
+        dom.labDistSignToggle.style.display = dist.symmetric ? "flex" : "none";
+    }
+
+    // Reconstruir parámetros dinámicos en la UI
+    buildDistParamsUI(dist, paramsOverride);
+
+    // Si viene tailOverride, usarlo; sino verificar si la cola actual es válida
+    if (tailOverride) {
+        laboratorioEstado.calcProb.tail = tailOverride;
     } else {
-        const delta = Math.abs(x - mu);
-        prob = labNormalCDF(mu + delta, mu, std) - labNormalCDF(mu - delta, mu, std);
+        if (dist.type === "discrete" && laboratorioEstado.calcProb.tail === "central") {
+            laboratorioEstado.calcProb.tail = "left";
+        }
+        if (!dist.symmetric && (laboratorioEstado.calcProb.tail === "central" || laboratorioEstado.calcProb.tail === "two")) {
+            laboratorioEstado.calcProb.tail = "left";
+        }
     }
 
-    if (dom.labNormZVal) dom.labNormZVal.textContent = z.toFixed(3);
-    if (dom.labNormPVal) {
-        dom.labNormPVal.textContent = `${prob.toFixed(4)} (${(prob * 100).toFixed(2)}%)`;
+    // Reconstruir selector de colas / región
+    buildDistTailPillsUI(dist);
+
+    // Ajustar valor del input principal
+    if (dom.labDistMainInput) {
+        if (valueOverride !== null && valueOverride !== undefined) {
+            dom.labDistMainInput.value = String(valueOverride);
+        } else if (laboratorioEstado.calcProb.mode === "pv") {
+            dom.labDistMainInput.value = "0.05";
+        } else {
+            dom.labDistMainInput.value = String(dist.defaultValue !== undefined ? dist.defaultValue : 1);
+        }
     }
 
-    renderizarCampanaGaussSVG(mu, std, x, tail);
+    recalcularYRenderizarDistribucion();
 }
 
+function cambiarModoDistLab(mode) {
+    if (!laboratorioEstado.calcProb) {
+        laboratorioEstado.calcProb = { distKey: "normal", mode: "vp", tail: "left", valor: 1.96, prob: 0.9750 };
+    }
+    laboratorioEstado.calcProb.mode = mode;
+
+    if (dom.labDistModeVP) dom.labDistModeVP.classList.toggle("is-active", mode === "vp");
+    if (dom.labDistModePV) dom.labDistModePV.classList.toggle("is-active", mode === "pv");
+
+    const dist = DIST_MODELS[laboratorioEstado.calcProb.distKey || "normal"];
+
+    if (dom.labDistMainInput) {
+        if (mode === "pv") {
+            dom.labDistMainInput.classList.remove("is-value");
+            dom.labDistMainInput.classList.add("is-prob");
+            dom.labDistMainInput.placeholder = "P(0 a 1)";
+            dom.labDistMainInput.value = "0.05";
+        } else {
+            dom.labDistMainInput.classList.add("is-value");
+            dom.labDistMainInput.classList.remove("is-prob");
+            dom.labDistMainInput.placeholder = dist.valueLabel || "Valor";
+            dom.labDistMainInput.value = String(dist.defaultValue !== undefined ? dist.defaultValue : 1);
+        }
+    }
+
+    buildDistTailPillsUI(dist);
+    recalcularYRenderizarDistribucion();
+}
+
+function cambiarColaDistLab(tail) {
+    if (!laboratorioEstado.calcProb) return;
+    laboratorioEstado.calcProb.tail = tail;
+
+    if (dom.labDistTailPills) {
+        dom.labDistTailPills.querySelectorAll(".lab-dist-tail-pill").forEach(p => {
+            p.classList.toggle("is-active", p.getAttribute("data-tail") === tail);
+        });
+    }
+
+    recalcularYRenderizarDistribucion();
+}
+
+function ajustarPasoDistInput(dir) {
+    if (!dom.labDistMainInput) return;
+    const isProb = laboratorioEstado.calcProb.mode === "pv";
+    let val = parseFloat(dom.labDistMainInput.value);
+    if (isNaN(val)) val = 0;
+
+    const dist = DIST_MODELS[laboratorioEstado.calcProb.distKey || "normal"];
+    let step = 0.1;
+    if (isProb) step = 0.01;
+    else if (dist.type === "discrete") step = 1;
+
+    let nuevo = val + (dir * step);
+    if (isProb) {
+        nuevo = Math.max(0.0001, Math.min(0.9999, nuevo));
+        dom.labDistMainInput.value = nuevo.toFixed(4);
+    } else if (dist.type === "discrete") {
+        nuevo = Math.max(0, Math.round(nuevo));
+        dom.labDistMainInput.value = String(nuevo);
+    } else {
+        dom.labDistMainInput.value = nuevo.toFixed(2);
+    }
+
+    recalcularYRenderizarDistribucion();
+}
+
+function buildDistParamsUI(dist, overrideValues = null) {
+    if (!dom.labDistParamsRow) return;
+    dom.labDistParamsRow.innerHTML = "";
+
+    dist.params.forEach(pd => {
+        const val = (overrideValues && overrideValues[pd.key] !== undefined)
+            ? overrideValues[pd.key]
+            : (pd.alwaysFilled ? pd.default : "");
+        const placeholder = pd.default;
+
+        const field = document.createElement("div");
+        field.className = "lab-dist-param-field";
+        field.innerHTML = `
+            <label for="param_${pd.key}">${pd.label}</label>
+            <input id="param_${pd.key}" type="text" inputmode="decimal" value="${val}" placeholder="${placeholder}">
+        `;
+
+        const inp = field.querySelector("input");
+        inp.addEventListener("input", recalcularYRenderizarDistribucion);
+        inp.addEventListener("change", recalcularYRenderizarDistribucion);
+        dom.labDistParamsRow.appendChild(field);
+    });
+}
+
+function readDistParams(dist) {
+    const out = {};
+    dist.params.forEach(pd => {
+        const el = document.getElementById("param_" + pd.key);
+        const raw = ((el && el.value) || "").toString().trim();
+        if (raw === "") {
+            out[pd.key] = pd.default;
+        } else {
+            let v = parseFloat(raw.replace(",", "."));
+            if (isNaN(v)) v = pd.default;
+            if (pd.integer) v = Math.round(v);
+            if (pd.min !== undefined) v = Math.max(pd.min, v);
+            if (pd.max !== undefined) v = Math.min(pd.max, v);
+            out[pd.key] = v;
+        }
+    });
+    return out;
+}
+
+function buildDistTailPillsUI(dist) {
+    if (!dom.labDistTailPills) return;
+    dom.labDistTailPills.innerHTML = "";
+
+    const mode = (laboratorioEstado.calcProb && laboratorioEstado.calcProb.mode) || "vp";
+    const currentTail = (laboratorioEstado.calcProb && laboratorioEstado.calcProb.tail) || "left";
+    let opts = [];
+
+    if (dist.type === "discrete") {
+        opts = [
+            { k: "left", l: "Izquierda", m: `P(X ≤ ${dist.sym})` },
+            { k: "right", l: "Derecha", m: `P(X ≥ ${dist.sym})` }
+        ];
+        if (mode !== "pv") {
+            opts.push({ k: "exact", l: "Exacta", m: `P(X = ${dist.sym})` });
+        }
+    } else if (dist.symmetric) {
+        opts = [
+            { k: "left", l: "Izquierda", m: `P(X ≤ ${dist.sym})` },
+            { k: "right", l: "Derecha", m: `P(X ≥ ${dist.sym})` },
+            { k: "central", l: "Central", m: `P(−|${dist.sym}| ≤ X ≤ |${dist.sym}|)` },
+            { k: "two", l: "Dos colas", m: `2P(X ≥ |${dist.sym}|)` }
+        ];
+    } else {
+        opts = [
+            { k: "left", l: "Izquierda", m: `P(X ≤ ${dist.sym})` },
+            { k: "right", l: "Derecha", m: `P(X ≥ ${dist.sym})` }
+        ];
+    }
+
+    opts.forEach(o => {
+        const pill = document.createElement("button");
+        pill.type = "button";
+        pill.className = `lab-dist-tail-pill ${o.k === currentTail ? "is-active" : ""}`;
+        pill.dataset.tail = o.k;
+        pill.innerHTML = `
+            <span>${o.l}</span>
+            <span class="math-notation">${o.m}</span>
+        `;
+        pill.addEventListener("click", () => cambiarColaDistLab(o.k));
+        dom.labDistTailPills.appendChild(pill);
+    });
+}
+
+function discreteCDF(dist, params, k) {
+    if (k < 0) return 0;
+    const mk = dist.maxK(params);
+    const kk = Math.min(k, mk);
+    let s = 0;
+    for (let i = 0; i <= kk; i++) s += dist.pmf(i, params);
+    return Math.min(1, s);
+}
+
+function computeTailProb(dist, params, x, tail) {
+    if (dist.type === "discrete") {
+        const k = Math.round(x);
+        if (tail === "left") return discreteCDF(dist, params, k);
+        if (tail === "right") return 1 - discreteCDF(dist, params, k - 1);
+        if (tail === "exact") return dist.pmf(k, params);
+    } else {
+        const cdf = v => dist.cdf(v, params);
+        if (tail === "left") return cdf(x);
+        if (tail === "right") return 1 - cdf(x);
+        const c = dist.center(params);
+        const d = Math.abs(x - c);
+        if (tail === "central") return cdf(c + d) - cdf(c - d);
+        if (tail === "two") return 1 - (cdf(c + d) - cdf(c - d));
+    }
+}
+
+function invertValue(dist, params, p, tail) {
+    if (dist.type === "discrete") {
+        const mk = dist.maxK(params);
+        if (tail === "left") {
+            let s = 0;
+            for (let k = 0; k <= mk; k++) {
+                s += dist.pmf(k, params);
+                if (s >= p - 1e-9) return k;
+            }
+            return mk;
+        } else {
+            let s2 = 0;
+            for (let k2 = mk; k2 >= 0; k2--) {
+                s2 += dist.pmf(k2, params);
+                if (s2 >= p - 1e-9) return k2;
+            }
+            return 0;
+        }
+    } else {
+        const bounds = dist.bounds(params, tail);
+        const increasing = (tail === "left" || tail === "central");
+        const f = x => computeTailProb(dist, params, x, tail);
+        return bisectGeneric(f, p, bounds[0], bounds[1], increasing, 90);
+    }
+}
+
+function chartDomain(dist, params) {
+    const b = dist.bounds(params, "left");
+    const f = x => dist.cdf(x, params);
+    let lo = bisectGeneric(f, 0.001, b[0], b[1], true, 80);
+    let hi = bisectGeneric(f, 0.999, b[0], b[1], true, 80);
+    if (dist.nonneg) {
+        lo = 0;
+    } else if (dist.symmetric) {
+        const c = dist.center(params);
+        const halfWidth = Math.max(c - lo, hi - c);
+        lo = c - halfWidth;
+        hi = c + halfWidth;
+    }
+    if (hi - lo < 1e-6) hi = lo + 1;
+    return [lo, hi];
+}
+
+function renderContinuousChart(dist, params, tail, x) {
+    const barsGroup = document.getElementById("labDistBarsGroup");
+    const curveLine = document.getElementById("labDistCurveLine");
+    const shadeA = document.getElementById("labDistShadeA");
+    const shadeB = document.getElementById("labDistShadeB");
+    const zlines = document.getElementById("labDistZlines");
+    const ticks = document.getElementById("labDistTicks");
+
+    if (barsGroup) barsGroup.innerHTML = "";
+    if (zlines) zlines.innerHTML = "";
+
+    const domX = chartDomain(dist, params);
+    const xmin = domX[0], xmax = domX[1];
+    const N = 120, step = (xmax - xmin) / N;
+    let ymax = 0;
+    const vals = [];
+
+    for (let i = 0; i <= N; i++) {
+        const xx = xmin + i * step;
+        const yy = dist.pdf(xx, params);
+        if (isFinite(yy) && yy > ymax) ymax = yy;
+        vals.push([xx, yy]);
+    }
+    ymax = ymax > 0 ? ymax * 1.08 : 1;
+
+    function toX(v) { return 10 + (v - xmin) / (xmax - xmin) * 320; }
+    function toY(v) {
+        let yy = (v / ymax) * 128;
+        if (!isFinite(yy)) yy = 128;
+        return 140 - Math.min(128, yy);
+    }
+
+    if (curveLine) {
+        curveLine.setAttribute("d", "M" + vals.map(v => toX(v[0]).toFixed(1) + "," + toY(v[1]).toFixed(1)).join(" L"));
+    }
+
+    function areaPath(a, b) {
+        a = Math.max(xmin, a);
+        b = Math.min(xmax, b);
+        if (b <= a) return "";
+        const pts = [];
+        const st = (b - a) / 50;
+        for (let xx = a; xx <= b + 1e-9; xx += st) {
+            pts.push(toX(xx).toFixed(1) + "," + toY(dist.pdf(xx, params)).toFixed(1));
+        }
+        return "M" + toX(a).toFixed(1) + ",140 L" + pts.join(" L") + " L" + toX(b).toFixed(1) + ",140 Z";
+    }
+
+    let pathA = "", pathB = "";
+    if (x !== null && x !== undefined && isFinite(x)) {
+        if (tail === "left") {
+            pathA = areaPath(xmin, x);
+            drawZlineSvg(toX(x), x.toFixed(2));
+        } else if (tail === "right") {
+            pathA = areaPath(x, xmax);
+            drawZlineSvg(toX(x), x.toFixed(2));
+        } else {
+            const c = dist.center(params);
+            const d = Math.abs(x - c);
+            if (tail === "central") {
+                pathA = areaPath(c - d, c + d);
+            } else {
+                pathA = areaPath(xmin, c - d);
+                pathB = areaPath(c + d, xmax);
+            }
+            drawZlineSvg(toX(c - d), (c - d).toFixed(2));
+            drawZlineSvg(toX(c + d), (c + d).toFixed(2));
+        }
+    }
+
+    if (shadeA) shadeA.setAttribute("d", pathA);
+    if (shadeB) shadeB.setAttribute("d", pathB);
+
+    // Ticks del eje X
+    if (ticks) {
+        let html = "";
+        for (let ti = 0; ti <= 4; ti++) {
+            const tv = xmin + (xmax - xmin) * ti / 4;
+            const px = toX(tv);
+            let tvLabel = tv.toFixed(1);
+            if (tvLabel.slice(-2) === ".0") tvLabel = tvLabel.slice(0, -2);
+            html += `<line class="tick" x1="${px.toFixed(1)}" y1="140" x2="${px.toFixed(1)}" y2="145"></line><text class="tick-label" x="${px.toFixed(1)}" y="156" text-anchor="middle">${tvLabel}</text>`;
+        }
+        ticks.innerHTML = html;
+    }
+}
+
+function drawZlineSvg(px, label) {
+    const zlines = document.getElementById("labDistZlines");
+    if (!zlines) return;
+    zlines.innerHTML += `<line class="zline" x1="${px}" y1="12" x2="${px}" y2="140"></line><text class="zlabel" x="${px}" y="10" text-anchor="middle">${label}</text>`;
+}
+
+function renderDiscreteChart(dist, params, tail, x) {
+    const curveLine = document.getElementById("labDistCurveLine");
+    const shadeA = document.getElementById("labDistShadeA");
+    const shadeB = document.getElementById("labDistShadeB");
+    const barsGroup = document.getElementById("labDistBarsGroup");
+    const zlines = document.getElementById("labDistZlines");
+    const ticks = document.getElementById("labDistTicks");
+
+    if (curveLine) curveLine.setAttribute("d", "");
+    if (shadeA) shadeA.setAttribute("d", "");
+    if (shadeB) shadeB.setAttribute("d", "");
+    if (zlines) zlines.innerHTML = "";
+
+    const hasX = (x !== null && x !== undefined && isFinite(x));
+    const mk = dist.maxK(params);
+    const xr = hasX ? Math.round(x) : null;
+    let lo = 0, hi = mk;
+
+    if (mk > 30) {
+        const center = hasX ? Math.max(0, Math.min(mk, xr)) : Math.round(mk / 2);
+        lo = Math.max(0, center - 12);
+        hi = Math.min(mk, center + 12);
+    }
+
+    const pairs = [];
+    let maxP = 0;
+    for (let k = lo; k <= hi; k++) {
+        const v = dist.pmf(k, params);
+        pairs.push([k, v]);
+        if (v > maxP) maxP = v;
+    }
+    maxP = maxP > 0 ? maxP * 1.15 : 1;
+
+    const n = pairs.length;
+    const barW = 300 / n;
+    function hlFn(k) {
+        if (!hasX) return false;
+        if (tail === "left") return k <= xr;
+        if (tail === "right") return k >= xr;
+        return k === xr;
+    }
+
+    let bars = "", tickHtml = "";
+    const labelEvery = Math.max(1, Math.ceil(n / 12));
+
+    pairs.forEach((pair, idx) => {
+        const k = pair[0], v = pair[1], h = (v / maxP) * 128;
+        const xpix = 20 + idx * barW + barW * 0.12, w = barW * 0.76, ypix = 140 - h;
+        bars += `<rect class="bar${hlFn(k) ? " hl" : ""}" x="${xpix.toFixed(1)}" y="${ypix.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" rx="1.5"></rect>`;
+        if (idx % labelEvery === 0) {
+            tickHtml += `<text class="tick-label" x="${(20 + idx * barW + barW / 2).toFixed(1)}" y="152" text-anchor="middle">${k}</text>`;
+        }
+    });
+
+    if (barsGroup) barsGroup.innerHTML = bars;
+    if (ticks) ticks.innerHTML = tickHtml;
+}
+
+function recalcularYRenderizarDistribucion() {
+    if (!laboratorioEstado.calcProb) return;
+    const distKey = laboratorioEstado.calcProb.distKey || "normal";
+    const dist = DIST_MODELS[distKey];
+    if (!dist) return;
+
+    const mode = laboratorioEstado.calcProb.mode || "vp";
+    const tail = laboratorioEstado.calcProb.tail || "left";
+    const params = readDistParams(dist);
+
+    const inputVal = parseFloat(dom.labDistMainInput ? dom.labDistMainInput.value : "");
+    let finalProb = null;
+    let finalVal = null;
+
+    if (mode === "vp") {
+        // Modo: Valor -> P(X)
+        if (!isNaN(inputVal)) {
+            finalVal = inputVal;
+            finalProb = computeTailProb(dist, params, inputVal, tail);
+            laboratorioEstado.calcProb.valor = finalVal;
+            laboratorioEstado.calcProb.prob = finalProb;
+        }
+
+        if (dist.type === "continuous") {
+            renderContinuousChart(dist, params, tail, finalVal);
+        } else {
+            renderDiscreteChart(dist, params, tail, finalVal);
+        }
+
+        if (dom.labDistResLabel) dom.labDistResLabel.textContent = "PROBABILIDAD CALCULADA";
+        if (dom.labDistResFormula) {
+            let sym = dist.sym || "X";
+            let op = tail === "left" ? "≤" : (tail === "right" ? "≥" : (tail === "exact" ? "=" : "∈"));
+            dom.labDistResFormula.textContent = `P(${sym} ${op} ${finalVal !== null ? finalVal.toFixed(4) : "—"})`;
+        }
+        if (dom.labDistResValue) {
+            if (finalProb !== null && isFinite(finalProb)) {
+                dom.labDistResValue.textContent = finalProb.toFixed(4);
+                dom.labDistResValue.classList.add("is-prob");
+                dom.labDistResValue.classList.remove("is-value");
+            } else {
+                dom.labDistResValue.textContent = "—";
+            }
+        }
+        if (dom.labDistResPct) {
+            dom.labDistResPct.textContent = (finalProb !== null && isFinite(finalProb))
+                ? `(${(finalProb * 100).toFixed(2)}%)`
+                : "";
+        }
+    } else {
+        // Modo: P(X) -> Valor (Cuantil inverso)
+        const pIn = !isNaN(inputVal) ? Math.max(0.0001, Math.min(0.9999, inputVal)) : 0.05;
+        finalProb = pIn;
+        finalVal = invertValue(dist, params, pIn, tail);
+        laboratorioEstado.calcProb.valor = finalVal;
+        laboratorioEstado.calcProb.prob = finalProb;
+
+        if (dist.type === "continuous") {
+            renderContinuousChart(dist, params, tail, finalVal);
+        } else {
+            renderDiscreteChart(dist, params, tail, finalVal);
+        }
+
+        if (dom.labDistResLabel) dom.labDistResLabel.textContent = "VALOR CRÍTICO / CUANTIL";
+        if (dom.labDistResFormula) {
+            dom.labDistResFormula.textContent = `Cuantil para P = ${finalProb.toFixed(4)}`;
+        }
+        if (dom.labDistResValue) {
+            if (finalVal !== null && isFinite(finalVal)) {
+                dom.labDistResValue.textContent = (dist.type === "discrete") ? String(Math.round(finalVal)) : finalVal.toFixed(4);
+                dom.labDistResValue.classList.add("is-value");
+                dom.labDistResValue.classList.remove("is-prob");
+            } else {
+                dom.labDistResValue.textContent = "—";
+            }
+        }
+        if (dom.labDistResPct) {
+            dom.labDistResPct.textContent = "";
+        }
+    }
+}
+
+function copiarValorDistACheckpoint() {
+    if (!laboratorioEstado.calcProb) return;
+    const mode = laboratorioEstado.calcProb.mode;
+    const val = mode === "vp" ? laboratorioEstado.calcProb.prob : laboratorioEstado.calcProb.valor;
+    if (val === null || val === undefined || !isFinite(val)) {
+        mostrarToast("⚠️ No hay un resultado válido para copiar.", "aviso");
+        return;
+    }
+
+    const dist = DIST_MODELS[laboratorioEstado.calcProb.distKey || "normal"];
+    const strVal = (mode === "vp" || (dist && dist.type === "continuous"))
+        ? Number(val).toFixed(4)
+        : String(Math.round(val));
+
+    // Buscar el input del checkpoint activo en el panel de enunciados
+    const activeInput = document.querySelector("#labActiveCheckpointCard input[type='text'], #labPanelEnunciado input[type='text']");
+    if (activeInput) {
+        activeInput.value = strVal;
+        activeInput.dispatchEvent(new Event("input", { bubbles: true }));
+        activeInput.dispatchEvent(new Event("change", { bubbles: true }));
+        mostrarToast(`📥 Valor ${strVal} copiado al campo de respuesta.`, "exito");
+    } else {
+        // Copiar al portapapeles del navegador
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(strVal);
+            mostrarToast(`📋 ${strVal} copiado al portapapeles.`, "exito");
+        } else {
+            mostrarToast(`Resultado: ${strVal}`, "info");
+        }
+    }
+}
+
+// Compatibilidad hacia atrás con controladores anteriores
+function actualizarCalculosNormalUI() {
+    recalcularYRenderizarDistribucion();
+}
 function actualizarCalculosBinomialUI() {
-    const n = parseInt(dom.labBinoN?.value) || 10;
-    const p = parseFloat(dom.labBinoP?.value) || 0.5;
-    const k = parseInt(dom.labBinoK?.value) || 0;
-
-    const exact = labBinomialPMF(n, p, k);
-    let le = 0;
-    for (let i = 0; i <= k; i++) le += labBinomialPMF(n, p, i);
-    const ge = 1 - (le - exact);
-
-    if (dom.labBinoExactVal) dom.labBinoExactVal.textContent = exact.toFixed(4);
-    if (dom.labBinoLeVal) dom.labBinoLeVal.textContent = le.toFixed(4);
-    if (dom.labBinoGeVal) dom.labBinoGeVal.textContent = ge.toFixed(4);
+    recalcularYRenderizarDistribucion();
 }
-
 function actualizarCalculosPoissonUI() {
-    const lambda = parseFloat(dom.labPoisLambda?.value) || 3;
-    const k = parseInt(dom.labPoisK?.value) || 0;
-
-    const exact = labPoissonPMF(lambda, k);
-    let le = 0;
-    for (let i = 0; i <= k; i++) le += labPoissonPMF(lambda, i);
-
-    if (dom.labPoisExactVal) dom.labPoisExactVal.textContent = exact.toFixed(4);
-    if (dom.labPoisLeVal) dom.labPoisLeVal.textContent = le.toFixed(4);
+    recalcularYRenderizarDistribucion();
 }
 
 function inicializarCalculadoraCientificaMini() {
@@ -19049,9 +19779,7 @@ function iniciarOReanudarLaboratorio() {
         laboratorioEstado.iniciado = true;
         configurarEventosLaboratorio();
         inicializarGrillaFrecuencias();
-        actualizarCalculosNormalUI();
-        actualizarCalculosBinomialUI();
-        actualizarCalculosPoissonUI();
+        inicializarCalculadoraDistribuciones();
         inicializarCalculadoraCientificaMini();
         recalcularMatrizBayes();
         inicializarScratchpadLab();
@@ -19059,7 +19787,7 @@ function iniciarOReanudarLaboratorio() {
         inicializarModuloContabilidad();
     }
     cambiarVistaMovilLab("enunciado");
-    filtrarTabsPorMateria(laboratorioEstado.materiaSeleccionada || "contabilidad");
+    filtrarTabsPorMateria(laboratorioEstado.materiaSeleccionada || "estadistica");
 
     // Abrir menú flotante si no hay ejercicio o si se ingresa por primera vez
     if (!laboratorioEstado.ejercicioActual) {
@@ -19085,7 +19813,7 @@ function mostrarPasoModalLab(paso) {
         if (dom.labStepMaterias) dom.labStepMaterias.classList.add("hidden");
         if (dom.labStepConfigMateria) dom.labStepConfigMateria.classList.remove("hidden");
         if (dom.labBtnCargarConfig) dom.labBtnCargarConfig.classList.remove("hidden");
-        const mat = CATALOGO_MATERIAS_LABORATORIO[laboratorioEstado.materiaSeleccionada] || CATALOGO_MATERIAS_LABORATORIO.contabilidad;
+        const mat = CATALOGO_MATERIAS_LABORATORIO[laboratorioEstado.materiaSeleccionada] || CATALOGO_MATERIAS_LABORATORIO.estadistica;
         if (dom.labConfigModalSubtitle) {
             dom.labConfigModalSubtitle.textContent = `Configurá los temas de ${mat.nombre} y cargá material de apoyo opcional.`;
         }
@@ -19097,9 +19825,17 @@ function renderizarSelectorMateriasLab() {
     if (!grid) return;
     grid.innerHTML = "";
 
-    const materiaActual = laboratorioEstado.materiaSeleccionada || "contabilidad";
+    const ordenPrioritario = ["estadistica", "contabilidad"];
+    const materiasList = Object.values(CATALOGO_MATERIAS_LABORATORIO).slice().sort((a, b) => {
+        const idxA = ordenPrioritario.indexOf(a.id);
+        const idxB = ordenPrioritario.indexOf(b.id);
+        if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+        if (idxA !== -1) return -1;
+        if (idxB !== -1) return 1;
+        return 0;
+    });
 
-    Object.values(CATALOGO_MATERIAS_LABORATORIO).forEach(mat => {
+    materiasList.forEach(mat => {
         const card = document.createElement("div");
         card.className = "lab-subject-card";
         card.setAttribute("role", "button");
@@ -21664,10 +22400,24 @@ function generarEjercicioProcedimentalPorMateria(materiaId, orden = "") {
     } else if (materiaId === "calculo") {
         ej = generarEjercicioCalculoProcedural(orden);
     } else if (materiaId === "estadistica") {
-        const primerTema = (laboratorioEstado.temasSeleccionados && laboratorioEstado.temasSeleccionados[0]) || "descriptiva";
-        if (primerTema === "bayes") ej = generarEjercicioBayesProcedural(orden);
-        else if (primerTema === "normal") ej = generarEjercicioNormalProcedural(orden);
-        else if (primerTema === "discretas") ej = generarEjercicioDiscretasProcedural(orden);
+        const temas = (laboratorioEstado.temasSeleccionados && laboratorioEstado.temasSeleccionados.length > 0)
+            ? laboratorioEstado.temasSeleccionados
+            : ["frecuencias", "descriptiva", "normal", "discretas"];
+        const ordenLower = (orden || "").toLowerCase();
+
+        let temaElegido = temas[Math.floor(Math.random() * temas.length)];
+        if (ordenLower.includes("bayes")) temaElegido = "bayes";
+        else if (ordenLower.includes("normal") || ordenLower.includes("gauss")) temaElegido = "normal";
+        else if (ordenLower.includes("poisson") || ordenLower.includes("binomial") || ordenLower.includes("discreta")) temaElegido = "discretas";
+        else if (ordenLower.includes("hiper") || ordenLower.includes("hyper")) temaElegido = "hipergeometrica";
+        else if (ordenLower.includes("inferencia") || ordenLower.includes("student") || ordenLower.includes("chi") || ordenLower.includes("fisher")) temaElegido = "inferencia";
+        else if (ordenLower.includes("frecuencia") || ordenLower.includes("descriptiva")) temaElegido = "descriptiva";
+
+        if (temaElegido === "bayes") ej = generarEjercicioBayesProcedural(orden);
+        else if (temaElegido === "normal") ej = generarEjercicioNormalProcedural(orden);
+        else if (temaElegido === "discretas") ej = generarEjercicioDiscretasProcedural(orden);
+        else if (temaElegido === "hipergeometrica") ej = generarEjercicioDiscretasProcedural(orden || "hipergeometrica");
+        else if (temaElegido === "inferencia") ej = generarEjercicioInferenciaProcedural(orden);
         else ej = generarEjercicioDescriptivaProcedural(orden);
     } else {
         ej = generarEjercicioSTEMProcedural(materiaId, orden);
@@ -21689,19 +22439,150 @@ function generarEjercicioProcedimentalPorMateria(materiaId, orden = "") {
 }
 
 function generarEjercicioContabilidadProcedural(orden = "") {
-    const escenarios = [
-        { cap: 400000, caja: 150000, merc: 250000, compra: 80000, banco: 70000, venta: 120000, cmv: 60000, pagoProv: 40000 },
-        { cap: 500000, caja: 200000, merc: 300000, compra: 100000, banco: 90000, venta: 150000, cmv: 75000, pagoProv: 50000 },
-        { cap: 600000, caja: 250000, merc: 350000, compra: 120000, banco: 100000, venta: 180000, cmv: 90000, pagoProv: 60000 }
+    const ordenLower = (orden || "").toLowerCase();
+    
+    // Casos reales inspirados en la Guía Completa de Contabilidad 1 (UADE / Económicas)
+    const casosGuia = [
+        {
+            tipo: "candilia",
+            titulo: "Caso 'CANDILIA': Comercio Minorista, Compras al Contado y CMV",
+            narrativa: "El 1 de febrero dos socios abren el comercio 'CANDILIA'. Registrá las operaciones en el Libro Diario, mayorizá y verificá el Resultado Bruto por ventas y la partida doble:",
+            datos: "1. 01/02: Situación inicial: Efectivo en Caja $1.000, Mercaderías en stock $250 (2.500 caramelos a $0,10 c/u). Capital Social: $1.250.\n" +
+                   "2. 05/03: Compra de 2.400 caramelos a $0,10 c/u ($240) abonada en efectivo (Caja).\n" +
+                   "3. 17/03: Venta de 500 caramelos a $0,80 c/u ($400) cobrada íntegramente en efectivo.\n" +
+                   "4. 17/03: Se registra el Costo de las Mercaderías Vendidas (CMV): 500 caramelos a $0,10 c/u ($50).\n" +
+                   "5. 25/03: Compra de estanterías para exhibición (Muebles y Útiles) por $300 en cuenta corriente (Acreedores Varios).",
+            preguntas: [
+                {
+                    letra: "a",
+                    texto: "¿Cuál es el Total del Debe registrado en el Libro Diario al finalizar todas las operaciones?",
+                    esperado: 2240,
+                    tolerancia: 20,
+                    pista: "Sumá los débitos de los asientos: Inicio ($1.250) + Compra Merc. ($240) + Venta Efectivo ($400) + CMV ($50) + Estantería ($300) = $2.240.",
+                    explicacion: "Total Debe del Libro Diario = $1.250 + $240 + $400 + $50 + $300 = $2.240."
+                },
+                {
+                    letra: "b",
+                    texto: "¿Cuál es el Saldo Deudor final de la cuenta 'Caja' tras las compras y cobros?",
+                    esperado: 1160,
+                    tolerancia: 5,
+                    pista: "Caja inicial $1.000 - Compra $240 + Cobro Venta $400 = $1.160.",
+                    explicacion: "Saldo Caja = Debe ($1.000 + $400) - Haber ($240) = $1.160 (Saldo Deudor)."
+                },
+                {
+                    letra: "c",
+                    texto: "¿Cuál es el Saldo Deudor final de 'Mercaderías' luego del registro del CMV?",
+                    esperado: 440,
+                    tolerancia: 5,
+                    pista: "Existencia Inicial ($250) + Compras ($240) - CMV ($50) = $440.",
+                    explicacion: "Saldo Mercaderías = $250 + $240 - $50 = $440 (quedan 4.400 caramelos a $0,10)."
+                },
+                {
+                    letra: "d",
+                    texto: "¿Cuál es la Utilidad Bruta o Resultado Positivo obtenido de la venta (Ventas - CMV)?",
+                    esperado: 350,
+                    tolerancia: 5,
+                    pista: "Ventas ($400) - CMV ($50) = $350.",
+                    explicacion: "Resultado Bruto = $400 - $50 = $350 (Resultado Positivo R+)."
+                }
+            ]
+        },
+        {
+            tipo: "xl",
+            titulo: "Caso 'XL ELECTRODOMÉSTICOS': Televisores LCD y Cuentas a Pagar",
+            narrativa: "La empresa 'XL' comercializa televisores de última generación. Comenzó sus operaciones en octubre. Registrá las compras financiadas, la venta y la cancelación del pasivo:",
+            datos: "1. 01/10: Situación inicial: Caja $10.000, Mercaderías $18.000 (10 televisores LCD a $1.800 c/u). Capital: $28.000.\n" +
+                   "2. 07/10: Compra de 5 televisores LCD a $1.800 c/u ($9.000). Se abonan $800 en efectivo y el resto ($8.200) a plazo en c/c Proveedores.\n" +
+                   "3. 13/10: Venta al contado de 4 televisores LCD a $4.000 c/u ($16.000). Cobro en efectivo.\n" +
+                   "4. 13/10: Registro del Costo de las Mercaderías Vendidas (CMV): 4 televisores a $1.800 c/u ($7.200).\n" +
+                   "5. 22/10: Cancelación en efectivo de la deuda con Proveedores contraída el 07/10 ($8.200).",
+            preguntas: [
+                {
+                    letra: "a",
+                    texto: "¿Cuál es el Total del Debe registrado en el Libro Diario al finalizar los asientos del mes?",
+                    esperado: 68400,
+                    tolerancia: 100,
+                    pista: "Débitos: Inicio ($28.000) + Compra ($9.000) + Venta ($16.000) + CMV ($7.200) + Pago Proveedores ($8.200) = $68.400.",
+                    explicacion: "Total Debe = $28.000 + $9.000 + $16.000 + $7.200 + $8.200 = $68.400."
+                },
+                {
+                    letra: "b",
+                    texto: "¿Cuál es el Saldo Deudor de la cuenta 'Caja' al 31 de octubre?",
+                    esperado: 17000,
+                    tolerancia: 20,
+                    pista: "Caja inicial $10.000 - $800 + $16.000 - $8.200 = $17.000.",
+                    explicacion: "Caja: Debe ($10.000 + $16.000) - Haber ($800 + $8.200) = $17.000."
+                },
+                {
+                    letra: "c",
+                    texto: "¿Cuál es el Saldo Deudor final de 'Mercaderías' (existencia física valuada)?",
+                    esperado: 19800,
+                    tolerancia: 20,
+                    pista: "Existencia: 10 iniciales + 5 comprados - 4 vendidos = 11 televisores a $1.800 = $19.800.",
+                    explicacion: "Mercaderías = $18.000 + $9.000 - $7.200 = $19.800 (11 TVs x $1.800)."
+                },
+                {
+                    letra: "d",
+                    texto: "¿Cuál es la Utilidad Bruta del período generada por la venta de televisores?",
+                    esperado: 8800,
+                    tolerancia: 20,
+                    pista: "Ventas ($16.000) - CMV ($7.200) = $8.800.",
+                    explicacion: "Utilidad Bruta = Ventas $16.000 - CMV $7.200 = $8.800 de ganancia."
+                }
+            ]
+        },
+        {
+            tipo: "verparaleer",
+            titulo: "Caso 'VERPARALEER': Librería Comercial, Cuentas Bancarias y Créditos",
+            narrativa: "La librería 'VERPARALEER' presenta sus saldos al 30 de septiembre y registra las operaciones comerciales y financieras de octubre:",
+            datos: "1. 30/09: Situación inicial: Caja $2.000, Banco Nación c/c $20.000, Mercaderías $15.000 (1.000 libros a $15 c/u), Deudores por Ventas $2.500. Pasivo: Proveedores $2.500. Patrimonio Neto: Capital $37.000.\n" +
+                   "2. 12/10: Compra de 100 libros a $15 c/u ($1.500) en cuenta corriente con Proveedores.\n" +
+                   "3. 14/10: Venta de 25 libros a $40 c/u ($1.000). Se cobran $250 en efectivo y $750 con Cheque al día (Valores a Depositar). CMV = 25 x $15 = $375.\n" +
+                   "4. 28/10: Cobro del saldo inicial de Deudores por Ventas ($2.500) mediante transferencia acreditada en Banco Nación c/c.\n" +
+                   "5. 30/10: Depósito íntegro en la cuenta corriente del Banco Nación del efectivo recibido ($250) y del cheque al día ($750).",
+            preguntas: [
+                {
+                    letra: "a",
+                    texto: "¿Cuál es el Saldo Deudor final de la cuenta corriente en 'Banco Nación'?",
+                    esperado: 23500,
+                    tolerancia: 25,
+                    pista: "Banco inicial $20.000 + Transferencia Deudores $2.500 + Depósito efectivo/cheque $1.000 = $23.500.",
+                    explicacion: "Banco Nación c/c: Saldo inicial $20.000 + Cobranza $2.500 + Depósito $1.000 = $23.500."
+                },
+                {
+                    letra: "b",
+                    texto: "¿Cuál es el Saldo Deudor final de 'Mercaderías' tras la venta y reposición?",
+                    esperado: 16125,
+                    tolerancia: 15,
+                    pista: "$15.000 inicial + $1.500 compras - $375 CMV = $16.125.",
+                    explicacion: "Mercaderías = $15.000 + $1.500 - $375 = $16.125 (1.075 libros a $15 c/u)."
+                },
+                {
+                    letra: "c",
+                    texto: "¿Cuál es el Saldo Acreedor final de la cuenta 'Proveedores' al cierre?",
+                    esperado: 4000,
+                    tolerancia: 10,
+                    pista: "Deuda previa $2.500 + Nueva compra financiada $1.500 = $4.000.",
+                    explicacion: "Proveedores = $2.500 inicial + $1.500 de la compra = $4.000 (Saldo Acreedor)."
+                },
+                {
+                    letra: "d",
+                    texto: "¿Cuál es el Resultado Neto del período (Ventas menos CMV)?",
+                    esperado: 625,
+                    tolerancia: 5,
+                    pista: "Ventas ($1.000) - CMV ($375) = $625.",
+                    explicacion: "Resultado del Ejercicio = $1.000 - $375 = $625 (Utilidad neta operativa)."
+                }
+            ]
+        }
     ];
-    const m = escenarios[Math.floor(Math.random() * escenarios.length)];
 
-    const saldoCaja = (m.caja + m.venta) - (m.banco + m.pagoProv);
-    const saldoMerc = (m.merc + m.compra) - m.cmv;
-    const saldoProv = m.compra - m.pagoProv;
-    const totDebe = m.cap + m.compra + m.banco + m.venta + m.cmv + m.pagoProv;
+    let caso = casosGuia[0];
+    if (ordenLower.includes("xl") || ordenLower.includes("televisor")) caso = casosGuia[1];
+    else if (ordenLower.includes("verparaleer") || ordenLower.includes("libro") || ordenLower.includes("banco")) caso = casosGuia[2];
+    else if (ordenLower.includes("candilia") || ordenLower.includes("caramelo") || ordenLower.includes("quiosco")) caso = casosGuia[0];
+    else caso = casosGuia[Math.floor(Math.random() * casosGuia.length)];
 
-    // Estructura limpia y vacía: el alumno deduce y asienta las operaciones a su propio criterio
     prepararEstructuraVaciaMesaTrabajo("contabilidad");
 
     return {
@@ -21709,50 +22590,13 @@ function generarEjercicioContabilidadProcedural(orden = "") {
         materia: "contabilidad",
         tema: "asientos",
         origen: "procedural",
-        titulo: "Registración Contable y Cuadre: 'El Progreso S.A.'",
+        titulo: caso.titulo,
         dificultad: "Intermedia",
-        enunciado: "Registrá y verificá las operaciones del mes en el Libro Diario, mayorizá en las Cuentas T y confirmá que la partida doble cuadre perfectamente.",
-        datos: `1. 01/03: Inicio de actividades: Aporte de socios con $${m.caja.toLocaleString('es-AR')} en efectivo (Caja) y $${m.merc.toLocaleString('es-AR')} en mercaderías. Total Capital: $${m.cap.toLocaleString('es-AR')}.\n` +
-               `2. 05/03: Compra de mercaderías por $${m.compra.toLocaleString('es-AR')} en cuenta corriente comercial a Proveedores.\n` +
-               `3. 10/03: Apertura de cuenta corriente en Banco Nación depositando $${m.banco.toLocaleString('es-AR')} en efectivo.\n` +
-               `4. 15/03: Venta de mercaderías al contado por $${m.venta.toLocaleString('es-AR')}. El Costo de las Mercaderías Vendidas (CMV) es de $${m.cmv.toLocaleString('es-AR')}.\n` +
-               `5. 25/03: Pago en efectivo del 50% de la deuda con Proveedores ($${m.pagoProv.toLocaleString('es-AR')}).`,
+        enunciado: "Registrá las operaciones en el Libro Diario, mayorizá en las Cuentas T y determiná los saldos deudores, acreedores y resultados según las normas contables vigentes.",
+        datos: caso.datos,
         datos_tipo: "lista",
-        narrativa: "La empresa comercial 'El Progreso S.A.' presenta sus operaciones comerciales de marzo. Utilizá la mesa de trabajo contable para asentar, mayorizar y verificar.",
-        preguntas: [
-            {
-                letra: "a",
-                texto: "¿Cuál es el Total del Debe registrado en el Libro Diario al finalizar las 5 operaciones?",
-                esperado: totDebe,
-                tolerancia: 50,
-                pista: "Sumá los débitos de los 5 asientos en el Libro Diario.",
-                explicacion: `Total Debe = $${m.cap} (asiento 1) + $${m.compra} (asiento 2) + $${m.banco} (asiento 3) + $${m.venta} (asiento 4a) + $${m.cmv} (asiento 4b) + $${m.pagoProv} (asiento 5) = $${totDebe}.`
-            },
-            {
-                letra: "b",
-                texto: "¿Cuál es el Saldo Deudor final de la cuenta 'Caja' tras todos los movimientos?",
-                esperado: saldoCaja,
-                tolerancia: 10,
-                pista: "Suma Debe de Caja menos Suma Haber de Caja.",
-                explicacion: `Caja Debe ($${m.caja} + $${m.venta}) - Caja Haber ($${m.banco} + $${m.pagoProv}) = $${saldoCaja}.`
-            },
-            {
-                letra: "c",
-                texto: "¿Cuál es el Saldo Deudor de la cuenta 'Mercaderías' luego de la venta y el CMV?",
-                esperado: saldoMerc,
-                tolerancia: 10,
-                pista: "Existencia inicial + compras - CMV.",
-                explicacion: `Existencia inicial ($${m.merc}) + Compras ($${m.compra}) - CMV ($${m.cmv}) = $${saldoMerc}.`
-            },
-            {
-                letra: "d",
-                texto: "¿Cuál es el Saldo Acreedor final de la cuenta 'Proveedores' tras el pago parcial?",
-                esperado: saldoProv,
-                tolerancia: 10,
-                pista: "Deuda original con proveedores menos el pago en efectivo.",
-                explicacion: `$${m.compra} - $${m.pagoProv} = $${saldoProv}.`
-            }
-        ]
+        narrativa: `${caso.narrativa}\n\n${caso.datos}`,
+        preguntas: caso.preguntas
     };
 }
 
@@ -22189,46 +23033,58 @@ function generarEjercicioBayesProcedural(orden = "") {
 
 function generarEjercicioNormalProcedural(orden = "") {
     const ordenLower = (orden || "").toLowerCase();
+    
+    // Casos reales inspirados en la Guía de Trabajos Prácticos de Estadística Empresarial I (TP4 y TP5)
     const modelos = [
         {
-            titulo: "Control de Tolerancias en Producción Industrial (Normal)",
-            mu: 500,
-            sigma: 10,
-            xCrit: 480,
-            xInf: 485,
-            xSup: 515,
-            narrativa: "Una planta embotelladora automática envasa gaseosas. El volumen por botella se distribuye normalmente con media μ = 500 ml y desvío estándar σ = 10 ml: X ~ N(500, 10²).\nPor regulaciones de control de calidad, toda botella que contenga menos de 480 ml es rechazada inmediatamente.\n\nUtilizá la pestaña 'Calculadora de Probabilidad' con la Campana de Gauss para verificar áreas y percentiles:"
+            id: "cafe",
+            titulo: "Distribución Normal: Peso de Bolsas de Café (TP4 Ejercicio 1)",
+            mu: 1000,
+            sigma: 15,
+            xCrit: 990,
+            xInf: 985,
+            xSup: 1015,
+            narrativa: "El peso en gramos de las bolsas de café recibidas en una empaquetadora sigue una distribución normal con media μ = 1000 g y desvío estándar σ = 15 g: X ~ N(1000, 15²).\nSe desea analizar el porcentaje de bolsas que quedan por debajo de la cota mínima de 990 g y el rango óptimo bilateral.\n\nUtilizá la suite 'Calculadora de Probabilidad' con la Campana de Gauss para verificar áreas, estandarización y cuantiles:"
         },
         {
-            titulo: "Resistencia Mecánica de Componentes de Aviación (Normal)",
-            mu: 250,
-            sigma: 12,
-            xCrit: 226,
-            xInf: 238,
-            xSup: 262,
-            narrativa: "Un laboratorio aeronáutico ensaya la resistencia a la tracción de pernos de titanio. La resistencia sigue una distribución normal con media μ = 250 MPa y desvío estándar σ = 12 MPa: X ~ N(250, 12²).\nPernos con resistencia inferior a 226 MPa no superan la norma técnica aeronáutica.\n\nUtilizá la Campana de Gauss de la Mesa de Trabajo para resolver:"
+            id: "gaseosa",
+            titulo: "Distribución Normal: Control de Volumen de Latas de Gaseosa (TP4)",
+            mu: 354,
+            sigma: 8,
+            xCrit: 340,
+            xInf: 345,
+            xSup: 365,
+            narrativa: "Una línea automática embotelladora llena latas de gaseosa con una media de μ = 354 ml y un desvío estándar de σ = 8 ml: X ~ N(354, 8²).\nPor normas de bromatología, cualquier lata con un contenido menor a 340 ml se considera no conforme y es retirada del lote.\n\nUtilizá la curva continua interactiva para calcular probabilidades y cotas críticas:"
         },
         {
-            titulo: "Tiempos de Respuesta de Microservicios Cloud (Normal)",
-            mu: 150,
-            sigma: 20,
-            xCrit: 110,
-            xInf: 130,
-            xSup: 170,
-            narrativa: "En un centro de cómputo en la nube, el tiempo de latencia de una consulta a la base de datos se modela como normal con μ = 150 ms y σ = 20 ms: X ~ N(150, 20²).\nSe considera tiempo anómalo crítico cuando la respuesta toma menos de 110 ms o más de 170 ms.\n\nCalculá las probabilidades utilizando la calculadora gaussiana:"
+            id: "cemento",
+            titulo: "Suma de Variables Normales: Carga de Camión de Materiales (TP5 Ejercicio 1)",
+            mu: 10000,
+            sigma: 53.385,
+            xCrit: 10200,
+            xInf: 9900,
+            xSup: 10100,
+            narrativa: "Un camión de carga transporta 100 bolsas de cemento y 200 de cal. Por el teorema de suma de variables aleatorias independientes, el peso total W se distribuye normalmente con media μ = 10.000 kg y desvío estándar σ = 53,385 kg: W ~ N(10000, 53.385²).\nLa capacidad máxima autorizada por la báscula de control es de 10.200 kg.\n\nDeterminá las probabilidades de sobrecarga y estandarización Z:"
         }
     ];
 
-    const m = modelos[Math.floor(Math.random() * modelos.length)];
+    let m = modelos[0];
+    if (ordenLower.includes("gaseosa") || ordenLower.includes("lata") || ordenLower.includes("botella")) m = modelos[1];
+    else if (ordenLower.includes("cemento") || ordenLower.includes("camion") || ordenLower.includes("suma")) m = modelos[2];
+    else if (ordenLower.includes("cafe")) m = modelos[0];
+    else m = modelos[Math.floor(Math.random() * modelos.length)];
+
     const z1 = Number(((m.xCrit - m.mu) / m.sigma).toFixed(2));
     const p1 = Number(labNormalCDF(m.xCrit, m.mu, m.sigma).toFixed(4));
+    const pMayor = Number((1 - labNormalCDF(m.xCrit, m.mu, m.sigma)).toFixed(4));
     const pIntervalo = Number((labNormalCDF(m.xSup, m.mu, m.sigma) - labNormalCDF(m.xInf, m.mu, m.sigma)).toFixed(4));
 
-    const enunciado = `El proceso continuo de ${m.titulo.toLowerCase()} sigue una distribución normal modelada como X ~ N(μ, σ²):`;
-    const datosStr = `Media del proceso (μ) = ${m.mu}\nDesvío estándar (σ) = ${m.sigma}\nValor crítico de corte (X) = ${m.xCrit}`;
+    const enunciado = `El proceso bajo estudio de ${m.titulo.toLowerCase()} se modela rigurosamente como una variable continua X ~ N(μ, σ²):`;
+    const datosStr = `Media del proceso (μ) = ${m.mu}\nDesvío estándar (σ) = ${m.sigma}\nValor crítico de análisis (X) = ${m.xCrit}`;
 
     return {
         id: "norm_" + Date.now(),
+        materia: "estadistica",
         tema: "normal",
         origen: "modelo",
         titulo: m.titulo,
@@ -22236,7 +23092,7 @@ function generarEjercicioNormalProcedural(orden = "") {
         enunciado: enunciado,
         datos: datosStr,
         datos_tipo: "parametros",
-        narrativa: `${enunciado}\n\n${datosStr}`,
+        narrativa: `${m.narrativa}\n\n${datosStr}`,
         preguntas: [
             {
                 letra: "a",
@@ -22248,27 +23104,27 @@ function generarEjercicioNormalProcedural(orden = "") {
             },
             {
                 letra: "b",
-                texto: `¿Cuál es la probabilidad de que una unidad sea rechazada: P(X ≤ ${m.xCrit})?`,
+                texto: `¿Cuál es la probabilidad de que una unidad seleccionada al azar pese/mida a lo sumo ${m.xCrit}: P(X ≤ ${m.xCrit})?`,
                 esperado: p1,
                 tolerancia: 0.005,
-                pista: `Ingresá Media=${m.mu}, Desvío=${m.sigma}, X=${m.xCrit} con cola izquierda en la campana de Gauss.`,
+                pista: `Ingresá en la Calculadora: μ=${m.mu}, σ=${m.sigma}, x=${m.xCrit} con cola izquierda P(X ≤ x).`,
                 explicacion: `P(X ≤ ${m.xCrit}) = P(Z ≤ ${z1}) ≈ ${p1} (${(p1 * 100).toFixed(2)}%).`
             },
             {
                 letra: "c",
-                texto: `¿Cuál es la probabilidad de que una unidad se encuentre en el rango óptimo entre ${m.xInf} y ${m.xSup}: P(${m.xInf} ≤ X ≤ ${m.xSup})?`,
-                esperado: pIntervalo,
-                tolerancia: 0.015,
-                pista: `P(${m.xInf} ≤ X ≤ ${m.xSup}) = P(X ≤ ${m.xSup}) - P(X ≤ ${m.xInf}). Usá la opción bilateral en la calculadora.`,
-                explicacion: `Área bilateral = P(X ≤ ${m.xSup}) - P(X ≤ ${m.xInf}) ≈ ${pIntervalo}.`
+                texto: `¿Cuál es la probabilidad de superar dicho valor: P(X > ${m.xCrit})?`,
+                esperado: pMayor,
+                tolerancia: 0.005,
+                pista: `Regla del complemento: 1 - P(X ≤ ${m.xCrit}) o cola derecha en la calculadora de probabilidad.`,
+                explicacion: `P(X > ${m.xCrit}) = 1 - ${p1} = ${pMayor} (${(pMayor * 100).toFixed(2)}%).`
             },
             {
                 letra: "d",
-                texto: "¿Cuál es el valor de la Media teórica (μ) de esta distribución?",
-                esperado: m.mu,
-                tolerancia: 0.1,
-                pista: "El parámetro de posición central dado en el enunciado.",
-                explicacion: `La media teórica nominal es μ = ${m.mu}.`
+                texto: `¿Cuál es la probabilidad de que una unidad se ubique en el intervalo entre ${m.xInf} y ${m.xSup}: P(${m.xInf} ≤ X ≤ ${m.xSup})?`,
+                esperado: pIntervalo,
+                tolerancia: 0.015,
+                pista: `P(${m.xInf} ≤ X ≤ ${m.xSup}) = F(${m.xSup}) - F(${m.xInf}). Podés usar la cola bilateral en la calculadora.`,
+                explicacion: `P(${m.xInf} ≤ X ≤ ${m.xSup}) ≈ ${pIntervalo} (${(pIntervalo * 100).toFixed(2)}%).`
             }
         ]
     };
@@ -22276,130 +23132,274 @@ function generarEjercicioNormalProcedural(orden = "") {
 
 function generarEjercicioDiscretasProcedural(orden = "") {
     const ordenLower = (orden || "").toLowerCase();
-    const esPoisson = ordenLower.includes("poisson") || ordenLower.includes("tasa") || ordenLower.includes("llamada") || (!ordenLower.includes("binomial") && Math.random() > 0.5);
+    const temas = laboratorioEstado.temasSeleccionados || [];
 
-    if (esPoisson) {
-        // Generador Poisson dinámico con factor aleatorio
-        const lambdas = [3, 4, 5, 6, 7];
-        const lam = lambdas[Math.floor(Math.random() * lambdas.length)];
-        const k = Math.min(3, Math.floor(lam * 0.7)) || 2;
+    const prefiereHiper = ordenLower.includes("hiper") || ordenLower.includes("hyper") || ordenLower.includes("postulante") || temas.includes("hipergeometrica");
+    const prefierePoisson = ordenLower.includes("poisson") || ordenLower.includes("llamada") || ordenLower.includes("minuto") || ordenLower.includes("tasa");
+
+    if (prefiereHiper) {
+        // Caso TP3 Ejercicio 13 de la Guía: Postulantes para puesto en empresa
+        // N = 14 postulantes, K = 5 con experiencia, se eligen n = 7
+        const N = 14;
+        const K = 5;
+        const n = 7;
+        const k = 3;
+        const media = Number(((n * K) / N).toFixed(2)); // 2.50
+        const pExacta = Number(labHyperPMF(N, K, n, k).toFixed(5)); // ~0.36713
+        let pAcum2 = 0;
+        for (let i = 0; i <= 2; i++) pAcum2 += labHyperPMF(N, K, n, i);
+        pAcum2 = Number(pAcum2.toFixed(4)); // ~0.5000
+        let pMin4 = 0;
+        for (let i = 4; i <= Math.min(n, K); i++) pMin4 += labHyperPMF(N, K, n, i);
+        pMin4 = Number(pMin4.toFixed(4)); // ~0.13287
+
+        const enunciado = "Entre los 14 postulantes que se presentaron para cubrir un puesto en una empresa, 5 acreditan experiencia previa en tareas similares. El director de RRHH decide elegir por sorteo sin reposición a 7 postulantes para entrevistar en primer término:";
+        const datosStr = `Tamaño de la población (N) = ${N}\nCantidad de éxitos en la población (K) = ${K}\nTamaño de muestra elegida sin reposición (n) = ${n}`;
+
+        return {
+            id: "hyper_" + Date.now(),
+            materia: "estadistica",
+            tema: "hipergeometrica",
+            origen: "modelo",
+            titulo: "Distribución Hipergeométrica: Selección de Postulantes (TP3 Ejercicio 13)",
+            dificultad: "Intermedia",
+            enunciado: enunciado,
+            datos: datosStr,
+            datos_tipo: "parametros",
+            narrativa: `${enunciado}\n\n${datosStr}`,
+            preguntas: [
+                {
+                    letra: "a",
+                    texto: `Calculá el número esperado de postulantes con experiencia en el grupo: E(X) = n · K / N:`,
+                    esperado: media,
+                    tolerancia: 0.1,
+                    pista: `E(X) = (7 * 5) / 14 = 2.5 postulantes.`,
+                    explicacion: `E(X) = n · (K / N) = 7 · (5 / 14) = ${media} postulantes con experiencia previa.`
+                },
+                {
+                    letra: "b",
+                    texto: `¿Cuál es la probabilidad de que haya exactamente 3 postulantes con experiencia: P(X = 3)?`,
+                    esperado: pExacta,
+                    tolerancia: 0.008,
+                    pista: `Fórmula Hipergeométrica: [C(5,3) · C(9,4)] / C(14,7). Utilizá la pestaña Hipergeométrica en la mesa de trabajo.`,
+                    explicacion: `P(X = 3) = [C(5,3) · C(9,4)] / C(14,7) = (10 · 126) / 3432 ≈ 0.36713 (36.71%).`
+                },
+                {
+                    letra: "c",
+                    texto: `¿Cuál es la probabilidad de que a lo sumo 2 postulantes tengan experiencia previa: P(X ≤ 2)?`,
+                    esperado: pAcum2,
+                    tolerancia: 0.015,
+                    pista: `P(X ≤ 2) = P(0) + P(1) + P(2). Seleccioná cola izquierda acumulada P(X ≤ x) con x=2.`,
+                    explicacion: `P(X ≤ 2) = P(X=0) + P(X=1) + P(X=2) = 0.0105 + 0.1538 + 0.3357 ≈ 0.5000 (50%).`
+                },
+                {
+                    letra: "d",
+                    texto: `¿Cuál es la probabilidad de encontrar como mínimo 4 postulantes con experiencia: P(X ≥ 4)?`,
+                    esperado: pMin4,
+                    tolerancia: 0.01,
+                    pista: `P(X ≥ 4) = P(4) + P(5). Seleccioná cola derecha P(X ≥ x) con x=4.`,
+                    explicacion: `P(X ≥ 4) = P(X=4) + P(X=5) = 0.1093 + 0.0236 ≈ 0.13287 (13.29%).`
+                }
+            ]
+        };
+    } else if (prefierePoisson) {
+        // Caso TP3 Ejercicio 12 de la Guía: Central telefónica (5 llamadas/min)
+        // En 2 minutos: lambda = 10 llamadas
+        const lam = 10;
+        const k = 8;
         
         function fact(n) { return n <= 1 ? 1 : n * fact(n - 1); }
         function pPois(l, x) { return (Math.exp(-l) * Math.pow(l, x)) / fact(x); }
 
-        const pExacta = Number(pPois(lam, k).toFixed(4));
+        const pExacta = Number(pPois(lam, k).toFixed(4)); // ~0.1126
         let pAcum = 0;
         for (let i = 0; i <= k; i++) pAcum += pPois(lam, i);
-        pAcum = Number(pAcum.toFixed(4));
-        const pAlMenosUno = Number((1 - pPois(lam, 0)).toFixed(4));
+        pAcum = Number(pAcum.toFixed(4)); // ~0.3328
+        const pMasDe8 = Number((1 - pAcum).toFixed(4)); // ~0.6672 (Respuesta oficial guía: 0.66718)
 
-        const enunciadoPois = `El flujo de eventos en el sistema se modela como un proceso estocástico continuo de Poisson:`;
-        const datosPois = `Tasa promedio observada (λ) = ${lam} eventos / intervalo`;
+        const enunciado = "En una central telefónica se reciben en promedio 5 llamadas por minuto. El proceso de arribo sigue un proceso de Poisson continuo sin memoria:";
+        const datosStr = `Tasa promedio en 2 minutos (λ) = 10 llamadas\nVariable de análisis: Cantidad de llamadas recibidas en un lapso de 2 minutos`;
 
         return {
             id: "pois_" + Date.now(),
-            tema: "discretas",
+            materia: "estadistica",
+            tema: "poisson",
             origen: "modelo",
-            titulo: `Análisis de Proceso de Poisson (Tasa Media λ = ${lam})`,
-            dificultad: laboratorioEstado.dificultad || "Intermedia",
-            enunciado: enunciadoPois,
-            datos: datosPois,
+            titulo: "Distribución de Poisson: Central Telefónica y Arribos (TP3 Ejercicio 12)",
+            dificultad: "Intermedia",
+            enunciado: enunciado,
+            datos: datosStr,
             datos_tipo: "parametros",
-            narrativa: `${enunciadoPois}\n\n${datosPois}`,
+            narrativa: `${enunciado}\n\n${datosStr}`,
             preguntas: [
                 {
                     letra: "a",
-                    texto: `Determiná el Valor Esperado o media de eventos E(X) = λ:`,
+                    texto: `Determiná el Valor Esperado o media de llamadas en el intervalo de 2 minutos: E(X) = λ:`,
                     esperado: lam,
                     tolerancia: 0.1,
-                    pista: "En una distribución de Poisson, el valor esperado y la varianza son iguales a la tasa media λ.",
-                    explicacion: `E(X) = λ = ${lam} eventos promedio por intervalo.`
+                    pista: "En Poisson, el valor esperado y la varianza son idénticos a la tasa media del intervalo.",
+                    explicacion: `E(X) = λ = 5 llamadas/min · 2 min = ${lam} llamadas.`
                 },
                 {
                     letra: "b",
-                    texto: `Calculá la probabilidad de registrar exactamente k = ${k} eventos: P(X = ${k}):`,
+                    texto: `Calculá la probabilidad de recibir exactamente k = 8 llamadas en 2 minutos: P(X = 8):`,
                     esperado: pExacta,
                     tolerancia: 0.008,
-                    pista: `Fórmula de Poisson: P(X=k) = (e^(-λ) * λ^k) / k! con λ=${lam} y k=${k}.`,
-                    explicacion: `P(X = ${k}) = (e^(-${lam}) * ${lam}^${k}) / ${k}! ≈ ${pExacta} (${(pExacta * 100).toFixed(2)}%).`
+                    pista: `Fórmula de Poisson: (e^(-10) · 10^8) / 8!. Ingresá λ=10 y x=8 en la suite interactiva.`,
+                    explicacion: `P(X = 8) = (e^(-10) · 10^8) / 8! ≈ ${pExacta} (${(pExacta * 100).toFixed(2)}%).`
                 },
                 {
                     letra: "c",
-                    texto: `Calculá la probabilidad acumulada de recibir a lo sumo ${k} eventos: P(X ≤ ${k}):`,
+                    texto: `Calculá la probabilidad acumulada de recibir a lo sumo 8 llamadas: P(X ≤ 8):`,
                     esperado: pAcum,
                     tolerancia: 0.015,
-                    pista: `Sumá las probabilidades puntuales desde 0 hasta ${k}: P(X ≤ ${k}) = Σ P(X = i).`,
-                    explicacion: `P(X ≤ ${k}) = ${pAcum}.`
+                    pista: `Sumá las probabilidades puntuales desde 0 hasta 8 o usá cola izquierda en la calculadora.`,
+                    explicacion: `P(X ≤ 8) ≈ ${pAcum} (${(pAcum * 100).toFixed(2)}%).`
                 },
                 {
                     letra: "d",
-                    texto: `Calculá la probabilidad de que ocurra al menos 1 evento: P(X ≥ 1) = 1 - P(X = 0):`,
-                    esperado: pAlMenosUno,
+                    texto: `¿Cuál es la probabilidad de que en 2 minutos se reciban más de 8 llamadas: P(X > 8)?`,
+                    esperado: pMasDe8,
                     tolerancia: 0.01,
-                    pista: `Regla del complemento: 1 - e^(-λ) = 1 - e^(-${lam}).`,
-                    explicacion: `P(X ≥ 1) = 1 - e^(-${lam}) = 1 - ${(pPois(lam, 0)).toFixed(4)} = ${pAlMenosUno}.`
+                    pista: `Regla del complemento: P(X > 8) = 1 - P(X ≤ 8). Podés usar la cola derecha estricta P(X > x).`,
+                    explicacion: `P(X > 8) = 1 - P(X ≤ 8) = 1 - ${pAcum} = ${pMasDe8} (Respuesta oficial guía: 0.66718).`
                 }
             ]
         };
     } else {
-        // Generador Binomial dinámico con parámetros aleatorios
-        const nList = [8, 10, 12, 15];
-        const pList = [0.10, 0.15, 0.20, 0.25];
-        const n = nList[Math.floor(Math.random() * nList.length)];
-        const p = pList[Math.floor(Math.random() * pList.length)];
-        const media = Number((n * p).toFixed(2));
-        const k = 2;
-        const pExacta = Number(labBinomialPMF(n, p, k).toFixed(4));
-        let pAcum = 0;
-        for (let i = 0; i <= k; i++) pAcum += labBinomialPMF(n, p, i);
-        pAcum = Number(pAcum.toFixed(4));
-        const pAlMenosUno = Number((1 - labBinomialPMF(n, p, 0)).toFixed(4));
+        // Caso TP3 Ejercicio 8 de la Guía: Encuesta de aceptación de producto en mercado
+        // n = 20 personas, p = 0.60
+        const n = 20;
+        const p = 0.60;
+        const media = Number((n * p).toFixed(2)); // 12
+        const k = 10;
+        const pExacta10 = Number(labBinomialPMF(n, p, 10).toFixed(5)); // 0.11714 (Respuesta oficial guía: 0.11714)
+        let pAcum12 = 0;
+        for (let i = 0; i <= 12; i++) pAcum12 += labBinomialPMF(n, p, i);
+        pAcum12 = Number(pAcum12.toFixed(5)); // 0.58411 (Respuesta oficial guía: 0.58411)
+        let pMasDe9 = 0;
+        for (let i = 10; i <= n; i++) pMasDe9 += labBinomialPMF(n, p, i);
+        pMasDe9 = Number(pMasDe9.toFixed(4)); // 0.8725
 
-        const enunciadoBinom = `Un control de calidad analiza una serie de ensayos independientes con probabilidad fija de defecto:`;
-        const datosBinom = `Número de ensayos analizados (n) = ${n}\nProbabilidad elemental de defecto (p) = ${p}`;
+        const enunciado = "Se realiza una encuesta de mercado para evaluar la repercusión de un producto que será lanzado comercialmente. Por estudios previos, se conoce que el porcentaje de aceptación es del 60% (p = 0,60). Se toma una muestra representativa de n = 20 personas:";
+        const datosStr = `Tamaño de la muestra aleatoria (n) = ${n}\nProbabilidad de éxito / aceptación (p) = ${p}\nVariable X: Cantidad de personas que aceptan el producto`;
 
         return {
             id: "disc_" + Date.now(),
-            tema: "discretas",
+            materia: "estadistica",
+            tema: "binomial",
             origen: "modelo",
-            titulo: `Control de Procesos y Distribución Binomial (n = ${n}, p = ${p})`,
-            dificultad: laboratorioEstado.dificultad || "Intermedia",
-            enunciado: enunciadoBinom,
-            datos: datosBinom,
+            titulo: "Distribución Binomial: Encuesta de Aceptación de Mercado (TP3 Ejercicio 8)",
+            dificultad: "Intermedia",
+            enunciado: enunciado,
+            datos: datosStr,
             datos_tipo: "parametros",
-            narrativa: `${enunciadoBinom}\n\n${datosBinom}`,
+            narrativa: `${enunciado}\n\n${datosStr}`,
             preguntas: [
                 {
                     letra: "a",
-                    texto: `Calculá el Valor Esperado o media de éxitos/fallas E(X) = n · p:`,
+                    texto: `Calculá el Valor Esperado o media de compradores en la muestra: E(X) = n · p:`,
                     esperado: media,
                     tolerancia: 0.1,
-                    pista: `E(X) = n * p = ${n} * ${p}`,
-                    explicacion: `El valor esperado es E(X) = ${n} * ${p} = ${media}.`
+                    pista: `E(X) = n · p = 20 · 0.60 = 12 personas.`,
+                    explicacion: `El valor esperado de compradores es E(X) = 20 · 0.60 = ${media} personas.`
                 },
                 {
                     letra: "b",
-                    texto: `Calculá la probabilidad de observar exactamente k = ${k} casos: P(X = ${k}):`,
-                    esperado: pExacta,
+                    texto: `¿Cuál es la probabilidad de que exactamente diez personas compren el producto: P(X = 10)?`,
+                    esperado: pExacta10,
                     tolerancia: 0.008,
-                    pista: `Fórmula Binomial: C(${n},${k}) * (${p})^${k} * (${(1 - p).toFixed(2)})^${n - k}.`,
-                    explicacion: `P(X = ${k}) ≈ ${pExacta} (${(pExacta * 100).toFixed(2)}%).`
+                    pista: `Fórmula Binomial: C(20, 10) · (0.60)^10 · (0.40)^10. Podés usar la suite de distribuciones con n=20, p=0.60 y x=10.`,
+                    explicacion: `P(X = 10) = C(20,10) · 0.60^10 · 0.40^10 ≈ 0.11714 (Respuesta oficial guía).`
                 },
                 {
                     letra: "c",
-                    texto: `¿Cuál es la probabilidad de observar a lo sumo ${k} casos: P(X ≤ ${k})?`,
-                    esperado: pAcum,
+                    texto: `¿Cuál es la probabilidad de que a lo sumo 12 personas compren el producto: P(X ≤ 12)?`,
+                    esperado: pAcum12,
                     tolerancia: 0.015,
-                    pista: `Sumá las probabilidades acumuladas P(0) + ... + P(${k}).`,
-                    explicacion: `P(X ≤ ${k}) ≈ ${pAcum}.`
+                    pista: `Sumá las probabilidades acumuladas P(X=0) + ... + P(X=12) o seleccioná cola izquierda P(X ≤ x) con x=12.`,
+                    explicacion: `P(X ≤ 12) = Σ P(X = i) ≈ 0.58411 (Respuesta oficial guía).`
                 },
                 {
                     letra: "d",
-                    texto: `Calculá la probabilidad de observar al menos 1 caso: P(X ≥ 1) = 1 - P(X = 0):`,
-                    esperado: pAlMenosUno,
+                    texto: `¿Cuál es la probabilidad de que al menos 10 personas acepten el producto: P(X ≥ 10)?`,
+                    esperado: pMasDe9,
                     tolerancia: 0.01,
-                    pista: `1 - (1 - ${p})^${n}`,
-                    explicacion: `P(X ≥ 1) = 1 - ${(labBinomialPMF(n, p, 0)).toFixed(4)} = ${pAlMenosUno}.`
+                    pista: `P(X ≥ 10) = 1 - P(X ≤ 9). Seleccioná cola derecha P(X ≥ x) con x=10.`,
+                    explicacion: `P(X ≥ 10) = 1 - P(X ≤ 9) ≈ ${pMasDe9} (${(pMasDe9 * 100).toFixed(2)}%).`
+                }
+            ]
+        };
+    }
+}
+
+function generarEjercicioInferenciaProcedural(orden = "") {
+    const ordenLower = (orden || "").toLowerCase();
+    
+    if (ordenLower.includes("chi") || ordenLower.includes("chi2") || ordenLower.includes("cuadrado")) {
+        const df = 5;
+        const valCrit = 11.07;
+        return {
+            id: "chi_" + Date.now(),
+            materia: "estadistica",
+            tema: "inferencia",
+            origen: "modelo",
+            titulo: "Inferencia Estadística: Distribución Chi-cuadrado (χ²)",
+            dificultad: "Intermedia",
+            enunciado: "En una prueba de bondad de ajuste y homogeneidad se utiliza la distribución Chi-cuadrado con 5 grados de libertad:",
+            datos: `Grados de libertad (ν) = ${df}\nNivel de significación (α) = 0.05 cola derecha\nValor crítico tabulated = ${valCrit}`,
+            datos_tipo: "parametros",
+            narrativa: `En una prueba estadística de varianzas o bondad de ajuste con ν = ${df} grados de libertad, se analiza la región crítica para un nivel α = 0.05.`,
+            preguntas: [
+                {
+                    letra: "a",
+                    texto: `Determiná la media o valor esperado de una variable Chi-cuadrado: E(χ²) = ν:`,
+                    esperado: df,
+                    tolerancia: 0.1,
+                    pista: `En la distribución χ², la media es igual a sus grados de libertad ν.`,
+                    explicacion: `E(χ²) = ν = ${df}.`
+                },
+                {
+                    letra: "b",
+                    texto: `Calculá la probabilidad de superar el valor crítico: P(χ² ≥ ${valCrit}):`,
+                    esperado: 0.05,
+                    tolerancia: 0.01,
+                    pista: `Es el nivel de significación α del cuantil crítico.`,
+                    explicacion: `P(χ² ≥ ${valCrit}) ≈ 0.05 (5%).`
+                }
+            ]
+        };
+    } else {
+        // t de Student
+        const df = 10;
+        const valCrit = 2.228;
+        return {
+            id: "t_" + Date.now(),
+            materia: "estadistica",
+            tema: "inferencia",
+            origen: "modelo",
+            titulo: "Inferencia Estadística: Distribución t de Student (Intervalos de Confianza)",
+            dificultad: "Intermedia",
+            enunciado: "Para construir un intervalo de confianza del 95% para la media poblacional con muestra pequeña (n = 11, ν = n - 1 = 10 grados de libertad) y varianza poblacional desconocida:",
+            datos: `Grados de libertad (ν) = ${df}\nNivel de confianza = 95% (bilateral α = 0.05)\nValor crítico t bilateral = ${valCrit}`,
+            datos_tipo: "parametros",
+            narrativa: `Se calcula el intervalo de confianza de Student con ν = ${df} grados de libertad. El valor crítico simétrico que encierra el 95% central es t = ±${valCrit}.`,
+            preguntas: [
+                {
+                    letra: "a",
+                    texto: `¿Cuál es el valor esperado o centro de simetría de la distribución t de Student?`,
+                    esperado: 0,
+                    tolerancia: 0.01,
+                    pista: `La distribución t de Student es estrictamente simétrica centrada en el origen.`,
+                    explicacion: `La media o centro es 0.`
+                },
+                {
+                    letra: "b",
+                    texto: `Verificá en la calculadora la probabilidad bilateral en las colas: P(|t| ≥ ${valCrit}):`,
+                    esperado: 0.05,
+                    tolerancia: 0.01,
+                    pista: `Área en ambas colas = 1 - 0.95 = 0.05.`,
+                    explicacion: `P(|t| ≥ ${valCrit}) = 0.05 (5% en dos colas).`
                 }
             ]
         };
@@ -22645,12 +23645,126 @@ function construirTablaDatosLabHtml(datos) {
 }
 
 // ------------------------------------------
+// ADAPTACIÓN INTELIGENTE DE LA MESA DE TRABAJO SEGÚN EL EJERCICIO
+// ------------------------------------------
+
+function adaptarMesaTrabajoSegunEjercicio(ej) {
+    if (!ej) return;
+    const materiaId = ej.materia || laboratorioEstado.materiaSeleccionada || "estadistica";
+    const tema = (ej.tema || "").toLowerCase();
+
+    // 1. Filtrar las pestañas visibles para esta materia
+    filtrarTabsPorMateria(materiaId);
+
+    // 2. Adaptar dinámicamente según el tema y la unidad
+    if (materiaId === "estadistica") {
+        if (tema.includes("normal") || tema.includes("gauss")) {
+            activarTabLaboratorio("prob");
+            let mu = 0, sigma = 1, xVal = 1.96;
+            if (ej.datos && typeof ej.datos === "string") {
+                const matchMu = ej.datos.match(/μ\s*=\s*([0-9.,]+)/i) || ej.datos.match(/media\s*[:=]\s*([0-9.,]+)/i);
+                const matchSigma = ej.datos.match(/σ\s*=\s*([0-9.,]+)/i) || ej.datos.match(/desv[íi]o\s*[:=]\s*([0-9.,]+)/i);
+                const matchX = ej.datos.match(/X\s*=\s*([0-9.,]+)/i) || ej.datos.match(/corte\s*[:=]\s*([0-9.,]+)/i);
+                if (matchMu) mu = parseFloat(matchMu[1].replace(',', '.'));
+                if (matchSigma) sigma = parseFloat(matchSigma[1].replace(',', '.'));
+                if (matchX) xVal = parseFloat(matchX[1].replace(',', '.'));
+            }
+            seleccionarDistribucionLab("normal", { mu, sigma }, xVal, "left");
+        } else if (tema.includes("discreta") || tema.includes("binomial") || tema.includes("bernoulli")) {
+            activarTabLaboratorio("prob");
+            let n = 10, pr = 0.5, k = 2;
+            if (ej.datos && typeof ej.datos === "string") {
+                const matchN = ej.datos.match(/n\s*=\s*([0-9]+)/i);
+                const matchP = ej.datos.match(/p\s*=\s*([0-9.,]+)/i);
+                const matchK = ej.datos.match(/k\s*=\s*([0-9]+)/i);
+                if (matchN) n = parseInt(matchN[1]);
+                if (matchP) pr = parseFloat(matchP[1].replace(',', '.'));
+                if (matchK) k = parseInt(matchK[1]);
+            }
+            seleccionarDistribucionLab("binomial", { n, pr }, k, "left");
+        } else if (tema.includes("poisson")) {
+            activarTabLaboratorio("prob");
+            let lambda = 3, k = 2;
+            if (ej.datos && typeof ej.datos === "string") {
+                const matchL = ej.datos.match(/λ\s*=\s*([0-9.,]+)/i) || ej.datos.match(/tasa\s*[:=]\s*([0-9.,]+)/i);
+                const matchK = ej.datos.match(/k\s*=\s*([0-9]+)/i);
+                if (matchL) lambda = parseFloat(matchL[1].replace(',', '.'));
+                if (matchK) k = parseInt(matchK[1]);
+            }
+            seleccionarDistribucionLab("poisson", { lambda }, k, "left");
+        } else if (tema.includes("hiper") || tema.includes("hyper")) {
+            activarTabLaboratorio("prob");
+            let N = 14, K = 5, n = 7, kVal = 3;
+            if (ej.datos && typeof ej.datos === "string") {
+                const matchN = ej.datos.match(/N\s*=\s*([0-9]+)/i);
+                const matchK = ej.datos.match(/K\s*=\s*([0-9]+)/i);
+                const matchn = ej.datos.match(/n\s*=\s*([0-9]+)/i);
+                if (matchN) N = parseInt(matchN[1]);
+                if (matchK) K = parseInt(matchK[1]);
+                if (matchn) n = parseInt(matchn[1]);
+            }
+            seleccionarDistribucionLab("hyper", { N, K, n }, kVal, "exact");
+        } else if (tema.includes("inferencia") || tema.includes("student") || tema.includes("chi") || tema.includes("fisher")) {
+            activarTabLaboratorio("prob");
+            const titLower = ((ej.titulo || "") + " " + (ej.enunciado || "")).toLowerCase();
+            if (titLower.includes("chi") || titLower.includes("χ²")) {
+                seleccionarDistribucionLab("chi2", { df: 5 }, 11.07, "right");
+            } else if (titLower.includes("fisher") || titLower.includes("f de fisher")) {
+                seleccionarDistribucionLab("f", { df1: 5, df2: 10 }, 3.33, "right");
+            } else {
+                seleccionarDistribucionLab("t", { df: 10 }, 2.228, "two");
+            }
+        } else if (tema.includes("bayes")) {
+            activarTabLaboratorio("bayes");
+        } else {
+            // Descriptiva o Frecuencias
+            activarTabLaboratorio("freq");
+            if (ej.datos && typeof ej.datos === "string" && ej.datos.includes("xi =")) {
+                const lineas = ej.datos.split("\n");
+                const filas = [];
+                lineas.forEach(l => {
+                    const mXi = l.match(/xi\s*=\s*([0-9.,-]+)/i);
+                    const mFi = l.match(/fi\s*=\s*([0-9.,-]+)/i);
+                    if (mXi && mFi) {
+                        filas.push({ xi: mXi[1], fi: mFi[1] });
+                    }
+                });
+                if (filas.length > 0) {
+                    laboratorioEstado.tablaDatos = filas;
+                    renderizarGrillaFrecuencias();
+                }
+            }
+        }
+    } else if (materiaId === "contabilidad") {
+        activarTabLaboratorio("contabilidad");
+        if (tema.includes("mayor")) {
+            cambiarSubvistaContabilidad("mayor");
+        } else if (tema.includes("balance")) {
+            cambiarSubvistaContabilidad("balance");
+        } else {
+            cambiarSubvistaContabilidad("diario");
+        }
+    } else if (materiaId === "quimica") {
+        activarTabLaboratorio("quimica");
+    } else if (materiaId === "fisica") {
+        activarTabLaboratorio("fisica");
+    } else if (materiaId === "matematicas" || materiaId === "calculo") {
+        activarTabLaboratorio("matematicas");
+    } else if (materiaId === "algebra_lineal" || materiaId === "computacion") {
+        activarTabLaboratorio("matrices");
+    }
+}
+
+// ------------------------------------------
 // RENDERIZADO DEL ENUNCIADO Y LAS PREGUNTAS
 // ------------------------------------------
 
 function renderizarEjercicioActual() {
     const ej = laboratorioEstado.ejercicioActual;
     if (!ej) return;
+
+    // Adaptar mesa de trabajo de acuerdo a lo que pide el ejercicio
+    adaptarMesaTrabajoSegunEjercicio(ej);
 
     // Encabezado del caso
     if (dom.labTituloCaso) dom.labTituloCaso.textContent = ej.titulo || "Caso Práctico de Estudio";
