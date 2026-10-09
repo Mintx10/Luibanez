@@ -588,6 +588,8 @@ Debes responder ÚNICAMENTE un objeto JSON con esta estructura exacta:
   "conductaTerapeuticaSugerida": "Conducta médica y farmacológica real de cátedra.",
   "consejoDocente": "Devolución formativa severa pero constructiva del Profesor Titular al Dr. Iván."
 }`;
+        } else if (tipoJuego === 'evaluacion_examen_finanzas') {
+            promptInstrucciones = body.prompt || `Evalúa el examen según los criterios de cátedra de ${materia}.`;
         } else {
             // Bolillero / Examen Oral / Trivia general
             const angulosPedagogicos = [

@@ -20387,6 +20387,546 @@ body.modo-dev-activo .juntos-locked-notice {
     color: #0f172a;
 }
 
+/* ==========================================================
+   MÓDULO LICENCIATURA EN FINANZAS & 5 MATERIAS
+   ========================================================== */
+
+.fin-section {
+    width: 100%;
+    min-height: calc(100vh - 72px);
+    padding: 1.5rem 1rem 3rem;
+    box-sizing: border-box;
+    background: radial-gradient(circle at top right, rgba(14, 165, 233, 0.05), transparent 45%),
+                radial-gradient(circle at bottom left, rgba(16, 185, 129, 0.04), transparent 50%),
+                var(--color-bg);
+}
+
+.fin-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* Header FinHub */
+.fin-header {
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.85), rgba(30, 41, 59, 0.7));
+    border: 1px solid rgba(56, 189, 248, 0.2);
+    border-radius: var(--radius-lg);
+    padding: 1.75rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+    backdrop-filter: blur(12px);
+}
+
+.fin-badge-row {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.75rem;
+}
+
+.fin-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.25rem 0.65rem;
+    border-radius: 9999px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.fin-badge--gold {
+    background: rgba(234, 179, 8, 0.15);
+    color: #facc15;
+    border: 1px solid rgba(234, 179, 8, 0.35);
+}
+
+.fin-badge--pulse {
+    background: rgba(56, 189, 248, 0.15);
+    color: #38bdf8;
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    position: relative;
+}
+
+.fin-header-hero {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.fin-title {
+    font-size: 1.85rem;
+    font-weight: 800;
+    color: #ffffff;
+    margin: 0 0 0.5rem;
+    letter-spacing: -0.02em;
+}
+
+.fin-subtitle {
+    margin: 0;
+    font-size: 0.95rem;
+    color: var(--color-text-muted);
+    max-width: 680px;
+    line-height: 1.5;
+}
+
+.fin-quick-stats {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.fin-stat-card {
+    background: rgba(15, 23, 42, 0.65);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-md);
+    padding: 0.65rem 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 90px;
+}
+
+.fin-stat-label {
+    font-size: 0.7rem;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+}
+
+.fin-stat-val {
+    font-size: 1.15rem;
+    color: #38bdf8;
+    font-weight: 800;
+    margin-top: 0.15rem;
+}
+
+/* Grid de las 5 Tarjetas en FinHub */
+.fin-hub-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.25rem;
+}
+
+.fin-card {
+    background: linear-gradient(145deg, rgba(30, 41, 59, 0.65), rgba(15, 23, 42, 0.85));
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    cursor: pointer;
+    transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 190px;
+    position: relative;
+    overflow: hidden;
+}
+
+.fin-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+    border-color: rgba(56, 189, 248, 0.4);
+}
+
+.fin-card__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.85rem;
+}
+
+.fin-card__icon {
+    font-size: 2.2rem;
+    line-height: 1;
+}
+
+.fin-pill {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 0.2rem 0.55rem;
+    border-radius: 9999px;
+    letter-spacing: 0.02em;
+}
+
+.fin-pill--filo { background: rgba(234, 179, 8, 0.15); color: #facc15; border: 1px solid rgba(234, 179, 8, 0.3); }
+.fin-pill--sfi { background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); }
+.fin-pill--historia { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+.fin-pill--estadistica { background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3); }
+.fin-pill--contabilidad { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+
+.fin-card__title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0 0 0.4rem;
+}
+
+.fin-card__desc {
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+    margin: 0 0 1rem;
+    line-height: 1.45;
+    flex-grow: 1;
+}
+
+.fin-card__meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.78rem;
+    color: var(--color-text-muted);
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    padding-top: 0.75rem;
+}
+
+.fin-card__action {
+    color: #38bdf8;
+    font-weight: 700;
+    transition: transform 0.15s ease;
+}
+
+.fin-card:hover .fin-card__action {
+    transform: translateX(4px);
+}
+
+/* Headers de Materias Individuales */
+.fin-sub-header {
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.9), rgba(30, 41, 59, 0.75));
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.fin-sub-header__nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.fin-sub-header__main {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.fin-sub-title {
+    font-size: 1.7rem;
+    font-weight: 800;
+    color: #ffffff;
+    margin: 0 0 0.35rem;
+}
+
+.fin-sub-desc {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--color-text-muted);
+    max-width: 760px;
+}
+
+/* Toolbar de Examen & Selector de Modos */
+.fin-exam-wrapper {
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.fin-exam-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.25rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.fin-exam-modes {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.fin-toolbar-label {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--color-text-muted);
+    margin-right: 0.25rem;
+}
+
+.fin-mode-chip {
+    background: rgba(30, 41, 59, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: var(--color-text-muted);
+    padding: 0.35rem 0.85rem;
+    border-radius: 9999px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.18s ease;
+}
+
+.fin-mode-chip:hover {
+    background: rgba(56, 189, 248, 0.15);
+    border-color: rgba(56, 189, 248, 0.35);
+    color: #fff;
+}
+
+.fin-mode-chip.is-active {
+    background: #0284c7;
+    border-color: #38bdf8;
+    color: #ffffff;
+    box-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
+}
+
+/* Hoja de Examen */
+.fin-exam-sheet {
+    background: #0d1117;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-md);
+    padding: 1.5rem;
+    min-height: 200px;
+}
+
+.fin-sheet-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 1rem;
+    text-align: center;
+    color: var(--color-text-muted);
+}
+
+.fin-placeholder-icon {
+    font-size: 3rem;
+    margin-bottom: 0.75rem;
+    opacity: 0.6;
+}
+
+.fin-sheet-placeholder h4 {
+    margin: 0 0 0.35rem;
+    font-size: 1.1rem;
+    color: #ffffff;
+}
+
+.fin-sheet-placeholder p {
+    margin: 0;
+    font-size: 0.88rem;
+    max-width: 520px;
+}
+
+/* Preguntas del Examen */
+.fin-question-card {
+    background: rgba(30, 41, 59, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-md);
+    padding: 1.25rem;
+    margin-bottom: 1.25rem;
+}
+
+.fin-question-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.fin-question-badge {
+    background: rgba(56, 189, 248, 0.12);
+    color: #38bdf8;
+    border: 1px solid rgba(56, 189, 248, 0.25);
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 0.2rem 0.5rem;
+    border-radius: var(--radius-xs);
+}
+
+.fin-question-points {
+    font-size: 0.78rem;
+    color: #fbbf24;
+    font-weight: 700;
+}
+
+.fin-question-text {
+    font-size: 0.95rem;
+    color: #ffffff;
+    line-height: 1.5;
+    margin: 0 0 0.85rem;
+    white-space: pre-line;
+}
+
+.fin-question-quote {
+    background: rgba(15, 23, 42, 0.8);
+    border-left: 3px solid #38bdf8;
+    padding: 0.65rem 0.85rem;
+    font-style: italic;
+    font-size: 0.88rem;
+    color: #e2e8f0;
+    margin: 0.5rem 0 0.85rem;
+    border-radius: 0 var(--radius-xs) var(--radius-xs) 0;
+}
+
+.fin-answer-input {
+    width: 100%;
+    background: #090d16;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: var(--radius-sm);
+    color: #ffffff;
+    padding: 0.75rem;
+    font-size: 0.9rem;
+    font-family: inherit;
+    line-height: 1.45;
+    resize: vertical;
+    box-sizing: border-box;
+    transition: border-color 0.18s ease;
+}
+
+.fin-answer-input:focus {
+    border-color: #38bdf8;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
+}
+
+/* Panel de Devolución Docente por IA */
+.fin-exam-feedback {
+    margin-top: 1.5rem;
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.85));
+    border: 1px solid rgba(16, 185, 129, 0.35);
+    border-radius: var(--radius-md);
+    padding: 1.5rem;
+    animation: fadeIn 0.25s ease;
+}
+
+.fin-feedback-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding-bottom: 0.85rem;
+    margin-bottom: 1rem;
+}
+
+.fin-grade-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.35rem 0.85rem;
+    border-radius: 9999px;
+    font-size: 1.1rem;
+    font-weight: 800;
+}
+
+.fin-grade-badge--pass {
+    background: rgba(16, 185, 129, 0.2);
+    color: #34d399;
+    border: 1px solid rgba(16, 185, 129, 0.4);
+}
+
+.fin-grade-badge--fail {
+    background: rgba(239, 68, 68, 0.2);
+    color: #f87171;
+    border: 1px solid rgba(239, 68, 68, 0.4);
+}
+
+.fin-feedback-item {
+    background: rgba(15, 23, 42, 0.65);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: var(--radius-sm);
+    padding: 1rem;
+    margin-bottom: 0.85rem;
+}
+
+/* Botonera de los 4 Juegos */
+.fin-games-section {
+    background: rgba(15, 23, 42, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+}
+
+.fin-section-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0 0 1rem;
+}
+
+.fin-games-buttons {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 0.85rem;
+}
+
+.fin-game-btn {
+    background: rgba(30, 41, 59, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-md);
+    padding: 0.85rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    text-align: left;
+    color: #ffffff;
+}
+
+.fin-game-btn:hover {
+    background: rgba(56, 189, 248, 0.15);
+    border-color: rgba(56, 189, 248, 0.35);
+    transform: translateY(-2px);
+}
+
+.fin-game-icon {
+    font-size: 1.8rem;
+    line-height: 1;
+}
+
+.fin-game-btn strong {
+    display: block;
+    font-size: 0.92rem;
+}
+
+.fin-game-btn small {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+    margin-top: 0.15rem;
+}
+
+/* Estilos de botones de navegación de Finanzas en Navbar */
+.nav-link--fin {
+    color: #38bdf8;
+    border-color: rgba(56, 189, 248, 0.25);
+}
+
+.nav-link--fin:hover,
+.nav-link--fin.is-active {
+    background: rgba(56, 189, 248, 0.15);
+    border-color: #38bdf8;
+    color: #ffffff;
+}
+
+.drawer-nav-item--fin {
+    color: #38bdf8;
+}
+
+.drawer-nav-item--fin:hover,
+.drawer-nav-item--fin.is-active {
+    background: rgba(56, 189, 248, 0.12);
+    color: #ffffff;
+}
+
 
 
 

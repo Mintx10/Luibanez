@@ -15,10 +15,10 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     
-    <link rel="icon" type="image/svg+xml" href="icon.svg?v=29.22">
-    <link rel="apple-touch-icon" href="icon-192.png?v=29.22">
-    <link rel="manifest" href="manifest.json?v=29.22">
-    <link rel="stylesheet" href="style.css?v=29.22">
+    <link rel="icon" type="image/svg+xml" href="icon.svg?v=29.23">
+    <link rel="apple-touch-icon" href="icon-192.png?v=29.23">
+    <link rel="manifest" href="manifest.json?v=29.23">
+    <link rel="stylesheet" href="style.css?v=29.23">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -77,6 +77,25 @@
         </button>
         <button id="navSaludBtn" class="nav-link nav-link--salud hidden" type="button" data-view="salud-publica" title="Salud Pública">
             📊 Salud Pública
+        </button>
+        <!-- Enlaces de Licenciatura en Finanzas (Lucas y Compañeros de Facultad) -->
+        <button id="navFinHubBtn" class="nav-link nav-link--fin hidden" type="button" data-view="fin-hub" title="Terminal de Licenciatura en Finanzas">
+            📈 FinHub
+        </button>
+        <button id="navFinFiloBtn" class="nav-link nav-link--fin hidden" type="button" data-view="fin-filosofia" title="Filosofía y Ética">
+            🏛️ Filosofía
+        </button>
+        <button id="navFinSfiBtn" class="nav-link nav-link--fin hidden" type="button" data-view="fin-sfi" title="Sistema Financiero Internacional">
+            🌐 SFI
+        </button>
+        <button id="navFinHemBtn" class="nav-link nav-link--fin hidden" type="button" data-view="fin-historia" title="Historia Económica Mundial">
+            📜 Hist. Económica
+        </button>
+        <button id="navFinEstadBtn" class="nav-link nav-link--fin hidden" type="button" data-view="fin-estadistica" title="Estadística 1">
+            📊 Estadística 1
+        </button>
+        <button id="navFinContBtn" class="nav-link nav-link--fin hidden" type="button" data-view="fin-contabilidad" title="Contabilidad 1">
+            📑 Contabilidad 1
         </button>
     </nav>
 
@@ -229,6 +248,31 @@
                 <button id="drawerNavSalud" class="drawer-nav-item drawer-nav-item--salud hidden" type="button" data-view="salud-publica">
                     <span class="drawer-nav-icon" aria-hidden="true">📊</span>
                     <span class="drawer-nav-text">Salud Pública</span>
+                </button>
+                <!-- Materias de Licenciatura en Finanzas en Menú Móvil -->
+                <button id="drawerNavFinHub" class="drawer-nav-item drawer-nav-item--fin hidden" type="button" data-view="fin-hub">
+                    <span class="drawer-nav-icon" aria-hidden="true">📈</span>
+                    <span class="drawer-nav-text">FinHub (Terminal)</span>
+                </button>
+                <button id="drawerNavFinFilo" class="drawer-nav-item drawer-nav-item--fin hidden" type="button" data-view="fin-filosofia">
+                    <span class="drawer-nav-icon" aria-hidden="true">🏛️</span>
+                    <span class="drawer-nav-text">Filosofía y Ética</span>
+                </button>
+                <button id="drawerNavFinSfi" class="drawer-nav-item drawer-nav-item--fin hidden" type="button" data-view="fin-sfi">
+                    <span class="drawer-nav-icon" aria-hidden="true">🌐</span>
+                    <span class="drawer-nav-text">Sistema Financiero</span>
+                </button>
+                <button id="drawerNavFinHem" class="drawer-nav-item drawer-nav-item--fin hidden" type="button" data-view="fin-historia">
+                    <span class="drawer-nav-icon" aria-hidden="true">📜</span>
+                    <span class="drawer-nav-text">Historia Económica</span>
+                </button>
+                <button id="drawerNavFinEstad" class="drawer-nav-item drawer-nav-item--fin hidden" type="button" data-view="fin-estadistica">
+                    <span class="drawer-nav-icon" aria-hidden="true">📊</span>
+                    <span class="drawer-nav-text">Estadística 1</span>
+                </button>
+                <button id="drawerNavFinCont" class="drawer-nav-item drawer-nav-item--fin hidden" type="button" data-view="fin-contabilidad">
+                    <span class="drawer-nav-icon" aria-hidden="true">📑</span>
+                    <span class="drawer-nav-text">Contabilidad 1</span>
                 </button>
             </nav>
         </div>
@@ -4787,6 +4831,465 @@
                     </div>
                 </main>
             </div>
+    </section>
+
+    <!-- =========================================================
+         MÓDULO LICENCIATURA EN FINANZAS: TERMINAL FINHUB & 5 MATERIAS
+         ========================================================= -->
+
+    <!-- 1. TERMINAL FINANCIERA CENTRAL (FINHUB) -->
+    <section id="viewFinanzasHub" class="view view--hidden fin-section fin-section--hub" aria-label="Terminal de Licenciatura en Finanzas">
+        <div class="fin-container">
+            <header class="fin-header fin-header--hub">
+                <div class="fin-badge-row">
+                    <span class="fin-badge fin-badge--gold">📈 TERMINAL DE LICENCIATURA EN FINANZAS</span>
+                    <span class="fin-badge fin-badge--pulse">EN VIVO · MODALIDAD UNIVERSITARIA</span>
+                </div>
+                <div class="fin-header-hero">
+                    <div>
+                        <h1 class="fin-title">FinHub · Espacio de Cátedras</h1>
+                        <p class="fin-subtitle">
+                            Tus 5 materias del cuatrimestre calibradas con los criterios, exigencias y exámenes reales de tus profesores. Simuladores de 1er Parcial, 2do Parcial y Final con corrección docente por Inteligencia Artificial.
+                        </p>
+                    </div>
+                    <div class="fin-quick-stats">
+                        <div class="fin-stat-card">
+                            <span class="fin-stat-label">Materias Activas</span>
+                            <strong class="fin-stat-val">5</strong>
+                        </div>
+                        <div class="fin-stat-card">
+                            <span class="fin-stat-label">Material Precargado</span>
+                            <strong class="fin-stat-val">100%</strong>
+                        </div>
+                        <div class="fin-stat-card">
+                            <span class="fin-stat-label">Simuladores IA</span>
+                            <strong class="fin-stat-val">Calibrados</strong>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Grid de las 5 Tarjetas de Materias -->
+            <div class="fin-hub-grid">
+                <!-- Tarjeta 1: Filosofía y Ética -->
+                <article class="fin-card fin-card--filo" onclick="cambiarVista('fin-filosofia')">
+                    <div class="fin-card__header">
+                        <span class="fin-card__icon">🏛️</span>
+                        <div class="fin-card__badge-wrap">
+                            <span class="fin-pill fin-pill--filo">14 Clases & Modelo Parcial</span>
+                        </div>
+                    </div>
+                    <h3 class="fin-card__title">Filosofía y Ética</h3>
+                    <p class="fin-card__desc">Sócrates, Platón, Aristóteles, Descartes, Hume y Kant. Preguntas sobre citas textuales y alegorías.</p>
+                    <div class="fin-card__meta">
+                        <span>🎯 1er P · 2do P · Final</span>
+                        <span class="fin-card__action">Entrar →</span>
+                    </div>
+                </article>
+
+                <!-- Tarjeta 2: Sistema Financiero Internacional -->
+                <article class="fin-card fin-card--sfi" onclick="cambiarVista('fin-sfi')">
+                    <div class="fin-card__header">
+                        <span class="fin-card__icon">🌐</span>
+                        <div class="fin-card__badge-wrap">
+                            <span class="fin-pill fin-pill--sfi">Cátedra Karina Díaz</span>
+                        </div>
+                    </div>
+                    <h3 class="fin-card__title">Sistema Financiero Internacional</h3>
+                    <p class="fin-card__desc">Fed, bonos soberanos cupón cero, tendencias de los 90, teoría de mercado eficiente, eurobonos y ETTI.</p>
+                    <div class="fin-card__meta">
+                        <span>🎯 Multiple Choice & Desarrollo</span>
+                        <span class="fin-card__action">Entrar →</span>
+                    </div>
+                </article>
+
+                <!-- Tarjeta 3: Historia Económica Mundial -->
+                <article class="fin-card fin-card--historia" onclick="cambiarVista('fin-historia')">
+                    <div class="fin-card__header">
+                        <span class="fin-card__icon">📜</span>
+                        <div class="fin-card__badge-wrap">
+                            <span class="fin-pill fin-pill--historia">Cátedra Andrea Picardi</span>
+                        </div>
+                    </div>
+                    <h3 class="fin-card__title">Historia Económica Mundial</h3>
+                    <p class="fin-card__desc">Transición feudalismo, revolución industrial británica, mercantilismo, crisis del 29 y siglo XX (100 pts).</p>
+                    <div class="fin-card__meta">
+                        <span>🎯 Bloque 40 pts + 60 pts</span>
+                        <span class="fin-card__action">Entrar →</span>
+                    </div>
+                </article>
+
+                <!-- Tarjeta 4: Estadística 1 -->
+                <article class="fin-card fin-card--estadistica" onclick="cambiarVista('fin-estadistica')">
+                    <div class="fin-card__header">
+                        <span class="fin-card__icon">📊</span>
+                        <div class="fin-card__badge-wrap">
+                            <span class="fin-pill fin-pill--estadistica">Cátedra UADE</span>
+                        </div>
+                    </div>
+                    <h3 class="fin-card__title">Estadística 1</h3>
+                    <p class="fin-card__desc">Probabilidades, tablas de contingencia, datos agrupados, coeficiente de variación, percentiles y moda.</p>
+                    <div class="fin-card__meta">
+                        <span>🎯 Regla de procedimiento estricta</span>
+                        <span class="fin-card__action">Entrar →</span>
+                    </div>
+                </article>
+
+                <!-- Tarjeta 5: Contabilidad 1 -->
+                <article class="fin-card fin-card--contabilidad" onclick="cambiarVista('fin-contabilidad')">
+                    <div class="fin-card__header">
+                        <span class="fin-card__icon">📑</span>
+                        <div class="fin-card__badge-wrap">
+                            <span class="fin-pill fin-pill--contabilidad">Cátedra UADE</span>
+                        </div>
+                    </div>
+                    <h3 class="fin-card__title">Contabilidad 1</h3>
+                    <p class="fin-card__desc">30% Teórico con justificación de negativas + 70% Práctico con asientos en Libro Diario, variaciones y balance.</p>
+                    <div class="fin-card__meta">
+                        <span>🎯 Caso integral & Cuentas T</span>
+                        <span class="fin-card__action">Entrar →</span>
+                    </div>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <!-- 2. VISTA: FILOSOFÍA Y ÉTICA -->
+    <section id="viewFinFilosofia" class="view view--hidden fin-section fin-section--subject" aria-label="Materia: Filosofía y Ética">
+        <div class="fin-container">
+            <header class="fin-sub-header fin-sub-header--filo">
+                <div class="fin-sub-header__nav">
+                    <button class="button button--ghost button--sm" type="button" onclick="cambiarVista('fin-hub')">← Volver a FinHub</button>
+                    <span class="fin-badge fin-badge--gold">🏛️ DEPARTAMENTO DE FILOSOFÍA & ÉTICA</span>
+                </div>
+                <div class="fin-sub-header__main">
+                    <div>
+                        <h2 class="fin-sub-title">Filosofía y Ética</h2>
+                        <p class="fin-sub-desc">Criterio estricto de cátedra: Rigor en ortografía, tildes, coherencia, análisis de citas textuales y alegorías.</p>
+                    </div>
+                    <div class="fin-sub-header__actions">
+                        <button class="button button--secondary button--sm" type="button" onclick="abrirPizarronNotasRapido()">📝 Abrir Borrador / Notas</button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Panel de Simulador de Examen -->
+            <div class="fin-exam-wrapper">
+                <div class="fin-exam-toolbar">
+                    <div class="fin-exam-modes">
+                        <span class="fin-toolbar-label">Modalidad:</span>
+                        <button class="fin-mode-chip is-active" type="button" data-materia="filosofia" data-modo="1er_parcial" onclick="seleccionarModoExamenMateria('filosofia', '1er_parcial', this)">🎯 1er Parcial</button>
+                        <button class="fin-mode-chip" type="button" data-materia="filosofia" data-modo="2do_parcial" onclick="seleccionarModoExamenMateria('filosofia', '2do_parcial', this)">🎯 2do Parcial</button>
+                        <button class="fin-mode-chip" type="button" data-materia="filosofia" data-modo="final" onclick="seleccionarModoExamenMateria('filosofia', 'final', this)">🏆 Final Integral</button>
+                    </div>
+                    <button class="button button--primary" type="button" onclick="generarExamenParaMateria('filosofia')">
+                        📝 Generar Modelo de Examen Real
+                    </button>
+                </div>
+
+                <!-- Hoja de Examen Activa -->
+                <div id="finExamSheet_filosofia" class="fin-exam-sheet">
+                    <div class="fin-sheet-placeholder">
+                        <span class="fin-placeholder-icon">📄</span>
+                        <h4>Listo para simular examen de Filosofía y Ética</h4>
+                        <p>Elegí la modalidad (1er Parcial, 2do Parcial o Final) y hacé clic en "Generar Modelo de Examen Real" para desplegar las consignas de cátedra.</p>
+                    </div>
+                </div>
+
+                <!-- Panel de Devolución Docente por IA -->
+                <div id="finExamFeedback_filosofia" class="fin-exam-feedback hidden"></div>
+            </div>
+
+            <!-- Botonera de los 4 Juegos -->
+            <div class="fin-games-section">
+                <h3 class="fin-section-title">🕹️ Entrenar con los 4 Juegos Académicos de Filosofía</h3>
+                <div class="fin-games-buttons">
+                    <button class="fin-game-btn" type="button" onclick="iniciarJuegoMateria('filosofia', 'bolillero')">
+                        <span class="fin-game-icon">🎲</span>
+                        <div><strong>Bolillero Oral</strong><small>Conceptos y preguntas orales</small></div>
+                    </button>
+                    <button class="fin-game-btn" type="button" onclick="iniciarJuegoMateria('filosofia', 'bomba')">
+                        <span class="fin-game-icon">💣</span>
+                        <div><strong>Bomba Contrarreloj</strong><small>Desactivación conceptual</small></div>
+                    </button>
+                    <button class="fin-game-btn" type="button" onclick="iniciarJuegoMateria('filosofia', 'impostor')">
+                        <span class="fin-game-icon">🕵️</span>
+                        <div><strong>El Impostor</strong><small>Detectar error conceptual</small></div>
+                    </button>
+                    <button class="fin-game-btn" type="button" onclick="iniciarJuegoMateria('filosofia', 'memotest')">
+                        <span class="fin-game-icon">🧠</span>
+                        <div><strong>Memotest</strong><small>Autores, corrientes y términos</small></div>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 3. VISTA: SISTEMA FINANCIERO INTERNACIONAL -->
+    <section id="viewFinSFI" class="view view--hidden fin-section fin-section--subject" aria-label="Materia: Sistema Financiero Internacional">
+        <div class="fin-container">
+            <header class="fin-sub-header fin-sub-header--sfi">
+                <div class="fin-sub-header__nav">
+                    <button class="button button--ghost button--sm" type="button" onclick="cambiarVista('fin-hub')">← Volver a FinHub</button>
+                    <span class="fin-badge fin-badge--gold">🌐 CÁTEDRA PROF. KARINA DÍAZ · DEEFI</span>
+                </div>
+                <div class="fin-sub-header__main">
+                    <div>
+                        <h2 class="fin-sub-title">Sistema Financiero Internacional</h2>
+                        <p class="fin-sub-desc">Formatos: 4 Multiple Choice iniciales de alta precisión institucional + Desarrollo de transformaciones, ETTI, Fed y eurobonos.</p>
+                    </div>
+                    <div class="fin-sub-header__actions">
+                        <button class="button button--secondary button--sm" type="button" onclick="abrirPizarronNotasRapido()">📝 Abrir Borrador / Notas</button>
+                    </div>
+                </div>
+            </header>
+
+            <div class="fin-exam-wrapper">
+                <div class="fin-exam-toolbar">
+                    <div class="fin-exam-modes">
+                        <span class="fin-toolbar-label">Modalidad:</span>
+                        <button class="fin-mode-chip is-active" type="button" data-materia="sfi" data-modo="1er_parcial" onclick="seleccionarModoExamenMateria('sfi', '1er_parcial', this)">🎯 1er Parcial</button>
+                        <button class="fin-mode-chip" type="button" data-materia="sfi" data-modo="2do_parcial" onclick="seleccionarModoExamenMateria('sfi', '2do_parcial', this)">🎯 2do Parcial</button>
+                        <button class="fin-mode-chip" type="button" data-materia="sfi" data-modo="final" onclick="seleccionarModoExamenMateria('sfi', 'final', this)">🏆 Final Integral</button>
+                    </div>
+                    <button class="button button--primary" type="button" onclick="generarExamenParaMateria('sfi')">
+                        📝 Generar Modelo de Examen Real
+                    </button>
+                </div>
+
+                <div id="finExamSheet_sfi" class="fin-exam-sheet">
+                    <div class="fin-sheet-placeholder">
+                        <span class="fin-placeholder-icon">📄</span>
+                        <h4>Listo para simular examen de Sistema Financiero Internacional</h4>
+                        <p>Elegí la modalidad y tocá "Generar Modelo de Examen Real" para cargar los multiple choice y casos analíticos de la cátedra.</p>
+                    </div>
+                </div>
+
+                <div id="finExamFeedback_sfi" class="fin-exam-feedback hidden"></div>
+            </div>
+
+            <div class="fin-games-section">
+                <h3 class="fin-section-title">🕹️ Entrenar con los 4 Juegos Académicos de SFI</h3>
+                <div class="fin-games-buttons">
+                    <button class="fin-game-btn" type="button" onclick="iniciarJuegoMateria('sfi', 'bolillero')">
+                        <span class="fin-game-icon">🎲</span>
+                        <div><strong>Bolillero Oral</strong><small>Instrumentos y conceptos de SFI</small></div>
+                    </button>
+                    <button class="fin-game-btn" type="button" onclick="iniciarJuegoMateria('sfi', 'bomba')">
+                        <span class="fin-game-icon">💣</span>
+                        <div><strong>Bomba Contrarreloj</strong><small>Términos y tasas a tiempo</small></div>
+                    </button>
+                    <button class="fin-game-btn" type="button" onclick="iniciarJuegoMateria('sfi', 'impostor')">
+                        <span class="fin-game-icon">🕵️</span>
+                        <div><strong>El Impostor</strong><small>Detectar error financiero</small></div>
+                    </button>
+                    <button class="fin-game-btn" type="button" onclick="iniciarJuegoMateria('sfi', 'memotest')">
+                        <span class="fin-game-icon">🧠</span>
+                        <div><strong>Memotest</strong><small>Mercados, plazas y emisores</small></div>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 4. VISTA: HISTORIA ECONÓMICA MUNDIAL -->
+    <section id="viewFinHistoria" class="view view--hidden fin-section fin-section--subject" aria-label="Materia: Historia Económica Mundial">
+        <div class="fin-container">
+            <header class="fin-sub-header fin-sub-header--historia">
+                <div class="fin-sub-header__nav">
+                    <button class="button button--ghost button--sm" type="button" onclick="cambiarVista('fin-hub')">← Volver a FinHub</button>
+                    <span class="fin-badge fin-badge--gold">📜 CÁTEDRA ANDREA G. PICARDI · DESOH</span>
+                </div>
+                <div class="fin-sub-header__main">
+                    <div>
+                        <h2 class="fin-sub-title">Historia Económica Mundial</h2>
+                        <p class="fin-sub-desc">Estructura oficial de 100 puntos: Parte 1 (40 pts multidimensional) + Parte 2 (60 pts, 3 de 4 temas analíticos).</p>
+                    </div>
+                    <div class="fin-sub-header__actions">
+                        <button class="button button--secondary button--sm" type="button" onclick="abrirPizarronNotasRapido()">📝 Abrir Borrador / Notas</button>
+                    </div>
+                </div>
+            </header>
+
+            <div class="fin-exam-wrapper">
+                <div class="fin-exam-toolbar">
+                    <div class="fin-exam-modes">
+                        <span class="fin-toolbar-label">Modalidad:</span>
+                        <button class="fin-mode-chip is-active" type="button" data-materia="historia" data-modo="1er_parcial" onclick="seleccionarModoExamenMateria('historia', '1er_parcial', this)">🎯 1er Parcial</button>
+                        <button class="fin-mode-chip" type="button" data-materia="historia" data-modo="2do_parcial" onclick="seleccionarModoExamenMateria('historia', '2do_parcial', this)">🎯 2do Parcial</button>
+                        <button class="fin-mode-chip" type="button" data-materia="historia" data-modo="final" onclick="seleccionarModoExamenMateria('historia', 'final', this)">🏆 Final Integral</button>
+                    </div>
+                    <button class="button button--primary" type="button" onclick="generarExamenParaMateria('historia')">
+                        📝 Generar Modelo de Examen Real
+                    </button>
+                </div>
+
+                <div id="finExamSheet_historia" class="fin-exam-sheet">
+                    <div class="fin-sheet-placeholder">
+                        <span class="fin-placeholder-icon">📄</span>
+                        <h4>Listo para simular examen de Historia Económica Mundial</h4>
+                        <p>Elegí la modalidad y tocá "Generar Modelo de Examen Real" para cargar los dos bloques oficiales de 40 pts y 60 pts.</p>
+                    </div>
+                </div>
+
+                <div id="finExamFeedback_historia" class="fin-exam-feedback hidden"></div>
+            </div>
+
+            <div class="fin-games-section">
+                <h3 class="fin-section-title">🕹️ Entrenar con los 4 Juegos Académicos de Historia</h3>
+                <div class="fin-games-buttons">
+                    <button class="fin-game-btn" type="button" onclick="iniciarJuegoMateria('historia', 'bolillero')">
+                        <span class="fin-game-icon">🎲</span>
+                        <div><strong>Bolillero Oral</strong><small>Hitos y transformaciones históricas</small></div>
+                    </button>
+                    <button class="fin-game-btn" type="button" onclick="iniciarJuegoMateria('historia', 'bomba')">
+                        <span class="fin-game-icon">💣</span>
+                        <div><strong>Bomba Contrarreloj</strong><small>Hechos y fechas cruciales</small></div>
+                    </button>
+                    <button class="fin-game-btn" type="button" onclick="iniciarJuegoMateria('historia', 'impostor')">
+                        <span class="fin-game-icon">🕵️</span>
+                        <div><strong>El Impostor</strong><small>Detectar error historiográfico</small></div>
+                    </button>
+                    <button class="fin-game-btn" type="button" onclick="iniciarJuegoMateria('historia', 'memotest')">
+                        <span class="fin-game-icon">🧠</span>
+                        <div><strong>Memotest</strong><small>Autores, tratados y crisis</small></div>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 5. VISTA: ESTADÍSTICA 1 -->
+    <section id="viewFinEstadistica" class="view view--hidden fin-section fin-section--subject" aria-label="Materia: Estadística 1">
+        <div class="fin-container">
+            <header class="fin-sub-header fin-sub-header--estadistica">
+                <div class="fin-sub-header__nav">
+                    <button class="button button--ghost button--sm" type="button" onclick="cambiarVista('fin-hub')">← Volver a FinHub</button>
+                    <span class="fin-badge fin-badge--gold">📊 CÁTEDRA ESTADÍSTICA EMPRESARIAL I · UADE</span>
+                </div>
+                <div class="fin-sub-header__main">
+                    <div>
+                        <h2 class="fin-sub-title">Estadística 1</h2>
+                        <p class="fin-sub-desc">Regla de oro: Cálculos sueltos o sin procedimiento anulan el ítem. Problema 1 (Probabilidades/Contingencia) + Problema 2 (Datos agrupados).</p>
+                    </div>
+                    <div class="fin-sub-header__actions">
+                        <button class="button button--secondary button--sm" type="button" onclick="abrirPizarronNotasRapido()">📝 Abrir Borrador / Notas</button>
+                    </div>
+                </div>
+            </header>
+
+            <div class="fin-exam-wrapper">
+                <div class="fin-exam-toolbar">
+                    <div class="fin-exam-modes">
+                        <span class="fin-toolbar-label">Modalidad:</span>
+                        <button class="fin-mode-chip is-active" type="button" data-materia="estadistica" data-modo="1er_parcial" onclick="seleccionarModoExamenMateria('estadistica', '1er_parcial', this)">🎯 1er Parcial</button>
+                        <button class="fin-mode-chip" type="button" data-materia="estadistica" data-modo="2do_parcial" onclick="seleccionarModoExamenMateria('estadistica', '2do_parcial', this)">🎯 2do Parcial</button>
+                        <button class="fin-mode-chip" type="button" data-materia="estadistica" data-modo="final" onclick="seleccionarModoExamenMateria('estadistica', 'final', this)">🏆 Final Integral</button>
+                    </div>
+                    <button class="button button--primary" type="button" onclick="generarExamenParaMateria('estadistica')">
+                        📝 Generar Modelo de Examen Real
+                    </button>
+                </div>
+
+                <div id="finExamSheet_estadistica" class="fin-exam-sheet">
+                    <div class="fin-sheet-placeholder">
+                        <span class="fin-placeholder-icon">📄</span>
+                        <h4>Listo para simular examen de Estadística 1</h4>
+                        <p>Elegí la modalidad y tocá "Generar Modelo de Examen Real" para desplegar los problemas cuantitativos con sus datos y tablas.</p>
+                    </div>
+                </div>
+
+                <div id="finExamFeedback_estadistica" class="fin-exam-feedback hidden"></div>
+            </div>
+
+            <div class="fin-games-section">
+                <h3 class="fin-section-title">🕹️ Entrenar con los 4 Juegos Académicos de Estadística</h3>
+                <div class="fin-games-buttons">
+                    <button class="fin-game-btn" type="button" onclick="iniciarJuegoMateria('estadistica', 'bolillero')">
+                        <span class="fin-game-icon">🎲</span>
+                        <div><strong>Bolillero Oral</strong><small>Fórmulas y propiedades estadísticas</small></div>
+                    </button>
+                    <button class="fin-game-btn" type="button" onclick="iniciarJuegoMateria('estadistica', 'bomba')">
+                        <span class="fin-game-icon">💣</span>
+                        <div><strong>Bomba Contrarreloj</strong><small>Cálculos rápidos y distribuciones</small></div>
+                    </button>
+                    <button class="fin-game-btn" type="button" onclick="iniciarJuegoMateria('estadistica', 'impostor')">
+                        <span class="fin-game-icon">🕵️</span>
+                        <div><strong>El Impostor</strong><small>Detectar error cuantitativo</small></div>
+                    </button>
+                    <button class="fin-game-btn" type="button" onclick="iniciarJuegoMateria('estadistica', 'memotest')">
+                        <span class="fin-game-icon">🧠</span>
+                        <div><strong>Memotest</strong><small>Distribuciones, medias y varianzas</small></div>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 6. VISTA: CONTABILIDAD 1 -->
+    <section id="viewFinContabilidad" class="view view--hidden fin-section fin-section--subject" aria-label="Materia: Contabilidad 1">
+        <div class="fin-container">
+            <header class="fin-sub-header fin-sub-header--contabilidad">
+                <div class="fin-sub-header__nav">
+                    <button class="button button--ghost button--sm" type="button" onclick="cambiarVista('fin-hub')">← Volver a FinHub</button>
+                    <span class="fin-badge fin-badge--gold">📑 CÁTEDRA CONTABILIDAD I · UADE</span>
+                </div>
+                <div class="fin-sub-header__main">
+                    <div>
+                        <h2 class="fin-sub-title">Contabilidad 1</h2>
+                        <p class="fin-sub-desc">30% Teórico (13 Multiple Choice con justificación obligatoria de negativas) + 70% Práctico (Asientos cronológicos, variaciones y balance).</p>
+                    </div>
+                    <div class="fin-sub-header__actions">
+                        <button class="button button--secondary button--sm" type="button" onclick="abrirPizarronNotasRapido()">📝 Abrir Borrador / Notas</button>
+                    </div>
+                </div>
+            </header>
+
+            <div class="fin-exam-wrapper">
+                <div class="fin-exam-toolbar">
+                    <div class="fin-exam-modes">
+                        <span class="fin-toolbar-label">Modalidad:</span>
+                        <button class="fin-mode-chip is-active" type="button" data-materia="contabilidad" data-modo="1er_parcial" onclick="seleccionarModoExamenMateria('contabilidad', '1er_parcial', this)">🎯 1er Parcial</button>
+                        <button class="fin-mode-chip" type="button" data-materia="contabilidad" data-modo="2do_parcial" onclick="seleccionarModoExamenMateria('contabilidad', '2do_parcial', this)">🎯 2do Parcial</button>
+                        <button class="fin-mode-chip" type="button" data-materia="contabilidad" data-modo="final" onclick="seleccionarModoExamenMateria('contabilidad', 'final', this)">🏆 Final Integral</button>
+                    </div>
+                    <button class="button button--primary" type="button" onclick="generarExamenParaMateria('contabilidad')">
+                        📝 Generar Modelo de Examen Real
+                    </button>
+                </div>
+
+                <div id="finExamSheet_contabilidad" class="fin-exam-sheet">
+                    <div class="fin-sheet-placeholder">
+                        <span class="fin-placeholder-icon">📄</span>
+                        <h4>Listo para simular examen de Contabilidad 1</h4>
+                        <p>Elegí la modalidad y tocá "Generar Modelo de Examen Real" para cargar los 13 teóricos y el caso práctico de 4 meses de operaciones.</p>
+                    </div>
+                </div>
+
+                <div id="finExamFeedback_contabilidad" class="fin-exam-feedback hidden"></div>
+            </div>
+
+            <div class="fin-games-section">
+                <h3 class="fin-section-title">🕹️ Entrenar con los 4 Juegos Académicos de Contabilidad</h3>
+                <div class="fin-games-buttons">
+                    <button class="fin-game-btn" type="button" onclick="iniciarJuegoMateria('contabilidad', 'bolillero')">
+                        <span class="fin-game-icon">🎲</span>
+                        <div><strong>Bolillero Oral</strong><small>Cuentas contables y principios</small></div>
+                    </button>
+                    <button class="fin-game-btn" type="button" onclick="iniciarJuegoMateria('contabilidad', 'bomba')">
+                        <span class="fin-game-icon">💣</span>
+                        <div><strong>Bomba Contrarreloj</strong><small>Variaciones y saldos a tiempo</small></div>
+                    </button>
+                    <button class="fin-game-btn" type="button" onclick="iniciarJuegoMateria('contabilidad', 'impostor')">
+                        <span class="fin-game-icon">🕵️</span>
+                        <div><strong>El Impostor</strong><small>Detectar error contable / imputación</small></div>
+                    </button>
+                    <button class="fin-game-btn" type="button" onclick="iniciarJuegoMateria('contabilidad', 'memotest')">
+                        <span class="fin-game-icon">🧠</span>
+                        <div><strong>Memotest</strong><small>Cuentas, rubros y saldos habituales</small></div>
+                    </button>
+                </div>
+            </div>
         </div>
     </section>
 
@@ -5186,6 +5689,16 @@
             <div class="field">
                 <label for="authRegApodo">Apodo o Nombre</label>
                 <input id="authRegApodo" type="text" maxlength="20" placeholder="" required autocomplete="off">
+            </div>
+
+            <div class="field">
+                <label for="authRegCarrera">Carrera Universitaria</label>
+                <select id="authRegCarrera" class="input-select" style="width: 100%; padding: 0.65rem; border-radius: var(--radius-md); background: #0d1117; color: #fff; border: 1px solid var(--color-border); font-size: 0.95rem;">
+                    <option value="Licenciatura en Finanzas" selected>📈 Licenciatura en Finanzas</option>
+                    <option value="Medicina">🩺 Medicina</option>
+                    <option value="General">🎓 General / Otras Carreras</option>
+                </select>
+                <span class="duelo-field-hint">Habilita materias y simuladores con IA según tu carrera.</span>
             </div>
 
             <!-- Selector de Avatar en Registro -->
@@ -5638,7 +6151,7 @@
 
 <script src="mqtt.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="script.js?v=29.22" defer></script>
+<script src="script.js?v=29.23" defer></script>
 
 <!-- =========================================================
      MODAL DE PROMPT PARA GEMINI (CREAR JUEGOS DESDE PDF)

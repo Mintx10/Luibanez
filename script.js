@@ -685,6 +685,7 @@ const dom = {
     authTabLogin: document.getElementById("authTabLogin"),
     authRegisterForm: document.getElementById("authRegisterForm"),
     authRegApodo: document.getElementById("authRegApodo"),
+    authRegCarrera: document.getElementById("authRegCarrera"),
     authRegAvatarPreview: document.getElementById("authRegAvatarPreview"),
     authRegOpenAvatarPickerBtn: document.getElementById("authRegOpenAvatarPickerBtn"),
     authRegPin: document.getElementById("authRegPin"),
@@ -1274,7 +1275,8 @@ function cambiarVista(vista) {
     const rawTarget = (vista === "duelo" || vista === "juntos") ? "juntos" : vista;
     const vistasValidas = [
         "home", "solo", "juntos", "bolillero", "fama", "juegos", "laboratorio", "podio",
-        "med-interna", "farmacologia-2", "salud-publica"
+        "med-interna", "farmacologia-2", "salud-publica",
+        "fin-hub", "fin-filosofia", "fin-sfi", "fin-historia", "fin-estadistica", "fin-contabilidad"
     ];
     const vistaDestino = vistasValidas.includes(rawTarget) ? rawTarget : "home";
 
@@ -1289,7 +1291,13 @@ function cambiarVista(vista) {
         { id: "podio", domView: dom.viewPodioOnline },
         { id: "med-interna", domView: document.getElementById("viewMedInterna") },
         { id: "farmacologia-2", domView: document.getElementById("viewFarmacologia2") },
-        { id: "salud-publica", domView: document.getElementById("viewSaludPublica") }
+        { id: "salud-publica", domView: document.getElementById("viewSaludPublica") },
+        { id: "fin-hub", domView: document.getElementById("viewFinanzasHub") },
+        { id: "fin-filosofia", domView: document.getElementById("viewFinFilosofia") },
+        { id: "fin-sfi", domView: document.getElementById("viewFinSFI") },
+        { id: "fin-historia", domView: document.getElementById("viewFinHistoria") },
+        { id: "fin-estadistica", domView: document.getElementById("viewFinEstadistica") },
+        { id: "fin-contabilidad", domView: document.getElementById("viewFinContabilidad") }
     ];
 
     // 1. Alternar visibilidad de las vistas
@@ -1316,6 +1324,19 @@ function cambiarVista(vista) {
     if (navFarma) navFarma.classList.toggle("is-active", vistaDestino === "farmacologia-2");
     if (navSalud) navSalud.classList.toggle("is-active", vistaDestino === "salud-publica");
 
+    const navFinHub = document.getElementById("navFinHubBtn");
+    const navFinFilo = document.getElementById("navFinFiloBtn");
+    const navFinSfi = document.getElementById("navFinSfiBtn");
+    const navFinHem = document.getElementById("navFinHemBtn");
+    const navFinEstad = document.getElementById("navFinEstadBtn");
+    const navFinCont = document.getElementById("navFinContBtn");
+    if (navFinHub) navFinHub.classList.toggle("is-active", vistaDestino === "fin-hub");
+    if (navFinFilo) navFinFilo.classList.toggle("is-active", vistaDestino === "fin-filosofia");
+    if (navFinSfi) navFinSfi.classList.toggle("is-active", vistaDestino === "fin-sfi");
+    if (navFinHem) navFinHem.classList.toggle("is-active", vistaDestino === "fin-historia");
+    if (navFinEstad) navFinEstad.classList.toggle("is-active", vistaDestino === "fin-estadistica");
+    if (navFinCont) navFinCont.classList.toggle("is-active", vistaDestino === "fin-contabilidad");
+
     // 3. Sincronizar navegación en el Drawer lateral (Off-canvas)
     const drawerNavMap = {
         home: dom.drawerNavHome,
@@ -1326,7 +1347,13 @@ function cambiarVista(vista) {
         fama: dom.drawerNavFama,
         "med-interna": document.getElementById("drawerNavMedInterna"),
         "farmacologia-2": document.getElementById("drawerNavFarma"),
-        "salud-publica": document.getElementById("drawerNavSalud")
+        "salud-publica": document.getElementById("drawerNavSalud"),
+        "fin-hub": document.getElementById("drawerNavFinHub"),
+        "fin-filosofia": document.getElementById("drawerNavFinFilo"),
+        "fin-sfi": document.getElementById("drawerNavFinSfi"),
+        "fin-historia": document.getElementById("drawerNavFinHem"),
+        "fin-estadistica": document.getElementById("drawerNavFinEstad"),
+        "fin-contabilidad": document.getElementById("drawerNavFinCont")
     };
     Object.entries(drawerNavMap).forEach(([id, btn]) => {
         if (btn) btn.classList.toggle("is-active", id === vistaDestino);
@@ -3342,7 +3369,7 @@ function poblarSelectCuentasAuth() {
     });
 }
 
-function crearOActualizarCuenta(apodo, avatar, tipoAvatar, fotoDataUrl, pin, email = "") {
+function crearOActualizarCuenta(apodo, avatar, tipoAvatar, fotoDataUrl, pin, email = "", carrera = "Licenciatura en Finanzas") {
     if (!apodo || apodo.trim().length === 0) {
         mostrarToast("⚠️ Por favor ingresá un apodo o nombre válido.", "aviso");
         return null;
@@ -3360,7 +3387,7 @@ function crearOActualizarCuenta(apodo, avatar, tipoAvatar, fotoDataUrl, pin, ema
             id: "acc_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6),
             username: apodo.trim().toLowerCase().replace(/\s+/g, ""),
             apodo: apodo.trim(),
-            carrera: "Estudiante Universitario",
+            carrera: carrera || "Licenciatura en Finanzas",
             avatar: avatar || "🦁",
             tipoAvatar: tipoAvatar || "emoji",
             fotoDataUrl: fotoDataUrl || "",
@@ -3379,6 +3406,7 @@ function crearOActualizarCuenta(apodo, avatar, tipoAvatar, fotoDataUrl, pin, ema
         cuenta.avatar = avatar || cuenta.avatar;
         cuenta.tipoAvatar = tipoAvatar || cuenta.tipoAvatar;
         cuenta.fotoDataUrl = fotoDataUrl !== undefined ? fotoDataUrl : cuenta.fotoDataUrl;
+        if (carrera) cuenta.carrera = carrera;
         if (email) cuenta.email = email.trim();
         cuenta.victorias += (perfilUsuario.victorias || 0);
         cuenta.puntosTotales += (perfilUsuario.puntosTotales || 0);
@@ -3395,7 +3423,7 @@ function crearOActualizarCuenta(apodo, avatar, tipoAvatar, fotoDataUrl, pin, ema
     perfilUsuario.id = cuenta.id;
     perfilUsuario.username = cuenta.username || cuenta.apodo;
     perfilUsuario.apodo = cuenta.apodo;
-    perfilUsuario.carrera = cuenta.carrera || "";
+    perfilUsuario.carrera = cuenta.carrera || "Licenciatura en Finanzas";
     perfilUsuario.avatar = cuenta.avatar;
     perfilUsuario.tipoAvatar = cuenta.tipoAvatar;
     perfilUsuario.fotoDataUrl = cuenta.fotoDataUrl;
@@ -3407,9 +3435,10 @@ function crearOActualizarCuenta(apodo, avatar, tipoAvatar, fotoDataUrl, pin, ema
     perfilUsuario.email = cuenta.email;
 
     guardarPerfilUsuario();
+    actualizarNavPorCarrera();
     if (dom.authAccountModal) dom.authAccountModal.close();
     removerMateriasMedicinaSiNoEsIvan();
-    mostrarToast(`✨ ¡Cuenta de ${cuenta.apodo} creada con éxito!`, "exito");
+    mostrarToast(`✨ ¡Cuenta de ${cuenta.apodo} lista para ${perfilUsuario.carrera}!`, "exito");
     return cuenta;
 }
 
@@ -3533,19 +3562,54 @@ function asegurarMateriasMedicinaIvan() {
 /* ==========================================================
    PERSONALIZACIÓN EXCLUSIVA DE NAVEGACIÓN PARA DR. IVÁN ('ivi')
    ========================================================== */
-function actualizarNavExclusivoIvan(esIvan) {
+function esCarreraFinanzasActiva() {
+    return (perfilUsuario.carrera && perfilUsuario.carrera.toLowerCase().includes("finanza")) ||
+           (perfilUsuario.username && (perfilUsuario.username.toLowerCase() === "lucas" || perfilUsuario.username.toLowerCase() === "lukit")) ||
+           (perfilUsuario.apodo && (perfilUsuario.apodo.toLowerCase().includes("lucas") || perfilUsuario.apodo.toLowerCase().includes("finanza")));
+}
+
+function actualizarNavPorCarrera() {
+    const esIvan = esCuentaIvanActiva();
+    const esFinanzas = esCarreraFinanzasActiva();
+
     // 1. Desktop Top Navigation
     const navHome = document.getElementById("navHomeBtn");
     const navSolo = document.getElementById("navSoloBtn");
     const navLab = document.getElementById("navLabBtn");
     const navJuntos = document.getElementById("navJuntosBtn");
     const navFama = document.getElementById("navFamaBtn");
+
     const navMed = document.getElementById("navMedInternaBtn");
     const navFarma = document.getElementById("navFarmaBtn");
     const navSalud = document.getElementById("navSaludBtn");
 
+    const navFinHub = document.getElementById("navFinHubBtn");
+    const navFinFilo = document.getElementById("navFinFiloBtn");
+    const navFinSfi = document.getElementById("navFinSfiBtn");
+    const navFinHem = document.getElementById("navFinHemBtn");
+    const navFinEstad = document.getElementById("navFinEstadBtn");
+    const navFinCont = document.getElementById("navFinContBtn");
+
+    // 2. Mobile Drawer Navigation
+    const drawerHome = document.getElementById("drawerNavHome");
+    const drawerSolo = document.getElementById("drawerNavSolo");
+    const drawerLab = document.getElementById("drawerNavLaboratorio");
+    const drawerJuntos = document.getElementById("drawerNavJuntos");
+    const drawerFama = document.getElementById("drawerNavFama");
+
+    const drawerMed = document.getElementById("drawerNavMedInterna");
+    const drawerFarma = document.getElementById("drawerNavFarma");
+    const drawerSalud = document.getElementById("drawerNavSalud");
+
+    const drawerFinHub = document.getElementById("drawerNavFinHub");
+    const drawerFinFilo = document.getElementById("drawerNavFinFilo");
+    const drawerFinSfi = document.getElementById("drawerNavFinSfi");
+    const drawerFinHem = document.getElementById("drawerNavFinHem");
+    const drawerFinEstad = document.getElementById("drawerNavFinEstad");
+    const drawerFinCont = document.getElementById("drawerNavFinCont");
+
     if (esIvan) {
-        // En la cuenta de Iván: solo Luibañez, Estudiar Solo y las 3 materias
+        // En la cuenta de Iván: sólo Luibañez, Estudiar Solo y las 3 materias médicas
         if (navHome) navHome.classList.add("hidden");
         if (navSolo) navSolo.classList.remove("hidden");
         if (navLab) navLab.classList.add("hidden");
@@ -3554,29 +3618,9 @@ function actualizarNavExclusivoIvan(esIvan) {
         if (navMed) navMed.classList.remove("hidden");
         if (navFarma) navFarma.classList.remove("hidden");
         if (navSalud) navSalud.classList.remove("hidden");
-    } else {
-        // Modo visitante o estándar: Luibañez estándar completo sin materias médicas
-        if (navHome) navHome.classList.remove("hidden");
-        if (navSolo) navSolo.classList.remove("hidden");
-        if (navLab) navLab.classList.remove("hidden");
-        if (navJuntos) navJuntos.classList.remove("hidden");
-        if (navFama) navFama.classList.remove("hidden");
-        if (navMed) navMed.classList.add("hidden");
-        if (navFarma) navFarma.classList.add("hidden");
-        if (navSalud) navSalud.classList.add("hidden");
-    }
 
-    // 2. Mobile Drawer Navigation
-    const drawerHome = document.getElementById("drawerNavHome");
-    const drawerSolo = document.getElementById("drawerNavSolo");
-    const drawerLab = document.getElementById("drawerNavLaboratorio");
-    const drawerJuntos = document.getElementById("drawerNavJuntos");
-    const drawerFama = document.getElementById("drawerNavFama");
-    const drawerMed = document.getElementById("drawerNavMedInterna");
-    const drawerFarma = document.getElementById("drawerNavFarma");
-    const drawerSalud = document.getElementById("drawerNavSalud");
+        [navFinHub, navFinFilo, navFinSfi, navFinHem, navFinEstad, navFinCont].forEach(b => b?.classList.add("hidden"));
 
-    if (esIvan) {
         if (drawerHome) drawerHome.classList.add("hidden");
         if (drawerSolo) drawerSolo.classList.remove("hidden");
         if (drawerLab) drawerLab.classList.add("hidden");
@@ -3585,16 +3629,51 @@ function actualizarNavExclusivoIvan(esIvan) {
         if (drawerMed) drawerMed.classList.remove("hidden");
         if (drawerFarma) drawerFarma.classList.remove("hidden");
         if (drawerSalud) drawerSalud.classList.remove("hidden");
+
+        [drawerFinHub, drawerFinFilo, drawerFinSfi, drawerFinHem, drawerFinEstad, drawerFinCont].forEach(b => b?.classList.add("hidden"));
+    } else if (esFinanzas) {
+        // En la cuenta de Licenciatura en Finanzas: FinHub y las 5 materias activas
+        if (navHome) navHome.classList.remove("hidden");
+        if (navSolo) navSolo.classList.remove("hidden");
+        if (navLab) navLab.classList.add("hidden");
+        if (navJuntos) navJuntos.classList.remove("hidden");
+        if (navFama) navFama.classList.add("hidden");
+
+        [navMed, navFarma, navSalud].forEach(b => b?.classList.add("hidden"));
+        [navFinHub, navFinFilo, navFinSfi, navFinHem, navFinEstad, navFinCont].forEach(b => b?.classList.remove("hidden"));
+
+        if (drawerHome) drawerHome.classList.remove("hidden");
+        if (drawerSolo) drawerSolo.classList.remove("hidden");
+        if (drawerLab) drawerLab.classList.add("hidden");
+        if (drawerJuntos) drawerJuntos.classList.remove("hidden");
+        if (drawerFama) drawerFama.classList.add("hidden");
+
+        [drawerMed, drawerFarma, drawerSalud].forEach(b => b?.classList.add("hidden"));
+        [drawerFinHub, drawerFinFilo, drawerFinSfi, drawerFinHem, drawerFinEstad, drawerFinCont].forEach(b => b?.classList.remove("hidden"));
     } else {
+        // Modo visitante o estándar
+        if (navHome) navHome.classList.remove("hidden");
+        if (navSolo) navSolo.classList.remove("hidden");
+        if (navLab) navLab.classList.remove("hidden");
+        if (navJuntos) navJuntos.classList.remove("hidden");
+        if (navFama) navFama.classList.remove("hidden");
+
+        [navMed, navFarma, navSalud].forEach(b => b?.classList.add("hidden"));
+        [navFinHub, navFinFilo, navFinSfi, navFinHem, navFinEstad, navFinCont].forEach(b => b?.classList.add("hidden"));
+
         if (drawerHome) drawerHome.classList.remove("hidden");
         if (drawerSolo) drawerSolo.classList.remove("hidden");
         if (drawerLab) drawerLab.classList.remove("hidden");
         if (drawerJuntos) drawerJuntos.classList.remove("hidden");
         if (drawerFama) drawerFama.classList.remove("hidden");
-        if (drawerMed) drawerMed.classList.add("hidden");
-        if (drawerFarma) drawerFarma.classList.add("hidden");
-        if (drawerSalud) drawerSalud.classList.add("hidden");
+
+        [drawerMed, drawerFarma, drawerSalud].forEach(b => b?.classList.add("hidden"));
+        [drawerFinHub, drawerFinFilo, drawerFinSfi, drawerFinHem, drawerFinEstad, drawerFinCont].forEach(b => b?.classList.add("hidden"));
     }
+}
+
+function actualizarNavExclusivoIvan(esIvan) {
+    actualizarNavPorCarrera();
 }
 
 function mostrarAnimacionBienvenidaIvan() {
@@ -13281,7 +13360,8 @@ function inicializarModoBolillero() {
             const apodo = dom.authRegApodo?.value;
             const pin = dom.authRegPin?.value;
             const email = dom.authRegEmail?.value;
-            crearOActualizarCuenta(apodo, perfilUsuario.avatar, perfilUsuario.tipoAvatar, perfilUsuario.fotoDataUrl, pin, email);
+            const carrera = dom.authRegCarrera?.value || "Licenciatura en Finanzas";
+            crearOActualizarCuenta(apodo, perfilUsuario.avatar, perfilUsuario.tipoAvatar, perfilUsuario.fotoDataUrl, pin, email, carrera);
         });
     }
     if (dom.authSubmitLoginBtn) {
@@ -14435,7 +14515,7 @@ function iniciarAplicacion() {
 // =========================================================
 // GESTOR DE VERSIONES Y ACTUALIZACIÓN AUTOMÁTICA
 // =========================================================
-const APP_BUILD_VERSION = "29.22";
+const APP_BUILD_VERSION = "29.23";
 
 async function forzarActualizacionCompleta(mostrarNotificacion = true) {
     const lastAttempt = parseInt(sessionStorage.getItem("last_auto_update_ts") || "0", 10);
@@ -23354,3 +23434,1920 @@ setTimeout(() => {
 }, 350);
 
 
+
+
+/* ==========================================================================
+   MÓDULO ACADÉMICO: LICENCIATURA EN FINANZAS (UADE)
+   5 Materias Calibradas con Criterio Docente Real, Simuladores & 4 Juegos
+   ========================================================================== */
+
+const MATERIAS_FINANZAS = {
+    filosofia: {
+        id: "filosofia",
+        nombre: "Filosofía y Ética",
+        catedra: "Cátedra Filosofía y Ética - UADE",
+        titular: "Profesor de Cátedra (Criterio: Carpio, Platón, Aristóteles, Presocráticos)",
+        color: "#f59e0b",
+        criterioDocente: `CRITERIO DE EVALUACIÓN DE CÁTEDRA:
+- Rigor conceptual y fidelidad a las fuentes primarias (Carpio, Platón, Aristóteles, Presocráticos).
+- Exigencia estricta en ortografía, tildes diacríticas, coherencia sintáctica y cohesión textual discursiva.
+- En citas y fragmentos: detección precisa del autor y desarrollo exhaustivo de los conceptos ontológicos y gnoseológicos involucrados.
+- En análisis de casos (ej: 'la mesa blanca'): distinguir estrictamente entre sustancia primera, sustancia segunda y accidente de cualidad.
+- Escala oficial UADE: Menos de 60 pts = Desaprobado (1 a 3); 60-64 = 4; 65-69 = 5; 70-74 = 6; 75-84 = 7; 85-89 = 8; 90-94 = 9; 95-100 = 10.`,
+        conceptosClave: ["Sócrates", "Mayéutica", "Areté", "Cuidado del alma", "Platón", "Alegoría de la Caverna", "Mundo Sensible", "Mundo Inteligible", "Doxa", "Episteme", "Línea Dividida", "Aristóteles", "Hilemorfismo", "Materia y Forma", "Acto y Potencia", "Sustancia", "Accidente", "Protágoras", "Relativismo", "Gorgias", "Heráclito", "Logos", "Discordia de los opuestos"],
+        examenes: {
+            "1er_parcial": {
+                titulo: "1er Examen Parcial Real - Filosofía y Ética",
+                subtitulo: "Unidades 1, 2 y 3 (Presocráticos, Sofistas, Sócrates, Platón y Aristóteles)",
+                duracion: "120 minutos · Escala oficial UADE (Aprobación con 60 puntos)",
+                consignas: [
+                    {
+                        numero: 1,
+                        tipo: "desarrollo",
+                        puntos: 25,
+                        pregunta: `Identifique al filósofo referido en el siguiente fragmento y explique exhaustivamente los conceptos principales que contiene:
+
+"No hago otra cosa que ir de un lado al otro persuadiéndolos a ustedes, sean jóvenes o ancianos, de no preocuparse por sus cuerpos ni por sus fortunas sin antes atender intensamente a su alma, de modo que llegue a ser perfecta; diciéndoles que no es de la fortuna la que nace la perfección, sino de la perfección que nace la fortuna y todos los demás bienes para los hombres".
+
+• Identifique al autor y la obra de referencia.
+• Desarrolle el concepto de cuidado del alma (psiché), virtud (areté) y la inversión de los valores tradicionales atenienses.
+• Explique la relación de este fragmento con el método de indagación e interpelación (ironía y mayéutica).`,
+                        placeholder: "Identifique al filósofo y desarrolle aquí su respuesta con adecuada coherencia, cohesión y ortografía..."
+                    },
+                    {
+                        numero: 2,
+                        tipo: "desarrollo",
+                        puntos: 25,
+                        pregunta: `Lea atentamente el siguiente fragmento de República (Libro VII) en que Platón expone la Alegoría de la Caverna:
+
+"Si no me engaño, [el prisionero] necesitará acostumbrarse para ver los objetos de la región superior. Lo que más fácilmente distinguirá serán las sombras, luego las imágenes de los hombres y de los demás objetos que se reflejan en las aguas y, por último, los objetos mismos; después, elevando su mirada hacia la luz de los astros y de la luna, contemplará durante la noche las constelaciones y el firmamento más fácilmente que durante el día el sol y el resplandor del sol".
+
+• Relacione este fragmento con los grados del ser y del conocer expuestos en la Alegoría de la Línea Dividida.
+• Identifique qué elementos del pasaje corresponden al Mundo Sensible (opinión / doxa: eikasía y pístis) y cuáles al Mundo Inteligible (ciencia / episteme: diánoia y nóesis).
+• Explique cuál es el problema gnoseológico y ontológico central que Platón plantea con la liberación del prisionero.`,
+                        placeholder: "Desarrolle la correspondencia ontológica y gnoseológica de cada elemento del fragmento..."
+                    },
+                    {
+                        numero: 3,
+                        tipo: "desarrollo",
+                        puntos: 20,
+                        pregunta: `Aristóteles y la Metafísica del Lenguaje:
+En un debate filosófico sobre la expresión cotidiana "la mesa blanca", uno de los interlocutores afirma que el término "blanca" constituye una sustancia.
+
+• ¿Es correcta o incorrecta dicha afirmación según la teoría de las categorías y la metafísica aristotélica? Justifique rigurosamente.
+• Explique la distinción ontológica fundamental entre Sustancia Primera (ousía), Sustancia Segunda y Accidente.
+• Relacione esta distinción con la Teoría Hilemórfica (materia y forma) y la explicación del cambio dinámico (pasaje del acto a la potencia).`,
+                        placeholder: "Justifique por qué 'blanca' no es una sustancia e integre los conceptos de accidente, hilemorfismo y acto/potencia..."
+                    },
+                    {
+                        numero: 4,
+                        tipo: "desarrollo",
+                        puntos: 15,
+                        pregunta: `Sofistas vs. Filosofía Socrático-Platónica:
+Analice la célebre tesis de Protágoras: "El hombre es la medida de todas las cosas, de las que son en tanto que son, y de las que no son en tanto que no son".
+
+• Explique qué concepción de la verdad, del conocimiento y de la retórica se desprende de esta posición relativista y gnoselógica.
+• Confronte esta postura con la búsqueda socrática y platónica de definiciones universales, objetivas y esencias inmutables.
+• Aplique brevemente esta contraposición a un debate contemporáneo sobre posverdad, desinformación o fake news.`,
+                        placeholder: "Analice el homo mensura de Protágoras y confróntelo con la concepción socrático-platónica de la verdad..."
+                    },
+                    {
+                        numero: 5,
+                        tipo: "desarrollo",
+                        puntos: 15,
+                        pregunta: `Presocráticos - Heráclito de Éfeso:
+El filósofo "censura al poeta que dice «que cese la discordia tanto entre dioses como entre hombres»; pues entonces no habría armonía, si no existieran lo agudo y lo grave; ni habría animales si no existieran hembra y macho, que son contrarios".
+
+• ¿A qué filósofo presocrático alude esta frase y qué ideas centrales de su ontología y física revela este pasaje?
+• Explique los conceptos de Devenir, Polemos (discordia/guerra como padre de todas las cosas), y el Logos como ley cósmica que rige la unidad de los opuestos.`,
+                        placeholder: "Identifique a Heráclito y desarrolle los conceptos de polemos, devenir, logos y contrarios..."
+                    }
+                ]
+            },
+            "2do_parcial": {
+                titulo: "2do Examen Parcial - Filosofía y Ética",
+                subtitulo: "Unidades 4, 5 y 6 (Modernidad: Descartes, Hume, Kant y Ética Aplicada)",
+                duracion: "120 minutos · Escala oficial UADE",
+                consignas: [
+                    {
+                        numero: 1,
+                        tipo: "desarrollo",
+                        puntos: 25,
+                        pregunta: `René Descartes y el Racionalismo Moderno:
+Desarrolle el camino de la duda metódica en las Meditaciones Metafísicas.
+• Explique los tres niveles de duda (sentidos, sueño, genio maligno).
+• ¿Por qué el 'Cogito, ergo sum' es una verdad indubitable e intuitiva y no un silogismo deductivo?
+• Explique la distinción entre res cogitans, res extensa y res infinita.`,
+                        placeholder: "Desarrolle la duda metódica, el cogito cartesiano y las tres sustancias..."
+                    },
+                    {
+                        numero: 2,
+                        tipo: "desarrollo",
+                        puntos: 25,
+                        pregunta: `David Hume y el Empirismo Radical:
+Analice la teoría del conocimiento de Hume en la Investigación sobre el entendimiento humano.
+• Distinga entre impresiones e ideas según el criterio de vivacidad y origen.
+• Desarrolle la crítica al principio de causalidad necesaria y al principio de inducción.
+• ¿Por qué la noción de 'conexión necesaria' es para Hume una creencia psicológica basada en el hábito o costumbre?`,
+                        placeholder: "Explique la división entre impresiones e ideas y la disolución de la causalidad necesaria..."
+                    },
+                    {
+                        numero: 3,
+                        tipo: "desarrollo",
+                        puntos: 25,
+                        pregunta: `Immanuel Kant y la Crítica de la Razón Pura:
+• Explique el 'Giro Copernicano' que Kant introduce en la filosofía gnoseológica.
+• Defina y ejemplifique: Juicios analíticos a priori, sintéticos a posteriori y sintéticos a priori.
+• Distinga entre las formas puras de la sensibilidad (espacio y tiempo) y las categorías del entendimiento.`,
+                        placeholder: "Desarrolle el giro copernicano kantiano y la fundamentación de los juicios sintéticos a priori..."
+                    },
+                    {
+                        numero: 4,
+                        tipo: "desarrollo",
+                        puntos: 25,
+                        pregunta: `Ética Kantiana vs. Utilitarismo:
+• Exponga la ética deontológica de Kant: buena voluntad, deber y las dos formulaciones del Imperativo Categórico.
+• Confróntela con el Utilitarismo de Jeremy Bentham y John Stuart Mill (principio de mayor felicidad para el mayor número y cálculo de consecuencias).
+• Aplique ambos marcos éticos a un dilema financiero contemporáneo (ej: uso de información privilegiada o rescate financiero estatal).`,
+                        placeholder: "Confronte el imperativo categórico kantiano con el consecuencialismo utilitarista y analice el dilema..."
+                    }
+                ]
+            },
+            "final": {
+                titulo: "Examen Final Integral - Filosofía y Ética",
+                subtitulo: "Programa Completo (Filosofía Antigua, Medieval, Moderna y Ética Empresarial)",
+                duracion: "150 minutos · Escala oficial UADE",
+                consignas: [
+                    {
+                        numero: 1,
+                        tipo: "desarrollo",
+                        puntos: 25,
+                        pregunta: "Confronte la concepción ontológica de las Ideas en Platón (trascendencia y dos mundos) con la concepción aristotélica de la Sustancia Primera e Inmanencia formal.",
+                        placeholder: "Desarrolle la confrontación ontológica entre Platón y Aristóteles..."
+                    },
+                    {
+                        numero: 2,
+                        tipo: "desarrollo",
+                        puntos: 25,
+                        pregunta: "El problema del origen del conocimiento: Compare detalladamente las respuestas del Racionalismo Cartesiano (ideas innatas), Empirismo de Hume (tabla rasa e impresiones) y el Idealismo Trascendental de Kant (síntesis a priori).",
+                        placeholder: "Compare las posiciones gnoseológicas de Descartes, Hume y Kant..."
+                    },
+                    {
+                        numero: 3,
+                        tipo: "desarrollo",
+                        puntos: 25,
+                        pregunta: "Analice el paso de la Ética de las Virtudes (Aristóteles y la eudaimonía como término medio) a la Ética del Deber (Kant y el imperativo categórico).",
+                        placeholder: "Desarrolle el tránsito de la virtud como hábito prudencial al deber por respeto a la ley moral..."
+                    },
+                    {
+                        numero: 4,
+                        tipo: "desarrollo",
+                        puntos: 25,
+                        pregunta: "Ética, Finanzas y Responsabilidad Social: Justifique desde la filosofía moral si un asesor financiero debe guiarse por la maximización del beneficio inmediato del cliente o por un código ético universal de transparencia y bienestar sistémico.",
+                        placeholder: "Articule principios deontológicos y teleológicos aplicados a la intermediación financiera..."
+                    }
+                ]
+            }
+        },
+        conceptosJuegos: [
+            {
+                id: "filo_c1",
+                nombre: "Sócrates y la Mayéutica",
+                guia: "Método socrático de diálogo que busca dar a luz la verdad interior mediante preguntas, ironía y examen del alma.",
+                preguntaBomba: "¿Cuál es el propósito central del método mayéutico practicado por Sócrates?",
+                cables: [
+                    { color: "azul", texto: "Ayudar al interlocutor a parir las verdades universales latentes en su propia alma", correcta: true },
+                    { color: "rojo", texto: "Inculcar dogmáticamente doctrinas morales fijadas por las leyes de la polis", correcta: false },
+                    { color: "verde", texto: "Cobrar honorarios por enseñar técnicas de persuasión política y retórica", correcta: false },
+                    { color: "amarillo", texto: "Demostrar que no existe ninguna verdad y que todo es relativo a la cultura", correcta: false }
+                ],
+                impostorAfirmaciones: [
+                    "Sócrates afirmaba que una vida sin examen no merece la pena ser vivida.",
+                    "El método socrático comienza con la ironía reconociendo la propia ignorancia.",
+                    "Sócrates cobraba elevadas sumas a los jóvenes atenienses por enseñarles retórica sofisticada.", // FALSO (Impostor)
+                    "Para Sócrates, la virtud es conocimiento: nadie obra mal voluntariamente sino por ignorancia."
+                ],
+                impostorCorrecta: 2,
+                memotestPar: { concepto: "Mayéutica Socrática", definicion: "Arte dialéctico de dialogar para que el interlocutor dé a luz la verdad de su alma." }
+            },
+            {
+                id: "filo_c2",
+                nombre: "Platón y la Alegoría de la Caverna",
+                guia: "Representación de la condición humana encadenada al mundo sensible y su ascenso hacia el mundo inteligible del Sol/Bien.",
+                preguntaBomba: "En la alegoría de la caverna, ¿qué representan los objetos reflejados en el exterior y el Sol?",
+                cables: [
+                    { color: "azul", texto: "Las Ideas o Formas inteligibles y la Idea suprema del Bien absoluto", correcta: true },
+                    { color: "rojo", texto: "Las sombras pasajeras proyectadas por el fuego de las apariencias sensibles", correcta: false },
+                    { color: "verde", texto: "Las leyes escritas por los tiranos para gobernar las ciudades", correcta: false },
+                    { color: "amarillo", texto: "El mundo de la conjetura, la imaginación y la creencia vulgar", correcta: false }
+                ],
+                impostorAfirmaciones: [
+                    "Los prisioneros encadenados en el fondo representan al ser humano común atrapado en la doxa.",
+                    "La liberación del prisionero simboliza el arduo camino educativo de la dialéctica filosófica.",
+                    "Para Platón, las cosas materiales y sensibles poseen mayor grado de realidad que las Ideas inmateriales.", // FALSO
+                    "El Sol exterior es el principio que otorga inteligibilidad, verdad y existencia a todas las esencias."
+                ],
+                impostorCorrecta: 2,
+                memotestPar: { concepto: "Mundo Inteligible", definicion: "Reino eterno e inmutable de las Ideas platónicas, accesible sólo por la nóesis." }
+            },
+            {
+                id: "filo_c3",
+                nombre: "Aristóteles: Sustancia y Accidente",
+                guia: "La sustancia primera es el individuo concreto existente; el accidente es aquello que inhiere en la sustancia y no existe por sí mismo.",
+                preguntaBomba: "En la frase 'la mesa de roble es blanca', ¿cómo clasifica Aristóteles al término 'blanca'?",
+                cables: [
+                    { color: "azul", texto: "Como un accidente de cualidad que no puede subsistir independientemente de la sustancia", correcta: true },
+                    { color: "rojo", texto: "Como una sustancia primera que existe por derecho propio en el espacio", correcta: false },
+                    { color: "verde", texto: "Como la causa final determinante de la esencia de la mesa", correcta: false },
+                    { color: "amarillo", texto: "Como la materia prima informe e incognoscible", correcta: false }
+                ],
+                impostorAfirmaciones: [
+                    "La sustancia primera es el ente individual concreto, por ejemplo este caballo o esta mesa.",
+                    "Los accidentes son diez modos del ser que predican determinaciones de la sustancia.",
+                    "Un accidente puede existir de forma autónoma en la realidad sin necesidad de ninguna sustancia.", // FALSO
+                    "La sustancia segunda refiere a las especies y géneros universales que definen la esencia."
+                ],
+                impostorCorrecta: 2,
+                memotestPar: { concepto: "Sustancia Primera (Ousía)", definicion: "El sujeto individual concreto que no se predica de ningún otro y subyace a los accidentes." }
+            },
+            {
+                id: "filo_c4",
+                nombre: "Aristóteles: Hilemorfismo y Cambio",
+                guia: "Todo ente físico está compuesto de materia (hylé) y forma (morphé); el cambio es el pasaje dinámico de la potencia al acto.",
+                preguntaBomba: "¿Cómo define Aristóteles el movimiento o cambio en su Física?",
+                cables: [
+                    { color: "azul", texto: "El acto de lo que está en potencia en tanto que está en potencia", correcta: true },
+                    { color: "rojo", texto: "Una ilusión sensorial provocada por la discordia de los átomos en el vacío", correcta: false },
+                    { color: "verde", texto: "La aniquilación total de la materia previa y la creación ex-nihilo", correcta: false },
+                    { color: "amarillo", texto: "El reposo perpetuo del Primer Motor Inmóvil", correcta: false }
+                ],
+                impostorAfirmaciones: [
+                    "La materia es el sustrato indeterminado receptor de determinaciones (lo que está en potencia).",
+                    "La forma es la estructura configuradora y esencia que hace que una cosa sea lo que es (acto).",
+                    "Una semilla es un árbol en acto y una semilla en potencia.", // FALSO (es semilla en acto y árbol en potencia)
+                    "El cambio accidental modifica atributos sin alterar la identidad sustancial del ente."
+                ],
+                impostorCorrecta: 2,
+                memotestPar: { concepto: "Teoría Hilemórfica", definicion: "Postulado aristotélico de que toda sustancia material es un compuesto indisoluble de materia y forma." }
+            },
+            {
+                id: "filo_c5",
+                nombre: "Heráclito y el Logos de los Opuestos",
+                guia: "El devenir constante de todas las cosas gobernado por el Logos y la tensión armónica de los contrarios (polemos).",
+                preguntaBomba: "¿Qué sostiene Heráclito de Éfeso acerca de la lucha de contrarios en la naturaleza?",
+                cables: [
+                    { color: "azul", texto: "Que el conflicto (polemos) es el padre y rey de todas las cosas y engendra la armonía del cosmos", correcta: true },
+                    { color: "rojo", texto: "Que debe suprimirse toda discordia para que impere un estatismo eterno sin cambio", correcta: false },
+                    { color: "verde", texto: "Que el cosmos es un engaño y el ser es único, inmóvil e indivisible", correcta: false },
+                    { color: "amarillo", texto: "Que los contrarios se anulan recíprocamente dejando el universo en el caos absoluto", correcta: false }
+                ],
+                impostorAfirmaciones: [
+                    "Heráclito utilizó la metáfora del río para ilustrar que todo fluye y nada permanece idéntico.",
+                    "El fuego es el símbolo y principio primordial de la transformación incesante en Heráclito.",
+                    "Para Heráclito, la discordia debe eliminarse porque destruye la verdad y el orden del universo.", // FALSO
+                    "El Logos es la razón cósmica que gobierna y unifica las tensiones opuestas del devenir."
+                ],
+                impostorCorrecta: 2,
+                memotestPar: { concepto: "Logos Heraclíteo", definicion: "Ley universal y principio de inteligibilidad que unifica armónicamente los contrarios en el perpetuo devenir." }
+            }
+        ]
+    },
+
+    sfi: {
+        id: "sfi",
+        nombre: "Sistema Financiero Internacional",
+        catedra: "Cátedra Karina Díaz · Fernández Matías - DEEFI",
+        titular: "Prof. Karina Díaz",
+        color: "#10b981",
+        criterioDocente: `CRITERIO DE EVALUACIÓN DE CÁTEDRA (Prof. Karina Díaz):
+- 4 Multiple Choice iniciales de alta precisión institucional (bonos soberanos, HME, ETTI, euromercados).
+- Rigor técnico absoluto en la separación institucional entre el Departamento del Tesoro (emisor fiscal de deuda soberana cupón cero T-Bills) y la Reserva Federal (FED / FOMC, autoridad monetaria que opera sólo en mercado secundario mediante OMO).
+- Dominio de las 4 tendencias de los 90 (desregulación, globalización de capitales, titulización/securitización, innovación financiera) y la transición de bancocéntrico a orientado a mercados de capitales.
+- Precisión en clasificación de emisiones internacionales: Bonos domésticos, Bonos Extranjeros (Yankee, Samurai, Bulldog) y Eurobonos (moneda no doméstica, colocación sindicada extraterritorial).
+- Dominio de la ETTI: Expectativas puras, prima por liquidez y mercados segmentados.`,
+        conceptosClave: ["Departamento del Tesoro", "Reserva Federal (FED)", "FOMC", "T-Bills Cupón Cero", "Eurobonos", "Bonos Extranjeros", "Yankee", "ETTI", "Expectativas Puras", "Prima de Liquidez", "Segmentación de Mercados", "Mercado Eficiente (Fama)", "Forma Débil", "Forma Semifuerte", "Forma Fuerte", "Titulización", "Desregulación de los 90", "Bancocéntrico vs Mercados"],
+        examenes: {
+            "1er_parcial": {
+                titulo: "1er Examen Parcial Real - Sistema Financiero Internacional",
+                subtitulo: "Cátedra Prof. Karina Díaz (Unidades 1 a 4: Instituciones, FED, ETTI y Renta Fija)",
+                duracion: "120 minutos · Modalidad Oficial DEEFI",
+                consignas: [
+                    {
+                        numero: 1,
+                        tipo: "mc_multiple",
+                        puntos: 20,
+                        pregunta: `BLOQUE I: Cuestionario de Opción Múltiple Institucional (4 Ítems Conceptuales Clave):
+
+1.1) ¿Qué entidad gubernamental emite los bonos soberanos a cupón cero (Treasury Bills) en el mercado estadounidense?
+[A] El Comité Federal de Mercado Abierto (FOMC)
+[B] El Departamento del Tesoro de los Estados Unidos (US Treasury)
+[C] El Banco de la Reserva Federal de Nueva York
+[D] La Comisión de Bolsa y Valores (SEC)
+
+1.2) Según la Hipótesis del Mercado Eficiente (HME) de Eugene Fama, un mercado se encuentra en su FORMA SEMIFUERTE cuando los precios de los activos reflejan:
+[A] Únicamente la serie histórica de precios y volúmenes pasados (análisis técnico inútil).
+[B] Toda la información disponible públicamente, incluyendo balances, dividendos, noticias y análisis macroeconómico.
+[C] Absolutamente toda la información, incluyendo tanto la pública como la información confidencial o privilegiada (insider trading).
+[D] Ningún tipo de información porque los precios siguen un camino totalmente irracional.
+
+1.3) Una empresa corporativa con sede central en Tailandia emite títulos de deuda denominados en dólares estadounidenses y los coloca entre inversores internacionales en Singapur y Londres. Este instrumento clasifica formalmente como:
+[A] Bono Soberano Doméstico
+[B] Eurobono (Eurodollar Bond)
+[C] Bono Yankee
+[D] Bono Samurai
+
+1.4) La Teoría de las Expectativas Puras sobre la Estructura Temporal de Tasas de Interés (ETTI) postula que:
+[A] Las tasas de largo plazo reflejan el promedio ponderado de las tasas cortas esperadas por el mercado sin requerir prima de liquidez.
+[B] Los inversores siempre exigen un rendimiento adicional compensatorio por inmovilizar capital a largo plazo.
+[C] Los mercados de corto y largo plazo están completamente desconectados por regulaciones bancarias.
+[D] La curva de rendimientos siempre y en todo momento debe presentar pendiente negativa.`,
+                        placeholder: "Indique sus respuestas justificadas para 1.1, 1.2, 1.3 y 1.4..."
+                    },
+                    {
+                        numero: 2,
+                        tipo: "desarrollo",
+                        puntos: 25,
+                        pregunta: `BLOQUE II: Transformación del Sistema Financiero Internacional
+a) Desarrolle y analice en profundidad las cuatro grandes tendencias macrofinancieras que transformaron el sistema financiero global a partir de la década de 1990:
+   1. Desregulación y liberalización financiera.
+   2. Globalización e integración transfronteriza de flujos de capital.
+   3. Titulización o securitización de activos.
+   4. Innovación financiera, proliferación de derivados y banca en la sombra (shadow banking).
+
+b) Explique la transformación estructural que experimentó el sistema financiero pasando del modelo tradicional 'bancocéntrico' (intermediación de depósitos y préstamos en balance) al modelo moderno 'orientado al mercado de capitales' (transferencia y empaquetamiento de riesgos).`,
+                        placeholder: "Desarrolle las 4 tendencias de los 90 y explique la transición de bancocéntrico a mercado de capitales..."
+                    },
+                    {
+                        numero: 3,
+                        tipo: "desarrollo",
+                        puntos: 20,
+                        pregunta: `BLOQUE III: Teoría de Mercados Eficientes (HME)
+a) Defina el concepto de mercado financiero eficiente según Eugene Fama y explicite sus supuestos subyacentes.
+b) Explique las tres formas de eficiencia del mercado (Débil, Semifuerte y Fuerte). Indique para cada forma qué tipo de análisis (Técnico o Fundamental) queda invalidado.
+c) ¿Qué consecuencias prácticas tiene la validez de la forma semifuerte para los gestores de fondos de inversión (gestión activa vs. fondos indexados / gestión pasiva)?`,
+                        placeholder: "Explique la HME, las tres formas débil/semifuerte/fuerte y sus implicancias en gestión activa vs pasiva..."
+                    },
+                    {
+                        numero: 4,
+                        tipo: "desarrollo",
+                        puntos: 15,
+                        pregunta: `BLOQUE IV: Relación Institucional FED y Departamento del Tesoro
+Analice la siguiente cuestión institucional de política monetaria y fiscal:
+¿Puede la Reserva Federal (FED) financiar de forma directa y primaria el déficit fiscal del Departamento del Tesoro de los Estados Unidos?
+
+• Responda de manera categórica indicando el marco legal vigente.
+• Explique la diferencia crucial entre el mercado primario de bonos y el mercado secundario.
+• Detalle cómo la FED interviene e impacta sobre las tasas y la liquidez a través del FOMC mediante las Operaciones de Mercado Abierto (OMO - Open Market Operations).`,
+                        placeholder: "Explique el marco legal que prohíbe el financiamiento directo de la FED al Tesoro y describa las operaciones de mercado abierto..."
+                    },
+                    {
+                        numero: 5,
+                        tipo: "desarrollo",
+                        puntos: 20,
+                        pregunta: `BLOQUE V: Caso Práctico de Emisión Internacional y ETTI
+a) Caso de Emisión: Compare detalladamente la emisión de un Bono Extranjero (Foreign Bond) frente a un Eurobono. Considere moneda de denominación, país de colocación, jurisdicción legal, sindicato colocador y ventajas de costo regulatorio.
+b) Curva de Rendimientos (Yield Curve): Explique la Teoría de Preferencia por la Liquidez y la Teoría de Segmentación de Mercados. ¿Qué factores pueden provocar que una curva de tasas de interés se invierta y qué señal macroeconómica emite históricamente dicha inversión?`,
+                        placeholder: "Compare Eurobonos vs Bonos Extranjeros y desarrolle las teorías de la curva de tasas y su inversión..."
+                    }
+                ]
+            },
+            "2do_parcial": {
+                titulo: "2do Examen Parcial - Sistema Financiero Internacional",
+                subtitulo: "Unidades 5 a 7: Renta Variable, Derivados Financieros e Indicadores de Mercado",
+                duracion: "120 minutos · Cátedra Prof. Karina Díaz",
+                consignas: [
+                    {
+                        numero: 1,
+                        tipo: "desarrollo",
+                        puntos: 25,
+                        pregunta: "Mercado de Renta Variable y Emisiones Internacionales: Explique el funcionamiento de los American Depositary Receipts (ADRs). Distinga los Niveles I, II y III, requisitos ante la SEC y la Ley Sarbanes-Oxley (SOX).",
+                        placeholder: "Desarrolle el mecanismo de los ADRs, niveles de cotización e impacto de la regulación Sarbanes-Oxley..."
+                    },
+                    {
+                        numero: 2,
+                        tipo: "desarrollo",
+                        puntos: 25,
+                        pregunta: "Contratos de Futuros vs. Forward: Analice las diferencias estructurales: negociación en mercados organizados vs OTC, estandarización, márgenes de garantía, mark-to-market y riesgo de contraparte con la Cámara Compensadora (Clearing House).",
+                        placeholder: "Compare en detalle contratos Futuros y Forwards..."
+                    },
+                    {
+                        numero: 3,
+                        tipo: "desarrollo",
+                        puntos: 25,
+                        pregunta: "Mercado de Opciones Financieras: Defina contratos Call y Put. Explique las obligaciones y derechos del comprador (holder) y del vendedor (writer). Distinga entre valor intrínseco y valor tiempo, y entre opciones europeas y americanas.",
+                        placeholder: "Desarrolle el funcionamiento técnico de las opciones Call y Put y sus determinantes de valor..."
+                    },
+                    {
+                        numero: 4,
+                        tipo: "desarrollo",
+                        puntos: 25,
+                        pregunta: "Indicadores de Mercado y Riesgo: Analice el índice VIX (indicador de volatilidad implícita del S&P 500). Explique cómo se calcula conceptualmente a partir de los precios de opciones y por qué es conocido como el 'índice del miedo'.",
+                        placeholder: "Explique la interpretación y relevancia macrofinanciera del índice VIX..."
+                    }
+                ]
+            },
+            "final": {
+                titulo: "Examen Final Integrador - Sistema Financiero Internacional",
+                subtitulo: "Programa Completo (Unidades 1 a 7)",
+                duracion: "150 minutos · Cátedra Prof. Karina Díaz",
+                consignas: [
+                    {
+                        numero: 1,
+                        tipo: "desarrollo",
+                        puntos: 25,
+                        pregunta: "Políticas Monetarias Globales y Bonos Soberanos: Analice cómo el target de la tasa de Fondos Federales de la Reserva Federal impacta en el flujo internacional de capitales hacia mercados emergentes y en la valuación de los bonos corporativos.",
+                        placeholder: "Desarrolle el mecanismo de transmisión de la tasa de la FED sobre la liquidez global..."
+                    },
+                    {
+                        numero: 2,
+                        tipo: "desarrollo",
+                        puntos: 25,
+                        pregunta: "Duration Modificada y Convexidad: Defina ambos conceptos para la gestión del riesgo de tasa de interés en carteras de renta fija. Explique por qué la duration subestima el aumento de precio ante bajas de tasas y sobreestima la caída ante subas.",
+                        placeholder: "Explique la relación matemática y económica entre duration, convexidad y precio del bono..."
+                    },
+                    {
+                        numero: 3,
+                        tipo: "desarrollo",
+                        puntos: 25,
+                        pregunta: "Estrategias de Cobertura con Derivados: Diseñe una estrategia de cobertura para una empresa multinacional exportadora que tiene cuentas a cobrar en Euros dentro de 90 días, utilizando futuros o puts.",
+                        placeholder: "Desarrolle la estrategia de hedging contra riesgo cambiario paso a paso..."
+                    },
+                    {
+                        numero: 4,
+                        tipo: "desarrollo",
+                        puntos: 25,
+                        pregunta: "Crisis Financiera Internacional de 2008: Analice las fallas de mercado que la originaron (hipotecas subprime, rol de las agencias calificadoras de riesgo, securitización opaca y apalancamiento bancario).",
+                        placeholder: "Desarrolle las causas sistémicas y la transformación regulatoria posterior a 2008..."
+                    }
+                ]
+            }
+        },
+        conceptosJuegos: [
+            {
+                id: "sfi_c1",
+                nombre: "Emisión de Bonos Cupón Cero (T-Bills)",
+                guia: "Los Treasury Bills son emitidos por el Departamento del Tesoro de EE.UU. a descuento, no por la Reserva Federal.",
+                preguntaBomba: "¿Qué entidad emite directamente los bonos soberanos cupón cero (T-Bills) en los Estados Unidos?",
+                cables: [
+                    { color: "azul", texto: "El Departamento del Tesoro de los Estados Unidos (US Treasury)", correcta: true },
+                    { color: "rojo", texto: "La Junta de Gobernadores de la Reserva Federal (FED)", correcta: false },
+                    { color: "verde", texto: "El Comité Federal de Mercado Abierto (FOMC)", correcta: false },
+                    { color: "amarillo", texto: "El Banco Central Europeo en acuerdo bilateral", correcta: false }
+                ],
+                impostorAfirmaciones: [
+                    "Los Treasury Bills son títulos de deuda pública emitidos a descuento con vencimiento inferior a un año.",
+                    "El emisor oficial y responsable del pago es el Departamento del Tesoro de EE.UU.",
+                    "La Reserva Federal emite T-Bills para financiar directamente el gasto corriente del Congreso.", // FALSO
+                    "En el vencimiento, el Tesoro abona el valor nominal o par completo al tenedor del bono."
+                ],
+                impostorCorrecta: 2,
+                memotestPar: { concepto: "Treasury Bills (T-Bills)", definicion: "Instrumento soberano cupón cero de corto plazo emitido por el Tesoro de EE.UU." }
+            },
+            {
+                id: "sfi_c2",
+                nombre: "Hipótesis de Mercado Eficiente (HME)",
+                guia: "Eugene Fama postuló que los precios reflejan toda la información disponible en tres grados: débil, semifuerte y fuerte.",
+                preguntaBomba: "Bajo la forma semifuerte de la HME, ¿qué información está ya incorporada en los precios de las acciones?",
+                cables: [
+                    { color: "azul", texto: "Toda la información disponible públicamente, incluyendo balances, reportes y noticias", correcta: true },
+                    { color: "rojo", texto: "Únicamente la secuencia histórica de cotizaciones pasadas", correcta: false },
+                    { color: "verde", texto: "Toda la información interna y privada que manejan los directivos de la empresa", correcta: false },
+                    { color: "amarillo", texto: "Ninguna información objetiva porque los mercados son puramente emocionales", correcta: false }
+                ],
+                impostorAfirmaciones: [
+                    "En la forma débil, el análisis técnico no puede generar rendimientos anormales consistentes.",
+                    "En la forma semifuerte, los precios reaccionan casi instantáneamente a los anuncios públicos de resultados.",
+                    "En la forma semifuerte, el análisis fundamental permite batir al mercado de manera sistemática.", // FALSO
+                    "En la forma fuerte, ni siquiera los inversores con información privilegiada obtienen ganancias extraordinarias."
+                ],
+                impostorCorrecta: 2,
+                memotestPar: { concepto: "Eficiencia Semifuerte", definicion: "Grado de mercado donde los precios descuentan de inmediato toda la información pública disponible." }
+            },
+            {
+                id: "sfi_c3",
+                nombre: "Clasificación de Eurobonos",
+                guia: "Títulos de deuda colocados internacionalmente denominados en una moneda distinta a la del país donde se emite.",
+                preguntaBomba: "Si una empresa argentina coloca bonos nominados en dólares en los mercados de Londres y Zúrich, ¿cómo se denomina dicho bono?",
+                cables: [
+                    { color: "azul", texto: "Eurobono (Eurodollar Bond)", correcta: true },
+                    { color: "rojo", texto: "Bono Yankee registrado localmente en la SEC", correcta: false },
+                    { color: "verde", texto: "Bono Samurai emitido en yenes japoneses", correcta: false },
+                    { color: "amarillo", texto: "Bono Soberano Doméstico con oferta pública local", correcta: false }
+                ],
+                impostorAfirmaciones: [
+                    "Los Eurobonos suelen emitirse al portador y con menores trabas regulatorias que las colocaciones domésticas.",
+                    "Un Eurobono está nominado en una divisa distinta a la moneda del mercado local de colocación.",
+                    "Un bono emitido en EE.UU. por una corporación extranjera nominado en dólares es un Eurobono.", // FALSO (Es un Bono Yankee)
+                    "El sindicato colocador internacional distribuye la emisión entre inversores de múltiples jurisdicciones."
+                ],
+                impostorCorrecta: 2,
+                memotestPar: { concepto: "Eurobono", definicion: "Bono internacional emitido en una moneda diferente a la del país o mercado de su colocación." }
+            },
+            {
+                id: "sfi_c4",
+                nombre: "ETTI: Curva de Rendimientos Invertida",
+                guia: "La inversión de la curva de rendimientos (tasas cortas superiores a tasas largas) anticipa históricamente recesiones económicas.",
+                preguntaBomba: "¿Qué fenómeno macroeconómico suele anticipar una curva de rendimientos de bonos soberanos invertida?",
+                cables: [
+                    { color: "azul", texto: "Una desaceleración económica severa o recesión esperada por el mercado", correcta: true },
+                    { color: "rojo", texto: "Un auge hiperinflacionario sin precedentes con pleno empleo", correcta: false },
+                    { color: "verde", texto: "Un aumento inmediato del superávit fiscal del gobierno central", correcta: false },
+                    { color: "amarillo", texto: "La eliminación total del riesgo de crédito corporativo", correcta: false }
+                ],
+                impostorAfirmaciones: [
+                    "La curva de rendimientos normal presenta pendiente positiva por exigencia de prima por liquidez a mayor plazo.",
+                    "La Teoría de las Expectativas Puras asume que los bonos a distinto plazo son sustitutos perfectos.",
+                    "Una curva invertida significa que el mercado anticipa que los bancos centrales subirán agresivamente las tasas a futuro.", // FALSO (anticipa bajas por recesión)
+                    "La Teoría de Mercados Segmentados postula que la oferta y demanda fijan la tasa en cada tramo de madurez de forma aislada."
+                ],
+                impostorCorrecta: 2,
+                memotestPar: { concepto: "Curva Invertida (Yield Curve)", definicion: "Estructura de tasas donde los rendimientos de corto plazo superan a los de largo plazo, señal de recesión." }
+            },
+            {
+                id: "sfi_c5",
+                nombre: "Independencia de la FED y Operaciones OMO",
+                guia: "La FED no financia directamente al Tesoro en mercado primario; interviene en mercado secundario mediante el FOMC para fijar liquidez.",
+                preguntaBomba: "¿Cómo ejecuta el FOMC de la Reserva Federal la regulación del circulante y las tasas de corto plazo?",
+                cables: [
+                    { color: "azul", texto: "Comprando y vendiendo títulos del Tesoro en el mercado secundario mediante OMO", correcta: true },
+                    { color: "rojo", texto: "Comprando directamente la emisión primaria de bonos al Tesoro sin intermediarios", correcta: false },
+                    { color: "verde", texto: "Fijando por decreto legal los precios de las acciones en Wall Street", correcta: false },
+                    { color: "amarillo", texto: "Confiscando los depósitos en dólares de los bancos extranjeros", correcta: false }
+                ],
+                impostorAfirmaciones: [
+                    "El FOMC fija el rango objetivo para la tasa de Fondos Federales (Fed Funds Rate).",
+                    "La FED tiene prohibido constitucional y legalmente financiar directamente el déficit del Tesoro en primario.",
+                    "Cuando la FED compra títulos en el mercado secundario, absorbe liquidez y presiona las tasas al alza.", // FALSO (inyecta liquidez y baja tasas)
+                    "El Libro Beige recopila la evidencia anecdótica sobre la actividad económica en los 12 distritos de la FED."
+                ],
+                impostorCorrecta: 2,
+                memotestPar: { concepto: "Operaciones de Mercado Abierto (OMO)", definicion: "Compraventa de títulos soberanos por el banco central en el mercado secundario para regular la liquidez." }
+            }
+        ]
+    },
+
+    historia: {
+        id: "historia",
+        nombre: "Historia Económica Mundial",
+        catedra: "Cátedra Prof. Andrea Picardi · DESOH",
+        titular: "Prof. Andrea Picardi",
+        color: "#3b82f6",
+        criterioDocente: `CRITERIO DE EVALUACIÓN DE CÁTEDRA (Prof. Andrea Picardi):
+- Estructura oficial del examen: 100 puntos totales distribuidos en dos bloques obligatorios.
+  • PARTE I (40 puntos): Elegir 1 de 2 grandes temas históricos estructurales. Exige desarrollo EXTENSO, PROFUNDO y MULTIDIMENSIONAL (articulando dimensiones política, económica, agraria, tecnológica, demográfica, social e institucional).
+  • PARTE II (60 puntos): Elegir y desarrollar 3 de 4 consignas de 20 puntos cada una.
+- Se penaliza duramente el esquematismo, respuestas breves de 3 renglones o falta de contexto histórico.
+- Dominio riguroso de autores de cátedra: Cameron (Historia Económica Mundial), Marichal (Grandes Crisis), debate Dobb-Sweezy y Brenner sobre la transición del feudalismo al capitalismo.
+- Criterios temáticos obligatorios: Causas multifactoriales de la Rev. Industrial británica, 1ra y 2da Fase industrial, Mercantilismo (metalismo, balanza comercial, manufacturas reales) y Patrón Oro.`,
+        conceptosClave: ["Transición Feudalismo-Capitalismo", "Crisis del Siglo XIV", "Debate Dobb-Sweezy-Brenner", "Revolución Agrícola", "Cercamientos (Enclosures)", "Revolución Gloriosa 1688", "Revolución Industrial Británica", "Industria Textil Algodonera", "Máquina de Vapor (Watt)", "Segunda Revolución Industrial", "Taylorismo y Fordismo", "Mercantilismo", "Metalismo", "Balanza Comercial Favorable", "Patrón Oro Internacional", "Reglas del Juego", "Mecanismo Precio-Flujo de Hume"],
+        examenes: {
+            "1er_parcial": {
+                titulo: "1er Examen Parcial Real - Historia Económica Mundial",
+                subtitulo: "Cátedra Prof. Andrea Picardi · Modalidad Oficial UADE (100 Puntos)",
+                duracion: "120 minutos · Selección de Opciones Obligatoria",
+                consignas: [
+                    {
+                        numero: 1,
+                        tipo: "desarrollo_opcion",
+                        puntos: 40,
+                        pregunta: `PARTE I (40 PUNTOS): TEMA ESTRUCTURAL A ELECCIÓN
+Elige y desarrolla en profundidad UNA (1) de las siguientes dos opciones. La cátedra exige un análisis multidimensional que contemple factores políticos, económicos, sociales, tecnológicos y demográficos:
+
+• OPCIÓN A: LA TRANSICIÓN DEL FEUDALISMO AL CAPITALISMO EN EUROPA OCCIDENTAL.
+Desarrolle el proceso de disolución del régimen feudal desde la crisis del siglo XIV hasta la consolidación del modo de producción capitalista. Analice:
+1) Las características del señorío feudal y la servidumbre.
+2) El impacto demográfico y agrario de la Peste Negra y la crisis del siglo XIV.
+3) El debate historiográfico sobre los motores de la transición (teoría comercial/circulacionista de Paul Sweezy vs. teoría de las relaciones de producción/lucha de clases de Maurice Dobb y Robert Brenner).
+4) El surgimiento de las monarquías absolutistas, la acumulación originaria y el surgimiento del trabajo libre asalariado.
+
+• OPCIÓN B: FACTORES DETERMINANTES DE LA REVOLUCIÓN INDUSTRIAL EN INGLATERRA.
+Explique por qué Inglaterra fue la pionera de la Revolución Industrial a mediados del siglo XVIII. Desarrolle de manera exhaustiva:
+1) La Revolución Agrícola: cercamientos (enclosures), rotación cuatrienal (sistema Norfolk), aumento de productividad y liberación de mano de obra.
+2) El marco institucional y político: consecuencias de la Revolución Gloriosa de 1688 sobre los derechos de propiedad privada y los límites al poder real.
+3) Las ventajas geográficas y de dotación factorial: yacimientos de carbón de coque e hierro, red de navegación fluvial y canales.
+4) La articulación entre el comercio colonial ultramarino (algodón, sistema de plantación y trata de esclavos) y el crecimiento sostenido del mercado interno británico.`,
+                        placeholder: "Indique la opción elegida (OPCIÓN A u OPCIÓN B) y desarrolle su respuesta ampliamente sin omitir ninguna de las dimensiones solicitadas..."
+                    },
+                    {
+                        numero: 2,
+                        tipo: "desarrollo",
+                        puntos: 20,
+                        pregunta: `PARTE II - CONSIGNAS TEMÁTICAS (20 Pts c/u - Debe desarrollar 3 de las 4 opciones):
+
+CONSIGNA 1: EL MERCANTILISMO Y EL COMERCIO COLONIAL
+Defina la doctrina y práctica del Mercantilismo desarrollada entre los siglos XVI y XVIII. Explique sus postulados centrales:
+• Noción de riqueza asociada al metalismo o bullionismo (acumulación de metales preciosos).
+• El principio de balanza comercial favorable y las medidas proteccionistas implementadas (aranceles, Actas de Navegación inglesas).
+• El fomento estatal de manufacturas reales y los monopolios conferidos a compañías de comercio ultramarino (Compañías de las Indias Orientales).
+• Críticas formuladas por David Hume y los pensadores clásicos (Adam Smith).`,
+                        placeholder: "Desarrolle exhaustivamente los principios del pensamiento y la praxis mercantilista..."
+                    },
+                    {
+                        numero: 3,
+                        tipo: "desarrollo",
+                        puntos: 20,
+                        pregunta: `CONSIGNA 2: LA PRIMERA FASE DE LA REVOLUCIÓN INDUSTRIAL (1760-1840)
+Analice las características centrales de la Primera Fase de la industrialización británica:
+• El sector textil algodonero como sector líder de punta (innovaciones mecánicas: hiladoras y telares mecánicos).
+• La máquina de vapor de James Watt y su impacto en la deslocalización de la producción industrial respecto a los cursos de agua.
+• La emergencia del sistema fabril (factory system): disciplina horaria, división del trabajo y proletarización de la mano de obra urbana.
+• Las consecuencias sociales sobre las condiciones de vida y trabajo de la naciente clase obrera.`,
+                        placeholder: "Analice la primera fase de la industrialización, innovaciones tecnológicas y el sistema de fábrica..."
+                    },
+                    {
+                        numero: 4,
+                        tipo: "desarrollo",
+                        puntos: 20,
+                        pregunta: `CONSIGNA 3: LA SEGUNDA FASE DE LA REVOLUCIÓN INDUSTRIAL (1870-1914)
+Desarrolle las transformaciones económicas, tecnológicas y organizacionales que definieron la Segunda Revolución Industrial:
+• Nuevas fuentes de energía (electricidad y petróleo) y nuevos sectores líderes (siderurgia pesada de acero, industria química y metalmecánica).
+• El ferrocarril y la navegación a vapor como motores de la integración de mercados globales.
+• La organización científica del trabajo: principios del Taylorismo y la cadena de montaje de Henry Ford.
+• Las nuevas formas de concentración empresarial corporativa: trusts, cárteles y holdings monopólicos.`,
+                        placeholder: "Desarrolle los sectores dinámicos, fuentes energéticas, taylorismo/fordismo y concentración corporativa..."
+                    },
+                    {
+                        numero: 5,
+                        tipo: "desarrollo",
+                        puntos: 20,
+                        pregunta: `CONSIGNA 4: EL PATRÓN ORO INTERNACIONAL (1870-1914)
+Explique el funcionamiento del sistema monetario del Patrón Oro Clásico:
+• Las 'reglas del juego': paridad fija respecto al oro, libre convertibilidad de los billetes y libre exportación e importación de oro.
+• El mecanismo de ajuste automático precio-flujo en especie enunciado por David Hume ante desequilibrios de balanza de pagos.
+• El rol hegemónico de la Libra Esterlina y del Banco de Inglaterra como prestamista de última instancia internacional.`,
+                        placeholder: "Desarrolle las reglas del patrón oro, el mecanismo de ajuste precio-flujo y el rol de Gran Bretaña..."
+                    }
+                ]
+            },
+            "2do_parcial": {
+                titulo: "2do Examen Parcial - Historia Económica Mundial",
+                subtitulo: "El Siglo XX: De la Primera Guerra Mundial a la Globalización Contemporánea",
+                duracion: "120 minutos · Cátedra Prof. Andrea Picardi",
+                consignas: [
+                    {
+                        numero: 1,
+                        tipo: "desarrollo",
+                        puntos: 35,
+                        pregunta: "La Gran Depresión de 1929: Analice las causas estructurales del crack bursátil, la propagación internacional de la deflación, las respuestas proteccionistas (arancel Smoot-Hawley) y las políticas del New Deal rooseveltiano.",
+                        placeholder: "Desarrolle las causas de la crisis del 29 y las transformaciones macroeconómicas del New Deal..."
+                    },
+                    {
+                        numero: 2,
+                        tipo: "desarrollo",
+                        puntos: 35,
+                        pregunta: "El Orden Económico de Posguerra (Bretton Woods 1944): Analice los acuerdos de Bretton Woods: creación del FMI y Banco Mundial, el patrón de cambio oro-dólar y los 'Treinta Años Dorados' de crecimiento keynesiano (1945-1973).",
+                        placeholder: "Desarrolle la arquitectura de Bretton Woods y el auge económico del estado de bienestar..."
+                    },
+                    {
+                        numero: 3,
+                        tipo: "desarrollo",
+                        puntos: 30,
+                        pregunta: "Las Crisis del Petróleo de 1973 y 1979 y el Quiebre del Modelo Keynesiano: Explique el fenómeno de la estanflación (inflación con desempleo), la caída de Bretton Woods en 1971 y el advenimiento del neoliberalismo (Thatcher y Reagan).",
+                        placeholder: "Analice el shock petrolero, la estanflación y el cambio de paradigma hacia el Consenso de Washington..."
+                    }
+                ]
+            },
+            "final": {
+                titulo: "Examen Final Integrador - Historia Económica Mundial",
+                subtitulo: "Programa Completo (Del Feudalismo a las Crisis Financieras Globales)",
+                duracion: "150 minutos · Cátedra Prof. Andrea Picardi",
+                consignas: [
+                    {
+                        numero: 1,
+                        tipo: "desarrollo",
+                        puntos: 35,
+                        pregunta: "Revoluciones Industriales Comparadas: Compare en un cuadro conceptual la Primera Revolución Industrial (Inglaterra, textil, vapor, talleres a fábricas) y la Segunda Revolución Industrial (Alemania/EE.UU., química, acero, corporaciones y fordism).",
+                        placeholder: "Compare actores, energías, tecnologías e impactos sociales entre la 1ra y 2da Revolución Industrial..."
+                    },
+                    {
+                        numero: 2,
+                        tipo: "desarrollo",
+                        puntos: 35,
+                        pregunta: "Sistemas Monetarios Internacionales en Perspectiva Histórica: Analice la evolución monetaria desde el Patrón Oro Clásico (1870-1914), el Período de Entreguerras (hiperinflaciones y caos cambiario), el Patrón Bretton Woods (1944-1971) hasta el Régimen de Flotación Sucia actual.",
+                        placeholder: "Trace la trayectoria histórica de los regímenes monetarios y sus momentos de ruptura..."
+                    },
+                    {
+                        numero: 3,
+                        tipo: "desarrollo",
+                        puntos: 30,
+                        pregunta: "Las Grandes Crisis Financieras según Carlos Marichal: Analice las regularidades comunes entre el Crack del 29 y la Crisis Subprime de 2008 (burbuja especulativa de activos, desregulación financiera, pánico de liquidez e intervención estatal de rescate).",
+                        placeholder: "Confronte los patrones históricos de las crisis financieras globales basándose en Marichal..."
+                    }
+                ]
+            }
+        },
+        conceptosJuegos: [
+            {
+                id: "hem_c1",
+                nombre: "Mercantilismo y Bullionismo",
+                guia: "Doctrina económica que identificaba la riqueza de una nación con la acumulación de metales preciosos (oro y plata).",
+                preguntaBomba: "¿Cuál era la meta principal de la política comercial mercantilista de los siglos XVII y XVIII?",
+                cables: [
+                    { color: "azul", texto: "Lograr una balanza comercial favorable maximizando exportaciones y restringiendo importaciones", correcta: true },
+                    { color: "rojo", texto: "Establecer el libre comercio internacional eliminando todo arancel y monopolio", correcta: false },
+                    { color: "verde", texto: "Promover la desindustrialización para volver exclusivamente a la producción agraria", correcta: false },
+                    { color: "amarillo", texto: "Distribuir equitativamente los metales preciosos entre todas las naciones europeas", correcta: false }
+                ],
+                impostorAfirmaciones: [
+                    "El metalismo o bullionismo consideraba al oro y la plata como la forma suprema de riqueza estatal.",
+                    "Las Actas de Navegación inglesas fueron un ejemplo paradigmático de legislación proteccionista mercantilista.",
+                    "El mercantilismo defendía la libre competencia irrestricta y el cese de los monopolios coloniales reales.", // FALSO
+                    "Fisiócratas como François Quesnay criticaron al mercantilismo señalando que sólo la tierra genera producto neto."
+                ],
+                impostorCorrecta: 2,
+                memotestPar: { concepto: "Balanza Comercial Favorable", definicion: "Principio mercantilista de exportar bienes de alto valor e importar lo mínimo para acumular metales." }
+            },
+            {
+                id: "hem_c2",
+                nombre: "Revolución Agrícola y Enclosures",
+                guia: "Proceso de cercamiento de tierras comunales en Inglaterra que privatizó el agro y expulsó campesinos hacia las fábricas urbanas.",
+                preguntaBomba: "¿Qué consecuencia social y demográfica decisiva tuvieron las Leyes de Cercamiento (Enclosure Acts) en Inglaterra?",
+                cables: [
+                    { color: "azul", texto: "Expulsaron a campesinos desposeídos creando la mano de obra proletaria urbana para las fábricas", correcta: true },
+                    { color: "rojo", texto: "Restablecieron los lazos feudales y la servidumbre perpetua de la gleba", correcta: false },
+                    { color: "verde", texto: "Provocaron la desaparición absoluta de la propiedad privada de la tierra", correcta: false },
+                    { color: "amarillo", texto: "Frenaron la introducción de innovaciones técnicas como el sistema Norfolk", correcta: false }
+                ],
+                impostorAfirmaciones: [
+                    "El sistema Norfolk eliminó el barbecho mediante la rotación cuatrienal de cultivos.",
+                    "Los cercamientos permitieron aplicar inversiones de capital y mejorar los rindes agrícolas.",
+                    "Las leyes de cercamiento beneficiaron principalmente a los pequeños campesinos comuneros sin títulos formales.", // FALSO
+                    "El aumento de la productividad agrícola permitió alimentar a una población urbana creciente no dedicada al campo."
+                ],
+                impostorCorrecta: 2,
+                memotestPar: { concepto: "Leyes de Cercamiento (Enclosures)", definicion: "Privatización de tierras comunales que convirtió al campesinado en proletariado fabril asalariado." }
+            },
+            {
+                id: "hem_c3",
+                nombre: "Primera Revolución Industrial: Textil y Vapor",
+                guia: "La industria textil algodonera en Lancashire y la máquina de vapor de James Watt lideraron la primera ola industrializadora.",
+                preguntaBomba: "¿Cuál fue el sector industrial líder (de punta) durante la Primera Revolución Industrial británica?",
+                cables: [
+                    { color: "azul", texto: "La industria textil manufacturera del algodón", correcta: true },
+                    { color: "rojo", texto: "La industria petroquímica y de refinación de plásticos", correcta: false },
+                    { color: "verde", texto: "La fabricación masiva de automóviles a combustión interna", correcta: false },
+                    { color: "amarillo", texto: "La industria aeroespacial y de telecomunicaciones satelitales", correcta: false }
+                ],
+                impostorAfirmaciones: [
+                    "La máquina de vapor perfeccionada por James Watt independizó a las fábricas de los ríos.",
+                    "El carbón mineral (coque) reemplazó a la leña vegetal como combustible clave de la fundición de hierro.",
+                    "La primera revolución industrial se caracterizó por la robótica automatizada y la electricidad.", // FALSO
+                    "El factory system impuso una rígida disciplina laboral basada en el control del tiempo por reloj."
+                ],
+                impostorCorrecta: 2,
+                memotestPar: { concepto: "Sector Algodonero de Punta", definicion: "Primer rubro industrial mecanizado a gran escala que motorizó las exportaciones británicas." }
+            },
+            {
+                id: "hem_c4",
+                nombre: "Segunda Revolución Industrial y Taylorismo",
+                guia: "Nuevas energías (petróleo y electricidad), acero, química y organización científica del trabajo con cronómetro y línea de montaje.",
+                preguntaBomba: "¿Cuál es el núcleo central del sistema de organización del trabajo formulado por Frederick Taylor?",
+                cables: [
+                    { color: "azul", texto: "La descomposición de tareas en movimientos mínimos cronometrados eliminando tiempos muertos", correcta: true },
+                    { color: "rojo", texto: "Permitir que cada obrero decida libremente su propio ritmo y herramientas de producción", correcta: false },
+                    { color: "verde", texto: "El retorno a los gremios artesanales medievales con aprendizaje prolongado", correcta: false },
+                    { color: "amarillo", texto: "La prohibición absoluta de la maquinaria en los talleres siderúrgicos", correcta: false }
+                ],
+                impostorAfirmaciones: [
+                    "Henry Ford añadió al taylorismo la cinta transportadora mecánica móvil en la producción del Modelo T.",
+                    "En la segunda revolución industrial, el acero sustituyó al hierro dulce en rieles y estructuras.",
+                    "El taylorismo promovía que los obreros organizaran colectivamente la dirección técnica de la empresa.", // FALSO
+                    "Alemania y los Estados Unidos superaron a Gran Bretaña en los sectores químicos y eléctricos modernos."
+                ],
+                impostorCorrecta: 2,
+                memotestPar: { concepto: "Taylorismo", definicion: "Estudio científico de tiempos y movimientos para maximizar la productividad y disciplina obrera." }
+            },
+            {
+                id: "hem_c5",
+                nombre: "Patrón Oro y Ajuste de Hume",
+                guia: "Mecanismo automático precio-flujo de oro donde el déficit de pagos drenaba metal, bajaba precios y restablecía el equilibrio.",
+                preguntaBomba: "Según el mecanismo de ajuste precio-flujo de David Hume, ¿qué ocurría cuando un país sufría déficit comercial?",
+                cables: [
+                    { color: "azul", texto: "Salía oro del país, reduciendo la masa monetaria y haciendo bajar los precios internos hasta volverlos competitivos", correcta: true },
+                    { color: "rojo", texto: "El Banco de Inglaterra le regalaba libras esterlinas a fondo perdido para tapar el déficit", correcta: false },
+                    { color: "verde", texto: "El gobierno devaluaba su moneda por decreto rompiendo la paridad fija con el oro", correcta: false },
+                    { color: "amarillo", texto: "Se prohibía la venta de bienes al exterior por cinco años consecutivos", correcta: false }
+                ],
+                impostorAfirmaciones: [
+                    "Bajo el Patrón Oro, cada unidad monetaria nacional tenía una paridad legal fija e inmutable en peso de oro.",
+                    "Los bancos centrales debían asegurar la libre convertibilidad de sus billetes en monedas o barras de oro.",
+                    "En el Patrón Oro, los bancos centrales aplicaban libremente controles de cambios y cepos monetarios.", // FALSO
+                    "La libra esterlina británica actuaba como la principal moneda de liquidación y reserva internacional."
+                ],
+                impostorCorrecta: 2,
+                memotestPar: { concepto: "Ajuste Precio-Flujo en Especie", definicion: "Teoría de David Hume que explica cómo el flujo de oro reequilibra automáticamente la balanza de pagos." }
+            }
+        ]
+    },
+
+    estadistica: {
+        id: "estadistica",
+        nombre: "Estadística 1",
+        catedra: "Cátedra Estadística 1 - UADE",
+        titular: "Cátedra de Métodos Cuantitativos UADE",
+        color: "#8b5cf6",
+        criterioDocente: `CRITERIO DE EVALUACIÓN DE CÁTEDRA (UADE Estadística 1):
+- EXIGENCIA METODOLÓGICA ABSOLUTA: Todo resultado numérico debe estar respaldado por su fórmula explícita y desarrollo paso a paso. Cálculos sin procedimiento o respuestas sueltas se anulan con 0 puntos.
+- Problema 1: Probabilidad en tablas de contingencia 2x2. Distinguir rigurosamente entre:
+  • Probabilidad conjunta P(A ∩ B)
+  • Probabilidad condicional P(A | B) = P(A ∩ B) / P(B)
+  • Verificación FORMAL de Independencia Estadística: A y B son independientes si y sólo si P(A | B) = P(A) o P(A ∩ B) = P(A) * P(B).
+  • Regla de la adición P(A ∪ B) = P(A) + P(B) - P(A ∩ B).
+  • Probabilidades sucesivas sin reposición (muestreo hipergeométrico).
+- Problema 2: Datos agrupados en intervalos de frecuencia:
+  • Media aritmética ponderada x̄ = Σ(xi * fi) / n.
+  • Varianza y Desvío Estándar muestral S.
+  • Coeficiente de Variación CV = S / x̄. Evaluación de homogeneidad: Si CV ≤ 25%, el promedio es representativo; si CV > 25%, la muestra es heterogénea y dispersa.
+  • Percentil 85 (P85) por interpolación de frecuencias acumuladas: Li + [ (k*n/100 - Fi-1) / fi ] * c.
+  • Moda modal Mo con fórmula de amplitudes.
+- Escala oficial UADE: Menos de 60 = 1 a 3 (Desaprobado); 60 = 4; 70 = 5; 80 = 6; 85 = 7; 90 = 8; 95 = 9; 100 = 10.`,
+        conceptosClave: ["Tabla de Contingencia 2x2", "Probabilidad Conjunta", "Probabilidad Condicional", "Independencia Estadística", "Regla de Adición", "Muestreo Sin Reposición", "Datos Agrupados en Intervalos", "Marca de Clase (xi)", "Media Aritmética", "Varianza Muestral", "Desvío Estándar", "Coeficiente de Variación (CV)", "Homogeneidad", "Percentil 85", "Moda Modal"],
+        examenes: {
+            "1er_parcial": {
+                titulo: "1er Examen Parcial Real - Estadística 1",
+                subtitulo: "Examen de Cátedra UADE (Probabilidades y Estadística Descriptiva Agrupada)",
+                duracion: "120 minutos · Escala oficial UADE (Procedimiento paso a paso obligatorio)",
+                consignas: [
+                    {
+                        numero: 1,
+                        tipo: "problema_cuantitativo",
+                        puntos: 50,
+                        pregunta: `PROBLEMA 1: ANÁLISIS DE VENTAS EN RETAIL Y PROBABILIDADES (50 Puntos)
+Un hipermercado realizó un estudio cuantitativo sobre una muestra de 500 clientes clasificados según su forma de pago y el volumen de compra:
+• 200 clientes pagaron con Tarjeta de Crédito (TC) y los 300 restantes pagaron con Débito o Efectivo (DE).
+• Del total de 500 clientes, 150 realizaron compras mayores a $50.000 (suceso M).
+• De los 200 clientes que pagaron con Tarjeta de Crédito, 90 realizaron compras mayores a $50.000.
+
+Construya mentalmente la tabla de contingencia 2x2 y responda desarrollando fórmula y cálculo exacto:
+a) (10 pts) Calcule la probabilidad conjunta de que un cliente elegido al azar haya pagado con Tarjeta de Crédito Y haya comprado más de $50.000: P(M ∩ TC).
+b) (10 pts) Calcule la probabilidad condicional de que un cliente haya realizado una compra mayor a $50.000 DADO QUE pagó con Tarjeta de Crédito: P(M | TC).
+c) (10 pts) Demuestre formalmente si los sucesos "Comprar más de $50.000" (M) y "Pagar con Tarjeta de Crédito" (TC) son estadísticamente INDEPENDIENTES justificando con el criterio matemático P(M | TC) = P(M).
+d) (10 pts) Calcule la probabilidad de que un cliente haya realizado una compra mayor a $50.000 O haya pagado con Tarjeta de Crédito: P(M ∪ TC).
+e) (10 pts) Si se seleccionan al azar 3 clientes de la muestra de 500 SIN REPOSICIÓN, calcule la probabilidad exacta de que los 3 hayan pagado con Tarjeta de Crédito.`,
+                        placeholder: "Detalle paso a paso: a) P(M ∩ TC), b) P(M | TC), c) Prueba de Independencia formal, d) P(M ∪ TC), e) Cálculo sin reposición..."
+                    },
+                    {
+                        numero: 2,
+                        tipo: "problema_cuantitativo",
+                        puntos: 50,
+                        pregunta: `PROBLEMA 2: CALL CENTER Y DATOS AGRUPADOS EN INTERVALOS (50 Puntos)
+Un centro de atención de reclamos financieros registró la duración en minutos de una muestra de n = 400 llamadas entrantes, arrojando la siguiente distribución de frecuencias agrupadas:
+
+| Intervalo de Duración (min) | Frecuencia Absoluta (fi) |
+| :--- | :--- |
+| [0 - 4) | 60 |
+| [4 - 8) | 140 |
+| [8 - 12) | 120 |
+| [12 - 16) | 60 |
+| [16 - 20] | 20 |
+| **Total (n)** | **400** |
+
+Desarrolle los siguientes incisos aplicando las fórmulas oficiales de cátedra:
+a) (10 pts) Calcule la Media Aritmética (x̄) de la duración de las llamadas indicando las marcas de clase (xi) de cada intervalo.
+b) (10 pts) Calcule la Varianza (S²), el Desvío Estándar (S) y el Coeficiente de Variación (CV = S / x̄). Interprete económicamente si la distribución es HOMOGÉNEA o heterogénea según el criterio de corte del 25%.
+c) (10 pts) Calcule el Percentil 85 (P85) indicando el intervalo correspondiente, la frecuencia acumulada anterior (Fi-1) y la fórmula de interpolación. Interprete el resultado en términos del tiempo de duración.
+d) (10 pts) Calcule la Moda (Mo) de la distribución utilizando la fórmula modal para datos agrupados.
+e) (10 pts) ¿Qué porcentaje exacto de llamadas tuvieron una duración SUPERIOR a los 12 minutos? Justifique con las frecuencias del cuadro.`,
+                        placeholder: "Detalle cálculos con fórmulas: a) x̄, b) S y CV con interpretación de homogeneidad, c) P85 con fórmula de interpolación, d) Moda, e) Porcentaje > 12 min..."
+                    }
+                ]
+            },
+            "2do_parcial": {
+                titulo: "2do Examen Parcial - Estadística 1",
+                subtitulo: "Variables Aleatorias Discretas y Continuas (Binomial, Poisson, Normal)",
+                duracion: "120 minutos · Cátedra UADE",
+                consignas: [
+                    {
+                        numero: 1,
+                        tipo: "problema_cuantitativo",
+                        puntos: 35,
+                        pregunta: "Distribución Binomial: En una entidad bancaria, la probabilidad de que una solicitud de crédito online sea rechazada es p = 0.15. Si en una tarde se reciben 12 solicitudes independientes, calcule: a) Probabilidad de que exactamente 2 sean rechazadas. b) Probabilidad de que al menos 1 sea rechazada. c) Esperanza matemática y desvío estándar del número de rechazos.",
+                        placeholder: "Desarrolle aplicando fórmula de distribución binomial P(X = k)..."
+                    },
+                    {
+                        numero: 2,
+                        tipo: "problema_cuantitativo",
+                        puntos: 35,
+                        pregunta: "Distribución de Poisson: En una mesa de dinero entran órdenes de compra a razón de un promedio λ = 4 órdenes por minuto. Calcule: a) Probabilidad de que en un minuto determinado no ingrese ninguna orden P(X = 0). b) Probabilidad de que en un intervalo de 3 minutos ingresen más de 8 órdenes. c) Varianza del proceso.",
+                        placeholder: "Desarrolle aplicando la distribución de Poisson y ajuste de intervalo..."
+                    },
+                    {
+                        numero: 3,
+                        tipo: "problema_cuantitativo",
+                        puntos: 30,
+                        pregunta: "Distribución Normal: El rendimiento diario de un fondo común de inversión sigue una distribución normal con media μ = 0.08% y desvío estándar σ = 0.25%. a) Estandarice mediante la variable Z y calcule la probabilidad de que un día el rendimiento sea negativo. b) Calcule el rendimiento que es superado sólo por el 5% de los mejores días (Percentil 95).",
+                        placeholder: "Desarrolle la tipificación Z = (X - μ) / σ y el uso de la tabla normal..."
+                    }
+                ]
+            },
+            "final": {
+                titulo: "Examen Final Integrador - Estadística 1",
+                subtitulo: "Programa Completo (Descriptiva, Probabilidades, Modelos y Teorema Central del Límite)",
+                duracion: "150 minutos · Cátedra UADE",
+                consignas: [
+                    {
+                        numero: 1,
+                        tipo: "problema_cuantitativo",
+                        puntos: 35,
+                        pregunta: "Teorema de Bayes y Calificación Crediticia: En una cartera corporativa, el 70% de las empresas son de Bajo Riesgo (B) y el 30% de Alto Riesgo (A). La probabilidad de default en Alto Riesgo es P(D|A) = 0.20, mientras que en Bajo Riesgo es P(D|B) = 0.02. Si una empresa cae en default, calcule por Bayes la probabilidad de que haya pertenecido al grupo de Bajo Riesgo: P(B|D).",
+                        placeholder: "Desarrolle probabilidad total y teorema de Bayes paso a paso..."
+                    },
+                    {
+                        numero: 2,
+                        tipo: "problema_cuantitativo",
+                        puntos: 35,
+                        pregunta: "Teorema Central del Límite (TCL): El monto gastado por cliente en una tienda tiene media μ = $25.000 y desvío σ = $8.000 con distribución asimétrica desconocida. Si se toma una muestra aleatoria de n = 64 clientes, calcule la probabilidad de que la media muestral X̄ sea superior a $27.000. Justifique la aplicación del TCL por tamaño muestral.",
+                        placeholder: "Aplique el TCL con error estándar de la media σ/√n..."
+                    },
+                    {
+                        numero: 3,
+                        tipo: "desarrollo",
+                        puntos: 30,
+                        pregunta: "Análisis Comparativo de Medidas de Dispersión: Explique por qué el desvío estándar no debe utilizarse directamente para comparar la dispersión de dos acciones que cotizan a precios muy dispares ($100 vs $50.000), y fundamente el uso del Coeficiente de Variación (CV).",
+                        placeholder: "Fundamente teóricamente el coeficiente de variación y la homogeneidad relativa..."
+                    }
+                ]
+            }
+        },
+        conceptosJuegos: [
+            {
+                id: "estad_c1",
+                nombre: "Probabilidad Condicional y Bayes",
+                guia: "La probabilidad condicional P(A|B) evalúa la ocurrencia de A habiendo ocurrido B: P(A ∩ B) / P(B).",
+                preguntaBomba: "¿Cuál es la fórmula matemática formal para calcular la probabilidad condicional de A dado B?",
+                cables: [
+                    { color: "azul", texto: "P(A | B) = P(A ∩ B) / P(B)", correcta: true },
+                    { color: "rojo", texto: "P(A | B) = P(A) * P(B) + P(A ∪ B)", correcta: false },
+                    { color: "verde", texto: "P(A | B) = P(A) / P(A ∩ B)", correcta: false },
+                    { color: "amarillo", texto: "P(A | B) = 1 - P(A ∪ B)", correcta: false }
+                ],
+                impostorAfirmaciones: [
+                    "Si dos sucesos son independientes, se cumple estrictamente que P(A | B) = P(A).",
+                    "La regla de adición general establece que P(A ∪ B) = P(A) + P(B) - P(A ∩ B).",
+                    "Dos sucesos mutuamente excluyentes con probabilidad positiva son siempre independientes.", // FALSO
+                    "El Teorema de Bayes permite calcular probabilidades a posteriori actualizando las previas."
+                ],
+                impostorCorrecta: 2,
+                memotestPar: { concepto: "Independencia Estadística", definicion: "Condición matemática donde la ocurrencia de B no altera la probabilidad de A: P(A|B) = P(A)." }
+            },
+            {
+                id: "estad_c2",
+                nombre: "Coeficiente de Variación (CV) y Homogeneidad",
+                guia: "CV = (S / x̄) * 100%. Medida relativa de dispersión adimensional. Si CV ≤ 25%, la muestra es homogénea y la media es representativa.",
+                preguntaBomba: "¿Cuándo se considera que una media aritmética es representativa según el criterio oficial de homogeneidad de cátedra UADE?",
+                cables: [
+                    { color: "azul", texto: "Cuando el Coeficiente de Variación (CV) es menor o igual al 25%", correcta: true },
+                    { color: "rojo", texto: "Cuando el desvío estándar es exactamente el doble que la varianza", correcta: false },
+                    { color: "verde", texto: "Únicamente si la mediana coincide con el percentil 99", correcta: false },
+                    { color: "amarillo", texto: "Cuando la muestra tiene menos de 10 observaciones", correcta: false }
+                ],
+                impostorAfirmaciones: [
+                    "El Coeficiente de Variación es una medida adimensional que permite comparar dispersiones de distintas unidades.",
+                    "Se calcula como el cociente entre el desvío estándar y el valor absoluto de la media aritmética.",
+                    "Un CV del 60% indica una distribución sumamente homogénea y altamente concentrada en el promedio.", // FALSO
+                    "La varianza tiene las unidades de la variable elevadas al cuadrado."
+                ],
+                impostorCorrecta: 2,
+                memotestPar: { concepto: "Coeficiente de Variación (CV)", definicion: "Cociente S / x̄ que mide la dispersión relativa y valida si la media es representativa (≤ 25%)." }
+            },
+            {
+                id: "estad_c3",
+                nombre: "Percentil 85 en Datos Agrupados",
+                guia: "Cuantil que deja por debajo al 85% de las observaciones y por encima al 15% restante mediante interpolación lineal de frecuencias acumuladas.",
+                preguntaBomba: "¿Qué representa conceptualmente el Percentil 85 (P85) en una distribución de datos?",
+                cables: [
+                    { color: "azul", texto: "El valor de la variable que no es superado por el 85% de las observaciones de la muestra", correcta: true },
+                    { color: "rojo", texto: "El promedio entre el valor mínimo y el 85% del valor máximo", correcta: false },
+                    { color: "verde", texto: "El intervalo que concentra a las 85 observaciones con mayor frecuencia", correcta: false },
+                    { color: "amarillo", texto: "La probabilidad fija de cometer un error tipo I del 85%", correcta: false }
+                ],
+                impostorAfirmaciones: [
+                    "Para ubicar el intervalo del P85 se busca el primer intervalo cuya frecuencia acumulada Fi cubra 0.85 * n.",
+                    "La fórmula de interpolación utiliza el límite inferior del intervalo y su amplitud c.",
+                    "El percentil 50 de una distribución es exactamente igual al promedio ponderado en cualquier distribución asimétrica.", // FALSO (es la mediana)
+                    "El percentil 85 es superado únicamente por el 15% de las observaciones superiores."
+                ],
+                impostorCorrecta: 2,
+                memotestPar: { concepto: "Percentil 85 (P85)", definicion: "Medida de posición que divide la distribución dejando el 85% de observaciones por debajo." }
+            },
+            {
+                id: "estad_c4",
+                nombre: "Distribución Normal Estándar Z",
+                guia: "Curva simétrica en forma de campana con media 0 y varianza 1 tipificada por la fórmula Z = (X - μ) / σ.",
+                preguntaBomba: "¿Cuál es la transformación requerida para estandarizar una variable continua X ~ N(μ, σ)?",
+                cables: [
+                    { color: "azul", texto: "Z = (X - μ) / σ", correcta: true },
+                    { color: "rojo", texto: "Z = (X * μ) / σ²", correcta: false },
+                    { color: "verde", texto: "Z = (X - σ) / μ", correcta: false },
+                    { color: "amarillo", texto: "Z = √(X² + μ²)", correcta: false }
+                ],
+                impostorAfirmaciones: [
+                    "El área total bajo la curva de densidad normal estandarizada es estrictamente igual a 1.",
+                    "Aproximadamente el 68.2% de los datos se ubican en el intervalo [μ - σ, μ + σ].",
+                    "La distribución normal es asimétrica hacia la derecha con media superior a la mediana.", // FALSO
+                    "En Z = 0 la distribución normal alcanza su valor máximo de densidad."
+                ],
+                impostorCorrecta: 2,
+                memotestPar: { concepto: "Tipificación Z", definicion: "Transformación (X - μ) / σ que convierte cualquier variable normal en Normal Estándar N(0, 1)." }
+            },
+            {
+                id: "estad_c5",
+                nombre: "Muestreo Sin Reposición (Hipergeométrica)",
+                guia: "Cuando los elementos no vuelven a la población, los ensayos sucesivos son dependientes y la probabilidad cambia en cada extracción.",
+                preguntaBomba: "Si de 500 clientes (200 con tarjeta) extraemos 3 al azar sin reposición, ¿cómo se calcula la probabilidad de que los 3 usen tarjeta?",
+                cables: [
+                    { color: "azul", texto: "(200/500) * (199/499) * (198/498)", correcta: true },
+                    { color: "rojo", texto: "(200/500)³ sin modificar el denominador", correcta: false },
+                    { color: "verde", texto: "3 * (200/500) / 300", correcta: false },
+                    { color: "amarillo", texto: "(200/500) + (199/500) + (198/500)", correcta: false }
+                ],
+                impostorAfirmaciones: [
+                    "En el muestreo sin reposición la composición de la población se modifica tras cada extracción.",
+                    "Los sucesos sucesivos de extracción son dependientes entre sí.",
+                    "En extracciones sin reposición, la probabilidad del segundo elemento siempre es idéntica a la del primero.", // FALSO
+                    "Si la población fuera infinita o con reposición, el modelo aplicable sería el Binomial."
+                ],
+                impostorCorrecta: 2,
+                memotestPar: { concepto: "Muestreo Sin Reposición", definicion: "Proceso donde cada extracción reduce el espacio muestral y genera probabilidades condicionales sucesivas." }
+            }
+        ]
+    },
+
+    contabilidad: {
+        id: "contabilidad",
+        nombre: "Contabilidad 1",
+        catedra: "Cátedra Cdra. Alicia Landini - UADE",
+        titular: "Cdra. Alicia Landini",
+        color: "#ec4899",
+        criterioDocente: `CRITERIO DE EVALUACIÓN DE CÁTEDRA (Cdra. Alicia Landini):
+- Estructura dual estricta del parcial oficial:
+  • 30% TEÓRICO: 13 preguntas Multiple Choice de 6 opciones (A, B, C, D, Todas son correctas, Ninguna es correcta).
+    REGLA DE ORO OBLIGATORIA: El alumno debe justificar OBLIGATORIAMENTE en el campo de texto las opciones que NO marcó (descartadas) para que el ítem sume puntos. Si marca una opción pero no justifica las falsas descartadas, no computa puntos (salvo que elija 'Todas son correctas').
+  • 70% PRÁCTICO: Caso integral de 4 meses con Libro Diario:
+    1) Asientos de suscripción e integración de capital social.
+    2) Variación patrimonial obligatoria al lado de cada cuenta (A+, A-, P+, P-, PN+, R+, R-).
+    3) Partida doble perfecta: Debe = Haber.
+    4) Leyenda documental respaldatoria obligatoria: S/ Acta Constitutiva, S/ Factura Original, S/ Minuta Contable, S/ Recibo.
+    5) Mayorización y Balance de Sumas y Saldos / Situación Patrimonial.
+- Escala oficial UADE: Menos de 60 pts = Desaprobado (1 a 3); 60 = 4; hasta 100 = 10.`,
+        conceptosClave: ["Ecuación Patrimonial Fundamental", "Variaciones Permutativas", "Variaciones Modificativas", "Principio de Devengado", "Valuación al Costo", "Prudencia", "Suscripción de Capital", "Integración de Capital", "Libro Diario", "Debe y Haber", "Leyenda Documental Respaldatoria", "Balance de Sumas y Saldos", "CMV (Costo de Mercaderías Vendidas)", "Intereses Positivos y Negativos a Devengar"],
+        examenes: {
+            "1er_parcial": {
+                titulo: "1er Examen Parcial Real - Contabilidad 1",
+                subtitulo: "Cátedra Cdra. Alicia Landini · Modalidad Oficial UADE (30% Teórico + 70% Práctico)",
+                duracion: "120 minutos · Escala oficial UADE",
+                consignas: [
+                    {
+                        numero: 1,
+                        tipo: "mc_teorico_justificado",
+                        puntos: 15,
+                        pregunta: `BLOQUE I (PARTE TEÓRICA - 30% DEL PARCIAL): PREGUNTAS MULTIPLE CHOICE CON JUSTIFICACIÓN DE DESCARTE
+(Para validar sus puntos teóricos, seleccione la/s opción/es correcta/s y JUSTIFIQUE OBLIGATORIAMENTE en el campo inferior por qué descartó las restantes opciones).
+
+Pregunta T1: Principio de Devengado y Ejercicio Contable
+Respecto al principio contable de DEVENGADO, determine la proposición correcta:
+[A] Los resultados positivos (ganancias) se reconocen únicamente en el momento en que se cobra el dinero en efectivo.
+[B] Los efectos patrimoniales de las operaciones se reconocen contablemente en los períodos en que se generan los hechos sustanciales, con total independencia de si se cobraron o pagaron.
+[C] Los gastos devengados impagos no deben registrarse en el Libro Diario hasta su efectiva cancelación en el banco.
+[D] El devengado sólo se aplica a los entes que no persiguen fines de lucro.
+[E] Todas son correctas.
+[F] Ninguna es correcta.
+
+Pregunta T2: Variaciones Patrimoniales
+Una compra de mercaderías financiada en cuenta corriente comercial a 30 días genera una variación patrimonial:
+[A] Modificativa Negativa, porque aumenta la deuda con los proveedores.
+[B] Permutativa Exclusiva del Activo.
+[C] Permutativa Intersectorial o Mixta (aumenta un Activo y aumenta en igual medida un Pasivo, sin alterar el Patrimonio Neto).
+[D] Modificativa Positiva, porque la empresa tiene más bienes de cambio en su inventario.
+[E] Todas son correctas.
+[F] Ninguna es correcta.`,
+                        placeholder: "Indique la opción elegida para T1 y T2 Y JUSTIFIQUE DETALLADAMENTE por qué descartó cada una de las opciones no marcadas..."
+                    },
+                    {
+                        numero: 2,
+                        tipo: "mc_teorico_justificado",
+                        puntos: 15,
+                        pregunta: `BLOQUE I (CONTINUACIÓN TEÓRICA):
+Pregunta T3: Documentación Respaldatoria y Minuta Contable
+¿Qué función contable cumple la Minuta Contable como comprobante de respaldo?
+[A] Es un documento comercial externo emitido por la AFIP/ARCA para validar créditos fiscales.
+[B] Es un comprobante interno emitido por el sector contable para respaldar registraciones que no poseen comprobante comercial externo directo (como la determinación del CMV, devengamientos periódicos o refundición de cuentas).
+[C] Sustituye formalmente a la factura de venta en transacciones con consumidores finales.
+[D] Se utiliza exclusivamente para justificar el pago de sueldos en efectivo.
+[E] Todas son correctas.
+[F] Ninguna es correcta.
+
+Pregunta T4: Medición de Bienes de Uso y Principio de Prudencia
+Al ingresar una maquinaria al patrimonio, el costo de incorporación contable está integrado por:
+[A] Únicamente el precio de contado facturado por el proveedor, excluyendo fletes e instalación.
+[B] El precio de compra neto de contado más todos los gastos necesarios hasta poner el bien en condiciones de ser utilizado económicamente (flete, seguro de traslado, instalación y puesta a punto).
+[C] El valor que la gerencia estime que valdrá la máquina dentro de diez años.
+[D] El precio de lista financiado incluyendo intereses explícitos futuros.
+[E] Todas son correctas.
+[F] Ninguna es correcta.`,
+                        placeholder: "Indique las respuestas a T3 y T4 Y JUSTIFIQUE OBLIGATORIAMENTE por qué descartó las opciones no seleccionadas..."
+                    },
+                    {
+                        numero: 3,
+                        tipo: "caso_practico_integral",
+                        puntos: 70,
+                        pregunta: `BLOQUE II (PARTE PRÁCTICA - 70% DEL PARCIAL): CASO INTEGRAL DE 4 MESES "FINTECH AUSTRAL S.A."
+Enunciado cronológico de operaciones:
+
+1. 01/03 - Constitución: Se funda "Fintech Austral S.A.". Los socios fundadores suscriben un capital de $1.000.000 compuesto por 10.000 acciones ordinarias de $100 V/N. S/ Contrato Constitutivo.
+2. 01/03 - Integración: En el mismo acto, los socios integran:
+   • $400.000 en efectivo que se deposita en una cuenta corriente abierta en Banco Macro. S/ Boleta de depósito.
+   • $350.000 en Mercaderías de reventa. S/ Remito e inventario.
+   • El saldo restante de $250.000 se integrará en un plazo de 60 días.
+3. 15/03 - Adquisición de Rodado: Se adquiere una camioneta utilitaria para logística en $500.000. Se abona $200.000 mediante transferencia de Banco Macro y por el saldo de $300.000 se firma un pagaré a 90 días que incluye $30.000 de intereses comerciales a vencer (total del pagaré: $330.000). S/ Factura original y pagaré.
+4. 02/04 - Venta de Mercaderías: Se venden mercaderías por $600.000. Condiciones de cobro: 50% con cheque corriente de terceros al día y 50% en cuenta corriente a 30 días sin documentar. S/ Factura duplicada.
+   El costo de las mercaderías vendidas (CMV) es de $250.000. S/ Minuta contable de costo.
+5. 30/04 - Devengamientos del mes:
+   • Se devengan los intereses del pagaré correspondientes al período transcurrido (45 días: $15.000). S/ Minuta contable.
+   • Se recibe y devenga la factura del alquiler del local comercial del mes por $80.000, la cual se cancelará el mes siguiente. S/ Factura recibida de alquiler impago.
+
+CONSIGNAS PRÁCTICAS A CONFECCIONAR:
+a) Asientos en el LIBRO DIARIO indicando: Fecha, Cuentas deudoras y acreedoras, Variación patrimonial (A+, A-, P+, P-, PN+, R+, R-), importes en Debe/Haber y leyenda respaldatoria S/ (...).
+b) Comprobación de la Partida Doble: Total Debe = Total Haber.
+c) Ecuación Patrimonial Final al 30/04: Activo Total = Pasivo Total + Patrimonio Neto Final.`,
+                        placeholder: `Confeccione aquí los asientos en formato de Libro Diario:
+-------------------------------------------------------------
+1/03: [Cuenta Debe] (Variación) $Importe  a  [Cuenta Haber] (Variación) $Importe | S/ (...)
+...
+Total Debe = $________ | Total Haber = $________
+Balance al 30/04: Activo = Pasivo + PN`
+                    }
+                ]
+            },
+            "2do_parcial": {
+                titulo: "2do Examen Parcial - Contabilidad 1",
+                subtitulo: "Rubros Patrimoniales Específicos: Bienes de Cambio, Conciliación Bancaria, Créditos e Inversiones",
+                duracion: "120 minutos · Cátedra Cdra. Alicia Landini",
+                consignas: [
+                    {
+                        numero: 1,
+                        tipo: "desarrollo",
+                        puntos: 30,
+                        pregunta: "Conciliación Bancaria y Arqueo de Caja: Explique la diferencia entre diferencias permanentes (que exigen asiento de ajuste en el Libro Diario, como notas de débito por comisiones o cheques extraviados) y diferencias transitorias o temporarias (depósitos no acreditados o cheques emitidos no cobrados).",
+                        placeholder: "Desarrolle la mecánica de conciliación bancaria y tipología de diferencias..."
+                    },
+                    {
+                        numero: 2,
+                        tipo: "desarrollo",
+                        puntos: 35,
+                        pregunta: "Sistemas de Valuación de Inventarios: Compare los métodos PEPS (Primero Entrado, Primero Salido), UEPS (Último Entrado, Primero Salido) y PPP (Precio Promedio Ponderado) en un contexto de inflación de precios. Analice su impacto en el valor de cierre de mercaderías y en el resultado del ejercicio.",
+                        placeholder: "Compare PEPS, UEPS y PPP y su impacto sobre el CMV y la ganancia bruta..."
+                    },
+                    {
+                        numero: 3,
+                        tipo: "desarrollo",
+                        puntos: 35,
+                        pregunta: "Rubro Créditos y Previsión para Deudores Incobrables: Explique el concepto contable de Previsión para Incobrables (cuenta regularizadora del Activo). Indique cómo se constituye, cómo se utiliza ante una quiebra efectiva de un cliente y qué ocurre si resulta excesiva o insuficiente al cierre del ejercicio.",
+                        placeholder: "Explique la constitución y uso de la previsión para deudores incobrables..."
+                    }
+                ]
+            },
+            "final": {
+                titulo: "Examen Final Integrador - Contabilidad 1",
+                subtitulo: "Programa Completo (Ciclo Contable, Estados Contables Básicos y RT)",
+                duracion: "150 minutos · Cátedra Cdra. Alicia Landini",
+                consignas: [
+                    {
+                        numero: 1,
+                        tipo: "desarrollo",
+                        puntos: 35,
+                        pregunta: "Los Cuatro Estados Contables Básicos: Defina los objetivos y estructura del: 1) Estado de Situación Patrimonial (Balance General), 2) Estado de Resultados, 3) Estado de Evolución del Patrimonio Neto, y 4) Estado de Flujo de Efectivo.",
+                        placeholder: "Desarrolle los componentes y objetivos de cada estado contable básico..."
+                    },
+                    {
+                        numero: 2,
+                        tipo: "desarrollo",
+                        puntos: 35,
+                        pregunta: "Cierre de Ejercicio Económico: Explique el proceso de refundición de cuentas de resultado (cuentas puente de Pérdidas y Ganancias) y el asiento de cierre de cuentas patrimoniales.",
+                        placeholder: "Desarrolle los asientos de refundición y cierre de libros..."
+                    },
+                    {
+                        numero: 3,
+                        tipo: "desarrollo",
+                        puntos: 30,
+                        pregunta: "Criterios de Medición Contable al Cierre: Explique la regla de 'Costo o Mercado, el menor' y el concepto de Valor Recuperable (mayor entre el Valor Neto de Realización [VNR] y el Valor de Utilización Económica [VUE]).",
+                        placeholder: "Desarrolle el concepto de valor límite de los activos y valor recuperable..."
+                    }
+                ]
+            }
+        },
+        conceptosJuegos: [
+            {
+                id: "cont_c1",
+                nombre: "Principio de Devengado",
+                guia: "Los resultados económicos deben registrarse en el período en que suceden los hechos económicos, sin importar su cobro o pago.",
+                preguntaBomba: "¿Cuándo debe registrarse una pérdida o gasto según el principio contable de devengado?",
+                cables: [
+                    { color: "azul", texto: "En el período en que se genera el hecho económico, independientemente de cuándo se pague", correcta: true },
+                    { color: "rojo", texto: "Únicamente en el momento en que se emite el cheque o se transfiere el dinero bancario", correcta: false },
+                    { color: "verde", texto: "Al año siguiente cuando el contador general firma los estados contables", correcta: false },
+                    { color: "amarillo", texto: "Sólo si el gasto genera una factura electrónica con CAE de la AFIP", correcta: false }
+                ],
+                impostorAfirmaciones: [
+                    "El devengado asigna los ingresos y egresos al ejercicio económico al cual corresponden.",
+                    "Los alquileres devengados del mes no pagados generan una deuda (Alquileres a Pagar) y un resultado negativo.",
+                    "Bajo el principio de devengado, una venta no se registra si el cliente no la pagó de contado en el mostrador.", // FALSO
+                    "El criterio de lo percibido sólo atiende a los flujos efectivos de entrada y salida monetaria."
+                ],
+                impostorCorrecta: 2,
+                memotestPar: { concepto: "Principio de Devengado", definicion: "Reconocimiento patrimonial de hechos económicos cuando se generan, no cuando se cobran o pagan." }
+            },
+            {
+                id: "cont_c2",
+                nombre: "Variación Patrimonial Permutativa vs Modificativa",
+                guia: "Permutativa: no altera la cuantía del Patrimonio Neto; Modificativa: altera el PN mediante ingresos, gastos, ganancias o pérdidas.",
+                preguntaBomba: "El depósito de $100.000 en efectivo en la cuenta corriente bancaria de la empresa genera una variación:",
+                cables: [
+                    { color: "azul", texto: "Permutativa exclusiva del Activo (aumenta Banco y disminuye Caja en igual valor)", correcta: true },
+                    { color: "rojo", texto: "Modificativa Positiva porque el dinero está seguro en un banco", correcta: false },
+                    { color: "verde", texto: "Modificativa Negativa por las comisiones que cobrará el banco", correcta: false },
+                    { color: "amarillo", texto: "Permutativa del Pasivo porque el banco contrae una deuda con nosotros", correcta: false }
+                ],
+                impostorAfirmaciones: [
+                    "Una variación permutativa cambia la composición cualitativa del patrimonio sin modificar el total del PN.",
+                    "Una variación modificativa involucra necesariamente al menos una cuenta de Resultado Positivo o Negativo.",
+                    "El cobro en efectivo de una venta con ganancia genera una variación puramente permutativa.", // FALSO (es modificativa)
+                    "El pago de un pasivo con efectivo es una variación permutativa intersectorial (A- y P-)."
+                ],
+                impostorCorrecta: 2,
+                memotestPar: { concepto: "Variación Modificativa", definicion: "Operación que altera la cuantía del Patrimonio Neto por generación de resultados económicos." }
+            },
+            {
+                id: "cont_c3",
+                nombre: "Suscripción e Integración de Capital",
+                guia: "Suscripción es el compromiso jurídico de aportar; Integración es la entrega real y efectiva de los bienes o fondos aportados.",
+                preguntaBomba: "¿Qué asiento contable registra la suscripción de capital de una Sociedad Anónima?",
+                cables: [
+                    { color: "azul", texto: "Accionistas (A+) al Debe contra Capital Social (PN+) al Haber", correcta: true },
+                    { color: "rojo", texto: "Caja (A+) al Debe contra Ventas (R+) al Haber", correcta: false },
+                    { color: "verde", texto: "Banco Cuenta Corriente (A+) al Debe contra Proveedores (P+) al Haber", correcta: false },
+                    { color: "amarillo", texto: "Capital Social (PN-) al Debe contra Gastos Generales (R-) al Haber", correcta: false }
+                ],
+                impostorAfirmaciones: [
+                    "La suscripción genera un derecho de cobro para la sociedad contra los socios (cuenta deudora del Activo).",
+                    "El Capital Social es una cuenta representativa del Patrimonio Neto que se acredita al constituirse.",
+                    "La integración de capital ocurre automáticamente sin necesidad de que los socios entreguen ningún bien.", // FALSO
+                    "La cuenta 'Accionistas' o 'Socios Cta. Aporte' se acredita cuando los socios integran sus aportes."
+                ],
+                impostorCorrecta: 2,
+                memotestPar: { concepto: "Suscripción de Capital", definicion: "Compromiso legal inicial asumido por los socios de aportar fondos a la sociedad constituida." }
+            },
+            {
+                id: "cont_c4",
+                nombre: "Minuta Contable y Determinación del CMV",
+                guia: "Comprobante interno que respalda asientos sin documento comercial externo directo, como el devengamiento o la registración del CMV.",
+                preguntaBomba: "¿Qué documentación respaldatoria respalda formalmente el asiento de Costo de Mercaderías Vendidas (CMV)?",
+                cables: [
+                    { color: "azul", texto: "Minuta contable interna de determinación del costo de venta", correcta: true },
+                    { color: "rojo", texto: "Factura de venta original emitida por el proveedor de luz", correcta: false },
+                    { color: "verde", texto: "Pagaré comercial firmado por el cliente moroso", correcta: false },
+                    { color: "amarillo", texto: "Contrato de alquiler timbrado ante escribano", correcta: false }
+                ],
+                impostorAfirmaciones: [
+                    "El asiento del CMV debita la cuenta de resultado negativo 'CMV' y acredita la cuenta de activo 'Mercaderías'.",
+                    "La minuta contable es un comprobante de uso y emisión estrictamente interna.",
+                    "El CMV debe coincidir exactamente con el precio total cobrado por la venta facturada al cliente.", // FALSO
+                    "La fórmula de inventario periódico para CMV es: Existencia Inicial + Compras Netas - Existencia Final."
+                ],
+                impostorCorrecta: 2,
+                memotestPar: { concepto: "Minuta Contable", definicion: "Documento respaldatorio interno para asientos no originados en comprobantes comerciales externos." }
+            },
+            {
+                id: "cont_c5",
+                nombre: "Balance de Sumas y Saldos",
+                guia: "Instrumento de control contable que verifica que la suma de débitos sea igual a la de créditos y que los saldos deudores igualen a los acreedores.",
+                preguntaBomba: "¿Cuál es la función primordial del Balance de Sumas y Saldos en el ciclo contable?",
+                cables: [
+                    { color: "azul", texto: "Comprobar la igualdad numérica de la partida doble en los mayores antes de los estados contables", correcta: true },
+                    { color: "rojo", texto: "Liquidar el impuesto a las ganancias que se debe abonar a la entidad fiscal", correcta: false },
+                    { color: "verde", texto: "Distribuir dividendos extraordinarios en efectivo a los directores", correcta: false },
+                    { color: "amarillo", texto: "Anular todos los asientos registrados en el Libro Diario durante el año", correcta: false }
+                ],
+                impostorAfirmaciones: [
+                    "En el balance de comprobación, el total de Sumas del Debe debe ser idéntico al total de Sumas del Haber.",
+                    "El total de Saldos Deudores debe igualar al total de Saldos Acreedores.",
+                    "Si el Balance de Sumas y Saldos balancea, garantiza con 100% de certeza que no se omitió ningún asiento.", // FALSO (pudo omitirse un asiento completo)
+                    "Sirve de base fundamental para confeccionar los asientos de ajuste y los Estados Contables."
+                ],
+                impostorCorrecta: 2,
+                memotestPar: { concepto: "Balance de Sumas y Saldos", definicion: "Planilla de comprobación aritmética de la partida doble de todos los mayores contables." }
+            }
+        ]
+    }
+};
+
+/* ==========================================================================
+   ESTADO Y CONTROLADOR DE SIMULADOR DE EXÁMENES DE FINANZAS
+   ========================================================================== */
+
+const estadoFinanzas = {
+    modoActivo: {
+        filosofia: "1er_parcial",
+        sfi: "1er_parcial",
+        historia: "1er_parcial",
+        estadistica: "1er_parcial",
+        contabilidad: "1er_parcial"
+    },
+    examenesGenerados: {},
+    ultimosResultados: {}
+};
+
+function normalizarMateriaFinanzasKey(materiaKey) {
+    const k = String(materiaKey || "").toLowerCase().trim();
+    if (k.includes("filo")) return "filosofia";
+    if (k.includes("sfi") || k.includes("financiero") || k.includes("sistema")) return "sfi";
+    if (k.includes("hist") || k.includes("hem")) return "historia";
+    if (k.includes("estad")) return "estadistica";
+    if (k.includes("cont")) return "contabilidad";
+    return "filosofia";
+}
+
+function seleccionarModoExamenMateria(materiaKey, modo, btnElem) {
+    const matId = normalizarMateriaFinanzasKey(materiaKey);
+    estadoFinanzas.modoActivo[matId] = modo;
+
+    // Actualizar estados visuales de los chips dentro de la vista correspondiente
+    const container = document.getElementById(
+        matId === "filosofia" ? "viewFinFilosofia" :
+        matId === "sfi" ? "viewFinSFI" :
+        matId === "historia" ? "viewFinHistoria" :
+        matId === "estadistica" ? "viewFinEstadistica" : "viewFinContabilidad"
+    );
+
+    if (container) {
+        const chips = container.querySelectorAll(".fin-mode-chip");
+        chips.forEach(c => {
+            const esEste = c.getAttribute("data-modo") === modo;
+            c.classList.toggle("is-active", esEste);
+        });
+    }
+
+    // Si ya había un examen generado, regenerar inmediatamente para el modo seleccionado
+    generarExamenParaMateria(matId, modo);
+}
+
+function generarExamenParaMateria(materiaKey, modoForzado = null) {
+    const matId = normalizarMateriaFinanzasKey(materiaKey);
+    const mat = MATERIAS_FINANZAS[matId];
+    if (!mat) return;
+
+    const modo = modoForzado || estadoFinanzas.modoActivo[matId] || "1er_parcial";
+    estadoFinanzas.modoActivo[matId] = modo;
+
+    const examenData = mat.examenes[modo] || mat.examenes["1er_parcial"];
+    const sheetId = `finExamSheet_${matId}`;
+    const sheet = document.getElementById(sheetId);
+    if (!sheet) return;
+
+    // Ocultar feedback previo al generar nuevo modelo
+    const feedbackPanel = document.getElementById(`finExamFeedback_${matId}`);
+    if (feedbackPanel) {
+        feedbackPanel.classList.add("hidden");
+        feedbackPanel.innerHTML = "";
+    }
+
+    let consignasHtml = "";
+    examenData.consignas.forEach((c, idx) => {
+        const inputId = `finResp_${matId}_${idx}`;
+        let formatoEspecifico = "";
+
+        if (matId === "contabilidad" && c.numero === 3) {
+            // Asistente visual rápido de libro diario para Contabilidad
+            formatoEspecifico = `
+                <div class="fin-accounting-helper" style="margin: 0.6rem 0; font-size: 0.8rem; background: rgba(236,72,153,0.08); padding: 0.6rem; border-radius: 8px; border: 1px solid rgba(236,72,153,0.25);">
+                    <div style="font-weight: 600; color: #f472b6; margin-bottom: 0.3rem;">📋 Guía de Formato de Asiento Requerido por Cátedra Landini:</div>
+                    <code style="color: #cbd5e1; display: block; font-family: monospace;">[Fecha] | [Cuenta al Debe] (A+/R-) $Debe  a  [Cuenta al Haber] (A-/P+/PN+/R+) $Haber | S/ [Comprobante de respaldo]</code>
+                </div>
+            `;
+        } else if (matId === "estadistica") {
+            formatoEspecifico = `
+                <div class="fin-stat-helper" style="margin: 0.6rem 0; font-size: 0.8rem; background: rgba(139,92,246,0.08); padding: 0.6rem; border-radius: 8px; border: 1px solid rgba(139,92,246,0.25);">
+                    <div style="font-weight: 600; color: #a78bfa; margin-bottom: 0.3rem;">📐 Criterio UADE: Fórmula explícita y procedimiento paso a paso requeridos.</div>
+                </div>
+            `;
+        }
+
+        consignasHtml += `
+            <div class="fin-question-block" style="background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 1.25rem; margin-bottom: 1.25rem;">
+                <div class="fin-question-head" style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.75rem;">
+                    <strong style="color: #60a5fa; font-size: 1.05rem;">Punto ${c.numero} (${c.puntos} puntos)</strong>
+                    <span class="badge badge--warning" style="font-size: 0.75rem;">${c.puntos} pts</span>
+                </div>
+                <div class="fin-question-text" style="color: #e2e8f0; font-size: 0.95rem; line-height: 1.6; white-space: pre-line; margin-bottom: 0.85rem;">
+                    ${c.pregunta}
+                </div>
+                ${formatoEspecifico}
+                <div class="fin-response-area">
+                    <label for="${inputId}" style="display: block; font-size: 0.82rem; color: #94a3b8; margin-bottom: 0.4rem; font-weight: 500;">
+                        ✏️ Tu desarrollo y justificación académica:
+                    </label>
+                    <textarea 
+                        id="${inputId}" 
+                        class="fin-response-textarea" 
+                        rows="7" 
+                        placeholder="${c.placeholder || 'Escribí aquí tu desarrollo completo para este punto...'}"
+                        style="width: 100%; box-sizing: border-box; background: #0b1120; border: 1px solid #334155; border-radius: 8px; color: #f8fafc; padding: 0.85rem; font-family: inherit; font-size: 0.9rem; line-height: 1.5; resize: vertical;"
+                    ></textarea>
+                </div>
+            </div>
+        `;
+    });
+
+    sheet.innerHTML = `
+        <div class="fin-active-exam-paper" style="background: rgba(30,41,59,0.7); border: 1px solid rgba(255,255,255,0.12); border-radius: 14px; padding: 1.5rem; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.5);">
+            <div class="fin-exam-header-band" style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 1rem; margin-bottom: 1.25rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
+                <div>
+                    <h3 style="margin: 0; color: #f8fafc; font-size: 1.3rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <span>📝</span> ${examenData.titulo}
+                    </h3>
+                    <p style="margin: 0.25rem 0 0; color: #94a3b8; font-size: 0.85rem;">${examenData.subtitulo} · ${mat.titular}</p>
+                </div>
+                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                    <span class="badge badge--success" style="font-size: 0.8rem;">⏱️ ${examenData.duracion}</span>
+                </div>
+            </div>
+
+            <div class="fin-exam-criterio-alert" style="background: rgba(59,130,246,0.1); border-left: 4px solid #3b82f6; padding: 0.75rem 1rem; border-radius: 0 8px 8px 0; margin-bottom: 1.25rem; font-size: 0.85rem; color: #cbd5e1; white-space: pre-line;">
+                <strong style="color: #60a5fa;">📌 Pautas oficiales de evaluación:</strong>
+                ${mat.criterioDocente}
+            </div>
+
+            <div class="fin-questions-container">
+                ${consignasHtml}
+            </div>
+
+            <div class="fin-exam-footer-actions" style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                <div style="font-size: 0.85rem; color: #94a3b8;">
+                    💡 La IA docente corregirá con el criterio exacto de cátedra y emitirá tu nota oficial (1 a 10).
+                </div>
+                <button 
+                    id="finSubmitBtn_${matId}" 
+                    class="button button--primary" 
+                    type="button" 
+                    onclick="evaluarExamenMateria('${matId}')"
+                    style="padding: 0.75rem 1.5rem; font-weight: 600; font-size: 1rem; display: flex; align-items: center; gap: 0.5rem;"
+                >
+                    🔍 Entregar y Evaluar con IA Docente
+                </button>
+            </div>
+        </div>
+    `;
+
+    mostrarToast(`📄 Modelo cargado: ${examenData.titulo}`, "info");
+}
+
+async function evaluarExamenMateria(materiaKey) {
+    const matId = normalizarMateriaFinanzasKey(materiaKey);
+    const mat = MATERIAS_FINANZAS[matId];
+    if (!mat) return;
+
+    const modo = estadoFinanzas.modoActivo[matId] || "1er_parcial";
+    const examenData = mat.examenes[modo] || mat.examenes["1er_parcial"];
+    const feedbackPanel = document.getElementById(`finExamFeedback_${matId}`);
+    const submitBtn = document.getElementById(`finSubmitBtn_${matId}`);
+
+    // Recolectar respuestas del usuario
+    const respuestas = [];
+    let tieneTexto = false;
+    let textoTotal = "";
+
+    examenData.consignas.forEach((c, idx) => {
+        const inp = document.getElementById(`finResp_${matId}_${idx}`);
+        const val = inp ? inp.value.trim() : "";
+        respuestas.push({
+            numero: c.numero,
+            puntos: c.puntos,
+            pregunta: c.pregunta,
+            respuestaUsuario: val
+        });
+        if (val.length > 5) tieneTexto = true;
+        textoTotal += `\n[Punto ${c.numero}]: ${val}\n`;
+    });
+
+    if (!tieneTexto) {
+        mostrarToast("⚠️ Por favor respondé al menos una consigna antes de entregar el examen.", "aviso");
+        return;
+    }
+
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = "⏳ Evaluando con Criterio de Cátedra...";
+    }
+
+    if (feedbackPanel) {
+        feedbackPanel.classList.remove("hidden");
+        feedbackPanel.innerHTML = `
+            <div style="padding: 2rem; text-align: center; color: #94a3b8; background: rgba(15,23,42,0.8); border-radius: 12px; border: 1px solid rgba(255,255,255,0.08);">
+                <div class="fin-spinner" style="font-size: 2.5rem; margin-bottom: 0.75rem; animation: pulse 1.5s infinite;">🤖</div>
+                <h4 style="color: #f8fafc; margin-bottom: 0.4rem;">La IA Docente está corrigiendo tu examen...</h4>
+                <p style="font-size: 0.9rem; max-width: 500px; margin: 0 auto;">Verificando rigor conceptual, vocabulario de cátedra, fundamentación y escala oficial de notas UADE.</p>
+            </div>
+        `;
+    }
+
+    let resultadoFinal = null;
+
+    // 1. Intentar llamar a Gemini (Directo con API Key o servidor /api/gemini)
+    try {
+        const promptCorreccion = `Actúa como el profesor titular y evaluador oficial de la cátedra de "${mat.nombre}" en UADE (${mat.titular}).
+Criterios de evaluación y pautas de cátedra:
+${mat.criterioDocente}
+
+Examen evaluado: "${examenData.titulo}" (${examenData.subtitulo})
+Respuestas enviadas por el alumno:
+${textoTotal}
+
+Evalúa estrictamente según la escala oficial UADE (0 a 100 puntos, con umbral de 60 para nota 4):
+- 0 a 59 pts = Nota 1 a 3 (Desaprobado)
+- 60 a 64 pts = Nota 4 (Aprobado básico)
+- 65 a 69 pts = Nota 5
+- 70 a 74 pts = Nota 6
+- 75 a 84 pts = Nota 7
+- 85 a 89 pts = Nota 8
+- 90 a 94 pts = Nota 9
+- 95 a 100 pts = Nota 10
+
+Genera una devolución exhaustiva y devuelve ÚNICAMENTE un JSON válido (sin formato markdown ni \`\`\`json) con esta estructura exacta:
+{
+  "puntaje100": 78,
+  "notaUade": 7,
+  "estado": "Aprobado",
+  "resumenGeneral": "Devolución global destacando aciertos y aspectos a corregir",
+  "ortografiaYCohesion": "Observaciones sobre ortografía, tildes y redacción",
+  "correccionesPorPunto": [
+    {
+      "numero": 1,
+      "puntajeObtenido": 20,
+      "puntajeMax": 25,
+      "comentario": "Análisis del desarrollo del alumno en este punto específico",
+      "puntosAMejorar": "Lo que faltó o debió precisar"
+    }
+  ],
+  "recomendacionEstudio": "Consejo personalizado para el examen real"
+}`;
+
+        const directKey = typeof obtenerGeminiApiKey === "function" ? obtenerGeminiApiKey() : "";
+        if (directKey) {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${directKey}`;
+            const res = await fetch(url, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: promptCorreccion }] }],
+                    generationConfig: { temperature: 0.2, maxOutputTokens: 2048 }
+                })
+            });
+            if (res.ok) {
+                const data = await res.json();
+                const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+                const cleanJson = rawText.replace(/```json/gi, "").replace(/```/g, "").trim();
+                resultadoFinal = JSON.parse(cleanJson);
+            }
+        } else {
+            // Intentar endpoint proxy
+            const res = await fetch("/api/gemini", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    materia: mat.nombre,
+                    tipoJuego: "evaluacion_examen_finanzas",
+                    prompt: promptCorreccion
+                })
+            });
+            if (res.ok) {
+                const data = await res.json();
+                if (data && typeof data.puntaje100 === "number") {
+                    resultadoFinal = data;
+                }
+            }
+        }
+    } catch (e) {
+        console.warn("[Finanzas IA] Fallback a evaluación heurística de cátedra:", e);
+    }
+
+    // 2. Si no hubo conexión o API key, usar rúbrica semántica de cátedra
+    if (!resultadoFinal) {
+        resultadoFinal = evaluarExamenMateriaLocal(matId, respuestas, examenData);
+    }
+
+    // Guardar en estado e historial
+    estadoFinanzas.ultimosResultados[matId] = resultadoFinal;
+    guardarHistorialExamenesFinanzas(matId, modo, resultadoFinal);
+
+    // Sumar XP y puntos al perfil
+    if (resultadoFinal.puntaje100 >= 60) {
+        perfilUsuario.puntosTotales = (perfilUsuario.puntosTotales || 0) + Math.round(resultadoFinal.puntaje100 * 1.5);
+        perfilUsuario.victorias = (perfilUsuario.victorias || 0) + 1;
+        if (typeof guardarPerfilUsuario === "function") guardarPerfilUsuario();
+        reproducirSonido("exito");
+    } else {
+        reproducirSonido("error");
+    }
+
+    // Renderizar panel de devolución
+    renderizarDevolucionDocente(feedbackPanel, resultadoFinal, matId);
+
+    if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = "🔍 Re-evaluar Examen con IA Docente";
+    }
+
+    mostrarToast(
+        resultadoFinal.puntaje100 >= 60 
+            ? `🎉 ¡Examen Aprobado! Nota: ${resultadoFinal.notaUade} (${resultadoFinal.puntaje100}/100)`
+            : `⚠️ Examen No Aprobado: Nota: ${resultadoFinal.notaUade} (${resultadoFinal.puntaje100}/100)`,
+        resultadoFinal.puntaje100 >= 60 ? "exito" : "advertencia"
+    );
+}
+
+function evaluarExamenMateriaLocal(matId, respuestas, examenData) {
+    const mat = MATERIAS_FINANZAS[matId];
+    let puntajeTotalAcum = 0;
+    const correcciones = [];
+
+    respuestas.forEach((r, idx) => {
+        const text = r.respuestaUsuario.toLowerCase();
+        let pts = 0;
+        const maxPts = r.puntos || 20;
+
+        if (text.length < 15) {
+            pts = 0;
+            correcciones.push({
+                numero: r.numero,
+                puntajeObtenido: 0,
+                puntajeMax: maxPts,
+                comentario: "Respuesta no desarrollada o ausente. No alcanza el umbral mínimo de análisis.",
+                puntosAMejorar: "Desarrollar los conceptos centrales de la consigna con fundamentación de cátedra."
+            });
+            return;
+        }
+
+        // Búsqueda de conceptos clave específicos por materia
+        let hits = 0;
+        mat.conceptosClave.forEach(concepto => {
+            if (text.includes(concepto.toLowerCase())) hits++;
+        });
+
+        // Evaluación de longitud y riqueza argumental
+        const words = text.split(/\s+/).filter(Boolean).length;
+        let factor = 0.4;
+        if (words > 40) factor += 0.25;
+        if (words > 90) factor += 0.2;
+        if (hits >= 2) factor += 0.15;
+        if (hits >= 4) factor += 0.1;
+
+        // Penalizaciones o verificaciones particulares
+        if (matId === "filosofia") {
+            // Verificar faltas o mención precisa
+            if (text.includes("socrates") || text.includes("sócrates") || text.includes("platon") || text.includes("platón") || text.includes("aristoteles") || text.includes("aristóteles")) {
+                factor += 0.1;
+            }
+        } else if (matId === "sfi") {
+            if (text.includes("tesoro") && text.includes("fed")) factor += 0.15;
+            if (text.includes("eurobono") || text.includes("eficiente")) factor += 0.1;
+        } else if (matId === "contabilidad") {
+            if (text.includes("debe") && text.includes("haber") && (text.includes("a+") || text.includes("p+"))) factor += 0.2;
+        } else if (matId === "estadistica") {
+            if (text.includes("p(") || text.includes("media") || text.includes("cv") || text.includes("%")) factor += 0.2;
+        } else if (matId === "historia") {
+            if (words > 120) factor += 0.15;
+        }
+
+        pts = Math.min(maxPts, Math.round(maxPts * Math.min(1.0, factor)));
+        puntajeTotalAcum += pts;
+
+        correcciones.push({
+            numero: r.numero,
+            puntajeObtenido: pts,
+            puntajeMax: maxPts,
+            comentario: pts >= maxPts * 0.6 
+                ? "Desarrollo conceptual satisfactorio con empleo adecuado del vocabulario técnico de cátedra."
+                : "Desarrollo parcial. Se detectan ideas centrales pero falta profundidad explicativa o rigor terminológico.",
+            puntosAMejorar: pts >= maxPts * 0.8
+                ? "Ajustar precisión en la articulación final de las conclusiones."
+                : "Profundizar en la justificación teórica y citar los autores o fórmulas solicitadas en el programa."
+        });
+    });
+
+    const puntaje100 = Math.min(100, Math.max(0, puntajeTotalAcum));
+    let notaUade = 1;
+    if (puntaje100 >= 95) notaUade = 10;
+    else if (puntaje100 >= 90) notaUade = 9;
+    else if (puntaje100 >= 85) notaUade = 8;
+    else if (puntaje100 >= 75) notaUade = 7;
+    else if (puntaje100 >= 70) notaUade = 6;
+    else if (puntaje100 >= 65) notaUade = 5;
+    else if (puntaje100 >= 60) notaUade = 4;
+    else if (puntaje100 >= 40) notaUade = 3;
+    else if (puntaje100 >= 20) notaUade = 2;
+    else notaUade = 1;
+
+    return {
+        puntaje100,
+        notaUade,
+        estado: puntaje100 >= 60 ? "Aprobado" : "Desaprobado",
+        resumenGeneral: puntaje100 >= 60
+            ? `Demostraste un dominio sólido de los ejes temáticos evaluados en ${mat.nombre}. Cumplís con el umbral reglamentario de acreditación de cátedra.`
+            : `El examen no alcanza el puntaje de aprobación (60 puntos). Es indispensable reforzar los conceptos nucleares y la precisión requerida por la cátedra.`,
+        ortografiaYCohesion: matId === "filosofia"
+            ? "Revisá la acentuación de términos clave (mayéutica, inteligible, hilemorfismo). La coherencia discursiva y sintáctica suma puntos decisivos en la corrección."
+            : "Redacción clara y comprensible. Cuidar la precisión en la nomenclatura técnica de cátedra.",
+        correccionesPorPunto: correcciones,
+        recomendacionEstudio: `Revisá las clases y apuntes subidos para ${mat.nombre}. Practicá con los 4 juegos educativos para fijar términos y fórmulas antes de rendir el parcial presencial.`
+    };
+}
+
+function renderizarDevolucionDocente(feedbackPanel, res, matId) {
+    if (!feedbackPanel) return;
+
+    const esAprobado = res.puntaje100 >= 60;
+    const badgeColor = esAprobado ? "#10b981" : "#ef4444";
+    const estadoIcon = esAprobado ? "🎉" : "⚠️";
+
+    let correccionesHtml = "";
+    if (Array.isArray(res.correccionesPorPunto)) {
+        res.correccionesPorPunto.forEach(cp => {
+            correccionesHtml += `
+                <div style="background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; padding: 1rem; margin-bottom: 0.75rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+                        <strong style="color: #60a5fa;">Punto ${cp.numero}</strong>
+                        <span style="font-weight: 700; color: ${cp.puntajeObtenido >= cp.puntajeMax * 0.6 ? '#34d399' : '#f87171'};">
+                            ${cp.puntajeObtenido} / ${cp.puntajeMax} pts
+                        </span>
+                    </div>
+                    <p style="margin: 0 0 0.4rem; color: #e2e8f0; font-size: 0.9rem;">${cp.comentario}</p>
+                    <div style="font-size: 0.82rem; color: #fbbf24; background: rgba(245,158,11,0.08); padding: 0.4rem 0.6rem; border-radius: 6px;">
+                        <strong>💡 Sugerencia de cátedra:</strong> ${cp.puntosAMejorar}
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    feedbackPanel.innerHTML = `
+        <div class="fin-feedback-card" style="background: rgba(30,41,59,0.9); border: 2px solid ${badgeColor}; border-radius: 14px; padding: 1.5rem; margin-top: 1.5rem; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.6);">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 1rem; margin-bottom: 1rem;">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <span style="font-size: 2.2rem;">${estadoIcon}</span>
+                    <div>
+                        <h3 style="margin: 0; color: #f8fafc; font-size: 1.35rem;">Dictamen Docente de Cátedra</h3>
+                        <p style="margin: 0.2rem 0 0; color: #94a3b8; font-size: 0.85rem;">Escala Oficial UADE · Aprobación con 60 puntos</p>
+                    </div>
+                </div>
+                <div style="text-align: right; background: rgba(15,23,42,0.8); padding: 0.6rem 1.25rem; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1);">
+                    <div style="font-size: 0.75rem; text-transform: uppercase; color: #94a3b8; font-weight: 600;">Nota Oficial Webcampus</div>
+                    <div style="font-size: 1.9rem; font-weight: 800; color: ${badgeColor}; line-height: 1.1;">
+                        ${res.notaUade} <span style="font-size: 0.9rem; font-weight: 500; color: #cbd5e1;">(${res.puntaje100}/100)</span>
+                    </div>
+                    <span class="badge ${esAprobado ? 'badge--success' : 'badge--error'}" style="font-size: 0.75rem;">
+                        ${res.estado}
+                    </span>
+                </div>
+            </div>
+
+            <div style="background: rgba(15,23,42,0.5); padding: 1rem; border-radius: 10px; margin-bottom: 1.25rem; border-left: 4px solid ${badgeColor};">
+                <strong style="color: #f8fafc; display: block; margin-bottom: 0.3rem;">📋 Devolución General:</strong>
+                <p style="margin: 0; color: #cbd5e1; font-size: 0.92rem; line-height: 1.5;">${res.resumenGeneral}</p>
+            </div>
+
+            <div style="margin-bottom: 1.25rem;">
+                <strong style="color: #60a5fa; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 0.6rem;">
+                    ✍️ Evaluación de Redacción, Ortografía y Cohesión:
+                </strong>
+                <div style="background: rgba(15,23,42,0.4); padding: 0.75rem 1rem; border-radius: 8px; color: #94a3b8; font-size: 0.88rem;">
+                    ${res.ortografiaYCohesion}
+                </div>
+            </div>
+
+            <div style="margin-bottom: 1.25rem;">
+                <h4 style="color: #f8fafc; font-size: 1.05rem; margin: 0 0 0.75rem;">Detalle de Corrección por Pregunta:</h4>
+                ${correccionesHtml}
+            </div>
+
+            <div style="background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.25); border-radius: 10px; padding: 1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
+                <div style="font-size: 0.88rem; color: #93c5fd;">
+                    <strong>🎯 Recomendación para el examen real:</strong> ${res.recomendacionEstudio}
+                </div>
+                <button class="button button--ghost button--sm" type="button" onclick="window.scrollTo({ top: 0, behavior: 'smooth' })">
+                    ↑ Subir a la Hoja
+                </button>
+            </div>
+        </div>
+    `;
+
+    feedbackPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+/* ==========================================================================
+   INTEGRACIÓN CON LOS 4 JUEGOS DE ESTUDIAR SOLO (Bolillero, Bomba, Impostor, Memotest)
+   ========================================================================== */
+
+function iniciarJuegoMateria(materiaKey, tipoJuego) {
+    const matId = normalizarMateriaFinanzasKey(materiaKey);
+    const mat = MATERIAS_FINANZAS[matId];
+    if (!mat) return;
+
+    const listaIdMateria = `fin_${matId}_conceptos`;
+
+    // 1. Preparar lista estructurada para el motor de juegos
+    const listaJuego = {
+        id: listaIdMateria,
+        nombre: mat.nombre,
+        titulo: `${mat.nombre} (Finanzas)`,
+        descripcion: `Banco conceptual calibrado para ${mat.catedra}`,
+        temas: mat.conceptosJuegos.map((c, idx) => ({
+            id: c.id || `t_${matId}_${idx}`,
+            nombre: c.nombre,
+            titulo: c.nombre,
+            guia: c.guia,
+            descripcion: c.guia,
+            bomba: {
+                pregunta: c.preguntaBomba,
+                cables: c.cables
+            },
+            impostor: {
+                afirmaciones: c.impostorAfirmaciones,
+                indiceImpostor: c.impostorCorrecta
+            },
+            memotest: c.memotestPar
+        }))
+    };
+
+    // 2. Inyectar o actualizar en estado.listas global
+    const idxExistente = estado.listas.findIndex(l => l.id === listaIdMateria || l.nombre.toLowerCase() === mat.nombre.toLowerCase());
+    if (idxExistente !== -1) {
+        estado.listas[idxExistente] = listaJuego;
+    } else {
+        estado.listas.push(listaJuego);
+    }
+    estado.listaActivaId = listaIdMateria;
+
+    if (tipoJuego === "bolillero") {
+        cambiarVista("solo");
+        if (typeof renderizarSelectores === "function") renderizarSelectores();
+        if (typeof renderizarBolillero === "function") renderizarBolillero();
+        mostrarToast(`🎲 Bolillero cargado con los temas de ${mat.nombre}`, "exito");
+    } else if (["bomba", "impostor", "memotest"].includes(tipoJuego)) {
+        if (typeof abrirArenaJuego === "function") {
+            abrirArenaJuego(tipoJuego, "solo", listaIdMateria, true);
+        } else {
+            cambiarVista("solo");
+            mostrarToast(`🕹️ Modo ${tipoJuego.toUpperCase()} activado para ${mat.nombre}`, "info");
+        }
+    }
+}
+
+function abrirPizarronNotasRapido() {
+    if (typeof abrirTarjetaScratchpad === "function") {
+        abrirTarjetaScratchpad();
+        mostrarToast("📝 Pizarrón y borrador abierto. Podés anotar fórmulas o borradores.", "info");
+    } else if (typeof toggleTarjetaScratchpad === "function") {
+        toggleTarjetaScratchpad();
+    } else {
+        cambiarVista("laboratorio");
+    }
+}
+
+/* ==========================================================================
+   PERSISTENCIA DE HISTORIAL DE EXÁMENES DE FINANZAS
+   ========================================================================== */
+
+const FINANZAS_HISTORIAL_STORAGE_KEY = "luibanez_finanzas_examenes_v1";
+
+function cargarHistorialExamenesFinanzas() {
+    try {
+        const raw = localStorage.getItem(FINANZAS_HISTORIAL_STORAGE_KEY);
+        if (raw) return JSON.parse(raw);
+    } catch (_) {}
+    return {};
+}
+
+function guardarHistorialExamenesFinanzas(matId, modo, resultado) {
+    try {
+        const hist = cargarHistorialExamenesFinanzas();
+        if (!hist[matId]) hist[matId] = [];
+        hist[matId].push({
+            modo,
+            fecha: Date.now(),
+            puntaje100: resultado.puntaje100,
+            notaUade: resultado.notaUade,
+            estado: resultado.estado
+        });
+        localStorage.setItem(FINANZAS_HISTORIAL_STORAGE_KEY, JSON.stringify(hist));
+    } catch (e) {
+        console.warn("No se pudo persistir historial de examen:", e);
+    }
+}
+
+// Exponer funciones necesarias en el objeto window global
+window.MATERIAS_FINANZAS = MATERIAS_FINANZAS;
+window.seleccionarModoExamenMateria = seleccionarModoExamenMateria;
+window.generarExamenParaMateria = generarExamenParaMateria;
+window.evaluarExamenMateria = evaluarExamenMateria;
+window.iniciarJuegoMateria = iniciarJuegoMateria;
+window.abrirPizarronNotasRapido = abrirPizarronNotasRapido;
