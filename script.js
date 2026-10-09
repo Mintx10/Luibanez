@@ -26642,7 +26642,10 @@ function generarExamenParaMateria(materiaKey, modoForzado = null, modeloIndexFor
     // 1. Selector visual de modelos disponibles
     let modelosBarHtml = `
         <div class="fin-models-bar">
-            <span style="font-size: 0.82rem; font-weight: 700; color: #94a3b8; margin-right: 0.35rem;">📋 Modelos Disponibles:</span>
+            <div class="fin-models-bar__header">
+                <span class="fin-models-bar__title">📋 Modelos Disponibles:</span>
+            </div>
+            <div class="fin-models-bar__chips">
     `;
 
     modelosDisponibles.forEach((m, idx) => {
@@ -26661,30 +26664,33 @@ function generarExamenParaMateria(materiaKey, modoForzado = null, modeloIndexFor
     });
 
     modelosBarHtml += `
-            <button 
-                class="fin-btn-gen-ai" 
-                type="button" 
-                onclick="generarNuevoModeloConIA('${matId}')"
-                title="Crea un modelo de examen con consignas 100% inéditas generadas por Inteligencia Artificial"
-            >
-                ✨ Crear Nuevo Modelo con IA
-            </button>
-            <button 
-                class="fin-btn-retry" 
-                type="button" 
-                onclick="limpiarYReintentarExamen('${matId}')"
-                title="Limpia tus respuestas para rehacer este modelo desde cero"
-            >
-                🔄 Reintentar / Limpiar Hoja
-            </button>
-            <button 
-                class="fin-btn-delete-custom" 
-                type="button" 
-                onclick="borrarModelosCustomDeMateria('${matId}')"
-                title="Borra los exámenes creados con IA y vuelve a los modelos oficiales originales"
-            >
-                🗑️ Borrar Exámenes Creados
-            </button>
+            </div>
+            <div class="fin-models-bar__actions">
+                <button 
+                    class="fin-btn-gen-ai" 
+                    type="button" 
+                    onclick="generarNuevoModeloConIA('${matId}')"
+                    title="Crea un modelo de examen con consignas 100% inéditas generadas por Inteligencia Artificial"
+                >
+                    ✨ Crear Nuevo Modelo con IA
+                </button>
+                <button 
+                    class="fin-btn-retry" 
+                    type="button" 
+                    onclick="limpiarYReintentarExamen('${matId}')"
+                    title="Limpia tus respuestas para rehacer este modelo desde cero"
+                >
+                    🔄 Reintentar / Limpiar Hoja
+                </button>
+                <button 
+                    class="fin-btn-delete-custom" 
+                    type="button" 
+                    onclick="borrarModelosCustomDeMateria('${matId}')"
+                    title="Borra los exámenes creados con IA y vuelve a los modelos oficiales originales"
+                >
+                    🗑️ Borrar Exámenes Creados
+                </button>
+            </div>
         </div>
     `;
 
@@ -26698,7 +26704,7 @@ function generarExamenParaMateria(materiaKey, modoForzado = null, modeloIndexFor
             formatoEspecifico = `
                 <div class="fin-accounting-helper" style="margin: 0.6rem 0; font-size: 0.8rem; background: rgba(236,72,153,0.08); padding: 0.6rem; border-radius: 8px; border: 1px solid rgba(236,72,153,0.25);">
                     <div style="font-weight: 600; color: #f472b6; margin-bottom: 0.3rem;">📋 Guía de Formato de Asiento Requerido por Cátedra Landini:</div>
-                    <code style="color: #cbd5e1; display: block; font-family: monospace;">[Fecha] | [Cuenta al Debe] (A+/R-) $Debe  a  [Cuenta al Haber] (A-/P+/PN+/R+) $Haber | S/ [Comprobante de respaldo]</code>
+                    <code style="color: #cbd5e1; display: block; font-family: monospace; white-space: pre-wrap; word-break: break-word;">[Fecha] | [Cuenta al Debe] (A+/R-) $Debe  a  [Cuenta al Haber] (A-/P+/PN+/R+) $Haber | S/ [Comprobante de respaldo]</code>
                 </div>
             `;
         } else if (matId === "estadistica") {
@@ -26710,25 +26716,24 @@ function generarExamenParaMateria(materiaKey, modoForzado = null, modeloIndexFor
         }
 
         consignasHtml += `
-            <div class="fin-question-block" style="background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 1.25rem; margin-bottom: 1.25rem;">
-                <div class="fin-question-head" style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.75rem;">
-                    <strong style="color: #60a5fa; font-size: 1.05rem;">Punto ${c.numero} (${c.puntos} puntos)</strong>
-                    <span class="badge badge--warning" style="font-size: 0.75rem;">${c.puntos} pts</span>
+            <div class="fin-question-block">
+                <div class="fin-question-head">
+                    <strong class="fin-question-number">Punto ${c.numero} (${c.puntos} puntos)</strong>
+                    <span class="badge badge--warning">${c.puntos} pts</span>
                 </div>
-                <div class="fin-question-text" style="color: #e2e8f0; font-size: 0.95rem; line-height: 1.6; white-space: pre-line; margin-bottom: 0.85rem;">
+                <div class="fin-question-text">
                     ${c.pregunta}
                 </div>
                 ${formatoEspecifico}
                 <div class="fin-response-area">
-                    <label for="${inputId}" style="display: block; font-size: 0.82rem; color: #94a3b8; margin-bottom: 0.4rem; font-weight: 500;">
+                    <label for="${inputId}" class="fin-response-label">
                         ✏️ Tu desarrollo y justificación académica:
                     </label>
                     <textarea 
                         id="${inputId}" 
                         class="fin-response-textarea" 
-                        rows="7" 
+                        rows="6" 
                         placeholder="${c.placeholder || 'Escribí aquí tu desarrollo completo para este punto...'}"
-                        style="width: 100%; box-sizing: border-box; background: #0b1120; border: 1px solid #334155; border-radius: 8px; color: #f8fafc; padding: 0.85rem; font-family: inherit; font-size: 0.9rem; line-height: 1.5; resize: vertical;"
                     ></textarea>
                 </div>
             </div>
@@ -26741,11 +26746,11 @@ function generarExamenParaMateria(materiaKey, modoForzado = null, modeloIndexFor
     let intentosHtml = "";
     if (intentosPrevios.length > 0) {
         intentosHtml = `
-            <div style="background: rgba(15,23,42,0.5); padding: 0.85rem 1.25rem; border-radius: 10px; margin-bottom: 1.25rem; border: 1px solid rgba(255,255,255,0.08);">
-                <div style="font-size: 0.82rem; font-weight: 700; color: #94a3b8; margin-bottom: 0.4rem;">📊 Tus Intentos Anteriores en este Modelo:</div>
-                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            <div class="fin-attempts-box">
+                <div class="fin-attempts-title">📊 Tus Intentos Anteriores en este Modelo:</div>
+                <div class="fin-attempts-chips">
                     ${intentosPrevios.map((it, i) => `
-                        <span class="badge ${it.puntaje100 >= 60 ? 'badge--success' : 'badge--error'}" style="font-size: 0.78rem;">
+                        <span class="badge ${it.puntaje100 >= 60 ? 'badge--success' : 'badge--error'}">
                             Intento ${i + 1}: Nota ${it.notaUade} (${it.puntaje100}/100)
                         </span>
                     `).join('')}
@@ -26755,25 +26760,25 @@ function generarExamenParaMateria(materiaKey, modoForzado = null, modeloIndexFor
     }
 
     sheet.innerHTML = `
-        <div class="fin-active-exam-paper" style="background: rgba(30,41,59,0.7); border: 1px solid rgba(255,255,255,0.12); border-radius: 14px; padding: 1.5rem; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.5);">
+        <div class="fin-active-exam-paper">
             ${modelosBarHtml}
 
-            <div class="fin-exam-header-band" style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 1rem; margin-bottom: 1.25rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
-                <div>
-                    <h3 style="margin: 0; color: #f8fafc; font-size: 1.3rem; display: flex; align-items: center; gap: 0.5rem;">
+            <div class="fin-exam-header-band">
+                <div class="fin-exam-header-info">
+                    <h3 class="fin-exam-header-title">
                         <span>📝</span> ${examenData.titulo}
                     </h3>
-                    <p style="margin: 0.25rem 0 0; color: #94a3b8; font-size: 0.85rem;">${examenData.subtitulo} · ${mat.titular}</p>
+                    <p class="fin-exam-header-subtitle">${examenData.subtitulo} · ${mat.titular}</p>
                 </div>
-                <div style="display: flex; gap: 0.5rem; align-items: center;">
-                    <span class="badge badge--success" style="font-size: 0.8rem;">⏱️ ${examenData.duracion}</span>
-                    <span class="badge badge--accent" style="font-size: 0.8rem;">${examenData.badge || 'Modelo'}</span>
+                <div class="fin-exam-header-meta">
+                    <span class="badge badge--success">⏱️ ${examenData.duracion}</span>
+                    <span class="badge badge--accent">${examenData.badge || 'Modelo'}</span>
                 </div>
             </div>
 
             ${intentosHtml}
 
-            <div class="fin-exam-criterio-alert" style="background: rgba(59,130,246,0.1); border-left: 4px solid #3b82f6; padding: 0.75rem 1rem; border-radius: 0 8px 8px 0; margin-bottom: 1.25rem; font-size: 0.85rem; color: #cbd5e1; white-space: pre-line;">
+            <div class="fin-exam-criterio-alert">
                 <strong style="color: #60a5fa;">📌 Pautas oficiales de evaluación:</strong>
                 ${mat.criterioDocente}
             </div>
@@ -26782,11 +26787,11 @@ function generarExamenParaMateria(materiaKey, modoForzado = null, modeloIndexFor
                 ${consignasHtml}
             </div>
 
-            <div class="fin-exam-footer-actions" style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-                <div style="font-size: 0.85rem; color: #94a3b8;">
+            <div class="fin-exam-footer-actions">
+                <div class="fin-exam-footer-tip">
                     💡 Podés hacer cada modelo las veces que quieras. Al entregar, la IA docente califica con nota oficial UADE.
                 </div>
-                <div style="display: flex; gap: 0.75rem; align-items: center;">
+                <div class="fin-exam-footer-buttons">
                     <button 
                         class="button button--ghost" 
                         type="button" 
@@ -26796,10 +26801,9 @@ function generarExamenParaMateria(materiaKey, modoForzado = null, modeloIndexFor
                     </button>
                     <button 
                         id="finSubmitBtn_${matId}" 
-                        class="button button--primary" 
+                        class="button button--primary fin-btn-submit" 
                         type="button" 
                         onclick="evaluarExamenMateria('${matId}')"
-                        style="padding: 0.75rem 1.5rem; font-weight: 600; font-size: 1rem; display: flex; align-items: center; gap: 0.5rem;"
                     >
                         🔍 Entregar y Evaluar con IA Docente
                     </button>

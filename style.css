@@ -21298,14 +21298,41 @@ body.modo-dev-activo .juntos-locked-notice {
 /* Selector de Modelos de Examen y Botón IA */
 .fin-models-bar {
     display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    flex-wrap: wrap;
+    flex-direction: column;
+    gap: 0.65rem;
     margin-bottom: 1.25rem;
-    padding: 0.75rem 1rem;
+    padding: 0.85rem 1rem;
     background: rgba(15, 23, 42, 0.75);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: var(--radius-md);
+    box-sizing: border-box;
+}
+
+.fin-models-bar__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.fin-models-bar__title {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #94a3b8;
+}
+
+.fin-models-bar__chips {
+    display: flex;
+    gap: 0.45rem;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.fin-models-bar__actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-top: 0.25rem;
 }
 
 .fin-model-chip {
@@ -21406,6 +21433,8 @@ body.modo-dev-activo .juntos-locked-notice {
     border-radius: var(--radius-md);
     padding: 1.5rem;
     min-height: 200px;
+    box-sizing: border-box;
+    width: 100%;
 }
 
 .fin-sheet-placeholder {
@@ -21436,13 +21465,216 @@ body.modo-dev-activo .juntos-locked-notice {
     max-width: 520px;
 }
 
-/* Preguntas del Examen */
+/* Papel del examen activo */
+.fin-active-exam-paper {
+    background: rgba(30, 41, 59, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 14px;
+    padding: 1.5rem;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Cabecera del examen */
+.fin-exam-header-band {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 1rem;
+    margin-bottom: 1.25rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.fin-exam-header-title {
+    margin: 0;
+    color: #f8fafc;
+    font-size: 1.3rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    letter-spacing: -0.01em;
+}
+
+.fin-exam-header-subtitle {
+    margin: 0.25rem 0 0;
+    color: #94a3b8;
+    font-size: 0.85rem;
+}
+
+.fin-exam-header-meta {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+/* Intentos previos */
+.fin-attempts-box {
+    background: rgba(15, 23, 42, 0.5);
+    padding: 0.85rem 1.25rem;
+    border-radius: 10px;
+    margin-bottom: 1.25rem;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.fin-attempts-title {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #94a3b8;
+    margin-bottom: 0.4rem;
+}
+
+.fin-attempts-chips {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+/* Criterio y pautas */
+.fin-exam-criterio-alert {
+    background: rgba(59, 130, 246, 0.1);
+    border-left: 4px solid #3b82f6;
+    padding: 0.75rem 1rem;
+    border-radius: 0 8px 8px 0;
+    margin-bottom: 1.25rem;
+    font-size: 0.88rem;
+    color: #cbd5e1;
+    white-space: pre-line;
+    line-height: 1.5;
+}
+
+/* Contenedor de preguntas */
+.fin-questions-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    width: 100%;
+}
+
+.fin-question-block {
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 1.25rem;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.fin-question-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 0.75rem;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.fin-question-number {
+    color: #60a5fa;
+    font-size: 1.05rem;
+    font-weight: 700;
+}
+
+.fin-question-text {
+    color: #e2e8f0;
+    font-size: 0.95rem;
+    line-height: 1.65;
+    white-space: pre-line;
+    margin-bottom: 0.85rem;
+    word-break: break-word;
+    overflow-wrap: break-word;
+}
+
+.fin-response-label {
+    display: block;
+    font-size: 0.82rem;
+    color: #94a3b8;
+    margin-bottom: 0.4rem;
+    font-weight: 500;
+}
+
+.fin-response-textarea {
+    width: 100%;
+    box-sizing: border-box;
+    background: #0b1120;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    color: #f8fafc;
+    padding: 0.85rem;
+    font-family: inherit;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    resize: vertical;
+    min-height: 140px;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.fin-response-textarea:focus {
+    border-color: #38bdf8;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
+}
+
+.fin-accounting-helper,
+.fin-stat-helper {
+    margin: 0.6rem 0;
+    font-size: 0.8rem;
+    padding: 0.6rem;
+    border-radius: 8px;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+/* Pie y Entrega */
+.fin-exam-footer-actions {
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.fin-exam-footer-tip {
+    font-size: 0.85rem;
+    color: #94a3b8;
+    max-width: 500px;
+    line-height: 1.4;
+}
+
+.fin-exam-footer-buttons {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.fin-btn-submit {
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    font-size: 1rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Preguntas del Examen (Legacy card fallback) */
 .fin-question-card {
     background: rgba(30, 41, 59, 0.5);
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: var(--radius-md);
     padding: 1.25rem;
     margin-bottom: 1.25rem;
+    box-sizing: border-box;
+    width: 100%;
 }
 
 .fin-question-header {
@@ -21466,14 +21698,6 @@ body.modo-dev-activo .juntos-locked-notice {
     font-size: 0.78rem;
     color: #fbbf24;
     font-weight: 700;
-}
-
-.fin-question-text {
-    font-size: 0.95rem;
-    color: #ffffff;
-    line-height: 1.5;
-    margin: 0 0 0.85rem;
-    white-space: pre-line;
 }
 
 .fin-question-quote {
@@ -21636,6 +21860,362 @@ body.modo-dev-activo .juntos-locked-notice {
 .drawer-nav-item--fin.is-active {
     background: rgba(56, 189, 248, 0.12);
     color: #ffffff;
+}
+
+/* =========================================================
+   SISTEMA RESPONSIVE UI/UX PARA EXÁMENES EN CELULAR
+   Optimizado para pantallas móviles de cualquier tamaño (320px - 768px)
+   ========================================================= */
+
+@media (max-width: 768px) {
+    /* 1. Eliminación del padding lateral redundante */
+    .fin-section {
+        padding: 0.65rem 0.45rem 2.5rem;
+        min-height: auto;
+    }
+
+    .fin-container {
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    /* 2. Cabeceras de materias */
+    .fin-header,
+    .fin-sub-header {
+        padding: 0.85rem 0.75rem;
+        border-radius: 12px;
+        margin-bottom: 0.75rem;
+    }
+
+    .fin-title,
+    .fin-sub-title {
+        font-size: clamp(1.2rem, 5vw, 1.45rem);
+        line-height: 1.25;
+        margin-bottom: 0.35rem;
+    }
+
+    .fin-subtitle,
+    .fin-sub-desc {
+        font-size: 0.82rem;
+        line-height: 1.42;
+    }
+
+    .fin-sub-header__nav {
+        flex-wrap: wrap;
+        gap: 0.4rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .fin-sub-header__main {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.65rem;
+    }
+
+    .fin-sub-header__actions {
+        width: 100%;
+    }
+
+    .fin-sub-header__actions .button {
+        width: 100%;
+        justify-content: center;
+        font-size: 0.82rem;
+        padding: 0.55rem 0.75rem;
+    }
+
+    /* 3. Wrapper exterior del examen */
+    .fin-exam-wrapper {
+        padding: 0.45rem 0.3rem;
+        border-radius: 12px;
+        margin-bottom: 1rem;
+        background: rgba(15, 23, 42, 0.4);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .fin-exam-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.5rem;
+        padding-bottom: 0.65rem;
+        margin-bottom: 0.65rem;
+    }
+
+    .fin-exam-modes {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.35rem;
+        width: 100%;
+    }
+
+    .fin-toolbar-label {
+        grid-column: 1 / -1;
+        margin-bottom: 0.15rem;
+        font-size: 0.75rem;
+    }
+
+    .fin-mode-chip {
+        padding: 0.45rem 0.25rem;
+        font-size: 0.75rem;
+        text-align: center;
+        justify-content: center;
+        width: 100%;
+        border-radius: 6px;
+    }
+
+    .fin-exam-toolbar > .button--primary {
+        width: 100%;
+        justify-content: center;
+        padding: 0.65rem 0.85rem;
+        font-size: 0.88rem;
+    }
+
+    /* 4. Hoja y Papel del examen: Expansión a pantalla completa */
+    .fin-exam-sheet {
+        padding: 0 !important;
+        background: transparent !important;
+        border: none !important;
+        min-height: auto;
+    }
+
+    .fin-active-exam-paper {
+        padding: 0.75rem 0.55rem;
+        border-radius: 10px;
+        width: 100%;
+        box-sizing: border-box;
+        background: rgba(30, 41, 59, 0.85);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    /* 5. Barra de modelos en celular */
+    .fin-models-bar {
+        padding: 0.6rem 0.5rem;
+        gap: 0.45rem;
+        border-radius: 8px;
+    }
+
+    .fin-models-bar__title {
+        font-size: 0.78rem;
+    }
+
+    .fin-models-bar__chips {
+        display: flex;
+        gap: 0.35rem;
+        flex-wrap: wrap;
+        width: 100%;
+    }
+
+    .fin-model-chip {
+        flex: 1 1 calc(50% - 0.35rem);
+        min-width: 110px;
+        font-size: 0.78rem;
+        padding: 0.45rem 0.5rem;
+        justify-content: center;
+        text-align: center;
+        box-sizing: border-box;
+    }
+
+    .fin-models-bar__actions {
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+        width: 100%;
+        margin-top: 0.35rem;
+    }
+
+    .fin-btn-gen-ai,
+    .fin-btn-retry,
+    .fin-btn-delete-custom {
+        width: 100%;
+        justify-content: center;
+        padding: 0.55rem 0.75rem;
+        font-size: 0.82rem;
+        min-height: 38px;
+        box-sizing: border-box;
+    }
+
+    /* 6. Cabecera del examen */
+    .fin-exam-header-band {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+        padding-bottom: 0.65rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .fin-exam-header-title {
+        font-size: 1.15rem;
+        line-height: 1.3;
+    }
+
+    .fin-exam-header-subtitle {
+        font-size: 0.8rem;
+    }
+
+    .fin-exam-header-meta {
+        width: 100%;
+        justify-content: flex-start;
+        gap: 0.4rem;
+    }
+
+    /* 7. Alertas de criterio e intentos */
+    .fin-exam-criterio-alert {
+        padding: 0.65rem 0.7rem;
+        font-size: 0.82rem;
+        line-height: 1.48;
+        border-radius: 6px;
+        margin-bottom: 0.75rem;
+    }
+
+    .fin-attempts-box {
+        padding: 0.65rem 0.75rem;
+        margin-bottom: 0.75rem;
+    }
+
+    /* 8. Tarjetas de preguntas: Anchas y cómodas para lectura fluida */
+    .fin-questions-container {
+        gap: 0.75rem;
+    }
+
+    .fin-question-block {
+        padding: 0.8rem 0.65rem !important;
+        border-radius: 10px !important;
+        margin-bottom: 0.75rem !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    .fin-question-head {
+        margin-bottom: 0.55rem;
+    }
+
+    .fin-question-number {
+        font-size: 0.98rem;
+    }
+
+    .fin-question-text {
+        font-size: 0.92rem;
+        line-height: 1.6;
+        margin-bottom: 0.65rem;
+        word-break: break-word;
+        overflow-wrap: break-word;
+    }
+
+    .fin-response-label {
+        font-size: 0.8rem;
+        margin-bottom: 0.35rem;
+    }
+
+    /* Previene auto-zoom en iOS Safari y maximiza legibilidad */
+    .fin-response-textarea {
+        font-size: 16px !important;
+        padding: 0.7rem;
+        min-height: 130px;
+        line-height: 1.45;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        border-radius: 8px;
+    }
+
+    .fin-accounting-helper,
+    .fin-stat-helper {
+        padding: 0.55rem 0.65rem;
+        font-size: 0.78rem;
+        border-radius: 6px;
+    }
+
+    /* 9. Botones finales de entrega */
+    .fin-exam-footer-actions {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.65rem;
+        margin-top: 1rem;
+        padding-top: 0.75rem;
+    }
+
+    .fin-exam-footer-tip {
+        font-size: 0.78rem;
+        text-align: center;
+        max-width: 100%;
+    }
+
+    .fin-exam-footer-buttons {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.5rem;
+        width: 100%;
+    }
+
+    .fin-exam-footer-buttons .button,
+    .fin-btn-submit {
+        width: 100% !important;
+        justify-content: center;
+        font-size: 0.92rem;
+        padding: 0.75rem 1rem;
+        box-sizing: border-box;
+    }
+
+    .fin-btn-submit {
+        font-size: 0.96rem;
+        padding: 0.85rem 1rem;
+    }
+
+    /* 10. Sección de Juegos */
+    .fin-games-section {
+        padding: 0.85rem 0.65rem;
+        border-radius: 10px;
+        margin-top: 1rem;
+    }
+
+    .fin-games-buttons {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+    }
+
+    .fin-game-btn {
+        padding: 0.65rem 0.75rem;
+    }
+
+    /* 11. Devolución de notas por IA */
+    .fin-exam-feedback {
+        padding: 0.85rem 0.65rem;
+        border-radius: 10px;
+        margin-top: 1rem;
+    }
+
+    .fin-feedback-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+}
+
+/* Pantallas extra angostas (iPhone SE, Galaxy Fold <= 380px) */
+@media (max-width: 380px) {
+    .fin-section {
+        padding: 0.5rem 0.25rem 2rem;
+    }
+
+    .fin-exam-wrapper {
+        padding: 0.35rem 0.2rem;
+    }
+
+    .fin-active-exam-paper {
+        padding: 0.6rem 0.45rem;
+    }
+
+    .fin-question-block {
+        padding: 0.65rem 0.5rem !important;
+    }
+
+    .fin-exam-modes {
+        grid-template-columns: 1fr;
+    }
+
+    .fin-model-chip {
+        flex: 1 1 100%;
+    }
 }
 
 
