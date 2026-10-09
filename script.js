@@ -1,5 +1,14 @@
 "use strict";
 
+// Limpieza de parámetros transitorios de recarga en la URL
+if (typeof window !== "undefined" && window.location && window.location.search && window.location.search.includes("_reload")) {
+    try {
+        const _cleanUrl = new URL(window.location.href);
+        _cleanUrl.searchParams.delete("_reload");
+        window.history.replaceState({}, document.title, _cleanUrl.pathname + _cleanUrl.search + _cleanUrl.hash);
+    } catch (_) {}
+}
+
 /* ==========================================================
    CONSTANTES & CLAVES DE ALMACENAMIENTO
    ========================================================== */
@@ -14237,14 +14246,12 @@ function iniciarAplicacion() {
     if ("serviceWorker" in navigator) {
         window.addEventListener("load", () => {
             let refreshing = false;
-            // Cuando un nuevo Service Worker toma el control, recargar automáticamente sin tocar Ctrl+F5
+            // Cuando un nuevo Service Worker toma el control, solo recargar si fue solicitado explícitamente
             navigator.serviceWorker.addEventListener("controllerchange", () => {
-                if (!refreshing) {
-                    const lastCtrl = parseInt(sessionStorage.getItem("last_ctrl_change_ts") || "0", 10);
-                    if (Date.now() - lastCtrl < 15000) return;
-                    sessionStorage.setItem("last_ctrl_change_ts", Date.now().toString());
+                if (!refreshing && sessionStorage.getItem("user_requested_update") === "true") {
+                    sessionStorage.removeItem("user_requested_update");
                     refreshing = true;
-                    console.log("[PWA] Nuevo Service Worker activado. Recargando automáticamente...");
+                    console.log("[PWA] Nuevo Service Worker activado tras solicitud. Recargando...");
                     window.location.reload();
                 }
             });
@@ -14777,15 +14784,16 @@ function iniciarAplicacion() {
 // =========================================================
 // GESTOR DE VERSIONES Y ACTUALIZACIÓN AUTOMÁTICA
 // =========================================================
-const APP_BUILD_VERSION = "29.31";
+const APP_BUILD_VERSION = "29.39";
 
 async function forzarActualizacionCompleta(mostrarNotificacion = true) {
     const lastAttempt = parseInt(sessionStorage.getItem("last_auto_update_ts") || "0", 10);
-    if (Date.now() - lastAttempt < 25000) {
-        console.warn("[Auto-Update] Recarga reciente detectada. Evitando bucle infinito de actualización.");
+    if (Date.now() - lastAttempt < 15000) {
+        console.warn("[Auto-Update] Recarga reciente detectada. Evitando bucle de actualización.");
         return;
     }
     sessionStorage.setItem("last_auto_update_ts", Date.now().toString());
+    sessionStorage.setItem("user_requested_update", "true");
 
     const btnActualizar = document.getElementById("btnForzarActualizar");
     if (btnActualizar) {
@@ -14796,41 +14804,28 @@ async function forzarActualizacionCompleta(mostrarNotificacion = true) {
     }
 
     if (mostrarNotificacion && typeof mostrarToast === "function") {
-        mostrarToast("🔄 Limpiando caché y descargando última versión...", "info");
+        mostrarToast("🔄 Descargando última versión...", "info");
     }
 
     try {
         if ("serviceWorker" in navigator) {
-            const registrations = await Promise.race([
-                navigator.serviceWorker.getRegistrations(),
-                new Promise(resolve => setTimeout(() => resolve([]), 800))
-            ]);
+            const registrations = await navigator.serviceWorker.getRegistrations();
             for (const registration of registrations) {
                 try {
-                    await registration.unregister();
+                    await registration.update();
                 } catch (_) {}
             }
         }
 
         if ("caches" in window) {
-            const cacheNames = await Promise.race([
-                caches.keys(),
-                new Promise(resolve => setTimeout(() => resolve([]), 800))
-            ]);
+            const cacheNames = await caches.keys();
             await Promise.all(cacheNames.map(name => caches.delete(name).catch(() => {})));
         }
 
-        // Construir la URL garantizando que el parámetro _reload quede en la URL base antes de cualquier hash
-        const url = new URL(window.location.href);
-        url.searchParams.set("_reload", Date.now().toString());
-
+        // Una única recarga limpia sin mutar la URL ni generar bucles
         setTimeout(() => {
-            window.location.href = url.toString();
-            // Fallback de seguridad si no inició la navegación inmediatamente
-            setTimeout(() => {
-                window.location.reload();
-            }, 300);
-        }, 200);
+            window.location.reload();
+        }, 300);
     } catch (err) {
         console.warn("Error al forzar actualización:", err);
         window.location.reload();
@@ -14840,16 +14835,24 @@ async function forzarActualizacionCompleta(mostrarNotificacion = true) {
 async function verificarActualizacionesDisponibles(silencioso = true) {
     if (!navigator.onLine) return;
 
-    const lastAttempt = parseInt(sessionStorage.getItem("last_auto_update_ts") || "0", 10);
-    if (Date.now() - lastAttempt < 25000) return;
-
     try {
         const resp = await fetch(`./version.json?_t=${Date.now()}`, { cache: "no-store" });
         if (resp.ok) {
             const data = await resp.json();
             if (data.version && data.version !== APP_BUILD_VERSION) {
-                console.log(`[Auto-Update] Nueva versión en servidor: ${data.version} (actual: ${APP_BUILD_VERSION}). Actualizando...`);
-                await forzarActualizacionCompleta(!silencioso);
+                console.log(`[Version Check] Versión disponible: ${data.version} (instalada: ${APP_BUILD_VERSION})`);
+                // Si es un chequeo en segundo plano, NUNCA interrumpir al usuario recargándole la pantalla.
+                // Simplemente pedir al Service Worker que descargue los nuevos assets silenciosamente.
+                if ("serviceWorker" in navigator) {
+                    navigator.serviceWorker.getRegistration().then(reg => {
+                        if (reg) reg.update();
+                    }).catch(() => {});
+                }
+
+                // Solo si el usuario tocó explícitamente el botón "Actualizar", forzar la recarga
+                if (!silencioso) {
+                    await forzarActualizacionCompleta(true);
+                }
             }
         }
     } catch (err) {
@@ -20404,7 +20407,7 @@ function renderizarLibroDiarioUI() {
         headerRow.innerHTML = `
             <td colspan="5" class="lab-asiento-header-cell">
                 <span class="lab-asiento-title-badge">📝 Asiento N° ${asiento.id || aIdx + 1}</span>
-                <input type="text" class="lab-diario-input lab-asiento-detalle-input" value="${asiento.detalle || ''}" placeholder="Detalle / Leyenda de la operación (ej. Compra mercaderías)..." oninput="contabilidadEstado.asientos[${aIdx}].detalle = this.value">
+                <input type="text" class="lab-diario-input lab-asiento-detalle-input" value="${asiento.detalle || ''}" placeholder="Concepto / Detalle de la operación..." oninput="contabilidadEstado.asientos[${aIdx}].detalle = this.value">
             </td>
             <td class="lab-asiento-del-cell" style="text-align: center;">
                 <button type="button" class="button button--ghost button--xs button--danger-text lab-btn-del-asiento" title="Eliminar este asiento completo" onclick="eliminarAsientoContable(${aIdx})">🗑️</button>
@@ -20421,17 +20424,14 @@ function renderizarLibroDiarioUI() {
 
             tr.innerHTML = `
                 <td class="lab-cell-fecha">
-                    <span class="lab-mobile-field-tag">📅 Fecha</span>
                     <input type="text" class="lab-diario-input lab-diario-input--fecha" value="${fila.fecha || asiento.fecha || ''}" placeholder="dd/mm" oninput="actualizarCeldaDiario(${aIdx}, ${fIdx}, 'fecha', this.value)">
                 </td>
                 <td class="lab-cell-cuenta">
-                    <span class="lab-mobile-field-tag">🏷️ Cuenta Contable (Nombre Completo)</span>
-                    <input type="text" list="labListaCuentasContables" class="lab-diario-input lab-diario-input--cuenta" value="${fila.cuenta || ''}" placeholder="Nombre completo de la cuenta (ej. Deudores por Ventas)" oninput="actualizarCeldaDiario(${aIdx}, ${fIdx}, 'cuenta', this.value)">
+                    <input type="text" list="labListaCuentasContables" class="lab-diario-input lab-diario-input--cuenta" value="${fila.cuenta || ''}" placeholder="Cuenta (ej. Caja, Deudores por Ventas...)" oninput="actualizarCeldaDiario(${aIdx}, ${fIdx}, 'cuenta', this.value)">
                 </td>
                 <td class="lab-cell-variacion">
-                    <span class="lab-mobile-field-tag">📊 Variación</span>
                     <select class="lab-diario-input lab-diario-select-variacion" onchange="actualizarCeldaDiario(${aIdx}, ${fIdx}, 'variacion', this.value)">
-                        <option value="" ${!v ? 'selected' : ''}>-- Variación --</option>
+                        <option value="" ${!v ? 'selected' : ''}>Variación</option>
                         <option value="A+" ${v === 'A+' ? 'selected' : ''}>A+ (Activo +)</option>
                         <option value="A-" ${v === 'A-' ? 'selected' : ''}>A- (Activo -)</option>
                         <option value="P+" ${v === 'P+' ? 'selected' : ''}>P+ (Pasivo +)</option>
@@ -20447,12 +20447,10 @@ function renderizarLibroDiarioUI() {
                     </select>
                 </td>
                 <td class="lab-cell-debe">
-                    <span class="lab-mobile-field-tag">📥 Debe ($)</span>
-                    <input type="number" step="any" min="0" class="lab-diario-input lab-diario-input--number lab-diario-input--debe" value="${fila.debe !== '' && fila.debe !== undefined && fila.debe !== null ? fila.debe : ''}" placeholder="0.00" oninput="actualizarCeldaDiario(${aIdx}, ${fIdx}, 'debe', this.value)">
+                    <input type="number" step="any" min="0" class="lab-diario-input lab-diario-input--number lab-diario-input--debe" value="${fila.debe !== '' && fila.debe !== undefined && fila.debe !== null ? fila.debe : ''}" placeholder="$ Debe" oninput="actualizarCeldaDiario(${aIdx}, ${fIdx}, 'debe', this.value)">
                 </td>
                 <td class="lab-cell-haber">
-                    <span class="lab-mobile-field-tag">📤 Haber ($)</span>
-                    <input type="number" step="any" min="0" class="lab-diario-input lab-diario-input--number lab-diario-input--haber" value="${fila.haber !== '' && fila.haber !== undefined && fila.haber !== null ? fila.haber : ''}" placeholder="0.00" oninput="actualizarCeldaDiario(${aIdx}, ${fIdx}, 'haber', this.value)">
+                    <input type="number" step="any" min="0" class="lab-diario-input lab-diario-input--number lab-diario-input--haber" value="${fila.haber !== '' && fila.haber !== undefined && fila.haber !== null ? fila.haber : ''}" placeholder="$ Haber" oninput="actualizarCeldaDiario(${aIdx}, ${fIdx}, 'haber', this.value)">
                 </td>
                 <td class="lab-cell-actions lab-asiento-actions-cell">
                     <button type="button" class="button button--ghost button--xs button--danger-text lab-btn-quitar-fila" title="Quitar línea de cuenta" onclick="eliminarFilaDeAsiento(${aIdx}, ${fIdx})">✕</button>
@@ -20467,7 +20465,7 @@ function renderizarLibroDiarioUI() {
         addRow.innerHTML = `
             <td colspan="6" class="lab-asiento-add-cell">
                 <button type="button" class="button button--ghost button--xs lab-btn-add-cuenta" onclick="agregarFilaAAsiento(${aIdx})">
-                    ➕ Agregar Cuenta al Asiento N° ${asiento.id || aIdx + 1}
+                    ➕ Agregar Renglón al Asiento N° ${asiento.id || aIdx + 1}
                 </button>
             </td>
         `;
