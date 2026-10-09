@@ -14784,7 +14784,7 @@ function iniciarAplicacion() {
 // =========================================================
 // GESTOR DE VERSIONES Y ACTUALIZACIÓN AUTOMÁTICA
 // =========================================================
-const APP_BUILD_VERSION = "29.39";
+const APP_BUILD_VERSION = "29.40";
 
 async function forzarActualizacionCompleta(mostrarNotificacion = true) {
     const lastAttempt = parseInt(sessionStorage.getItem("last_auto_update_ts") || "0", 10);
@@ -17885,13 +17885,17 @@ const CATALOGO_MATERIAS_LABORATORIO = {
     }
 };
 
+/* Claves y Persistencia de Contabilidad y Laboratorio */
+const CONTABILIDAD_STORAGE_KEY = "luibanez_contabilidad_v1";
+const LABORATORIO_STORAGE_KEY = "luibanez_laboratorio_v1";
+
 /* Estado del Módulo Contable */
 const contabilidadEstado = {
-    subvistaActiva: "diario", // "diario" | "mayor" | "balance"
+    subvistaActiva: "diario", // Siempre inicia en Libro Diario
     asientos: [
         {
             id: 1,
-            fecha: "",
+            fecha: "01/03",
             detalle: "",
             filas: [
                 { id: "f1", cuenta: "", variacion: "", debe: "", haber: "" },
@@ -17902,6 +17906,68 @@ const contabilidadEstado = {
     mayores: {},
     balance: []
 };
+
+function guardarContabilidadStorage() {
+    try {
+        const payload = {
+            asientos: contabilidadEstado.asientos,
+            subvistaActiva: "diario",
+            ts: Date.now()
+        };
+        localStorage.setItem(CONTABILIDAD_STORAGE_KEY, JSON.stringify(payload));
+    } catch (e) {
+        console.warn("No se pudo guardar contabilidad en storage:", e);
+    }
+}
+
+function cargarContabilidadStorage() {
+    try {
+        const raw = localStorage.getItem(CONTABILIDAD_STORAGE_KEY);
+        if (!raw) return false;
+        const data = JSON.parse(raw);
+        if (data && Array.isArray(data.asientos) && data.asientos.length > 0) {
+            contabilidadEstado.asientos = data.asientos;
+            contabilidadEstado.subvistaActiva = "diario";
+            return true;
+        }
+    } catch (e) {
+        console.warn("No se pudo cargar contabilidad de storage:", e);
+    }
+    return false;
+}
+
+function guardarLaboratorioStorage() {
+    try {
+        const payload = {
+            materiaSeleccionada: laboratorioEstado.materiaSeleccionada,
+            temasSeleccionados: laboratorioEstado.temasSeleccionados,
+            dificultad: laboratorioEstado.dificultad,
+            ejercicioActual: laboratorioEstado.ejercicioActual,
+            ts: Date.now()
+        };
+        localStorage.setItem(LABORATORIO_STORAGE_KEY, JSON.stringify(payload));
+    } catch (e) {
+        console.warn("No se pudo guardar laboratorio en storage:", e);
+    }
+}
+
+function cargarLaboratorioStorage() {
+    try {
+        const raw = localStorage.getItem(LABORATORIO_STORAGE_KEY);
+        if (!raw) return false;
+        const data = JSON.parse(raw);
+        if (data) {
+            if (data.materiaSeleccionada) laboratorioEstado.materiaSeleccionada = data.materiaSeleccionada;
+            if (data.temasSeleccionados) laboratorioEstado.temasSeleccionados = data.temasSeleccionados;
+            if (data.dificultad) laboratorioEstado.dificultad = data.dificultad;
+            if (data.ejercicioActual) laboratorioEstado.ejercicioActual = data.ejercicioActual;
+            return true;
+        }
+    } catch (e) {
+        console.warn("No se pudo cargar laboratorio de storage:", e);
+    }
+    return false;
+}
 
 const laboratorioEstado = {
     iniciado: false,
@@ -19973,6 +20039,11 @@ function cambiarVistaMovilLab(vista, scrollTarget = false) {
         }
     }
 
+    // Si toca la mesa de trabajo y la materia es contabilidad, SIEMPRE abrir Libro Diario (nunca el mayor)
+    if (vista === "herramientas" && (laboratorioEstado.materiaSeleccionada === "contabilidad" || laboratorioEstado.tabActiva === "contabilidad")) {
+        cambiarSubvistaContabilidad("diario");
+    }
+
     if (scrollTarget) {
         const target = vista === "enunciado" ? (dom.labActiveCheckpointCard || dom.labPanelEnunciado) : dom.labPanelHerramientas;
         if (target) {
@@ -19986,6 +20057,10 @@ function cambiarVistaMovilLab(vista, scrollTarget = false) {
 // ==========================================
 
 function iniciarOReanudarLaboratorio() {
+    // Restaurar progreso previo de almacenamiento
+    cargarLaboratorioStorage();
+    cargarContabilidadStorage();
+
     if (!laboratorioEstado.iniciado) {
         laboratorioEstado.iniciado = true;
         configurarEventosLaboratorio();
@@ -19998,14 +20073,23 @@ function iniciarOReanudarLaboratorio() {
         inicializarModuloContabilidad();
         inicializarCalculadorasLaboratorio();
     }
+
+    // Si la materia es contabilidad, asegurar subvista de Libro Diario
+    if (laboratorioEstado.materiaSeleccionada === "contabilidad") {
+        cambiarSubvistaContabilidad("diario");
+    }
+
     cambiarVistaMovilLab("enunciado");
     filtrarTabsPorMateria(laboratorioEstado.materiaSeleccionada || "estadistica");
 
-    // Abrir menú flotante si no hay ejercicio o si se ingresa por primera vez
+    // Abrir menú flotante solo si no hay ejercicio o si se ingresa por primera vez
     if (!laboratorioEstado.ejercicioActual) {
         abrirModalConfigLab();
     } else {
         actualizarBadgesMateriaLabUI();
+        if (typeof renderizarEjercicioLaboratorio === "function") {
+            renderizarEjercicioLaboratorio(laboratorioEstado.ejercicioActual);
+        }
     }
 }
 
@@ -20310,16 +20394,18 @@ function inicializarModuloContabilidad() {
             contabilidadEstado.asientos = [
                 {
                     id: 1,
-                    fecha: "",
+                    fecha: "01/03",
                     detalle: "",
                     filas: [
-                        { id: "f1", cuenta: "", debe: "", haber: "" },
-                        { id: "f2", cuenta: "", debe: "", haber: "" }
+                        { id: "f1", cuenta: "", variacion: "", debe: "", haber: "" },
+                        { id: "f2", cuenta: "", variacion: "", debe: "", haber: "" }
                     ]
                 }
             ];
             contabilidadEstado.mayores = {};
             contabilidadEstado.balance = [];
+            guardarContabilidadStorage();
+            cambiarSubvistaContabilidad("diario");
             renderizarLibroDiarioUI();
             renderLibroMayorUI();
             sincronizarBalanceSumasYSaldos();
@@ -20373,7 +20459,9 @@ function inicializarModuloContabilidad() {
         });
     }
 
-    // Renderizado inicial
+    // Cargar estado persistente y renderizado inicial
+    cargarContabilidadStorage();
+    cambiarSubvistaContabilidad("diario");
     renderizarLibroDiarioUI();
     sincronizarLibroMayor();
     sincronizarBalanceSumasYSaldos();
@@ -20396,26 +20484,46 @@ function cambiarSubvistaContabilidad(vista) {
     if (vista === "balance") sincronizarBalanceSumasYSaldos();
 }
 
+function actualizarFechaAsiento(asientoIndex, valor) {
+    if (!contabilidadEstado.asientos[asientoIndex]) return;
+    contabilidadEstado.asientos[asientoIndex].fecha = String(valor).trim();
+    guardarContabilidadStorage();
+}
+
+function actualizarDetalleAsiento(asientoIndex, valor) {
+    if (!contabilidadEstado.asientos[asientoIndex]) return;
+    contabilidadEstado.asientos[asientoIndex].detalle = String(valor);
+    guardarContabilidadStorage();
+}
+
 function renderizarLibroDiarioUI() {
     if (!dom.labDiarioTableBody) return;
     dom.labDiarioTableBody.innerHTML = "";
 
     contabilidadEstado.asientos.forEach((asiento, aIdx) => {
-        // Fila de Encabezado del Asiento (--- Asiento N° X ---)
+        // Fila de Encabezado del Asiento (📝 Asiento N° X | 📅 Fecha | Detalle | 🗑️)
         const headerRow = document.createElement("tr");
         headerRow.className = "lab-asiento-header-row";
         headerRow.innerHTML = `
-            <td colspan="5" class="lab-asiento-header-cell">
-                <span class="lab-asiento-title-badge">📝 Asiento N° ${asiento.id || aIdx + 1}</span>
-                <input type="text" class="lab-diario-input lab-asiento-detalle-input" value="${asiento.detalle || ''}" placeholder="Concepto / Detalle de la operación..." oninput="contabilidadEstado.asientos[${aIdx}].detalle = this.value">
+            <td colspan="4" class="lab-asiento-header-cell">
+                <div class="lab-asiento-header-top">
+                    <span class="lab-asiento-title-badge">📝 Asiento N° ${asiento.id || aIdx + 1}</span>
+                    <div class="lab-asiento-fecha-box" title="Fecha del asiento contable">
+                        <span class="lab-asiento-fecha-icon" aria-hidden="true">📅</span>
+                        <input type="text" class="lab-diario-input lab-asiento-fecha-input" value="${asiento.fecha || ''}" placeholder="dd/mm" title="Fecha del asiento (ej. 03/10)" oninput="actualizarFechaAsiento(${aIdx}, this.value)">
+                    </div>
+                </div>
+                <div class="lab-asiento-header-bottom">
+                    <input type="text" class="lab-diario-input lab-asiento-detalle-input" value="${asiento.detalle || ''}" placeholder="Concepto / Detalle de la operación..." oninput="actualizarDetalleAsiento(${aIdx}, this.value)">
+                </div>
             </td>
-            <td class="lab-asiento-del-cell" style="text-align: center;">
+            <td class="lab-asiento-del-cell" style="text-align: center; vertical-align: middle;">
                 <button type="button" class="button button--ghost button--xs button--danger-text lab-btn-del-asiento" title="Eliminar este asiento completo" onclick="eliminarAsientoContable(${aIdx})">🗑️</button>
             </td>
         `;
         dom.labDiarioTableBody.appendChild(headerRow);
 
-        // Filas de Cuentas (Fecha, Cuenta, Variación, Debe, Haber, Eliminar)
+        // Filas de Cuentas (Cuenta, Variación, Debe, Haber, Eliminar) - La fecha ya pertenece al asiento
         asiento.filas.forEach((fila, fIdx) => {
             const tr = document.createElement("tr");
             tr.className = "lab-asiento-row";
@@ -20423,9 +20531,6 @@ function renderizarLibroDiarioUI() {
             const v = fila.variacion || "";
 
             tr.innerHTML = `
-                <td class="lab-cell-fecha">
-                    <input type="text" class="lab-diario-input lab-diario-input--fecha" value="${fila.fecha || asiento.fecha || ''}" placeholder="dd/mm" oninput="actualizarCeldaDiario(${aIdx}, ${fIdx}, 'fecha', this.value)">
-                </td>
                 <td class="lab-cell-cuenta">
                     <input type="text" list="labListaCuentasContables" class="lab-diario-input lab-diario-input--cuenta" value="${fila.cuenta || ''}" placeholder="Cuenta (ej. Caja, Deudores por Ventas...)" oninput="actualizarCeldaDiario(${aIdx}, ${fIdx}, 'cuenta', this.value)">
                 </td>
@@ -20463,7 +20568,7 @@ function renderizarLibroDiarioUI() {
         const addRow = document.createElement("tr");
         addRow.className = "lab-asiento-add-row";
         addRow.innerHTML = `
-            <td colspan="6" class="lab-asiento-add-cell">
+            <td colspan="5" class="lab-asiento-add-cell">
                 <button type="button" class="button button--ghost button--xs lab-btn-add-cuenta" onclick="agregarFilaAAsiento(${aIdx})">
                     ➕ Agregar Renglón al Asiento N° ${asiento.id || aIdx + 1}
                 </button>
@@ -20484,12 +20589,13 @@ function agregarAsientoContable(fecha = null, detalle = null) {
         fecha: fechaDefecto,
         detalle: detalle || `Operación comercial N° ${nuevoId}`,
         filas: [
-            { id: "f_" + Date.now() + "_1", fecha: fechaDefecto, cuenta: "", variacion: "", debe: "", haber: "" },
-            { id: "f_" + Date.now() + "_2", fecha: fechaDefecto, cuenta: "", variacion: "", debe: "", haber: "" }
+            { id: "f_" + Date.now() + "_1", cuenta: "", variacion: "", debe: "", haber: "" },
+            { id: "f_" + Date.now() + "_2", cuenta: "", variacion: "", debe: "", haber: "" }
         ]
     });
 
     renderizarLibroDiarioUI();
+    guardarContabilidadStorage();
     mostrarToast(`➕ Asiento N° ${nuevoId} creado.`, "info");
 }
 
@@ -20499,7 +20605,6 @@ function agregarFilaAAsiento(asientoIndex, cuenta = "", debe = "", haber = "", v
 
     asiento.filas.push({
         id: "f_" + Date.now(),
-        fecha: asiento.fecha || "",
         cuenta: cuenta,
         variacion: variacion || "",
         debe: debe !== "" ? (Number(debe) || 0) : "",
@@ -20507,6 +20612,7 @@ function agregarFilaAAsiento(asientoIndex, cuenta = "", debe = "", haber = "", v
     });
 
     renderizarLibroDiarioUI();
+    guardarContabilidadStorage();
 }
 
 function eliminarFilaDeAsiento(asientoIndex, filaIndex) {
@@ -20520,6 +20626,7 @@ function eliminarFilaDeAsiento(asientoIndex, filaIndex) {
 
     asiento.filas.splice(filaIndex, 1);
     renderizarLibroDiarioUI();
+    guardarContabilidadStorage();
 }
 
 function eliminarAsientoContable(asientoIndex) {
@@ -20533,6 +20640,7 @@ function eliminarAsientoContable(asientoIndex) {
     renderizarLibroDiarioUI();
     sincronizarLibroMayor();
     sincronizarBalanceSumasYSaldos();
+    guardarContabilidadStorage();
 }
 
 function actualizarCeldaDiario(asientoIndex, filaIndex, campo, valor) {
@@ -20546,6 +20654,7 @@ function actualizarCeldaDiario(asientoIndex, filaIndex, campo, valor) {
     }
 
     recalcularTotalesDiario();
+    guardarContabilidadStorage();
 }
 
 function recalcularTotalesDiario() {
@@ -23563,31 +23672,37 @@ function obtenerEtiquetaTema(tema) {
     return `${mat.icono} ${mat.nombre}`;
 }
 
-function prepararEstructuraVaciaMesaTrabajo(materiaId) {
+function prepararEstructuraVaciaMesaTrabajo(materiaId, forzar = false) {
     if (materiaId === "contabilidad") {
-        contabilidadEstado.asientos = [
-            {
-                id: 1,
-                fecha: "",
-                detalle: "",
-                filas: [
-                    { id: "f1", fecha: "", cuenta: "", debe: "", haber: "" },
-                    { id: "f2", fecha: "", cuenta: "", debe: "", haber: "" }
-                ]
-            }
-        ];
-        contabilidadEstado.mayores = {};
-        contabilidadEstado.balance = [];
+        if (forzar || !contabilidadEstado.asientos || contabilidadEstado.asientos.length === 0) {
+            contabilidadEstado.asientos = [
+                {
+                    id: 1,
+                    fecha: "01/03",
+                    detalle: "",
+                    filas: [
+                        { id: "f1", cuenta: "", variacion: "", debe: "", haber: "" },
+                        { id: "f2", cuenta: "", variacion: "", debe: "", haber: "" }
+                    ]
+                }
+            ];
+            contabilidadEstado.mayores = {};
+            contabilidadEstado.balance = [];
+            guardarContabilidadStorage();
+        }
         renderizarLibroDiarioUI();
         renderLibroMayorUI();
         sincronizarBalanceSumasYSaldos();
+        cambiarSubvistaContabilidad("diario");
     } else if (materiaId === "estadistica") {
-        laboratorioEstado.tablaDatos = [
-            { xi: "", fi: "" },
-            { xi: "", fi: "" },
-            { xi: "", fi: "" },
-            { xi: "", fi: "" }
-        ];
+        if (forzar || !laboratorioEstado.tablaDatos) {
+            laboratorioEstado.tablaDatos = [
+                { xi: "", fi: "" },
+                { xi: "", fi: "" },
+                { xi: "", fi: "" },
+                { xi: "", fi: "" }
+            ];
+        }
         renderizarGrillaFrecuencias();
     }
 }
@@ -23693,6 +23808,7 @@ async function generarEjercicioLaboratorio(forzarNuevo = false, ordenManual = nu
                     }
                 }
 
+                guardarLaboratorioStorage();
                 renderizarEjercicioActual();
                 mostrarToast("✨ ¡Ejercicio generado con éxito según tus preferencias!", "exito");
                 return;
@@ -23749,6 +23865,7 @@ function generarEjercicioProcedimentalPorMateria(materiaId, orden = "") {
         }
     }
 
+    guardarLaboratorioStorage();
     renderizarEjercicioActual();
     const origenMsg = orden ? `🎯 Ejercicio generado a medida para: "${orden.slice(0, 35)}..."` : "🎲 Ejercicio práctico preparado en la mesa de trabajo.";
     mostrarToast(origenMsg, "info");
