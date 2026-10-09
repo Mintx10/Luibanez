@@ -21377,6 +21377,28 @@ body.modo-dev-activo .juntos-locked-notice {
     border-color: rgba(255, 255, 255, 0.3);
 }
 
+.fin-btn-delete-custom {
+    background: rgba(239, 68, 68, 0.12);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: #f87171;
+    padding: 0.45rem 0.9rem;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    transition: all 0.15s ease;
+}
+
+.fin-btn-delete-custom:hover {
+    background: rgba(239, 68, 68, 0.22);
+    color: #fca5a5;
+    border-color: rgba(239, 68, 68, 0.5);
+    transform: translateY(-1px);
+}
+
 /* Hoja de Examen */
 .fin-exam-sheet {
     background: #0d1117;

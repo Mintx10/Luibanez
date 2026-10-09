@@ -3745,11 +3745,11 @@ function actualizarNavPorCarrera() {
     const drawerFinEstad = document.getElementById("drawerNavFinEstad");
     const drawerFinCont = document.getElementById("drawerNavFinCont");
 
-    // 1. Barra superior de escritorio: SIEMPRE los 5 menús importantes limpios
-    [navHome, navSolo, navLab, navJuntos, navFama].forEach(b => b?.classList.remove("hidden"));
-    [navMed, navFarma, navSalud, navFinHub, navFinFilo, navFinSfi, navFinHem, navFinEstad, navFinCont].forEach(b => b?.classList.add("hidden"));
+    // 1. Barra superior de escritorio: Acceso directo a vistas principales + FinHub
+    [navHome, navSolo, navLab, navJuntos, navFama, navFinHub].forEach(b => b?.classList.remove("hidden"));
+    [navMed, navFarma, navSalud, navFinFilo, navFinSfi, navFinHem, navFinEstad, navFinCont].forEach(b => b?.classList.add("hidden"));
 
-    // 2. Menú lateral móvil (Drawer): se adapta según la carrera
+    // 2. Menú lateral móvil (Drawer): se adapta según la carrera manteniendo acceso a FinHub
     if (esIvan) {
         if (drawerHome) drawerHome.classList.add("hidden");
         if (drawerSolo) drawerSolo.classList.remove("hidden");
@@ -3759,8 +3759,9 @@ function actualizarNavPorCarrera() {
         if (drawerMed) drawerMed.classList.remove("hidden");
         if (drawerFarma) drawerFarma.classList.remove("hidden");
         if (drawerSalud) drawerSalud.classList.remove("hidden");
+        if (drawerFinHub) drawerFinHub.classList.remove("hidden");
 
-        [drawerFinHub, drawerFinFilo, drawerFinSfi, drawerFinHem, drawerFinEstad, drawerFinCont].forEach(b => b?.classList.add("hidden"));
+        [drawerFinFilo, drawerFinSfi, drawerFinHem, drawerFinEstad, drawerFinCont].forEach(b => b?.classList.add("hidden"));
     } else if (esFinanzas) {
         if (drawerHome) drawerHome.classList.remove("hidden");
         if (drawerSolo) drawerSolo.classList.remove("hidden");
@@ -3776,9 +3777,10 @@ function actualizarNavPorCarrera() {
         if (drawerLab) drawerLab.classList.remove("hidden");
         if (drawerJuntos) drawerJuntos.classList.remove("hidden");
         if (drawerFama) drawerFama.classList.remove("hidden");
+        if (drawerFinHub) drawerFinHub.classList.remove("hidden");
 
         [drawerMed, drawerFarma, drawerSalud].forEach(b => b?.classList.add("hidden"));
-        [drawerFinHub, drawerFinFilo, drawerFinSfi, drawerFinHem, drawerFinEstad, drawerFinCont].forEach(b => b?.classList.add("hidden"));
+        [drawerFinFilo, drawerFinSfi, drawerFinHem, drawerFinEstad, drawerFinCont].forEach(b => b?.classList.add("hidden"));
     }
 }
 
@@ -13611,22 +13613,6 @@ function inicializarModoBolillero() {
         });
     }
     if (dom.authForgotPinBtn) dom.authForgotPinBtn.addEventListener("click", recuperarPin);
-    const btnQuickIvan = document.getElementById("authQuickIvanBtn");
-    if (btnQuickIvan) {
-        btnQuickIvan.addEventListener("click", () => {
-            if (dom.authLoginUserInput) dom.authLoginUserInput.value = "ivi";
-            if (dom.authLoginPin) dom.authLoginPin.value = "1234";
-            iniciarSesionConPin("ivi", "1234");
-        });
-    }
-    const btnQuickLucas = document.getElementById("authQuickLucasBtn");
-    if (btnQuickLucas) {
-        btnQuickLucas.addEventListener("click", () => {
-            if (dom.authLoginUserInput) dom.authLoginUserInput.value = "lucas";
-            if (dom.authLoginPin) dom.authLoginPin.value = "1234";
-            iniciarSesionConPin("lucas", "1234");
-        });
-    }
 
     // Selector de Avatares (Emojis & Foto)
     if (dom.avatarModalCloseBtn) dom.avatarModalCloseBtn.addEventListener("click", () => dom.avatarPickerModal.close());
@@ -22446,12 +22432,12 @@ function generarEjercicioContabilidadProcedural(orden = "") {
         {
             tipo: "candilia",
             titulo: "Caso 'CANDILIA': Comercio Minorista, Compras al Contado y CMV",
-            narrativa: "El 1 de febrero dos socios abren el comercio 'CANDILIA'. Registrá las operaciones en el Libro Diario, mayorizá y verificá el Resultado Bruto por ventas y la partida doble:",
-            datos: "1. 01/02: Situación inicial: Efectivo en Caja $1.000, Mercaderías en stock $250 (2.500 caramelos a $0,10 c/u). Capital Social: $1.250.\n" +
-                   "2. 05/03: Compra de 2.400 caramelos a $0,10 c/u ($240) abonada en efectivo (Caja).\n" +
-                   "3. 17/03: Venta de 500 caramelos a $0,80 c/u ($400) cobrada íntegramente en efectivo.\n" +
-                   "4. 17/03: Se registra el Costo de las Mercaderías Vendidas (CMV): 500 caramelos a $0,10 c/u ($50).\n" +
-                   "5. 25/03: Compra de estanterías para exhibición (Muebles y Útiles) por $300 en cuenta corriente (Acreedores Varios).",
+            narrativa: "El comercio 'CANDILIA' presenta sus hechos económicos del período. Registrá cada operación en el Libro Diario respetando la partida doble, realizá los pases al Mayor (Cuentas T) y calculá los saldos finales:",
+            datos: "• Op. 1 (01/02) - Apertura: Aporte de socios con Efectivo (Caja) por $1.000 y Mercaderías por $250 (2.500 caramelos a $0,10 c/u). Capital Social: $1.250.\n" +
+                   "• Op. 2 (05/03) - Compra: Adquisición de 2.400 caramelos a $0,10 c/u ($240) abonada en efectivo s/ Factura Original.\n" +
+                   "• Op. 3 (17/03) - Venta: Venta de 500 caramelos a $0,80 c/u ($400) cobrada en efectivo s/ Factura Duplicado.\n" +
+                   "• Op. 4 (17/03) - Costo: Registro del CMV por los 500 caramelos vendidos a su costo de $0,10 c/u ($50) s/ Minuta Contable.\n" +
+                   "• Op. 5 (25/03) - Equipamiento: Compra de estanterías de exhibición (Muebles y Útiles) por $300 en cuenta corriente s/ Factura Original a Acreedores Varios.",
             preguntas: [
                 {
                     letra: "a",
@@ -22490,12 +22476,12 @@ function generarEjercicioContabilidadProcedural(orden = "") {
         {
             tipo: "xl",
             titulo: "Caso 'XL ELECTRODOMÉSTICOS': Televisores LCD y Cuentas a Pagar",
-            narrativa: "La empresa 'XL' comercializa televisores de última generación. Comenzó sus operaciones en octubre. Registrá las compras financiadas, la venta y la cancelación del pasivo:",
-            datos: "1. 01/10: Situación inicial: Caja $10.000, Mercaderías $18.000 (10 televisores LCD a $1.800 c/u). Capital: $28.000.\n" +
-                   "2. 07/10: Compra de 5 televisores LCD a $1.800 c/u ($9.000). Se abonan $800 en efectivo y el resto ($8.200) a plazo en c/c Proveedores.\n" +
-                   "3. 13/10: Venta al contado de 4 televisores LCD a $4.000 c/u ($16.000). Cobro en efectivo.\n" +
-                   "4. 13/10: Registro del Costo de las Mercaderías Vendidas (CMV): 4 televisores a $1.800 c/u ($7.200).\n" +
-                   "5. 22/10: Cancelación en efectivo de la deuda con Proveedores contraída el 07/10 ($8.200).",
+            narrativa: "La empresa 'XL' comercializa televisores de última generación. Registrá las compras financiadas en cuenta corriente, la venta al contado y la posterior cancelación del pasivo:",
+            datos: "• Op. 1 (01/10) - Situación Inicial: Caja $10.000 y Mercaderías $18.000 (10 televisores LCD a $1.800 c/u). Capital Social: $28.000.\n" +
+                   "• Op. 2 (07/10) - Compra: Adquisición de 5 televisores LCD a $1.800 c/u ($9.000). Se abonan $800 en efectivo s/ Recibo y el saldo ($8.200) a 15 días en c/c Proveedores s/ Factura Original.\n" +
+                   "• Op. 3 (13/10) - Venta: Venta al contado de 4 televisores LCD a $4.000 c/u ($16.000) cobrada íntegramente en efectivo s/ Factura Duplicado.\n" +
+                   "• Op. 4 (13/10) - Costo: Determinación y registro del CMV por los 4 televisores a su costo de $1.800 c/u ($7.200) s/ Minuta Contable.\n" +
+                   "• Op. 5 (22/10) - Pago a Proveedores: Cancelación en efectivo de la deuda contraída con el proveedor el 07/10 ($8.200) s/ Recibo Original.",
             preguntas: [
                 {
                     letra: "a",
@@ -22534,12 +22520,13 @@ function generarEjercicioContabilidadProcedural(orden = "") {
         {
             tipo: "verparaleer",
             titulo: "Caso 'VERPARALEER': Librería Comercial, Cuentas Bancarias y Créditos",
-            narrativa: "La librería 'VERPARALEER' presenta sus saldos al 30 de septiembre y registra las operaciones comerciales y financieras de octubre:",
-            datos: "1. 30/09: Situación inicial: Caja $2.000, Banco Nación c/c $20.000, Mercaderías $15.000 (1.000 libros a $15 c/u), Deudores por Ventas $2.500. Pasivo: Proveedores $2.500. Patrimonio Neto: Capital $37.000.\n" +
-                   "2. 12/10: Compra de 100 libros a $15 c/u ($1.500) en cuenta corriente con Proveedores.\n" +
-                   "3. 14/10: Venta de 25 libros a $40 c/u ($1.000). Se cobran $250 en efectivo y $750 con Cheque al día (Valores a Depositar). CMV = 25 x $15 = $375.\n" +
-                   "4. 28/10: Cobro del saldo inicial de Deudores por Ventas ($2.500) mediante transferencia acreditada en Banco Nación c/c.\n" +
-                   "5. 30/10: Depósito íntegro en la cuenta corriente del Banco Nación del efectivo recibido ($250) y del cheque al día ($750).",
+            narrativa: "La librería 'VERPARALEER' presenta sus saldos patrimoniales y registra las operaciones comerciales, cobros y depósitos del mes de octubre:",
+            datos: "• Op. 1 (30/09) - Situación Inicial: Caja $2.000, Banco Nación c/c $20.000, Mercaderías $15.000 (1.000 libros a $15 c/u), Deudores por Ventas $2.500. Pasivo: Proveedores $2.500. Capital: $37.000.\n" +
+                   "• Op. 2 (12/10) - Compra: Adquisición de 100 libros a $15 c/u ($1.500) en cuenta corriente comercial con Proveedores s/ Factura Original.\n" +
+                   "• Op. 3 (14/10) - Venta y Cobro: Venta de 25 libros a $40 c/u ($1.000) s/ Factura Duplicado. Se cobran $250 en efectivo y $750 con Cheque al día (Valores a Depositar).\n" +
+                   "• Op. 4 (14/10) - Costo: Registro del CMV por 25 libros a su costo unitario de $15 c/u ($375) s/ Minuta Contable.\n" +
+                   "• Op. 5 (28/10) - Cobro Crédito Inicial: Cobranza a Deudores por Ventas por $2.500 acreditada directamente en Banco Nación c/c.\n" +
+                   "• Op. 6 (30/10) - Depósito Bancario: Boleta de depósito en Banco Nación c/c por el efectivo ($250) y el cheque de terceros ($750), total $1.000.",
             preguntas: [
                 {
                     letra: "a",
@@ -22594,7 +22581,7 @@ function generarEjercicioContabilidadProcedural(orden = "") {
         dificultad: "Intermedia",
         enunciado: "Registrá las operaciones en el Libro Diario, mayorizá en las Cuentas T y determiná los saldos deudores, acreedores y resultados según las normas contables vigentes.",
         datos: caso.datos,
-        datos_tipo: "lista",
+        datos_tipo: "operaciones",
         narrativa: `${caso.narrativa}\n\n${caso.datos}`,
         preguntas: caso.preguntas
     };
@@ -23560,21 +23547,48 @@ function formatearBloqueDatosLab(datos, tipo = "auto") {
             </div>
         `;
     }
-    // 3. Muestra de Datos / Lista de Números
+    // 3. Operaciones Comerciales / Lista de Hechos Económicos (Contabilidad / Enunciados)
+    else if (tipo === "operaciones" || tipo === "lista" || (typeof datos === "string" && (datos.includes("1.") || datos.includes("•") || datos.includes("Op.") || datos.includes("Situación")))) {
+        headerBadge = "Operaciones del Ejercicio";
+        const lineas = typeof datos === "string" ? datos.split(/\n+/).map(l => l.trim()).filter(Boolean) : [];
+        bodyHtml = `
+            <div class="lab-operations-list" style="display: flex; flex-direction: column; gap: 0.65rem;">
+                ${lineas.map(lin => {
+                    const matchNum = lin.match(/^(\d+[\.\)]|\•|\-\s*)\s*(.*)/);
+                    if (matchNum) {
+                        return `
+                            <div class="lab-operation-item" style="display: flex; align-items: flex-start; gap: 0.75rem; background: rgba(30, 41, 59, 0.6); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 0.7rem 0.9rem; line-height: 1.55; font-size: 0.9rem;">
+                                <span class="badge badge--accent" style="flex-shrink: 0; font-size: 0.75rem; font-weight: 700; margin-top: 0.15rem; background: rgba(56,189,248,0.15); color: #38bdf8; border: 1px solid rgba(56,189,248,0.3);">${matchNum[1]}</span>
+                                <span style="color: #f1f5f9; word-break: break-word;">${matchNum[2]}</span>
+                            </div>
+                        `;
+                    }
+                    return `<div class="lab-case-data-content" style="font-size: 0.9rem; line-height: 1.55; color: #f1f5f9; padding: 0.35rem 0;">${lin}</div>`;
+                }).join("")}
+            </div>
+        `;
+    }
+    // 4. Muestra de Datos Numéricos Puros (sin oraciones de texto)
     else {
-        headerBadge = "Muestra Observada";
-        const nums = Array.isArray(datos) ? datos : String(datos).match(/-?\d+(\.\d+)?/g);
-        if (nums && nums.length >= 3) {
-            bodyHtml = `
-                <div style="font-size: 0.8rem; color: var(--color-text-muted); margin-bottom: 0.35rem;">
-                    Valores registrados (n = ${nums.length}):
-                </div>
-                <div class="lab-data-chips">
-                    ${nums.map(n => `<span class="lab-data-chip">${n}</span>`).join("")}
-                </div>
-            `;
+        const isSentenceText = typeof datos === "string" && /[a-záéíóúñ]{4,}/i.test(datos);
+        if (!isSentenceText) {
+            headerBadge = "Muestra Observada";
+            const nums = Array.isArray(datos) ? datos : String(datos).match(/-?\d+(\.\d+)?/g);
+            if (nums && nums.length >= 3) {
+                bodyHtml = `
+                    <div style="font-size: 0.8rem; color: var(--color-text-muted); margin-bottom: 0.35rem;">
+                        Valores registrados (n = ${nums.length}):
+                    </div>
+                    <div class="lab-data-chips">
+                        ${nums.map(n => `<span class="lab-data-chip">${n}</span>`).join("")}
+                    </div>
+                `;
+            } else {
+                bodyHtml = `<div class="lab-case-data-content" style="white-space: pre-line; color: #f1f5f9; line-height: 1.6;">${datos}</div>`;
+            }
         } else {
-            bodyHtml = `<div class="lab-case-data-content" style="white-space: pre-line;">${datos}</div>`;
+            headerBadge = "Enunciado del Caso";
+            bodyHtml = `<div class="lab-case-data-content" style="white-space: pre-line; color: #f1f5f9; line-height: 1.6;">${datos}</div>`;
         }
     }
 
@@ -26625,6 +26639,14 @@ function generarExamenParaMateria(materiaKey, modoForzado = null, modeloIndexFor
             >
                 🔄 Reintentar / Limpiar Hoja
             </button>
+            <button 
+                class="fin-btn-delete-custom" 
+                type="button" 
+                onclick="borrarModelosCustomDeMateria('${matId}')"
+                title="Borra los exámenes creados con IA y vuelve a los modelos oficiales originales"
+            >
+                🗑️ Borrar Exámenes Creados
+            </button>
         </div>
     `;
 
@@ -26770,16 +26792,57 @@ function limpiarYReintentarExamen(materiaKey) {
     mostrarToast("🔄 Hoja de examen limpiada. ¡Listo para un nuevo intento!", "exito");
 }
 
+function borrarModelosCustomDeMateria(materiaKey) {
+    const matId = normalizarMateriaFinanzasKey(materiaKey);
+    const mat = MATERIAS_FINANZAS[matId];
+    const store = cargarModelosCustomAlmacenados();
+    let totalBorrados = 0;
+
+    ["1er_parcial", "2do_parcial", "final"].forEach(m => {
+        const key = `${matId}_${m}`;
+        if (store[key] && store[key].length > 0) {
+            totalBorrados += store[key].length;
+            delete store[key];
+        }
+    });
+
+    try {
+        localStorage.setItem(FINANZAS_CUSTOM_MODELS_KEY, JSON.stringify(store));
+    } catch (_) {}
+
+    estadoFinanzas.modeloActivoIndex[matId] = 0;
+    const modo = estadoFinanzas.modoActivo[matId] || "1er_parcial";
+    generarExamenParaMateria(matId, modo, 0);
+
+    if (totalBorrados > 0) {
+        if (typeof reproducirSonido === "function") reproducirSonido("click");
+        mostrarToast(`🗑️ Se eliminaron los ${totalBorrados} exámenes creados para ${mat ? mat.nombre : 'esta materia'}. Se restablecieron los modelos oficiales de cátedra.`, "info");
+    } else {
+        mostrarToast(`ℹ️ Esta materia ya muestra únicamente sus modelos oficiales originales de cátedra.`, "info");
+    }
+}
+window.borrarModelosCustomDeMateria = borrarModelosCustomDeMateria;
+
 async function generarNuevoModeloConIA(materiaKey) {
     const matId = normalizarMateriaFinanzasKey(materiaKey);
     const mat = MATERIAS_FINANZAS[matId];
     if (!mat) return;
 
     const modo = estadoFinanzas.modoActivo[matId] || "1er_parcial";
+    const customKey = `${matId}_${modo}`;
+    const store = cargarModelosCustomAlmacenados();
+    const customCount = Array.isArray(store[customKey]) ? store[customKey].length : 0;
+
+    // Límite estricto: máximo 3 modelos inéditos por materia/modo para evitar acumulación y duplicados
+    if (customCount >= 3) {
+        mostrarToast(`⚠️ Ya generaste el máximo de 3 exámenes adicionales para este examen. Podés reintentar los existentes o pulsar "🗑️ Borrar Exámenes Creados" para reiniciar.`, "advertencia");
+        return;
+    }
+
     const modelosExistentes = obtenerListaModelosParaMateria(matId, modo);
     const nuevoNum = modelosExistentes.length + 1;
 
-    mostrarToast(`✨ Consultando a la IA Docente para crear el Modelo ${nuevoNum} inédito de ${mat.nombre}...`, "info");
+    mostrarToast(`✨ Creando el Modelo ${nuevoNum} inédito para ${mat.nombre}...`, "info");
 
     const directKey = typeof obtenerGeminiApiKey === "function" ? obtenerGeminiApiKey() : "";
     let nuevoModeloGenerado = null;
@@ -26816,7 +26879,7 @@ Formato de respuesta: Devuelve ÚNICAMENTE un objeto JSON válido (sin markdown 
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     contents: [{ parts: [{ text: prompt }] }],
-                    generationConfig: { temperature: 0.4, maxOutputTokens: 2500 }
+                    generationConfig: { temperature: 0.5, maxOutputTokens: 2500 }
                 })
             });
             if (res.ok) {
@@ -26830,9 +26893,9 @@ Formato de respuesta: Devuelve ÚNICAMENTE un objeto JSON válido (sin markdown 
         }
     }
 
-    // Fallback generador pedagógico procedimental si no hay API key o falló la red
+    // Fallback generador pedagógico procedimental diversificado según variantIndex
     if (!nuevoModeloGenerado || !Array.isArray(nuevoModeloGenerado.consignas)) {
-        nuevoModeloGenerado = crearModeloIneditoProcedural(matId, modo, nuevoNum);
+        nuevoModeloGenerado = crearModeloIneditoProcedural(matId, modo, nuevoNum, customCount);
     }
 
     // Guardar el nuevo modelo en storage y activarlo
@@ -26843,294 +26906,249 @@ Formato de respuesta: Devuelve ÚNICAMENTE un objeto JSON válido (sin markdown 
     estadoFinanzas.modeloActivoIndex[matId] = nuevoIndex;
     generarExamenParaMateria(matId, modo, nuevoIndex);
 
-    reproducirSonido("exito");
-    mostrarToast(`🎉 ¡Modelo ${nuevoNum} (IA) creado exitosamente! Ahora podés practicarlo.`, "exito");
+    if (typeof reproducirSonido === "function") reproducirSonido("exito");
+    mostrarToast(`🎉 ¡Modelo ${nuevoNum} inédito creado exitosamente! Ahora podés practicarlo.`, "exito");
 }
 
-function crearModeloIneditoProcedural(matId, modo, num) {
-    const mat = MATERIAS_FINANZAS[matId];
+function crearModeloIneditoProcedural(matId, modo, num, variantIndex = 0) {
     const timestamp = Date.now();
+    const v = variantIndex % 3;
 
     if (matId === "filosofia") {
+        const poolFilo = [
+            // Variante 0
+            [
+                { numero: 1, puntos: 25, pregunta: "Análisis de Fragmento Socrático: Confronte la postura de Calicles en el Gorgias ('el poder del más fuerte como ley natural') con la afirmación socrática de que la justicia consiste en gobernar las pasiones del alma. Explique el método dialéctico y la areté.", placeholder: "Desarrolle la confrontación entre Sócrates y Calicles..." },
+                { numero: 2, puntos: 25, pregunta: "Platón y la Teoría de la Reminiscencia (Menón): ¿Por qué para Platón 'aprender es recordar' (anámnesis)? Relacione la inmortalidad del alma con la visión previa de las Ideas en el Topos Uranos.", placeholder: "Explique la anámnesis y el conocimiento como recuerdo..." },
+                { numero: 3, puntos: 20, pregunta: "Aristóteles y la Metafísica del Ser: 'El Ser se dice de muchas maneras'. Explique esta célebre fórmula aristotélica, distinga la analogía del ser frente al unívoco parmenídeo y defina qué es la Ousía o sustancia.", placeholder: "Explique la polisemia del ser y la primacía de la sustancia..." },
+                { numero: 4, puntos: 15, pregunta: "Heráclito y el Fuego Cósmico: ¿Por qué Heráclito eligió al Fuego como símbolo primordial del Logos y del cosmos eterno 'que ningún dios ni hombre hizo'? Relacione con la medida de los opuestos.", placeholder: "Desarrolle el significado del fuego como principio del devenir..." },
+                { numero: 5, puntos: 15, pregunta: "Ética Aplicada a la Actividad Financiera: ¿Es legítimo desde la ética aristotélica perseguir el lucro financiero por sí mismo (crematística antinatural) o debe subordinarse a la economía doméstica y al bien común de la polis?", placeholder: "Confronte crematística natural vs antinatural en Aristóteles..." }
+            ],
+            // Variante 1
+            [
+                { numero: 1, puntos: 25, pregunta: "La Alegoría de la Caverna (República VII): Explique detalladamente los cuatro grados del ser y del conocer (conjetura, creencia, pensamiento discursivo e intelección pura) y el ascenso del prisionero hacia la Idea del Bien.", placeholder: "Desarrolle la alegoría y los grados ontológicos y gnoseológicos..." },
+                { numero: 2, puntos: 25, pregunta: "Las Cuatro Causas de Aristóteles: Explique y ejemplifique la causa material, formal, eficiente y final. ¿Por qué la causa final posee primacía ontológica en la física y metafísica aristotélica (teleología)?", placeholder: "Desarrolle la teoría de las cuatro causas y la teleología..." },
+                { numero: 3, puntos: 20, pregunta: "Sócrates frente a los Sofistas: Compare la concepción sofística de la verdad (Protágoras: 'el hombre es la medida de todas las cosas') frente a la búsqueda socrática de definiciones universales y el examen moral de la vida.", placeholder: "Confronte relativismo sofístico vs universalismo socrático..." },
+                { numero: 4, puntos: 15, pregunta: "Parménides y la Vía de la Verdad: Explique la tesis de que 'el ser es y el no-ser no es'. ¿Por qué para Parménides el cambio, el movimiento y la multiplicidad son meras ilusiones engañosas de los sentidos?", placeholder: "Explique el poema de Parménides y las propiedades del Ser inmutable..." },
+                { numero: 5, puntos: 15, pregunta: "Ética a Nicómaco y la Felicidad: ¿Qué entiende Aristóteles por Eudaimonía? Explique por qué la virtud ética consiste en el 'justo medio' entre dos extremos viciosos (exceso y defecto).", placeholder: "Desarrolle la doctrina del término medio y la vida contemplativa..." }
+            ],
+            // Variante 2
+            [
+                { numero: 1, puntos: 25, pregunta: "Juicio y Muerte de Sócrates en la Apología: ¿Por qué Sócrates sostiene que 'una vida sin examen no merece ser vivida' y rehúsa renunciar a su misión filosófica a cambio de conservar la vida? Analice el papel de las leyes atenienses en el Critón.", placeholder: "Analice el juicio de Sócrates, la piedad y el deber hacia la polis..." },
+                { numero: 2, puntos: 25, pregunta: "La Estructura Tripartita del Alma en Platón (Fedro): Analice el mito del carro alado. Describa las tres partes del alma (racional, irascible y apetitiva) y qué virtud cardinal corresponde a cada una para lograr la justicia.", placeholder: "Explique el mito del carro alado y la correspondencia con las virtudes..." },
+                { numero: 3, puntos: 20, pregunta: "Sustancia Primera y Sustancia Segunda en Aristóteles: A partir de las Categorías, diferencie la sustancia primera (individuo concreto, 'este hombre') de la sustancia segunda (género y especie). ¿Cómo resuelve Aristóteles la crítica al mundo de las ideas platónico?", placeholder: "Diferencie sustancia primera y segunda con ejemplos..." },
+                { numero: 4, puntos: 15, pregunta: "El Problema del Arjé en los Filósofos Milesios: Compare las propuestas de Tales (Agua), Anaximandro (Ápeiron) y Anaxímenes (Aire). ¿Por qué representan el paso fundamental del Mito al Logos racional?", placeholder: "Analice la búsqueda del principio material primordial en Mileto..." },
+                { numero: 5, puntos: 15, pregunta: "La Polis Ideal y la Justicia Platónica: ¿Cómo organiza Platón las tres clases sociales de la República y por qué fundamenta que solo los filósofos deben gobernar para garantizar una sociedad virtuosa?", placeholder: "Desarrolle la teoría del rey-filósofo y la justicia en la ciudad..." }
+            ]
+        ];
         return {
             id: `filo_ia_${timestamp}`,
             nombre: `Modelo ${num} (IA Inédito)`,
             badge: "IA",
             titulo: `Modelo ${num} Inédito · Filosofía y Ética`,
-            subtitulo: "Generado a partir del programa de Presocráticos, Platón, Aristóteles y Ética",
+            subtitulo: `Variante académica ${v + 1} · Presocráticos, Platón, Aristóteles y Ética`,
             duracion: "120 min · 60 pts para aprobar",
-            consignas: [
-                {
-                    numero: 1,
-                    puntos: 25,
-                    pregunta: "Análisis de Fragmento Socrático: Confronte la postura de Calicles en el Gorgias ('el poder del más fuerte como ley natural') con la afirmación socrática de que la justicia consiste en gobernar las pasiones del alma. Explique el método dialéctico y la areté.",
-                    placeholder: "Desarrolle la confrontación entre Sócrates y Calicles..."
-                },
-                {
-                    numero: 2,
-                    puntos: 25,
-                    pregunta: "Platón y la Teoría de la Reminiscencia (Menón): ¿Por qué para Platón 'aprender es recordar' (anámnesis)? Relacione la inmortalidad del alma con la visión previa de las Ideas en el Topos Uranos y la función de la dialéctica.",
-                    placeholder: "Explique la anámnesis y el conocimiento como recuerdo..."
-                },
-                {
-                    numero: 3,
-                    puntos: 20,
-                    pregunta: "Aristóteles y la Metafísica del Ser: 'El Ser se dice de muchas maneras'. Explique esta célebre fórmula aristotélica, distinga la analogía del ser frente al unívoco parmenídeo y defina qué es la Ousía o sustancia.",
-                    placeholder: "Explique la polisemia del ser y la primacía de la sustancia..."
-                },
-                {
-                    numero: 4,
-                    puntos: 15,
-                    pregunta: "Heráclito y el Fuego Cósmico: ¿Por qué Heráclito eligió al Fuego como símbolo primordial del Logos y del cosmos eterno 'que ningún dios ni hombre hizo'? Relacione con la medida del encenderse y apagarse de los opuestos.",
-                    placeholder: "Desarrolle el significado del fuego como principio del devenir..."
-                },
-                {
-                    numero: 5,
-                    puntos: 15,
-                    pregunta: "Ética Aplicada a la Actividad Financiera: ¿Es legítimo desde la ética aristotélica perseguir el lucro financiero por sí mismo (crematística antinatural) o debe subordinarse a la economía doméstica y al bien común de la polis? Fundamente.",
-                    placeholder: "Confronte crematística natural vs antinatural en Aristóteles..."
-                }
-            ]
+            consignas: poolFilo[v]
         };
     } else if (matId === "sfi") {
+        const poolSfi = [
+            // Variante 0
+            [
+                { numero: 1, puntos: 20, pregunta: "BLOQUE I: Operaciones de la Fed: Distinga entre compras definitivas (Outright) y operaciones de Repos y Reverse Repos. Explique su efecto en la masa monetaria y en la tasa target.", placeholder: "Desarrolle la política monetaria y las OMO de la Fed..." },
+                { numero: 2, puntos: 25, pregunta: "Teorías de la Curva de Rendimientos (ETTI): Compare la Teoría de Expectativas Puras con la de Prima por Liquidez y Segmentación de Mercados.", placeholder: "Analice supuestos e implicancias de las tres teorías de la ETTI..." },
+                { numero: 3, puntos: 25, pregunta: "Clasificación de Deuda Internacional: Eurobonos vs Bonos Extranjeros (Yankee, Samurai, Bulldog). Explique monedas, agentes colocadores y ventajas de emitir en euromercados.", placeholder: "Distinga emisiones internacionales con ejemplos prácticos..." },
+                { numero: 4, puntos: 15, pregunta: "Hipótesis de Mercado Eficiente (Fama): Distinga las formas Débil, Semifuerte y Fuerte. ¿Por qué el análisis técnico no genera retornos extraordinarios según la forma débil?", placeholder: "Explique los tres niveles de eficiencia informacional de Eugene Fama..." },
+                { numero: 5, puntos: 15, pregunta: "Impacto del Carry Trade y Subas de Tasas en Mercados Emergentes: Analice la fuga de capitales, depreciación cambiaria y riesgo soberano cuando la Fed endurece su política monetaria.", placeholder: "Desarrolle el canal de transmisión de la Fed a emergentes..." }
+            ],
+            // Variante 1
+            [
+                { numero: 1, puntos: 25, pregunta: "Mercado de Euromonedas y Préstamos Sindicados: ¿Cómo se originaron los eurodólares en Londres? Explique la estructura de un crédito bancario sindicado internacional (Lead Manager, Facility Agent y Bancos participantes).", placeholder: "Explique el funcionamiento de los préstamos sindicados y los euromercados..." },
+                { numero: 2, puntos: 25, pregunta: "Inversión de la Curva de Rendimientos de los Treasuries: Explique por qué el diferencial entre las tasas a 10 años y 2 años (10Y-2Y) se vuelve negativo y por qué históricamente anticipa recesiones económicas en EE.UU.", placeholder: "Analice las causas macroeconómicas de la inversión de la curva de rendimientos..." },
+                { numero: 3, puntos: 20, pregunta: "Swaps de Tasa de Interés (IRS): Un banco cambia flujos de tasa fija por tasa flotante (SOFR). Explique el funcionamiento del contrato, el nocional, los pagos netos y para qué se utiliza en cobertura de balances corporativos.", placeholder: "Desarrolle la mecánica de un IRS de tasa fija a flotante..." },
+                { numero: 4, puntos: 15, pregunta: "Bonos Brady y Crisis de Deuda Emergente: Explique la reestructuración de deudas bancarias de los años 80/90 a través de bonos respaldados con Bonos cupón cero del Tesoro estadounidense.", placeholder: "Analice el Plan Brady y el nacimiento del mercado de bonos emergentes..." },
+                { numero: 5, puntos: 15, pregunta: "Régimen de Tipo de Cambio Flotante vs Fijo: Compare ambos sistemas a la luz del Trilema Monetario de Mundell-Fleming. ¿Por qué un país no puede tener simultáneamente tipo de cambio fijo, libre movilidad de capitales y política monetaria independiente?", placeholder: "Explique el Trilema de la Trinidad Imposible de Mundell-Fleming..." }
+            ],
+            // Variante 2
+            [
+                { numero: 1, puntos: 25, pregunta: "Regulación Financiera Internacional de Basilea III: Explique los pilares de Basilea, el ratio de capital común Tier 1, el Coeficiente de Cobertura de Liquidez (LCR) y el Ratio de Fondeo Estable Neto (NSFR).", placeholder: "Desarrolle los estándares de solvencia y liquidez de Basilea III..." },
+                { numero: 2, puntos: 25, pregunta: "Mercados Forwards vs Futuros Financieros: Compare ambos instrumentos en cuanto a estandarización, mercado over-the-counter vs cámara compensadora (clearing house), margen inicial, margen de variación y riesgo de incumplimiento.", placeholder: "Compare contratos forwards vs futuros con cuadro comparativo..." },
+                { numero: 3, puntos: 20, pregunta: "Quantitative Easing (QE) y Expansión Cuantitativa: ¿En qué circunstancias los bancos centrales aplican QE? Explique cómo la compra de bonos de largo plazo aplana la curva de tasas y estimula la inversión privada.", placeholder: "Analice el QE como herramienta no convencional de política monetaria..." },
+                { numero: 4, puntos: 15, pregunta: "Riesgo Soberano y Spread EMBI+: Explique cómo calcula JP Morgan el diferencial de rendimiento entre bonos de un país emergente y los Bonos del Tesoro de EE.UU. ¿Qué factores determinan la prima de riesgo país?", placeholder: "Explique la construcción del EMBI+ y los determinantes del riesgo país..." },
+                { numero: 5, puntos: 15, pregunta: "El Euro y la Unión Económica y Monetaria: ¿Qué implicó la adopción de una moneda única sin una unión fiscal común? Analice los desequilibrios generados en la crisis de deuda soberana europea de 2010-2012.", placeholder: "Analice las tensiones de la unión monetaria europea sin unión fiscal..." }
+            ]
+        ];
         return {
             id: `sfi_ia_${timestamp}`,
             nombre: `Modelo ${num} (IA Inédito)`,
             badge: "IA",
             titulo: `Modelo ${num} Inédito · Sistema Financiero Internacional`,
-            subtitulo: "Cátedra Karina Díaz: Mercado monetario, Treasuries, HME y euromercados",
+            subtitulo: `Variante académica ${v + 1} · Cátedra Karina Díaz: Mercados globales y banca`,
             duracion: "120 min · 60 pts para aprobar",
-            consignas: [
-                {
-                    numero: 1,
-                    puntos: 20,
-                    pregunta: `BLOQUE I: Cuestionario de Opción Múltiple Especial (4 Puntos Clave):
-1.1) Una operación de Reverse Repo efectuada por la Reserva Federal implica que la Fed:
-[A] Vende títulos al mercado para absorber liquidez bancaria excedente.
-[B] Compra títulos inyectando dólares en el sistema monetario.
-[C] Cancela la deuda pública del Tesoro.
-[D] Fija el tipo de cambio del euro.
-
-1.2) En el mercado secundario de renta fija, si la tasa de interés de mercado sube, el precio de un bono soberano a tasa fija:
-[A] Sube en igual proporción.
-[B] Cae debido a la relación inversa entre precio y rendimiento (TIR).
-[C] Permanece constante porque el valor nominal no cambia.
-[D] Se convierte automáticamente en una acción preferida.
-
-1.3) Los Bonos Samurai son instrumentos de deuda emitidos en:
-[A] Japón, nominados en yenes por un emisor extranjero.
-[B] Londres, nominados en dólares por un banco japonés.
-[C] Estados Unidos, nominados en yenes por la FED.
-[D] Tailandia, nominados en moneda doméstica.
-
-1.4) La Hipótesis de Mercado Eficiente en su forma Débil descarta la utilidad de:
-[A] El análisis fundamental de balances corporativos.
-[B] El análisis técnico basado en gráficos y cotizaciones pasadas.
-[C] La información de noticias macroeconómicas en tiempo real.
-[D] El código ético del CFA Institute.`,
-                    placeholder: "Respuestas y justificaciones para 1.1, 1.2, 1.3 y 1.4..."
-                },
-                {
-                    numero: 2,
-                    puntos: 25,
-                    pregunta: "Operaciones de Mercado Abierto (OMO) y el Balance de la FED: Explique detalladamente cómo expande y contrae la Fed su balance. Distinga entre compras definitivas (Outright purchases) y operaciones transitorias (Repos), y su efecto sobre las reservas bancarias.",
-                    placeholder: "Desarrolle las OMO y el balance de la Reserva Federal..."
-                },
-                {
-                    numero: 3,
-                    puntos: 25,
-                    pregunta: "Teorías de la ETTI Comparadas: Desarrolle en un cuadro analítico: 1) Teoría de las Expectativas Puras, 2) Teoría de la Prima por Liquidez, y 3) Teoría de Segmentación de Mercados. Explique qué supuesto sobre los inversores asume cada una.",
-                    placeholder: "Compare las 3 teorías de la estructura temporal de tasas..."
-                },
-                {
-                    numero: 4,
-                    puntos: 15,
-                    pregunta: "Clasificación Integral de Bonos Internacionales: Desarrolle las diferencias entre Bonos Soberanos Domésticos, Bonos Extranjeros (Foreign Bonds) y Eurobonos. Mencione sindicatos colocadores, moneda y marco legal aplicable.",
-                    placeholder: "Clasifique instrumentos de deuda internacional..."
-                },
-                {
-                    numero: 5,
-                    puntos: 15,
-                    pregunta: "Transmisión de Subas de Tasas de la Fed a Mercados Emergentes: Analice qué sucede con el 'Carry Trade', el tipo de cambio y los rendimientos de bonos en economías emergentes cuando la Fed sube su tasa target agresivamente.",
-                    placeholder: "Analice el impacto macroeconómico y cambiario en emergentes..."
-                }
-            ]
+            consignas: poolSfi[v]
         };
     } else if (matId === "historia") {
+        const poolHist = [
+            // Variante 0
+            [
+                { numero: 1, puntos: 40, pregunta: "PARTE I (40 PUNTOS): LA SEGUNDA REVOLUCIÓN INDUSTRIAL Y EL ASCENSO DE EE.UU. Y ALEMANIA (1870-1914). Analice las innovaciones tecnológicas (acero, química, electricidad, petróleo), la gran empresa moderna con gerencia profesional (Chandler), el fordismo y la pérdida del liderazgo británico.", placeholder: "Desarrolle la Segunda Revolución Industrial y el nuevo liderazgo..." },
+                { numero: 2, puntos: 20, pregunta: "PARTE II: LA PESTE NEGRA DE 1348. Analice el colapso demográfico, la escasez de siervos y la suba de salarios reales en la disolución del régimen feudal en Europa Occidental.", placeholder: "Desarrolle las consecuencias económicas de la Peste Negra..." },
+                { numero: 3, puntos: 20, pregunta: "PARTE II: LA MÁQUINA DE VAPOR Y LA MINERÍA DEL CARBÓN. Explique el salto de la energía orgánica a la mineral y cómo la máquina de Watt transformó el transporte y la manufactura.", placeholder: "Analice la transición energética al carbón mineral..." },
+                { numero: 4, puntos: 20, pregunta: "PARTE II: EL COLBERTISMO MERCANTILISTA. Describa la política industrial francesa, manufacturas reales, control de calidad y aduanas proteccionistas.", placeholder: "Desarrolle el mercantilismo colbertiano en Francia..." }
+            ],
+            // Variante 1
+            [
+                { numero: 1, puntos: 40, pregunta: "PARTE I (40 PUNTOS): LA GRAN DEPRESIÓN DE 1929 Y EL COLAPSO DEL COMERCIO MUNDIAL. Analice el colapso de Wall Street, la deflación, las quiebras bancarias en cadena y la respuesta del New Deal con regulación financiera y obras públicas keynesianas.", placeholder: "Desarrolle las causas y consecuencias de la crisis de 1929 y el New Deal..." },
+                { numero: 2, puntos: 20, pregunta: "PARTE II: LA PRIMERA REVOLUCIÓN INDUSTRIAL BRITÁNICA (1760-1830). Explique las Leyes de Cercamiento (Enclosures), el despegue del sector textil algodonero y el nacimiento del sistema fabril.", placeholder: "Desarrolle los factores del despegue fabril británico..." },
+                { numero: 3, puntos: 20, pregunta: "PARTE II: LA REVOLUCIÓN DE LOS PRECIOS EN EL SIGLO XVI. Analice el impacto de la llegada masiva de metales preciosos americanos a España y su difusión inflacionaria por el continente europeo.", placeholder: "Explique la teoría cuantitativa y la inflación del siglo XVI..." },
+                { numero: 4, puntos: 20, pregunta: "PARTE II: LAS CONSECUENCIAS ECONÓMICAS DE LA PAZ (1919). Analice las reparaciones impuestas a Alemania en el Tratado de Versalles según Keynes y el fenómeno de la hiperinflación de 1923.", placeholder: "Desarrolle la crítica de Keynes y la hiperinflación alemana..." }
+            ],
+            // Variante 2
+            [
+                { numero: 1, puntos: 40, pregunta: "PARTE I (40 PUNTOS): EL ORDEN ECONÓMICO DE POSGUERRA Y LOS 'TREINTA GLORIOSOS' (1945-1973). Analice los acuerdos de Bretton Woods (patrón dólar-oro), el Plan Marshall, el estado de bienestar y el crecimiento sincronizado occidental.", placeholder: "Desarrolle el orden de Bretton Woods y la era dorada del capitalismo..." },
+                { numero: 2, puntos: 20, pregunta: "PARTE II: EL FERROCARRIL Y LA UNIFICACIÓN DE MERCADOS. Explique el papel de la red ferroviaria como impulsora de las industrias pesadas (hierro, carbón) y articuladora del comercio interregional en el siglo XIX.", placeholder: "Analice el impacto integrador y económico del ferrocarril..." },
+                { numero: 3, puntos: 20, pregunta: "PARTE II: LA CRISIS DEL PETRÓLEO DE 1973 Y LA ESTANFLACIÓN. Explique el shock de oferta generado por la OPEP, el fin de la convertibilidad oro de Nixon en 1971 y el agotamiento del modelo keynesiano.", placeholder: "Analice la crisis energética de 1973 y la estanflación global..." },
+                { numero: 4, puntos: 20, pregunta: "PARTE II: LAS ACTAS DE NAVEGACIÓN Y EL MERCANTILISMO INGLÉS. Describa cómo las leyes marítimas de 1651 garantizaron el monopolio colonial de fletes a la flota británica y debilitaron a Holanda.", placeholder: "Desarrolle las Actas de Navegación y la hegemonía comercial británica..." }
+            ]
+        ];
         return {
             id: `hem_ia_${timestamp}`,
             nombre: `Modelo ${num} (IA Inédito)`,
             badge: "IA",
             titulo: `Modelo ${num} Inédito · Historia Económica Mundial`,
-            subtitulo: "Cátedra Prof. Andrea Picardi: 100 Puntos (Desarrollo Multidimensional)",
+            subtitulo: `Variante académica ${v + 1} · Cátedra Prof. Andrea Picardi: 100 Puntos`,
             duracion: "120 min · 60 pts para aprobar",
-            consignas: [
-                {
-                    numero: 1,
-                    puntos: 40,
-                    pregunta: `PARTE I (40 PUNTOS): TEMA ESTRUCTURAL A ELECCIÓN
-Elige y desarrolla en profundidad UNA (1) de las dos opciones:
-
-• OPCIÓN A: LA SEGUNDA REVOLUCIÓN INDUSTRIAL Y EL ASCENSO DE ESTADOS UNIDOS Y ALEMANIA (1870-1914).
-Analice las innovaciones tecnológicas (acero, química, electricidad, petróleo), el surgimiento de la gran empresa moderna con gerencia profesional (Alfred Chandler), el fordismo y cómo desplazaron a Gran Bretaña de su liderazgo industrial.
-
-• OPCIÓN B: LAS REPERCUSIONES ECONÓMICAS DE LA PAZ Y EL PERÍODO DE ENTREGUERRAS (1919-1939).
-Analice las consecuencias del Tratado de Versalles según John Maynard Keynes, la hiperinflación alemana de 1923, la reconstrucción monetaria sobre bases frágiles y las causas de fondo del colapso de 1929.`,
-                    placeholder: "Indique la opción elegida (OPCIÓN A u OPCIÓN B) y desarrolle exhaustivamente..."
-                },
-                {
-                    numero: 2,
-                    puntos: 20,
-                    pregunta: "PARTE II - CONSIGNA 1: EL IMPACTO DE LA PESTE NEGRA DE 1348. Analice el colapso demográfico, la escasez de mano de obra servil y el aumento de los salarios reales en la disolución del feudalismo.",
-                    placeholder: "Desarrolle las consecuencias económicas y agrarias de la Peste Negra..."
-                },
-                {
-                    numero: 3,
-                    puntos: 20,
-                    pregunta: "PARTE II - CONSIGNA 2: LA MÁQUINA DE VAPOR Y LA MINERÍA DEL CARBÓN. Explique cómo la necesidad de desagotar las minas inundadas en Cornualles impulsó las máquinas de Newcomen y Watt, y cómo el carbón mineral sustituyó a la energía orgánica.",
-                    placeholder: "Analice la transición energética hacia el carbón y la máquina de vapor..."
-                },
-                {
-                    numero: 4,
-                    puntos: 20,
-                    pregunta: "PARTE II - CONSIGNA 3: EL ROL DEL ESTADO EN EL MERCANTILISMO COLBERTIANO (COLBERTISMO). Describa la política de manufacturas reales en Francia, inspección de calidad e impuestos al comercio exterior.",
-                    placeholder: "Desarrolle el colbertismo y la intervención del estado mercantilista..."
-                },
-                {
-                    numero: 5,
-                    puntos: 20,
-                    pregunta: "PARTE II - CONSIGNA 4: EL COLAPSO DEL PATRÓN ORO EN 1931. Explique por qué Gran Bretaña debió abandonar la convertibilidad de la libra en oro durante la Gran Depresión y qué consecuencias tuvo para el comercio internacional.",
-                    placeholder: "Analice el fin de la convertibilidad de la libra en 1931 y el bloque de la libra..."
-                }
-            ]
+            consignas: poolHist[v]
         };
     } else if (matId === "estadistica") {
+        const poolEstad = [
+            // Variante 0
+            [
+                { numero: 1, puntos: 50, pregunta: `PROBLEMA 1: CONTROL DE CALIDAD Y PROBABILIDADES EN LÍNEAS DE PRODUCCIÓN (50 Puntos)
+800 componentes electrónicos inspeccionados en dos turnos:
+• 320 producidos en Turno Mañana (TM) y 480 en Turno Tarde (TT).
+• 120 presentaron Defectos (D), de los cuales 48 pertenecían al Turno Mañana.
+Calcule paso a paso con fórmulas:
+a) (10 pts) P(D ∩ TM) - Probabilidad conjunta.
+b) (10 pts) P(D | TM) - Probabilidad condicional.
+c) (10 pts) Prueba formal de independencia: ¿P(D | TM) = P(D)?
+d) (10 pts) P(D ∪ TM) - Regla de la adición.
+e) (10 pts) Probabilidad de extraer 3 componentes al azar del TM SIN reposición.`, placeholder: "Desarrolle cálculos paso a paso: a) P(D∩TM), b) P(D|TM), c) Prueba formal, d) Unión, e) Sin reposición..." },
+                { numero: 2, puntos: 50, pregunta: `PROBLEMA 2: TIEMPOS DE ENTREGA LOGÍSTICA EN INTERVALOS (50 Puntos)
+Muestra de n = 500 envíos según horas de entrega:
+[12 - 24): 50 | [24 - 36): 150 | [36 - 48): 200 | [48 - 60): 75 | [60 - 72]: 25
+Calcule con desarrollo explícito:
+a) (10 pts) Media aritmética (x̄) de los tiempos de entrega.
+b) (10 pts) Varianza (S²), Desvío estándar (S) y Coeficiente de Variación (CV). ¿Es representativa la media?
+c) (10 pts) Percentil 90 (P90) con fórmula de interpolación.
+d) (10 pts) Moda (Mo) del tiempo de entrega.
+e) (10 pts) Porcentaje de entregas que tardó más de 48 horas.`, placeholder: "Fórmulas y cálculos: a) Media, b) Varianza y CV, c) P90 con interpolación, d) Moda, e) % > 48..." }
+            ],
+            // Variante 1
+            [
+                { numero: 1, puntos: 50, pregunta: `PROBLEMA 1: TEST DIAGNÓSTICO CLÍNICO Y TEOREMA DE BAYES (50 Puntos)
+En un programa de control sanitario para una condición con prevalencia del 2% (P(E) = 0.02):
+• Sensibilidad del test: P(+ | E) = 0.95 (detecta al 95% de los afectados).
+• Especificidad del test: P(- | Sano) = 0.90 (el 90% de los sanos da negativo, 10% falsos positivos).
+Calcule con rigurosidad:
+a) (15 pts) Tabla de contingencia 2x2 para una población teórica de 10.000 individuos.
+b) (15 pts) Probabilidad total de que un individuo dé positivo al test: P(+).
+c) (20 pts) Teorema de Bayes: Si un individuo dio positivo, ¿cuál es la probabilidad real de que esté afectado: P(E | +)? Interprete la paradoja del falso positivo.`, placeholder: "Desarrolle: a) Matriz 2x2 con 10.000 casos, b) P(+) total, c) Teorema de Bayes e interpretación..." },
+                { numero: 2, puntos: 50, pregunta: `PROBLEMA 2: RENDIMIENTOS SEMANALES Y MEDIDAS DE POSICIÓN (50 Puntos)
+Distribución de frecuencias de n = 400 carteras de inversión según rendimiento porcentual:
+[-4% a 0%): 40 | [0% a 4%): 120 | [4% a 8%): 160 | [8% a 12%): 60 | [12% a 16%]: 20
+Determine paso a paso:
+a) (10 pts) Media aritmética ponderada (x̄) del rendimiento.
+b) (15 pts) Mediana (Me) con fórmula de interpolación sobre el intervalo mediano.
+c) (15 pts) Cuartil 1 (Q1) y Cuartil 3 (Q3) y Rango Intercuartil (RIC = Q3 - Q1).
+d) (10 pts) Coeficiente de variación (CV) y evaluación de homogeneidad de la muestra.`, placeholder: "Desarrolle: a) Media ponderada, b) Mediana con interpolación, c) Q1, Q3 y RIC, d) CV..." }
+            ],
+            // Variante 2
+            [
+                { numero: 1, puntos: 50, pregunta: `PROBLEMA 1: PROCESO ESTOCÁSTICO DE POISSON EN ATENCIÓN TELEFÓNICA (50 Puntos)
+Una central bancaria recibe en promedio λ = 6 consultas por hora en horario bancario:
+a) (10 pts) Identifique el modelo de probabilidad, la variable aleatoria y sus parámetros.
+b) (10 pts) Calcule la probabilidad de recibir exactamente 4 llamadas en una hora: P(X = 4).
+c) (15 pts) Calcule la probabilidad de recibir a lo sumo 3 llamadas en una hora: P(X ≤ 3).
+d) (15 pts) ¿Cuál es la probabilidad de registrar al menos 1 consulta en un lapso de 30 minutos (λ = 3)?`, placeholder: "Fórmulas de Poisson y desarrollo de cada inciso a, b, c y d..." },
+                { numero: 2, puntos: 50, pregunta: `PROBLEMA 2: SALARIOS Y DISPERSIÓN EN ENTIDAD FINANCIERA (50 Puntos)
+Muestra de n = 300 analistas financieros según escala salarial en miles de pesos:
+[400 - 600): 45 | [600 - 800): 105 | [800 - 1000): 90 | [1000 - 1200): 45 | [1200 - 1400]: 15
+Calcule:
+a) (10 pts) Media muestral (x̄).
+b) (15 pts) Desvío estándar insesgado (S) y Coeficiente de Variación.
+c) (15 pts) Percentil 75 (P75) con interpolación de clases acumuladas.
+d) (10 pts) Coeficiente de Asimetría de Pearson: Ap = 3 · (x̄ - Me) / S.`, placeholder: "Cálculos explícitos: a) x̄, b) S y CV, c) P75 con interpolación, d) Asimetría de Pearson..." }
+            ]
+        ];
         return {
             id: `estad_ia_${timestamp}`,
             nombre: `Modelo ${num} (IA Inédito)`,
             badge: "IA",
             titulo: `Modelo ${num} Inédito · Estadística 1`,
-            subtitulo: "Cátedra UADE: Procedimiento obligatorio, tabla 2x2 y datos agrupados",
+            subtitulo: `Variante académica ${v + 1} · Cátedra UADE: Procedimiento cuantitativo y pautas de examen`,
             duracion: "120 min · 60 pts para aprobar",
-            consignas: [
-                {
-                    numero: 1,
-                    puntos: 50,
-                    pregunta: `PROBLEMA 1: CONTROL DE CALIDAD Y PROBABILIDADES EN LÍNEAS DE PRODUCCIÓN (50 Puntos)
-Una planta industrial inspeccionó 800 componentes electrónicos fabricados en dos turnos:
-• 320 componentes fueron producidos en el Turno Mañana (TM) y 480 en el Turno Tarde (TT).
-• Del total de 800 componentes, 120 presentaron Defectos (D).
-• Del Turno Mañana, 48 componentes presentaron Defectos.
-
-Desarrolle detalladamente fórmulas y cálculos:
-a) (10 pts) P(D ∩ TM) - Probabilidad conjunta.
-b) (10 pts) P(D | TM) - Probabilidad condicional de defecto dado que es del Turno Mañana.
-c) (10 pts) Verifique FORMALMENTE si la aparición de defectos es INDEPENDIENTE del turno de producción: ¿P(D | TM) = P(D)?
-d) (10 pts) P(D ∪ TM) - Regla de la adición.
-e) (10 pts) Si se extraen 3 componentes al azar SIN REPOSICIÓN, calcule la probabilidad de que los 3 sean del Turno Mañana.`,
-                    placeholder: "Desarrolle cálculos paso a paso: a) P(D∩TM), b) P(D|TM), c) Prueba formal, d) Unión, e) Sin reposición..."
-                },
-                {
-                    numero: 2,
-                    puntos: 50,
-                    pregunta: `PROBLEMA 2: TIEMPOS DE ENTREGA LOGÍSTICA EN INTERVALOS (50 Puntos)
-Muestra de n = 500 envíos de paquetería según tiempo de entrega en horas:
-
-| Intervalo de Tiempo (hs) | Envíos (fi) |
-| :--- | :--- |
-| [12 - 24) | 50 |
-| [24 - 36) | 150 |
-| [36 - 48) | 200 |
-| [48 - 60) | 75 |
-| [60 - 72] | 25 |
-| **Total (n)** | **500** |
-
-Calcule con desarrollo explícito:
-a) (10 pts) Media aritmética (x̄) de los tiempos de entrega.
-b) (10 pts) Varianza (S²), Desvío estándar (S) y Coeficiente de Variación (CV). ¿Es la media un valor representativo (CV ≤ 25%)?
-c) (10 pts) Percentil 90 (P90): Intervalo, frecuencia acumulada e interpolación. Interprete en horas.
-d) (10 pts) Moda (Mo) del tiempo de entrega.
-e) (10 pts) ¿Qué porcentaje de entregas tardó más de 48 horas?`,
-                    placeholder: "Fórmulas y cálculos: a) x̄, b) CV y representatividad, c) P90 con interpolación, d) Moda, e) % > 48 hs..."
-                }
-            ]
+            consignas: poolEstad[v]
         };
     } else {
         // Contabilidad
+        const poolCont = [
+            // Variante 0
+            [
+                { numero: 1, puntos: 15, pregunta: `BLOQUE I: TEORÍA CON JUSTIFICACIÓN DE DESCARTE (T1 y T2):
+T1: Principio de Valuación al Costo: Los bienes se incorporan por el sacrificio económico necesario para su puesta en marcha o venta. Justifique por qué se descartan las restantes opciones.
+T2: Variación Modificativa Negativa: Identifique el hecho económico y justifique minuciosamente por qué descartó las demás alternativas.`, placeholder: "Respuestas y justificación exhaustiva de opciones descartadas para T1 y T2..." },
+                { numero: 2, puntos: 15, pregunta: `BLOQUE I: TEORÍA (T3 y T4):
+T3: Fondo Fijo y Arqueo: Tratamiento contable de la rendición y reposición con cheque.
+T4: Imputación de Ventas y CMV: ¿Por qué no se acredita Mercaderías al precio facturado de venta?`, placeholder: "Respuestas y justificaciones de descarte para T3 y T4..." },
+                { numero: 3, puntos: 70, pregunta: `BLOQUE II: CASO INTEGRAL "DISTRIBUIDORA DEL CENTRO S.A.":
+1. 01/04: Constitución: Suscripción por $1.200.000. Integran $600.000 en Banco Nación c/c, $400.000 en Mercaderías y el resto a 60 días. S/ Contrato social y boleta.
+2. 12/04: Compra de Muebles y Útiles por $250.000. 40% con cheque Banco y 60% con pagaré a 60 días con $15.000 de interés a vencer. S/ Factura original y pagaré.
+3. 05/05: Venta de mercaderías por $800.000. 50% con cheque al día y 50% en c/c a 30 días. CMV: $380.000. S/ Factura duplicada y minuta.
+4. 31/05: Devengamiento de intereses del primer mes ($7.500) y luz del local por $45.000 impaga. S/ Minuta y factura de luz.
+Registre en Libro Diario con partida doble, leyenda documental y verifique el balance patrimonial.`, placeholder: "Libro Diario con cuentas, Debe, Haber, leyendas S/ y comprobación de partida doble..." }
+            ],
+            // Variante 1
+            [
+                { numero: 1, puntos: 15, pregunta: `BLOQUE I: TEORÍA CON JUSTIFICACIÓN DE DESCARTE:
+T1: Principio de lo Devengado: Los resultados económicos se reconocen en el período en que se originan, con independencia del cobro o pago. Analice su aplicación práctica en alquileres e intereses.
+T2: Cuentas Regularizadoras del Activo: Función, saldo habitual (acreedor) y exposición en el estado de situación patrimonial (ej: Previsión Incobrables, Depreciación Acumulada).`, placeholder: "Desarrolle T1 y T2 fundamentando con normas contables..." },
+                { numero: 2, puntos: 15, pregunta: `BLOQUE I: TEORÍA (Conciliación Bancaria):
+Distinga entre diferencias transitorias o temporarias (cheques pendientes de cobro, depósitos no acreditados) y permanentes (débitos por comisiones, errores de registro). ¿Cuáles exigen asiento de ajuste en el Libro Diario?`, placeholder: "Explique diferencias bancarias y asientos de ajuste..." },
+                { numero: 3, puntos: 70, pregunta: `BLOQUE II: CASO PRÁCTICO "NORTE SUR COMERCIAL S.A.":
+1. 02/06: Apertura: Caja $500.000, Banco Galicia c/c $800.000 y Mercaderías $600.000 (3.000 unidades a $200 c/u). Deuda Proveedores: $200.000. Capital: $1.700.000.
+2. 08/06: Compra de 1.500 unidades a $220 c/u ($330.000). Se obtiene una bonificación comercial de $30.000 por volumen. Se abona 50% con transferencia bancaria y 50% en c/c con Proveedores. S/ Factura original.
+3. 18/06: Venta de 2.000 unidades a $500 c/u ($1.000.000). Se cobra 40% al contado y por el 60% se recibe un pagaré a 60 días con $40.000 de interés incluido ($640.000). CMV registrado por inventario permanente. S/ Factura duplicada y minuta.
+4. 30/06: Devengamiento del primer mes de intereses del pagaré a cobrar ($20.000) y devengamiento del sueldo del vendedor por $180.000 impago. S/ Minuta contable.
+Pautas: Asientos en Libro Diario con cuenta, tipo de variación patrimonial y verificación de igualdad A = P + PN.`, placeholder: "Libro Diario, asientos 1 a 4, cuentas T de mayor y comprobación final..." }
+            ],
+            // Variante 2
+            [
+                { numero: 1, puntos: 15, pregunta: `BLOQUE I: TEORÍA CONTABLE:
+T1: Bienes de Uso y Depreciaciones: Concepto de valor de incorporación, vida útil estimada, valor de rezago y método de amortización lineal. ¿Qué cuentas intervienen al cierre del ejercicio?
+T2: Variación Patrimonial Permutativa Exclusiva del Activo: Defina y brinde 3 ejemplos de la vida comercial donde el Activo cambie cualitativamente sin modificar el monto total del Patrimonio Neto.`, placeholder: "Respuestas teóricas justificadas para T1 y T2..." },
+                { numero: 2, puntos: 15, pregunta: `BLOQUE I: COMPROBANTES Y CONTROL INTERNO:
+Identifique qué comprobante respalda legal y contablemente cada operación:
+a) Compra al contado.
+b) Venta en cuenta corriente comercial.
+c) Devolución de mercaderías defectuosas por parte de un cliente.
+d) Depósito de cheques en cuenta corriente bancaria.`, placeholder: "Identifique comprobantes respaldatorios y efectos contables..." },
+                { numero: 3, puntos: 70, pregunta: `BLOQUE II: CASO INTEGRAL "OMEGA LOGÍSTICA S.A.":
+1. 01/08: Constitución: Aporte de socios de $2.000.000 integrado en efectivo y depositado en Banco Nación c/c.
+2. 05/08: Compra de un Utilitario de reparto por $1.500.000. Se paga $500.000 con cheque bancario y el saldo ($1.000.000) mediante préstamo prendario en 10 cuotas con $100.000 de intereses adelantados a devengar. S/ Factura y contrato prendario.
+3. 10/08: Pago de póliza de seguro contra todo riesgo por 6 meses por $120.000 con cheque Banco Nación. S/ Póliza y recibo.
+4. 20/08: Venta de servicios logísticos por $600.000 cobrados con cheques al día de terceros (Valores a Depositar). S/ Factura duplicado.
+5. 31/08: Devengamiento del primer mes del seguro ($20.000) y primer mes del interés del préstamo ($10.000). S/ Minutas de devengamiento.
+Registre en Libro Diario con partida doble, clasifique variaciones patrimoniales y demuestre la ecuación patrimonial al 31/08.`, placeholder: "Asientos en Libro Diario, Debe, Haber, análisis patrimonial y saldos..." }
+            ]
+        ];
         return {
             id: `cont_ia_${timestamp}`,
             nombre: `Modelo ${num} (IA Inédito)`,
             badge: "IA",
             titulo: `Modelo ${num} Inédito · Contabilidad 1`,
-            subtitulo: "Cátedra Cdra. Alicia Landini: 30% Teórico Justificado + 70% Práctico Integral",
+            subtitulo: `Variante académica ${v + 1} · Cátedra Cdra. Alicia Landini: 30% Teórico + 70% Práctico`,
             duracion: "120 min · 60 pts para aprobar",
-            consignas: [
-                {
-                    numero: 1,
-                    puntos: 15,
-                    pregunta: `BLOQUE I: TEORÍA CON JUSTIFICACIÓN OBLIGATORIA DE DESCARTE (Preguntas T1 y T2):
-Pregunta T1: Principio de Valuación al Costo
-El principio de valuación al costo establece que:
-[A] Los activos deben registrarse a su valor de liquidación forzosa.
-[B] Los bienes se incorporan por el sacrificio económico necesario para adquirirlos o producirlos y ponerlos en condiciones de uso o venta.
-[C] Los costos financieros futuros deben sumarse siempre al valor de contado.
-[D] Solo aplica a los bienes intangibles.
-[E] Todas son correctas.
-[F] Ninguna es correcta.
-
-Pregunta T2: Variaciones Patrimoniales Modificativas
-Se produce una variación patrimonial modificativa negativa cuando:
-[A] Se compra un rodado pagando en efectivo.
-[B] Se cobra una deuda de un cliente con cheque al día.
-[C] Se produce una pérdida o gasto que reduce el Patrimonio Neto sin contraprestación de activo.
-[D] Se suscribe capital social por acta constitutiva.
-[E] Todas son correctas.
-[F] Ninguna es correcta.`,
-                    placeholder: "Indique las respuestas a T1 y T2 Y JUSTIFIQUE DETALLADAMENTE por qué descartó las demás opciones..."
-                },
-                {
-                    numero: 2,
-                    puntos: 15,
-                    pregunta: `BLOQUE I: TEORÍA (Preguntas T3 y T4):
-Pregunta T3: Fondo Fijo y Arqueo de Caja
-La reposición del fondo fijo mediante cheque genera una variación:
-[A] Permutativa del activo (aumenta Fondo Fijo y disminuye Banco).
-[B] Modificativa negativa por el total de los comprobantes rendidos y acreditación bancaria.
-[C] De patrimonio neto que reduce el capital social.
-[D] Nula porque no se registra en el libro diario.
-[E] Todas son correctas.
-[F] Ninguna es correcta.
-
-Pregunta T4: La Cuenta Mercaderías y el Asiento de Costo
-¿Por qué la cuenta Mercaderías no se acredita al precio de venta facturado al cliente?
-[A] Porque la diferencia entre precio de venta y costo representa el resultado bruto de la operación.
-[B] Porque está prohibido por la ley de cheques.
-[C] Porque las mercaderías solo se acreditan a fin de año.
-[D] Porque el inventario no tiene relación con el libro diario.
-[E] Todas son correctas.
-[F] Ninguna es correcta.`,
-                    placeholder: "Indique respuestas y justifique minuciosamente las opciones que descartó..."
-                },
-                {
-                    numero: 3,
-                    puntos: 70,
-                    pregunta: `BLOQUE II: CASO INTEGRAL "DISTRIBUIDORA DEL CENTRO S.A." (3 Meses):
-1. 01/04: Constitución: Los socios suscriben capital por $1.200.000. Integran en el acto $600.000 en efectivo depositado en Banco Nación c/c, $400.000 en Mercaderías y el resto a 60 días. S/ Contrato social y boleta.
-2. 12/04: Compra de Muebles y Útiles por $250.000. Se paga 40% con cheque Banco Nación y 60% con pagaré a 60 días con $15.000 de interés a vencer ($165.000 total pagaré). S/ Factura original y pagaré.
-3. 05/05: Venta de mercaderías por $800.000. 50% con cheque de terceros y 50% en c/c comercial a 30 días. S/ Factura duplicada. Costo de mercaderías vendidas: $380.000. S/ Minuta contable.
-4. 31/05: Devengamiento de intereses del pagaré correspondiente al primer mes ($7.500) y devengamiento de servicios de luz del local por $45.000 impagos. S/ Minuta contable y factura de luz.
-
-CONSIGNAS:
-a) Asientos de Libro Diario con cuenta, variación patrimonial y leyenda documental S/ (...).
-b) Comprobación de partida doble.
-c) Ecuación Patrimonial al 31/05.`,
-                    placeholder: `Libro Diario:
--------------------------------------------------------------
-1/04: ...
-Total Debe = $________ | Total Haber = $________
-Balance al 31/05: Activo = Pasivo + PN`
-                }
-            ]
+            consignas: poolCont[v]
         };
     }
 }
