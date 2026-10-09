@@ -18,7 +18,7 @@
     <link rel="icon" type="image/svg+xml" href="icon.svg?v=29.31">
     <link rel="apple-touch-icon" href="icon-192.png?v=29.31">
     <link rel="manifest" href="manifest.json?v=29.31">
-    <link rel="stylesheet" href="style.css?v=29.37">
+    <link rel="stylesheet" href="style.css?v=29.38">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -3649,6 +3649,44 @@
                                     </div>
                                 </div>
 
+                                <!-- Banco de sugerencias de cuentas contables universitarias -->
+                                <datalist id="labListaCuentasContables">
+                                    <option value="Caja">
+                                    <option value="Banco Cuenta Corriente">
+                                    <option value="Valores a Depositar">
+                                    <option value="Deudores por Ventas">
+                                    <option value="Documentos a Cobrar">
+                                    <option value="Deudores Varios">
+                                    <option value="Mercaderías de Reventa">
+                                    <option value="Muebles y Útiles">
+                                    <option value="Instalaciones">
+                                    <option value="Rodados">
+                                    <option value="Inmuebles">
+                                    <option value="Equipos de Computación">
+                                    <option value="Proveedores">
+                                    <option value="Acreedores Varios">
+                                    <option value="Documentos a Pagar">
+                                    <option value="Sueldos a Pagar">
+                                    <option value="Impuestos a Pagar">
+                                    <option value="Capital Social">
+                                    <option value="Reservas">
+                                    <option value="Resultados Acumulados">
+                                    <option value="Ventas">
+                                    <option value="Costo de Mercaderías Vendidas (CMV)">
+                                    <option value="Gastos Generales">
+                                    <option value="Sueldos y Jornales">
+                                    <option value="Alquileres Pagados">
+                                    <option value="Intereses Perdidos">
+                                    <option value="Intereses Ganados">
+                                    <option value="Descuentos Otorgados">
+                                    <option value="Descuentos Obtenidos">
+                                    <option value="IVA Débito Fiscal">
+                                    <option value="IVA Crédito Fiscal">
+                                    <option value="IVA Saldo a Favor">
+                                    <option value="Amortizaciones Acumuladas Rodados">
+                                    <option value="Amortizaciones Acumuladas Muebles y Útiles">
+                                </datalist>
+
                                 <div class="lab-table-container lab-diario-table-container">
                                     <table class="lab-grid-table lab-diario-table" id="labDiarioTable">
                                         <thead>
@@ -3666,11 +3704,11 @@
                                         </tbody>
                                         <tfoot>
                                             <tr class="lab-diario-foot-row">
-                                                <td colspan="3" style="text-align: right; font-weight: 700;">
+                                                <td colspan="3" class="lab-diario-foot-title">
                                                     Totales del Libro Diario:
                                                 </td>
-                                                <td id="labDiarioTotalDebe" style="text-align: right; font-weight: 800; color: #34d399;">$0.00</td>
-                                                <td id="labDiarioTotalHaber" style="text-align: right; font-weight: 800; color: #38bdf8;">$0.00</td>
+                                                <td id="labDiarioTotalDebe" class="lab-diario-foot-total-debe">$0.00</td>
+                                                <td id="labDiarioTotalHaber" class="lab-diario-foot-total-haber">$0.00</td>
                                                 <td></td>
                                             </tr>
                                         </tfoot>
@@ -6930,7 +6968,7 @@
 
 <script src="mqtt.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="script.js?v=29.37" defer></script>
+<script src="script.js?v=29.38" defer></script>
 
 <!-- =========================================================
      MODAL DE PROMPT PARA GEMINI (CREAR JUEGOS DESDE PDF)

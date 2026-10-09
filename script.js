@@ -20389,7 +20389,7 @@ function cambiarSubvistaContabilidad(vista) {
     if (dom.labContabSeccionBalance) dom.labContabSeccionBalance.classList.toggle("hidden", vista !== "balance");
     if (dom.labContabSeccionCalc) dom.labContabSeccionCalc.classList.toggle("hidden", vista !== "calc");
 
-    if (vista === "mayor") renderizarLibroMayorUI();
+    if (vista === "mayor") renderLibroMayorUI();
     if (vista === "balance") sincronizarBalanceSumasYSaldos();
 }
 
@@ -20402,12 +20402,12 @@ function renderizarLibroDiarioUI() {
         const headerRow = document.createElement("tr");
         headerRow.className = "lab-asiento-header-row";
         headerRow.innerHTML = `
-            <td colspan="5" style="padding: 0.35rem 0.6rem;">
-                <strong>📝 Asiento N° ${asiento.id || aIdx + 1}</strong>: 
-                <input type="text" class="lab-diario-input" style="display:inline-block; width: calc(100% - 130px); margin-left: 0.4rem; padding: 0.2rem 0.45rem; font-size: 0.8rem; background: rgba(0,0,0,0.3); border-color: rgba(255,255,255,0.15);" value="${asiento.detalle || ''}" placeholder="Detalle / Leyenda de la operación (ej. Compra mercaderías)..." oninput="contabilidadEstado.asientos[${aIdx}].detalle = this.value">
+            <td colspan="5" class="lab-asiento-header-cell">
+                <span class="lab-asiento-title-badge">📝 Asiento N° ${asiento.id || aIdx + 1}</span>
+                <input type="text" class="lab-diario-input lab-asiento-detalle-input" value="${asiento.detalle || ''}" placeholder="Detalle / Leyenda de la operación (ej. Compra mercaderías)..." oninput="contabilidadEstado.asientos[${aIdx}].detalle = this.value">
             </td>
-            <td style="text-align: center;">
-                <button type="button" class="button button--ghost button--xs" title="Eliminar este asiento completo" style="color: #f87171; padding: 0.15rem 0.35rem;" onclick="eliminarAsientoContable(${aIdx})">🗑️</button>
+            <td class="lab-asiento-del-cell" style="text-align: center;">
+                <button type="button" class="button button--ghost button--xs button--danger-text lab-btn-del-asiento" title="Eliminar este asiento completo" onclick="eliminarAsientoContable(${aIdx})">🗑️</button>
             </td>
         `;
         dom.labDiarioTableBody.appendChild(headerRow);
@@ -20420,13 +20420,16 @@ function renderizarLibroDiarioUI() {
             const v = fila.variacion || "";
 
             tr.innerHTML = `
-                <td>
-                    <input type="text" class="lab-diario-input" value="${fila.fecha || asiento.fecha || ''}" placeholder="dd/mm" oninput="actualizarCeldaDiario(${aIdx}, ${fIdx}, 'fecha', this.value)">
+                <td class="lab-cell-fecha">
+                    <span class="lab-mobile-field-tag">📅 Fecha</span>
+                    <input type="text" class="lab-diario-input lab-diario-input--fecha" value="${fila.fecha || asiento.fecha || ''}" placeholder="dd/mm" oninput="actualizarCeldaDiario(${aIdx}, ${fIdx}, 'fecha', this.value)">
                 </td>
-                <td>
-                    <input type="text" class="lab-diario-input" value="${fila.cuenta || ''}" placeholder="Nombre de la cuenta (ej. Caja, Mercaderías)" oninput="actualizarCeldaDiario(${aIdx}, ${fIdx}, 'cuenta', this.value)">
+                <td class="lab-cell-cuenta">
+                    <span class="lab-mobile-field-tag">🏷️ Cuenta Contable (Nombre Completo)</span>
+                    <input type="text" list="labListaCuentasContables" class="lab-diario-input lab-diario-input--cuenta" value="${fila.cuenta || ''}" placeholder="Nombre completo de la cuenta (ej. Deudores por Ventas)" oninput="actualizarCeldaDiario(${aIdx}, ${fIdx}, 'cuenta', this.value)">
                 </td>
-                <td style="width: 140px;">
+                <td class="lab-cell-variacion">
+                    <span class="lab-mobile-field-tag">📊 Variación</span>
                     <select class="lab-diario-input lab-diario-select-variacion" onchange="actualizarCeldaDiario(${aIdx}, ${fIdx}, 'variacion', this.value)">
                         <option value="" ${!v ? 'selected' : ''}>-- Variación --</option>
                         <option value="A+" ${v === 'A+' ? 'selected' : ''}>A+ (Activo +)</option>
@@ -20437,20 +20440,22 @@ function renderizarLibroDiarioUI() {
                         <option value="PN-" ${v === 'PN-' ? 'selected' : ''}>PN- (Patrimonio Neto -)</option>
                         <option value="RP+" ${v === 'RP+' ? 'selected' : ''}>RP+ (Resultado Positivo)</option>
                         <option value="RN+" ${v === 'RN+' ? 'selected' : ''}>RN+ (Resultado Negativo)</option>
-                        <option value="Reg. A+" ${v === 'Reg. A+' ? 'selected' : ''}>Reg. A+ (Regularizadora Activo +)</option>
-                        <option value="Reg. A-" ${v === 'Reg. A-' ? 'selected' : ''}>Reg. A- (Regularizadora Activo -)</option>
-                        <option value="Reg. P+" ${v === 'Reg. P+' ? 'selected' : ''}>Reg. P+ (Regularizadora Pasivo +)</option>
-                        <option value="Reg. P-" ${v === 'Reg. P-' ? 'selected' : ''}>Reg. P- (Regularizadora Pasivo -)</option>
+                        <option value="Reg. A+" ${v === 'Reg. A+' ? 'selected' : ''}>Reg. A+ (Reg. Activo +)</option>
+                        <option value="Reg. A-" ${v === 'Reg. A-' ? 'selected' : ''}>Reg. A- (Reg. Activo -)</option>
+                        <option value="Reg. P+" ${v === 'Reg. P+' ? 'selected' : ''}>Reg. P+ (Reg. Pasivo +)</option>
+                        <option value="Reg. P-" ${v === 'Reg. P-' ? 'selected' : ''}>Reg. P- (Reg. Pasivo -)</option>
                     </select>
                 </td>
-                <td>
-                    <input type="number" step="any" min="0" class="lab-diario-input lab-diario-input--number" value="${fila.debe !== '' && fila.debe !== undefined && fila.debe !== null ? fila.debe : ''}" placeholder="0.00" oninput="actualizarCeldaDiario(${aIdx}, ${fIdx}, 'debe', this.value)">
+                <td class="lab-cell-debe">
+                    <span class="lab-mobile-field-tag">📥 Debe ($)</span>
+                    <input type="number" step="any" min="0" class="lab-diario-input lab-diario-input--number lab-diario-input--debe" value="${fila.debe !== '' && fila.debe !== undefined && fila.debe !== null ? fila.debe : ''}" placeholder="0.00" oninput="actualizarCeldaDiario(${aIdx}, ${fIdx}, 'debe', this.value)">
                 </td>
-                <td>
-                    <input type="number" step="any" min="0" class="lab-diario-input lab-diario-input--number" value="${fila.haber !== '' && fila.haber !== undefined && fila.haber !== null ? fila.haber : ''}" placeholder="0.00" oninput="actualizarCeldaDiario(${aIdx}, ${fIdx}, 'haber', this.value)">
+                <td class="lab-cell-haber">
+                    <span class="lab-mobile-field-tag">📤 Haber ($)</span>
+                    <input type="number" step="any" min="0" class="lab-diario-input lab-diario-input--number lab-diario-input--haber" value="${fila.haber !== '' && fila.haber !== undefined && fila.haber !== null ? fila.haber : ''}" placeholder="0.00" oninput="actualizarCeldaDiario(${aIdx}, ${fIdx}, 'haber', this.value)">
                 </td>
-                <td class="lab-asiento-actions-cell">
-                    <button type="button" class="button button--ghost button--xs" title="Quitar línea" style="color: #f87171; padding: 0.15rem 0.3rem;" onclick="eliminarFilaDeAsiento(${aIdx}, ${fIdx})">✕</button>
+                <td class="lab-cell-actions lab-asiento-actions-cell">
+                    <button type="button" class="button button--ghost button--xs button--danger-text lab-btn-quitar-fila" title="Quitar línea de cuenta" onclick="eliminarFilaDeAsiento(${aIdx}, ${fIdx})">✕</button>
                 </td>
             `;
             dom.labDiarioTableBody.appendChild(tr);
@@ -20458,9 +20463,10 @@ function renderizarLibroDiarioUI() {
 
         // Fila para agregar otra cuenta al asiento
         const addRow = document.createElement("tr");
+        addRow.className = "lab-asiento-add-row";
         addRow.innerHTML = `
-            <td colspan="6" style="padding: 0.25rem 0.55rem; background: rgba(15, 23, 42, 0.25);">
-                <button type="button" class="button button--ghost button--xs" style="color: #38bdf8; font-size: 0.74rem;" onclick="agregarFilaAAsiento(${aIdx})">
+            <td colspan="6" class="lab-asiento-add-cell">
+                <button type="button" class="button button--ghost button--xs lab-btn-add-cuenta" onclick="agregarFilaAAsiento(${aIdx})">
                     ➕ Agregar Cuenta al Asiento N° ${asiento.id || aIdx + 1}
                 </button>
             </td>

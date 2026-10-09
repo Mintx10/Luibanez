@@ -14965,15 +14965,18 @@ body.modo-dev-activo .juntos-locked-notice {
 }
 
 .lab-diario-table-container {
-    max-height: 48vh;
+    max-height: 52vh;
     overflow-y: auto;
+    overflow-x: auto;
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: var(--radius-sm);
     background: rgba(15, 23, 42, 0.4);
+    -webkit-overflow-scrolling: touch;
 }
 
 .lab-diario-table {
     width: 100%;
+    min-width: 680px;
     border-collapse: collapse;
 }
 
@@ -14988,14 +14991,68 @@ body.modo-dev-activo .juntos-locked-notice {
     border-bottom: 1px solid rgba(255, 255, 255, 0.12);
 }
 
+.lab-mobile-field-tag {
+    display: none;
+}
+
+.lab-cell-fecha {
+    width: 95px;
+    min-width: 85px;
+}
+
+.lab-cell-cuenta {
+    min-width: 220px;
+}
+
+.lab-cell-variacion {
+    width: 145px;
+    min-width: 135px;
+}
+
+.lab-cell-debe {
+    width: 120px;
+    min-width: 105px;
+}
+
+.lab-cell-haber {
+    width: 120px;
+    min-width: 105px;
+}
+
+.lab-cell-actions {
+    width: 45px;
+    text-align: center;
+}
+
 .lab-asiento-header-row td {
-    background: rgba(30, 41, 59, 0.8);
-    padding: 0.4rem 0.75rem;
+    background: rgba(30, 41, 59, 0.85);
+    padding: 0.45rem 0.75rem;
     font-size: 0.8rem;
     font-weight: 700;
     color: #38bdf8;
     border-top: 1px solid rgba(56, 189, 248, 0.25);
     border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.lab-asiento-header-cell {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.lab-asiento-title-badge {
+    font-weight: 800;
+    color: #38bdf8;
+    white-space: nowrap;
+}
+
+.lab-asiento-detalle-input {
+    flex: 1;
+    margin-left: 0.4rem;
+    padding: 0.25rem 0.55rem;
+    font-size: 0.82rem;
+    background: rgba(0, 0, 0, 0.35);
+    border-color: rgba(255, 255, 255, 0.15);
 }
 
 .lab-asiento-row td {
@@ -15065,6 +15122,385 @@ body.modo-dev-activo .juntos-locked-notice {
     display: flex;
     align-items: center;
     gap: 0.45rem;
+}
+
+/* =========================================================
+   ADAPTACIÓN MOBILE DEL LIBRO DIARIO (VISTA FICHAS / TARJETAS)
+   ========================================================= */
+
+@media (max-width: 768px) {
+    .lab-contab-toolbar {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 0.55rem !important;
+    }
+
+    .lab-contab-nav-pills {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 0.35rem !important;
+        width: 100% !important;
+        padding: 0.35rem !important;
+    }
+
+    .lab-contab-subtab-btn {
+        text-align: center !important;
+        padding: 0.5rem 0.35rem !important;
+        font-size: 0.76rem !important;
+        white-space: normal !important;
+        line-height: 1.25 !important;
+        border-radius: var(--radius-xs) !important;
+        justify-content: center !important;
+    }
+
+    .lab-tool-actions-right,
+    #labBtnVerificarContabilidad {
+        width: 100% !important;
+        justify-content: center !important;
+        padding: 0.55rem 1rem !important;
+        font-size: 0.88rem !important;
+    }
+
+    .lab-diario-controls {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 0.5rem !important;
+    }
+
+    .lab-diario-controls-left {
+        display: flex !important;
+        gap: 0.45rem !important;
+        width: 100% !important;
+    }
+
+    .lab-diario-controls-left .button {
+        flex: 1 !important;
+        justify-content: center !important;
+        font-size: 0.78rem !important;
+        padding: 0.45rem 0.5rem !important;
+    }
+
+    .lab-diario-controls-right {
+        width: 100% !important;
+    }
+
+    .lab-diario-controls-right .button {
+        width: 100% !important;
+        justify-content: center !important;
+        font-size: 0.78rem !important;
+        padding: 0.45rem 0.5rem !important;
+    }
+
+    /* Contenedor y Tabla convertida a Tarjetas Móviles */
+    .lab-diario-table-container {
+        max-height: none !important;
+        overflow-x: visible !important;
+        overflow-y: visible !important;
+        background: transparent !important;
+        border: none !important;
+        padding: 0 !important;
+        box-shadow: none !important;
+    }
+
+    .lab-diario-table {
+        min-width: 0 !important;
+        width: 100% !important;
+        display: block !important;
+    }
+
+    .lab-diario-table thead {
+        display: none !important;
+    }
+
+    .lab-diario-table tbody {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 0.65rem !important;
+        width: 100% !important;
+    }
+
+    /* Encabezado del Asiento en Móvil */
+    .lab-asiento-header-row {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        flex-wrap: wrap !important;
+        gap: 0.45rem !important;
+        padding: 0.65rem 0.85rem !important;
+        margin-top: 0.85rem !important;
+        margin-bottom: 0.35rem !important;
+        background: linear-gradient(135deg, rgba(30, 41, 59, 0.98), rgba(15, 23, 42, 0.95)) !important;
+        border: 1px solid rgba(56, 189, 248, 0.4) !important;
+        border-radius: var(--radius-md, 10px) !important;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25) !important;
+    }
+
+    .lab-asiento-header-cell {
+        display: flex !important;
+        flex-direction: column !important;
+        flex: 1 1 200px !important;
+        min-width: 0 !important;
+        gap: 0.35rem !important;
+        padding: 0 !important;
+        border: none !important;
+        background: transparent !important;
+    }
+
+    .lab-asiento-title-badge {
+        font-size: 0.92rem !important;
+        font-weight: 800 !important;
+        color: #38bdf8 !important;
+        letter-spacing: 0.02em;
+    }
+
+    .lab-asiento-detalle-input {
+        width: 100% !important;
+        margin-left: 0 !important;
+        font-size: 0.84rem !important;
+        padding: 0.45rem 0.65rem !important;
+        border-radius: var(--radius-xs, 6px) !important;
+        background: rgba(15, 23, 42, 0.85) !important;
+    }
+
+    .lab-asiento-del-cell {
+        padding: 0 !important;
+        border: none !important;
+        background: transparent !important;
+    }
+
+    /* Ficha / Tarjeta de cada Cuenta Contable en Móvil */
+    .lab-asiento-row {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 0.55rem 0.65rem !important;
+        padding: 0.85rem 0.85rem 0.9rem !important;
+        background: rgba(15, 23, 42, 0.88) !important;
+        border: 1px solid rgba(255, 255, 255, 0.12) !important;
+        border-radius: var(--radius-md, 10px) !important;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35) !important;
+        position: relative !important;
+    }
+
+    .lab-asiento-row td {
+        display: block !important;
+        padding: 0 !important;
+        border: none !important;
+        background: transparent !important;
+    }
+
+    .lab-mobile-field-tag {
+        display: block !important;
+        font-size: 0.7rem !important;
+        font-weight: 700 !important;
+        color: #94a3b8 !important;
+        margin-bottom: 0.25rem !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.04em !important;
+    }
+
+    .lab-cell-fecha {
+        grid-column: 1 / 2 !important;
+    }
+
+    .lab-cell-variacion {
+        grid-column: 2 / 3 !important;
+        padding-right: 34px !important; /* Espacio para el botón de quitar fila */
+    }
+
+    .lab-cell-actions {
+        position: absolute !important;
+        top: 0.75rem !important;
+        right: 0.75rem !important;
+    }
+
+    .lab-btn-quitar-fila {
+        padding: 0.25rem 0.45rem !important;
+        font-size: 0.88rem !important;
+        line-height: 1 !important;
+    }
+
+    /* ¡CUENTA CONTABLE AL 100% DE ANCHO PARA QUE SE LEA COMPLETA SIN CORTAR! */
+    .lab-cell-cuenta {
+        grid-column: 1 / -1 !important;
+    }
+
+    .lab-cell-cuenta .lab-mobile-field-tag {
+        color: #38bdf8 !important;
+        font-size: 0.72rem !important;
+    }
+
+    .lab-cell-cuenta .lab-diario-input {
+        font-size: 0.96rem !important;
+        font-weight: 600 !important;
+        color: #ffffff !important;
+        background: rgba(15, 23, 42, 0.95) !important;
+        border: 1.5px solid rgba(56, 189, 248, 0.5) !important;
+        padding: 0.55rem 0.75rem !important;
+        border-radius: var(--radius-sm, 8px) !important;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2) !important;
+    }
+
+    .lab-cell-cuenta .lab-diario-input:focus {
+        border-color: #38bdf8 !important;
+        box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.25) !important;
+    }
+
+    .lab-cell-debe {
+        grid-column: 1 / 2 !important;
+    }
+
+    .lab-cell-haber {
+        grid-column: 2 / 3 !important;
+    }
+
+    .lab-diario-input--number {
+        font-size: 0.96rem !important;
+        font-weight: 700 !important;
+        padding: 0.5rem 0.65rem !important;
+    }
+
+    .lab-diario-input--debe {
+        color: #34d399 !important;
+        border-color: rgba(52, 211, 153, 0.35) !important;
+    }
+
+    .lab-diario-input--haber {
+        color: #38bdf8 !important;
+        border-color: rgba(56, 189, 248, 0.35) !important;
+    }
+
+    /* Botón de agregar cuenta en móvil */
+    .lab-asiento-add-row {
+        display: block !important;
+        width: 100% !important;
+        margin-bottom: 0.85rem !important;
+    }
+
+    .lab-asiento-add-cell {
+        display: block !important;
+        width: 100% !important;
+        padding: 0 !important;
+        border: none !important;
+    }
+
+    .lab-btn-add-cuenta {
+        width: 100% !important;
+        padding: 0.65rem 1rem !important;
+        border: 1.5px dashed rgba(56, 189, 248, 0.45) !important;
+        background: rgba(56, 189, 248, 0.08) !important;
+        border-radius: var(--radius-md, 10px) !important;
+        color: #38bdf8 !important;
+        font-weight: 700 !important;
+        font-size: 0.85rem !important;
+        text-align: center !important;
+        justify-content: center !important;
+        transition: all 0.15s ease !important;
+    }
+
+    .lab-btn-add-cuenta:hover,
+    .lab-btn-add-cuenta:active {
+        background: rgba(56, 189, 248, 0.18) !important;
+        border-color: #38bdf8 !important;
+    }
+
+    /* Totales del Libro Diario en Móvil */
+    .lab-diario-table tfoot,
+    .lab-diario-foot-row {
+        display: block !important;
+        width: 100% !important;
+        border-top: none !important;
+        background: transparent !important;
+    }
+
+    .lab-diario-foot-row {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 0.45rem !important;
+        padding: 0.75rem 0.85rem !important;
+        margin-top: 0.65rem !important;
+        background: rgba(15, 23, 42, 0.98) !important;
+        border: 1px solid rgba(255, 255, 255, 0.15) !important;
+        border-radius: var(--radius-md, 10px) !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+    }
+
+    .lab-diario-foot-title {
+        grid-column: 1 / -1 !important;
+        text-align: center !important;
+        font-size: 0.82rem !important;
+        font-weight: 700 !important;
+        color: #94a3b8 !important;
+        padding: 0 0 0.4rem 0 !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    }
+
+    .lab-diario-foot-total-debe {
+        grid-column: 1 / 2 !important;
+        text-align: center !important;
+        font-size: 1rem !important;
+        font-weight: 800 !important;
+        color: #34d399 !important;
+        padding: 0.3rem 0.2rem !important;
+        border: none !important;
+    }
+
+    .lab-diario-foot-total-debe::before {
+        content: "Total Debe";
+        display: block;
+        font-size: 0.68rem;
+        font-weight: 700;
+        color: #94a3b8;
+        margin-bottom: 0.15rem;
+        text-transform: uppercase;
+    }
+
+    .lab-diario-foot-total-haber {
+        grid-column: 2 / 3 !important;
+        text-align: center !important;
+        font-size: 1rem !important;
+        font-weight: 800 !important;
+        color: #38bdf8 !important;
+        padding: 0.3rem 0.2rem !important;
+        border: none !important;
+    }
+
+    .lab-diario-foot-total-haber::before {
+        content: "Total Haber";
+        display: block;
+        font-size: 0.68rem;
+        font-weight: 700;
+        color: #94a3b8;
+        margin-bottom: 0.15rem;
+        text-transform: uppercase;
+    }
+
+    .lab-diario-foot-row td:last-child {
+        display: none !important;
+    }
+
+    /* Barra de Partida Doble en móvil */
+    .lab-partida-doble-bar {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        text-align: center !important;
+        gap: 0.35rem !important;
+        padding: 0.75rem 0.85rem !important;
+        font-size: 0.82rem !important;
+    }
+
+    .lab-pd-status {
+        justify-content: center !important;
+    }
+
+    .lab-pd-diff {
+        font-size: 0.85rem !important;
+        font-weight: 800 !important;
+    }
+
+    /* Tabla de Balance en Móvil */
+    .lab-balance-table {
+        min-width: 580px !important;
+    }
 }
 
 /* Libro Mayor: Cuentas T */
