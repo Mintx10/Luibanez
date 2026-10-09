@@ -18,7 +18,7 @@
     <link rel="icon" type="image/svg+xml" href="icon.svg?v=29.31">
     <link rel="apple-touch-icon" href="icon-192.png?v=29.31">
     <link rel="manifest" href="manifest.json?v=29.31">
-    <link rel="stylesheet" href="style.css?v=29.35">
+    <link rel="stylesheet" href="style.css?v=29.36">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -3510,14 +3510,27 @@
 
                         <!-- WIDGET 3: MATRIZ DE CONTINGENCIA Y TEOREMA DE BAYES -->
                         <div id="labWidgetBayes" class="lab-tab-pane hidden" role="tabpanel">
-                            <div class="lab-bayes-config">
+                            <!-- Configuración de los 4 Eventos (Filas y Columnas Personalizables) -->
+                            <div class="lab-bayes-header-box">
+                                <span class="lab-bayes-header-title">🏷️ Definición de los 4 Eventos (Variables):</span>
+                                <p class="lab-bayes-header-desc">Configurá el nombre exacto de cada una de las 4 categorías del enunciado (ej: Hombre / Mujer, Enfermo / Sano).</p>
+                            </div>
+                            <div class="lab-bayes-config-grid">
                                 <div class="lab-input-group">
-                                    <label for="labBayesEvAName">Evento A (Ej. Enfermo):</label>
-                                    <input type="text" id="labBayesEvAName" class="input input--sm" value="Enfermo (A)">
+                                    <label for="labBayesEvAName">Evento A (Fila 1):</label>
+                                    <input type="text" id="labBayesEvAName" class="input input--sm" value="Enfermo (A)" placeholder="Ej: Hombre, Enfermo">
                                 </div>
                                 <div class="lab-input-group">
-                                    <label for="labBayesEvBName">Evento B (Ej. Test +):</label>
-                                    <input type="text" id="labBayesEvBName" class="input input--sm" value="Test Positivo (B)">
+                                    <label for="labBayesEvNotAName">Evento A' / No A (Fila 2):</label>
+                                    <input type="text" id="labBayesEvNotAName" class="input input--sm" value="Sano (A')" placeholder="Ej: Mujer, Sano">
+                                </div>
+                                <div class="lab-input-group">
+                                    <label for="labBayesEvBName">Evento B (Columna 1):</label>
+                                    <input type="text" id="labBayesEvBName" class="input input--sm" value="Test Positivo (B)" placeholder="Ej: Test +, Fuma">
+                                </div>
+                                <div class="lab-input-group">
+                                    <label for="labBayesEvNotBName">Evento B' / No B (Columna 2):</label>
+                                    <input type="text" id="labBayesEvNotBName" class="input input--sm" value="Test Negativo (B')" placeholder="Ej: Test -, No fuma">
                                 </div>
                             </div>
 
@@ -3526,21 +3539,21 @@
                                 <table class="lab-grid-table lab-bayes-table">
                                     <thead>
                                         <tr>
-                                            <th>Estado / Test</th>
-                                            <th id="labBayesThB">B (Positivo)</th>
-                                            <th id="labBayesThNotB">No B (Negativo)</th>
+                                            <th>Estado / Variable</th>
+                                            <th id="labBayesThB">Test Positivo (B)</th>
+                                            <th id="labBayesThNotB">Test Negativo (B')</th>
                                             <th>Total Marginal</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         <tr>
-                                            <th id="labBayesThA">A (Enfermo)</th>
+                                            <th id="labBayesThA">Enfermo (A)</th>
                                             <td><input type="number" id="labBayesCellAB" class="lab-cell-input" value="95" step="any"></td>
                                             <td><input type="number" id="labBayesCellANotB" class="lab-cell-input" value="5" step="any"></td>
                                             <td id="labBayesTotalA" class="lab-total-cell">100</td>
                                         </tr>
                                         <tr>
-                                            <th id="labBayesThNotA">No A (Sano)</th>
+                                            <th id="labBayesThNotA">Sano (A')</th>
                                             <td><input type="number" id="labBayesCellNotAB" class="lab-cell-input" value="45" step="any"></td>
                                             <td><input type="number" id="labBayesCellNotANotB" class="lab-cell-input" value="855" step="any"></td>
                                             <td id="labBayesTotalNotA" class="lab-total-cell">900</td>
@@ -3548,7 +3561,7 @@
                                     </tbody>
                                     <tfoot>
                                         <tr>
-                                            <th>Total:</th>
+                                            <th>Total Marginal:</th>
                                             <td id="labBayesTotalB" class="lab-total-cell">140</td>
                                             <td id="labBayesTotalNotB" class="lab-total-cell">860</td>
                                             <td id="labBayesGrandTotal" class="lab-total-cell">1000</td>
@@ -3557,18 +3570,11 @@
                                 </table>
                             </div>
 
-                            <!-- Desglose de Probabilidad Condicional / Bayes -->
-                            <div class="lab-bayes-formula-box">
-                                <div class="lab-formula-line">
-                                    <span class="lab-f-title">Probabilidad Condicional P(A|B):</span>
-                                    <code class="lab-f-code" id="labBayesFormulaText">P(A|B) = P(A ∩ B) / P(B) = 95 / 140</code>
-                                </div>
-                                <div class="lab-res-item">
-                                    <span class="lab-res-label">P(A|B) [Valor predictivo]:</span>
-                                     <strong class="lab-res-val lab-res-val--highlight" id="labBayesResultVal">0.6786 (67.86%)</strong>
-                                 </div>
-                             </div>
-                         </div>
+                            <!-- Desglose Completo de Fórmulas de Probabilidad de Cátedra -->
+                            <div class="lab-bayes-formulas-section" id="labBayesFormulasContainer">
+                                <!-- Se renderizan dinámicamente con recalcularMatrizBayes() -->
+                            </div>
+                        </div>
 
                         <!-- WIDGET 4: MESA CONTABLE (LIBRO DIARIO, MAYOR Y BALANCE) -->
                         <div id="labWidgetContabilidad" class="lab-tab-pane hidden" role="tabpanel">
@@ -3616,6 +3622,7 @@
                                             <tr>
                                                 <th style="width: 105px;">Fecha</th>
                                                 <th>Cuentas / Detalle Operación</th>
+                                                <th style="width: 130px; text-align: center;">Variación</th>
                                                 <th style="width: 120px; text-align: right;">Debe ($)</th>
                                                 <th style="width: 120px; text-align: right;">Haber ($)</th>
                                                 <th style="width: 45px;"></th>
@@ -3626,7 +3633,7 @@
                                         </tbody>
                                         <tfoot>
                                             <tr class="lab-diario-foot-row">
-                                                <td colspan="2" style="text-align: right; font-weight: 700;">
+                                                <td colspan="3" style="text-align: right; font-weight: 700;">
                                                     Totales del Libro Diario:
                                                 </td>
                                                 <td id="labDiarioTotalDebe" style="text-align: right; font-weight: 800; color: #34d399;">$0.00</td>
@@ -5991,7 +5998,7 @@
 
 <script src="mqtt.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="script.js?v=29.35" defer></script>
+<script src="script.js?v=29.36" defer></script>
 
 <!-- =========================================================
      MODAL DE PROMPT PARA GEMINI (CREAR JUEGOS DESDE PDF)

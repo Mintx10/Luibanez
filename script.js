@@ -984,7 +984,9 @@ const dom = {
 
     /* Matriz de Bayes */
     labBayesEvAName: document.getElementById("labBayesEvAName"),
+    labBayesEvNotAName: document.getElementById("labBayesEvNotAName"),
     labBayesEvBName: document.getElementById("labBayesEvBName"),
+    labBayesEvNotBName: document.getElementById("labBayesEvNotBName"),
     labBayesThA: document.getElementById("labBayesThA"),
     labBayesThNotA: document.getElementById("labBayesThNotA"),
     labBayesThB: document.getElementById("labBayesThB"),
@@ -1000,6 +1002,7 @@ const dom = {
     labBayesGrandTotal: document.getElementById("labBayesGrandTotal"),
     labBayesFormulaText: document.getElementById("labBayesFormulaText"),
     labBayesResultVal: document.getElementById("labBayesResultVal"),
+    labBayesFormulasContainer: document.getElementById("labBayesFormulasContainer"),
 
     /* Pizarrón Flotante & Herramientas */
     labFloatingWhiteboard: document.getElementById("labFloatingWhiteboard"),
@@ -17567,7 +17570,8 @@ function irASeccionEstudio(idSeccion, navId) {
         }
 
         scratchpadCanvas.addEventListener("pointerdown", (e) => {
-            scratchpadCanvas.setPointerCapture(e.pointerId);
+            e.preventDefault();
+            try { scratchpadCanvas.setPointerCapture(e.pointerId); } catch (_) {}
             isDrawing = true;
             const pos = getPos(e);
             lastX = pos.x;
@@ -17578,10 +17582,11 @@ function irASeccionEstudio(idSeccion, navId) {
             ctx.strokeStyle = scratchState.tool === "eraser" ? "#0d1117" : scratchState.color;
             ctx.lineWidth = scratchState.tool === "eraser" ? scratchState.eraserSize : scratchState.penSize;
             ctx.stroke();
-        });
+        }, { passive: false });
 
         scratchpadCanvas.addEventListener("pointermove", (e) => {
             if (!isDrawing) return;
+            e.preventDefault();
             const pos = getPos(e);
             ctx.beginPath();
             ctx.moveTo(lastX, lastY);
@@ -17591,7 +17596,7 @@ function irASeccionEstudio(idSeccion, navId) {
             ctx.stroke();
             lastX = pos.x;
             lastY = pos.y;
-        });
+        }, { passive: false });
 
         const stopDrawing = () => {
             if (isDrawing) {
@@ -17602,6 +17607,13 @@ function irASeccionEstudio(idSeccion, navId) {
 
         scratchpadCanvas.addEventListener("pointerup", stopDrawing);
         scratchpadCanvas.addEventListener("pointercancel", stopDrawing);
+
+        scratchpadCanvas.addEventListener("touchstart", (e) => {
+            e.preventDefault();
+        }, { passive: false });
+        scratchpadCanvas.addEventListener("touchmove", (e) => {
+            e.preventDefault();
+        }, { passive: false });
 
         // Colores
         document.querySelectorAll("#scratchpadDrawToolbar .color-dot").forEach(btn => {
@@ -17867,8 +17879,8 @@ const contabilidadEstado = {
             fecha: "",
             detalle: "",
             filas: [
-                { id: "f1", cuenta: "", debe: "", haber: "" },
-                { id: "f2", cuenta: "", debe: "", haber: "" }
+                { id: "f1", cuenta: "", variacion: "", debe: "", haber: "" },
+                { id: "f2", cuenta: "", variacion: "", debe: "", haber: "" }
             ]
         }
     ],
@@ -19142,7 +19154,7 @@ function inicializarCalculadoraCientificaMini() {
 }
 
 // ==========================================
-// CONTROLADOR DE MATRIZ DE BAYES
+// CONTROLADOR DE MATRIZ DE BAYES Y FÓRMULAS DE PROBABILIDAD
 // ==========================================
 
 function recalcularMatrizBayes() {
@@ -19157,18 +19169,157 @@ function recalcularMatrizBayes() {
     const totalNotB = aNotB + notANotB;
     const grandTotal = totalA + totalNotA;
 
+    // Nombres de los 4 eventos personalizados
+    const evA = (dom.labBayesEvAName?.value || "A (Enfermo)").trim();
+    const evNotA = (dom.labBayesEvNotAName?.value || "A' (Sano)").trim();
+    const evB = (dom.labBayesEvBName?.value || "B (Test +)").trim();
+    const evNotB = (dom.labBayesEvNotBName?.value || "B' (Test -)").trim();
+
+    // Actualizar encabezados de la tabla de contingencia
+    if (dom.labBayesThA) dom.labBayesThA.textContent = evA;
+    if (dom.labBayesThNotA) dom.labBayesThNotA.textContent = evNotA;
+    if (dom.labBayesThB) dom.labBayesThB.textContent = evB;
+    if (dom.labBayesThNotB) dom.labBayesThNotB.textContent = evNotB;
+
+    // Actualizar celdas marginales
     if (dom.labBayesTotalA) dom.labBayesTotalA.textContent = String(totalA);
     if (dom.labBayesTotalNotA) dom.labBayesTotalNotA.textContent = String(totalNotA);
     if (dom.labBayesTotalB) dom.labBayesTotalB.textContent = String(totalB);
     if (dom.labBayesTotalNotB) dom.labBayesTotalNotB.textContent = String(totalNotB);
     if (dom.labBayesGrandTotal) dom.labBayesGrandTotal.textContent = String(grandTotal);
 
-    const probCondicional = totalB > 0 ? (ab / totalB) : 0;
+    // Cálculos de Probabilidad
+    const N = grandTotal > 0 ? grandTotal : 1;
+    const pA = totalA / N;
+    const pNotA = totalNotA / N;
+    const pB = totalB / N;
+    const pNotB = totalNotB / N;
+
+    const pAnB = ab / N;
+    const pAnNotB = aNotB / N;
+    const pNotAnB = notAB / N;
+    const pNotAnNotB = notANotB / N;
+
+    // 1. Regla de la Unión: P(A U B) = P(A) + P(B) - P(A ∩ B)
+    const pAuB = pA + pB - pAnB;
+    const sonIncompatibles = ab === 0;
+
+    // 2. Probabilidad Condicional
+    const pAgivenB = totalB > 0 ? (ab / totalB) : 0;
+    const pBgivenA = totalA > 0 ? (ab / totalA) : 0;
+    const pNotAgivenB = totalB > 0 ? (notAB / totalB) : 0;
+
+    // 3. Regla del Producto / Independencia
+    const pProdIndep = pA * pB;
+    const sonIndependientes = Math.abs(pAnB - pProdIndep) < 0.0001;
+
+    // 4. Suceso Contrario / Complementario
+    const pContrarioA = 1 - pA;
+    const pContrarioB = 1 - pB;
+    const pDeMorganUnion = pNotAnNotB; // P(A' ∩ B') = 1 - P(A U B)
+    const pDeMorganIntersec = 1 - pAnB; // P(A' U B') = 1 - P(A ∩ B)
+
+    // Compatibilidad hacia atrás si existen elementos individuales
     if (dom.labBayesFormulaText) {
-        dom.labBayesFormulaText.textContent = `P(A|B) = P(A ∩ B) / P(B) = ${ab} / ${totalB}`;
+        dom.labBayesFormulaText.textContent = `P(${evA}|${evB}) = P(${evA} ∩ ${evB}) / P(${evB}) = ${ab} / ${totalB}`;
     }
     if (dom.labBayesResultVal) {
-        dom.labBayesResultVal.textContent = `${probCondicional.toFixed(4)} (${(probCondicional * 100).toFixed(2)}%)`;
+        dom.labBayesResultVal.textContent = `${pAgivenB.toFixed(4)} (${(pAgivenB * 100).toFixed(2)}%)`;
+    }
+
+    // Renderizar sección completa de fórmulas de probabilidad de cátedra
+    if (dom.labBayesFormulasContainer) {
+        dom.labBayesFormulasContainer.innerHTML = `
+            <div class="lab-bayes-header-box" style="margin-top: 0.5rem;">
+                <span class="lab-bayes-header-title">📐 Fórmulas Oficiales de Probabilidad de Cátedra (Cálculo en Vivo):</span>
+                <p class="lab-bayes-header-desc">Desglose analítico paso a paso calculado automáticamente con los totales y celdas de la tabla.</p>
+            </div>
+
+            <div class="lab-bayes-formulas-grid">
+                <!-- CARD 1: REGLA DE LA UNIÓN -->
+                <div class="lab-bayes-card">
+                    <div class="lab-bayes-card-header">
+                        <span class="lab-bayes-card-title">1. Regla de la Unión (O / Suma)</span>
+                        <span class="lab-bayes-badge-rule">${sonIncompatibles ? 'Incompatibles' : 'Compatibles'}</span>
+                    </div>
+                    <div class="lab-bayes-math-formula">
+                        P(A ∪ B) = P(A) + P(B) - P(A ∩ B)
+                    </div>
+                    <div class="lab-bayes-step-calc">
+                        • <strong>P(A)</strong> = ${totalA}/${N} = ${pA.toFixed(4)}<br>
+                        • <strong>P(B)</strong> = ${totalB}/${N} = ${pB.toFixed(4)}<br>
+                        • <strong>P(A ∩ B)</strong> = ${ab}/${N} = ${pAnB.toFixed(4)}<br>
+                        • Sustitución: ${pA.toFixed(4)} + ${pB.toFixed(4)} - ${pAnB.toFixed(4)}
+                    </div>
+                    <div class="lab-bayes-result-row">
+                        <span class="lab-bayes-res-label">P(A ∪ B):</span>
+                        <strong class="lab-bayes-res-val">${pAuB.toFixed(4)} (${(pAuB * 100).toFixed(2)}%)</strong>
+                    </div>
+                </div>
+
+                <!-- CARD 2: PROBABILIDAD CONDICIONAL (BAYES) -->
+                <div class="lab-bayes-card">
+                    <div class="lab-bayes-card-header">
+                        <span class="lab-bayes-card-title">2. Probabilidad Condicional (Dado que...)</span>
+                        <span class="lab-bayes-badge-rule">Teorema de Bayes</span>
+                    </div>
+                    <div class="lab-bayes-math-formula">
+                        P(A / B) = P(A ∩ B) / P(B)
+                    </div>
+                    <div class="lab-bayes-step-calc">
+                        • <strong>P(A | B)</strong> = ${ab} / ${totalB} = <strong>${pAgivenB.toFixed(4)}</strong> (${(pAgivenB * 100).toFixed(2)}%)<br>
+                        • <strong>P(B | A)</strong> = ${ab} / ${totalA} = <strong>${pBgivenA.toFixed(4)}</strong> (${(pBgivenA * 100).toFixed(2)}%)<br>
+                        • <strong>P(A' | B)</strong> = ${notAB} / ${totalB} = <strong>${pNotAgivenB.toFixed(4)}</strong> (${(pNotAgivenB * 100).toFixed(2)}%)
+                    </div>
+                    <div class="lab-bayes-result-row">
+                        <span class="lab-bayes-res-label">P(A | B) Valor Predictivo:</span>
+                        <strong class="lab-bayes-res-val lab-bayes-res-val--info">${pAgivenB.toFixed(4)} (${(pAgivenB * 100).toFixed(2)}%)</strong>
+                    </div>
+                </div>
+
+                <!-- CARD 3: REGLA DE LA MULTIPLICACIÓN E INDEPENDENCIA -->
+                <div class="lab-bayes-card">
+                    <div class="lab-bayes-card-header">
+                        <span class="lab-bayes-card-title">3. Multiplicación & Independencia</span>
+                        <span class="lab-bayes-badge-rule">${sonIndependientes ? '✅ Independientes' : '⚠️ Dependientes'}</span>
+                    </div>
+                    <div class="lab-bayes-math-formula">
+                        P(A ∩ B) = P(A) · P(B / A)
+                    </div>
+                    <div class="lab-bayes-step-calc">
+                        • <strong>Regla general:</strong> P(A) · P(B|A) = ${pA.toFixed(4)} · ${pBgivenA.toFixed(4)} = ${pAnB.toFixed(4)}<br>
+                        • <strong>Test de independencia:</strong><br>
+                        &nbsp;&nbsp;P(A) · P(B) = ${pProdIndep.toFixed(4)} ${sonIndependientes ? '==' : '≠'} P(A ∩ B) = ${pAnB.toFixed(4)}<br>
+                        • <em>${sonIndependientes ? 'Los sucesos son estadísticamente independientes.' : 'Los sucesos son dependientes (el resultado de B afecta a A).'}</em>
+                    </div>
+                    <div class="lab-bayes-result-row">
+                        <span class="lab-bayes-res-label">Intersección P(A ∩ B):</span>
+                        <strong class="lab-bayes-res-val lab-bayes-res-val--purple">${pAnB.toFixed(4)} (${(pAnB * 100).toFixed(2)}%)</strong>
+                    </div>
+                </div>
+
+                <!-- CARD 4: SUCESOS CONTRARIOS Y LEYES DE DE MORGAN -->
+                <div class="lab-bayes-card">
+                    <div class="lab-bayes-card-header">
+                        <span class="lab-bayes-card-title">4. Complementarios & De Morgan</span>
+                        <span class="lab-bayes-badge-rule">P(Ā) = 1 - P(A)</span>
+                    </div>
+                    <div class="lab-bayes-math-formula">
+                        P(A̅ ∩ B̅) = P(A̅ ∪ B̅)' = 1 - P(A ∪ B)
+                    </div>
+                    <div class="lab-bayes-step-calc">
+                        • <strong>P(A̅) = P(No A)</strong> = 1 - ${pA.toFixed(4)} = <strong>${pContrarioA.toFixed(4)}</strong> (${(pContrarioA * 100).toFixed(2)}%)<br>
+                        • <strong>P(B̅) = P(No B)</strong> = 1 - ${pB.toFixed(4)} = <strong>${pContrarioB.toFixed(4)}</strong> (${(pContrarioB * 100).toFixed(2)}%)<br>
+                        • <strong>De Morgan P(A̅ ∩ B̅):</strong> ${notANotB}/${N} = <strong>${pDeMorganUnion.toFixed(4)}</strong> (${(pDeMorganUnion * 100).toFixed(2)}%)<br>
+                        • <strong>De Morgan P(A̅ ∪ B̅):</strong> 1 - P(A∩B) = <strong>${pDeMorganIntersec.toFixed(4)}</strong> (${(pDeMorganIntersec * 100).toFixed(2)}%)
+                    </div>
+                    <div class="lab-bayes-result-row">
+                        <span class="lab-bayes-res-label">P(A̅) [Suceso Contrario]:</span>
+                        <strong class="lab-bayes-res-val lab-bayes-res-val--amber">${pContrarioA.toFixed(4)} (${(pContrarioA * 100).toFixed(2)}%)</strong>
+                    </div>
+                </div>
+            </div>
+        `;
     }
 }
 
@@ -19231,9 +19382,10 @@ function inicializarScratchpadLab() {
     if (!st.initialized) {
         st.initialized = true;
 
-        // 1. Eventos de dibujo en canvas (Pointer Events)
+        // 1. Eventos de dibujo en canvas (Pointer Events con bloqueo de scroll nativo)
         canvas.addEventListener("pointerdown", (e) => {
-            canvas.setPointerCapture(e.pointerId);
+            e.preventDefault();
+            try { canvas.setPointerCapture(e.pointerId); } catch (_) {}
             st.drawing = true;
             const p = getCoords(e);
             st.startX = p.x;
@@ -19261,10 +19413,11 @@ function inicializarScratchpadLab() {
                 ctx.fill();
                 ctx.restore();
             }
-        });
+        }, { passive: false });
 
         canvas.addEventListener("pointermove", (e) => {
             if (!st.drawing) return;
+            e.preventDefault();
             const p = getCoords(e);
 
             if (st.tool === "ruler") {
@@ -19310,7 +19463,7 @@ function inicializarScratchpadLab() {
                 st.lastX = p.x;
                 st.lastY = p.y;
             }
-        });
+        }, { passive: false });
 
         const stopDrawing = () => {
             if (st.drawing) {
@@ -19320,6 +19473,14 @@ function inicializarScratchpadLab() {
         };
         canvas.addEventListener("pointerup", stopDrawing);
         canvas.addEventListener("pointercancel", stopDrawing);
+
+        // Bloqueo explícito de gestos touch en móviles para evitar que la pantalla se trabe o deslice la página
+        canvas.addEventListener("touchstart", (e) => {
+            e.preventDefault();
+        }, { passive: false });
+        canvas.addEventListener("touchmove", (e) => {
+            e.preventDefault();
+        }, { passive: false });
 
         // 2. Herramientas: Lápiz, Regla, Goma
         if (dom.labScratchPenBtn) {
@@ -20212,7 +20373,7 @@ function renderizarLibroDiarioUI() {
         const headerRow = document.createElement("tr");
         headerRow.className = "lab-asiento-header-row";
         headerRow.innerHTML = `
-            <td colspan="4" style="padding: 0.35rem 0.6rem;">
+            <td colspan="5" style="padding: 0.35rem 0.6rem;">
                 <strong>📝 Asiento N° ${asiento.id || aIdx + 1}</strong>: 
                 <input type="text" class="lab-diario-input" style="display:inline-block; width: calc(100% - 130px); margin-left: 0.4rem; padding: 0.2rem 0.45rem; font-size: 0.8rem; background: rgba(0,0,0,0.3); border-color: rgba(255,255,255,0.15);" value="${asiento.detalle || ''}" placeholder="Detalle / Leyenda de la operación (ej. Compra mercaderías)..." oninput="contabilidadEstado.asientos[${aIdx}].detalle = this.value">
             </td>
@@ -20222,10 +20383,12 @@ function renderizarLibroDiarioUI() {
         `;
         dom.labDiarioTableBody.appendChild(headerRow);
 
-        // Filas de Cuentas (Debe / Haber)
+        // Filas de Cuentas (Fecha, Cuenta, Variación, Debe, Haber, Eliminar)
         asiento.filas.forEach((fila, fIdx) => {
             const tr = document.createElement("tr");
             tr.className = "lab-asiento-row";
+
+            const v = fila.variacion || "";
 
             tr.innerHTML = `
                 <td>
@@ -20233,6 +20396,23 @@ function renderizarLibroDiarioUI() {
                 </td>
                 <td>
                     <input type="text" class="lab-diario-input" value="${fila.cuenta || ''}" placeholder="Nombre de la cuenta (ej. Caja, Mercaderías)" oninput="actualizarCeldaDiario(${aIdx}, ${fIdx}, 'cuenta', this.value)">
+                </td>
+                <td style="width: 140px;">
+                    <select class="lab-diario-input lab-diario-select-variacion" onchange="actualizarCeldaDiario(${aIdx}, ${fIdx}, 'variacion', this.value)">
+                        <option value="" ${!v ? 'selected' : ''}>-- Variación --</option>
+                        <option value="A+" ${v === 'A+' ? 'selected' : ''}>A+ (Activo +)</option>
+                        <option value="A-" ${v === 'A-' ? 'selected' : ''}>A- (Activo -)</option>
+                        <option value="P+" ${v === 'P+' ? 'selected' : ''}>P+ (Pasivo +)</option>
+                        <option value="P-" ${v === 'P-' ? 'selected' : ''}>P- (Pasivo -)</option>
+                        <option value="PN+" ${v === 'PN+' ? 'selected' : ''}>PN+ (Patrimonio Neto +)</option>
+                        <option value="PN-" ${v === 'PN-' ? 'selected' : ''}>PN- (Patrimonio Neto -)</option>
+                        <option value="RP+" ${v === 'RP+' ? 'selected' : ''}>RP+ (Resultado Positivo)</option>
+                        <option value="RN+" ${v === 'RN+' ? 'selected' : ''}>RN+ (Resultado Negativo)</option>
+                        <option value="Reg. A+" ${v === 'Reg. A+' ? 'selected' : ''}>Reg. A+ (Regularizadora Activo +)</option>
+                        <option value="Reg. A-" ${v === 'Reg. A-' ? 'selected' : ''}>Reg. A- (Regularizadora Activo -)</option>
+                        <option value="Reg. P+" ${v === 'Reg. P+' ? 'selected' : ''}>Reg. P+ (Regularizadora Pasivo +)</option>
+                        <option value="Reg. P-" ${v === 'Reg. P-' ? 'selected' : ''}>Reg. P- (Regularizadora Pasivo -)</option>
+                    </select>
                 </td>
                 <td>
                     <input type="number" step="any" min="0" class="lab-diario-input lab-diario-input--number" value="${fila.debe !== '' && fila.debe !== undefined && fila.debe !== null ? fila.debe : ''}" placeholder="0.00" oninput="actualizarCeldaDiario(${aIdx}, ${fIdx}, 'debe', this.value)">
@@ -20250,7 +20430,7 @@ function renderizarLibroDiarioUI() {
         // Fila para agregar otra cuenta al asiento
         const addRow = document.createElement("tr");
         addRow.innerHTML = `
-            <td colspan="5" style="padding: 0.25rem 0.55rem; background: rgba(15, 23, 42, 0.25);">
+            <td colspan="6" style="padding: 0.25rem 0.55rem; background: rgba(15, 23, 42, 0.25);">
                 <button type="button" class="button button--ghost button--xs" style="color: #38bdf8; font-size: 0.74rem;" onclick="agregarFilaAAsiento(${aIdx})">
                     ➕ Agregar Cuenta al Asiento N° ${asiento.id || aIdx + 1}
                 </button>
@@ -20271,8 +20451,8 @@ function agregarAsientoContable(fecha = null, detalle = null) {
         fecha: fechaDefecto,
         detalle: detalle || `Operación comercial N° ${nuevoId}`,
         filas: [
-            { id: "f_" + Date.now() + "_1", fecha: fechaDefecto, cuenta: "", debe: "", haber: "" },
-            { id: "f_" + Date.now() + "_2", fecha: fechaDefecto, cuenta: "", debe: "", haber: "" }
+            { id: "f_" + Date.now() + "_1", fecha: fechaDefecto, cuenta: "", variacion: "", debe: "", haber: "" },
+            { id: "f_" + Date.now() + "_2", fecha: fechaDefecto, cuenta: "", variacion: "", debe: "", haber: "" }
         ]
     });
 
@@ -20280,7 +20460,7 @@ function agregarAsientoContable(fecha = null, detalle = null) {
     mostrarToast(`➕ Asiento N° ${nuevoId} creado.`, "info");
 }
 
-function agregarFilaAAsiento(asientoIndex, cuenta = "", debe = "", haber = "") {
+function agregarFilaAAsiento(asientoIndex, cuenta = "", debe = "", haber = "", variacion = "") {
     const asiento = contabilidadEstado.asientos[asientoIndex];
     if (!asiento) return;
 
@@ -20288,6 +20468,7 @@ function agregarFilaAAsiento(asientoIndex, cuenta = "", debe = "", haber = "") {
         id: "f_" + Date.now(),
         fecha: asiento.fecha || "",
         cuenta: cuenta,
+        variacion: variacion || "",
         debe: debe !== "" ? (Number(debe) || 0) : "",
         haber: haber !== "" ? (Number(haber) || 0) : ""
     });
@@ -24368,20 +24549,9 @@ function configurarEventosLaboratorio() {
         if (elem) elem.addEventListener("input", recalcularMatrizBayes);
     });
 
-    if (dom.labBayesEvAName) {
-        dom.labBayesEvAName.addEventListener("input", (e) => {
-            const nom = e.target.value || "A";
-            if (dom.labBayesThA) dom.labBayesThA.textContent = nom;
-            if (dom.labBayesThNotA) dom.labBayesThNotA.textContent = `No ${nom}`;
-        });
-    }
-    if (dom.labBayesEvBName) {
-        dom.labBayesEvBName.addEventListener("input", (e) => {
-            const nom = e.target.value || "B";
-            if (dom.labBayesThB) dom.labBayesThB.textContent = nom;
-            if (dom.labBayesThNotB) dom.labBayesThNotB.textContent = `No ${nom}`;
-        });
-    }
+    [dom.labBayesEvAName, dom.labBayesEvNotAName, dom.labBayesEvBName, dom.labBayesEvNotBName].forEach(elem => {
+        if (elem) elem.addEventListener("input", recalcularMatrizBayes);
+    });
 }
 
 /* =========================================================
