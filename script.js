@@ -1294,7 +1294,18 @@ function inicializarModoDev() {
    NAVEGACIÓN SPA (VISTAS: HOME / BOLILLERO / DUELO / FAMA)
    ========================================================== */
 function cambiarVista(vista) {
-    const rawTarget = (vista === "duelo" || vista === "juntos") ? "juntos" : vista;
+    let rawTarget = (vista === "duelo" || vista === "juntos") ? "juntos" : vista;
+
+    // Validación de acceso exclusivo por carrera y perfil
+    if (typeof esCarreraFinanzasActiva === "function" && rawTarget.startsWith("fin-") && !esCarreraFinanzasActiva()) {
+        mostrarToast("🔒 El módulo de Finanzas es exclusivo para estudiantes de la carrera.", "aviso");
+        rawTarget = "home";
+    }
+    if (typeof esCuentaIvanActiva === "function" && (rawTarget.startsWith("med-") || rawTarget === "farmacologia-2" || rawTarget === "salud-publica") && !esCuentaIvanActiva()) {
+        mostrarToast("🔒 El módulo médico es exclusivo para el Dr. Iván.", "aviso");
+        rawTarget = "home";
+    }
+
     const vistasValidas = [
         "home", "solo", "juntos", "bolillero", "fama", "juegos", "laboratorio", "podio",
         "med-interna", "farmacologia-2", "salud-publica",
@@ -3648,6 +3659,12 @@ function cerrarSesionPerfil() {
     if (dropdown) dropdown.classList.add("hidden");
     removerMateriasMedicinaSiNoEsIvan();
     actualizarUIAuthHeader();
+    if (estado.interfaz && estado.interfaz.vistaActual) {
+        const vAct = estado.interfaz.vistaActual;
+        if (vAct.startsWith("fin-") || vAct.startsWith("med-") || vAct === "farmacologia-2" || vAct === "salud-publica") {
+            cambiarVista("home");
+        }
+    }
     mostrarToast("🔒 Sesión cerrada. Has vuelto al modo visitante.", "info");
 }
 
@@ -3699,10 +3716,12 @@ function asegurarMateriasMedicinaIvan() {
    PERSONALIZACIÓN EXCLUSIVA DE NAVEGACIÓN PARA DR. IVÁN ('ivi')
    ========================================================== */
 function esCarreraFinanzasActiva() {
+    if (perfilUsuario.esInvitado) return false;
+    if (esCuentaIvanActiva()) return false;
     return esCuentaLucasActiva() ||
-           (perfilUsuario.carrera && perfilUsuario.carrera.toLowerCase().includes("finanza")) ||
-           (perfilUsuario.username && (perfilUsuario.username.toLowerCase() === "lucas" || perfilUsuario.username.toLowerCase() === "lukit")) ||
-           (perfilUsuario.apodo && (perfilUsuario.apodo.toLowerCase().includes("lucas") || perfilUsuario.apodo.toLowerCase().includes("finanza")));
+           (Boolean(perfilUsuario.carrera) && perfilUsuario.carrera.toLowerCase().includes("finanza")) ||
+           (Boolean(perfilUsuario.username) && (perfilUsuario.username.toLowerCase() === "lucas" || perfilUsuario.username.toLowerCase() === "lukit")) ||
+           (Boolean(perfilUsuario.apodo) && (perfilUsuario.apodo.toLowerCase().includes("lucas") || perfilUsuario.apodo.toLowerCase().includes("finanza")));
 }
 
 function actualizarNavPorCarrera() {
@@ -3745,42 +3764,61 @@ function actualizarNavPorCarrera() {
     const drawerFinEstad = document.getElementById("drawerNavFinEstad");
     const drawerFinCont = document.getElementById("drawerNavFinCont");
 
-    // 1. Barra superior de escritorio: Acceso directo a vistas principales + FinHub
-    [navHome, navSolo, navLab, navJuntos, navFama, navFinHub].forEach(b => b?.classList.remove("hidden"));
+    // 1. Barra superior de escritorio:
+    // Menús estándar universales
+    [navHome, navSolo, navLab, navJuntos, navFama].forEach(b => b?.classList.remove("hidden"));
+    // Médicas y materias específicas en nav superior
     [navMed, navFarma, navSalud, navFinFilo, navFinSfi, navFinHem, navFinEstad, navFinCont].forEach(b => b?.classList.add("hidden"));
 
-    // 2. Menú lateral móvil (Drawer): se adapta según la carrera manteniendo acceso a FinHub
+    // FinHub en PC Navbar: ÚNICAMENTE visible para cuentas con carrera de Finanzas (NUNCA invitados ni Iván)
+    if (navFinHub) {
+        if (esFinanzas) {
+            navFinHub.classList.remove("hidden");
+        } else {
+            navFinHub.classList.add("hidden");
+        }
+    }
+
+    // 2. Menú lateral móvil (Drawer):
     if (esIvan) {
+        // --- DR. IVÁN (MEDICINA) ---
         if (drawerHome) drawerHome.classList.add("hidden");
         if (drawerSolo) drawerSolo.classList.remove("hidden");
         if (drawerLab) drawerLab.classList.add("hidden");
         if (drawerJuntos) drawerJuntos.classList.add("hidden");
         if (drawerFama) drawerFama.classList.add("hidden");
-        if (drawerMed) drawerMed.classList.remove("hidden");
-        if (drawerFarma) drawerFarma.classList.remove("hidden");
-        if (drawerSalud) drawerSalud.classList.remove("hidden");
-        if (drawerFinHub) drawerFinHub.classList.remove("hidden");
 
-        [drawerFinFilo, drawerFinSfi, drawerFinHem, drawerFinEstad, drawerFinCont].forEach(b => b?.classList.add("hidden"));
+        // Materias médicas de Iván: VISIBLES SOLO PARA ÉL
+        [drawerMed, drawerFarma, drawerSalud].forEach(b => b?.classList.remove("hidden"));
+
+        // FinHub y materias de finanzas: TOTALMENTE OCULTAS PARA IVÁN
+        [drawerFinHub, drawerFinFilo, drawerFinSfi, drawerFinHem, drawerFinEstad, drawerFinCont].forEach(b => b?.classList.add("hidden"));
     } else if (esFinanzas) {
-        if (drawerHome) drawerHome.classList.remove("hidden");
-        if (drawerSolo) drawerSolo.classList.remove("hidden");
-        if (drawerLab) drawerLab.classList.add("hidden");
-        if (drawerJuntos) drawerJuntos.classList.remove("hidden");
-        if (drawerFama) drawerFama.classList.add("hidden");
-
-        [drawerMed, drawerFarma, drawerSalud].forEach(b => b?.classList.add("hidden"));
-        [drawerFinHub, drawerFinFilo, drawerFinSfi, drawerFinHem, drawerFinEstad, drawerFinCont].forEach(b => b?.classList.remove("hidden"));
-    } else {
+        // --- ESTUDIANTE DE FINANZAS ---
         if (drawerHome) drawerHome.classList.remove("hidden");
         if (drawerSolo) drawerSolo.classList.remove("hidden");
         if (drawerLab) drawerLab.classList.remove("hidden");
         if (drawerJuntos) drawerJuntos.classList.remove("hidden");
         if (drawerFama) drawerFama.classList.remove("hidden");
-        if (drawerFinHub) drawerFinHub.classList.remove("hidden");
 
+        // Menú médico de Iván: TOTALMENTE OCULTO PARA ESTUDIANTES DE FINANZAS
         [drawerMed, drawerFarma, drawerSalud].forEach(b => b?.classList.add("hidden"));
-        [drawerFinFilo, drawerFinSfi, drawerFinHem, drawerFinEstad, drawerFinCont].forEach(b => b?.classList.add("hidden"));
+
+        // FinHub y materias de finanzas: VISIBLES EN MENÚ MÓVIL
+        [drawerFinHub, drawerFinFilo, drawerFinSfi, drawerFinHem, drawerFinEstad, drawerFinCont].forEach(b => b?.classList.remove("hidden"));
+    } else {
+        // --- INVITADOS Y OTRAS CARRERAS ---
+        if (drawerHome) drawerHome.classList.remove("hidden");
+        if (drawerSolo) drawerSolo.classList.remove("hidden");
+        if (drawerLab) drawerLab.classList.remove("hidden");
+        if (drawerJuntos) drawerJuntos.classList.remove("hidden");
+        if (drawerFama) drawerFama.classList.remove("hidden");
+
+        // Menú médico de Iván: TOTALMENTE OCULTO PARA INVITADOS
+        [drawerMed, drawerFarma, drawerSalud].forEach(b => b?.classList.add("hidden"));
+
+        // FinHub y materias de finanzas: TOTALMENTE OCULTAS PARA INVITADOS
+        [drawerFinHub, drawerFinFilo, drawerFinSfi, drawerFinHem, drawerFinEstad, drawerFinCont].forEach(b => b?.classList.add("hidden"));
     }
 }
 
