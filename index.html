@@ -15,10 +15,10 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     
-    <link rel="icon" type="image/svg+xml" href="icon.svg?v=29.28">
-    <link rel="apple-touch-icon" href="icon-192.png?v=29.28">
-    <link rel="manifest" href="manifest.json?v=29.28">
-    <link rel="stylesheet" href="style.css?v=29.28">
+    <link rel="icon" type="image/svg+xml" href="icon.svg?v=29.29">
+    <link rel="apple-touch-icon" href="icon-192.png?v=29.29">
+    <link rel="manifest" href="manifest.json?v=29.29">
+    <link rel="stylesheet" href="style.css?v=29.29">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -168,23 +168,9 @@
             </div>
         </div>
 
-        <!-- Selector de Estilo de Menú: Simple vs Detallado -->
-        <div class="drawer-layout-switcher">
-            <span class="drawer-layout-switcher__label">ESTILO DE MENÚ</span>
-            <div class="drawer-layout-segmented" role="radiogroup" aria-label="Estilo de vista del menú">
-                <button type="button" id="drawerLayoutSimpleBtn" class="drawer-layout-seg-btn" role="radio" aria-checked="false" title="Ver menú resumido con accesos principales">
-                    <span>⚡ Simple</span>
-                </button>
-                <button type="button" id="drawerLayoutDetailedBtn" class="drawer-layout-seg-btn is-active" role="radio" aria-checked="true" title="Ver menú detallado con todas las modalidades y juegos">
-                    <span>📑 Detallado</span>
-                </button>
-            </div>
-        </div>
-
-        <!-- Sección 1: Navegación de vistas -->
-        <!-- Sección 1: Navegación Principal -->
+        <!-- Navegación Principal en Celular -->
         <div class="drawer-section drawer-section--principal" id="drawerSectionPrincipal">
-            <span class="drawer-section__label">Principal</span>
+            <span class="drawer-section__label">Navegación</span>
             <nav class="drawer-nav" aria-label="Navegación principal en menú móvil">
                 <button id="drawerNavHome" class="drawer-nav-item is-active" type="button" data-view="home">
                     <span class="drawer-nav-icon" aria-hidden="true">🏠</span>
@@ -196,7 +182,7 @@
                 </button>
                 <button id="drawerNavLaboratorio" class="drawer-nav-item" type="button" data-view="laboratorio">
                     <span class="drawer-nav-icon" aria-hidden="true">🔬</span>
-                    <span class="drawer-nav-text">Laboratorio Práctico</span>
+                    <span class="drawer-nav-text">Laboratorio</span>
                     <span class="badge badge--success" style="font-size: 0.65rem; margin-left: auto;">¡Nuevo!</span>
                 </button>
                 <button id="drawerNavJuntos" class="drawer-nav-item" type="button" data-view="juntos">
@@ -248,114 +234,22 @@
             </nav>
         </div>
 
-        <!-- Sección 2: 👤 MODO SOLO (Estudio Individual) -->
-        <div class="drawer-section drawer-section--solo" id="drawerSectionSolo">
-            <div class="drawer-section__header-badge">
-                <span class="drawer-section__label">👤 Modo Solo (Individual)</span>
-                <span class="badge badge--success">Práctica</span>
-            </div>
-            <nav class="drawer-nav" aria-label="Juegos en Modo Solo">
-                <button id="drawerNavBolillero" class="drawer-nav-item" type="button" data-view="bolillero">
-                    <span class="drawer-nav-icon" aria-hidden="true">🎲</span>
-                    <span class="drawer-nav-text">Bolillero Clásico</span>
-                </button>
-                <button id="drawerNavSoloBomba" class="drawer-nav-item" type="button" data-game="bomba" data-mode="solo">
-                    <span class="drawer-nav-icon" aria-hidden="true">💣</span>
-                    <span class="drawer-nav-text">Desactivá la Bomba</span>
-                </button>
-                <button id="drawerNavSoloImpostor" class="drawer-nav-item" type="button" data-game="impostor" data-mode="solo">
-                    <span class="drawer-nav-icon" aria-hidden="true">🕵️‍♂️</span>
-                    <span class="drawer-nav-text">Caza al Impostor</span>
-                </button>
-                <button id="drawerNavSoloMemotest" class="drawer-nav-item" type="button" data-game="memotest" data-mode="solo">
-                    <span class="drawer-nav-icon" aria-hidden="true">🧠</span>
-                    <span class="drawer-nav-text">Memotest Conectado</span>
-                </button>
-            </nav>
-        </div>
-
-        <!-- Sección 3: ⚔️ MODO DUELO (Multijugador Online) -->
-        <div class="drawer-section drawer-section--duelo" id="drawerSectionDuelo">
-            <div class="drawer-section__header-badge">
-                <span class="drawer-section__label">⚔️ Modo Duelo (Online)</span>
-                <span class="badge badge--accent">Multijugador</span>
-            </div>
-            <nav class="drawer-nav" aria-label="Modos Duelo Multijugador">
-                <button id="drawerNavDuelo" class="drawer-nav-item" type="button" data-view="duelo">
-                    <span class="drawer-nav-icon" aria-hidden="true">🌐</span>
-                    <span class="drawer-nav-text">Lobby & Salas Online</span>
-                </button>
-                <button id="drawerNavOnlineBolillero" class="drawer-nav-item" type="button" data-game="bolillero" data-mode="duelo">
-                    <span class="drawer-nav-icon" aria-hidden="true">🎲</span>
-                    <span class="drawer-nav-text">Bolillero VS Online</span>
-                </button>
-                <button id="drawerNavOnlineBomba" class="drawer-nav-item" type="button" data-game="bomba" data-mode="duelo">
-                    <span class="drawer-nav-icon" aria-hidden="true">💣</span>
-                    <span class="drawer-nav-text">Bomba Online (VS/Co-op)</span>
-                </button>
-                <button id="drawerNavOnlineImpostor" class="drawer-nav-item" type="button" data-game="impostor" data-mode="duelo">
-                    <span class="drawer-nav-icon" aria-hidden="true">🕵️‍♂️</span>
-                    <span class="drawer-nav-text">Impostor Online</span>
-                </button>
-                <button id="drawerNavOnlineMemotest" class="drawer-nav-item" type="button" data-game="memotest" data-mode="duelo">
-                    <span class="drawer-nav-icon" aria-hidden="true">🧠</span>
-                    <span class="drawer-nav-text">Memotest Online</span>
-                </button>
-                <button id="drawerNavOnlineTriatlon" class="drawer-nav-item" type="button" data-game="triatlon" data-mode="duelo">
-                    <span class="drawer-nav-icon" aria-hidden="true">🏅</span>
-                    <span class="drawer-nav-text">Modo Triatlón (3 Rondas)</span>
-                </button>
-            </nav>
-        </div>
-
-        <!-- Sección 4: Herramientas Rápidas -->
+        <!-- Herramientas Rápidas -->
         <div class="drawer-section">
             <span class="drawer-section__label">Herramientas Rápidas</span>
             <div class="drawer-tools">
                 <button id="drawerThemeToggleBtn" class="drawer-tool-btn" type="button" aria-label="Cambiar tema">
                     <span class="drawer-tool-icon" id="drawerThemeToggleIcon" aria-hidden="true">☀️</span>
-                    <span class="drawer-tool-text">Modo <span id="drawerThemeLabel">Claro</span></span>
+                    <span class="drawer-tool-text">Tema</span>
                 </button>
                 <button id="drawerPerfToggleBtn" class="drawer-tool-btn" type="button" aria-label="Alternar rendimiento y animaciones">
                     <span class="drawer-tool-icon" id="drawerPerfToggleIcon" aria-hidden="true">✨</span>
-                    <span class="drawer-tool-text">Efectos <span id="drawerPerfLabel">Activos</span></span>
+                    <span class="drawer-tool-text">Efectos</span>
                 </button>
                 <button id="drawerScratchpadBtn" class="drawer-tool-btn" type="button" aria-label="Abrir pizarrón y notas">
                     <span class="drawer-tool-icon" aria-hidden="true">📝</span>
                     <span class="drawer-tool-text">Pizarrón</span>
                 </button>
-            </div>
-
-            <!-- Mini-Widget Pomodoro en Drawer -->
-            <div class="drawer-pomodoro-card">
-                <div class="drawer-pomo-header">
-                    <div class="drawer-pomo-status">
-                        <span class="dynamic-island__indicator" id="drawerPomoIndicator" aria-hidden="true"></span>
-                        <span class="drawer-pomo-title">⏱️ Pomodoro</span>
-                    </div>
-                    <span class="badge badge--primary" id="drawerPomoBadge">Estudio</span>
-                </div>
-                <div class="drawer-pomo-time" id="drawerPomoTime">25:00</div>
-                <div class="drawer-pomo-actions">
-                    <button id="drawerPomoToggleBtn" class="button button--primary button--sm" type="button">Iniciar</button>
-                    <button id="drawerPomoOpenCardBtn" class="button button--secondary button--sm" type="button">Ver Reloj</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Sección 5: Copia de Seguridad y Datos -->
-        <div class="drawer-section">
-            <span class="drawer-section__label">Copia de Seguridad y Datos</span>
-            <div class="drawer-tools" style="grid-template-columns: 1fr 1fr;">
-                <button id="drawerExportarBackupBtn" class="drawer-tool-btn" type="button" aria-label="Descargar copia de seguridad en JSON">
-                    <span class="drawer-tool-icon" aria-hidden="true">💾</span>
-                    <span class="drawer-tool-text">Exportar Backup</span>
-                </button>
-                <button id="drawerImportarBackupBtn" class="drawer-tool-btn" type="button" aria-label="Restaurar copia de seguridad desde JSON">
-                    <span class="drawer-tool-icon" aria-hidden="true">📥</span>
-                    <span class="drawer-tool-text">Importar Backup</span>
-                </button>
-                <input type="file" id="inputImportarBackupJson" accept=".json" style="display: none;">
             </div>
         </div>
 
@@ -6133,7 +6027,7 @@
 
 <script src="mqtt.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="script.js?v=29.28" defer></script>
+<script src="script.js?v=29.29" defer></script>
 
 <!-- =========================================================
      MODAL DE PROMPT PARA GEMINI (CREAR JUEGOS DESDE PDF)
