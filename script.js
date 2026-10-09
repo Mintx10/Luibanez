@@ -3723,19 +3723,12 @@ function actualizarNavPorCarrera() {
     const drawerFinEstad = document.getElementById("drawerNavFinEstad");
     const drawerFinCont = document.getElementById("drawerNavFinCont");
 
+    // 1. Barra superior de escritorio: SIEMPRE los 5 menús importantes limpios
+    [navHome, navSolo, navLab, navJuntos, navFama].forEach(b => b?.classList.remove("hidden"));
+    [navMed, navFarma, navSalud, navFinHub, navFinFilo, navFinSfi, navFinHem, navFinEstad, navFinCont].forEach(b => b?.classList.add("hidden"));
+
+    // 2. Menú lateral móvil (Drawer): se adapta según la carrera
     if (esIvan) {
-        // En la cuenta de Iván: sólo Luibañez, Estudiar Solo y las 3 materias médicas
-        if (navHome) navHome.classList.add("hidden");
-        if (navSolo) navSolo.classList.remove("hidden");
-        if (navLab) navLab.classList.add("hidden");
-        if (navJuntos) navJuntos.classList.add("hidden");
-        if (navFama) navFama.classList.add("hidden");
-        if (navMed) navMed.classList.remove("hidden");
-        if (navFarma) navFarma.classList.remove("hidden");
-        if (navSalud) navSalud.classList.remove("hidden");
-
-        [navFinHub, navFinFilo, navFinSfi, navFinHem, navFinEstad, navFinCont].forEach(b => b?.classList.add("hidden"));
-
         if (drawerHome) drawerHome.classList.add("hidden");
         if (drawerSolo) drawerSolo.classList.remove("hidden");
         if (drawerLab) drawerLab.classList.add("hidden");
@@ -3747,16 +3740,6 @@ function actualizarNavPorCarrera() {
 
         [drawerFinHub, drawerFinFilo, drawerFinSfi, drawerFinHem, drawerFinEstad, drawerFinCont].forEach(b => b?.classList.add("hidden"));
     } else if (esFinanzas) {
-        // En la cuenta de Licenciatura en Finanzas: FinHub y las 5 materias activas
-        if (navHome) navHome.classList.remove("hidden");
-        if (navSolo) navSolo.classList.remove("hidden");
-        if (navLab) navLab.classList.add("hidden");
-        if (navJuntos) navJuntos.classList.remove("hidden");
-        if (navFama) navFama.classList.add("hidden");
-
-        [navMed, navFarma, navSalud].forEach(b => b?.classList.add("hidden"));
-        [navFinHub, navFinFilo, navFinSfi, navFinHem, navFinEstad, navFinCont].forEach(b => b?.classList.remove("hidden"));
-
         if (drawerHome) drawerHome.classList.remove("hidden");
         if (drawerSolo) drawerSolo.classList.remove("hidden");
         if (drawerLab) drawerLab.classList.add("hidden");
@@ -3766,16 +3749,6 @@ function actualizarNavPorCarrera() {
         [drawerMed, drawerFarma, drawerSalud].forEach(b => b?.classList.add("hidden"));
         [drawerFinHub, drawerFinFilo, drawerFinSfi, drawerFinHem, drawerFinEstad, drawerFinCont].forEach(b => b?.classList.remove("hidden"));
     } else {
-        // Modo visitante o estándar
-        if (navHome) navHome.classList.remove("hidden");
-        if (navSolo) navSolo.classList.remove("hidden");
-        if (navLab) navLab.classList.remove("hidden");
-        if (navJuntos) navJuntos.classList.remove("hidden");
-        if (navFama) navFama.classList.remove("hidden");
-
-        [navMed, navFarma, navSalud].forEach(b => b?.classList.add("hidden"));
-        [navFinHub, navFinFilo, navFinSfi, navFinHem, navFinEstad, navFinCont].forEach(b => b?.classList.add("hidden"));
-
         if (drawerHome) drawerHome.classList.remove("hidden");
         if (drawerSolo) drawerSolo.classList.remove("hidden");
         if (drawerLab) drawerLab.classList.remove("hidden");
@@ -14720,7 +14693,7 @@ function iniciarAplicacion() {
 // =========================================================
 // GESTOR DE VERSIONES Y ACTUALIZACIÓN AUTOMÁTICA
 // =========================================================
-const APP_BUILD_VERSION = "29.27";
+const APP_BUILD_VERSION = "29.28";
 
 async function forzarActualizacionCompleta(mostrarNotificacion = true) {
     const lastAttempt = parseInt(sessionStorage.getItem("last_auto_update_ts") || "0", 10);
