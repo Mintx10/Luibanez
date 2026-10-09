@@ -11780,6 +11780,10 @@ const supabaseService = {
     async guardarPerfil(perfil) {
         const client = obtenerSupabaseClient();
         if (!client || !perfil || !perfil.id) return;
+        // Solo registrar cuentas reales con nombre (ignorar visitantes temporales/invitados)
+        if (perfil.esInvitado || String(perfil.id).startsWith("guest_") || !perfil.apodo || perfil.apodo.trim().toLowerCase() === "invitado") {
+            return;
+        }
         try {
             const fila = {
                 id: String(perfil.id),
@@ -11918,8 +11922,8 @@ async function asegurarSincronizacionNube() {
             }
             // 2. Traer novedades desde la nube
             await supabaseService.sincronizarColeccionDesdeNube();
-            // 3. Respaldar perfil del estudiante
-            if (perfilUsuario && perfilUsuario.id) {
+            // 3. Respaldar perfil del estudiante (solo cuentas creadas y registradas)
+            if (perfilUsuario && perfilUsuario.id && !perfilUsuario.esInvitado && perfilUsuario.apodo !== "Invitado") {
                 await supabaseService.guardarPerfil(perfilUsuario);
             }
         }
@@ -14581,7 +14585,7 @@ function iniciarAplicacion() {
 // =========================================================
 // GESTOR DE VERSIONES Y ACTUALIZACIÓN AUTOMÁTICA
 // =========================================================
-const APP_BUILD_VERSION = "29.25";
+const APP_BUILD_VERSION = "29.26";
 
 async function forzarActualizacionCompleta(mostrarNotificacion = true) {
     const lastAttempt = parseInt(sessionStorage.getItem("last_auto_update_ts") || "0", 10);
