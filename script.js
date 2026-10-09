@@ -9502,7 +9502,10 @@ function actualizarCardPdfEnCrearSala() {
             const uploadBtn = document.getElementById("dueloUploadPdfBtn");
             const removeBtn = document.getElementById("dueloRemovePdfBtn");
 
-            if (titleEl) titleEl.textContent = `📄 ${apunte.nombre}`;
+            if (titleEl) {
+                titleEl.textContent = `📄 ${apunte.nombreCorto || apunte.nombreDisplay || apunte.nombre}`;
+                titleEl.title = apunte.nombre;
+            }
             if (badgeEl) {
                 badgeEl.style.display = "inline-flex";
                 badgeEl.textContent = "Conectado a Todos los Juegos";
@@ -11617,8 +11620,18 @@ function obtenerContextoConsolidadoApuntes() {
     const palabrasTotal = activos.reduce((acc, d) => acc + (d.palabras || (d.texto ? d.texto.split(/\s+/).filter(Boolean).length : 0)), 0);
     const nombres = activos.map(d => d.nombre).join(" + ");
 
+    const nombreDisplay = activos.length === 1 
+        ? activos[0].nombre 
+        : `${activos.length} documentos activos (${activos[0].nombre} y ${activos.length - 1} más)`;
+
+    const nombreCorto = activos.length === 1 
+        ? activos[0].nombre 
+        : `${activos.length} apuntes activos`;
+
     return {
         nombre: nombres,
+        nombreDisplay: nombreDisplay,
+        nombreCorto: nombreCorto,
         texto: textoCombinado,
         paginas: paginasTotal,
         palabras: palabrasTotal,
@@ -12212,7 +12225,10 @@ function actualizarUIIndicadoresPDF() {
         if (apunteActivo && apunteActivo.nombre) {
             dom.mainPdfHubEmpty.classList.add("hidden");
             dom.mainPdfHubActive.classList.remove("hidden");
-            if (dom.mainPdfFileName) dom.mainPdfFileName.textContent = apunteActivo.nombre;
+            if (dom.mainPdfFileName) {
+                dom.mainPdfFileName.textContent = apunteActivo.nombreDisplay || apunteActivo.nombre;
+                dom.mainPdfFileName.title = apunteActivo.nombre;
+            }
             if (dom.mainPdfFileStats) {
                 dom.mainPdfFileStats.textContent = `${apunteActivo.activosDocs || 1} documento(s) activo(s) • ${apunteActivo.paginas || 1} páginas • Guardado en base de datos local`;
             }
@@ -12227,7 +12243,11 @@ function actualizarUIIndicadoresPDF() {
         if (apunteActivo && apunteActivo.nombre) {
             dom.bolilleroGlobalPdfBadge.style.display = "inline-flex";
             dom.bolilleroGlobalPdfBadge.classList.remove("hidden");
-            if (dom.bolilleroGlobalPdfName) dom.bolilleroGlobalPdfName.textContent = apunteActivo.nombre;
+            if (dom.bolilleroGlobalPdfName) {
+                dom.bolilleroGlobalPdfName.textContent = apunteActivo.nombreCorto || apunteActivo.nombre;
+                dom.bolilleroGlobalPdfName.title = apunteActivo.nombre;
+            }
+            dom.bolilleroGlobalPdfBadge.title = `Material activo: ${apunteActivo.nombre}`;
         } else {
             dom.bolilleroGlobalPdfBadge.style.display = "none";
             dom.bolilleroGlobalPdfBadge.classList.add("hidden");
@@ -12237,11 +12257,13 @@ function actualizarUIIndicadoresPDF() {
     // 3. Barra de Apuntes en Juegos Educativos
     if (dom.juegosApuntesStatus) {
         if (apunteActivo) {
-            dom.juegosApuntesStatus.textContent = `📚 ${apunteActivo.activosDocs || 1} doc(s) activos: ${apunteActivo.nombre} (${apunteActivo.paginas} págs, ${apunteActivo.palabras} palabras)`;
+            dom.juegosApuntesStatus.textContent = `📚 ${apunteActivo.activosDocs || 1} doc(s) activos: ${apunteActivo.nombreCorto || apunteActivo.nombre} (${apunteActivo.paginas} págs)`;
+            dom.juegosApuntesStatus.title = `Documentos: ${apunteActivo.nombre} (${apunteActivo.paginas} págs, ${apunteActivo.palabras} palabras)`;
             dom.juegosApuntesStatus.classList.add("has-pdf");
             if (dom.juegosRemovePdfBtn) dom.juegosRemovePdfBtn.classList.remove("hidden");
         } else {
             dom.juegosApuntesStatus.textContent = "Sin PDF cargado (usando banco temático estándar)";
+            dom.juegosApuntesStatus.title = "";
             dom.juegosApuntesStatus.classList.remove("has-pdf");
             if (dom.juegosRemovePdfBtn) dom.juegosRemovePdfBtn.classList.add("hidden");
         }
@@ -12251,7 +12273,8 @@ function actualizarUIIndicadoresPDF() {
     if (dom.bolilleroIASourceBadge) {
         if (apunteActivo) {
             dom.bolilleroIASourceBadge.style.display = "inline-block";
-            dom.bolilleroIASourceBadge.textContent = `📚 Basado en ${apunteActivo.activosDocs || 1} doc(s): ${apunteActivo.nombre}`;
+            dom.bolilleroIASourceBadge.textContent = `📚 Basado en ${apunteActivo.activosDocs || 1} doc(s): ${apunteActivo.nombreCorto || apunteActivo.nombre}`;
+            dom.bolilleroIASourceBadge.title = apunteActivo.nombre;
         } else {
             dom.bolilleroIASourceBadge.style.display = "none";
         }
@@ -12260,7 +12283,7 @@ function actualizarUIIndicadoresPDF() {
     // 5. Tarjeta en Estudiar Solo
     if (dom.soloPdfCardDesc) {
         if (apunteActivo) {
-            dom.soloPdfCardDesc.innerHTML = `<strong style="color: #34d399;">📚 Archivos activos (${apunteActivo.activosDocs || 1}):</strong> ${apunteActivo.nombre} (${apunteActivo.paginas} págs). Los juegos de la plataforma están usando este material para formular desafíos.`;
+            dom.soloPdfCardDesc.innerHTML = `<strong style="color: #34d399;">📚 Archivos activos (${apunteActivo.activosDocs || 1}):</strong> ${apunteActivo.nombreDisplay || apunteActivo.nombre} (${apunteActivo.paginas} págs). Los juegos de la plataforma están usando este material para formular desafíos.`;
         } else {
             dom.soloPdfCardDesc.textContent = "Cargá uno o varios resúmenes en PDF de tu materia. La IA de Google Gemini extraerá los conceptos y adaptará las preguntas de todos tus juegos automáticamente.";
         }
@@ -14693,7 +14716,7 @@ function iniciarAplicacion() {
 // =========================================================
 // GESTOR DE VERSIONES Y ACTUALIZACIÓN AUTOMÁTICA
 // =========================================================
-const APP_BUILD_VERSION = "29.30";
+const APP_BUILD_VERSION = "29.31";
 
 async function forzarActualizacionCompleta(mostrarNotificacion = true) {
     const lastAttempt = parseInt(sessionStorage.getItem("last_auto_update_ts") || "0", 10);
@@ -15196,8 +15219,8 @@ async function abrirArenaJuego(tipoJuego, modo, listaId = null, forzarNuevas = f
 
     // Si el usuario no tiene una lista en localStorage, creamos un banco temático base para que NUNCA lo mande al bolillero
     if (!lista || !lista.temas || lista.temas.length === 0) {
-        const nombreMateria = (apunteActivo && apunteActivo.nombre) 
-            ? apunteActivo.nombre.replace(/\.pdf$/i, '') 
+        const nombreMateria = (apunteActivo && (apunteActivo.nombreCorto || apunteActivo.nombreDisplay || apunteActivo.nombre)) 
+            ? (apunteActivo.nombreCorto || apunteActivo.nombreDisplay || apunteActivo.nombre).replace(/\.pdf$/i, '') 
             : "Materia de Estudio";
         lista = {
             id: "lista_auto_educativa",
@@ -20647,16 +20670,21 @@ const bolilleroSetupEstado = {
 };
 
 function abrirModalConfigBolillero() {
+    actualizarUIIndicadoresPDF();
     const apunte = apuntesEstado.bolillero || apuntesEstado.global;
-    if (!bolilleroSetupEstado.archivoTexto && apunte && apunte.texto) {
+    if (apunte && apunte.texto) {
         bolilleroSetupEstado.archivoTexto = apunte.texto;
-        bolilleroSetupEstado.archivoNombre = apunte.nombre || "apuntes.pdf";
+        bolilleroSetupEstado.archivoNombre = apunte.nombreCorto || apunte.nombre;
         bolilleroSetupEstado.archivoPaginas = apunte.paginas || 1;
-        if (dom.bolilleroLoadedPdfInfo) dom.bolilleroLoadedPdfInfo.classList.remove("hidden");
-        if (dom.bolilleroLoadedPdfIcon) dom.bolilleroLoadedPdfIcon.textContent = "📄";
-        if (dom.bolilleroLoadedPdfName) dom.bolilleroLoadedPdfName.textContent = bolilleroSetupEstado.archivoNombre;
-        if (dom.bolilleroLoadedPdfMeta) dom.bolilleroLoadedPdfMeta.textContent = `${bolilleroSetupEstado.archivoPaginas} pág(s) listas`;
-        if (dom.bolilleroUploadTitle) dom.bolilleroUploadTitle.textContent = "Material Activo en el Bolillero";
+        if (apuntesColeccion.length === 0 && dom.bolilleroLoadedPdfInfo) {
+            dom.bolilleroLoadedPdfInfo.classList.remove("hidden");
+            if (dom.bolilleroLoadedPdfIcon) dom.bolilleroLoadedPdfIcon.textContent = "📄";
+            if (dom.bolilleroLoadedPdfName) dom.bolilleroLoadedPdfName.textContent = bolilleroSetupEstado.archivoNombre;
+            if (dom.bolilleroLoadedPdfMeta) dom.bolilleroLoadedPdfMeta.textContent = `${bolilleroSetupEstado.archivoPaginas} pág(s) listas`;
+            if (dom.bolilleroUploadTitle) dom.bolilleroUploadTitle.textContent = "Material Activo en el Bolillero";
+        }
+    } else if (apuntesColeccion.length === 0 && dom.bolilleroLoadedPdfInfo) {
+        dom.bolilleroLoadedPdfInfo.classList.add("hidden");
     }
 
     sincronizarDificultadBolilleroUI();
@@ -20744,7 +20772,7 @@ async function ejecutarGeneracionBolilleroIA() {
         mostrarToast("🤖 Gemini está analizando tu apunte y extrayendo las bolillas solicitadas...", "info");
 
         let palabras = [];
-        let materia = apunte ? apunte.nombre.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " ") : "Materia de Estudio";
+        let materia = apunte ? (apunte.nombreCorto || apunte.nombreDisplay || apunte.nombre).replace(/\.[^/.]+$/, "").replace(/[-_]/g, " ") : "Materia de Estudio";
 
         if (apunte && apunte.texto) {
             try {
@@ -20837,16 +20865,21 @@ const bombaSetupEstado = {
 
 function abrirModalConfigBomba(modo = "solo") {
     juegosEduEstado.modo = modo;
+    actualizarUIIndicadoresPDF();
     const apunte = apuntesEstado.bomba || apuntesEstado.global;
-    if (!bombaSetupEstado.archivoTexto && apunte && apunte.texto) {
+    if (apunte && apunte.texto) {
         bombaSetupEstado.archivoTexto = apunte.texto;
-        bombaSetupEstado.archivoNombre = apunte.nombre || "apuntes.pdf";
+        bombaSetupEstado.archivoNombre = apunte.nombreCorto || apunte.nombre;
         bombaSetupEstado.archivoPaginas = apunte.paginas || 1;
-        if (dom.bombaLoadedPdfInfo) dom.bombaLoadedPdfInfo.classList.remove("hidden");
-        if (dom.bombaLoadedPdfIcon) dom.bombaLoadedPdfIcon.textContent = "📄";
-        if (dom.bombaLoadedPdfName) dom.bombaLoadedPdfName.textContent = bombaSetupEstado.archivoNombre;
-        if (dom.bombaLoadedPdfMeta) dom.bombaLoadedPdfMeta.textContent = `${bombaSetupEstado.archivoPaginas} pág(s) listas`;
-        if (dom.bombaUploadTitle) dom.bombaUploadTitle.textContent = "Material Activo en la Bomba";
+        if (apuntesColeccion.length === 0 && dom.bombaLoadedPdfInfo) {
+            dom.bombaLoadedPdfInfo.classList.remove("hidden");
+            if (dom.bombaLoadedPdfIcon) dom.bombaLoadedPdfIcon.textContent = "📄";
+            if (dom.bombaLoadedPdfName) dom.bombaLoadedPdfName.textContent = bombaSetupEstado.archivoNombre;
+            if (dom.bombaLoadedPdfMeta) dom.bombaLoadedPdfMeta.textContent = `${bombaSetupEstado.archivoPaginas} pág(s) listas`;
+            if (dom.bombaUploadTitle) dom.bombaUploadTitle.textContent = "Material Activo en la Bomba";
+        }
+    } else if (apuntesColeccion.length === 0 && dom.bombaLoadedPdfInfo) {
+        dom.bombaLoadedPdfInfo.classList.add("hidden");
     }
 
     sincronizarDificultadBombaUI();
@@ -20946,7 +20979,7 @@ async function ejecutarInicioBombaConfigurada() {
     try {
         if (apunte && apunte.texto) {
             mostrarToast("🤖 Gemini está redactando las 3 fases conceptuales de tu unidad...", "info");
-            const materia = apunte.nombre.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " ");
+            const materia = (apunte.nombreCorto || apunte.nombreDisplay || apunte.nombre).replace(/\.[^/.]+$/, "").replace(/[-_]/g, " ");
             const tema = orden ? `Unidad o Eje: ${orden}` : "Conceptos Clave";
 
             const data = await generarPreguntaIA({
@@ -21121,16 +21154,21 @@ const impostorSetupEstado = {
 
 function abrirModalConfigImpostor(modo = "solo") {
     juegosEduEstado.modo = modo;
+    actualizarUIIndicadoresPDF();
     const apunte = apuntesEstado.impostor || apuntesEstado.global;
-    if (!impostorSetupEstado.archivoTexto && apunte && apunte.texto) {
+    if (apunte && apunte.texto) {
         impostorSetupEstado.archivoTexto = apunte.texto;
-        impostorSetupEstado.archivoNombre = apunte.nombre || "apuntes.pdf";
+        impostorSetupEstado.archivoNombre = apunte.nombreCorto || apunte.nombre;
         impostorSetupEstado.archivoPaginas = apunte.paginas || 1;
-        if (dom.impostorLoadedPdfInfo) dom.impostorLoadedPdfInfo.classList.remove("hidden");
-        if (dom.impostorLoadedPdfIcon) dom.impostorLoadedPdfIcon.textContent = "📄";
-        if (dom.impostorLoadedPdfName) dom.impostorLoadedPdfName.textContent = impostorSetupEstado.archivoNombre;
-        if (dom.impostorLoadedPdfMeta) dom.impostorLoadedPdfMeta.textContent = `${impostorSetupEstado.archivoPaginas} pág(s) listas`;
-        if (dom.impostorUploadTitle) dom.impostorUploadTitle.textContent = "Material Activo en Impostor";
+        if (apuntesColeccion.length === 0 && dom.impostorLoadedPdfInfo) {
+            dom.impostorLoadedPdfInfo.classList.remove("hidden");
+            if (dom.impostorLoadedPdfIcon) dom.impostorLoadedPdfIcon.textContent = "📄";
+            if (dom.impostorLoadedPdfName) dom.impostorLoadedPdfName.textContent = impostorSetupEstado.archivoNombre;
+            if (dom.impostorLoadedPdfMeta) dom.impostorLoadedPdfMeta.textContent = `${impostorSetupEstado.archivoPaginas} pág(s) listas`;
+            if (dom.impostorUploadTitle) dom.impostorUploadTitle.textContent = "Material Activo en Impostor";
+        }
+    } else if (apuntesColeccion.length === 0 && dom.impostorLoadedPdfInfo) {
+        dom.impostorLoadedPdfInfo.classList.add("hidden");
     }
 
     sincronizarDificultadImpostorUI();
@@ -21231,7 +21269,7 @@ async function ejecutarInicioImpostorConfigurado() {
 
         if (apunte && apunte.texto) {
             mostrarToast("🤖 Gemini está analizando tu apunte y redactando casos sospechosos...", "info");
-            const materia = apunte.nombre ? apunte.nombre.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " ") : "Materia de Estudio";
+            const materia = (apunte.nombreCorto || apunte.nombreDisplay || apunte.nombre || "Materia de Estudio").replace(/\.[^/.]+$/, "").replace(/[-_]/g, " ");
             
             try {
                 const data = await generarPreguntaIA({
@@ -21288,16 +21326,21 @@ const memotestSetupEstado = {
 
 function abrirModalConfigMemotest(modo = "solo") {
     juegosEduEstado.modo = modo;
+    actualizarUIIndicadoresPDF();
     const apunte = apuntesEstado.memotest || apuntesEstado.global;
-    if (!memotestSetupEstado.archivoTexto && apunte && apunte.texto) {
+    if (apunte && apunte.texto) {
         memotestSetupEstado.archivoTexto = apunte.texto;
-        memotestSetupEstado.archivoNombre = apunte.nombre || "apuntes.pdf";
+        memotestSetupEstado.archivoNombre = apunte.nombreCorto || apunte.nombre;
         memotestSetupEstado.archivoPaginas = apunte.paginas || 1;
-        if (dom.memotestLoadedPdfInfo) dom.memotestLoadedPdfInfo.classList.remove("hidden");
-        if (dom.memotestLoadedPdfIcon) dom.memotestLoadedPdfIcon.textContent = "📄";
-        if (dom.memotestLoadedPdfName) dom.memotestLoadedPdfName.textContent = memotestSetupEstado.archivoNombre;
-        if (dom.memotestLoadedPdfMeta) dom.memotestLoadedPdfMeta.textContent = `${memotestSetupEstado.archivoPaginas} pág(s) listas`;
-        if (dom.memotestUploadTitle) dom.memotestUploadTitle.textContent = "Material Activo en Memotest";
+        if (apuntesColeccion.length === 0 && dom.memotestLoadedPdfInfo) {
+            dom.memotestLoadedPdfInfo.classList.remove("hidden");
+            if (dom.memotestLoadedPdfIcon) dom.memotestLoadedPdfIcon.textContent = "📄";
+            if (dom.memotestLoadedPdfName) dom.memotestLoadedPdfName.textContent = memotestSetupEstado.archivoNombre;
+            if (dom.memotestLoadedPdfMeta) dom.memotestLoadedPdfMeta.textContent = `${memotestSetupEstado.archivoPaginas} pág(s) listas`;
+            if (dom.memotestUploadTitle) dom.memotestUploadTitle.textContent = "Material Activo en Memotest";
+        }
+    } else if (apuntesColeccion.length === 0 && dom.memotestLoadedPdfInfo) {
+        dom.memotestLoadedPdfInfo.classList.add("hidden");
     }
 
     sincronizarDificultadMemotestUI();
@@ -21395,7 +21438,7 @@ async function ejecutarInicioMemotestConfigurado() {
     try {
         if (apunte && apunte.texto) {
             mostrarToast("🤖 Gemini está analizando tu apunte y extrayendo pares conceptuales...", "info");
-            const materia = apunte.nombre ? apunte.nombre.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " ") : "Materia de Estudio";
+            const materia = (apunte.nombreCorto || apunte.nombreDisplay || apunte.nombre || "Materia de Estudio").replace(/\.[^/.]+$/, "").replace(/[-_]/g, " ");
 
             try {
                 const data = await generarPreguntaIA({

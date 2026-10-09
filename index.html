@@ -15,10 +15,10 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     
-    <link rel="icon" type="image/svg+xml" href="icon.svg?v=29.30">
-    <link rel="apple-touch-icon" href="icon-192.png?v=29.30">
-    <link rel="manifest" href="manifest.json?v=29.30">
-    <link rel="stylesheet" href="style.css?v=29.30">
+    <link rel="icon" type="image/svg+xml" href="icon.svg?v=29.31">
+    <link rel="apple-touch-icon" href="icon-192.png?v=29.31">
+    <link rel="manifest" href="manifest.json?v=29.31">
+    <link rel="stylesheet" href="style.css?v=29.31">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1095,8 +1095,8 @@
                         <button id="bolilleroRulesBtn" class="rules-trigger-btn" type="button" title="Ver reglas y cómo funciona el Bolillero">
                             <span>❓</span><span>Reglas</span>
                         </button>
-                        <span class="badge badge--success hidden" id="bolilleroGlobalPdfBadge" style="display: none; align-items: center; gap: 0.4rem; padding: 0.4rem 0.85rem; font-size: 0.85rem;">
-                            📄 Material Activo: <strong id="bolilleroGlobalPdfName">apuntes.pdf</strong>
+                        <span class="badge badge--success hidden" id="bolilleroGlobalPdfBadge" style="display: none;">
+                            📄 <span class="bolillero-pdf-label-text">Material:</span> <strong id="bolilleroGlobalPdfName">apuntes.pdf</strong>
                         </span>
                     </div>
                 </header>
@@ -1619,11 +1619,11 @@
 
                             <!-- Acordeón Desplegable para Reglas Avanzadas y Clave -->
                             <details class="setup-advanced-accordion" id="dueloAdvancedOptionsAccordion" style="margin-top: 1.25rem;">
-                                <summary class="setup-advanced-summary">
+                                <summary class="setup-advanced-accordion__summary setup-advanced-summary">
                                     <span>⚙️ Opciones avanzadas de partida (tiempos, comodines, desempate y clave)</span>
-                                    <span class="setup-advanced-arrow">▼</span>
+                                    <span class="setup-accordion-chevron setup-advanced-arrow">▼</span>
                                 </summary>
-                                <div class="setup-advanced-content" style="padding-top: 0.75rem;">
+                                <div class="setup-advanced-accordion__content setup-advanced-content" style="padding-top: 0.75rem;">
                                     <!-- 💣 PANEL 1: REGLAS DE DESACTIVÁ LA BOMBA -->
                                     <div id="dueloOpcionesBomba" class="duelo-game-options-panel">
                                         <div class="duelo-options-panel-header">
@@ -6027,7 +6027,7 @@
 
 <script src="mqtt.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="script.js?v=29.30" defer></script>
+<script src="script.js?v=29.31" defer></script>
 
 <!-- =========================================================
      MODAL DE PROMPT PARA GEMINI (CREAR JUEGOS DESDE PDF)

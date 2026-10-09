@@ -19666,31 +19666,120 @@ body.modo-dev-activo .juntos-locked-notice {
 
 @media (max-width: 819px) {
     .modal.lab-config-dialog {
-        width: 95vw !important;
-        max-width: 95vw !important;
-        max-height: 90vh !important;
+        width: min(96vw, 600px) !important;
+        max-width: 96vw !important;
+        max-height: 92vh !important;
         margin: auto !important;
+        border-radius: var(--radius-lg, 18px) !important;
+    }
+
+    .modal.lab-config-dialog .lab-config-modal-content {
+        display: flex !important;
+        flex-direction: column !important;
+        max-height: 92vh !important;
+        height: 100% !important;
+        padding: 1rem 0.85rem !important;
+        box-sizing: border-box !important;
+        overflow: hidden !important;
+    }
+
+    .modal.lab-config-dialog .lab-config-header {
+        flex-shrink: 0 !important;
+        padding-bottom: 0.65rem !important;
     }
 
     .modal.lab-config-dialog .setup-simplified-body {
-        max-height: calc(85vh - 110px) !important;
+        flex: 1 1 auto !important;
+        min-height: 0 !important;
+        max-height: none !important;
         gap: 0.75rem !important;
-        padding: 0.35rem 0.35rem 4rem !important;
+        padding: 0.4rem 0.2rem 1rem !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+
+    .modal.lab-config-dialog .lab-config-footer {
+        flex-shrink: 0 !important;
+        padding-top: 0.65rem !important;
+    }
+}
+
+@media (max-width: 600px) {
+    .modal.lab-config-dialog {
+        width: 96vw !important;
+        max-height: 94vh !important;
+        border-radius: 16px !important;
+    }
+
+    .modal.lab-config-dialog .lab-config-modal-content {
+        padding: 0.75rem 0.65rem !important;
+        gap: 0.5rem !important;
+        max-height: 94vh !important;
+    }
+
+    .modal.lab-config-dialog .lab-config-header {
+        padding-bottom: 0.45rem !important;
+    }
+
+    .modal.lab-config-dialog .lab-config-header-text {
+        gap: 0.5rem !important;
+    }
+
+    .modal.lab-config-dialog .lab-config-header-icon {
+        font-size: 1.35rem !important;
+    }
+
+    .modal.lab-config-dialog .lab-config-header-text .modal__title {
+        font-size: 0.98rem !important;
+        line-height: 1.25 !important;
+    }
+
+    .modal.lab-config-dialog .lab-config-subtitle {
+        font-size: 0.72rem !important;
+    }
+
+    .modal.lab-config-dialog .setup-simplified-body {
+        padding: 0.25rem 0.1rem 0.75rem !important;
+        gap: 0.6rem !important;
+    }
+
+    .modal.lab-config-dialog .lab-config-footer {
+        flex-direction: column-reverse !important;
+        gap: 0.45rem !important;
+        padding-top: 0.5rem !important;
+        margin-top: 0 !important;
+    }
+
+    .modal.lab-config-dialog .lab-config-footer .button {
+        width: 100% !important;
+        min-height: 42px !important;
+        justify-content: center !important;
+        text-align: center !important;
+        font-size: 0.88rem !important;
+        padding: 0.6rem 0.75rem !important;
     }
 }
 
 /* Slim Uploader Horizontal */
 .setup-slim-uploader {
-    display: flex !important;
-    align-items: center !important;
-    gap: 0.75rem !important;
-    padding: 0.55rem 0.85rem !important;
-    background: rgba(15, 23, 42, 0.65) !important;
-    border: 1.5px dashed rgba(56, 189, 248, 0.4) !important;
-    border-radius: var(--radius-md, 12px) !important;
-    cursor: pointer !important;
-    transition: all 0.2s ease !important;
-    min-height: 52px !important;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.55rem 0.85rem;
+    background: rgba(15, 23, 42, 0.65);
+    border: 1.5px dashed rgba(56, 189, 248, 0.4);
+    border-radius: var(--radius-md, 12px);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-height: 52px;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.setup-slim-uploader.hidden,
+.setup-multi-pdf-tray.hidden,
+.lab-loaded-pdf-info.hidden {
+    display: none !important;
 }
 
 .setup-slim-uploader:hover,
@@ -19847,16 +19936,18 @@ body.modo-dev-activo .juntos-locked-notice {
 
 /* Acordeón de Opciones Avanzadas */
 .setup-advanced-accordion {
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: var(--radius-md, 12px);
-    background: rgba(15, 23, 42, 0.35);
+    background: rgba(15, 23, 42, 0.45);
     overflow: hidden;
     transition: all 0.25s ease;
+    margin-top: 0.25rem;
 }
 
-.setup-advanced-accordion__summary {
-    padding: 0.6rem 0.85rem;
-    font-size: 0.8rem;
+.setup-advanced-accordion__summary,
+.setup-advanced-summary {
+    padding: 0.65rem 0.85rem;
+    font-size: 0.82rem;
     font-weight: 600;
     color: var(--color-text-muted);
     cursor: pointer;
@@ -19866,32 +19957,44 @@ body.modo-dev-activo .juntos-locked-notice {
     user-select: none;
     list-style: none;
     transition: all 0.2s ease;
+    min-height: 42px;
+    -webkit-tap-highlight-color: transparent;
 }
 
-.setup-advanced-accordion__summary::-webkit-details-marker {
+.setup-advanced-accordion__summary::-webkit-details-marker,
+.setup-advanced-summary::-webkit-details-marker {
     display: none;
 }
 
-.setup-advanced-accordion__summary:hover {
-    color: var(--color-text);
-    background: rgba(255, 255, 255, 0.03);
+.setup-advanced-accordion__summary:hover,
+.setup-advanced-summary:hover,
+.setup-advanced-accordion__summary:focus-visible,
+.setup-advanced-summary:focus-visible {
+    color: #38bdf8;
+    background: rgba(56, 189, 248, 0.08);
 }
 
-.setup-advanced-accordion[open] .setup-advanced-accordion__summary {
+.setup-advanced-accordion[open] .setup-advanced-accordion__summary,
+.setup-advanced-accordion[open] .setup-advanced-summary {
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    color: var(--color-text);
+    color: #38bdf8;
+    background: rgba(56, 189, 248, 0.06);
 }
 
-.setup-accordion-chevron {
+.setup-accordion-chevron,
+.setup-advanced-arrow {
     font-size: 0.85rem;
+    color: #38bdf8;
     transition: transform 0.2s ease;
 }
 
-.setup-advanced-accordion[open] .setup-accordion-chevron {
+.setup-advanced-accordion[open] .setup-accordion-chevron,
+.setup-advanced-accordion[open] .setup-advanced-arrow {
     transform: rotate(180deg);
 }
 
-.setup-advanced-accordion__content {
+.setup-advanced-accordion__content,
+.setup-advanced-content {
     padding: 0.75rem 0.85rem;
     display: flex;
     flex-direction: column;
@@ -20413,6 +20516,162 @@ body.modo-dev-activo .juntos-locked-notice {
 
 [data-theme="light"] .setup-multi-pdf-item__name {
     color: #0f172a;
+}
+
+/* Indicadores y Cabeceras de Documentos Resilientes */
+#bolilleroGlobalPdfBadge {
+    max-width: 280px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: inline-flex;
+    align-items: center;
+    border-radius: 9999px;
+}
+
+#bolilleroGlobalPdfName {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 150px;
+    display: inline-block;
+    vertical-align: bottom;
+}
+
+#juegosGameSubtitle {
+    max-width: 280px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#juegosApuntesStatus {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 320px;
+}
+
+@media (max-width: 600px) {
+    #bolilleroGlobalPdfBadge {
+        max-width: 175px !important;
+        font-size: 0.72rem !important;
+        padding: 0.2rem 0.5rem !important;
+    }
+
+    #bolilleroGlobalPdfName {
+        max-width: 85px !important;
+    }
+
+    #juegosGameSubtitle {
+        max-width: 160px !important;
+        font-size: 0.74rem !important;
+    }
+
+    #juegosApuntesStatus {
+        max-width: 170px !important;
+        font-size: 0.7rem !important;
+    }
+
+    /* Bandeja Multi-PDF Mobile */
+    .setup-multi-pdf-tray {
+        padding: 0.5rem 0.65rem !important;
+        gap: 0.4rem !important;
+        margin-top: 0.25rem !important;
+    }
+
+    .setup-multi-pdf-header {
+        flex-wrap: wrap !important;
+        gap: 0.35rem !important;
+    }
+
+    .setup-multi-pdf-count {
+        font-size: 0.78rem !important;
+    }
+
+    .setup-multi-pdf-meta {
+        font-size: 0.68rem !important;
+    }
+
+    .setup-multi-pdf-add-btn {
+        padding: 0.25rem 0.55rem !important;
+        font-size: 0.72rem !important;
+    }
+
+    .setup-multi-pdf-list {
+        max-height: 120px !important;
+        gap: 0.3rem !important;
+    }
+
+    .setup-multi-pdf-item {
+        padding: 0.3rem 0.45rem !important;
+        gap: 0.35rem !important;
+    }
+
+    .setup-multi-pdf-item__name {
+        max-width: 160px !important;
+        font-size: 0.74rem !important;
+    }
+
+    .setup-multi-pdf-item__meta {
+        font-size: 0.64rem !important;
+    }
+
+    .setup-multi-pdf-item__checkbox {
+        width: 17px !important;
+        height: 17px !important;
+    }
+
+    .setup-multi-pdf-item__remove {
+        padding: 0.25rem 0.45rem !important;
+        font-size: 0.82rem !important;
+    }
+
+    /* Duelo Crear Sala Modal Mobile */
+    .duelo-create-modal {
+        width: 96vw !important;
+        padding: 0.85rem 0.65rem 1.25rem !important;
+        max-height: 94vh !important;
+    }
+
+    .duelo-create-modal .duelo-lobby-card--host {
+        max-height: calc(94vh - 80px) !important;
+        padding-bottom: 2rem !important;
+    }
+
+    .duelo-game-cards-grid--compact {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 0.45rem !important;
+    }
+
+    .duelo-game-card {
+        padding: 0.55rem 0.5rem !important;
+        gap: 0.4rem !important;
+    }
+
+    .duelo-game-card__title {
+        font-size: 0.76rem !important;
+    }
+
+    .duelo-pdf-card-box {
+        padding: 0.65rem 0.65rem !important;
+        gap: 0.5rem !important;
+    }
+
+    .duelo-pdf-card-details strong {
+        max-width: 100% !important;
+        font-size: 0.82rem !important;
+    }
+
+    .duelo-pdf-card-actions {
+        width: 100% !important;
+        justify-content: flex-end !important;
+    }
+
+    .duelo-room-main-settings {
+        grid-template-columns: 1fr !important;
+        gap: 0.5rem !important;
+    }
 }
 
 /* ==========================================================
