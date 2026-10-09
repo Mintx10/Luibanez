@@ -1425,10 +1425,31 @@ function cambiarVista(vista) {
         if (typeof generarEjercicioTpSalud === "function") {
             generarEjercicioTpSalud();
         }
+    } else if (vistaDestino === "fin-filosofia") {
+        if (typeof generarExamenParaMateria === "function" && document.getElementById("finExamSheet_filosofia")?.querySelector(".fin-sheet-placeholder")) {
+            generarExamenParaMateria("filosofia");
+        }
+    } else if (vistaDestino === "fin-sfi") {
+        if (typeof generarExamenParaMateria === "function" && document.getElementById("finExamSheet_sfi")?.querySelector(".fin-sheet-placeholder")) {
+            generarExamenParaMateria("sfi");
+        }
+    } else if (vistaDestino === "fin-historia") {
+        if (typeof generarExamenParaMateria === "function" && document.getElementById("finExamSheet_historia")?.querySelector(".fin-sheet-placeholder")) {
+            generarExamenParaMateria("historia");
+        }
+    } else if (vistaDestino === "fin-estadistica") {
+        if (typeof generarExamenParaMateria === "function" && document.getElementById("finExamSheet_estadistica")?.querySelector(".fin-sheet-placeholder")) {
+            generarExamenParaMateria("estadistica");
+        }
+    } else if (vistaDestino === "fin-contabilidad") {
+        if (typeof generarExamenParaMateria === "function" && document.getElementById("finExamSheet_contabilidad")?.querySelector(".fin-sheet-placeholder")) {
+            generarExamenParaMateria("contabilidad");
+        }
     }
 
     window.scrollTo({ top: 0, behavior: "smooth" });
 }
+window.cambiarVista = cambiarVista;
 
 function renderPerfilUsuarioDuelo() {
     actualizarUIPerfilUsuario();
@@ -1437,7 +1458,12 @@ function renderPerfilUsuarioDuelo() {
 function inicializarRutas() {
     const hash = window.location.hash.replace("#", "");
     const normalized = (hash === "duelo" || hash === "juntos") ? "juntos" : hash;
-    if (["solo", "juntos", "bolillero", "fama", "home", "laboratorio", "med-interna", "farmacologia-2", "salud-publica"].includes(normalized)) {
+    const rutasPermitidas = [
+        "solo", "juntos", "bolillero", "fama", "home", "laboratorio",
+        "med-interna", "farmacologia-2", "salud-publica",
+        "fin-hub", "fin-filosofia", "fin-sfi", "fin-historia", "fin-estadistica", "fin-contabilidad"
+    ];
+    if (rutasPermitidas.includes(normalized)) {
         cambiarVista(normalized);
     } else {
         cambiarVista("home");
@@ -1612,6 +1638,26 @@ function inicializarDrawerMenu() {
             cerrarDrawerMenu();
         });
     }
+
+    // Navegación Licenciatura en Finanzas (Drawer Menú Móvil)
+    const finDrawerConfig = [
+        { id: "drawerNavFinHub", vista: "fin-hub" },
+        { id: "drawerNavFinFilo", vista: "fin-filosofia" },
+        { id: "drawerNavFinSfi", vista: "fin-sfi" },
+        { id: "drawerNavFinHem", vista: "fin-historia" },
+        { id: "drawerNavFinEstad", vista: "fin-estadistica" },
+        { id: "drawerNavFinCont", vista: "fin-contabilidad" }
+    ];
+    finDrawerConfig.forEach(item => {
+        const btn = document.getElementById(item.id);
+        if (btn) {
+            btn.addEventListener("click", (e) => {
+                e.preventDefault();
+                cambiarVista(item.vista);
+                if (typeof cerrarDrawerMenu === "function") cerrarDrawerMenu();
+            });
+        }
+    });
 
     // Modo Solo - Juegos desde el Drawer lateral
     if (dom.drawerNavSoloBomba) {
@@ -12924,6 +12970,26 @@ function registrarEventos() {
     if (dom.navBolilleroBtn) dom.navBolilleroBtn.addEventListener("click", () => cambiarVista("bolillero"));
     if (dom.navDueloBtn) dom.navDueloBtn.addEventListener("click", () => cambiarVista("duelo"));
     if (dom.navFamaBtn) dom.navFamaBtn.addEventListener("click", () => cambiarVista("fama"));
+
+    // Navegación Licenciatura en Finanzas (Navbar Superior)
+    const finNavConfig = [
+        { id: "navFinHubBtn", vista: "fin-hub" },
+        { id: "navFinFiloBtn", vista: "fin-filosofia" },
+        { id: "navFinSfiBtn", vista: "fin-sfi" },
+        { id: "navFinHemBtn", vista: "fin-historia" },
+        { id: "navFinEstadBtn", vista: "fin-estadistica" },
+        { id: "navFinContBtn", vista: "fin-contabilidad" }
+    ];
+    finNavConfig.forEach(item => {
+        const btn = document.getElementById(item.id);
+        if (btn) {
+            btn.addEventListener("click", (e) => {
+                e.preventDefault();
+                cambiarVista(item.vista);
+            });
+        }
+    });
+
     if (dom.brandLink) {
         dom.brandLink.addEventListener("click", (e) => {
             e.preventDefault();
@@ -14515,7 +14581,7 @@ function iniciarAplicacion() {
 // =========================================================
 // GESTOR DE VERSIONES Y ACTUALIZACIÓN AUTOMÁTICA
 // =========================================================
-const APP_BUILD_VERSION = "29.23";
+const APP_BUILD_VERSION = "29.24";
 
 async function forzarActualizacionCompleta(mostrarNotificacion = true) {
     const lastAttempt = parseInt(sessionStorage.getItem("last_auto_update_ts") || "0", 10);
@@ -25351,3 +25417,52 @@ window.generarExamenParaMateria = generarExamenParaMateria;
 window.evaluarExamenMateria = evaluarExamenMateria;
 window.iniciarJuegoMateria = iniciarJuegoMateria;
 window.abrirPizarronNotasRapido = abrirPizarronNotasRapido;
+
+// Delegación y vinculación resiliente e inmediata de navegación para Licenciatura en Finanzas
+function inicializarNavegacionFinanzasGarantizada() {
+    const mapaVistas = {
+        navFinHubBtn: "fin-hub",
+        navFinFiloBtn: "fin-filosofia",
+        navFinSfiBtn: "fin-sfi",
+        navFinHemBtn: "fin-historia",
+        navFinEstadBtn: "fin-estadistica",
+        navFinContBtn: "fin-contabilidad",
+        drawerNavFinHub: "fin-hub",
+        drawerNavFinFilo: "fin-filosofia",
+        drawerNavFinSfi: "fin-sfi",
+        drawerNavFinHem: "fin-historia",
+        drawerNavFinEstad: "fin-estadistica",
+        drawerNavFinCont: "fin-contabilidad"
+    };
+
+    Object.entries(mapaVistas).forEach(([elemId, vistaId]) => {
+        const el = document.getElementById(elemId);
+        if (el) {
+            el.onclick = (e) => {
+                e.preventDefault();
+                cambiarVista(vistaId);
+                if (elemId.startsWith("drawer") && typeof cerrarDrawerMenu === "function") {
+                    cerrarDrawerMenu();
+                }
+            };
+        }
+    });
+
+    // Delegación global por si se hace clic antes del render o sobre iconos internos
+    document.addEventListener("click", (e) => {
+        const targetBtn = e.target.closest("#navFinHubBtn, #navFinFiloBtn, #navFinSfiBtn, #navFinHemBtn, #navFinEstadBtn, #navFinContBtn, #drawerNavFinHub, #drawerNavFinFilo, #drawerNavFinSfi, #drawerNavFinHem, #drawerNavFinEstad, #drawerNavFinCont");
+        if (targetBtn && mapaVistas[targetBtn.id]) {
+            e.preventDefault();
+            cambiarVista(mapaVistas[targetBtn.id]);
+            if (targetBtn.id.startsWith("drawer") && typeof cerrarDrawerMenu === "function") {
+                cerrarDrawerMenu();
+            }
+        }
+    });
+}
+
+if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", inicializarNavegacionFinanzasGarantizada);
+} else {
+    inicializarNavegacionFinanzasGarantizada();
+}
