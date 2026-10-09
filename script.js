@@ -14784,7 +14784,7 @@ function iniciarAplicacion() {
 // =========================================================
 // GESTOR DE VERSIONES Y ACTUALIZACIÓN AUTOMÁTICA
 // =========================================================
-const APP_BUILD_VERSION = "29.40";
+const APP_BUILD_VERSION = "29.41";
 
 async function forzarActualizacionCompleta(mostrarNotificacion = true) {
     const lastAttempt = parseInt(sessionStorage.getItem("last_auto_update_ts") || "0", 10);
@@ -17936,39 +17936,6 @@ function cargarContabilidadStorage() {
     return false;
 }
 
-function guardarLaboratorioStorage() {
-    try {
-        const payload = {
-            materiaSeleccionada: laboratorioEstado.materiaSeleccionada,
-            temasSeleccionados: laboratorioEstado.temasSeleccionados,
-            dificultad: laboratorioEstado.dificultad,
-            ejercicioActual: laboratorioEstado.ejercicioActual,
-            ts: Date.now()
-        };
-        localStorage.setItem(LABORATORIO_STORAGE_KEY, JSON.stringify(payload));
-    } catch (e) {
-        console.warn("No se pudo guardar laboratorio en storage:", e);
-    }
-}
-
-function cargarLaboratorioStorage() {
-    try {
-        const raw = localStorage.getItem(LABORATORIO_STORAGE_KEY);
-        if (!raw) return false;
-        const data = JSON.parse(raw);
-        if (data) {
-            if (data.materiaSeleccionada) laboratorioEstado.materiaSeleccionada = data.materiaSeleccionada;
-            if (data.temasSeleccionados) laboratorioEstado.temasSeleccionados = data.temasSeleccionados;
-            if (data.dificultad) laboratorioEstado.dificultad = data.dificultad;
-            if (data.ejercicioActual) laboratorioEstado.ejercicioActual = data.ejercicioActual;
-            return true;
-        }
-    } catch (e) {
-        console.warn("No se pudo cargar laboratorio de storage:", e);
-    }
-    return false;
-}
-
 const laboratorioEstado = {
     iniciado: false,
     materiaSeleccionada: "estadistica",
@@ -17984,6 +17951,7 @@ const laboratorioEstado = {
     resueltasPorPregunta: {},
     pistasReveladas: {},
     solucionesReveladas: {},
+    respuestasUsuario: {},
     xpTotal: 0,
     tabActiva: "freq",
     distribucionActiva: "normal",
@@ -18004,15 +17972,133 @@ const laboratorioEstado = {
     },
     historialEjercicios: [],
     ultimoProceduralSector: "",
-    // La grilla empieza vacía para que el alumno complete x e f deduciéndolas del enunciado
     tablaDatos: [
         { xi: "", fi: "" },
         { xi: "", fi: "" },
         { xi: "", fi: "" },
         { xi: "", fi: "" }
     ],
-    columnasActivas: ["xifi", "var"] // xi, fi, xi·fi y xi²·fi activas por defecto
+    columnasActivas: ["xifi", "var"],
+    ejerciciosPorMateria: {} // Almacena progreso individualizado por disciplina
 };
+
+function sincronizarEstadoMateriaActualLab() {
+    if (!laboratorioEstado) return;
+    const matId = laboratorioEstado.materiaSeleccionada || "estadistica";
+    if (!laboratorioEstado.ejerciciosPorMateria) {
+        laboratorioEstado.ejerciciosPorMateria = {};
+    }
+    laboratorioEstado.ejerciciosPorMateria[matId] = {
+        ejercicioActual: laboratorioEstado.ejercicioActual,
+        intentosPorPregunta: { ...(laboratorioEstado.intentosPorPregunta || {}) },
+        resueltasPorPregunta: { ...(laboratorioEstado.resueltasPorPregunta || {}) },
+        pistasReveladas: { ...(laboratorioEstado.pistasReveladas || {}) },
+        solucionesReveladas: { ...(laboratorioEstado.solucionesReveladas || {}) },
+        respuestasUsuario: { ...(laboratorioEstado.respuestasUsuario || {}) },
+        tablaDatos: Array.isArray(laboratorioEstado.tablaDatos) ? JSON.parse(JSON.stringify(laboratorioEstado.tablaDatos)) : [],
+        columnasActivas: Array.isArray(laboratorioEstado.columnasActivas) ? Array.from(laboratorioEstado.columnasActivas) : ["xifi", "var"],
+        dificultad: laboratorioEstado.dificultad || "intermedio",
+        temasSeleccionados: Array.isArray(laboratorioEstado.temasSeleccionados) ? Array.from(laboratorioEstado.temasSeleccionados) : [],
+        instruccionUsuario: laboratorioEstado.instruccionUsuario || ""
+    };
+}
+
+function cargarEstadoMateriaLab(matId) {
+    if (!laboratorioEstado) return;
+    if (!laboratorioEstado.ejerciciosPorMateria) {
+        laboratorioEstado.ejerciciosPorMateria = {};
+    }
+    const guardado = laboratorioEstado.ejerciciosPorMateria[matId];
+    if (guardado) {
+        laboratorioEstado.ejercicioActual = guardado.ejercicioActual || null;
+        laboratorioEstado.intentosPorPregunta = guardado.intentosPorPregunta || {};
+        laboratorioEstado.resueltasPorPregunta = guardado.resueltasPorPregunta || {};
+        laboratorioEstado.pistasReveladas = guardado.pistasReveladas || {};
+        laboratorioEstado.solucionesReveladas = guardado.solucionesReveladas || {};
+        laboratorioEstado.respuestasUsuario = guardado.respuestasUsuario || {};
+        if (Array.isArray(guardado.tablaDatos) && guardado.tablaDatos.length > 0) {
+            laboratorioEstado.tablaDatos = JSON.parse(JSON.stringify(guardado.tablaDatos));
+        }
+        if (Array.isArray(guardado.columnasActivas) && guardado.columnasActivas.length > 0) {
+            laboratorioEstado.columnasActivas = Array.from(guardado.columnasActivas);
+        }
+        if (guardado.dificultad) laboratorioEstado.dificultad = guardado.dificultad;
+        if (Array.isArray(guardado.temasSeleccionados) && guardado.temasSeleccionados.length > 0) {
+            laboratorioEstado.temasSeleccionados = Array.from(guardado.temasSeleccionados);
+        }
+        laboratorioEstado.instruccionUsuario = guardado.instruccionUsuario || "";
+    } else {
+        laboratorioEstado.ejercicioActual = null;
+        laboratorioEstado.intentosPorPregunta = {};
+        laboratorioEstado.resueltasPorPregunta = {};
+        laboratorioEstado.pistasReveladas = {};
+        laboratorioEstado.solucionesReveladas = {};
+        laboratorioEstado.respuestasUsuario = {};
+        const matCat = typeof CATALOGO_MATERIAS_LABORATORIO !== "undefined" ? CATALOGO_MATERIAS_LABORATORIO[matId] : null;
+        if (matCat && Array.isArray(matCat.subtemas)) {
+            laboratorioEstado.temasSeleccionados = matCat.subtemas.filter(s => s.default).map(s => s.id);
+        }
+    }
+}
+
+function guardarLaboratorioStorage() {
+    try {
+        sincronizarEstadoMateriaActualLab();
+        const payload = {
+            materiaSeleccionada: laboratorioEstado.materiaSeleccionada,
+            temasSeleccionados: laboratorioEstado.temasSeleccionados,
+            dificultad: laboratorioEstado.dificultad,
+            ejercicioActual: laboratorioEstado.ejercicioActual,
+            intentosPorPregunta: laboratorioEstado.intentosPorPregunta,
+            resueltasPorPregunta: laboratorioEstado.resueltasPorPregunta,
+            pistasReveladas: laboratorioEstado.pistasReveladas,
+            solucionesReveladas: laboratorioEstado.solucionesReveladas,
+            respuestasUsuario: laboratorioEstado.respuestasUsuario,
+            tablaDatos: laboratorioEstado.tablaDatos,
+            columnasActivas: laboratorioEstado.columnasActivas,
+            xpTotal: laboratorioEstado.xpTotal,
+            ejerciciosPorMateria: laboratorioEstado.ejerciciosPorMateria,
+            ts: Date.now()
+        };
+        localStorage.setItem(LABORATORIO_STORAGE_KEY, JSON.stringify(payload));
+    } catch (e) {
+        console.warn("No se pudo guardar laboratorio en storage:", e);
+    }
+}
+
+function cargarLaboratorioStorage() {
+    try {
+        const raw = localStorage.getItem(LABORATORIO_STORAGE_KEY);
+        if (!raw) return false;
+        const data = JSON.parse(raw);
+        if (data) {
+            if (data.materiaSeleccionada) laboratorioEstado.materiaSeleccionada = data.materiaSeleccionada;
+            if (data.ejerciciosPorMateria) laboratorioEstado.ejerciciosPorMateria = data.ejerciciosPorMateria;
+            if (typeof data.xpTotal === "number") laboratorioEstado.xpTotal = data.xpTotal;
+
+            // Si hay progreso guardado para la materia seleccionada, restaurarlo
+            const matId = data.materiaSeleccionada || "estadistica";
+            if (laboratorioEstado.ejerciciosPorMateria && laboratorioEstado.ejerciciosPorMateria[matId]) {
+                cargarEstadoMateriaLab(matId);
+            } else {
+                if (data.temasSeleccionados) laboratorioEstado.temasSeleccionados = data.temasSeleccionados;
+                if (data.dificultad) laboratorioEstado.dificultad = data.dificultad;
+                if (data.ejercicioActual) laboratorioEstado.ejercicioActual = data.ejercicioActual;
+                if (data.intentosPorPregunta) laboratorioEstado.intentosPorPregunta = data.intentosPorPregunta;
+                if (data.resueltasPorPregunta) laboratorioEstado.resueltasPorPregunta = data.resueltasPorPregunta;
+                if (data.pistasReveladas) laboratorioEstado.pistasReveladas = data.pistasReveladas;
+                if (data.solucionesReveladas) laboratorioEstado.solucionesReveladas = data.solucionesReveladas;
+                if (data.respuestasUsuario) laboratorioEstado.respuestasUsuario = data.respuestasUsuario;
+                if (data.tablaDatos) laboratorioEstado.tablaDatos = data.tablaDatos;
+                if (data.columnasActivas) laboratorioEstado.columnasActivas = data.columnasActivas;
+            }
+            return true;
+        }
+    } catch (e) {
+        console.warn("No se pudo cargar laboratorio de storage:", e);
+    }
+    return false;
+}
 
 // ==========================================
 // MOTOR MATEMÁTICO DE PROBABILIDAD AVANZADO (PURO JS)
@@ -18373,6 +18459,7 @@ function renderizarGrillaFrecuencias() {
                 // Actualizar celdas calculadas de esa fila en el DOM
                 actualizarFilaGrillaDOM(idx);
                 recalcularTotalesGrilla();
+                guardarLaboratorioStorage();
             }
         });
     });
@@ -18514,18 +18601,21 @@ function recalcularTotalesGrilla() {
 function agregarFilaGrilla() {
     laboratorioEstado.tablaDatos.push({ xi: "", fi: "" });
     renderizarGrillaFrecuencias();
+    guardarLaboratorioStorage();
 }
 
 function quitarFilaGrilla(idx) {
     if (laboratorioEstado.tablaDatos.length <= 1) return;
     laboratorioEstado.tablaDatos.splice(idx, 1);
     renderizarGrillaFrecuencias();
+    guardarLaboratorioStorage();
 }
 
 function agregarColumnaGrilla(tipo) {
     if (!laboratorioEstado.columnasActivas.includes(tipo)) {
         laboratorioEstado.columnasActivas.push(tipo);
         renderizarGrillaFrecuencias();
+        guardarLaboratorioStorage();
     }
 }
 
@@ -18535,6 +18625,7 @@ function quitarColumnaGrilla() {
     if (idx > -1) {
         laboratorioEstado.columnasActivas.splice(idx, 1);
         renderizarGrillaFrecuencias();
+        guardarLaboratorioStorage();
         mostrarToast(`Columna ${sel} quitada de la tabla.`, "info");
     } else {
         mostrarToast("Esa columna no está activa en la tabla.", "aviso");
@@ -18549,6 +18640,7 @@ function limpiarGrillaFrecuencias() {
         { xi: "", fi: "" }
     ];
     renderizarGrillaFrecuencias();
+    guardarLaboratorioStorage();
     mostrarToast("🗑️ Grilla restablecida a estado vacío.", "info");
 }
 
@@ -20087,8 +20179,8 @@ function iniciarOReanudarLaboratorio() {
         abrirModalConfigLab();
     } else {
         actualizarBadgesMateriaLabUI();
-        if (typeof renderizarEjercicioLaboratorio === "function") {
-            renderizarEjercicioLaboratorio(laboratorioEstado.ejercicioActual);
+        if (typeof renderizarEjercicioActual === "function") {
+            renderizarEjercicioActual(false);
         }
     }
 }
@@ -20169,7 +20261,14 @@ function seleccionarMateriaLab(materiaId) {
     const mat = CATALOGO_MATERIAS_LABORATORIO[materiaId];
     if (!mat) return;
 
+    // Guardar el estado de la materia anterior
+    sincronizarEstadoMateriaActualLab();
+
     laboratorioEstado.materiaSeleccionada = materiaId;
+
+    // Cargar progreso previo guardado para la nueva materia (si existía)
+    cargarEstadoMateriaLab(materiaId);
+    guardarLaboratorioStorage();
 
     // Actualizar Banner y tema del Modal Paso 2
     if (dom.labStepConfigMateria) {
@@ -20181,11 +20280,6 @@ function seleccionarMateriaLab(materiaId) {
     if (dom.labMateriaBannerIcon) dom.labMateriaBannerIcon.textContent = mat.icono;
     if (dom.labMateriaBannerTitle) dom.labMateriaBannerTitle.textContent = mat.nombre;
     if (dom.labMateriaBannerDesc) dom.labMateriaBannerDesc.textContent = mat.descripcion;
-
-    // Inicializar subtemas por defecto si aún no están configurados para esta materia
-    laboratorioEstado.temasSeleccionados = mat.subtemas
-        .filter(s => s.default)
-        .map(s => s.id);
 
     renderizarOpcionesSubtemasLab(materiaId);
 
@@ -23809,7 +23903,7 @@ async function generarEjercicioLaboratorio(forzarNuevo = false, ordenManual = nu
                 }
 
                 guardarLaboratorioStorage();
-                renderizarEjercicioActual();
+                renderizarEjercicioActual(true);
                 mostrarToast("✨ ¡Ejercicio generado con éxito según tus preferencias!", "exito");
                 return;
             }
@@ -23866,7 +23960,7 @@ function generarEjercicioProcedimentalPorMateria(materiaId, orden = "") {
     }
 
     guardarLaboratorioStorage();
-    renderizarEjercicioActual();
+    renderizarEjercicioActual(true);
     const origenMsg = orden ? `🎯 Ejercicio generado a medida para: "${orden.slice(0, 35)}..."` : "🎲 Ejercicio práctico preparado en la mesa de trabajo.";
     mostrarToast(origenMsg, "info");
 }
@@ -25263,7 +25357,7 @@ function adaptarMesaTrabajoSegunEjercicio(ej) {
 // RENDERIZADO DEL ENUNCIADO Y LAS PREGUNTAS
 // ------------------------------------------
 
-function renderizarEjercicioActual() {
+function renderizarEjercicioActual(resetRespuestas = false) {
     const ej = laboratorioEstado.ejercicioActual;
     if (!ej) return;
 
@@ -25320,13 +25414,30 @@ function renderizarEjercicioActual() {
         }
     }
 
-    // Resetear estados de preguntas
-    laboratorioEstado.intentosPorPregunta = {};
-    laboratorioEstado.resueltasPorPregunta = {};
-    laboratorioEstado.pistasReveladas = {};
-    laboratorioEstado.solucionesReveladas = {};
+    // Resetear estados de preguntas solo si es un ejercicio nuevo generado
+    if (resetRespuestas) {
+        laboratorioEstado.intentosPorPregunta = {};
+        laboratorioEstado.resueltasPorPregunta = {};
+        laboratorioEstado.pistasReveladas = {};
+        laboratorioEstado.solucionesReveladas = {};
+        laboratorioEstado.respuestasUsuario = {};
+    } else {
+        if (!laboratorioEstado.intentosPorPregunta) laboratorioEstado.intentosPorPregunta = {};
+        if (!laboratorioEstado.resueltasPorPregunta) laboratorioEstado.resueltasPorPregunta = {};
+        if (!laboratorioEstado.pistasReveladas) laboratorioEstado.pistasReveladas = {};
+        if (!laboratorioEstado.solucionesReveladas) laboratorioEstado.solucionesReveladas = {};
+        if (!laboratorioEstado.respuestasUsuario) laboratorioEstado.respuestasUsuario = {};
+    }
 
-    if (dom.labCompletedCard) dom.labCompletedCard.classList.add("hidden");
+    const total = (ej.preguntas || []).length;
+    const resueltasCount = Object.keys(laboratorioEstado.resueltasPorPregunta || {}).length;
+    if (dom.labCompletedCard) {
+        if (resueltasCount >= total && total > 0) {
+            dom.labCompletedCard.classList.remove("hidden");
+        } else {
+            dom.labCompletedCard.classList.add("hidden");
+        }
+    }
 
     actualizarProgresoPreguntasUI();
 
@@ -25339,13 +25450,17 @@ function renderizarEjercicioActual() {
         item.className = "lab-question-item";
         item.id = `labQuestionItem_${idx}`;
 
+        const valorGuardado = (laboratorioEstado.respuestasUsuario && laboratorioEstado.respuestasUsuario[idx] !== undefined)
+            ? String(laboratorioEstado.respuestasUsuario[idx])
+            : "";
+
         item.innerHTML = `
             <div class="lab-q-prompt-row">
                 <span class="lab-q-letter-badge">${q.letra.toUpperCase()})</span>
                 <p class="lab-q-text">${q.texto}</p>
             </div>
             <div class="lab-q-action-row">
-                <input type="number" class="input input--sm lab-q-input" id="labQInput_${idx}" data-qindex="${idx}" placeholder="Ingresá tu respuesta..." step="any">
+                <input type="number" class="input input--sm lab-q-input" id="labQInput_${idx}" data-qindex="${idx}" placeholder="Ingresá tu respuesta..." step="any" value="${valorGuardado}">
                 <button type="button" class="button button--primary button--sm lab-q-verify-btn" id="labBtnVerify_${idx}" data-qindex="${idx}">
                     Verificar
                 </button>
@@ -25372,9 +25487,56 @@ function renderizarEjercicioActual() {
         const inputField = item.querySelector(`#labQInput_${idx}`);
         const pistaBtn = item.querySelector(`#labBtnPista_${idx}`);
         const respBtn = item.querySelector(`#labBtnRespuesta_${idx}`);
+        const statusBadge = item.querySelector(`#labQStatus_${idx}`);
+        const attemptBox = item.querySelector(`#lab3rdAttemptBox_${idx}`);
+        const revealBox = item.querySelector(`#labQRevealBox_${idx}`);
 
-        if (verifyBtn) verifyBtn.addEventListener("click", () => verificarPreguntaInciso(idx));
+        // Restaurar estado visual previo guardado
+        if (laboratorioEstado.resueltasPorPregunta && laboratorioEstado.resueltasPorPregunta[idx]) {
+            item.classList.add("is-correct");
+            if (statusBadge) {
+                statusBadge.className = "lab-q-status-badge is-correct";
+                statusBadge.textContent = "✅ ¡Correcto! (+25 XP)";
+            }
+            if (inputField) inputField.disabled = true;
+            if (verifyBtn) verifyBtn.disabled = true;
+        } else if (laboratorioEstado.intentosPorPregunta && laboratorioEstado.intentosPorPregunta[idx]) {
+            const intentos = laboratorioEstado.intentosPorPregunta[idx];
+            item.classList.add("is-error");
+            if (intentos < 3) {
+                if (statusBadge) {
+                    statusBadge.className = "lab-q-status-badge is-wrong";
+                    statusBadge.textContent = `❌ No coincide (Intento ${intentos}/3). Verificá tu cálculo.`;
+                }
+            } else {
+                if (statusBadge) {
+                    statusBadge.className = "lab-q-status-badge is-wrong";
+                    statusBadge.textContent = "❌ Intento 3/3 alcanzado.";
+                }
+                if (attemptBox) attemptBox.classList.remove("hidden");
+            }
+        }
+
+        if (laboratorioEstado.pistasReveladas && laboratorioEstado.pistasReveladas[idx]) {
+            if (revealBox) {
+                revealBox.classList.remove("hidden");
+                revealBox.innerHTML = `<strong>💡 Pista para el Inciso ${q.letra.toUpperCase()}:</strong><p style="margin: 0.35rem 0 0;">${q.pista || "Consultá las fórmulas en la Mesa de Trabajo."}</p>`;
+            }
+        }
+        if (laboratorioEstado.solucionesReveladas && laboratorioEstado.solucionesReveladas[idx]) {
+            if (revealBox) {
+                revealBox.classList.remove("hidden");
+                revealBox.innerHTML = `<strong>📖 Respuesta Exacta (${q.esperado}) & Paso a Paso:</strong><p style="margin: 0.35rem 0 0;">${q.explicacion || `El valor teórico exacto es ${q.esperado}.`}</p>`;
+            }
+        }
+
+        // Eventos interactivos y guardado en tiempo real
         if (inputField) {
+            inputField.addEventListener("input", (e) => {
+                if (!laboratorioEstado.respuestasUsuario) laboratorioEstado.respuestasUsuario = {};
+                laboratorioEstado.respuestasUsuario[idx] = e.target.value;
+                guardarLaboratorioStorage();
+            });
             inputField.addEventListener("keydown", (e) => {
                 if (e.key === "Enter") {
                     e.preventDefault();
@@ -25382,6 +25544,8 @@ function renderizarEjercicioActual() {
                 }
             });
         }
+
+        if (verifyBtn) verifyBtn.addEventListener("click", () => verificarPreguntaInciso(idx));
         if (pistaBtn) pistaBtn.addEventListener("click", () => mostrarPistaInciso(idx));
         if (respBtn) respBtn.addEventListener("click", () => mostrarRespuestaInciso(idx));
     });
@@ -25441,6 +25605,7 @@ function verificarPreguntaInciso(idx) {
 
         reproducirSonidoDuelo("fanfare");
         actualizarProgresoPreguntasUI();
+        guardarLaboratorioStorage();
 
         // Chequear si se completó todo el ejercicio
         if (Object.keys(laboratorioEstado.resueltasPorPregunta).length >= ej.preguntas.length) {
@@ -25450,6 +25615,7 @@ function verificarPreguntaInciso(idx) {
         // Intento fallido
         const intentos = (laboratorioEstado.intentosPorPregunta[idx] || 0) + 1;
         laboratorioEstado.intentosPorPregunta[idx] = intentos;
+        guardarLaboratorioStorage();
 
         reproducirSonidoDuelo("buzzer");
 
@@ -25478,18 +25644,25 @@ function mostrarPistaInciso(idx) {
     if (!ej || !ej.preguntas[idx]) return;
     const q = ej.preguntas[idx];
 
+    laboratorioEstado.pistasReveladas = laboratorioEstado.pistasReveladas || {};
+    laboratorioEstado.pistasReveladas[idx] = true;
+
     const revealBox = document.getElementById(`labQRevealBox_${idx}`);
     if (revealBox) {
         revealBox.classList.remove("hidden");
         revealBox.innerHTML = `<strong>💡 Pista para el Inciso ${q.letra.toUpperCase()}:</strong><p style="margin: 0.35rem 0 0;">${q.pista || "Consultá las fórmulas en la Mesa de Trabajo."}</p>`;
         mostrarToast("💡 Pista desbloqueada.", "info");
     }
+    guardarLaboratorioStorage();
 }
 
 function mostrarRespuestaInciso(idx) {
     const ej = laboratorioEstado.ejercicioActual;
     if (!ej || !ej.preguntas[idx]) return;
     const q = ej.preguntas[idx];
+
+    laboratorioEstado.solucionesReveladas = laboratorioEstado.solucionesReveladas || {};
+    laboratorioEstado.solucionesReveladas[idx] = true;
 
     const revealBox = document.getElementById(`labQRevealBox_${idx}`);
     const input = document.getElementById(`labQInput_${idx}`);
@@ -25501,7 +25674,10 @@ function mostrarRespuestaInciso(idx) {
 
     if (input) {
         input.value = q.esperado;
+        if (!laboratorioEstado.respuestasUsuario) laboratorioEstado.respuestasUsuario = {};
+        laboratorioEstado.respuestasUsuario[idx] = q.esperado;
     }
+    guardarLaboratorioStorage();
     mostrarToast(`📖 Respuesta revelada para el Inciso ${q.letra.toUpperCase()}.`, "info");
 }
 
@@ -25510,8 +25686,13 @@ function finalizarEjercicioLaboratorio() {
     laboratorioEstado.xpTotal += 50;
     if (dom.labXpDisplay) dom.labXpDisplay.textContent = `${laboratorioEstado.xpTotal} XP`;
 
+    const matId = laboratorioEstado.materiaSeleccionada || "estadistica";
+    const mat = CATALOGO_MATERIAS_LABORATORIO[matId];
+    const nomMat = mat ? mat.nombre : "la materia";
+
     reproducirSonidoDuelo("fanfare");
-    mostrarToast("🎉 ¡Felicitaciones! Completaste todos los incisos del ejercicio de Estadística.", "exito");
+    mostrarToast(`🎉 ¡Felicitaciones! Completaste todos los incisos del ejercicio de ${nomMat}.`, "exito");
+    guardarLaboratorioStorage();
 }
 
 // ------------------------------------------
@@ -25604,7 +25785,12 @@ function configurarEventosLaboratorio() {
             filtrarTabsPorMateria(laboratorioEstado.materiaSeleccionada);
 
             cerrarModalConfigLab();
-            generarEjercicioLaboratorio(true, laboratorioEstado.instruccionUsuario);
+            // Si ya hay un ejercicio guardado para esta materia y el alumno no escribió una orden nueva, reanudar
+            if (laboratorioEstado.ejercicioActual && !laboratorioEstado.instruccionUsuario) {
+                renderizarEjercicioActual(false);
+            } else {
+                generarEjercicioLaboratorio(true, laboratorioEstado.instruccionUsuario);
+            }
         });
     }
 
@@ -27963,6 +28149,56 @@ Balance al 31/05: Activo = Pasivo + PN`
    ========================================================================== */
 
 const FINANZAS_CUSTOM_MODELS_KEY = "luibanez_finanzas_custom_models_v2";
+const FINANZAS_BORRADORES_KEY = "luibanez_finanzas_borradores_v1";
+
+function guardarBorradorExamenMateria(matId, examId) {
+    try {
+        const sheet = document.getElementById(`finExamSheet_${matId}`);
+        if (!sheet) return;
+        const textareas = sheet.querySelectorAll("textarea");
+        const respuestas = {};
+        textareas.forEach((t, idx) => {
+            if (t.value.trim()) respuestas[idx] = t.value;
+        });
+        const raw = localStorage.getItem(FINANZAS_BORRADORES_KEY);
+        const store = raw ? JSON.parse(raw) : {};
+        store[`${matId}_${examId}`] = { respuestas, ts: Date.now() };
+        localStorage.setItem(FINANZAS_BORRADORES_KEY, JSON.stringify(store));
+    } catch (_) {}
+}
+
+function restaurarBorradorExamenMateria(matId, examId) {
+    try {
+        const raw = localStorage.getItem(FINANZAS_BORRADORES_KEY);
+        if (!raw) return;
+        const store = JSON.parse(raw);
+        const saved = store[`${matId}_${examId}`];
+        if (saved && saved.respuestas) {
+            const sheet = document.getElementById(`finExamSheet_${matId}`);
+            if (!sheet) return;
+            const textareas = sheet.querySelectorAll("textarea");
+            Object.entries(saved.respuestas).forEach(([idx, val]) => {
+                if (textareas[idx]) textareas[idx].value = val;
+            });
+        }
+    } catch (_) {}
+}
+
+function borrarBorradorExamenMateria(matId, examId = null) {
+    try {
+        const raw = localStorage.getItem(FINANZAS_BORRADORES_KEY);
+        if (!raw) return;
+        const store = JSON.parse(raw);
+        if (examId) {
+            delete store[`${matId}_${examId}`];
+        } else {
+            Object.keys(store).forEach(k => {
+                if (k.startsWith(`${matId}_`)) delete store[k];
+            });
+        }
+        localStorage.setItem(FINANZAS_BORRADORES_KEY, JSON.stringify(store));
+    } catch (_) {}
+}
 
 const estadoFinanzas = {
     modoActivo: {
@@ -28258,6 +28494,16 @@ function generarExamenParaMateria(materiaKey, modoForzado = null, modeloIndexFor
         </div>
     `;
 
+    // Restaurar borrador previo si el alumno ya había escrito respuestas en este modelo
+    restaurarBorradorExamenMateria(matId, examenData.id);
+
+    // Guardar respuestas en tiempo real mientras el alumno escribe
+    sheet.querySelectorAll("textarea").forEach(ta => {
+        ta.addEventListener("input", () => {
+            guardarBorradorExamenMateria(matId, examenData.id);
+        });
+    });
+
     mostrarToast(`📄 ${examenData.nombre} cargado. Podés resolverlo y evaluarlo cuantas veces quieras.`, "info");
 }
 
@@ -28269,6 +28515,9 @@ function limpiarYReintentarExamen(materiaKey) {
 
     const textareas = sheet.querySelectorAll("textarea");
     textareas.forEach(t => t.value = "");
+
+    // Borrar borrador guardado en storage para esta materia
+    borrarBorradorExamenMateria(matId);
 
     const feedbackPanel = document.getElementById(`finExamFeedback_${matId}`);
     if (feedbackPanel) {
