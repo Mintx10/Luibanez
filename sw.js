@@ -1,4 +1,4 @@
-const CACHE_NAME = "luibanez-cache-v29.36";
+const CACHE_NAME = "luibanez-cache-v29.37";
 const STATIC_ASSETS = [
     "./",
     "./index.html",

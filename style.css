@@ -11232,6 +11232,262 @@ body.modo-dev-activo .juntos-locked-notice {
     color: #1e293b;
 }
 
+/* ==========================================================
+   SISTEMA UNIVERSAL DE CALCULADORAS Y MESAS POR DISCIPLINA
+   ========================================================== */
+.lab-calc-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    width: 100%;
+}
+
+.lab-calc-subnav {
+    display: flex;
+    gap: 0.5rem;
+    overflow-x: auto;
+    padding-bottom: 0.35rem;
+    margin-bottom: 0.65rem;
+    scrollbar-width: thin;
+}
+
+.lab-calc-subnav::-webkit-scrollbar {
+    height: 4px;
+}
+
+.lab-calc-subtab-pill {
+    padding: 0.35rem 0.75rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    border-radius: 999px;
+    border: 1px solid var(--color-border);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--color-text-muted);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.18s ease;
+}
+
+.lab-calc-subtab-pill:hover {
+    color: var(--color-text-primary);
+    border-color: rgba(56, 189, 248, 0.4);
+}
+
+.lab-calc-subtab-pill.is-active {
+    background: rgba(37, 99, 235, 0.15);
+    border-color: var(--color-primary, #2563eb);
+    color: var(--color-primary, #2563eb);
+}
+
+[data-theme="dark"] .lab-calc-subtab-pill.is-active {
+    background: rgba(56, 189, 248, 0.18);
+    border-color: #38bdf8;
+    color: #38bdf8;
+}
+
+.lab-calc-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 0.85rem;
+    width: 100%;
+}
+
+.lab-calc-card {
+    background: var(--color-surface, #ffffff);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-lg, 12px);
+    padding: 0.95rem 1.05rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    box-shadow: var(--box-shadow-subtle, 0 4px 6px -1px rgba(0, 0, 0, 0.05));
+    transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+.lab-calc-card:hover {
+    border-color: rgba(37, 99, 235, 0.35);
+}
+
+[data-theme="dark"] .lab-calc-card {
+    background: rgba(15, 23, 42, 0.75);
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .lab-calc-card:hover {
+    border-color: rgba(56, 189, 248, 0.35);
+}
+
+.lab-calc-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    padding-bottom: 0.4rem;
+}
+
+[data-theme="dark"] .lab-calc-card-header {
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+.lab-calc-card-title {
+    font-size: 0.84rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.lab-calc-badge {
+    font-size: 0.7rem;
+    padding: 0.15rem 0.45rem;
+    border-radius: 999px;
+    font-weight: 600;
+    background: rgba(37, 99, 235, 0.1);
+    color: var(--color-primary, #2563eb);
+}
+
+[data-theme="dark"] .lab-calc-badge {
+    background: rgba(56, 189, 248, 0.15);
+    color: #38bdf8;
+}
+
+.lab-calc-badge--emerald {
+    background: rgba(16, 185, 129, 0.12) !important;
+    color: #10b981 !important;
+}
+
+.lab-calc-badge--purple {
+    background: rgba(168, 85, 247, 0.12) !important;
+    color: #a855f7 !important;
+}
+
+.lab-calc-badge--amber {
+    background: rgba(245, 158, 11, 0.12) !important;
+    color: #f59e0b !important;
+}
+
+.lab-calc-formula-banner {
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--color-primary, #2563eb);
+    background: rgba(37, 99, 235, 0.05);
+    border-left: 3px solid var(--color-primary, #2563eb);
+    padding: 0.35rem 0.55rem;
+    border-radius: 0 6px 6px 0;
+    line-height: 1.35;
+}
+
+[data-theme="dark"] .lab-calc-formula-banner {
+    color: #93c5fd;
+    background: rgba(56, 189, 248, 0.08);
+    border-left-color: #38bdf8;
+}
+
+.lab-calc-inputs-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+    gap: 0.5rem;
+}
+
+.lab-calc-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.lab-calc-field label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--color-text-muted);
+}
+
+.lab-calc-field .input,
+.lab-calc-field select {
+    padding: 0.3rem 0.45rem !important;
+    font-size: 0.82rem !important;
+    height: 32px;
+}
+
+.lab-calc-breakdown {
+    font-size: 0.76rem;
+    color: var(--color-text-muted);
+    line-height: 1.45;
+    background: rgba(0, 0, 0, 0.02);
+    border-radius: 6px;
+    padding: 0.4rem 0.55rem;
+}
+
+[data-theme="dark"] .lab-calc-breakdown {
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.lab-calc-result-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 0.35rem;
+    margin-top: auto;
+    border-top: 1px dashed rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="dark"] .lab-calc-result-bar {
+    border-top-color: rgba(255, 255, 255, 0.08);
+}
+
+.lab-calc-res-value {
+    font-size: 0.96rem;
+    font-weight: 800;
+    color: #10b981;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.lab-calc-res-value--sky {
+    color: #38bdf8;
+}
+
+.lab-calc-res-value--purple {
+    color: #a855f7;
+}
+
+.lab-calc-res-value--amber {
+    color: #f59e0b;
+}
+
+.lab-punnett-grid {
+    display: grid;
+    grid-template-columns: 50px 1fr 1fr;
+    grid-template-rows: 35px 1fr 1fr;
+    gap: 4px;
+    margin: 0.5rem 0;
+    font-family: monospace;
+    font-weight: 700;
+}
+
+.lab-punnett-cell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    padding: 0.4rem;
+    font-size: 0.88rem;
+}
+
+.lab-punnett-cell--header {
+    background: rgba(37, 99, 235, 0.15);
+    color: #38bdf8;
+}
+
+.lab-amort-table-wrap {
+    max-height: 220px;
+    overflow-y: auto;
+    border-radius: 8px;
+    border: 1px solid var(--color-border);
+}
+
 /* Campos de Entrada de Datos del Laboratorio (Inputs Limpios y Suaves) */
 #viewLaboratorio input[type="text"],
 #viewLaboratorio input[type="number"],

@@ -872,7 +872,12 @@ const dom = {
     labTabBtnQuimica: document.getElementById("labTabBtnQuimica"),
     labTabBtnFisica: document.getElementById("labTabBtnFisica"),
     labTabBtnMatematicas: document.getElementById("labTabBtnMatematicas"),
+    labTabBtnCalculo: document.getElementById("labTabBtnCalculo"),
     labTabBtnMatrices: document.getElementById("labTabBtnMatrices"),
+    labTabBtnComputacion: document.getElementById("labTabBtnComputacion"),
+    labTabBtnBiologia: document.getElementById("labTabBtnBiologia"),
+    labTabBtnFinanciera: document.getElementById("labTabBtnFinanciera"),
+    labTabBtnMedicina: document.getElementById("labTabBtnMedicina"),
     labTabBtnScratch: document.getElementById("labTabBtnScratch"),
     labWidgetFreq: document.getElementById("labWidgetFreq"),
     labWidgetProb: document.getElementById("labWidgetProb"),
@@ -881,8 +886,15 @@ const dom = {
     labWidgetQuimica: document.getElementById("labWidgetQuimica"),
     labWidgetFisica: document.getElementById("labWidgetFisica"),
     labWidgetMatematicas: document.getElementById("labWidgetMatematicas"),
+    labWidgetCalculo: document.getElementById("labWidgetCalculo"),
     labWidgetMatrices: document.getElementById("labWidgetMatrices"),
+    labWidgetComputacion: document.getElementById("labWidgetComputacion"),
+    labWidgetBiologia: document.getElementById("labWidgetBiologia"),
+    labWidgetFinanciera: document.getElementById("labWidgetFinanciera"),
+    labWidgetMedicina: document.getElementById("labWidgetMedicina"),
     labWidgetScratch: document.getElementById("labWidgetScratch"),
+    labBtnSubtabCalcContab: document.getElementById("labBtnSubtabCalcContab"),
+    labContabSeccionCalc: document.getElementById("labContabSeccionCalc"),
 
     /* Mesa de Trabajo Contable */
     labBtnSubtabDiario: document.getElementById("labBtnSubtabDiario"),
@@ -19858,11 +19870,12 @@ function filtrarTabsPorMateria(materiaId) {
         quimica: ["quimica"],
         fisica: ["fisica"],
         matematicas: ["matematicas"],
-        calculo: ["matematicas"],
+        calculo: ["calculo"],
         algebra_lineal: ["matrices"],
-        computacion: ["matrices"],
-        biologia: ["quimica"],
-        financiera: ["contabilidad"]
+        computacion: ["computacion"],
+        biologia: ["biologia"],
+        financiera: ["financiera"],
+        medicina: ["medicina"]
     };
 
     const permitidas = visibilidadPorMateria[materiaId] || ["matematicas"];
@@ -19876,7 +19889,12 @@ function filtrarTabsPorMateria(materiaId) {
         { btn: dom.labTabBtnQuimica, id: "quimica" },
         { btn: dom.labTabBtnFisica, id: "fisica" },
         { btn: dom.labTabBtnMatematicas, id: "matematicas" },
-        { btn: dom.labTabBtnMatrices, id: "matrices" }
+        { btn: dom.labTabBtnCalculo, id: "calculo" },
+        { btn: dom.labTabBtnMatrices, id: "matrices" },
+        { btn: dom.labTabBtnComputacion, id: "computacion" },
+        { btn: dom.labTabBtnBiologia, id: "biologia" },
+        { btn: dom.labTabBtnFinanciera, id: "financiera" },
+        { btn: dom.labTabBtnMedicina, id: "medicina" }
     ];
 
     tabBtns.forEach(({ btn, id }) => {
@@ -19903,7 +19921,12 @@ function activarTabLaboratorio(tabId) {
         { btn: dom.labTabBtnQuimica, pane: dom.labWidgetQuimica, id: "quimica" },
         { btn: dom.labTabBtnFisica, pane: dom.labWidgetFisica, id: "fisica" },
         { btn: dom.labTabBtnMatematicas, pane: dom.labWidgetMatematicas, id: "matematicas" },
-        { btn: dom.labTabBtnMatrices, pane: dom.labWidgetMatrices, id: "matrices" }
+        { btn: dom.labTabBtnCalculo, pane: dom.labWidgetCalculo, id: "calculo" },
+        { btn: dom.labTabBtnMatrices, pane: dom.labWidgetMatrices, id: "matrices" },
+        { btn: dom.labTabBtnComputacion, pane: dom.labWidgetComputacion, id: "computacion" },
+        { btn: dom.labTabBtnBiologia, pane: dom.labWidgetBiologia, id: "biologia" },
+        { btn: dom.labTabBtnFinanciera, pane: dom.labWidgetFinanciera, id: "financiera" },
+        { btn: dom.labTabBtnMedicina, pane: dom.labWidgetMedicina, id: "medicina" }
     ];
 
     tabPanels.forEach(t => {
@@ -19970,6 +19993,7 @@ function iniciarOReanudarLaboratorio() {
         inicializarScratchpadLab();
         sincronizarSelectoresDificultadLab();
         inicializarModuloContabilidad();
+        inicializarCalculadorasLaboratorio();
     }
     cambiarVistaMovilLab("enunciado");
     filtrarTabsPorMateria(laboratorioEstado.materiaSeleccionada || "estadistica");
@@ -20263,6 +20287,9 @@ function inicializarModuloContabilidad() {
     if (dom.labBtnSubtabBalance) {
         dom.labBtnSubtabBalance.addEventListener("click", () => cambiarSubvistaContabilidad("balance"));
     }
+    if (dom.labBtnSubtabCalcContab) {
+        dom.labBtnSubtabCalcContab.addEventListener("click", () => cambiarSubvistaContabilidad("calc"));
+    }
 
     // Botones del Libro Diario
     if (dom.labBtnAddAsiento) {
@@ -20355,10 +20382,12 @@ function cambiarSubvistaContabilidad(vista) {
     if (dom.labBtnSubtabDiario) dom.labBtnSubtabDiario.classList.toggle("is-active", vista === "diario");
     if (dom.labBtnSubtabMayor) dom.labBtnSubtabMayor.classList.toggle("is-active", vista === "mayor");
     if (dom.labBtnSubtabBalance) dom.labBtnSubtabBalance.classList.toggle("is-active", vista === "balance");
+    if (dom.labBtnSubtabCalcContab) dom.labBtnSubtabCalcContab.classList.toggle("is-active", vista === "calc");
 
     if (dom.labContabSeccionDiario) dom.labContabSeccionDiario.classList.toggle("hidden", vista !== "diario");
     if (dom.labContabSeccionMayor) dom.labContabSeccionMayor.classList.toggle("hidden", vista !== "mayor");
     if (dom.labContabSeccionBalance) dom.labContabSeccionBalance.classList.toggle("hidden", vista !== "balance");
+    if (dom.labContabSeccionCalc) dom.labContabSeccionCalc.classList.toggle("hidden", vista !== "calc");
 
     if (vista === "mayor") renderizarLibroMayorUI();
     if (vista === "balance") sincronizarBalanceSumasYSaldos();
@@ -21398,34 +21427,46 @@ function dibujarGraficaFuncion2D(canvas, exprStr) {
    MÓDULO: ÁLGEBRA MATRICIAL & TABLAS DE VERDAD
    ========================================================= */
 
-function inicializarModuloMatricesYLogica() {
+function conmutarSubtabMatrices(sub) {
     const btn2x2 = document.getElementById("labBtnSubtabMatriz2x2");
-    const btnLogica = document.getElementById("labBtnSubtabLogica");
+    const btn3x3 = document.getElementById("labBtnSubtabMatriz3x3");
+    const btnVec = document.getElementById("labBtnSubtabVectores");
     const panel2x2 = document.getElementById("labPanelMatriz2x2");
-    const panelLogica = document.getElementById("labPanelLogica");
-    const btnCopy = document.getElementById("labBtnCopyDet2");
+    const panel3x3 = document.getElementById("labPanelMatriz3x3");
+    const panelVec = document.getElementById("labPanelVectores");
 
-    if (btn2x2 && btnLogica) {
-        btn2x2.onclick = () => {
-            btn2x2.classList.add("is-active", "button--secondary");
-            btn2x2.classList.remove("button--ghost");
-            btnLogica.classList.remove("is-active", "button--secondary");
-            btnLogica.classList.add("button--ghost");
-            if (panel2x2) panel2x2.classList.remove("hidden");
-            if (panelLogica) panelLogica.classList.add("hidden");
-        };
-
-        btnLogica.onclick = () => {
-            btnLogica.classList.add("is-active", "button--secondary");
-            btnLogica.classList.remove("button--ghost");
-            btn2x2.classList.remove("is-active", "button--secondary");
-            btn2x2.classList.add("button--ghost");
-            if (panelLogica) panelLogica.classList.remove("hidden");
-            if (panel2x2) panel2x2.classList.add("hidden");
-        };
+    if (btn2x2) {
+        btn2x2.classList.toggle("is-active", sub === "2x2");
+        btn2x2.classList.toggle("button--secondary", sub === "2x2");
+        btn2x2.classList.toggle("button--ghost", sub !== "2x2");
+    }
+    if (btn3x3) {
+        btn3x3.classList.toggle("is-active", sub === "3x3");
+        btn3x3.classList.toggle("button--secondary", sub === "3x3");
+        btn3x3.classList.toggle("button--ghost", sub !== "3x3");
+    }
+    if (btnVec) {
+        btnVec.classList.toggle("is-active", sub === "vectores");
+        btnVec.classList.toggle("button--secondary", sub === "vectores");
+        btnVec.classList.toggle("button--ghost", sub !== "vectores");
     }
 
-    const celdas = ["m2_00", "m2_01", "m2_10", "m2_11"].map(id => document.getElementById(id));
+    if (panel2x2) panel2x2.classList.toggle("hidden", sub !== "2x2");
+    if (panel3x3) panel3x3.classList.toggle("hidden", sub !== "3x3");
+    if (panelVec) panelVec.classList.toggle("hidden", sub !== "vectores");
+}
+
+function inicializarModuloMatricesYLogica() {
+    const btn2x2 = document.getElementById("labBtnSubtabMatriz2x2");
+    const btn3x3 = document.getElementById("labBtnSubtabMatriz3x3");
+    const btnVec = document.getElementById("labBtnSubtabVectores");
+
+    if (btn2x2) btn2x2.onclick = () => conmutarSubtabMatrices("2x2");
+    if (btn3x3) btn3x3.onclick = () => conmutarSubtabMatrices("3x3");
+    if (btnVec) btnVec.onclick = () => conmutarSubtabMatrices("vectores");
+
+    // 1. Matriz 2x2
+    const celdas2 = ["m2_00", "m2_01", "m2_10", "m2_11"].map(id => document.getElementById(id));
     function recalcularMatriz2x2() {
         const a = parseFloat(document.getElementById("m2_00")?.value || 0);
         const b = parseFloat(document.getElementById("m2_01")?.value || 0);
@@ -21447,21 +21488,1087 @@ function inicializarModuloMatricesYLogica() {
                 : "Matriz singular (no tiene inversa, det = 0)";
         }
     }
-
-    celdas.forEach(inp => {
-        if (inp) inp.addEventListener("input", recalcularMatriz2x2);
-    });
-
-    if (btnCopy) {
-        btnCopy.onclick = () => {
+    celdas2.forEach(inp => { if (inp) inp.addEventListener("input", recalcularMatriz2x2); });
+    const btnCopy2 = document.getElementById("labBtnCopyDet2");
+    if (btnCopy2) {
+        btnCopy2.onclick = () => {
             const det = document.getElementById("m2_det")?.textContent || "0";
-            navigator.clipboard.writeText(det).then(() => {
-                mostrarToast(`📋 Copiado det(A) = ${det}`);
-            });
+            navigator.clipboard.writeText(det).then(() => mostrarToast(`📋 Copiado det(A) = ${det}`));
         };
     }
-
     recalcularMatriz2x2();
+
+    // 2. Matriz 3x3 (Regla de Sarrus y Traza)
+    const celdas3 = [
+        "m3_00", "m3_01", "m3_02",
+        "m3_10", "m3_11", "m3_12",
+        "m3_20", "m3_21", "m3_22"
+    ].map(id => document.getElementById(id));
+
+    function recalcularMatriz3x3() {
+        const a = parseFloat(document.getElementById("m3_00")?.value || 0);
+        const b = parseFloat(document.getElementById("m3_01")?.value || 0);
+        const c = parseFloat(document.getElementById("m3_02")?.value || 0);
+        const d = parseFloat(document.getElementById("m3_10")?.value || 0);
+        const e = parseFloat(document.getElementById("m3_11")?.value || 0);
+        const f = parseFloat(document.getElementById("m3_12")?.value || 0);
+        const g = parseFloat(document.getElementById("m3_20")?.value || 0);
+        const h = parseFloat(document.getElementById("m3_21")?.value || 0);
+        const i = parseFloat(document.getElementById("m3_22")?.value || 0);
+
+        const det = a * (e * i - f * h) - b * (d * i - f * g) + c * (d * h - e * g);
+        const traza = a + e + i;
+
+        const detEl = document.getElementById("m3_det");
+        const trEl = document.getElementById("m3_tr");
+        const invEl = document.getElementById("m3_inv_desc");
+
+        if (detEl) detEl.textContent = String(det);
+        if (trEl) trEl.textContent = String(traza);
+        if (invEl) {
+            invEl.textContent = det !== 0
+                ? "Inversa regular existente (det ≠ 0, rango 3)"
+                : "Matriz singular (no invertible, det = 0)";
+        }
+    }
+    celdas3.forEach(inp => { if (inp) inp.addEventListener("input", recalcularMatriz3x3); });
+    const btnCopy3 = document.getElementById("labBtnCopyDet3");
+    if (btnCopy3) {
+        btnCopy3.onclick = () => {
+            const det = document.getElementById("m3_det")?.textContent || "0";
+            navigator.clipboard.writeText(det).then(() => mostrarToast(`📋 Copiado det(A 3x3) = ${det}`));
+        };
+    }
+    recalcularMatriz3x3();
+
+    // 3. Vectores R³ y Regla de Cramer 2x2
+    const elVecU = document.getElementById("labVecU");
+    const elVecV = document.getElementById("labVecV");
+    const elVecBreakdown = document.getElementById("labVecBreakdown");
+    const elVecResDot = document.getElementById("labVecResDot");
+
+    function parseVector3(str) {
+        if (!str) return [0, 0, 0];
+        const parts = str.split(/[,\s]+/).map(p => parseFloat(p.trim())).filter(n => !isNaN(n));
+        return [parts[0] || 0, parts[1] || 0, parts[2] || 0];
+    }
+
+    function recalcularVectoresR3() {
+        if (!elVecResDot) return;
+        const u = parseVector3(elVecU?.value);
+        const v = parseVector3(elVecV?.value);
+
+        const dot = (u[0] * v[0]) + (u[1] * v[1]) + (u[2] * v[2]);
+        const modU = Math.sqrt(u[0] * u[0] + u[1] * u[1] + u[2] * u[2]);
+        const modV = Math.sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
+
+        let angDeg = 0;
+        if (modU > 0 && modV > 0) {
+            const cosT = Math.max(-1, Math.min(1, dot / (modU * modV)));
+            angDeg = (Math.acos(cosT) * 180) / Math.PI;
+        }
+
+        const cross = [
+            u[1] * v[2] - u[2] * v[1],
+            u[2] * v[0] - u[0] * v[2],
+            u[0] * v[1] - u[1] * v[0]
+        ];
+
+        if (elVecBreakdown) {
+            elVecBreakdown.innerHTML = `• |u| = ${modU.toFixed(2)}, |v| = ${modV.toFixed(2)}<br>` +
+                `• Ángulo θ = ${angDeg.toFixed(2)}° • Producto vectorial u × v = (${cross.map(c => c.toFixed(2)).join(', ')})`;
+        }
+        elVecResDot.textContent = `${dot.toFixed(2)}`;
+    }
+    if (elVecU) elVecU.addEventListener("input", recalcularVectoresR3);
+    if (elVecV) elVecV.addEventListener("input", recalcularVectoresR3);
+    recalcularVectoresR3();
+
+    // Cramer 2x2
+    const elCrF1 = document.getElementById("labCrF1");
+    const elCrF2 = document.getElementById("labCrF2");
+    const elCrBreakdown = document.getElementById("labCrBreakdown");
+    const elCrRes = document.getElementById("labCrRes");
+
+    function recalcularCramer() {
+        if (!elCrRes) return;
+        const f1 = parseVector3(elCrF1?.value); // a1, b1, c1
+        const f2 = parseVector3(elCrF2?.value); // a2, b2, c2
+
+        const a1 = f1[0], b1 = f1[1], c1 = f1[2];
+        const a2 = f2[0], b2 = f2[1], c2 = f2[2];
+
+        const delta = (a1 * b2) - (b1 * a2);
+        const deltaX = (c1 * b2) - (b1 * c2);
+        const deltaY = (a1 * c2) - (c1 * a2);
+
+        if (elCrBreakdown) {
+            elCrBreakdown.innerHTML = `• Determinante principal Δ = ${delta.toFixed(2)}<br>` +
+                `• Δx = ${deltaX.toFixed(2)}, Δy = ${deltaY.toFixed(2)}`;
+        }
+
+        if (delta !== 0) {
+            const x = deltaX / delta;
+            const y = deltaY / delta;
+            elCrRes.textContent = `x = ${x.toFixed(2)}, y = ${y.toFixed(2)}`;
+        } else {
+            elCrRes.textContent = deltaX === 0 && deltaY === 0 ? "Infinitas Soluciones (Compatible Indet.)" : "Sin Solución (Incompatible)";
+        }
+    }
+    if (elCrF1) elCrF1.addEventListener("input", recalcularCramer);
+    if (elCrF2) elCrF2.addEventListener("input", recalcularCramer);
+    recalcularCramer();
+}
+
+/* =========================================================
+   SUITE DE CALCULADORAS CIENTÍFICAS Y UNIVERSITARIAS POR MATERIA
+   ========================================================= */
+
+function conmutarSubtabQuimica(sub) {
+    const btnTabla = document.getElementById("labBtnChemSubtabTabla");
+    const btnCalc = document.getElementById("labBtnChemSubtabCalc");
+    const secTabla = document.getElementById("labChemSeccionTabla");
+    const secCalc = document.getElementById("labChemSeccionCalc");
+
+    if (btnTabla) btnTabla.classList.toggle("is-active", sub === "tabla");
+    if (btnCalc) btnCalc.classList.toggle("is-active", sub === "calc");
+    if (secTabla) secTabla.classList.toggle("hidden", sub !== "tabla");
+    if (secCalc) secCalc.classList.toggle("hidden", sub !== "calc");
+}
+
+function inicializarCalculadoraQuimica() {
+    const btnTabla = document.getElementById("labBtnChemSubtabTabla");
+    const btnCalc = document.getElementById("labBtnChemSubtabCalc");
+    if (btnTabla) btnTabla.onclick = () => conmutarSubtabQuimica("tabla");
+    if (btnCalc) btnCalc.onclick = () => conmutarSubtabQuimica("calc");
+
+    // 1. Moles y Masa
+    const elM = document.getElementById("labChemInputMasaMolar");
+    const elG = document.getElementById("labChemInputGramos");
+    const elBrMoles = document.getElementById("labChemBreakdownMoles");
+    const elResMoles = document.getElementById("labChemResMoles");
+
+    function recalcularMoles() {
+        if (!elResMoles) return;
+        const M = parseFloat(elM?.value) || 1;
+        const m = parseFloat(elG?.value) || 0;
+        const n = M > 0 ? m / M : 0;
+        const moleculas = n * 6.02214076e23;
+
+        if (elBrMoles) {
+            elBrMoles.innerHTML = `• Moléculas ≈ ${moleculas.toExponential(3)} partículas (N_A)<br>• Fórmula: n = ${m.toFixed(2)} g / ${M.toFixed(2)} g/mol`;
+        }
+        elResMoles.textContent = `${n.toFixed(4)} mol`;
+    }
+    if (elM) elM.addEventListener("input", recalcularMoles);
+    if (elG) elG.addEventListener("input", recalcularMoles);
+
+    // 2. Molaridad
+    const elSoluto = document.getElementById("labChemInputSolutoMoles");
+    const elVol = document.getElementById("labChemInputVolumenLitros");
+    const elBrMolar = document.getElementById("labChemBreakdownMolaridad");
+    const elResMolar = document.getElementById("labChemResMolaridad");
+
+    function recalcularMolaridad() {
+        if (!elResMolar) return;
+        const n = parseFloat(elSoluto?.value) || 0;
+        const v = parseFloat(elVol?.value) || 1;
+        const M = v > 0 ? n / v : 0;
+
+        if (elBrMolar) {
+            elBrMolar.innerHTML = `• En ${(v * 1000).toFixed(0)} mL hay ${n.toFixed(3)} moles<br>• Concentración molar = ${M.toFixed(4)} mol/L`;
+        }
+        elResMolar.textContent = `${M.toFixed(2)} M`;
+    }
+    if (elSoluto) elSoluto.addEventListener("input", recalcularMolaridad);
+    if (elVol) elVol.addEventListener("input", recalcularMolaridad);
+
+    // 3. pH / pOH
+    const elH = document.getElementById("labChemInputHConcentration");
+    const elBrPH = document.getElementById("labChemBreakdownPH");
+    const elResPH = document.getElementById("labChemResPH");
+
+    function recalcularPH() {
+        if (!elResPH) return;
+        const hConc = parseFloat(elH?.value) || 0;
+        const pH = hConc > 0 ? -Math.log10(hConc) : 7;
+        const pOH = 14 - pH;
+        const ohConc = Math.pow(10, -pOH);
+        const tipo = pH < 6.9 ? "Ácida (pH < 7)" : pH > 7.1 ? "Básica / Alcalina (pH > 7)" : "Neutra (pH ≈ 7)";
+
+        if (elBrPH) {
+            elBrPH.innerHTML = `• pOH = ${pOH.toFixed(2)} • [OH⁻] = ${ohConc.toExponential(2)} M<br>• Solución ${tipo}`;
+        }
+        elResPH.textContent = `${pH.toFixed(2)}`;
+    }
+    if (elH) elH.addEventListener("input", recalcularPH);
+
+    // 4. Gases Ideales PV=nRT
+    const elP = document.getElementById("labChemGasPresion");
+    const elN = document.getElementById("labChemGasMoles");
+    const elT = document.getElementById("labChemGasTempC");
+    const elBrGas = document.getElementById("labChemBreakdownGas");
+    const elResGas = document.getElementById("labChemResVolGas");
+
+    function recalcularGas() {
+        if (!elResGas) return;
+        const P = parseFloat(elP?.value) || 1;
+        const n = parseFloat(elN?.value) || 1;
+        const Tc = parseFloat(elT?.value) || 0;
+        const Tk = Tc + 273.15;
+        const R = 0.082057; // atm L / mol K
+        const V = P > 0 ? (n * R * Tk) / P : 0;
+
+        if (elBrGas) {
+            elBrGas.innerHTML = `• T = ${Tk.toFixed(2)} K • P·V = n·R·T (R = 0.082 atm·L/mol·K)`;
+        }
+        elResGas.textContent = `${V.toFixed(2)} Litros`;
+    }
+    if (elP) elP.addEventListener("input", recalcularGas);
+    if (elN) elN.addEventListener("input", recalcularGas);
+    if (elT) elT.addEventListener("input", recalcularGas);
+
+    recalcularMoles();
+    recalcularMolaridad();
+    recalcularPH();
+    recalcularGas();
+}
+
+function conmutarSubtabFisica(sub) {
+    const btnSim = document.getElementById("labBtnPhysSubtabSim");
+    const btnCalc = document.getElementById("labBtnPhysSubtabCalc");
+    const secSim = document.getElementById("labPhysSeccionSim");
+    const secCalc = document.getElementById("labPhysSeccionCalc");
+
+    if (btnSim) btnSim.classList.toggle("is-active", sub === "sim");
+    if (btnCalc) btnCalc.classList.toggle("is-active", sub === "calc");
+    if (secSim) secSim.classList.toggle("hidden", sub !== "sim");
+    if (secCalc) secCalc.classList.toggle("hidden", sub !== "calc");
+}
+
+function inicializarCalculadoraFisica() {
+    const btnSim = document.getElementById("labBtnPhysSubtabSim");
+    const btnCalc = document.getElementById("labBtnPhysSubtabCalc");
+    if (btnSim) btnSim.onclick = () => conmutarSubtabFisica("sim");
+    if (btnCalc) btnCalc.onclick = () => conmutarSubtabFisica("calc");
+
+    // 1. Cinemática MRUV
+    const elV0 = document.getElementById("labCalcPhysV0");
+    const elA = document.getElementById("labCalcPhysA");
+    const elT = document.getElementById("labCalcPhysT");
+    const elCinBreak = document.getElementById("labCalcPhysCinBreakdown");
+    const elCinRes = document.getElementById("labCalcPhysCinRes");
+
+    function recalcularCinematica() {
+        if (!elCinRes) return;
+        const v0 = parseFloat(elV0?.value) || 0;
+        const a = parseFloat(elA?.value) || 0;
+        const t = parseFloat(elT?.value) || 0;
+
+        const vf = v0 + a * t;
+        const d = v0 * t + 0.5 * a * (t * t);
+        const vMed = t !== 0 ? d / t : v0;
+
+        if (elCinBreak) {
+            elCinBreak.innerHTML = `• Distancia Recorrida: d = ${d.toFixed(2)} m<br>• Velocidad Media: ${vMed.toFixed(2)} m/s`;
+        }
+        elCinRes.textContent = `${vf.toFixed(2)} m/s`;
+    }
+    [elV0, elA, elT].forEach(inp => { if (inp) inp.addEventListener("input", recalcularCinematica); });
+
+    // 2. Dinámica Plano Inclinado
+    const elMasa = document.getElementById("labCalcPhysMasa");
+    const elAngulo = document.getElementById("labCalcPhysAngulo");
+    const elMu = document.getElementById("labCalcPhysMu");
+    const elDinBreak = document.getElementById("labCalcPhysDinBreakdown");
+    const elDinRes = document.getElementById("labCalcPhysDinRes");
+
+    function recalcularDinamica() {
+        if (!elDinRes) return;
+        const m = parseFloat(elMasa?.value) || 0;
+        const angDeg = parseFloat(elAngulo?.value) || 0;
+        const mu = parseFloat(elMu?.value) || 0;
+        const g = 9.8;
+
+        const rad = (angDeg * Math.PI) / 180;
+        const P = m * g;
+        const Px = P * Math.sin(rad);
+        const Py = P * Math.cos(rad);
+        const N = Py;
+        const fr = mu * N;
+        const Fnet = Px - fr;
+        const acc = m > 0 ? Fnet / m : 0;
+
+        if (elDinBreak) {
+            elDinBreak.innerHTML = `• Peso P = ${P.toFixed(2)} N (Px = ${Px.toFixed(2)} N, Py = ${Py.toFixed(2)} N)<br>` +
+                `• Normal N = ${N.toFixed(2)} N | Rozamiento fr = ${fr.toFixed(2)} N`;
+        }
+        elDinRes.textContent = `${acc.toFixed(2)} m/s²`;
+    }
+    [elMasa, elAngulo, elMu].forEach(inp => { if (inp) inp.addEventListener("input", recalcularDinamica); });
+
+    // 3. Energía Mecánica
+    const elEnMasa = document.getElementById("labCalcPhysEnMasa");
+    const elEnVel = document.getElementById("labCalcPhysEnVel");
+    const elEnAlt = document.getElementById("labCalcPhysEnAlt");
+    const elEnBreak = document.getElementById("labCalcPhysEnBreakdown");
+    const elEnRes = document.getElementById("labCalcPhysEnRes");
+
+    function recalcularEnergia() {
+        if (!elEnRes) return;
+        const m = parseFloat(elEnMasa?.value) || 0;
+        const v = parseFloat(elEnVel?.value) || 0;
+        const h = parseFloat(elEnAlt?.value) || 0;
+        const g = 9.8;
+
+        const Ec = 0.5 * m * (v * v);
+        const Ep = m * g * h;
+        const Em = Ec + Ep;
+
+        if (elEnBreak) {
+            elEnBreak.innerHTML = `• Energía Cinética (Ec): ${Ec.toFixed(2)} J<br>• Energía Potencial (Ep): ${Ep.toFixed(2)} J`;
+        }
+        elEnRes.textContent = `${Em.toFixed(2)} Joules`;
+    }
+    [elEnMasa, elEnVel, elEnAlt].forEach(inp => { if (inp) inp.addEventListener("input", recalcularEnergia); });
+
+    // 4. Ley de Ohm
+    const elVolt = document.getElementById("labCalcPhysVolt");
+    const elR1 = document.getElementById("labCalcPhysR1");
+    const elR2 = document.getElementById("labCalcPhysR2");
+    const elOhmBreak = document.getElementById("labCalcPhysOhmBreakdown");
+    const elOhmRes = document.getElementById("labCalcPhysOhmRes");
+
+    function recalcularOhm() {
+        if (!elOhmRes) return;
+        const V = parseFloat(elVolt?.value) || 0;
+        const R1 = parseFloat(elR1?.value) || 0;
+        const R2 = parseFloat(elR2?.value) || 0;
+
+        const Rserie = R1 + R2;
+        const Iserie = Rserie > 0 ? V / Rserie : 0;
+        const Pserie = V * Iserie;
+
+        const Rpar = (R1 + R2 > 0) ? (R1 * R2) / (R1 + R2) : 0;
+        const Ipar = Rpar > 0 ? V / Rpar : 0;
+        const Ppar = V * Ipar;
+
+        if (elOhmBreak) {
+            elOhmBreak.innerHTML = `• En Serie: R_eq = ${Rserie.toFixed(2)} Ω (I = ${Iserie.toFixed(2)} A, P = ${Pserie.toFixed(2)} W)<br>` +
+                `• En Paralelo: R_eq = ${Rpar.toFixed(2)} Ω (I = ${Ipar.toFixed(2)} A, P = ${Ppar.toFixed(2)} W)`;
+        }
+        elOhmRes.textContent = `${Iserie.toFixed(2)} A`;
+    }
+    [elVolt, elR1, elR2].forEach(inp => { if (inp) inp.addEventListener("input", recalcularOhm); });
+
+    recalcularCinematica();
+    recalcularDinamica();
+    recalcularEnergia();
+    recalcularOhm();
+}
+
+function conmutarSubtabMatematicas(sub) {
+    const btnGraf = document.getElementById("labBtnMathSubtabGraf");
+    const btnCalc = document.getElementById("labBtnMathSubtabCalc");
+    const secGraf = document.getElementById("labMathSeccionGraf");
+    const secCalc = document.getElementById("labMathSeccionCalc");
+
+    if (btnGraf) btnGraf.classList.toggle("is-active", sub === "graf");
+    if (btnCalc) btnCalc.classList.toggle("is-active", sub === "calc");
+    if (secGraf) secGraf.classList.toggle("hidden", sub !== "graf");
+    if (secCalc) secCalc.classList.toggle("hidden", sub !== "calc");
+}
+
+function inicializarCalculadoraMatematicas() {
+    const btnGraf = document.getElementById("labBtnMathSubtabGraf");
+    const btnCalc = document.getElementById("labBtnMathSubtabCalc");
+    if (btnGraf) btnGraf.onclick = () => conmutarSubtabMatematicas("graf");
+    if (btnCalc) btnCalc.onclick = () => conmutarSubtabMatematicas("calc");
+
+    // 1. Bhaskara
+    const elA = document.getElementById("labMathBhaskA");
+    const elB = document.getElementById("labMathBhaskB");
+    const elC = document.getElementById("labMathBhaskC");
+    const elBhaskBreak = document.getElementById("labMathBhaskBreakdown");
+    const elBhaskRes = document.getElementById("labMathBhaskRes");
+
+    function recalcularBhaskara() {
+        if (!elBhaskRes) return;
+        const a = parseFloat(elA?.value) || 1;
+        const b = parseFloat(elB?.value) || 0;
+        const c = parseFloat(elC?.value) || 0;
+
+        const delta = (b * b) - (4 * a * c);
+        const vx = -b / (2 * a);
+        const vy = a * (vx * vx) + b * vx + c;
+
+        if (delta > 0) {
+            const x1 = (-b + Math.sqrt(delta)) / (2 * a);
+            const x2 = (-b - Math.sqrt(delta)) / (2 * a);
+            if (elBhaskBreak) {
+                elBhaskBreak.innerHTML = `• Discriminante Δ = ${delta.toFixed(2)} (> 0, 2 raíces reales)<br>` +
+                    `• Vértice V: (${vx.toFixed(2)}, ${vy.toFixed(2)}) • Eje de simetría: x = ${vx.toFixed(2)}<br>` +
+                    `• Forma factorizada: ${a} · (x - ${x1.toFixed(2)})(x - ${x2.toFixed(2)})`;
+            }
+            elBhaskRes.textContent = `x₁ = ${x1.toFixed(2)}, x₂ = ${x2.toFixed(2)}`;
+        } else if (delta === 0) {
+            const x = -b / (2 * a);
+            if (elBhaskBreak) {
+                elBhaskBreak.innerHTML = `• Discriminante Δ = 0 (raíz real doble)<br>` +
+                    `• Vértice V: (${vx.toFixed(2)}, 0)<br>` +
+                    `• Forma factorizada: ${a} · (x - ${x.toFixed(2)})²`;
+            }
+            elBhaskRes.textContent = `x₁ = x₂ = ${x.toFixed(2)}`;
+        } else {
+            const real = (-b / (2 * a)).toFixed(2);
+            const imag = (Math.sqrt(-delta) / (2 * a)).toFixed(2);
+            if (elBhaskBreak) {
+                elBhaskBreak.innerHTML = `• Discriminante Δ = ${delta.toFixed(2)} (< 0, raíces complejas conjugadas)<br>` +
+                    `• Vértice V: (${vx.toFixed(2)}, ${vy.toFixed(2)})<br>` +
+                    `• La parábola no interseca el eje real X.`;
+            }
+            elBhaskRes.textContent = `${real} ± ${imag}i`;
+        }
+    }
+    [elA, elB, elC].forEach(inp => { if (inp) inp.addEventListener("input", recalcularBhaskara); });
+
+    // 2. Regla de 3 Simple
+    const elR3A = document.getElementById("labMathR3A");
+    const elR3B = document.getElementById("labMathR3B");
+    const elR3C = document.getElementById("labMathR3C");
+    const elR3Break = document.getElementById("labMathR3Breakdown");
+    const elR3Res = document.getElementById("labMathR3Res");
+
+    function recalcularRegla3() {
+        if (!elR3Res) return;
+        const A = parseFloat(elR3A?.value) || 1;
+        const B = parseFloat(elR3B?.value) || 0;
+        const C = parseFloat(elR3C?.value) || 0;
+
+        const X = A !== 0 ? (B * C) / A : 0;
+        const pct = A !== 0 ? (B / A) * 100 : 0;
+
+        if (elR3Break) {
+            elR3Break.innerHTML = `• Proporción directa: X = (${B} × ${C}) / ${A} = ${X.toFixed(2)}<br>` +
+                `• Porcentaje de B respecto a A: ${pct.toFixed(2)}%`;
+        }
+        elR3Res.textContent = `${X.toFixed(2)}`;
+    }
+    [elR3A, elR3B, elR3C].forEach(inp => { if (inp) inp.addEventListener("input", recalcularRegla3); });
+
+    // 3. Pitágoras y Trigonometría
+    const elCatA = document.getElementById("labMathCatA");
+    const elCatB = document.getElementById("labMathCatB");
+    const elTrigBreak = document.getElementById("labMathTrigBreakdown");
+    const elTrigRes = document.getElementById("labMathTrigRes");
+
+    function recalcularPitagoras() {
+        if (!elTrigRes) return;
+        const a = parseFloat(elCatA?.value) || 0;
+        const b = parseFloat(elCatB?.value) || 0;
+
+        const h = Math.sqrt(a * a + b * b);
+        const rad = Math.atan2(a, b);
+        const deg = (rad * 180) / Math.PI;
+
+        const sinA = h > 0 ? a / h : 0;
+        const cosA = h > 0 ? b / h : 0;
+        const tanA = b !== 0 ? a / b : Infinity;
+
+        if (elTrigBreak) {
+            elTrigBreak.innerHTML = `• Ángulo α = ${deg.toFixed(2)}° (${rad.toFixed(4)} rad)<br>` +
+                `• sin(α) = ${sinA.toFixed(4)} • cos(α) = ${cosA.toFixed(4)} • tan(α) = ${tanA.toFixed(4)}`;
+        }
+        elTrigRes.textContent = `${h.toFixed(2)}`;
+    }
+    [elCatA, elCatB].forEach(inp => { if (inp) inp.addEventListener("input", recalcularPitagoras); });
+
+    recalcularBhaskara();
+    recalcularRegla3();
+    recalcularPitagoras();
+}
+
+function conmutarSubtabCalculo(sub) {
+    const btnDeriv = document.getElementById("labBtnCalcSubtabDeriv");
+    const btnInteg = document.getElementById("labBtnCalcSubtabInteg");
+    if (btnDeriv) btnDeriv.classList.toggle("is-active", sub === "deriv");
+    if (btnInteg) btnInteg.classList.toggle("is-active", sub === "integ");
+}
+
+function evaluarExpresionSegura(expr, xVal) {
+    try {
+        if (!expr || typeof expr !== "string") return 0;
+        const clean = expr
+            .replace(/\s+/g, '')
+            .replace(/\^/g, '**')
+            .replace(/(\d)(x)/gi, '$1*$2')
+            .replace(/(x)(\d)/gi, '$1*$2')
+            .replace(/(\))(\()/g, '$1*$2')
+            .replace(/(\d)(\()/g, '$1*$2')
+            .replace(/(\))(x)/gi, '$1*$2')
+            .replace(/sin/gi, 'Math.sin')
+            .replace(/cos/gi, 'Math.cos')
+            .replace(/tan/gi, 'Math.tan')
+            .replace(/sqrt/gi, 'Math.sqrt')
+            .replace(/exp/gi, 'Math.exp')
+            .replace(/ln/gi, 'Math.log')
+            .replace(/log/gi, 'Math.log10')
+            .replace(/abs/gi, 'Math.abs')
+            .replace(/pi/gi, 'Math.PI')
+            .replace(/\be\b/gi, 'Math.E');
+
+        if (/[^0-9xX+\-*/().,MathPIE\s]/.test(clean)) return NaN;
+        const fn = new Function('x', `"use strict"; return (${clean});`);
+        const res = fn(xVal);
+        return typeof res === 'number' && !isNaN(res) && isFinite(res) ? res : NaN;
+    } catch {
+        return NaN;
+    }
+}
+
+function inicializarCalculadoraCalculo() {
+    const btnDeriv = document.getElementById("labBtnCalcSubtabDeriv");
+    const btnInteg = document.getElementById("labBtnCalcSubtabInteg");
+    if (btnDeriv) btnDeriv.onclick = () => conmutarSubtabCalculo("deriv");
+    if (btnInteg) btnInteg.onclick = () => conmutarSubtabCalculo("integ");
+
+    // 1. Derivada y Recta Tangente
+    const elFunc = document.getElementById("labCalcDerivFunc");
+    const elX0 = document.getElementById("labCalcDerivX0");
+    const elDerivBreak = document.getElementById("labCalcDerivBreakdown");
+    const elDerivRes = document.getElementById("labCalcDerivRes");
+
+    function recalcularDerivada() {
+        if (!elDerivRes) return;
+        const expr = elFunc?.value || "x^2 - 4*x + 5";
+        const x0 = parseFloat(elX0?.value) || 0;
+
+        const h = 1e-5;
+        const y0 = evaluarExpresionSegura(expr, x0);
+        const yPlus = evaluarExpresionSegura(expr, x0 + h);
+        const yMinus = evaluarExpresionSegura(expr, x0 - h);
+
+        const m = (yPlus - yMinus) / (2 * h);
+        const bTang = y0 - (m * x0);
+
+        let ecNormal = "Recta vertical (pendiente infinita)";
+        if (Math.abs(m) > 1e-6) {
+            const mNorm = -1 / m;
+            const bNorm = y0 - (mNorm * x0);
+            ecNormal = `y = ${mNorm.toFixed(2)}·x ${bNorm >= 0 ? '+' : '-'} ${Math.abs(bNorm).toFixed(2)}`;
+        }
+
+        if (elDerivBreak) {
+            elDerivBreak.innerHTML = `• f(${x0}) = ${y0.toFixed(2)} • Pendiente recta tangente m = ${m.toFixed(2)}<br>` +
+                `• Ecuación recta tangente: y = ${m.toFixed(2)}·x ${bTang >= 0 ? '+' : '-'} ${Math.abs(bTang).toFixed(2)}<br>` +
+                `• Ecuación recta normal: ${ecNormal}`;
+        }
+        elDerivRes.textContent = `${m.toFixed(4)}`;
+    }
+    if (elFunc) elFunc.addEventListener("input", recalcularDerivada);
+    if (elX0) elX0.addEventListener("input", recalcularDerivada);
+
+    // 2. Integral Definida Simpson 1/3
+    const elIntegFunc = document.getElementById("labCalcIntegFunc");
+    const elIntegA = document.getElementById("labCalcIntegA");
+    const elIntegB = document.getElementById("labCalcIntegB");
+    const elIntegBreak = document.getElementById("labCalcIntegBreakdown");
+    const elIntegRes = document.getElementById("labCalcIntegRes");
+
+    function recalcularIntegral() {
+        if (!elIntegRes) return;
+        const expr = elIntegFunc?.value || "3*x^2 + 2*x";
+        const a = parseFloat(elIntegA?.value) || 0;
+        const b = parseFloat(elIntegB?.value) || 0;
+
+        const N = 200; // Intervalos pares
+        const step = (b - a) / N;
+        let sum = evaluarExpresionSegura(expr, a) + evaluarExpresionSegura(expr, b);
+
+        for (let i = 1; i < N; i++) {
+            const xi = a + i * step;
+            const yi = evaluarExpresionSegura(expr, xi);
+            sum += (i % 2 === 0 ? 2 : 4) * yi;
+        }
+        const area = (sum * step) / 3;
+
+        if (elIntegBreak) {
+            elIntegBreak.innerHTML = `• Intervalo [${a}, ${b}] dividido en ${N} subintervalos (h = ${step.toFixed(4)})<br>` +
+                `• Método: Cuadratura de Simpson 1/3 compuesto.`;
+        }
+        elIntegRes.textContent = `${area.toFixed(4)}`;
+    }
+    if (elIntegFunc) elIntegFunc.addEventListener("input", recalcularIntegral);
+    if (elIntegA) elIntegA.addEventListener("input", recalcularIntegral);
+    if (elIntegB) elIntegB.addEventListener("input", recalcularIntegral);
+
+    recalcularDerivada();
+    recalcularIntegral();
+}
+
+function inicializarCalculadoraComputacion() {
+    const elDec = document.getElementById("labCompInputDec");
+    const elBin = document.getElementById("labCompInputBin");
+    const elHex = document.getElementById("labCompInputHex");
+    const elBreakBases = document.getElementById("labCompBreakdownBases");
+    const elResHex = document.getElementById("labCompResHex");
+
+    function actualizarDesdeDecimal(val) {
+        const bin = (val >>> 0).toString(2);
+        const hex = (val >>> 0).toString(16).toUpperCase();
+        const oct = (val >>> 0).toString(8);
+
+        if (elBin) elBin.value = bin;
+        if (elHex) elHex.value = hex;
+
+        if (elBreakBases) {
+            elBreakBases.innerHTML = `• Octal (Base 8): ${oct}<br>• Formato Byte: ${bin.padStart(8, '0')} (${bin.length} bits)`;
+        }
+        if (elResHex) elResHex.textContent = `0x${hex}`;
+    }
+
+    if (elDec) {
+        elDec.addEventListener("input", () => {
+            const val = parseInt(elDec.value, 10) || 0;
+            actualizarDesdeDecimal(val);
+        });
+    }
+
+    if (elBin) {
+        elBin.addEventListener("input", () => {
+            const val = parseInt(elBin.value.replace(/[^01]/g, ''), 2) || 0;
+            if (elDec) elDec.value = val;
+            actualizarDesdeDecimal(val);
+        });
+    }
+
+    if (elHex) {
+        elHex.addEventListener("input", () => {
+            const val = parseInt(elHex.value.replace(/[^0-9A-Fa-f]/g, ''), 16) || 0;
+            if (elDec) elDec.value = val;
+            actualizarDesdeDecimal(val);
+        });
+    }
+
+    // Big-O Estimator
+    const elN = document.getElementById("labCompInputN");
+    const elBreakBigO = document.getElementById("labCompBreakdownBigO");
+    const elResBigO = document.getElementById("labCompResBigO");
+
+    function recalcularBigO() {
+        if (!elResBigO) return;
+        const N = Math.max(1, parseInt(elN?.value, 10) || 1);
+        const cLog = Math.round(Math.log2(N));
+        const cNlogN = Math.round(N * Math.log2(N));
+        const cN2 = N * N;
+
+        if (elBreakBigO) {
+            elBreakBigO.innerHTML = `• O(1) Constante: 1 op.<br>` +
+                `• O(log N) Binario: ${cLog.toLocaleString('es-AR')} op.<br>` +
+                `• O(N) Lineal: ${N.toLocaleString('es-AR')} op.<br>` +
+                `• O(N log N) Quicksort/Merge: ~${cNlogN.toLocaleString('es-AR')} op.<br>` +
+                `• O(N²) Cuadrático: ${cN2.toExponential(2)} op.`;
+        }
+        elResBigO.textContent = `~${cNlogN.toExponential(2)} op.`;
+    }
+    if (elN) elN.addEventListener("input", recalcularBigO);
+
+    actualizarDesdeDecimal(parseInt(elDec?.value, 10) || 255);
+    recalcularBigO();
+}
+
+function inicializarCalculadoraBiologia() {
+    const elPadre = document.getElementById("labBioPadre");
+    const elMadre = document.getElementById("labBioMadre");
+    const hP1 = document.getElementById("labBioHeaderP1");
+    const hP2 = document.getElementById("labBioHeaderP2");
+    const hM1 = document.getElementById("labBioHeaderM1");
+    const hM2 = document.getElementById("labBioHeaderM2");
+    const cell1 = document.getElementById("labBioCell1");
+    const cell2 = document.getElementById("labBioCell2");
+    const cell3 = document.getElementById("labBioCell3");
+    const cell4 = document.getElementById("labBioCell4");
+    const elBreakGen = document.getElementById("labBioBreakdownGen");
+    const elResRatio = document.getElementById("labBioResRatio");
+
+    function ordenarAlelos(a, b) {
+        return (a === a.toUpperCase() && b === b.toLowerCase()) ? `${a}${b}` :
+               (b === b.toUpperCase() && a === b.toLowerCase()) ? `${b}${a}` :
+               `${a}${b}`;
+    }
+
+    function recalcularPunnett() {
+        if (!cell1) return;
+        const pStr = (elPadre?.value || "Aa").trim();
+        const mStr = (elMadre?.value || "Aa").trim();
+
+        const p1 = pStr[0] || "A";
+        const p2 = pStr[1] || pStr[0] || "a";
+        const m1 = mStr[0] || "A";
+        const m2 = mStr[1] || mStr[0] || "a";
+
+        if (hP1) hP1.textContent = p1;
+        if (hP2) hP2.textContent = p2;
+        if (hM1) hM1.textContent = m1;
+        if (hM2) hM2.textContent = m2;
+
+        const c1 = ordenarAlelos(m1, p1);
+        const c2 = ordenarAlelos(m1, p2);
+        const c3 = ordenarAlelos(m2, p1);
+        const c4 = ordenarAlelos(m2, p2);
+
+        cell1.textContent = c1;
+        cell2.textContent = c2;
+        cell3.textContent = c3;
+        cell4.textContent = c4;
+
+        const genotipos = [c1, c2, c3, c4];
+        const conteo = {};
+        genotipos.forEach(g => { conteo[g] = (conteo[g] || 0) + 1; });
+
+        const domChar = p1.toUpperCase();
+        const recChar = p1.toLowerCase();
+        let domCount = 0;
+        let recCount = 0;
+        genotipos.forEach(g => {
+            if (g.includes(domChar)) domCount++;
+            else recCount++;
+        });
+
+        const pctDom = (domCount / 4) * 100;
+        const pctRec = (recCount / 4) * 100;
+
+        const desgloseGen = Object.entries(conteo).map(([g, c]) => `${(c / 4) * 100}% ${g}`).join(", ");
+
+        if (elBreakGen) {
+            elBreakGen.innerHTML = `• Genotipos: ${desgloseGen}<br>` +
+                `• Fenotipo: ${pctDom}% Dominante [${domChar}-], ${pctRec}% Recesivo [${recChar}${recChar}]`;
+        }
+        if (elResRatio) {
+            elResRatio.textContent = `${domCount} : ${recCount} (${pctDom}% / ${pctRec}%)`;
+        }
+    }
+
+    if (elPadre) elPadre.addEventListener("input", recalcularPunnett);
+    if (elMadre) elMadre.addEventListener("input", recalcularPunnett);
+
+    // ATP Respiración Celular
+    const elGlucosa = document.getElementById("labBioMolesGlucosa");
+    const elBreakATP = document.getElementById("labBioBreakdownATP");
+    const elResATP = document.getElementById("labBioResATP");
+
+    function recalcularATP() {
+        if (!elResATP) return;
+        const moles = parseFloat(elGlucosa?.value) || 1;
+        const atp = Math.round(moles * 32);
+        const co2 = (moles * 6).toFixed(1);
+        const h2o = (moles * 6).toFixed(1);
+
+        if (elBreakATP) {
+            elBreakATP.innerHTML = `• Glucólisis: ${(moles * 2).toFixed(1)} ATP + ${(moles * 2).toFixed(1)} NADH<br>` +
+                `• Oxidación del Piruvato & Krebs: ${(moles * 2).toFixed(1)} GTP + ${(moles * 8).toFixed(1)} NADH + ${(moles * 2).toFixed(1)} FADH₂<br>` +
+                `• Subproductos: ${co2} mol CO₂ y ${h2o} mol H₂O • Rendimiento neto teórico: 30 a 32 ATP/mol.`;
+        }
+        elResATP.textContent = `${atp} ATP`;
+    }
+    if (elGlucosa) elGlucosa.addEventListener("input", recalcularATP);
+
+    recalcularPunnett();
+    recalcularATP();
+}
+
+function conmutarSubtabFinanciera(sub) {
+    const btnPrest = document.getElementById("labBtnFinSubtabPrest");
+    const btnCalc = document.getElementById("labBtnFinSubtabCalc");
+    const secPrest = document.getElementById("labFinSeccionPrest");
+    const secCalc = document.getElementById("labFinSeccionCalc");
+
+    if (btnPrest) btnPrest.classList.toggle("is-active", sub === "prest");
+    if (btnCalc) btnCalc.classList.toggle("is-active", sub === "calc");
+    if (secPrest) secPrest.classList.toggle("hidden", sub !== "prest");
+    if (secCalc) secCalc.classList.toggle("hidden", sub !== "calc");
+}
+
+function inicializarCalculadoraFinanciera() {
+    const btnPrest = document.getElementById("labBtnFinSubtabPrest");
+    const btnCalc = document.getElementById("labBtnFinSubtabCalc");
+    if (btnPrest) btnPrest.onclick = () => conmutarSubtabFinanciera("prest");
+    if (btnCalc) btnCalc.onclick = () => conmutarSubtabFinanciera("calc");
+
+    // 1. Amortización de Préstamos
+    const elCap = document.getElementById("labFinCapital");
+    const elTasa = document.getElementById("labFinTasa");
+    const elCuotas = document.getElementById("labFinCuotas");
+    const elSistema = document.getElementById("labFinSistema");
+    const tbodyAmort = document.getElementById("labFinTableBodyAmort");
+
+    function recalcularAmortizacion() {
+        if (!tbodyAmort) return;
+        const C0 = parseFloat(elCap?.value) || 100000;
+        const i = (parseFloat(elTasa?.value) || 5) / 100;
+        const n = Math.max(1, parseInt(elCuotas?.value, 10) || 6);
+        const sist = elSistema?.value || "frances";
+
+        tbodyAmort.innerHTML = "";
+        let saldo = C0;
+
+        if (sist === "frances") {
+            const cuotaFija = i > 0 ? C0 * (i / (1 - Math.pow(1 + i, -n))) : C0 / n;
+            for (let k = 1; k <= n; k++) {
+                const interes = saldo * i;
+                const amort = Math.min(saldo, cuotaFija - interes);
+                saldo = Math.max(0, saldo - amort);
+
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
+                    <td><strong>${k}</strong></td>
+                    <td style="color: #38bdf8;">$${cuotaFija.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                    <td style="color: #f87171;">$${interes.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                    <td style="color: #34d399;">$${amort.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                    <td>$${saldo.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                `;
+                tbodyAmort.appendChild(tr);
+            }
+        } else {
+            // Alemán: Amortización constante
+            const amortConst = C0 / n;
+            for (let k = 1; k <= n; k++) {
+                const interes = saldo * i;
+                const cuota = amortConst + interes;
+                saldo = Math.max(0, saldo - amortConst);
+
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
+                    <td><strong>${k}</strong></td>
+                    <td style="color: #38bdf8;">$${cuota.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                    <td style="color: #f87171;">$${interes.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                    <td style="color: #34d399;">$${amortConst.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                    <td>$${saldo.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                `;
+                tbodyAmort.appendChild(tr);
+            }
+        }
+    }
+    [elCap, elTasa, elCuotas, elSistema].forEach(inp => { if (inp) inp.addEventListener("input", recalcularAmortizacion); });
+
+    // 2. Interés Simple y Compuesto
+    const elIntC0 = document.getElementById("labFinIntC0");
+    const elIntTasa = document.getElementById("labFinIntTasa");
+    const elIntN = document.getElementById("labFinIntN");
+    const elIntBreak = document.getElementById("labFinIntBreakdown");
+    const elIntRes = document.getElementById("labFinIntRes");
+
+    function recalcularInteres() {
+        if (!elIntRes) return;
+        const C0 = parseFloat(elIntC0?.value) || 0;
+        const i = (parseFloat(elIntTasa?.value) || 0) / 100;
+        const n = parseFloat(elIntN?.value) || 0;
+
+        const Msimple = C0 * (1 + i * n);
+        const Isimple = Msimple - C0;
+        const Mcomp = C0 * Math.pow(1 + i, n);
+        const Icomp = Mcomp - C0;
+        const gananciaComp = Icomp - Isimple;
+
+        if (elIntBreak) {
+            elIntBreak.innerHTML = `• Monto Simple: $${Msimple.toLocaleString('es-AR', {minimumFractionDigits: 2})}<br>` +
+                `• Interés Simple: $${Isimple.toLocaleString('es-AR', {minimumFractionDigits: 2})} • Ganancia por capitalización: $${gananciaComp.toLocaleString('es-AR', {minimumFractionDigits: 2})}`;
+        }
+        elIntRes.textContent = `$${Mcomp.toLocaleString('es-AR', {minimumFractionDigits: 2})}`;
+    }
+    [elIntC0, elIntTasa, elIntN].forEach(inp => { if (inp) inp.addEventListener("input", recalcularInteres); });
+
+    // 3. Conversor TNA a TEA
+    const elTna = document.getElementById("labFinTnaVal");
+    const elFrec = document.getElementById("labFinTnaFrec");
+    const elTnaBreak = document.getElementById("labFinTnaBreakdown");
+    const elTeaRes = document.getElementById("labFinTeaRes");
+
+    function recalcularTNA() {
+        if (!elTeaRes) return;
+        const tna = (parseFloat(elTna?.value) || 0) / 100;
+        const m = parseFloat(elFrec?.value) || 12;
+
+        const iPer = tna / m;
+        const tea = (Math.pow(1 + iPer, m) - 1) * 100;
+
+        if (elTnaBreak) {
+            elTnaBreak.innerHTML = `• Tasa periódica efectiva: ${(iPer * 100).toFixed(4)}%<br>` +
+                `• Capitalizaciones por año: ${m} períodos.`;
+        }
+        elTeaRes.textContent = `${tea.toFixed(2)}%`;
+    }
+    if (elTna) elTna.addEventListener("input", recalcularTNA);
+    if (elFrec) elFrec.addEventListener("change", recalcularTNA);
+
+    recalcularAmortizacion();
+    recalcularInteres();
+    recalcularTNA();
+}
+
+function inicializarCalculadoraMedicina() {
+    // 1. Cockcroft-Gault eGFR
+    const elEdad = document.getElementById("labMedEdad");
+    const elPeso = document.getElementById("labMedPeso");
+    const elCr = document.getElementById("labMedCr");
+    const elSexo = document.getElementById("labMedSexo");
+    const elRenalBreak = document.getElementById("labMedRenalBreakdown");
+    const elRenalRes = document.getElementById("labMedRenalRes");
+
+    function recalcularRenal() {
+        if (!elRenalRes) return;
+        const edad = parseFloat(elEdad?.value) || 65;
+        const peso = parseFloat(elPeso?.value) || 70;
+        const cr = parseFloat(elCr?.value) || 1.2;
+        const sexo = elSexo?.value || "m";
+
+        let clcr = 0;
+        if (cr > 0) {
+            clcr = ((140 - edad) * peso) / (72 * cr);
+            if (sexo === "f") clcr *= 0.85;
+        }
+
+        let estadio = "";
+        if (clcr >= 90) estadio = "G1 (Normal o elevado, ≥ 90 mL/min)";
+        else if (clcr >= 60) estadio = "G2 (Descenso leve, 60-89 mL/min)";
+        else if (clcr >= 45) estadio = "G3a (Descenso leve a moderado, 45-59 mL/min)";
+        else if (clcr >= 30) estadio = "G3b (Descenso moderado a grave, 30-44 mL/min)";
+        else if (clcr >= 15) estadio = "G4 (Descenso grave, 15-29 mL/min)";
+        else estadio = "G5 (Falla renal terminal, < 15 mL/min)";
+
+        if (elRenalBreak) {
+            elRenalBreak.innerHTML = `• Estadío KDIGO: ${estadio}<br>` +
+                `• ${clcr < 60 ? '⚠️ Requiere ajuste de dosis en fármacos de excreción renal.' : '✅ Filtrado glomerular adecuado.'}`;
+        }
+        elRenalRes.textContent = `${clcr.toFixed(2)} mL/min`;
+    }
+    [elEdad, elPeso, elCr, elSexo].forEach(inp => { if (inp) inp.addEventListener("input", recalcularRenal); });
+
+    // 2. IMC y Superficie Corporal
+    const elImcPeso = document.getElementById("labMedImcPeso");
+    const elAlt = document.getElementById("labMedAltCm");
+    const elImcBreak = document.getElementById("labMedImcBreakdown");
+    const elImcRes = document.getElementById("labMedImcRes");
+
+    function recalcularIMC() {
+        if (!elImcRes) return;
+        const peso = parseFloat(elImcPeso?.value) || 70;
+        const altCm = parseFloat(elAlt?.value) || 170;
+        const altM = altCm / 100;
+
+        const imc = altM > 0 ? peso / (altM * altM) : 0;
+        const sc = Math.sqrt((peso * altCm) / 3600); // Fórmula de Mosteller
+
+        let clasif = "";
+        if (imc < 18.5) clasif = "Bajo peso (< 18.5)";
+        else if (imc < 25) clasif = "Normopeso (18.5 - 24.9)";
+        else if (imc < 30) clasif = "Sobrepeso (25.0 - 29.9)";
+        else if (imc < 35) clasif = "Obesidad Grado I (30.0 - 34.9)";
+        else if (imc < 40) clasif = "Obesidad Grado II (35.0 - 39.9)";
+        else clasif = "Obesidad Grado III (≥ 40.0)";
+
+        if (elImcBreak) {
+            elImcBreak.innerHTML = `• Clasificación OMS: ${clasif}<br>` +
+                `• Superficie Corporal (Fórmula Mosteller): ${sc.toFixed(2)} m²`;
+        }
+        elImcRes.textContent = `${imc.toFixed(2)} kg/m²`;
+    }
+    [elImcPeso, elAlt].forEach(inp => { if (inp) inp.addEventListener("input", recalcularIMC); });
+
+    recalcularRenal();
+    recalcularIMC();
+}
+
+function inicializarCalculadoraContabilidad() {
+    const elEI = document.getElementById("labCmvEI");
+    const elCompras = document.getElementById("labCmvCompras");
+    const elGastos = document.getElementById("labCmvGastos");
+    const elEF = document.getElementById("labCmvEF");
+    const elVentas = document.getElementById("labCmvVentas");
+    const elCmvBreakdown = document.getElementById("labCmvBreakdown");
+    const elCmvRes = document.getElementById("labCmvResVal");
+
+    function recalcularCMV() {
+        if (!elCmvRes) return;
+        const ei = parseFloat(elEI?.value) || 0;
+        const compras = parseFloat(elCompras?.value) || 0;
+        const gastos = parseFloat(elGastos?.value) || 0;
+        const ef = parseFloat(elEF?.value) || 0;
+        const ventas = parseFloat(elVentas?.value) || 0;
+
+        const disponibles = ei + compras + gastos;
+        const cmv = disponibles - ef;
+        const utilidad = ventas - cmv;
+        const margen = ventas !== 0 ? ((utilidad / ventas) * 100) : 0;
+
+        if (elCmvBreakdown) {
+            elCmvBreakdown.innerHTML = `• Mercaderías Disponibles: $${disponibles.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}<br>` +
+                `• Utilidad Bruta: $${utilidad.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})} (Margen: ${margen.toFixed(2)}%)`;
+        }
+        elCmvRes.textContent = `$${cmv.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+    }
+
+    [elEI, elCompras, elGastos, elEF, elVentas].forEach(inp => {
+        if (inp) inp.addEventListener("input", recalcularCMV);
+    });
+
+    const elModo = document.getElementById("labIvaModo");
+    const elAlic = document.getElementById("labIvaAlicuota");
+    const elImp = document.getElementById("labIvaImporte");
+    const elImpLabel = document.getElementById("labIvaImporteLabel");
+    const elIvaBreakdown = document.getElementById("labIvaBreakdown");
+    const elIvaResLabel = document.getElementById("labIvaResLabel");
+    const elIvaRes = document.getElementById("labIvaResVal");
+
+    function recalcularIVA() {
+        if (!elIvaRes) return;
+        const modo = elModo?.value || "netoToTotal";
+        const alic = parseFloat(elAlic?.value) || 21;
+        const imp = parseFloat(elImp?.value) || 0;
+
+        if (modo === "netoToTotal") {
+            if (elImpLabel) elImpLabel.textContent = "Importe Neto ($):";
+            if (elIvaResLabel) elIvaResLabel.textContent = "Total Facturado:";
+            const neto = imp;
+            const iva = neto * (alic / 100);
+            const total = neto + iva;
+            if (elIvaBreakdown) {
+                elIvaBreakdown.innerHTML = `• Neto Gravado: $${neto.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}<br>` +
+                    `• IVA Débito/Crédito (${alic}%): $${iva.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+            }
+            elIvaRes.textContent = `$${total.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+        } else {
+            if (elImpLabel) elImpLabel.textContent = "Importe Total ($):";
+            if (elIvaResLabel) elIvaResLabel.textContent = "Neto Segregado:";
+            const total = imp;
+            const neto = total / (1 + (alic / 100));
+            const iva = total - neto;
+            if (elIvaBreakdown) {
+                elIvaBreakdown.innerHTML = `• Total Facturado: $${total.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}<br>` +
+                    `• IVA Contenido (${alic}%): $${iva.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+            }
+            elIvaRes.textContent = `$${neto.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+        }
+    }
+
+    if (elModo) elModo.addEventListener("change", recalcularIVA);
+    if (elAlic) elAlic.addEventListener("change", recalcularIVA);
+    if (elImp) elImp.addEventListener("input", recalcularIVA);
+
+    recalcularCMV();
+    recalcularIVA();
+}
+
+function inicializarCalculadorasLaboratorio() {
+    inicializarCalculadoraContabilidad();
+    inicializarCalculadoraQuimica();
+    inicializarCalculadoraFisica();
+    inicializarCalculadoraMatematicas();
+    inicializarCalculadoraCalculo();
+    inicializarCalculadoraComputacion();
+    inicializarCalculadoraBiologia();
+    inicializarCalculadoraFinanciera();
+    inicializarCalculadoraMedicina();
 }
 
 async function extraerTextoDeCualquierArchivo(file) {
@@ -23974,17 +25081,60 @@ function adaptarMesaTrabajoSegunEjercicio(ej) {
             cambiarSubvistaContabilidad("mayor");
         } else if (tema.includes("balance")) {
             cambiarSubvistaContabilidad("balance");
+        } else if (tema.includes("cmv") || tema.includes("iva") || tema.includes("calc")) {
+            cambiarSubvistaContabilidad("calc");
         } else {
             cambiarSubvistaContabilidad("diario");
         }
     } else if (materiaId === "quimica") {
         activarTabLaboratorio("quimica");
+        if (tema.includes("calc") || tema.includes("mole") || tema.includes("ph") || tema.includes("gas") || tema.includes("soluci")) {
+            if (typeof conmutarSubtabQuimica === "function") conmutarSubtabQuimica("calc");
+        } else {
+            if (typeof conmutarSubtabQuimica === "function") conmutarSubtabQuimica("tabla");
+        }
     } else if (materiaId === "fisica") {
         activarTabLaboratorio("fisica");
-    } else if (materiaId === "matematicas" || materiaId === "calculo") {
+        if (tema.includes("calc") || tema.includes("dinam") || tema.includes("ohm") || tema.includes("energia") || tema.includes("mru")) {
+            if (typeof conmutarSubtabFisica === "function") conmutarSubtabFisica("calc");
+        } else {
+            if (typeof conmutarSubtabFisica === "function") conmutarSubtabFisica("sim");
+        }
+    } else if (materiaId === "matematicas") {
         activarTabLaboratorio("matematicas");
-    } else if (materiaId === "algebra_lineal" || materiaId === "computacion") {
+        if (tema.includes("bhask") || tema.includes("cuadra") || tema.includes("pitag") || tema.includes("regla") || tema.includes("calc")) {
+            if (typeof conmutarSubtabMatematicas === "function") conmutarSubtabMatematicas("calc");
+        } else {
+            if (typeof conmutarSubtabMatematicas === "function") conmutarSubtabMatematicas("graf");
+        }
+    } else if (materiaId === "calculo") {
+        activarTabLaboratorio("calculo");
+    } else if (materiaId === "algebra_lineal") {
         activarTabLaboratorio("matrices");
+        if (typeof conmutarSubtabMatrices === "function") {
+            if (tema.includes("vector") || tema.includes("cramer") || tema.includes("punto") || tema.includes("cruz")) {
+                conmutarSubtabMatrices("vectores");
+            } else if (tema.includes("3x3") || tema.includes("sarrus")) {
+                conmutarSubtabMatrices("3x3");
+            } else {
+                conmutarSubtabMatrices("2x2");
+            }
+        }
+    } else if (materiaId === "computacion") {
+        activarTabLaboratorio("computacion");
+    } else if (materiaId === "biologia") {
+        activarTabLaboratorio("biologia");
+    } else if (materiaId === "financiera") {
+        activarTabLaboratorio("financiera");
+        if (typeof conmutarSubtabFinanciera === "function") {
+            if (tema.includes("inter") || tema.includes("tasa") || tema.includes("tea") || tema.includes("compuesto") || tema.includes("calc")) {
+                conmutarSubtabFinanciera("calc");
+            } else {
+                conmutarSubtabFinanciera("prest");
+            }
+        }
+    } else if (materiaId === "medicina") {
+        activarTabLaboratorio("medicina");
     }
 }
 
@@ -24445,7 +25595,12 @@ function configurarEventosLaboratorio() {
         { btn: dom.labTabBtnQuimica, id: "quimica" },
         { btn: dom.labTabBtnFisica, id: "fisica" },
         { btn: dom.labTabBtnMatematicas, id: "matematicas" },
-        { btn: dom.labTabBtnMatrices, id: "matrices" }
+        { btn: dom.labTabBtnCalculo, id: "calculo" },
+        { btn: dom.labTabBtnMatrices, id: "matrices" },
+        { btn: dom.labTabBtnComputacion, id: "computacion" },
+        { btn: dom.labTabBtnBiologia, id: "biologia" },
+        { btn: dom.labTabBtnFinanciera, id: "financiera" },
+        { btn: dom.labTabBtnMedicina, id: "medicina" }
     ];
 
     tabBtns.forEach(({ btn, id }) => {
