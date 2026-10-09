@@ -2821,6 +2821,25 @@ const CUENTA_PREDEFINIDA_IVAN = {
     fechaCreacion: 1700000000000
 };
 
+const CUENTA_PREDEFINIDA_LUCAS = {
+    id: "acc_lucas_finanzas",
+    username: "lucas",
+    apodo: "Lucas",
+    nombre: "Lucas",
+    carrera: "Licenciatura en Finanzas",
+    avatar: "🦁",
+    tipoAvatar: "emoji",
+    fotoDataUrl: "",
+    pin: "1234",
+    email: "lucas@finanzas.edu",
+    victorias: 15,
+    partidasJugadas: 24,
+    puntosTotales: 3400,
+    maxRachaHistorica: 12,
+    totalRobos: 6,
+    fechaCreacion: 1700000000000
+};
+
 const MATERIAS_MEDICINA_IVAN = [
     {
         id: "lista_medicina_interna",
@@ -3099,14 +3118,20 @@ function obtenerCuentasGuardadas() {
         let cuentas = data ? JSON.parse(data) : [];
         if (!Array.isArray(cuentas)) cuentas = [];
         
-        // Garantizar que la cuenta de Iván ('ivi' / '1234') esté siempre presente
+        // 1. Purgar y eliminar cualquier cuenta de prueba o corrupta vieja (ej: 'asd', o 'Lucas' con user 'ivi')
+        cuentas = cuentas.filter(c => {
+            if (!c) return false;
+            if (c.id === "acc_1790905602677_uyds" || c.id === "acc_1791509383895_dbtl") return false;
+            if (c.username === "asd" || c.apodo === "asd") return false;
+            if (c.username === "ivi" && c.apodo === "Lucas") return false;
+            return true;
+        });
+
+        // 2. Garantizar cuenta 1 por default: Iván ('ivi' / '1234') -> Hub Doctor / Medicina
         const idxIvan = cuentas.findIndex(c => 
             c.id === CUENTA_PREDEFINIDA_IVAN.id || 
-            (c.username && c.username.toLowerCase() === "ivi") || 
-            (c.apodo && c.apodo.toLowerCase() === "iván") || 
-            (c.apodo && c.apodo.toLowerCase() === "ivan")
+            (c.username && c.username.toLowerCase() === "ivi")
         );
-        
         if (idxIvan === -1) {
             cuentas.unshift({ ...CUENTA_PREDEFINIDA_IVAN });
         } else {
@@ -3114,14 +3139,35 @@ function obtenerCuentasGuardadas() {
                 ...CUENTA_PREDEFINIDA_IVAN,
                 ...cuentas[idxIvan],
                 username: "ivi",
+                apodo: "Iván",
+                carrera: "Medicina",
                 fotoDataUrl: "ivan_avatar_head.png",
-                pin: cuentas[idxIvan].pin || "1234",
-                carrera: "Medicina"
+                pin: "1234"
             };
         }
+
+        // 3. Garantizar cuenta 2 por default: Lucas ('lucas' / '1234') -> Hub Finanzas
+        const idxLucas = cuentas.findIndex(c => 
+            c.id === CUENTA_PREDEFINIDA_LUCAS.id || 
+            (c.username && c.username.toLowerCase() === "lucas")
+        );
+        if (idxLucas === -1) {
+            cuentas.splice(1, 0, { ...CUENTA_PREDEFINIDA_LUCAS });
+        } else {
+            cuentas[idxLucas] = {
+                ...CUENTA_PREDEFINIDA_LUCAS,
+                ...cuentas[idxLucas],
+                username: "lucas",
+                apodo: "Lucas",
+                carrera: "Licenciatura en Finanzas",
+                pin: "1234"
+            };
+        }
+
+        guardarCuentas(cuentas);
         return cuentas;
     } catch {
-        return [{ ...CUENTA_PREDEFINIDA_IVAN }];
+        return [{ ...CUENTA_PREDEFINIDA_IVAN }, { ...CUENTA_PREDEFINIDA_LUCAS }];
     }
 }
 
@@ -3135,6 +3181,13 @@ function esCuentaIvanActiva() {
     return !perfilUsuario.esInvitado && (
         (perfilUsuario.username && perfilUsuario.username.toLowerCase() === "ivi") ||
         perfilUsuario.id === CUENTA_PREDEFINIDA_IVAN.id
+    );
+}
+
+function esCuentaLucasActiva() {
+    return !perfilUsuario.esInvitado && (
+        (perfilUsuario.username && perfilUsuario.username.toLowerCase() === "lucas") ||
+        perfilUsuario.id === CUENTA_PREDEFINIDA_LUCAS.id
     );
 }
 
@@ -3156,8 +3209,16 @@ function cargarPerfilUsuario() {
         const data = localStorage.getItem(ACTIVE_USER_STORAGE_KEY);
         if (data) {
             const perfil = JSON.parse(data);
-            // Si el perfil guardado era un invitado o un test sin PIN, limpiar a visitante default
-            if (perfil && (perfil.esInvitado !== false || !perfil.pin || perfil.apodo === "Invitado" || perfil.apodo === "Lucas" || perfil.apodo === "Lucas Medicina")) {
+            // Si el perfil guardado era un invitado o un test corrupto, resetear
+            if (perfil && (
+                perfil.esInvitado !== false || 
+                !perfil.pin || 
+                perfil.apodo === "Invitado" || 
+                perfil.username === "asd" || 
+                perfil.id === "acc_1790905602677_uyds" || 
+                perfil.id === "acc_1791509383895_dbtl" ||
+                (perfil.username === "ivi" && perfil.apodo === "Lucas")
+            )) {
                 perfilUsuario.esInvitado = true;
                 perfilUsuario.username = "";
                 perfilUsuario.apodo = "Invitado";
@@ -3502,13 +3563,13 @@ function iniciarSesionConPin(identificador, pinIngresado) {
 
     if (!cuenta || String(cuenta.pin).trim() !== pinClean) {
         if (dom.authLoginError) dom.authLoginError.classList.remove("hidden");
-        mostrarToast("⚠️ Usuario o contraseña incorrectos. Para Iván ingresá 'ivi' y clave '1234'.", "aviso");
+        mostrarToast("⚠️ Usuario o contraseña incorrectos. Cuentas oficiales: 'lucas' o 'ivi' (clave: 1234).", "aviso");
         return false;
     }
 
     perfilUsuario.esInvitado = false;
     perfilUsuario.id = cuenta.id;
-    perfilUsuario.username = cuenta.username || "ivi";
+    perfilUsuario.username = cuenta.username || cuenta.apodo;
     perfilUsuario.apodo = cuenta.apodo;
     perfilUsuario.avatar = cuenta.avatar || "👤";
     perfilUsuario.tipoAvatar = cuenta.tipoAvatar || "emoji";
@@ -3525,11 +3586,18 @@ function iniciarSesionConPin(identificador, pinIngresado) {
     if (dom.authAccountModal) dom.authAccountModal.close();
 
     const esIvan = esCuentaIvanActiva();
+    const esLucas = esCuentaLucasActiva();
 
     if (esIvan) {
         asegurarMateriasMedicinaIvan();
         mostrarAnimacionBienvenidaIvan();
         mostrarToast("🩺 ¡Bienvenido, Dr. Iván! Sesión iniciada y Modo Medicina activado.", "exito");
+    } else if (esLucas || esCarreraFinanzasActiva()) {
+        removerMateriasMedicinaSiNoEsIvan();
+        if (typeof cambiarVista === "function") {
+            cambiarVista("fin-hub");
+        }
+        mostrarToast(`📈 ¡Bienvenido, ${cuenta.apodo}! Hub de Licenciatura en Finanzas activado.`, "exito");
     } else {
         removerMateriasMedicinaSiNoEsIvan();
         mostrarToast(`👋 ¡Bienvenido de nuevo, ${cuenta.apodo}!`, "exito");
@@ -3567,7 +3635,7 @@ function recuperarPin() {
         mostrarToast("ℹ️ No hay cuentas registradas en este dispositivo.", "info");
         return;
     }
-    const ident = prompt("Ingresá tu usuario ('ivi'), apodo o email para recuperar el PIN:");
+    const ident = prompt("Ingresá tu usuario ('lucas' o 'ivi'), apodo o email para recuperar el PIN:");
     if (!ident) return;
 
     const encontrada = cuentas.find(c =>
@@ -3609,7 +3677,8 @@ function asegurarMateriasMedicinaIvan() {
    PERSONALIZACIÓN EXCLUSIVA DE NAVEGACIÓN PARA DR. IVÁN ('ivi')
    ========================================================== */
 function esCarreraFinanzasActiva() {
-    return (perfilUsuario.carrera && perfilUsuario.carrera.toLowerCase().includes("finanza")) ||
+    return esCuentaLucasActiva() ||
+           (perfilUsuario.carrera && perfilUsuario.carrera.toLowerCase().includes("finanza")) ||
            (perfilUsuario.username && (perfilUsuario.username.toLowerCase() === "lucas" || perfilUsuario.username.toLowerCase() === "lukit")) ||
            (perfilUsuario.apodo && (perfilUsuario.apodo.toLowerCase().includes("lucas") || perfilUsuario.apodo.toLowerCase().includes("finanza")));
 }
@@ -11908,6 +11977,53 @@ async function cargarApuntesGuardados() {
     }
 }
 
+async function sincronizarPerfilesPorDefectoEnSupabase() {
+    const client = obtenerSupabaseClient();
+    if (!client) return;
+    try {
+        // 1. Eliminar cuentas de prueba o corruptas de Supabase (las 2 que vio el usuario)
+        await client.from("perfiles").delete().in("id", ["acc_1790905602677_uyds", "acc_1791509383895_dbtl"]);
+        await client.from("perfiles").delete().eq("username", "asd");
+        await client.from("perfiles").delete().eq("apodo", "asd");
+
+        // 2. Garantizar las 2 cuentas oficiales por default en Supabase: Iván y Lucas
+        await client.from("perfiles").upsert([
+            {
+                id: CUENTA_PREDEFINIDA_IVAN.id,
+                apodo: CUENTA_PREDEFINIDA_IVAN.apodo,
+                username: CUENTA_PREDEFINIDA_IVAN.username,
+                carrera: CUENTA_PREDEFINIDA_IVAN.carrera,
+                avatar: CUENTA_PREDEFINIDA_IVAN.avatar,
+                tipo_avatar: CUENTA_PREDEFINIDA_IVAN.tipoAvatar,
+                foto_data_url: CUENTA_PREDEFINIDA_IVAN.fotoDataUrl,
+                victorias: CUENTA_PREDEFINIDA_IVAN.victorias,
+                partidas_jugadas: CUENTA_PREDEFINIDA_IVAN.partidasJugadas,
+                puntos_totales: CUENTA_PREDEFINIDA_IVAN.puntosTotales,
+                max_racha_historica: CUENTA_PREDEFINIDA_IVAN.maxRachaHistorica,
+                total_robos: CUENTA_PREDEFINIDA_IVAN.totalRobos,
+                updated_at: new Date().toISOString()
+            },
+            {
+                id: CUENTA_PREDEFINIDA_LUCAS.id,
+                apodo: CUENTA_PREDEFINIDA_LUCAS.apodo,
+                username: CUENTA_PREDEFINIDA_LUCAS.username,
+                carrera: CUENTA_PREDEFINIDA_LUCAS.carrera,
+                avatar: CUENTA_PREDEFINIDA_LUCAS.avatar,
+                tipo_avatar: CUENTA_PREDEFINIDA_LUCAS.tipoAvatar,
+                foto_data_url: CUENTA_PREDEFINIDA_LUCAS.fotoDataUrl,
+                victorias: CUENTA_PREDEFINIDA_LUCAS.victorias,
+                partidas_jugadas: CUENTA_PREDEFINIDA_LUCAS.partidasJugadas,
+                puntos_totales: CUENTA_PREDEFINIDA_LUCAS.puntosTotales,
+                max_racha_historica: CUENTA_PREDEFINIDA_LUCAS.maxRachaHistorica,
+                total_robos: CUENTA_PREDEFINIDA_LUCAS.totalRobos,
+                updated_at: new Date().toISOString()
+            }
+        ], { onConflict: "id" });
+    } catch (err) {
+        console.warn("[Supabase] Sincronización de perfiles por defecto:", err);
+    }
+}
+
 async function asegurarSincronizacionNube() {
     try {
         let intentos = 0;
@@ -11916,6 +12032,9 @@ async function asegurarSincronizacionNube() {
             intentos++;
         }
         if (supabaseService.isAvailable()) {
+            // Sincronizar y depurar perfiles oficiales (elimina cuentas viejas y deja a Iván y Lucas)
+            await sincronizarPerfilesPorDefectoEnSupabase();
+
             // 1. Si hay documentos locales, respaldarlos de inmediato en Supabase
             if (apuntesColeccion.length > 0) {
                 await supabaseService.sincronizarColeccionConNube(apuntesColeccion);
@@ -13474,6 +13593,22 @@ function inicializarModoBolillero() {
         });
     }
     if (dom.authForgotPinBtn) dom.authForgotPinBtn.addEventListener("click", recuperarPin);
+    const btnQuickIvan = document.getElementById("authQuickIvanBtn");
+    if (btnQuickIvan) {
+        btnQuickIvan.addEventListener("click", () => {
+            if (dom.authLoginUserInput) dom.authLoginUserInput.value = "ivi";
+            if (dom.authLoginPin) dom.authLoginPin.value = "1234";
+            iniciarSesionConPin("ivi", "1234");
+        });
+    }
+    const btnQuickLucas = document.getElementById("authQuickLucasBtn");
+    if (btnQuickLucas) {
+        btnQuickLucas.addEventListener("click", () => {
+            if (dom.authLoginUserInput) dom.authLoginUserInput.value = "lucas";
+            if (dom.authLoginPin) dom.authLoginPin.value = "1234";
+            iniciarSesionConPin("lucas", "1234");
+        });
+    }
 
     // Selector de Avatares (Emojis & Foto)
     if (dom.avatarModalCloseBtn) dom.avatarModalCloseBtn.addEventListener("click", () => dom.avatarPickerModal.close());
@@ -14585,7 +14720,7 @@ function iniciarAplicacion() {
 // =========================================================
 // GESTOR DE VERSIONES Y ACTUALIZACIÓN AUTOMÁTICA
 // =========================================================
-const APP_BUILD_VERSION = "29.26";
+const APP_BUILD_VERSION = "29.27";
 
 async function forzarActualizacionCompleta(mostrarNotificacion = true) {
     const lastAttempt = parseInt(sessionStorage.getItem("last_auto_update_ts") || "0", 10);

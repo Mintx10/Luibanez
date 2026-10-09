@@ -15,10 +15,10 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     
-    <link rel="icon" type="image/svg+xml" href="icon.svg?v=29.26">
-    <link rel="apple-touch-icon" href="icon-192.png?v=29.26">
-    <link rel="manifest" href="manifest.json?v=29.26">
-    <link rel="stylesheet" href="style.css?v=29.26">
+    <link rel="icon" type="image/svg+xml" href="icon.svg?v=29.27">
+    <link rel="apple-touch-icon" href="icon-192.png?v=29.27">
+    <link rel="manifest" href="manifest.json?v=29.27">
+    <link rel="stylesheet" href="style.css?v=29.27">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -5695,10 +5695,9 @@
                 <label for="authRegCarrera">Carrera Universitaria</label>
                 <select id="authRegCarrera" class="input-select" style="width: 100%; padding: 0.65rem; border-radius: var(--radius-md); background: #0d1117; color: #fff; border: 1px solid var(--color-border); font-size: 0.95rem;">
                     <option value="Licenciatura en Finanzas" selected>📈 Licenciatura en Finanzas</option>
-                    <option value="Medicina">🩺 Medicina</option>
-                    <option value="General">🎓 General / Otras Carreras</option>
+                    <option value="General">🎓 Cuenta General (Sin materias predefinidas)</option>
                 </select>
-                <span class="duelo-field-hint">Habilita materias y simuladores con IA según tu carrera.</span>
+                <span class="duelo-field-hint">Elegí Licenciatura en Finanzas para el Hub de Cátedras y simuladores, o General para acceso libre.</span>
             </div>
 
             <!-- Selector de Avatar en Registro -->
@@ -5737,9 +5736,21 @@
         <form id="authLoginForm" class="auth-panel hidden" autocomplete="off" onsubmit="return false;">
             <p class="auth-desc">Ingresá tu usuario y contraseña / PIN para acceder:</p>
 
+            <div class="field" style="margin-bottom: 0.85rem;">
+                <label style="font-size: 0.85rem; color: var(--color-text-muted);">Cuentas Principales:</label>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 0.35rem;">
+                    <button type="button" class="button button--secondary button--sm" id="authQuickIvanBtn" style="display: flex; align-items: center; justify-content: center; gap: 0.35rem; font-size: 0.85rem; padding: 0.5rem 0.25rem;">
+                        <span>🩺 <strong>Iván</strong></span> <small style="opacity: 0.7;">(@ivi)</small>
+                    </button>
+                    <button type="button" class="button button--secondary button--sm" id="authQuickLucasBtn" style="display: flex; align-items: center; justify-content: center; gap: 0.35rem; font-size: 0.85rem; padding: 0.5rem 0.25rem;">
+                        <span>🦁 <strong>Lucas</strong></span> <small style="opacity: 0.7;">(@lucas)</small>
+                    </button>
+                </div>
+            </div>
+
             <div class="field">
                 <label for="authLoginUserInput">Usuario o Apodo</label>
-                <input id="authLoginUserInput" type="text" placeholder="" autocomplete="username">
+                <input id="authLoginUserInput" type="text" placeholder="ej: lucas o ivi" autocomplete="username">
             </div>
 
             <div class="field">
@@ -6151,7 +6162,7 @@
 
 <script src="mqtt.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="script.js?v=29.26" defer></script>
+<script src="script.js?v=29.27" defer></script>
 
 <!-- =========================================================
      MODAL DE PROMPT PARA GEMINI (CREAR JUEGOS DESDE PDF)
