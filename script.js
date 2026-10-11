@@ -24,6 +24,18 @@ const ACTIVE_USER_STORAGE_KEY = "luibanez_perfil_activo_v2";
 const MQTT_BROKER_URL = "wss://broker.emqx.io:8084/mqtt";
 const LOBBY_DISCOVERY_TOPIC = "luibanez/lobbies/discover";
 
+/* Helper utilitario de alto rendimiento para debouncing de eventos interactivos */
+function crearDebounce(fn, delayMs = 120) {
+    let timerId = null;
+    return function(...args) {
+        if (timerId) clearTimeout(timerId);
+        timerId = setTimeout(() => {
+            fn.apply(this, args);
+            timerId = null;
+        }, delayMs);
+    };
+}
+
 /* ==========================================================
    ESTADO GLOBAL
    ========================================================== */
@@ -4565,9 +4577,15 @@ const BANCO_CASOS_SHOCK_ROOM = [
 ];
 
 let ecgCanvasObserver = null;
+let ecgIntersectionObserver = null;
+let ecgIsRunning = false;
+let ecgIsIntersecting = true;
+let ecgCurrentRitmo = "st_elevado";
+let ecgResumeFrameFn = null;
 
 function iniciarEcgMonitorCanvas(ritmoTipo = "st_elevado") {
     detenerEcgMonitorCanvas();
+    ecgCurrentRitmo = ritmoTipo;
     const canvas = document.getElementById("shockEcgMonitorCanvas");
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
@@ -4610,8 +4628,16 @@ function iniciarEcgMonitorCanvas(ritmoTipo = "st_elevado") {
         ecgCanvasObserver.observe(wrap);
     }
 
-    function animar() {
-        const speed = ritmoTipo === "taquicardia" ? 2.8 : (ritmoTipo === "bradicardia" ? 1.6 : 2.2);
+    function pasoAnimacion() {
+        if (!ecgIsRunning) return;
+
+        // Si la pestaña está oculta o el canvas no está en el viewport, pausar el requestAnimationFrame para ahorrar GPU/batería
+        if (document.hidden || !ecgIsIntersecting) {
+            ecgAnimationId = null;
+            return;
+        }
+
+        const speed = ecgCurrentRitmo === "taquicardia" ? 2.8 : (ecgCurrentRitmo === "bradicardia" ? 1.6 : 2.2);
         const nextX = x + speed;
 
         ctx.fillStyle = "rgba(2, 20, 10, 0.08)";
@@ -4621,10 +4647,10 @@ function iniciarEcgMonitorCanvas(ritmoTipo = "st_elevado") {
         const baseY = height / 2;
         let y = baseY;
 
-        const ciclo = ritmoTipo === "taquicardia" ? 90 : (ritmoTipo === "bradicardia" ? 220 : 130);
+        const ciclo = ecgCurrentRitmo === "taquicardia" ? 90 : (ecgCurrentRitmo === "bradicardia" ? 220 : 130);
         const pos = Math.floor(x % ciclo);
 
-        if (ritmoTipo === "st_elevado") {
+        if (ecgCurrentRitmo === "st_elevado") {
             if (pos >= 15 && pos < 30) {
                 y = baseY - Math.sin(((pos - 15) / 15) * Math.PI) * 5;
             } else if (pos >= 38 && pos < 42) {
@@ -4638,7 +4664,7 @@ function iniciarEcgMonitorCanvas(ritmoTipo = "st_elevado") {
             } else if (pos >= 78 && pos < 88) {
                 y = baseY - (1 - (pos - 78) / 10) * 10;
             }
-        } else if (ritmoTipo === "tep") {
+        } else if (ecgCurrentRitmo === "tep") {
             if (pos >= 10 && pos < 22) {
                 y = baseY - Math.sin(((pos - 10) / 12) * Math.PI) * 6;
             } else if (pos >= 28 && pos < 32) {
@@ -4650,7 +4676,7 @@ function iniciarEcgMonitorCanvas(ritmoTipo = "st_elevado") {
             } else if (pos >= 52 && pos < 68) {
                 y = baseY + Math.sin(((pos - 52) / 16) * Math.PI) * 7;
             }
-        } else if (ritmoTipo === "fibrilacion") {
+        } else if (ecgCurrentRitmo === "fibrilacion") {
             const jitter = (Math.sin(pos * 0.9) + Math.cos(pos * 1.7)) * 2.5;
             y = baseY + jitter;
             if (pos >= 40 && pos < 45) {
@@ -4700,13 +4726,42 @@ function iniciarEcgMonitorCanvas(ritmoTipo = "st_elevado") {
             lastY = baseY;
         }
 
-        ecgAnimationId = requestAnimationFrame(animar);
+        ecgAnimationId = requestAnimationFrame(pasoAnimacion);
     }
 
-    ecgAnimationId = requestAnimationFrame(animar);
+    ecgResumeFrameFn = function() {
+        if (ecgIsRunning && !ecgAnimationId && !document.hidden && ecgIsIntersecting) {
+            ecgAnimationId = requestAnimationFrame(pasoAnimacion);
+        }
+    };
+
+    ecgIsRunning = true;
+
+    // IntersectionObserver: pausa el renderizado cuando el monitor no está en la pantalla (scroll)
+    if (window.IntersectionObserver) {
+        ecgIntersectionObserver = new IntersectionObserver((entries) => {
+            for (const entry of entries) {
+                ecgIsIntersecting = entry.isIntersecting;
+                if (ecgIsIntersecting) {
+                    if (ecgResumeFrameFn) ecgResumeFrameFn();
+                } else if (ecgAnimationId) {
+                    cancelAnimationFrame(ecgAnimationId);
+                    ecgAnimationId = null;
+                }
+            }
+        }, { threshold: 0.05 });
+        ecgIntersectionObserver.observe(canvas);
+    } else {
+        ecgIsIntersecting = true;
+    }
+
+    if (!document.hidden && ecgIsIntersecting) {
+        ecgAnimationId = requestAnimationFrame(pasoAnimacion);
+    }
 }
 
 function detenerEcgMonitorCanvas() {
+    ecgIsRunning = false;
     if (ecgAnimationId) {
         cancelAnimationFrame(ecgAnimationId);
         ecgAnimationId = null;
@@ -4715,6 +4770,25 @@ function detenerEcgMonitorCanvas() {
         ecgCanvasObserver.disconnect();
         ecgCanvasObserver = null;
     }
+    if (ecgIntersectionObserver) {
+        ecgIntersectionObserver.disconnect();
+        ecgIntersectionObserver = null;
+    }
+    ecgResumeFrameFn = null;
+}
+
+// Pausar el bucle del ECG cuando el usuario cambia de pestaña y reanudarlo al regresar
+if (typeof document !== "undefined") {
+    document.addEventListener("visibilitychange", () => {
+        if (document.hidden) {
+            if (ecgAnimationId) {
+                cancelAnimationFrame(ecgAnimationId);
+                ecgAnimationId = null;
+            }
+        } else if (ecgIsRunning && ecgResumeFrameFn) {
+            ecgResumeFrameFn();
+        }
+    });
 }
 
 function dibujarGrillaEcgMonitor(ctx, width, height) {
@@ -13620,13 +13694,16 @@ function inicializarModoBolillero() {
 
     const topicSearchInput = document.getElementById("topicSearchInput");
     if (topicSearchInput) {
-        topicSearchInput.addEventListener("input", (e) => {
-            const query = e.target.value.toLowerCase().trim();
-            const cards = dom.topicsGrid.querySelectorAll(".topic-card");
+        const filtrarTemasDebounced = crearDebounce((query) => {
+            const cards = dom.topicsGrid ? dom.topicsGrid.querySelectorAll(".topic-card") : [];
             cards.forEach(card => {
                 const title = (card.querySelector(".topic-card__title")?.textContent || "").toLowerCase();
                 card.style.display = title.includes(query) ? "" : "none";
             });
+        }, 90);
+
+        topicSearchInput.addEventListener("input", (e) => {
+            filtrarTemasDebounced(e.target.value.toLowerCase().trim());
         });
     }
 
@@ -13784,10 +13861,14 @@ function inicializarModoBolillero() {
         });
     }
     if (dom.avatarEmojiSearchInput) {
-        dom.avatarEmojiSearchInput.addEventListener("input", (e) => {
+        const filtrarEmojisDebounced = crearDebounce((query) => {
             const activeCatPill = document.querySelector(".emoji-cat-pill.is-active");
             const cat = activeCatPill ? activeCatPill.dataset.cat : "all";
-            renderCatalogoEmojis(cat, e.target.value);
+            renderCatalogoEmojis(cat, query);
+        }, 120);
+
+        dom.avatarEmojiSearchInput.addEventListener("input", (e) => {
+            filtrarEmojisDebounced(e.target.value);
         });
     }
     const catPills = document.querySelectorAll(".emoji-cat-pill");
@@ -14873,7 +14954,7 @@ function iniciarAplicacion() {
 // =========================================================
 // GESTOR DE VERSIONES Y ACTUALIZACIÓN AUTOMÁTICA
 // =========================================================
-const APP_BUILD_VERSION = "29.43";
+const APP_BUILD_VERSION = "29.44";
 
 async function forzarActualizacionCompleta(mostrarNotificacion = true) {
     const lastAttempt = parseInt(sessionStorage.getItem("last_auto_update_ts") || "0", 10);
@@ -26409,7 +26490,11 @@ async function generarTemarioConGeminiDirecto() {
         statusEl.textContent = "⏳ Consultando a Gemini Flash...";
     }
 
+    let abortTimeout = null;
     try {
+        const controller = new AbortController();
+        abortTimeout = setTimeout(() => controller.abort(), 18000);
+
         const prompt = `Analizá el siguiente material académico de "${nombreMateria}" y generá exactamente 10 temas o conceptos clave para examen oral y juego de preguntas.
 Respondé ÚNICAMENTE con un array JSON válido sin texto adicional ni bloques de markdown (sin \`\`\`json).
 Cada elemento del array debe tener este formato:
@@ -26432,6 +26517,7 @@ ${textoBase}`;
         const res = await fetch(url, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
+            signal: controller.signal,
             body: JSON.stringify({
                 contents: [{ parts: [{ text: prompt }] }],
                 generationConfig: {
@@ -26440,6 +26526,8 @@ ${textoBase}`;
                 }
             })
         });
+
+        if (abortTimeout) clearTimeout(abortTimeout);
 
         if (!res.ok) {
             const errData = await res.json().catch(() => ({}));
@@ -26483,8 +26571,12 @@ ${textoBase}`;
             dom.geminiPromptModal.close();
         }
     } catch (err) {
+        if (abortTimeout) clearTimeout(abortTimeout);
         console.error("Error al generar con Gemini:", err);
-        mostrarToast(`❌ Error al consultar Gemini: ${err.message}`, "error");
+        const mensajeError = err.name === "AbortError" 
+            ? "La solicitud a Gemini tardó demasiado (tiempo de espera agotado)." 
+            : err.message;
+        mostrarToast(`❌ Error al consultar Gemini: ${mensajeError}`, "error");
     } finally {
         if (btn) btn.disabled = false;
         if (statusEl) statusEl.style.display = "none";
