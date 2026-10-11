@@ -12575,11 +12575,17 @@ window.supabaseService = supabaseService;
 async function cargarApuntesGuardados() {
     try {
         const idbColeccion = await obtenerApunteDeIDB("apuntesColeccion");
-        if (Array.isArray(idbColeccion) && idbColeccion.length > 0) {
+        const yaMigrado = localStorage.getItem("luibanez_apuntes_migrado_v1") === "true";
+
+        if (Array.isArray(idbColeccion)) {
+            // Si la colección ya existe en IndexedDB (incluso si está vacía []), se respeta la decisión del usuario
             apuntesColeccion.length = 0;
             apuntesColeccion.push(...idbColeccion);
-        } else {
-            // Migración retroactiva si existía un apunte individual previo
+            // Asegurar que los depósitos obsoletos no contengan datos zombi
+            localStorage.setItem("luibanez_apuntes_migrado_v1", "true");
+            localStorage.removeItem(APUNTES_STORAGE_KEY);
+        } else if (!yaMigrado) {
+            // Migración retroactiva una única vez si nunca se había creado la colección
             const idbData = await obtenerApunteDeIDB("apuntesEstado");
             const legado = idbData?.global || idbData?.bolillero || idbData?.bomba;
             if (legado && legado.texto) {
@@ -12598,25 +12604,31 @@ async function cargarApuntesGuardados() {
             } else {
                 const guardado = localStorage.getItem(APUNTES_STORAGE_KEY);
                 if (guardado) {
-                    const data = JSON.parse(guardado);
-                    const leg = data.global || data.bolillero || data.bomba;
-                    if (leg && leg.texto) {
-                        apuntesColeccion.push({
-                            id: "doc_ls_" + Date.now(),
-                            nombre: leg.nombre || "Apunte Anterior",
-                            paginas: leg.paginas || 1,
-                            palabras: leg.palabras || 0,
-                            texto: leg.texto,
-                            icono: "📄",
-                            tipoLabel: "PDF",
-                            metaDetalle: `${leg.paginas || 1} págs`,
-                            activo: true,
-                            timestamp: Date.now()
-                        });
-                    }
+                    try {
+                        const data = JSON.parse(guardado);
+                        const leg = data.global || data.bolillero || data.bomba;
+                        if (leg && leg.texto) {
+                            apuntesColeccion.push({
+                                id: "doc_ls_" + Date.now(),
+                                nombre: leg.nombre || "Apunte Anterior",
+                                paginas: leg.paginas || 1,
+                                palabras: leg.palabras || 0,
+                                texto: leg.texto,
+                                icono: "📄",
+                                tipoLabel: "PDF",
+                                metaDetalle: `${leg.paginas || 1} págs`,
+                                activo: true,
+                                timestamp: Date.now()
+                            });
+                        }
+                    } catch (e) {}
                 }
             }
+            localStorage.setItem("luibanez_apuntes_migrado_v1", "true");
+            localStorage.removeItem(APUNTES_STORAGE_KEY);
+            await guardarApunteEnIDB("apuntesEstado", null);
         }
+
         // Purgar documentos ajenos de química que se descargaron por error de sincronización global en versiones previas
         for (let i = apuntesColeccion.length - 1; i >= 0; i--) {
             const d = apuntesColeccion[i];
@@ -12778,6 +12790,9 @@ async function eliminarDocumentoColeccion(docId) {
     const index = apuntesColeccion.findIndex(d => d.id === docId);
     if (index === -1) return;
     const eliminado = apuntesColeccion.splice(index, 1)[0];
+    localStorage.setItem("luibanez_apuntes_migrado_v1", "true");
+    localStorage.removeItem(APUNTES_STORAGE_KEY);
+    await guardarApunteEnIDB("apuntesEstado", null);
     await guardarColeccionEnStorage();
     actualizarUIIndicadoresPDF();
     if (supabaseService.isAvailable()) {
@@ -15430,7 +15445,7 @@ function iniciarAplicacion() {
 // =========================================================
 // GESTOR DE VERSIONES Y ACTUALIZACIÓN AUTOMÁTICA
 // =========================================================
-const APP_BUILD_VERSION = "29.50";
+const APP_BUILD_VERSION = "29.51";
 
 async function forzarActualizacionCompleta(mostrarNotificacion = true) {
     const lastAttempt = parseInt(sessionStorage.getItem("last_auto_update_ts") || "0", 10);
