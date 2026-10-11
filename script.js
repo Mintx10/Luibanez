@@ -2363,6 +2363,32 @@ function actualizarDisplaysBolillero(texto, estadoClase = null) {
     });
 }
 
+// Estado de orientación acumulada del bolillero para encadenar giros sin saltos
+let bolilleroWheelCurrentAngle = 0;
+
+// Motor de física continua C1 (Aceleración sin sacudidas + Desaceleración suave por fricción)
+function calcularFisicaRuleta(p) {
+    p = Math.max(0, Math.min(1, p));
+    const pAcc = 0.14; // Primeros 14% (~380ms): aceleración armónica suave
+    const factorAcc = pAcc * 2 / Math.PI;
+    const factorDec = (1 - pAcc) * 0.5;
+    const areaTotal = factorAcc + factorDec;
+
+    let progreso, velocidadNorm;
+    if (p <= pAcc) {
+        const t = p / pAcc;
+        const area = factorAcc * (1 - Math.cos((Math.PI * 0.5) * t));
+        progreso = area / areaTotal;
+        velocidadNorm = Math.sin((Math.PI * 0.5) * t);
+    } else {
+        const u = (p - pAcc) / (1 - pAcc);
+        const areaDec = (1 - pAcc) * 0.5 * (u + Math.sin(Math.PI * u) / Math.PI);
+        progreso = (factorAcc + areaDec) / areaTotal;
+        velocidadNorm = (1 + Math.cos(Math.PI * u)) * 0.5;
+    }
+    return { progreso, velocidadNorm };
+}
+
 /* ==========================================================
    ANIMACIÓN DE RULETA PLACENTERA
    ========================================================== */
@@ -2384,7 +2410,10 @@ async function girarBolillero() {
     estado.interfaz.girando = true;
     renderEstadoBotones();
     dom.resultSection.classList.add("hidden");
-    actualizarDisplaysBolillero("...", "spinning");
+
+    // Mostrar inmediatamente un tema aleatorio en lugar de puntos suspendidos para evitar parpadeos
+    const primerTema = temasDisponibles[Math.floor(Math.random() * temasDisponibles.length)];
+    actualizarDisplaysBolillero(primerTema.titulo, "spinning");
 
     const wheelDisc = document.getElementById("rouletteWheelDisc");
     if (wheelDisc) {
@@ -2395,7 +2424,10 @@ async function girarBolillero() {
     const esLite = window.bolilleroPerfMode === "lite";
     const duracion = esLite ? 200 : 2800;
 
-    // Animación ultra-fluida sincronizada con la tasa de refresco del monitor (requestAnimationFrame)
+    const anguloBase = bolilleroWheelCurrentAngle;
+    const vueltasTotales = 6 * 360; // 2160 grados (6 giros completos)
+
+    // Animación ultra-fluida sincronizada con la tasa de refresco del monitor (requestAnimationFrame + GPU)
     await new Promise(resolve => {
         const inicio = performance.now();
         let lastUpdateTs = 0;
@@ -2403,12 +2435,19 @@ async function girarBolillero() {
 
         function frame(now) {
             const transcurrido = now - inicio;
-            const progreso = Math.min(1, transcurrido / duracion);
+            const p = Math.min(1, transcurrido / duracion);
+            const { progreso, velocidadNorm } = calcularFisicaRuleta(p);
 
-            // Intervalo adaptativo de cambio de texto: rápido al inicio (45ms) y desaceleración suave al final (280ms)
-            const intervaloActual = 45 + (Math.pow(progreso, 2.2) * 235);
+            // Rotación suave por GPU del disco del bolillero
+            if (wheelDisc) {
+                const angulo = anguloBase + (progreso * vueltasTotales);
+                wheelDisc.style.transform = `rotate(${angulo.toFixed(1)}deg)`;
+            }
 
-            if (now - lastUpdateTs >= intervaloActual || progreso >= 1) {
+            // Intervalo adaptativo de cambio de texto: rápido a máxima velocidad (~45ms) y desaceleración suave (~280ms)
+            const intervaloActual = 45 + (Math.pow(1 - velocidadNorm, 2.2) * 235);
+
+            if (now - lastUpdateTs >= intervaloActual || p >= 1) {
                 lastUpdateTs = now;
                 let nextIdx = Math.floor(Math.random() * temasDisponibles.length);
                 if (temasDisponibles.length > 1 && nextIdx === lastIndex) {
@@ -2435,6 +2474,8 @@ async function girarBolillero() {
     actualizarDisplaysBolillero(ganador.titulo, "winner");
 
     if (wheelDisc) {
+        bolilleroWheelCurrentAngle = (anguloBase + vueltasTotales) % 360;
+        wheelDisc.style.transform = `rotate(${bolilleroWheelCurrentAngle}deg)`;
         wheelDisc.classList.remove("is-spinning");
         // Micro-impacto (pop de rebote)
         wheelDisc.classList.add("is-landed");
@@ -9174,10 +9215,11 @@ async function ejecutarAnimacionRuletaSincronizada(jugadorGanador, temaGanador, 
 
         function frame(now) {
             const transcurrido = now - inicio;
-            const progreso = Math.min(1, transcurrido / duracion);
-            const intervaloActual = 45 + (Math.pow(progreso, 2.2) * 235);
+            const p = Math.min(1, transcurrido / duracion);
+            const { velocidadNorm } = calcularFisicaRuleta(p);
+            const intervaloActual = 45 + (Math.pow(1 - velocidadNorm, 2.2) * 235);
 
-            if (now - lastUpdateTs >= intervaloActual || progreso >= 1) {
+            if (now - lastUpdateTs >= intervaloActual || p >= 1) {
                 lastUpdateTs = now;
 
                 if (partida.jugadores && partida.jugadores.length > 0) {
@@ -15038,7 +15080,7 @@ function iniciarAplicacion() {
 // =========================================================
 // GESTOR DE VERSIONES Y ACTUALIZACIÓN AUTOMÁTICA
 // =========================================================
-const APP_BUILD_VERSION = "29.46";
+const APP_BUILD_VERSION = "29.47";
 
 async function forzarActualizacionCompleta(mostrarNotificacion = true) {
     const lastAttempt = parseInt(sessionStorage.getItem("last_auto_update_ts") || "0", 10);

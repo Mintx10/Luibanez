@@ -1911,7 +1911,6 @@ input:focus {
     overflow: hidden;
     border: 2.5px solid rgba(56, 189, 248, 0.55);
     box-shadow: 0 10px 32px rgba(0, 0, 0, 0.35), 0 0 0 6px rgba(37, 99, 235, 0.15), inset 0 0 30px rgba(56, 189, 248, 0.2);
-    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     /* Fondo espacial limpio sin divisiones de ruleta */
     background: radial-gradient(circle at 50% 50%, #0f172a 0%, #0b1329 45%, #020617 100%);
 }
@@ -1922,7 +1921,7 @@ input:focus {
     background: radial-gradient(circle at 50% 50%, #0b1329 0%, #060b18 50%, #01040a 100%);
 }
 
-/* Haz de energía rotatorio continuo (Sin líneas de casino) */
+/* Haz de energía rotatorio continuo (Sin líneas de casino, ultra-fluido sin filtros de desenfoque costosos) */
 .tech-disc-smooth-beam {
     position: absolute;
     inset: 0;
@@ -1935,7 +1934,6 @@ input:focus {
         rgba(56, 189, 248, 0.85) 350deg,
         rgba(56, 189, 248, 0.02) 360deg
     );
-    filter: blur(1.5px);
     pointer-events: none;
 }
 
@@ -1982,16 +1980,6 @@ input:focus {
     height: 6px;
 }
 
-/* Animación de Giro Continuo y Desaceleración Fluida (GPU Accelerated) */
-@keyframes realisticRouletteSpin {
-    0% {
-        transform: rotate(0deg);
-    }
-    100% {
-        transform: rotate(2520deg); /* 7 giros completos con desaceleración natural sin saltos bruscos */
-    }
-}
-
 .roulette-wheel-disc {
     will-change: transform;
     transform: translateZ(0);
@@ -1999,21 +1987,19 @@ input:focus {
 }
 
 .roulette-wheel-disc.is-spinning {
-    animation: realisticRouletteSpin 2.8s cubic-bezier(0.12, 0.8, 0.32, 1) forwards;
-    filter: brightness(1.12);
-    box-shadow: 0 0 35px rgba(56, 189, 248, 0.55), 0 0 0 8px rgba(37, 99, 235, 0.3);
+    box-shadow: 0 0 32px rgba(56, 189, 248, 0.5), 0 0 0 8px rgba(37, 99, 235, 0.25);
 }
 
-/* Efecto de Micro-Impacto (Pop de Rebote al Detenerse) */
+/* Efecto de Micro-Impacto (Pop de Rebote al Detenerse - usa scale independiente para preservar rotación) */
 @keyframes wheelPopLanding {
     0% {
-        transform: scale(0.96);
+        scale: 0.97;
     }
     50% {
-        transform: scale(1.03);
+        scale: 1.03;
     }
     100% {
-        transform: scale(1);
+        scale: 1;
     }
 }
 
@@ -2021,7 +2007,7 @@ input:focus {
     animation: wheelPopLanding 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
 
-/* Centro / Hub del Bolillero Tecnológico */
+/* Centro / Hub del Bolillero Tecnológico (Sin backdrop-filter para máximo FPS en móviles) */
 .tech-center-hub {
     position: absolute;
     top: 50%;
@@ -2030,9 +2016,8 @@ input:focus {
     width: 66%;
     height: 66%;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.94);
+    background: #ffffff;
     border: 2px solid rgba(56, 189, 248, 0.4);
-    backdrop-filter: blur(10px);
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12), inset 0 0 16px rgba(56, 189, 248, 0.15);
     display: flex;
     align-items: center;
@@ -2040,11 +2025,11 @@ input:focus {
     z-index: 10;
     padding: 0.65rem;
     text-align: center;
-    transition: all 0.25s ease;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 [data-theme="dark"] .tech-center-hub {
-    background: rgba(15, 23, 42, 0.92);
+    background: #0f172a;
     border-color: rgba(56, 189, 248, 0.5);
     box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6), inset 0 0 20px rgba(56, 189, 248, 0.2);
 }
