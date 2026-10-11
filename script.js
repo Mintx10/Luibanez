@@ -622,6 +622,14 @@ const dom = {
     dueloOradorControlBar: document.getElementById("dueloOradorControlBar"),
     dueloOradorFinishBtn: document.getElementById("dueloOradorFinishBtn"),
     dueloOradorConcedeBtn: document.getElementById("dueloOradorConcedeBtn"),
+    dueloThiefControlBar: document.getElementById("dueloThiefControlBar"),
+    dueloThiefFinishBtn: document.getElementById("dueloThiefFinishBtn"),
+    dueloHostRoboEvalBar: document.getElementById("dueloHostRoboEvalBar"),
+    dueloHostRoboSuccessBtn: document.getElementById("dueloHostRoboSuccessBtn"),
+    dueloHostRoboFailBtn: document.getElementById("dueloHostRoboFailBtn"),
+    dueloRulesBtn: document.getElementById("dueloRulesBtn"),
+    dueloArenaRulesBtn: document.getElementById("dueloArenaRulesBtn"),
+    rulesModalTabs: document.getElementById("rulesModalTabs"),
 
     /* Votación Individual Online */
     dueloOnlineVoteBox: document.getElementById("dueloOnlineVoteBox"),
@@ -8456,30 +8464,52 @@ function procesarMensajeMqttSala(data) {
         ejecutarAnimacionRuletaSincronizada(data.jugadorGanador, data.temaGanador, data.duracion);
     }
 
-    // 6. Sincronización de cronómetro
-    if (data.tipo === "CRONO_TICK") {
-        dueloEstado.partida.tiempoRestante = data.tiempo;
-        actualizarCronometroTurnoDueloUI();
+    // 6. Sincronización oficial de inicio de turno
+    if (data.tipo === "TURNO_INICIAR_OFICIAL") {
+        if (!onlineDueloEstado.esHost) {
+            const partida = dueloEstado.partida;
+            const jugador = partida.jugadores.find(j => j.id === data.jugadorId) || partida.jugadores[0];
+            if (jugador) {
+                prepararTurnoActivoDuelo(jugador, data.tema, false);
+                iniciarCronometroRed(data.duracionSegundos, false, data.timestampFin);
+            }
+        }
     }
 
-    // 6.1 Fin de Exposición Oral (Pasa a votación)
+    // 6.1 Pausa y Reanudación de Cronómetro
+    if (data.tipo === "CRONO_PAUSAR") {
+        if (!onlineDueloEstado.esHost) {
+            dueloTimerEstado.tiempoPausadoRestante = data.tiempoRestante;
+            detenerCronometroRed();
+            dueloEstado.partida.tiempoRestante = data.tiempoRestante;
+            actualizarCronometroTurnoDueloUI();
+        }
+    }
+
+    if (data.tipo === "CRONO_REANUDAR") {
+        if (!onlineDueloEstado.esHost) {
+            iniciarCronometroRed(data.duracionSegundos, data.esRobo, data.timestampFin);
+        }
+    }
+
+    // 6.2 Fin de Exposición Oral (Pasa a votación)
     if (data.tipo === "FIN_EXPOSICION_ORAL") {
         transicionarAVotacionDuelo(data.jugadorId);
     }
 
-    // 6.2 Orador cede el turno voluntariamente (0 pts y Robo Relámpago inmediato)
+    // 6.3 Orador cede el turno voluntariamente (0 pts y Robo Relámpago inmediato)
     if (data.tipo === "CEDER_TURNO_ORADOR") {
         ejecutarCederTurnoOrador(data.jugadorId);
     }
 
-    // 6.3 Avance a la siguiente ronda ordenado por el host
+    // 6.4 Avance a la siguiente ronda ordenado por el host
     if (data.tipo === "AVANZAR_SIGUIENTE_RONDA") {
         if (!onlineDueloEstado.esHost) {
             avanzarSiguienteTemaDuelo();
         }
     }
 
-    // 6.4 Notificación sincronizada de fin de ronda
+    // 6.5 Notificación sincronizada de fin de ronda
     if (data.tipo === "FIN_RONDA_ONLINE") {
         mostrarFinDeRondaUI(data.rondaTerminada, data.siguienteRonda);
     }
@@ -8498,19 +8528,40 @@ function procesarMensajeMqttSala(data) {
         }
     }
 
-    // 9. Robo Relámpago activado
+    // 9. Robo Relámpago activado para toda la sala
     if (data.tipo === "ROBO_DISPONIBLE") {
         activarRoboRelampagoOnlinePantalla(data.tema);
     }
 
-    // 10. Reclamo de robo relámpago
+    // 10. Reclamo de robo relámpago recibido por el Host
     if (data.tipo === "ROBO_RECLAMADO") {
-        atribuirRoboRelampagoOnline(data.ladronId, data.ladronNombre);
+        if (onlineDueloEstado.esHost) {
+            if (dueloEstado.partida.robo.activo && !dueloEstado.partida.robo.ladronId) {
+                const duracionRobo = 30; // 30 segundos
+                const timestampFin = Date.now() + (duracionRobo * 1000);
+                publicarMensajeSala({
+                    tipo: "ROBO_INICIADO_OFICIAL",
+                    ladronId: data.ladronId,
+                    ladronNombre: data.ladronNombre,
+                    duracionSegundos: duracionRobo,
+                    timestampFin
+                });
+                atribuirRoboRelampagoOnline(data.ladronId, data.ladronNombre, duracionRobo, timestampFin);
+            }
+        }
     }
 
-    // 10.1 Calificación sincronizada de robo relámpago
+    // 10.1 Inicio oficial de Robo para los demás clientes
+    if (data.tipo === "ROBO_INICIADO_OFICIAL") {
+        if (!onlineDueloEstado.esHost) {
+            atribuirRoboRelampagoOnline(data.ladronId, data.ladronNombre, data.duracionSegundos, data.timestampFin);
+        }
+    }
+
+    // 10.2 Calificación sincronizada de robo relámpago
     if (data.tipo === "ROBO_CALIFICADO") {
         if (!onlineDueloEstado.esHost) {
+            detenerCronometroRed();
             const partida = dueloEstado.partida;
             const ladron = partida.jugadores.find(j => j.id === data.ladronId);
             if (ladron) {
@@ -8519,10 +8570,28 @@ function procesarMensajeMqttSala(data) {
             }
             if (dom.dueloRoboBox) dom.dueloRoboBox.classList.add("hidden");
             if (dom.dueloOnlineRoboOverlay) dom.dueloOnlineRoboOverlay.classList.add("hidden");
+            if (dom.dueloThiefControlBar) dom.dueloThiefControlBar.classList.add("hidden");
+            if (dom.dueloHostRoboEvalBar) dom.dueloHostRoboEvalBar.classList.add("hidden");
             partida.robo.activo = false;
+
+            if (data.exito) {
+                reproducirSonidoDuelo("fanfare");
+                mostrarToast(`🎉 ¡Robo exitoso de ${ladron ? ladron.apodo : "Jugador"}! (+10 pts)`, "exito");
+            } else {
+                reproducirSonidoDuelo("buzzer");
+                mostrarToast(`❌ Robo fallido de ${ladron ? ladron.apodo : "Jugador"} (0 pts)`, "info");
+            }
+
             actualizarMarcadorDueloUI();
             avanzarSiguienteTemaDuelo();
         }
+    }
+
+    // 10.3 Ladrón terminó su exposición antes de tiempo
+    if (data.tipo === "LADRON_TERMINO_ROBO") {
+        detenerCronometroRed();
+        if (dom.dueloThiefControlBar) dom.dueloThiefControlBar.classList.add("hidden");
+        mostrarToast("⚡ ¡El jugador terminó de responder el Robo! A la espera de calificación...", "aviso");
     }
 
     // 11. Chat Mensaje Multimedia
@@ -9559,12 +9628,12 @@ function tocarPulsadorRoboOnline() {
     });
 }
 
-function atribuirRoboRelampagoOnline(ladronId, ladronNombre) {
+function atribuirRoboRelampagoOnline(ladronId, ladronNombre, duracionSegundos = 30, timestampFin = null) {
     if (dom.dueloOnlineRoboOverlay) {
         dom.dueloOnlineRoboOverlay.classList.add("hidden");
     }
-    // Activar al ladrón en la partida
-    pulsarRoboRelampago(ladronId);
+    // Activar al ladrón en la partida con el tiempo de red sincronizado
+    pulsarRoboRelampago(ladronId, duracionSegundos, timestampFin);
 }
 
 /* ==========================================================
@@ -10178,7 +10247,7 @@ async function girarDobleRuletaDuelo() {
     }, 450);
 }
 
-function prepararTurnoActivoDuelo(jugador, tema) {
+function prepararTurnoActivoDuelo(jugador, tema, emitirRed = true) {
     const partida = dueloEstado.partida;
     partida.comodinActivo = null;
     partida.jugadorSocorroId = null;
@@ -10294,10 +10363,29 @@ function prepararTurnoActivoDuelo(jugador, tema) {
     // Comodines del jugador
     actualizarComodinesJugadorUI(jugador);
 
-    // Iniciar cronómetro global del turno
+    // Iniciar cronómetro global del turno sincronizado por red
     partida.tiempoRestante = dueloEstado.config.tiempoTurnoSegundos;
     actualizarCronometroTurnoDueloUI();
-    iniciarCronometroTurnoDuelo();
+
+    if (onlineDueloEstado.modo === "online" && onlineDueloEstado.codigoSala) {
+        if (onlineDueloEstado.esHost && emitirRed) {
+            const duracion = dueloEstado.config.tiempoTurnoSegundos;
+            const timestampInicio = Date.now();
+            const timestampFin = timestampInicio + (duracion * 1000);
+            publicarMensajeSala({
+                tipo: "TURNO_INICIAR_OFICIAL",
+                jugadorId: jugador.id,
+                tema,
+                duracionSegundos: duracion,
+                timestampInicio,
+                timestampFin
+            });
+            iniciarCronometroRed(duracion, false, timestampFin);
+        }
+    } else {
+        const duracion = dueloEstado.config.tiempoTurnoSegundos;
+        iniciarCronometroRed(duracion, false, Date.now() + (duracion * 1000));
+    }
 }
 
 function actualizarComodinesJugadorUI(jugador) {
@@ -10323,63 +10411,169 @@ function actualizarComodinesJugadorUI(jugador) {
     }
 }
 
-/* Cronómetro de Turno */
-function iniciarCronometroTurnoDuelo() {
-    const partida = dueloEstado.partida;
-    if (partida.intervalId) clearInterval(partida.intervalId);
+/* ==========================================================
+   MOTOR DE CRONÓMETRO SINCRONIZADO POR RED (EPOCH AUTHORITY)
+   ========================================================== */
+let dueloTimerRAF = null;
+let dueloTimerEstado = {
+    activo: false,
+    timestampInicio: 0,
+    timestampFin: 0,
+    duracionTotalSegundos: 90,
+    tiempoPausadoRestante: null,
+    esRobo: false,
+    _beep10Played: false
+};
 
-    partida.temporizadorActivo = true;
+function iniciarCronometroRed(duracionSegundos, esRobo = false, timestampFin = null) {
+    detenerCronometroRed();
+
+    const ahora = Date.now();
+    dueloTimerEstado.esRobo = esRobo;
+    dueloTimerEstado.duracionTotalSegundos = duracionSegundos;
+    dueloTimerEstado.timestampInicio = ahora;
+    dueloTimerEstado.timestampFin = timestampFin || (ahora + (duracionSegundos * 1000));
+    dueloTimerEstado.activo = true;
+    dueloTimerEstado.tiempoPausadoRestante = null;
+    dueloTimerEstado._beep10Played = false;
+
+    dueloEstado.partida.temporizadorActivo = true;
     if (dom.dueloTimerToggleBtn) dom.dueloTimerToggleBtn.textContent = "⏸";
 
-    partida.intervalId = setInterval(() => {
-        if (partida.tiempoRestante > 1) {
-            partida.tiempoRestante--;
-            actualizarCronometroTurnoDueloUI();
-            if (partida.tiempoRestante === 10) {
-                reproducirSonidoDuelo("beep");
-            }
-        } else {
-            partida.tiempoRestante = 0;
-            actualizarCronometroTurnoDueloUI();
-            pausarCronometroTurnoDuelo();
-            reproducirSonidoDuelo("buzzer");
-            
-            // Tiempo agotado: pasar a fase de calificación / votación
-            if (onlineDueloEstado.modo === "online" && onlineDueloEstado.codigoSala) {
-                if (onlineDueloEstado.esHost) {
-                    publicarMensajeSala({
-                        tipo: "FIN_EXPOSICION_ORAL",
-                        jugadorId: partida.jugadorActualId
-                    });
-                    transicionarAVotacionDuelo(partida.jugadorActualId);
-                }
-            } else {
-                transicionarAVotacionDuelo(partida.jugadorActualId);
+    function loopTimer() {
+        if (!dueloTimerEstado.activo) return;
+
+        const currentNow = Date.now();
+        const msRestantes = Math.max(0, dueloTimerEstado.timestampFin - currentNow);
+        const segundos = Math.ceil(msRestantes / 1000);
+        dueloEstado.partida.tiempoRestante = segundos;
+
+        const m = Math.floor(segundos / 60);
+        const s = segundos % 60;
+        const str = `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+
+        if (dom.dueloTimerDigits) {
+            dom.dueloTimerDigits.textContent = str;
+            dom.dueloTimerDigits.className = "duelo-timer-digits";
+            if (segundos <= 10) {
+                dom.dueloTimerDigits.classList.add("is-danger");
+            } else if (segundos <= 30) {
+                dom.dueloTimerDigits.classList.add("is-warning");
             }
         }
-    }, 1000);
+
+        if (dom.dueloTimerBar) {
+            const totalMs = dueloTimerEstado.duracionTotalSegundos * 1000;
+            const pct = totalMs > 0 ? (msRestantes / totalMs) * 100 : 0;
+            dom.dueloTimerBar.style.width = `${pct}%`;
+            dom.dueloTimerBar.className = "duelo-timer-fill";
+            if (segundos <= 10) {
+                dom.dueloTimerBar.classList.add("is-danger");
+            } else if (segundos <= 30) {
+                dom.dueloTimerBar.classList.add("is-warning");
+            }
+        }
+
+        if (segundos === 10 && !dueloTimerEstado._beep10Played) {
+            dueloTimerEstado._beep10Played = true;
+            reproducirSonidoDuelo("beep");
+        }
+
+        if (msRestantes <= 0) {
+            detenerCronometroRed();
+            reproducirSonidoDuelo("buzzer");
+
+            if (dueloTimerEstado.esRobo) {
+                // Robo expirado: calificar como fallido
+                if (onlineDueloEstado.esHost || onlineDueloEstado.modo !== "online") {
+                    calificarRoboRelampago(false);
+                }
+            } else {
+                // Tiempo regular de exposición expirado
+                if (onlineDueloEstado.modo === "online" && onlineDueloEstado.codigoSala) {
+                    if (onlineDueloEstado.esHost) {
+                        publicarMensajeSala({
+                            tipo: "FIN_EXPOSICION_ORAL",
+                            jugadorId: dueloEstado.partida.jugadorActualId
+                        });
+                        transicionarAVotacionDuelo(dueloEstado.partida.jugadorActualId);
+                    }
+                } else {
+                    transicionarAVotacionDuelo(dueloEstado.partida.jugadorActualId);
+                }
+            }
+            return;
+        }
+
+        dueloTimerRAF = requestAnimationFrame(loopTimer);
+    }
+
+    dueloTimerRAF = requestAnimationFrame(loopTimer);
 }
 
-function pausarCronometroTurnoDuelo() {
-    const partida = dueloEstado.partida;
-    if (partida.intervalId) {
-        clearInterval(partida.intervalId);
-        partida.intervalId = null;
+function detenerCronometroRed() {
+    dueloTimerEstado.activo = false;
+    if (dueloTimerRAF) {
+        cancelAnimationFrame(dueloTimerRAF);
+        dueloTimerRAF = null;
     }
-    partida.temporizadorActivo = false;
+    if (dueloEstado.partida.intervalId) {
+        clearInterval(dueloEstado.partida.intervalId);
+        dueloEstado.partida.intervalId = null;
+    }
+    dueloEstado.partida.temporizadorActivo = false;
     if (dom.dueloTimerToggleBtn) dom.dueloTimerToggleBtn.textContent = "▶";
 }
 
+function iniciarCronometroTurnoDuelo() {
+    iniciarCronometroRed(dueloEstado.config.tiempoTurnoSegundos, false);
+}
+
+function pausarCronometroTurnoDuelo() {
+    if (!dueloTimerEstado.activo) return;
+    const ahora = Date.now();
+    const msRestantes = Math.max(0, dueloTimerEstado.timestampFin - ahora);
+    dueloTimerEstado.tiempoPausadoRestante = Math.ceil(msRestantes / 1000);
+    detenerCronometroRed();
+
+    if (onlineDueloEstado.modo === "online" && onlineDueloEstado.codigoSala && onlineDueloEstado.esHost) {
+        publicarMensajeSala({
+            tipo: "CRONO_PAUSAR",
+            tiempoRestante: dueloTimerEstado.tiempoPausadoRestante
+        });
+    }
+}
+
+function reanudarCronometroTurnoDuelo() {
+    if (dueloTimerEstado.activo) return;
+    const segundos = dueloTimerEstado.tiempoPausadoRestante || dueloEstado.partida.tiempoRestante || 30;
+    const nuevoTimestampFin = Date.now() + (segundos * 1000);
+
+    if (onlineDueloEstado.modo === "online" && onlineDueloEstado.codigoSala && onlineDueloEstado.esHost) {
+        publicarMensajeSala({
+            tipo: "CRONO_REANUDAR",
+            duracionSegundos: segundos,
+            timestampFin: nuevoTimestampFin,
+            esRobo: dueloTimerEstado.esRobo
+        });
+    }
+    iniciarCronometroRed(segundos, dueloTimerEstado.esRobo, nuevoTimestampFin);
+}
+
 function toggleCronometroTurnoDuelo() {
-    if (dueloEstado.partida.temporizadorActivo) {
+    if (onlineDueloEstado.modo === "online" && !onlineDueloEstado.esHost) {
+        mostrarToast("Solo el anfitrión puede pausar o reanudar el cronómetro de la sala.", "info");
+        return;
+    }
+    if (dueloTimerEstado.activo) {
         pausarCronometroTurnoDuelo();
     } else {
-        iniciarCronometroTurnoDuelo();
+        reanudarCronometroTurnoDuelo();
     }
 }
 
 function actualizarCronometroTurnoDueloUI() {
-    const segundos = dueloEstado.partida.tiempoRestante;
+    const segundos = dueloEstado.partida.tiempoRestante || 0;
     const m = Math.floor(segundos / 60);
     const s = segundos % 60;
     const str = `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
@@ -10395,7 +10589,7 @@ function actualizarCronometroTurnoDueloUI() {
     }
 
     if (dom.dueloTimerBar) {
-        const total = dueloEstado.config.tiempoTurnoSegundos;
+        const total = dueloTimerEstado.duracionTotalSegundos || dueloEstado.config.tiempoTurnoSegundos || 90;
         const pct = total > 0 ? (segundos / total) * 100 : 0;
         dom.dueloTimerBar.style.width = `${pct}%`;
         dom.dueloTimerBar.className = "duelo-timer-fill";
@@ -10646,51 +10840,76 @@ function iniciarRoboRelampago(otrosJugadores) {
     reproducirSonidoDuelo("buzzer");
 }
 
-function pulsarRoboRelampago(ladronId) {
+function pulsarRoboRelampago(ladronId, duracionSegundos = 30, timestampFin = null) {
     const partida = dueloEstado.partida;
     const ladron = partida.jugadores.find(j => j.id === ladronId);
     if (!ladron) return;
 
+    partida.robo.activo = true;
     partida.robo.ladronId = ladronId;
     const nomLadron = ladron.apodo || ladron.nombre || "Jugador";
+    const soyLadron = (ladronId === perfilUsuario.id);
 
+    // Ocultar overlays y buzzers
     if (dom.dueloBuzzerContainer) dom.dueloBuzzerContainer.classList.add("hidden");
-    if (dom.dueloThiefActiveArea) dom.dueloThiefActiveArea.classList.remove("hidden");
-    if (dom.dueloThiefTitle) dom.dueloThiefTitle.textContent = `⚡ ¡${nomLadron} pulsa el Robo Relámpago!`;
+    if (dom.dueloOnlineRoboOverlay) dom.dueloOnlineRoboOverlay.classList.add("hidden");
+    if (dom.dueloRoboBox) dom.dueloRoboBox.classList.add("hidden");
 
-    // Tiempo rápido: la mitad del turno global
-    partida.robo.tiempoRestante = Math.max(10, Math.floor(dueloEstado.config.tiempoTurnoSegundos / 2));
-    actualizarCronometroRoboUI();
+    // Asegurar que el área principal de turno esté visible para todos
+    if (dom.dueloTurnArea) dom.dueloTurnArea.classList.remove("hidden");
+    if (dom.dueloTurnHeader) dom.dueloTurnHeader.classList.remove("hidden");
 
-    if (partida.robo.intervalId) clearInterval(partida.robo.intervalId);
-    partida.robo.intervalId = setInterval(() => {
-        if (partida.robo.tiempoRestante > 1) {
-            partida.robo.tiempoRestante--;
-            actualizarCronometroRoboUI();
+    // Transformar cabecera con los datos del ladrón
+    if (dom.dueloTurnAvatar) dom.dueloTurnAvatar.textContent = ladron.avatar || "👤";
+    if (dom.dueloTurnPlayerName) dom.dueloTurnPlayerName.textContent = `⚡ ¡${nomLadron}! (Robo Relámpago)`;
+    if (dom.dueloTurnPhaseBadge) {
+        dom.dueloTurnPhaseBadge.textContent = "⚡ Robo Relámpago (30s)";
+        dom.dueloTurnPhaseBadge.style.background = "rgba(245, 158, 11, 0.25)";
+        dom.dueloTurnPhaseBadge.style.color = "#fde68a";
+    }
+    if (dom.dueloTurnStreakBadge) dom.dueloTurnStreakBadge.textContent = "Disputa por 10 pts";
+
+    // Indicador de rol en la pantalla
+    if (dom.dueloTurnRoleNotice) {
+        if (soyLadron) {
+            dom.dueloTurnRoleNotice.className = "duelo-turn-role-notice is-speaker";
+            if (dom.dueloRoleNoticeIcon) dom.dueloRoleNoticeIcon.textContent = "⚡";
+            if (dom.dueloRoleNoticeText) dom.dueloRoleNoticeText.textContent = "¡Ganaste el pulsador! Explicá el tema en 30s para ganar los 10 puntos.";
         } else {
-            partida.robo.tiempoRestante = 0;
-            actualizarCronometroRoboUI();
-            clearInterval(partida.robo.intervalId);
-            partida.robo.intervalId = null;
-            reproducirSonidoDuelo("buzzer");
+            dom.dueloTurnRoleNotice.className = "duelo-turn-role-notice is-listener";
+            if (dom.dueloRoleNoticeIcon) dom.dueloRoleNoticeIcon.textContent = "👂";
+            if (dom.dueloRoleNoticeText) dom.dueloRoleNoticeText.textContent = `${nomLadron} está respondiendo el Robo Relámpago...`;
         }
-    }, 1000);
+    }
+
+    // Ocultar controles regulares de turno y comodines
+    if (dom.dueloOradorControlBar) dom.dueloOradorControlBar.classList.add("hidden");
+    if (dom.dueloComodinesTray) dom.dueloComodinesTray.classList.add("hidden");
+    if (dom.dueloOnlineVoteBox) dom.dueloOnlineVoteBox.classList.add("hidden");
+    if (dom.dueloLocalEvalSection) dom.dueloLocalEvalSection.classList.add("hidden");
+
+    // Si soy el ladrón: mostrar mi botón para finalizar exposición de robo
+    if (dom.dueloThiefControlBar) {
+        dom.dueloThiefControlBar.classList.toggle("hidden", !soyLadron);
+    }
+
+    // Si soy Host o modo local: mostrar los botones de calificar robo
+    const esHost = (onlineDueloEstado.modo !== "online" || onlineDueloEstado.esHost);
+    if (dom.dueloHostRoboEvalBar) {
+        dom.dueloHostRoboEvalBar.classList.toggle("hidden", !esHost);
+    }
+
+    // Iniciar cronómetro unificado de red a 30 segundos
+    const finTs = timestampFin || (Date.now() + (duracionSegundos * 1000));
+    iniciarCronometroRed(duracionSegundos, true, finTs);
 
     reproducirSonidoDuelo("beep");
-}
-
-function actualizarCronometroRoboUI() {
-    const s = dueloEstado.partida.robo.tiempoRestante;
-    const str = `00:${String(s).padStart(2, "0")}`;
-    if (dom.dueloThiefTimerDigits) dom.dueloThiefTimerDigits.textContent = str;
+    mostrarToast(`⚡ ¡${nomLadron} pulsa el Robo Relámpago!`, "aviso");
 }
 
 function calificarRoboRelampago(exito) {
     const partida = dueloEstado.partida;
-    if (partida.robo.intervalId) {
-        clearInterval(partida.robo.intervalId);
-        partida.robo.intervalId = null;
-    }
+    detenerCronometroRed();
 
     const ladron = partida.jugadores.find(j => j.id === partida.robo.ladronId);
     const nomLadron = ladron ? (ladron.apodo || ladron.nombre || "Jugador") : "Jugador";
@@ -10700,13 +10919,18 @@ function calificarRoboRelampago(exito) {
         ladron.robosExitosos++;
         agregarRegistroTurnoDuelo(`⚡ ¡Robo Relámpago exitoso de ${nomLadron}! (+10 pts)`, 10);
         reproducirSonidoDuelo("fanfare");
+        mostrarToast(`🎉 ¡Robo exitoso de ${nomLadron}! (+10 pts)`, "exito");
     } else if (ladron) {
         agregarRegistroTurnoDuelo(`⚡ Robo fallido de ${nomLadron} (0 pts)`, 0);
         reproducirSonidoDuelo("buzzer");
+        mostrarToast(`❌ Robo fallido de ${nomLadron} (0 pts)`, "info");
     }
 
+    // Ocultar barras de robo
     if (dom.dueloRoboBox) dom.dueloRoboBox.classList.add("hidden");
     if (dom.dueloOnlineRoboOverlay) dom.dueloOnlineRoboOverlay.classList.add("hidden");
+    if (dom.dueloThiefControlBar) dom.dueloThiefControlBar.classList.add("hidden");
+    if (dom.dueloHostRoboEvalBar) dom.dueloHostRoboEvalBar.classList.add("hidden");
     partida.robo.activo = false;
 
     if (onlineDueloEstado.modo === "online" && onlineDueloEstado.codigoSala && onlineDueloEstado.esHost) {
@@ -10719,7 +10943,31 @@ function calificarRoboRelampago(exito) {
         });
     }
 
-    avanzarSiguienteTemaDuelo();
+    actualizarMarcadorDueloUI();
+
+    // En cooperativo, si el robo salvó el tema, sumar al pozo del equipo
+    if (partida.esCoop && exito) {
+        partida.puntosEquipo = (partida.puntosEquipo || 0) + 10;
+        if (onlineDueloEstado.esHost) {
+            publicarMensajeSala({
+                tipo: "COOP_UPDATE_PUNTOS",
+                puntosEquipo: partida.puntosEquipo,
+                vidasEquipo: partida.vidasEquipo
+            });
+        }
+        actualizarMarcadorDueloUI();
+    }
+
+    // Avanzar al siguiente tema
+    setTimeout(() => {
+        if (onlineDueloEstado.modo === "online") {
+            if (onlineDueloEstado.esHost) {
+                avanzarSiguienteTemaDuelo();
+            }
+        } else {
+            avanzarSiguienteTemaDuelo();
+        }
+    }, 1200);
 }
 
 function mostrarFinDeRondaUI(rondaTerminada, siguienteRonda) {
@@ -14407,6 +14655,41 @@ function inicializarModoBolillero() {
     if (dom.dueloThiefSuccessBtn) dom.dueloThiefSuccessBtn.addEventListener("click", () => calificarRoboRelampago(true));
     if (dom.dueloThiefFailBtn) dom.dueloThiefFailBtn.addEventListener("click", () => calificarRoboRelampago(false));
 
+    if (dom.dueloThiefFinishBtn) {
+        dom.dueloThiefFinishBtn.addEventListener("click", () => {
+            detenerCronometroRed();
+            if (onlineDueloEstado.modo === "online") {
+                publicarMensajeSala({
+                    tipo: "LADRON_TERMINO_ROBO",
+                    ladronId: perfilUsuario.id
+                });
+            }
+            if (dom.dueloThiefControlBar) dom.dueloThiefControlBar.classList.add("hidden");
+            mostrarToast("⏱️ Concluiste tu exposición de Robo Relámpago. Esperando calificación...", "info");
+        });
+    }
+
+    if (dom.dueloHostRoboSuccessBtn) {
+        dom.dueloHostRoboSuccessBtn.addEventListener("click", () => calificarRoboRelampago(true));
+    }
+    if (dom.dueloHostRoboFailBtn) {
+        dom.dueloHostRoboFailBtn.addEventListener("click", () => calificarRoboRelampago(false));
+    }
+
+    if (dom.dueloRulesBtn) {
+        dom.dueloRulesBtn.addEventListener("click", () => {
+            const ruleKey = ((dueloEstado.partida && dueloEstado.partida.esCoop) || (onlineDueloEstado && onlineDueloEstado.formatoModo === "coop")) ? "bolillero_coop" : "bolillero_versus";
+            abrirModalReglas(ruleKey);
+        });
+    }
+
+    if (dom.dueloArenaRulesBtn) {
+        dom.dueloArenaRulesBtn.addEventListener("click", () => {
+            const ruleKey = ((dueloEstado.partida && dueloEstado.partida.esCoop) || (onlineDueloEstado && onlineDueloEstado.formatoModo === "coop")) ? "bolillero_coop" : "bolillero_versus";
+            abrirModalReglas(ruleKey);
+        });
+    }
+
     // Salón de la Fama
     if (dom.famaPlayNewDueloBtn) dom.famaPlayNewDueloBtn.addEventListener("click", () => cambiarVista("duelo"));
     if (dom.famaClearHistoryBtn) dom.famaClearHistoryBtn.addEventListener("click", borrarHistorialCompleto);
@@ -14635,6 +14918,15 @@ function iniciarAplicacion() {
         dom.rulesModal.addEventListener("cancel", (e) => {
             e.preventDefault();
             cerrarModalReglas();
+        });
+    }
+
+    if (dom.rulesModalTabs) {
+        dom.rulesModalTabs.addEventListener("click", (e) => {
+            const tabBtn = e.target.closest(".rules-tab");
+            if (tabBtn && tabBtn.dataset.rule) {
+                abrirModalReglas(tabBtn.dataset.rule);
+            }
         });
     }
 
@@ -15080,7 +15372,7 @@ function iniciarAplicacion() {
 // =========================================================
 // GESTOR DE VERSIONES Y ACTUALIZACIÓN AUTOMÁTICA
 // =========================================================
-const APP_BUILD_VERSION = "29.47";
+const APP_BUILD_VERSION = "29.48";
 
 async function forzarActualizacionCompleta(mostrarNotificacion = true) {
     const lastAttempt = parseInt(sessionStorage.getItem("last_auto_update_ts") || "0", 10);
@@ -15160,6 +15452,47 @@ async function verificarActualizacionesDisponibles(silencioso = true) {
 // SISTEMA DE REGLAS E INSTRUCCIONES RÁPIDAS DE JUEGOS
 // =========================================================
 const REGLAS_DATA = {
+    bolillero_versus: {
+        icono: "⚔️",
+        titulo: "Bolillero Online (Modo Versus)",
+        subtitulo: "El tribunal implacable: todos contra todos por el podio",
+        objetivo: "Obtener el mayor puntaje de oratoria frente a tus compañeros defendiendo temas orales y robando puntos con el pulsador relámpago ante las dudas ajenas.",
+        dinamica: [
+            "La Ruleta Doble sincronizada elige en vivo al orador y el tema de examen para toda la sala.",
+            "El orador tiene un cronómetro de exposición sincronizado por red (60s a 180s) para explicar los conceptos clave.",
+            "Al terminar la exposición, los compañeros votan anónimamente desde sus celulares o PC: 🟢 10 pts (Excelente), 🟡 5 pts (Regular), 🔴 0 pts (Insuficiente).",
+            "🔥 Racha de Fuego: Obtener 2 calificaciones consecutivas de 10 pts otorga un bono automático de +20 pts extra.",
+            "⚡ Robo Relámpago: Si el orador obtiene 0 pts, se abre una ventana de 5 segundos con el pulsador. El primero en presionar gana 30 segundos para exponer y robarse los 10 puntos."
+        ],
+        botones: [
+            { badge: "🎰 Girar Doble Ruleta", desc: "Sortea en simultáneo al estudiante y la bolilla activa." },
+            { badge: "🏁 Finalizar Turno", desc: "Concluye tu oratoria y abre de inmediato la votación de tus rivales." },
+            { badge: "⚡ Pulsador de Robo", desc: "Aparece ante fallos: tocá primero para ganar 30s de exposición por los 10 puntos." },
+            { badge: "💡 Pista Clave", desc: "Suma +15 segundos al cronómetro de turno para consultar el apunte." },
+            { badge: "🔄 Paso y Rebote", desc: "Descarta la bolilla sorteada por otra sin perder puntos (1 uso)." }
+        ],
+        tip: "Aprovechá los primeros 20 segundos para plantear la definición central y el marco teórico antes de pasar a los ejemplos prácticos."
+    },
+    bolillero_coop: {
+        icono: "🤝",
+        titulo: "Bolillero Online (Modo Cooperativo)",
+        subtitulo: "Misión Cátedra: el escuadrón contra la mesa de examen",
+        objetivo: "Aprobar la materia en equipo sumando 100 puntos en el Pozo Común antes de que el tribunal agote las 3 Vidas de Escuadrón.",
+        dinamica: [
+            "La Ruleta asigna a un compañero para defender la bolilla actual en representación del equipo.",
+            "El equipo comienza con 3 Vidas de Escuadrón (❤️❤️❤️). Si un tema termina desaprobado (0 pts) y nadie lo rescata, se pierde 1 vida.",
+            "Pozo Común de Puntos: cada tema aprobado suma +10 o +15 pts al marcador compartido del escuadrón.",
+            "🤝 Comodín Socorro / Relevo: si el orador asignado se traba o tiene dudas, puede pedir socorro. Cualquier compañero puede pulsar '¡Tomo el Relevo!' para continuar la exposición y salvar la vida del equipo.",
+            "Condición de Victoria: alcanzar la meta de 100 pts o defender todas las bolillas manteniendo al menos 1 vida."
+        ],
+        botones: [
+            { badge: "🤝 Pedir Socorro", desc: "El orador solicita apoyo inmediato a sus compañeros de equipo." },
+            { badge: "🙋‍♂️ Tomar Relevo", desc: "Un compañero interviene en vivo para complementar la respuesta y asegurar los puntos." },
+            { badge: "❤️❤️❤️ Vidas de Escuadrón", desc: "Barra de tolerancia del tribunal: al llegar a 0 vidas, la mesa reprueba al equipo." },
+            { badge: "🎯 Meta 100 pts", desc: "Pozo común sincronizado donde se acumulan las victorias teóricas del escuadrón." }
+        ],
+        tip: "Si no estás seguro de un concepto, no dudes en pedir Socorro a tiempo: trabajar en equipo salva vidas y asegura el examen."
+    },
     bolillero: {
         icono: "🎲",
         titulo: "Bolillero Individual",
@@ -15274,6 +15607,21 @@ function abrirModalReglas(gameKey) {
     if (dom.rulesModalIcon) dom.rulesModalIcon.textContent = data.icono;
     if (dom.rulesModalTitle) dom.rulesModalTitle.textContent = `Reglas: ${data.titulo}`;
     if (dom.rulesModalSubtitle) dom.rulesModalSubtitle.textContent = data.subtitulo;
+
+    // Manejar selector de pestañas para las modalidades del Bolillero
+    if (dom.rulesModalTabs) {
+        if (gameKey === "bolillero" || gameKey === "bolillero_versus" || gameKey === "bolillero_coop") {
+            dom.rulesModalTabs.classList.remove("hidden");
+            const tabs = dom.rulesModalTabs.querySelectorAll(".rules-tab");
+            tabs.forEach(tab => {
+                const isActive = (tab.dataset.rule === gameKey);
+                tab.classList.toggle("is-active", isActive);
+                tab.setAttribute("aria-selected", isActive ? "true" : "false");
+            });
+        } else {
+            dom.rulesModalTabs.classList.add("hidden");
+        }
+    }
 
     if (dom.rulesModalBody) {
         let dinamicaHtml = data.dinamica.map(d => `<li>${d}</li>`).join("");

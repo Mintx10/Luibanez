@@ -18,7 +18,7 @@
     <link rel="icon" type="image/svg+xml" href="icon.svg?v=29.31">
     <link rel="apple-touch-icon" href="icon-192.png?v=29.31">
     <link rel="manifest" href="manifest.json?v=29.31">
-    <link rel="stylesheet" href="style.css?v=29.47">
+    <link rel="stylesheet" href="style.css?v=29.48">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1186,9 +1186,12 @@
         
         <!-- Lobby Pre-Partida -->
         <div id="dueloLobby" class="duelo-lobby-container">
-            <div style="padding: 1rem 1rem 0;">
+            <div style="padding: 1rem 1rem 0; display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
                 <button id="backFromDueloBtn" class="button button--ghost button--sm" type="button" style="font-weight: 600;">
                     ⬅️ Volver al Inicio
+                </button>
+                <button id="dueloRulesBtn" class="rules-trigger-btn" type="button" title="Ver reglas de la partida online">
+                    <span>📖</span><span>Reglas Online</span>
                 </button>
             </div>
             
@@ -1992,6 +1995,9 @@
                     <span class="duelo-bar-stats" id="dueloBarRemainingTopics">Temas restantes: 0</span>
                 </div>
                 <div class="duelo-bar-actions">
+                    <button id="dueloArenaRulesBtn" class="rules-trigger-btn" type="button" title="Ver reglas y mecánicas de la partida" style="margin-right: 0.35rem;">
+                        <span>📖</span><span>Reglas</span>
+                    </button>
                     <button id="dueloEndMatchBtn" class="button button--danger button--sm" type="button" title="Finalizar la partida y coronar al campeón">
                         🏁 Finalizar Duelo
                     </button>
@@ -2113,6 +2119,26 @@
                             <button id="dueloOradorConcedeBtn" class="button button--danger button--md" type="button" style="font-weight: 700; flex: 1;">
                                 ⏭️ Pasar de Turno
                             </button>
+                        </div>
+
+                        <!-- Barra de Acción para el Ladrón Activo durante un Robo Relámpago -->
+                        <div id="dueloThiefControlBar" class="duelo-thief-control-bar hidden" style="margin-bottom: 0.85rem; display: flex; width: 100%;">
+                            <button id="dueloThiefFinishBtn" class="button button--warning button--md" type="button" style="font-weight: 700; flex: 1; box-shadow: 0 4px 14px rgba(245, 158, 11, 0.4);">
+                                ⚡ ¡Terminé mi Robo! (Pasar a Calificación)
+                            </button>
+                        </div>
+
+                        <!-- Barra de Calificación de Robo para el Host (Visible cuando hay un robo en curso) -->
+                        <div id="dueloHostRoboEvalBar" class="duelo-host-robo-eval-bar hidden" style="margin-bottom: 0.85rem; padding: 0.75rem; border-radius: 12px; background: rgba(30, 41, 59, 0.85); border: 1.5px solid rgba(245, 158, 11, 0.4);">
+                            <span style="font-size: 0.85rem; font-weight: 700; color: #fbbf24; width: 100%; text-align: center; margin-bottom: 0.45rem; display: block;">👑 Calificar Robo Relámpago (Solo Anfitrión):</span>
+                            <div style="display: flex; gap: 0.5rem; width: 100%; flex-wrap: wrap;">
+                                <button id="dueloHostRoboSuccessBtn" class="button button--success button--md" type="button" style="font-weight: 700; flex: 1; min-width: 140px;">
+                                    🟢 ¡Robo Exitoso! (+10 pts)
+                                </button>
+                                <button id="dueloHostRoboFailBtn" class="button button--danger button--md" type="button" style="font-weight: 700; flex: 1; min-width: 140px;">
+                                    🔴 Robo Fallido (0 pts)
+                                </button>
+                            </div>
                         </div>
 
                         <!-- Cronómetro de Turno -->
@@ -6879,6 +6905,13 @@
             <button id="rulesModalCloseBtn" class="icon-button" type="button" aria-label="Cerrar reglas" style="font-size: 1.1rem; line-height: 1;">✕</button>
         </header>
 
+        <!-- Selector de pestañas dinámico para modalidades (Versus, Cooperativo, Solo) -->
+        <div id="rulesModalTabs" class="rules-modal-tabs hidden" role="tablist" aria-label="Modalidades de juego">
+            <button type="button" class="rules-tab is-active" data-rule="bolillero_versus">⚔️ Versus</button>
+            <button type="button" class="rules-tab" data-rule="bolillero_coop">🤝 Cooperativo</button>
+            <button type="button" class="rules-tab" data-rule="bolillero">👤 Individual</button>
+        </div>
+
         <div id="rulesModalBody" class="rules-modal__body">
             <!-- Se puebla dinámicamente con las reglas de cada juego -->
         </div>
@@ -6897,7 +6930,7 @@
 
 <script src="mqtt.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="script.js?v=29.47" defer></script>
+<script src="script.js?v=29.48" defer></script>
 
 <!-- =========================================================
      MODAL DE PROMPT PARA GEMINI (CREAR JUEGOS DESDE PDF)
