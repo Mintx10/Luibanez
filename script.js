@@ -4564,16 +4564,19 @@ const BANCO_CASOS_SHOCK_ROOM = [
     }
 ];
 
+let ecgCanvasObserver = null;
+
 function iniciarEcgMonitorCanvas(ritmoTipo = "st_elevado") {
     detenerEcgMonitorCanvas();
     const canvas = document.getElementById("shockEcgMonitorCanvas");
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
+    const wrap = canvas.parentElement;
 
     const dpr = window.devicePixelRatio || 1;
-    const rect = canvas.getBoundingClientRect();
-    const width = rect.width > 0 ? rect.width : 600;
+    let rect = canvas.getBoundingClientRect();
+    let width = rect.width > 0 ? rect.width : (wrap && wrap.clientWidth > 0 ? wrap.clientWidth : 600);
     const height = 95;
     canvas.width = width * dpr;
     canvas.height = height * dpr;
@@ -4585,6 +4588,27 @@ function iniciarEcgMonitorCanvas(ritmoTipo = "st_elevado") {
 
     let x = 0;
     let lastY = height / 2;
+
+    // Adaptabilidad reactiva del monitor ante giros de pantalla y cambios de tamaño
+    if (wrap && window.ResizeObserver && !ecgCanvasObserver) {
+        ecgCanvasObserver = new ResizeObserver((entries) => {
+            for (const entry of entries) {
+                const newWidth = Math.floor(entry.contentRect.width);
+                if (newWidth > 0 && Math.abs(newWidth - width) > 4) {
+                    width = newWidth;
+                    canvas.width = width * dpr;
+                    canvas.height = height * dpr;
+                    ctx.scale(dpr, dpr);
+                    ctx.fillStyle = "#02140a";
+                    ctx.fillRect(0, 0, width, height);
+                    dibujarGrillaEcgMonitor(ctx, width, height);
+                    x = 0;
+                    lastY = height / 2;
+                }
+            }
+        });
+        ecgCanvasObserver.observe(wrap);
+    }
 
     function animar() {
         const speed = ritmoTipo === "taquicardia" ? 2.8 : (ritmoTipo === "bradicardia" ? 1.6 : 2.2);
@@ -4687,6 +4711,10 @@ function detenerEcgMonitorCanvas() {
         cancelAnimationFrame(ecgAnimationId);
         ecgAnimationId = null;
     }
+    if (ecgCanvasObserver) {
+        ecgCanvasObserver.disconnect();
+        ecgCanvasObserver = null;
+    }
 }
 
 function dibujarGrillaEcgMonitor(ctx, width, height) {
@@ -4788,6 +4816,16 @@ function generarCasoShockRoomHome(forzarNuevo = false) {
     if (vitalsAnnouncer) {
         vitalsAnnouncer.textContent = `Paciente ingresado. Signos vitales: Frecuencia cardíaca ${caso.signosVitales?.fc || 120} latidos por minuto, Presión arterial ${caso.signosVitales?.pa || "80/50"}, Saturación de oxígeno ${caso.signosVitales?.spo2 || 90} por ciento. Ritmo: ${caso.signosVitales?.fcRitmo || "Taquicardia sinusal"}.`;
     }
+
+    // Sincronizar barra fija compacta de signos vitales para móviles
+    const stickyFc = document.getElementById("shockStickyFc");
+    if (stickyFc) stickyFc.textContent = caso.signosVitales?.fc || 120;
+    const stickyPa = document.getElementById("shockStickyPa");
+    if (stickyPa) stickyPa.textContent = caso.signosVitales?.pa || "80/50";
+    const stickySpo2 = document.getElementById("shockStickySpo2");
+    if (stickySpo2) stickySpo2.textContent = `${caso.signosVitales?.spo2 || 90}%`;
+    const stickyRhythm = document.getElementById("shockStickyRhythm");
+    if (stickyRhythm) stickyRhythm.textContent = caso.signosVitales?.fcRitmo || "TAQUICARDIA SINUSAL";
 
     iniciarEcgMonitorCanvas(caso.signosVitales?.ritmoEcg || "st_elevado");
 
@@ -5030,6 +5068,13 @@ function inicializarEventosShockRoom() {
                                 (tabName === "dx" && panel === "dx");
                 col.classList.toggle("is-mobile-visible", isMatch);
             });
+
+            if (tabName === "monitor") {
+                const canvas = document.getElementById("shockEcgMonitorCanvas");
+                if (canvas && (!ecgAnimationId || canvas.width <= 0)) {
+                    iniciarEcgMonitorCanvas(casoShockRoomActivo?.signosVitales?.ritmoEcg || "st_elevado");
+                }
+            }
 
             if (tabName === "dx") {
                 const diagInput = document.getElementById("shockStudentDiagnosisInput");
@@ -14828,7 +14873,7 @@ function iniciarAplicacion() {
 // =========================================================
 // GESTOR DE VERSIONES Y ACTUALIZACIÓN AUTOMÁTICA
 // =========================================================
-const APP_BUILD_VERSION = "29.42";
+const APP_BUILD_VERSION = "29.43";
 
 async function forzarActualizacionCompleta(mostrarNotificacion = true) {
     const lastAttempt = parseInt(sessionStorage.getItem("last_auto_update_ts") || "0", 10);

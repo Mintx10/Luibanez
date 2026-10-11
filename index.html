@@ -18,7 +18,7 @@
     <link rel="icon" type="image/svg+xml" href="icon.svg?v=29.31">
     <link rel="apple-touch-icon" href="icon-192.png?v=29.31">
     <link rel="manifest" href="manifest.json?v=29.31">
-    <link rel="stylesheet" href="style.css?v=29.42">
+    <link rel="stylesheet" href="style.css?v=29.43">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -274,7 +274,7 @@
     <section id="viewHome" class="view view--active" aria-label="Página de inicio">
         <div class="hero">
             <div class="hero__badge">
-                <span>🚀 Plataforma Integral de Estudio Universitario</span>
+                <span>🎓 Plataforma Universitaria Integral</span>
             </div>
             
             <h1 class="hero__title">
@@ -282,113 +282,18 @@
             </h1>
             
             <p class="hero__subtitle">
-                Simulador de exámenes orales, entrenamientos individuales, desafíos cooperativos y competitivos en tiempo real con preguntas teóricas generadas por IA, Pomodoro y Pizarrón de notas.
+                Simulador de exámenes orales, entrenamientos individuales, desafíos colaborativos en tiempo real con IA, Pomodoro y Laboratorio de Prácticas.
             </p>
 
-            <div class="hero__actions">
-                <button id="heroGoSoloBtn" class="button button--primary button--lg" type="button">
-                    👤 Entrar a Estudiar Solo
-                </button>
-                <button id="heroGoJuntosBtn" class="button button--secondary button--lg" type="button" title="Ir a Estudiar Juntos">
-                    🤝 Entrar a Estudiar Juntos
-                </button>
-                <button id="heroGoLabBtn" class="button button--secondary button--lg button--lab-hero" type="button" title="Ir al Laboratorio de Prácticas">
-                    🔬 Laboratorio Práctico
-                </button>
+            <div class="hero__features-row">
+                <span class="hero__feature-tag">👤 4 Juegos Individuales</span>
+                <span class="hero__feature-tag">🤝 Versus y Cooperativo Online</span>
+                <span class="hero__feature-tag">🔬 Laboratorio Numérico</span>
             </div>
         </div>
 
-        <!-- Panel Exclusivo para Iván (Modo Medicina) - Se activa dinámicamente si el usuario activo es Iván / Medicina -->
-        <section id="panelMedicinaIvan" class="med-portal-container hidden" aria-labelledby="medPortalTitle">
-            <div class="med-portal-card">
-                <div class="med-portal-header">
-                    <div class="med-portal-avatar-wrap">
-                        <img src="ivan_avatar_head.png" alt="Dr. Iván" class="med-portal-avatar-img">
-                        <span class="med-portal-pulse-dot" title="Sesión de Medicina Activa"></span>
-                    </div>
-                    <div class="med-portal-intro">
-                        <div class="med-portal-tag">🩺 MODO ESTUDIANTE DE MEDICINA</div>
-                        <h2 id="medPortalTitle" class="med-portal-title">Mesa de Estudio de Dr. Iván</h2>
-                        <p class="med-portal-desc">
-                            Espacio exclusivo de preparación médica. Accedé al <strong>Bolillero directo</strong> de tus materias o abrí los entrenadores clínicos y ficheros especializados.
-                        </p>
-                    </div>
-                    <div class="med-portal-top-action">
-                        <button id="medBtnDirectBolillero" class="button button--primary button--sm" type="button">
-                            🎯 Bolillero de Estudio ➜
-                        </button>
-                    </div>
-                </div>
-
-                <div class="med-subjects-grid">
-                    <!-- Materia 1: Medicina Interna -->
-                    <article class="med-subject-card med-subject-card--interna">
-                        <div class="med-subject-badge">🫀 Fisiopato · Dx · Tto</div>
-                        <h3 class="med-subject-title">Medicina Interna</h3>
-                        <p class="med-subject-desc">
-                            Fisiopatología, diagnóstico diferencial y conducta terapéutica de las principales patologías.
-                        </p>
-                        <div class="med-subject-meta">
-                            <span class="med-meta-pill">📋 Casos Clínicos</span>
-                            <span class="med-meta-pill">⚡ Bolillero de Examen</span>
-                        </div>
-                        <div class="med-subject-actions">
-                            <button class="button button--primary button--sm med-btn-launch" data-med-action="bolillero" data-med-sub="interna" type="button">
-                                🎯 Bolillero Oral
-                            </button>
-                            <button class="button button--secondary button--sm med-btn-launch" data-med-action="clinica" data-med-sub="interna" type="button">
-                                🩺 Casos Clínicos
-                            </button>
-                        </div>
-                    </article>
-
-                    <!-- Materia 2: Farmacología 2 -->
-                    <article class="med-subject-card med-subject-card--farma">
-                        <div class="med-subject-badge">💊 Cinética · Dinamia · Drogas</div>
-                        <h3 class="med-subject-title">Farmacología 2</h3>
-                        <p class="med-subject-desc">
-                            Uso clínico, farmacocinética, farmacodinamia y efectos adversos de distintas familias de drogas.
-                        </p>
-                        <div class="med-subject-meta">
-                            <span class="med-meta-pill">📑 Fichas 4x4</span>
-                            <span class="med-meta-pill">⚡ Bolillero Drogas</span>
-                        </div>
-                        <div class="med-subject-actions">
-                            <button class="button button--primary button--sm med-btn-launch" data-med-action="bolillero" data-med-sub="farma" type="button">
-                                🎯 Bolillero Drogas
-                            </button>
-                            <button class="button button--secondary button--sm med-btn-launch" data-med-action="fichero" data-med-sub="farma" type="button">
-                                📑 Fichero 4x4
-                            </button>
-                        </div>
-                    </article>
-
-                    <!-- Materia 3: Salud Pública -->
-                    <article class="med-subject-card med-subject-card--salud">
-                        <div class="med-subject-badge">📊 Trabajos Prácticos & APS</div>
-                        <h3 class="med-subject-title">Salud Pública</h3>
-                        <p class="med-subject-desc">
-                            Resolución de Trabajos Prácticos (TPs), epidemiología comunitaria, bioestadística aplicada y APS.
-                        </p>
-                        <div class="med-subject-meta">
-                            <span class="med-meta-pill">📝 Taller de TPs</span>
-                            <span class="med-meta-pill">⚡ Bolillero de Temas</span>
-                        </div>
-                        <div class="med-subject-actions">
-                            <button class="button button--primary button--sm med-btn-launch" data-med-action="bolillero" data-med-sub="salud" type="button">
-                                🎯 Bolillero TPs
-                            </button>
-                            <button class="button button--secondary button--sm med-btn-launch" data-med-action="tp" data-med-sub="salud" type="button">
-                                📝 Asistente TPs
-                            </button>
-                        </div>
-                    </article>
-                </div>
-            </div>
-        </section>
-
         <!-- Portal Hub: 3 Grandes Accesos Directos a las Páginas de la App -->
-        <div class="portal-hub-container">
+        <div id="portalHub" class="portal-hub-container">
             <!-- Barra Superior de Selección de Vista: Diseño Simple vs Detallado -->
             <div class="home-view-control-bar">
                 <div class="home-view-control-info">
@@ -519,6 +424,26 @@
                     <button id="shockDirectOralBtn" class="button button--primary button--sm shock-action-btn" type="button" title="Llevar tema al Bolillero Oral">
                         🎯 Bolillero Oral
                     </button>
+                </div>
+            </div>
+
+            <!-- Barra Compacta Fija para Móviles (Signos Vitales Críticos Siempre Visibles) -->
+            <div id="shockMobileStickyVitals" class="shock-mobile-sticky-vitals" aria-label="Signos vitales continuos del paciente">
+                <div class="shock-sticky-metric shock-sticky-metric--fc">
+                    <span class="vital-pulse-icon" aria-hidden="true">❤️</span>
+                    <strong id="shockStickyFc">124</strong>
+                    <span class="shock-sticky-unit">lpm</span>
+                </div>
+                <div class="shock-sticky-metric shock-sticky-metric--pa">
+                    <span aria-hidden="true">🩸</span>
+                    <strong id="shockStickyPa">82/50</strong>
+                </div>
+                <div class="shock-sticky-metric shock-sticky-metric--spo2">
+                    <span aria-hidden="true">🌬️</span>
+                    <strong id="shockStickySpo2">90%</strong>
+                </div>
+                <div class="shock-sticky-rhythm-wrap">
+                    <span id="shockStickyRhythm" class="shock-sticky-rhythm">TAQUICARDIA SINUSAL</span>
                 </div>
             </div>
 
@@ -6972,7 +6897,7 @@
 
 <script src="mqtt.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="script.js?v=29.42" defer></script>
+<script src="script.js?v=29.43" defer></script>
 
 <!-- =========================================================
      MODAL DE PROMPT PARA GEMINI (CREAR JUEGOS DESDE PDF)
