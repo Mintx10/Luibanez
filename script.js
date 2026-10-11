@@ -2021,6 +2021,7 @@ function abrirTarjetaPomodoro() {
     estadoFlotante.abierto = true;
     dom.pomodoroFloatingCard.classList.remove("is-minimized");
     dom.pomodoroFloatingCard.setAttribute("aria-hidden", "false");
+    if (dom.pomodoroPill) dom.pomodoroPill.setAttribute("aria-expanded", "true");
 }
 
 function cerrarTarjetaPomodoro(forzar = false) {
@@ -2030,6 +2031,7 @@ function cerrarTarjetaPomodoro(forzar = false) {
     estadoFlotante.abierto = false;
     dom.pomodoroFloatingCard.classList.add("is-minimized");
     dom.pomodoroFloatingCard.setAttribute("aria-hidden", "true");
+    if (dom.pomodoroPill) dom.pomodoroPill.setAttribute("aria-expanded", "false");
 }
 
 function toggleTarjetaPomodoro() {
@@ -4782,6 +4784,11 @@ function generarCasoShockRoomHome(forzarNuevo = false) {
     const glasgowNote = document.getElementById("shockVitalGlasgowNote");
     if (glasgowNote) glasgowNote.textContent = caso.signosVitales?.glasgowNota || "AO:3 RV:4 RM:6";
 
+    const vitalsAnnouncer = document.getElementById("shockVitalsAriaAnnouncer");
+    if (vitalsAnnouncer) {
+        vitalsAnnouncer.textContent = `Paciente ingresado. Signos vitales: Frecuencia cardíaca ${caso.signosVitales?.fc || 120} latidos por minuto, Presión arterial ${caso.signosVitales?.pa || "80/50"}, Saturación de oxígeno ${caso.signosVitales?.spo2 || 90} por ciento. Ritmo: ${caso.signosVitales?.fcRitmo || "Taquicardia sinusal"}.`;
+    }
+
     iniciarEcgMonitorCanvas(caso.signosVitales?.ritmoEcg || "st_elevado");
 
     const caseTitle = document.getElementById("shockCaseTitle");
@@ -4897,7 +4904,9 @@ function actualizarOrganoFocoShock(organoKey) {
     });
 
     document.querySelectorAll(".shock-hotspot").forEach(spot => {
-        spot.classList.toggle("is-active", spot.dataset.organ === organoKey);
+        const isActive = spot.dataset.organ === organoKey;
+        spot.classList.toggle("is-active", isActive);
+        spot.setAttribute("aria-pressed", isActive ? "true" : "false");
     });
 
     const iconElem = document.getElementById("shockOrganIcon");
@@ -4944,6 +4953,17 @@ function sincronizarShockRoomHome() {
 }
 
 function inicializarEventosShockRoom() {
+    // Accesibilidad por teclado en hotspots anatómicos (Enter o Espacio)
+    document.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+            const hotspot = e.target.closest(".shock-hotspot");
+            if (hotspot && hotspot.dataset.organ) {
+                e.preventDefault();
+                actualizarOrganoFocoShock(hotspot.dataset.organ);
+            }
+        }
+    });
+
     document.addEventListener("click", (e) => {
         const organBtn = e.target.closest(".shock-organ-btn");
         if (organBtn && organBtn.dataset.organ) {
@@ -6717,16 +6737,40 @@ function inicializarEventosAuthYMedicina() {
     // User Pill en Navbar
     const pill = document.getElementById("userHeaderPill");
     const dropdown = document.getElementById("userHeaderDropdown");
+    const actualizarAriaDropdown = (abierto) => {
+        if (pill) pill.setAttribute("aria-expanded", abierto ? "true" : "false");
+    };
     if (pill) {
         pill.onclick = (e) => {
             e.stopPropagation();
-            if (dropdown) dropdown.classList.toggle("hidden");
+            if (dropdown) {
+                const estabaOculto = dropdown.classList.contains("hidden");
+                dropdown.classList.toggle("hidden");
+                actualizarAriaDropdown(estabaOculto);
+                if (estabaOculto) {
+                    const primerItem = dropdown.querySelector("[role='menuitem'], button");
+                    if (primerItem) primerItem.focus();
+                }
+            }
         };
     }
     document.addEventListener("click", (e) => {
         if (dropdown && !dropdown.classList.contains("hidden")) {
-            if (!e.target.closest("#userHeaderPill")) {
+            if (!e.target.closest("#userHeaderPill") && !e.target.closest("#userHeaderDropdown")) {
                 dropdown.classList.add("hidden");
+                actualizarAriaDropdown(false);
+            }
+        }
+    });
+    document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+            if (dropdown && !dropdown.classList.contains("hidden")) {
+                dropdown.classList.add("hidden");
+                actualizarAriaDropdown(false);
+                if (pill) pill.focus();
+            } else if (dom.drawerMenu && dom.drawerMenu.classList.contains("is-open")) {
+                cerrarDrawerMenu();
+                if (dom.menuToggleBtn) dom.menuToggleBtn.focus();
             }
         }
     });
@@ -14784,7 +14828,7 @@ function iniciarAplicacion() {
 // =========================================================
 // GESTOR DE VERSIONES Y ACTUALIZACIÓN AUTOMÁTICA
 // =========================================================
-const APP_BUILD_VERSION = "29.41";
+const APP_BUILD_VERSION = "29.42";
 
 async function forzarActualizacionCompleta(mostrarNotificacion = true) {
     const lastAttempt = parseInt(sessionStorage.getItem("last_auto_update_ts") || "0", 10);
@@ -17436,6 +17480,8 @@ function irASeccionEstudio(idSeccion, navId) {
         scratchState.isMinimized = false;
         scratchpadCard.classList.remove("is-minimized");
         scratchpadCard.setAttribute("aria-hidden", "false");
+        const pill = document.getElementById("scratchpadPill");
+        if (pill) pill.setAttribute("aria-expanded", "true");
         if (scratchState.mode === "drawing") {
             ajustarResolucionCanvas();
         }
@@ -17446,6 +17492,8 @@ function irASeccionEstudio(idSeccion, navId) {
         scratchState.isMinimized = true;
         scratchpadCard.classList.add("is-minimized");
         scratchpadCard.setAttribute("aria-hidden", "true");
+        const pill = document.getElementById("scratchpadPill");
+        if (pill) pill.setAttribute("aria-expanded", "false");
     }
 
     function togglePizarron() {

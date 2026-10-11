@@ -18,7 +18,7 @@
     <link rel="icon" type="image/svg+xml" href="icon.svg?v=29.31">
     <link rel="apple-touch-icon" href="icon-192.png?v=29.31">
     <link rel="manifest" href="manifest.json?v=29.31">
-    <link rel="stylesheet" href="style.css?v=29.41">
+    <link rel="stylesheet" href="style.css?v=29.42">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -85,18 +85,18 @@
         </button>
 
         <!-- Píldora Pizarrón / Notas (📝) -->
-        <div id="scratchpadPill" class="nav-tool-pill scratchpad-pill" role="button" tabindex="0" aria-label="Abrir Pizarrón y Notas" title="Abrir Pizarrón y Notas (📝)">
+        <button id="scratchpadPill" class="nav-tool-pill scratchpad-pill" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="scratchpadCard" aria-label="Abrir Pizarrón y Notas" title="Abrir Pizarrón y Notas (📝)">
             <span class="nav-tool-pill__icon" aria-hidden="true">📝</span>
             <span class="nav-tool-pill__text">Notas</span>
-        </div>
+        </button>
 
         <!-- Dynamic Island Pomodoro Pill -->
-        <div id="pomodoroPill" class="dynamic-island" role="button" tabindex="0" aria-label="Abrir temporizador Pomodoro" title="Abrir cronómetro Pomodoro">
+        <button id="pomodoroPill" class="dynamic-island" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="pomodoroFloatingCard" aria-label="Abrir temporizador Pomodoro" title="Abrir cronómetro Pomodoro">
             <span class="dynamic-island__indicator" aria-hidden="true"></span>
             <span class="dynamic-island__icon" aria-hidden="true">⏱️</span>
             <span id="pillTimer" class="dynamic-island__timer">25:00</span>
             <span id="pillBadge" class="dynamic-island__badge">Estudio</span>
-        </div>
+        </button>
 
         <!-- Botones de Autenticación / Perfil de Usuario en Header -->
         <div id="topNavAuthContainer" class="top-nav-auth-container">
@@ -111,24 +111,24 @@
             </div>
             <!-- Estado Logueado: Píldora de Perfil Activo -->
             <div id="topNavAuthUser" class="top-nav-auth-user hidden">
-                <div id="userHeaderPill" class="user-header-pill" role="button" tabindex="0" title="Ver mi cuenta">
+                <button id="userHeaderPill" class="user-header-pill" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="userHeaderDropdown" aria-label="Menú de usuario" title="Ver mi cuenta">
                     <div id="userHeaderAvatar" class="user-header-avatar">👤</div>
                     <span id="userHeaderName" class="user-header-name">Usuario</span>
                     <span class="user-header-caret" aria-hidden="true">▾</span>
-                </div>
+                </button>
                 <!-- Menú desplegable de cuenta -->
-                <div id="userHeaderDropdown" class="user-header-dropdown hidden">
+                <div id="userHeaderDropdown" class="user-header-dropdown hidden" role="menu" aria-labelledby="userHeaderPill">
                     <div class="user-dropdown-info">
                         <span id="userDropdownRole" class="user-dropdown-role">Perfil</span>
                         <strong id="userDropdownName" class="user-dropdown-name">Usuario</strong>
                     </div>
-                    <button id="userDropdownMedBtn" class="user-dropdown-btn hidden" type="button">
+                    <button id="userDropdownMedBtn" class="user-dropdown-btn hidden" type="button" role="menuitem">
                         🩺 Gabinete Médico
                     </button>
-                    <button id="userDropdownProfileBtn" class="user-dropdown-btn" type="button">
+                    <button id="userDropdownProfileBtn" class="user-dropdown-btn" type="button" role="menuitem">
                         👤 Mi Perfil y Racha
                     </button>
-                    <button id="userDropdownLogoutBtn" class="user-dropdown-btn user-dropdown-btn--logout" type="button">
+                    <button id="userDropdownLogoutBtn" class="user-dropdown-btn user-dropdown-btn--logout" type="button" role="menuitem">
                         🚪 Cerrar Sesión
                     </button>
                 </div>
@@ -141,7 +141,7 @@
 <div id="drawerBackdrop" class="drawer-backdrop" aria-hidden="true"></div>
 
 <!-- Menú lateral plegable (Off-canvas Drawer) -->
-<aside id="drawerMenu" class="drawer-menu" aria-label="Menú lateral de Luibañez" aria-hidden="true">
+<aside id="drawerMenu" class="drawer-menu" role="dialog" aria-modal="true" aria-label="Menú lateral de Luibañez" aria-hidden="true">
     <div class="drawer-menu__header">
         <div class="drawer-menu__brand">
             <span class="drawer-brand-icon" aria-hidden="true">✨</span>
@@ -550,8 +550,13 @@
 
                         <!-- Canvas de Trazado ECG en Tiempo Real con Fósforo Verde -->
                         <div class="shock-ecg-canvas-wrap">
-                            <canvas id="shockEcgMonitorCanvas" width="600" height="90"></canvas>
+                            <canvas id="shockEcgMonitorCanvas" width="600" height="90" role="img" aria-label="Monitor de electrocardiograma en tiempo real mostrando trazado dinámico de ritmo cardíaco">
+                                <p class="sr-only">Monitor de ECG activo con trazado continuo de ondas cardíacas en tiempo real.</p>
+                            </canvas>
                         </div>
+
+                        <!-- Región en vivo para anuncio accesible de signos vitales -->
+                        <div id="shockVitalsAriaAnnouncer" class="sr-only" aria-live="polite" aria-atomic="true"></div>
 
                         <!-- Encapsulado de Signos Vitales con Tipografía Monoespaciada y Fondo Oscuro #0F172A -->
                         <div class="shock-monitor-vitals-console">
@@ -658,27 +663,27 @@
                                 <ellipse cx="100" cy="118" rx="28" ry="18" fill="none" stroke="rgba(56, 189, 248, 0.15)" stroke-dasharray="2,3" />
 
                                 <!-- Hotspots Clínicos -->
-                                <g class="shock-hotspot" data-organ="cerebro" transform="translate(100, 38)" role="button" tabindex="0" aria-label="Explorar Cerebro">
+                                <g class="shock-hotspot" data-organ="cerebro" transform="translate(100, 38)" role="button" tabindex="0" aria-pressed="false" aria-label="Explorar Cerebro">
                                     <circle class="shock-hotspot-pulse" r="16" />
                                     <circle class="shock-hotspot-core" r="9" />
                                     <text y="4" text-anchor="middle" class="shock-hotspot-icon">🧠</text>
                                 </g>
-                                <g class="shock-hotspot" data-organ="pulmon" transform="translate(78, 114)" role="button" tabindex="0" aria-label="Explorar Pulmones">
+                                <g class="shock-hotspot" data-organ="pulmon" transform="translate(78, 114)" role="button" tabindex="0" aria-pressed="false" aria-label="Explorar Pulmones">
                                     <circle class="shock-hotspot-pulse" r="18" />
                                     <circle class="shock-hotspot-core" r="10" />
                                     <text y="4" text-anchor="middle" class="shock-hotspot-icon">🫁</text>
                                 </g>
-                                <g class="shock-hotspot is-active" data-organ="corazon" transform="translate(118, 128)" role="button" tabindex="0" aria-label="Explorar Corazón">
+                                <g class="shock-hotspot is-active" data-organ="corazon" transform="translate(118, 128)" role="button" tabindex="0" aria-pressed="true" aria-label="Explorar Corazón">
                                     <circle class="shock-hotspot-pulse shock-hotspot-pulse--critical" r="19" />
                                     <circle class="shock-hotspot-core shock-hotspot-core--critical" r="11" />
                                     <text y="4" text-anchor="middle" class="shock-hotspot-icon">🫀</text>
                                 </g>
-                                <g class="shock-hotspot" data-organ="abdomen" transform="translate(100, 172)" role="button" tabindex="0" aria-label="Explorar Abdomen">
+                                <g class="shock-hotspot" data-organ="abdomen" transform="translate(100, 172)" role="button" tabindex="0" aria-pressed="false" aria-label="Explorar Abdomen">
                                     <circle class="shock-hotspot-pulse" r="16" />
                                     <circle class="shock-hotspot-core" r="9" />
                                     <text y="4" text-anchor="middle" class="shock-hotspot-icon">🩺</text>
                                 </g>
-                                <g class="shock-hotspot" data-organ="renal" transform="translate(100, 235)" role="button" tabindex="0" aria-label="Explorar Renal y Vascular">
+                                <g class="shock-hotspot" data-organ="renal" transform="translate(100, 235)" role="button" tabindex="0" aria-pressed="false" aria-label="Explorar Renal y Vascular">
                                     <circle class="shock-hotspot-pulse" r="16" />
                                     <circle class="shock-hotspot-core" r="9" />
                                     <text y="4" text-anchor="middle" class="shock-hotspot-icon">🩸</text>
@@ -6967,7 +6972,7 @@
 
 <script src="mqtt.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="script.js?v=29.41" defer></script>
+<script src="script.js?v=29.42" defer></script>
 
 <!-- =========================================================
      MODAL DE PROMPT PARA GEMINI (CREAR JUEGOS DESDE PDF)

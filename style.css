@@ -619,6 +619,21 @@ body.mode-lite .bomba-wire-slot.is-cut .wire-half--right {
     background: var(--color-card-hover);
 }
 
+/* Normalización de botones accesibles para píldoras del header */
+button.nav-tool-pill,
+button.dynamic-island,
+button.user-header-pill {
+    font-family: inherit;
+    font-size: inherit;
+    line-height: inherit;
+    color: inherit;
+    border: 1px solid var(--color-border);
+    background: var(--color-card);
+    text-align: left;
+    appearance: none;
+    -webkit-appearance: none;
+}
+
 /* Píldora Herramientas de Barra Superior */
 .nav-tool-pill {
     display: inline-flex;
