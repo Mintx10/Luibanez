@@ -8407,15 +8407,48 @@ function procesarMensajeMqttSala(data) {
     }
 
     if (data.tipo === "COOP_BOMBA_FALLO") {
+        if (data.senderId === perfilUsuario.id) {
+            // El usuario que cometió el fallo ya aplicó el castigo de tiempo localmente: NO duplicar
+            return;
+        }
         reproducirSonido("chispazo");
         dispararGlitchBomba();
-        juegosEduEstado.bomba.fallos++;
-        juegosEduEstado.bomba.tiempoRestante = Math.max(5, juegosEduEstado.bomba.tiempoRestante - 15);
+        juegosEduEstado.bomba.fallos = (data.fallos !== undefined) ? data.fallos : (juegosEduEstado.bomba.fallos + 1);
+        if (data.nuevoTimestampFin) {
+            bombaTimerEstado.timestampFin = data.nuevoTimestampFin;
+            const msRest = Math.max(0, bombaTimerEstado.timestampFin - Date.now());
+            juegosEduEstado.bomba.tiempoRestante = Math.ceil(msRest / 1000);
+        } else {
+            ajustarTiempoCronometroBomba(data.deltaSegundos || -15);
+        }
         actualizarTimerBombaDisplay();
-        mostrarToast(`⚠️ ¡Fallo grupal en el equipo! -15s`);
+        mostrarToast(`⚠️ ¡Fallo grupal en el equipo! ${data.deltaSegundos || -15}s`);
         if (juegosEduEstado.bomba.fallos >= 3) {
             detonarBomba("3 errores en equipo provocaron la detonación.");
         }
+        return;
+    }
+
+    if (data.tipo === "COOP_BOMBA_CONGELAR") {
+        if (data.senderId === perfilUsuario.id) return;
+        if (data.nuevoTimestampFin) {
+            bombaTimerEstado.timestampFin = data.nuevoTimestampFin;
+            const msRest = Math.max(0, bombaTimerEstado.timestampFin - Date.now());
+            juegosEduEstado.bomba.tiempoRestante = Math.ceil(msRest / 1000);
+        } else {
+            ajustarTiempoCronometroBomba(data.segundos || 15);
+        }
+        efectoVisualCongelarBomba();
+        reproducirSonido("comodin");
+        mostrarToast("❄️ ¡Un compañero congeló el tiempo! (+15s para el equipo)", "exito");
+        return;
+    }
+
+    if (data.tipo === "COOP_BOMBA_PISTA") {
+        if (data.senderId === perfilUsuario.id) return;
+        mostrarPistaLcdBomba(data.pistaTexto);
+        reproducirSonido("comodin");
+        mostrarToast("💡 ¡Un compañero reveló una pista teórica para la escuadra!", "info");
         return;
     }
 
@@ -9086,6 +9119,7 @@ async function iniciarBombaOnlineHost() {
 
     const formatoModo = onlineDueloEstado.formatoModo || "versus";
     const tiempo = formatoModo === "coop" ? 120 : 90;
+    const timestampFin = Date.now() + (tiempo * 1000);
 
     const payload = {
         tipo: "INICIO_BOMBA_ONLINE",
@@ -9093,6 +9127,7 @@ async function iniciarBombaOnlineHost() {
         formatoModo,
         tema,
         tiempo,
+        timestampFin,
         codigoSala: onlineDueloEstado.codigoSala,
         listaNombre: listaNombre
     };
@@ -9143,7 +9178,7 @@ function arrancarBombaOnlineCliente(data) {
     if (dom.triatlonProgressBar) dom.triatlonProgressBar.classList.add("hidden");
     if (dom.arenaBomba) dom.arenaBomba.classList.remove("hidden");
 
-    iniciarBomba(data.formatoModo);
+    iniciarBomba(data.formatoModo, data.tiempo, data.timestampFin);
 
     // Tracker UI
     const tracker = document.getElementById("bombaOnlineTracker");
@@ -11629,6 +11664,7 @@ function retornarAlLobbyOnlineGlobal(emitirRed = true) {
     }
     pausarCronometroTurnoDuelo();
 
+    if (typeof detenerCronometroBombaRed === "function") detenerCronometroBombaRed();
     if (juegosEduEstado.bomba && juegosEduEstado.bomba.timerId) clearInterval(juegosEduEstado.bomba.timerId);
     if (juegosEduEstado.impostor && juegosEduEstado.impostor.timerId) clearInterval(juegosEduEstado.impostor.timerId);
     if (juegosEduEstado.memotest && juegosEduEstado.memotest.timerId) clearInterval(juegosEduEstado.memotest.timerId);
@@ -11684,6 +11720,7 @@ function retornarAlMenuDesdePodio() {
         salirDeSalaOnline();
     }
 
+    if (typeof detenerCronometroBombaRed === "function") detenerCronometroBombaRed();
     if (juegosEduEstado.bomba && juegosEduEstado.bomba.timerId) clearInterval(juegosEduEstado.bomba.timerId);
     if (juegosEduEstado.impostor && juegosEduEstado.impostor.timerId) clearInterval(juegosEduEstado.impostor.timerId);
     if (juegosEduEstado.memotest && juegosEduEstado.memotest.timerId) clearInterval(juegosEduEstado.memotest.timerId);
@@ -14897,7 +14934,15 @@ function iniciarAplicacion() {
         dom.bolilleroRulesBtn.addEventListener("click", () => abrirModalReglas("bolillero"));
     }
     if (dom.juegosRulesBtn) {
-        dom.juegosRulesBtn.addEventListener("click", () => abrirModalReglas(juegosEduEstado.juegoActual || "bomba"));
+        dom.juegosRulesBtn.addEventListener("click", () => {
+            let key = juegosEduEstado.juegoActual || "bomba";
+            if (key === "bomba") {
+                if (juegosEduEstado.esOnline && juegosEduEstado.modo === "coop") key = "bomba_coop";
+                else if (juegosEduEstado.esOnline) key = "bomba_versus";
+                else key = "bomba";
+            }
+            abrirModalReglas(key);
+        });
     }
     if (dom.soloRulesBtn) {
         dom.soloRulesBtn.addEventListener("click", () => abrirModalReglas("solo"));
@@ -15372,7 +15417,7 @@ function iniciarAplicacion() {
 // =========================================================
 // GESTOR DE VERSIONES Y ACTUALIZACIÓN AUTOMÁTICA
 // =========================================================
-const APP_BUILD_VERSION = "29.48";
+const APP_BUILD_VERSION = "29.49";
 
 async function forzarActualizacionCompleta(mostrarNotificacion = true) {
     const lastAttempt = parseInt(sessionStorage.getItem("last_auto_update_ts") || "0", 10);
@@ -15512,21 +15557,63 @@ const REGLAS_DATA = {
         tip: "Practicá explicando el tema en voz alta durante 2 minutos de corrido antes de consultar la pregunta con IA."
     },
     bomba: {
-        icono: "💣",
-        titulo: "Desactivá la Bomba",
-        subtitulo: "Desafío de tensión y precisión conceptual",
+        icono: "👤",
+        titulo: "Desactivá la Bomba (Individual)",
+        subtitulo: "Entrenamiento contrarreloj en solitario",
         objetivo: "Desarmar el explosivo cortando el cable correcto en cada una de las 3 fases conceptuales antes de que el cronómetro llegue a 00:00.",
         dinamica: [
-            "El artefacto tiene 3 fases: Fundamentos Teóricos, Deducción Lógica y Síntesis Maestra.",
-            "Tenés 90 segundos en total para completar las 3 fases.",
-            "Cada error genera un chispazo eléctrico ⚡ y te resta una vida/fase. Al tercer fallo, la bomba explota."
+            "El artefacto tiene 3 fases: Fundamentos Teóricos (Cable 1), Deducción Lógica (Cable 2) y Síntesis Maestra (Cable 3).",
+            "Tenés 90 segundos configurables para completar las 3 fases con preguntas balanceadas del material o PDF.",
+            "Cada error genera un chispazo eléctrico ⚡ y resta tiempo (-15s en fases 1 y 2, -20s en fase 3). Al tercer fallo, la bomba explota."
         ],
         botones: [
-            { badge: "✂️ Cables de Colores", desc: "Cada cable representa una respuesta teórica. Tocá el que creas que contiene la afirmación correcta." },
-            { badge: "💥 Detonación (2.5s)", desc: "Si explota, la pantalla tiembla 2.5s, guarda tus puntos en el Salón de la Fama y vuelve al menú." },
-            { badge: "🔄 Jugar de nuevo", desc: "Genera una nueva partida con preguntas y respuestas 100% inéditas y balanceadas desde el PDF." }
+            { badge: "✂️ Cables de Opción", desc: "Cada opción representa un cable. Cortá el que creas que contiene la afirmación teórica correcta." },
+            { badge: "✂️ Cortacables", desc: "Descarta y tacha 1 opción falsa de la pantalla LCD." },
+            { badge: "❄️ Congelar", desc: "Otorga de inmediato +15 segundos extra a tu reloj." },
+            { badge: "💡 Pista Teórica", desc: "Muestra una ayuda conceptual clave extraída de los apuntes." }
         ],
         tip: "Todas las respuestas tienen una longitud similar para evitar patrones obvios; leé con atención conceptual cada opción."
+    },
+    bomba_versus: {
+        icono: "⚔️",
+        titulo: "Desactivá la Bomba: Versus Online",
+        subtitulo: "Carrera simultánea de artificieros en tiempo real (Hasta 8 rivales)",
+        objetivo: "Desactivar tu artefacto antes de que el cronómetro universal llegue a 00:00 y antes que los demás jugadores de la sala para quedarte con el 1º puesto del podio.",
+        dinamica: [
+            "Todos los artificieros enfrentan en paralelo la misma bomba y las mismas premisas teóricas generadas con IA desde los apuntes.",
+            "El cronómetro de red corre exactamente igual y sincronizado para toda la sala (90 segundos con hora epoch universal).",
+            "Cada fallo conceptual resta -15s (fases 1 y 2) o -20s (fase 3) a tu reloj personal y suma 1 fallo. Al 3er fallo, tu bomba detona y quedás eliminado.",
+            "El Tracker Superior muestra en tiempo real en qué cable está cada rival, quién desactivó primero y a quién le explotó.",
+            "Puntuación: 300 pts base por desactivar + 10 pts por segundo restante + Bonus de podio (1º: +200 pts, 2º: +100 pts, 3º: +50 pts)."
+        ],
+        botones: [
+            { badge: "✂️ Cables de Opción", desc: "Cortá el cable que responde correctamente al desafío teórico para avanzar a la siguiente fase." },
+            { badge: "✂️ Cortacables (x1)", desc: "Comodín que descarta y tacha 1 opción incorrecta en tu pantalla LCD." },
+            { badge: "❄️ Congelar (x1)", desc: "Comodín que suma de inmediato +15 segundos a tu reloj de desactivación." },
+            { badge: "💡 Pista Teórica (x1)", desc: "Revela una pista conceptual clave extraída del apunte en la pantalla LCD." },
+            { badge: "📊 Tracker de Rivales", desc: "Barra superior en vivo que te indica la posición y avance de cada contrincante en la sala." }
+        ],
+        tip: "Priorizá la precisión sobre la velocidad extrema: un error te cuesta 15 segundos y te acerca a la detonación fatal."
+    },
+    bomba_coop: {
+        icono: "🤝",
+        titulo: "Desactivá la Bomba: Cooperativo Online",
+        subtitulo: "Misión en equipo de escuadrón antibombas (Hasta 8 jugadores)",
+        objetivo: "Desarmar una ÚNICA bomba compartida entre todos los integrantes del equipo antes de que el cronómetro universal llegue a 00:00.",
+        dinamica: [
+            "Toda la sala comparte la misma bomba, el mismo artefacto y el mismo cronómetro universal (120 segundos con hora epoch de red).",
+            "¡Cualquier miembro del equipo que corte el cable correcto hace avanzar a TODA la escuadra a la siguiente fase!",
+            "Cuidado: los fallos son compartidos. Cada error resta 15s al reloj común y suma un chispazo al equipo. ¡Al 3er fallo grupal, la bomba detona para todos!",
+            "Los comodines de tiempo (❄️ Congelar +15s) y pistas (💡 Pista Teórica) benefician a todo el equipo simultáneamente en la pantalla LCD.",
+            "Coordinen por el chat en vivo o debate para consensuar qué cable cortar antes de tocarlo."
+        ],
+        botones: [
+            { badge: "✂️ Cables de Escuadra", desc: "Cualquier jugador que pulse la respuesta correcta desactiva la fase para todo el grupo." },
+            { badge: "❄️ Congelar (+15s Grupo)", desc: "Suma 15 segundos al reloj universal de todo el equipo de forma sincronizada." },
+            { badge: "💡 Pista Colectiva", desc: "Despliega una pista teórica en la pantalla LCD de todos los integrantes de la misión." },
+            { badge: "💬 Chat de Escuadrón", desc: "Usá el chat en vivo para debatir y coordinar qué opción elegir sin arriesgar vidas." }
+        ],
+        tip: "En cooperativo no se compite por velocidad: tómense unos segundos para consensuar la respuesta. Un fallo grupal daña a todo el equipo."
     },
     impostor: {
         icono: "🕵️‍♂️",
@@ -15608,16 +15695,22 @@ function abrirModalReglas(gameKey) {
     if (dom.rulesModalTitle) dom.rulesModalTitle.textContent = `Reglas: ${data.titulo}`;
     if (dom.rulesModalSubtitle) dom.rulesModalSubtitle.textContent = data.subtitulo;
 
-    // Manejar selector de pestañas para las modalidades del Bolillero
+    // Manejar selector de pestañas para las modalidades del Bolillero o de la Bomba
     if (dom.rulesModalTabs) {
         if (gameKey === "bolillero" || gameKey === "bolillero_versus" || gameKey === "bolillero_coop") {
             dom.rulesModalTabs.classList.remove("hidden");
-            const tabs = dom.rulesModalTabs.querySelectorAll(".rules-tab");
-            tabs.forEach(tab => {
-                const isActive = (tab.dataset.rule === gameKey);
-                tab.classList.toggle("is-active", isActive);
-                tab.setAttribute("aria-selected", isActive ? "true" : "false");
-            });
+            dom.rulesModalTabs.innerHTML = `
+                <button type="button" class="rules-tab ${gameKey === 'bolillero_versus' ? 'is-active' : ''}" data-rule="bolillero_versus" aria-selected="${gameKey === 'bolillero_versus'}">⚔️ Versus</button>
+                <button type="button" class="rules-tab ${gameKey === 'bolillero_coop' ? 'is-active' : ''}" data-rule="bolillero_coop" aria-selected="${gameKey === 'bolillero_coop'}">🤝 Cooperativo</button>
+                <button type="button" class="rules-tab ${gameKey === 'bolillero' ? 'is-active' : ''}" data-rule="bolillero" aria-selected="${gameKey === 'bolillero'}">👤 Individual</button>
+            `;
+        } else if (gameKey === "bomba" || gameKey === "bomba_versus" || gameKey === "bomba_coop") {
+            dom.rulesModalTabs.classList.remove("hidden");
+            dom.rulesModalTabs.innerHTML = `
+                <button type="button" class="rules-tab ${gameKey === 'bomba_versus' ? 'is-active' : ''}" data-rule="bomba_versus" aria-selected="${gameKey === 'bomba_versus'}">⚔️ Versus</button>
+                <button type="button" class="rules-tab ${gameKey === 'bomba_coop' ? 'is-active' : ''}" data-rule="bomba_coop" aria-selected="${gameKey === 'bomba_coop'}">🤝 Cooperativo</button>
+                <button type="button" class="rules-tab ${gameKey === 'bomba' ? 'is-active' : ''}" data-rule="bomba" aria-selected="${gameKey === 'bomba'}">👤 Individual</button>
+            `;
         } else {
             dom.rulesModalTabs.classList.add("hidden");
         }
@@ -15659,9 +15752,9 @@ function abrirModalReglas(gameKey) {
         dom.rulesDontShowAgainCheckbox.checked = localStorage.getItem("luibanez_rules_dont_show_" + gameKey) === "true";
     }
 
-    // Pausar temporizador de la bomba si está activa en segundo plano
-    if (gameKey === "bomba" && juegosEduEstado.bomba && juegosEduEstado.bomba.activo && juegosEduEstado.bomba.timerId) {
-        clearInterval(juegosEduEstado.bomba.timerId);
+    // Pausar temporizador de la bomba si está activa en segundo plano (SÓLO en individual, NUNCA en partidas online)
+    if (gameKey.startsWith("bomba") && !juegosEduEstado.esOnline && juegosEduEstado.bomba && juegosEduEstado.bomba.activo && typeof detenerCronometroBombaRed === "function") {
+        detenerCronometroBombaRed();
         juegoPausadoPorReglas = "bomba";
     }
 
@@ -15691,16 +15784,11 @@ function cerrarModalReglas() {
         }
     }
 
-    // Reanudar temporizador si estaba pausado
-    if (juegoPausadoPorReglas === "bomba" && juegosEduEstado.bomba && juegosEduEstado.bomba.activo && juegosEduEstado.bomba.tiempoRestante > 0) {
-        juegosEduEstado.bomba.timerId = setInterval(() => {
-            juegosEduEstado.bomba.tiempoRestante--;
-            actualizarTimerBombaDisplay();
-            if (juegosEduEstado.bomba.tiempoRestante <= 0) {
-                clearInterval(juegosEduEstado.bomba.timerId);
-                detonarBomba("¡Se agotó el tiempo! La bomba explotó.");
-            }
-        }, 1000);
+    // Reanudar temporizador si estaba pausado por reglas (en modo individual)
+    if (juegoPausadoPorReglas === "bomba" && !juegosEduEstado.esOnline && juegosEduEstado.bomba && juegosEduEstado.bomba.activo && juegosEduEstado.bomba.tiempoRestante > 0) {
+        if (typeof iniciarCronometroBombaRed === "function") {
+            iniciarCronometroBombaRed(juegosEduEstado.bomba.tiempoRestante, null, false);
+        }
     }
     juegoPausadoPorReglas = null;
 }
@@ -16010,9 +16098,118 @@ async function abrirArenaJuego(tipoJuego, modo, listaId = null, forzarNuevas = f
 }
 
 /* =========================================================
-   JUEGO 1: 💣 DESACTIVÁ LA BOMBA (100% TEÓRICA & CONCEPTUAL)
+   JUEGO 1: 💣 DESACTIVÁ LA BOMBA (CRONÓMETRO DE RED Y REGLAS OFICIALES)
    ========================================================= */
-function iniciarBomba(modo) {
+const bombaTimerEstado = {
+    activo: false,
+    esOnline: false,
+    duracionTotalSegundos: 90,
+    timestampInicio: null,
+    timestampFin: null,
+    animFrameId: null,
+    _intervalFallback: null,
+    _lastRenderedSec: null
+};
+
+function detenerCronometroBombaRed() {
+    bombaTimerEstado.activo = false;
+    if (bombaTimerEstado.animFrameId) {
+        cancelAnimationFrame(bombaTimerEstado.animFrameId);
+        bombaTimerEstado.animFrameId = null;
+    }
+    if (bombaTimerEstado._intervalFallback) {
+        clearInterval(bombaTimerEstado._intervalFallback);
+        bombaTimerEstado._intervalFallback = null;
+    }
+    if (juegosEduEstado.bomba && juegosEduEstado.bomba.timerId) {
+        clearInterval(juegosEduEstado.bomba.timerId);
+        juegosEduEstado.bomba.timerId = null;
+    }
+}
+
+function iniciarCronometroBombaRed(duracionSegundos, timestampFin = null, esOnline = false) {
+    detenerCronometroBombaRed();
+
+    const ahora = Date.now();
+    bombaTimerEstado.esOnline = esOnline;
+    bombaTimerEstado.duracionTotalSegundos = duracionSegundos;
+    bombaTimerEstado.timestampInicio = ahora;
+    bombaTimerEstado.timestampFin = timestampFin || (ahora + (duracionSegundos * 1000));
+    bombaTimerEstado.activo = true;
+    bombaTimerEstado._lastRenderedSec = null;
+
+    if (juegosEduEstado.bomba) {
+        juegosEduEstado.bomba.activo = true;
+        juegosEduEstado.bomba.tiempoRestante = duracionSegundos;
+    }
+
+    actualizarTimerBombaDisplay();
+
+    function loopTimer() {
+        if (!bombaTimerEstado.activo) return;
+
+        const currentNow = Date.now();
+        const msRestantes = Math.max(0, bombaTimerEstado.timestampFin - currentNow);
+        const segundos = Math.ceil(msRestantes / 1000);
+
+        if (juegosEduEstado.bomba) {
+            juegosEduEstado.bomba.tiempoRestante = segundos;
+        }
+
+        if (bombaTimerEstado._lastRenderedSec !== segundos) {
+            bombaTimerEstado._lastRenderedSec = segundos;
+            actualizarTimerBombaDisplay();
+        }
+
+        if (msRestantes <= 0) {
+            detenerCronometroBombaRed();
+            detonarBomba("¡Se agotó el tiempo! La bomba explotó.");
+            return;
+        }
+
+        bombaTimerEstado.animFrameId = requestAnimationFrame(loopTimer);
+    }
+
+    bombaTimerEstado.animFrameId = requestAnimationFrame(loopTimer);
+
+    // Intervalo de seguridad para pestañas en segundo plano o móviles con pantalla bloqueada
+    bombaTimerEstado._intervalFallback = setInterval(() => {
+        if (!bombaTimerEstado.activo) return;
+        const currentNow = Date.now();
+        const msRestantes = Math.max(0, bombaTimerEstado.timestampFin - currentNow);
+        const segundos = Math.ceil(msRestantes / 1000);
+        if (juegosEduEstado.bomba) {
+            juegosEduEstado.bomba.tiempoRestante = segundos;
+        }
+        if (bombaTimerEstado._lastRenderedSec !== segundos) {
+            bombaTimerEstado._lastRenderedSec = segundos;
+            actualizarTimerBombaDisplay();
+        }
+        if (msRestantes <= 0) {
+            detenerCronometroBombaRed();
+            detonarBomba("¡Se agotó el tiempo! La bomba explotó.");
+        }
+    }, 1000);
+}
+
+function ajustarTiempoCronometroBomba(deltaSegundos) {
+    if (!bombaTimerEstado.activo) return;
+    const deltaMs = deltaSegundos * 1000;
+    bombaTimerEstado.timestampFin += deltaMs;
+    const ahora = Date.now();
+    const msRestantes = Math.max(0, bombaTimerEstado.timestampFin - ahora);
+    const segundos = Math.ceil(msRestantes / 1000);
+    if (juegosEduEstado.bomba) {
+        juegosEduEstado.bomba.tiempoRestante = segundos;
+    }
+    actualizarTimerBombaDisplay();
+    if (msRestantes <= 0) {
+        detenerCronometroBombaRed();
+        detonarBomba("¡El artefacto se quedó sin tiempo y explotó!");
+    }
+}
+
+function iniciarBomba(modo, tiempoPersonalizado = null, timestampFin = null) {
     if (!dom.arenaBomba) return;
     dom.arenaBomba.classList.remove("hidden");
     if (dom.juegosGameIcon) dom.juegosGameIcon.textContent = "💣";
@@ -16020,12 +16217,11 @@ function iniciarBomba(modo) {
 
     const b = juegosEduEstado.bomba;
     b.activo = true;
-    b.tiempoRestante = (bombaSetupEstado && bombaSetupEstado.tiempo) ? bombaSetupEstado.tiempo : (modo === "coop" ? 120 : 90);
+    const duracion = tiempoPersonalizado ? tiempoPersonalizado : ((bombaSetupEstado && bombaSetupEstado.tiempo) ? bombaSetupEstado.tiempo : (modo === "coop" ? 120 : 90));
+    b.tiempoRestante = duracion;
     b.fase = 1;
     b.fallos = 0;
     actualizarComodinesBombaUI();
-
-    clearInterval(b.timerId);
 
     const tema = juegosEduEstado.temas[juegosEduEstado.temaIndice] || juegosEduEstado.temas[0];
 
@@ -16047,16 +16243,10 @@ function iniciarBomba(modo) {
     if (dom.arenaBomba) dom.arenaBomba.classList.remove("bomba-exploding");
 
     renderFase1Bomba(tema);
-    actualizarTimerBombaDisplay();
 
-    b.timerId = setInterval(() => {
-        b.tiempoRestante--;
-        actualizarTimerBombaDisplay();
-        if (b.tiempoRestante <= 0) {
-            clearInterval(b.timerId);
-            detonarBomba("¡Se agotó el tiempo! La bomba explotó.");
-        }
-    }, 1000);
+    // Iniciar cronómetro de red sincronizado
+    const fin = timestampFin || (Date.now() + (duracion * 1000));
+    iniciarCronometroBombaRed(duracion, fin, Boolean(juegosEduEstado.esOnline));
 }
 
 function actualizarTimerBombaDisplay() {
@@ -16268,11 +16458,16 @@ function renderFase1Bomba(tema) {
                 dispararGlitchBomba();
                 juegosEduEstado.bomba.fallos++;
                 notificarProgresoBombaOnline(1, juegosEduEstado.bomba.fallos);
+                ajustarTiempoCronometroBomba(-15);
                 if (juegosEduEstado.modo === "coop" && onlineDueloEstado.conectado) {
-                    publicarMensajeSala({ tipo: "COOP_BOMBA_FALLO" });
+                    publicarMensajeSala({
+                        tipo: "COOP_BOMBA_FALLO",
+                        senderId: perfilUsuario.id,
+                        fallos: juegosEduEstado.bomba.fallos,
+                        deltaSegundos: -15,
+                        nuevoTimestampFin: bombaTimerEstado.timestampFin
+                    });
                 }
-                juegosEduEstado.bomba.tiempoRestante = Math.max(5, juegosEduEstado.bomba.tiempoRestante - 15);
-                actualizarTimerBombaDisplay();
                 mostrarToast("💥 ¡Chispazo! Fundamento incorrecto (-15s)");
                 if (juegosEduEstado.bomba.fallos >= 3) {
                     detonarBomba("Cometiste 3 errores fatales en los cables.");
@@ -16341,11 +16536,16 @@ function renderFase2Bomba(tema) {
                 dispararGlitchBomba();
                 juegosEduEstado.bomba.fallos++;
                 notificarProgresoBombaOnline(2, juegosEduEstado.bomba.fallos);
+                ajustarTiempoCronometroBomba(-15);
                 if (juegosEduEstado.modo === "coop" && onlineDueloEstado.conectado) {
-                    publicarMensajeSala({ tipo: "COOP_BOMBA_FALLO" });
+                    publicarMensajeSala({
+                        tipo: "COOP_BOMBA_FALLO",
+                        senderId: perfilUsuario.id,
+                        fallos: juegosEduEstado.bomba.fallos,
+                        deltaSegundos: -15,
+                        nuevoTimestampFin: bombaTimerEstado.timestampFin
+                    });
                 }
-                juegosEduEstado.bomba.tiempoRestante = Math.max(5, juegosEduEstado.bomba.tiempoRestante - 15);
-                actualizarTimerBombaDisplay();
                 mostrarToast("💥 ¡Error de análisis! (-15s)");
                 if (juegosEduEstado.bomba.fallos >= 3) {
                     detonarBomba("3 deducciones erróneas detonaron la bomba.");
@@ -16409,11 +16609,16 @@ function renderFase3Bomba(tema) {
                 dispararGlitchBomba();
                 juegosEduEstado.bomba.fallos++;
                 notificarProgresoBombaOnline(3, juegosEduEstado.bomba.fallos);
+                ajustarTiempoCronometroBomba(-20);
                 if (juegosEduEstado.modo === "coop" && onlineDueloEstado.conectado) {
-                    publicarMensajeSala({ tipo: "COOP_BOMBA_FALLO" });
+                    publicarMensajeSala({
+                        tipo: "COOP_BOMBA_FALLO",
+                        deltaSegundos: -20,
+                        fallos: juegosEduEstado.bomba.fallos,
+                        senderId: perfilUsuario.id,
+                        nuevoTimestampFin: bombaTimerEstado.timestampFin
+                    });
                 }
-                juegosEduEstado.bomba.tiempoRestante = Math.max(5, juegosEduEstado.bomba.tiempoRestante - 20);
-                actualizarTimerBombaDisplay();
                 mostrarToast("❌ ¡Síntesis errónea en cable maestro! (-20s)");
                 if (juegosEduEstado.bomba.fallos >= 3) {
                     detonarBomba("3 fallos en el detonador maestro causaron la explosión.");
@@ -16426,7 +16631,7 @@ function renderFase3Bomba(tema) {
 
 function desactivarBombaExito() {
     const b = juegosEduEstado.bomba;
-    clearInterval(b.timerId);
+    detenerCronometroBombaRed();
 
     // Barrido holográfico de desactivación en Modo Visual Pro
     if (window.bolilleroPerfMode !== "lite") {
@@ -16487,6 +16692,11 @@ function desactivarBombaExito() {
 
         const btnVolver = document.getElementById("bombaBackToLobbyBtn");
         if (btnVolver) btnVolver.classList.remove("hidden");
+        if (dom.bombaPlayAgainBtn) dom.bombaPlayAgainBtn.classList.add("hidden");
+    } else {
+        const btnVolver = document.getElementById("bombaBackToLobbyBtn");
+        if (btnVolver) btnVolver.classList.add("hidden");
+        if (dom.bombaPlayAgainBtn) dom.bombaPlayAgainBtn.classList.remove("hidden");
     }
 
     // Registrar en el Salón de la Fama Multiverso
@@ -16505,7 +16715,7 @@ function desactivarBombaExito() {
 
 function detonarBomba(motivo) {
     const b = juegosEduEstado.bomba;
-    clearInterval(b.timerId);
+    detenerCronometroBombaRed();
 
     reproducirSonido("explosion");
     if (typeof dispararVibracion === "function") dispararVibracion([150, 60, 250, 60, 300]);
@@ -16544,6 +16754,11 @@ function detonarBomba(motivo) {
 
         const btnVolver = document.getElementById("bombaBackToLobbyBtn");
         if (btnVolver) btnVolver.classList.remove("hidden");
+        if (dom.bombaPlayAgainBtn) dom.bombaPlayAgainBtn.classList.add("hidden");
+    } else {
+        const btnVolver = document.getElementById("bombaBackToLobbyBtn");
+        if (btnVolver) btnVolver.classList.add("hidden");
+        if (dom.bombaPlayAgainBtn) dom.bombaPlayAgainBtn.classList.remove("hidden");
     }
 
     registrarResultadoJuego("bomba", puntos, false);
@@ -17916,6 +18131,7 @@ function registrarEventosModulosV5() {
     // 5. Arena Controles
     if (dom.juegosBackBtn) {
         dom.juegosBackBtn.addEventListener("click", () => {
+            detenerCronometroBombaRed();
             clearInterval(juegosEduEstado.bomba.timerId);
             clearInterval(juegosEduEstado.impostor.timerId);
             clearInterval(juegosEduEstado.memotest.timerId);
@@ -17934,7 +18150,15 @@ function registrarEventosModulosV5() {
             await abrirArenaJuego("bomba", juegosEduEstado.modo, null, true);
         });
     }
-    if (dom.bombaExitBtn) dom.bombaExitBtn.addEventListener("click", () => cambiarVista("home"));
+    if (dom.bombaExitBtn) {
+        dom.bombaExitBtn.addEventListener("click", () => {
+            detenerCronometroBombaRed();
+            if (onlineDueloEstado.modo === "online" && onlineDueloEstado.codigoSala) {
+                salirDeSalaOnline();
+            }
+            cambiarVista("home");
+        });
+    }
 
     // Controles de Configuración Previa de Caza al Impostor
     if (dom.impostorTimeSelector) {
@@ -23976,15 +24200,7 @@ function usarComodinBombaCortacables() {
     mostrarToast("✂️ ¡Cortacables activado! 1 opción falsa eliminada con éxito.", "exito");
 }
 
-function usarComodinBombaCongelar() {
-    const b = juegosEduEstado.bomba;
-    if (!b || !b.activo || !b.comodines || b.comodines.congelar <= 0) return;
-
-    animarActivacionComodinCard(dom.bombaBtnCongelar);
-
-    b.tiempoRestante += 15;
-    actualizarTimerBombaDisplay();
-
+function efectoVisualCongelarBomba() {
     if (dom.bombaTimerDisplay) {
         dom.bombaTimerDisplay.style.boxShadow = "0 0 25px #38bdf8, inset 0 0 15px #38bdf8";
         dom.bombaTimerDisplay.style.borderColor = "#38bdf8";
@@ -23995,9 +24211,39 @@ function usarComodinBombaCongelar() {
             }
         }, 1500);
     }
+}
 
+function mostrarPistaLcdBomba(pistaTexto) {
+    let pistaBanner = document.getElementById("bombaLcdPistaBanner");
+    if (!pistaBanner) {
+        pistaBanner = document.createElement("div");
+        pistaBanner.id = "bombaLcdPistaBanner";
+        pistaBanner.style.cssText = "background: rgba(14, 165, 233, 0.18); border: 1.5px solid #38bdf8; border-radius: 8px; padding: 0.65rem 0.85rem; margin-top: 0.75rem; color: #e0f2fe; font-size: 0.82rem; line-height: 1.35; animation: fadeIn 0.3s ease;";
+        dom.bombaLcdScreen?.prepend(pistaBanner);
+    }
+    pistaBanner.innerHTML = `<strong>💡 PISTA TEÓRICA:</strong> ${pistaTexto}`;
+}
+
+function usarComodinBombaCongelar() {
+    const b = juegosEduEstado.bomba;
+    if (!b || !b.activo || !b.comodines || b.comodines.congelar <= 0) return;
+
+    animarActivacionComodinCard(dom.bombaBtnCongelar);
     b.comodines.congelar--;
     actualizarComodinesBombaUI();
+
+    ajustarTiempoCronometroBomba(15);
+    efectoVisualCongelarBomba();
+
+    if (juegosEduEstado.modo === "coop" && onlineDueloEstado.conectado) {
+        publicarMensajeSala({
+            tipo: "COOP_BOMBA_CONGELAR",
+            senderId: perfilUsuario.id,
+            segundos: 15,
+            nuevoTimestampFin: bombaTimerEstado.timestampFin
+        });
+    }
+
     reproducirSonido("comodin");
     mostrarToast("❄️ ¡Congelar activado! +15 segundos sumados al reloj de la bomba.", "exito");
 }
@@ -24011,18 +24257,19 @@ function usarComodinBombaPista() {
     const pistaTexto = dataFase?.explicacion || t?.descripcion || "Concentrate en la definición principal de este principio teórico.";
 
     animarActivacionComodinCard(dom.bombaBtnPista);
-
-    let pistaBanner = document.getElementById("bombaLcdPistaBanner");
-    if (!pistaBanner) {
-        pistaBanner = document.createElement("div");
-        pistaBanner.id = "bombaLcdPistaBanner";
-        pistaBanner.style.cssText = "background: rgba(14, 165, 233, 0.18); border: 1.5px solid #38bdf8; border-radius: 8px; padding: 0.65rem 0.85rem; margin-top: 0.75rem; color: #e0f2fe; font-size: 0.82rem; line-height: 1.35; animation: fadeIn 0.3s ease;";
-        dom.bombaLcdScreen?.prepend(pistaBanner);
-    }
-    pistaBanner.innerHTML = `<strong>💡 PISTA TEÓRICA:</strong> ${pistaTexto}`;
-
     b.comodines.pista--;
     actualizarComodinesBombaUI();
+
+    mostrarPistaLcdBomba(pistaTexto);
+
+    if (juegosEduEstado.modo === "coop" && onlineDueloEstado.conectado) {
+        publicarMensajeSala({
+            tipo: "COOP_BOMBA_PISTA",
+            senderId: perfilUsuario.id,
+            pistaTexto
+        });
+    }
+
     reproducirSonido("comodin");
     mostrarToast("💡 Pista teórica revelada en la pantalla LCD.", "info");
 }

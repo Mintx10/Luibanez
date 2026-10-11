@@ -7739,6 +7739,63 @@ dialog:not([open]),
     100% { top: 100%; }
 }
 
+/* --- Responsividad y Accesibilidad Táctil para Desactivá la Bomba --- */
+@media (max-width: 640px) {
+    .bomba-casing__body {
+        padding: 0.85rem;
+    }
+    .bomba-wires-panel {
+        padding: 0.75rem;
+    }
+    .bomba-lcd-screen {
+        padding: 1rem 0.85rem;
+        min-height: 220px;
+    }
+    .bomba-header-controls {
+        padding: 0.5rem 0.85rem;
+        gap: 0.5rem;
+    }
+    .bomba-timer-display {
+        font-size: 1.75rem;
+        padding: 0.2rem 0.6rem;
+    }
+    .bomba-options-grid {
+        grid-template-columns: 1fr;
+        gap: 0.65rem;
+    }
+    .bomba-option-btn {
+        min-height: 48px;
+        padding: 0.75rem 0.9rem;
+        font-size: 0.95rem;
+        display: flex;
+        align-items: center;
+    }
+    .bomba-wires-grid {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+    }
+    .bomba-result-actions {
+        flex-direction: column;
+        width: 100%;
+    }
+    .bomba-result-actions button {
+        width: 100%;
+        min-height: 48px;
+    }
+}
+
+@media (max-width: 380px) {
+    .bomba-casing__body {
+        padding: 0.5rem;
+    }
+    .bomba-lcd-screen {
+        padding: 0.75rem 0.5rem;
+    }
+    .bomba-timer-display {
+        font-size: 1.45rem;
+    }
+}
+
 /* =========================================================
    JUEGO 2: 🕵️‍♂️ CAZA AL IMPOSTOR
    ========================================================= */
