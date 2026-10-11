@@ -37,6 +37,43 @@ function crearDebounce(fn, delayMs = 120) {
 }
 
 /* ==========================================================
+   ARQUITECTURA Y REGISTRO CENTRAL DE MÓDULOS (LUIBAÑEZ CORE)
+   ========================================================== */
+const LuibanezCore = (function() {
+    const _modulos = new Map();
+    const _eventos = new Map();
+
+    return {
+        registrarModulo(nombre, instancia) {
+            if (_modulos.has(nombre)) {
+                console.warn(`[LuibanezCore] Módulo "${nombre}" ya registrado. Sobrescribiendo.`);
+            }
+            _modulos.set(nombre, instancia);
+        },
+        obtenerModulo(nombre) {
+            return _modulos.get(nombre) || null;
+        },
+        listarModulos() {
+            return Array.from(_modulos.keys());
+        },
+        on(evento, callback) {
+            if (!_eventos.has(evento)) _eventos.set(evento, []);
+            _eventos.get(evento).push(callback);
+        },
+        emit(evento, datos) {
+            const listeners = _eventos.get(evento) || [];
+            listeners.forEach(cb => {
+                try { cb(datos); } catch (e) { console.error(`[LuibanezCore Event Error: ${evento}]`, e); }
+            });
+        }
+    };
+})();
+
+if (typeof window !== "undefined") {
+    window.LuibanezCore = LuibanezCore;
+}
+
+/* ==========================================================
    ESTADO GLOBAL
    ========================================================== */
 const perfilUsuario = {
@@ -14954,7 +14991,7 @@ function iniciarAplicacion() {
 // =========================================================
 // GESTOR DE VERSIONES Y ACTUALIZACIÓN AUTOMÁTICA
 // =========================================================
-const APP_BUILD_VERSION = "29.44";
+const APP_BUILD_VERSION = "29.45";
 
 async function forzarActualizacionCompleta(mostrarNotificacion = true) {
     const lastAttempt = parseInt(sessionStorage.getItem("last_auto_update_ts") || "0", 10);
