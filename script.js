@@ -12442,10 +12442,14 @@ const supabaseService = {
     async sincronizarColeccionDesdeNube() {
         const client = obtenerSupabaseClient();
         if (!client) return;
+        const miUserId = (perfilUsuario && perfilUsuario.id) ? String(perfilUsuario.id) : null;
+        // Si no hay cuenta autenticada o es invitado temporal, nunca descargar documentos privados de la nube
+        if (!miUserId || miUserId.startsWith("guest_") || perfilUsuario.esInvitado) return;
         try {
             const { data, error } = await client
                 .from("documentos_pdf")
                 .select("id, nombre, paginas, palabras, texto, activo, updated_at")
+                .eq("user_id", miUserId)
                 .order("created_at", { ascending: false })
                 .limit(50);
 
@@ -12613,6 +12617,15 @@ async function cargarApuntesGuardados() {
                 }
             }
         }
+        // Purgar documentos ajenos de química que se descargaron por error de sincronización global en versiones previas
+        for (let i = apuntesColeccion.length - 1; i >= 0; i--) {
+            const d = apuntesColeccion[i];
+            if (d && d.nombre && (d.nombre.includes("SFI-2C") || d.nombre.includes("Hidratos de Carbono"))) {
+                apuntesColeccion.splice(i, 1);
+            }
+        }
+        await guardarApunteEnIDB("apuntesColeccion", apuntesColeccion);
+
         sincronizarApuntesEstadoLegacy();
         actualizarUIIndicadoresPDF();
 
@@ -15417,7 +15430,7 @@ function iniciarAplicacion() {
 // =========================================================
 // GESTOR DE VERSIONES Y ACTUALIZACIÓN AUTOMÁTICA
 // =========================================================
-const APP_BUILD_VERSION = "29.49";
+const APP_BUILD_VERSION = "29.50";
 
 async function forzarActualizacionCompleta(mostrarNotificacion = true) {
     const lastAttempt = parseInt(sessionStorage.getItem("last_auto_update_ts") || "0", 10);
