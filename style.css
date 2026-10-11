@@ -1982,32 +1982,35 @@ input:focus {
     height: 6px;
 }
 
-/* Animación de Giro Vertiginoso y Desaceleración Ultra Realista */
+/* Animación de Giro Continuo y Desaceleración Fluida (GPU Accelerated) */
 @keyframes realisticRouletteSpin {
     0% {
         transform: rotate(0deg);
     }
-    10% {
-        transform: rotate(360deg);
-    }
     100% {
-        transform: rotate(2880deg); /* 8 vueltas completas */
+        transform: rotate(2520deg); /* 7 giros completos con desaceleración natural sin saltos bruscos */
     }
 }
 
+.roulette-wheel-disc {
+    will-change: transform;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+}
+
 .roulette-wheel-disc.is-spinning {
-    animation: realisticRouletteSpin 3s cubic-bezier(0.25, 1, 0.5, 1) forwards;
-    filter: blur(1.2px) brightness(1.15);
+    animation: realisticRouletteSpin 2.8s cubic-bezier(0.12, 0.8, 0.32, 1) forwards;
+    filter: brightness(1.12);
     box-shadow: 0 0 35px rgba(56, 189, 248, 0.55), 0 0 0 8px rgba(37, 99, 235, 0.3);
 }
 
 /* Efecto de Micro-Impacto (Pop de Rebote al Detenerse) */
 @keyframes wheelPopLanding {
     0% {
-        transform: scale(0.94);
+        transform: scale(0.96);
     }
     50% {
-        transform: scale(1.04);
+        transform: scale(1.03);
     }
     100% {
         transform: scale(1);
@@ -2015,7 +2018,7 @@ input:focus {
 }
 
 .roulette-wheel-disc.is-landed {
-    animation: wheelPopLanding 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    animation: wheelPopLanding 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
 
 /* Centro / Hub del Bolillero Tecnológico */
@@ -2170,7 +2173,8 @@ input:focus {
     color: var(--color-text) !important;
     line-height: 1.25;
     word-break: break-word;
-    transition: all 0.15s ease;
+    transition: transform 0.08s ease, color 0.15s ease;
+    will-change: transform;
 }
 
 [data-theme="dark"] .tech-rolling-display {
@@ -2179,8 +2183,7 @@ input:focus {
 
 .rolling-display.is-spinning {
     color: var(--color-primary, #2563eb);
-    transform: scale(0.96);
-    filter: blur(0.8px);
+    transform: scale(0.97);
 }
 
 .rolling-display.is-winner {
@@ -3262,14 +3265,15 @@ dialog:not([open]),
     color: var(--color-text);
     box-shadow: inset 0 2px 8px rgba(0,0,0,0.3);
     text-align: center;
-    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: transform 0.08s ease, border-color 0.2s ease, background 0.2s ease;
+    will-change: transform;
 }
 
 .duelo-roulette-display.is-spinning {
     color: var(--color-primary);
     border-color: var(--color-primary);
     box-shadow: 0 0 20px rgba(79, 140, 255, 0.3), inset 0 2px 8px rgba(0,0,0,0.4);
-    filter: blur(0.4px);
+    transform: scale(0.98);
 }
 
 .duelo-roulette-display.is-winner {

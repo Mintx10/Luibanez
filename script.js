@@ -2393,22 +2393,41 @@ async function girarBolillero() {
     }
 
     const esLite = window.bolilleroPerfMode === "lite";
-    const duracion = esLite ? 200 : 3000;
-    const inicio = performance.now();
-    let intervalo = esLite ? 80 : 45;
+    const duracion = esLite ? 200 : 2800;
 
-    while (true) {
-        const transcurrido = performance.now() - inicio;
-        if (transcurrido >= duracion) break;
+    // Animación ultra-fluida sincronizada con la tasa de refresco del monitor (requestAnimationFrame)
+    await new Promise(resolve => {
+        const inicio = performance.now();
+        let lastUpdateTs = 0;
+        let lastIndex = -1;
 
-        const temaAleatorio = temasDisponibles[Math.floor(Math.random() * temasDisponibles.length)];
-        actualizarDisplaysBolillero(temaAleatorio.titulo);
+        function frame(now) {
+            const transcurrido = now - inicio;
+            const progreso = Math.min(1, transcurrido / duracion);
 
-        const progreso = transcurrido / duracion;
-        intervalo = 45 + (progreso * progreso * 300);
+            // Intervalo adaptativo de cambio de texto: rápido al inicio (45ms) y desaceleración suave al final (280ms)
+            const intervaloActual = 45 + (Math.pow(progreso, 2.2) * 235);
 
-        await new Promise(resolve => setTimeout(resolve, intervalo));
-    }
+            if (now - lastUpdateTs >= intervaloActual || progreso >= 1) {
+                lastUpdateTs = now;
+                let nextIdx = Math.floor(Math.random() * temasDisponibles.length);
+                if (temasDisponibles.length > 1 && nextIdx === lastIndex) {
+                    nextIdx = (nextIdx + 1) % temasDisponibles.length;
+                }
+                lastIndex = nextIdx;
+                const temaAleatorio = temasDisponibles[nextIdx];
+                actualizarDisplaysBolillero(temaAleatorio.titulo);
+            }
+
+            if (transcurrido < duracion) {
+                requestAnimationFrame(frame);
+            } else {
+                resolve();
+            }
+        }
+
+        requestAnimationFrame(frame);
+    });
 
     const ganador = temasDisponibles[Math.floor(Math.random() * temasDisponibles.length)];
     
@@ -2419,7 +2438,7 @@ async function girarBolillero() {
         wheelDisc.classList.remove("is-spinning");
         // Micro-impacto (pop de rebote)
         wheelDisc.classList.add("is-landed");
-        setTimeout(() => wheelDisc.classList.remove("is-landed"), 500);
+        setTimeout(() => wheelDisc.classList.remove("is-landed"), 380);
     }
 
     // Eliminar automáticamente de los disponibles de la ronda
@@ -9146,27 +9165,55 @@ async function ejecutarAnimacionRuletaSincronizada(jugadorGanador, temaGanador, 
         dom.dueloTopicRoulette.className = "duelo-roulette-display is-spinning";
     }
 
-    const inicio = performance.now();
-    let intervalo = 50;
+    // Animación de doble ruleta fluida con requestAnimationFrame (sin micro-congelamientos de setTimeout)
+    await new Promise(resolve => {
+        const inicio = performance.now();
+        let lastUpdateTs = 0;
+        let lastJIdx = -1;
+        let lastTIdx = -1;
 
-    while (true) {
-        const transcurrido = performance.now() - inicio;
-        if (transcurrido >= duracion) break;
+        function frame(now) {
+            const transcurrido = now - inicio;
+            const progreso = Math.min(1, transcurrido / duracion);
+            const intervaloActual = 45 + (Math.pow(progreso, 2.2) * 235);
 
-        const randJ = partida.jugadores[Math.floor(Math.random() * partida.jugadores.length)];
-        const randT = partida.temasDisponibles[Math.floor(Math.random() * partida.temasDisponibles.length)];
+            if (now - lastUpdateTs >= intervaloActual || progreso >= 1) {
+                lastUpdateTs = now;
 
-        if (dom.dueloPlayerRoulette && randJ) {
-            dom.dueloPlayerRoulette.textContent = `${randJ.avatar || "👤"} ${randJ.apodo || randJ.nombre || "Jugador"}`;
+                if (partida.jugadores && partida.jugadores.length > 0) {
+                    let nextJ = Math.floor(Math.random() * partida.jugadores.length);
+                    if (partida.jugadores.length > 1 && nextJ === lastJIdx) {
+                        nextJ = (nextJ + 1) % partida.jugadores.length;
+                    }
+                    lastJIdx = nextJ;
+                    const randJ = partida.jugadores[nextJ];
+                    if (dom.dueloPlayerRoulette && randJ) {
+                        dom.dueloPlayerRoulette.textContent = `${randJ.avatar || "👤"} ${randJ.apodo || randJ.nombre || "Jugador"}`;
+                    }
+                }
+
+                if (partida.temasDisponibles && partida.temasDisponibles.length > 0) {
+                    let nextT = Math.floor(Math.random() * partida.temasDisponibles.length);
+                    if (partida.temasDisponibles.length > 1 && nextT === lastTIdx) {
+                        nextT = (nextT + 1) % partida.temasDisponibles.length;
+                    }
+                    lastTIdx = nextT;
+                    const randT = partida.temasDisponibles[nextT];
+                    if (dom.dueloTopicRoulette && randT) {
+                        dom.dueloTopicRoulette.textContent = randT.titulo || randT.palabra || randT.nombre || "Tema";
+                    }
+                }
+            }
+
+            if (transcurrido < duracion) {
+                requestAnimationFrame(frame);
+            } else {
+                resolve();
+            }
         }
-        if (dom.dueloTopicRoulette && randT) {
-            dom.dueloTopicRoulette.textContent = randT.titulo || randT.palabra || randT.nombre || "Tema";
-        }
 
-        const progreso = transcurrido / duracion;
-        intervalo = 50 + (progreso * progreso * 300);
-        await new Promise(r => setTimeout(r, intervalo));
-    }
+        requestAnimationFrame(frame);
+    });
 
     const ganadorNombre = jugadorGanador.apodo || jugadorGanador.nombre || "Jugador";
     const temaTitulo = temaGanador.titulo || temaGanador.palabra || temaGanador.nombre || "Tema Asignado";
@@ -14991,7 +15038,7 @@ function iniciarAplicacion() {
 // =========================================================
 // GESTOR DE VERSIONES Y ACTUALIZACIÓN AUTOMÁTICA
 // =========================================================
-const APP_BUILD_VERSION = "29.45";
+const APP_BUILD_VERSION = "29.46";
 
 async function forzarActualizacionCompleta(mostrarNotificacion = true) {
     const lastAttempt = parseInt(sessionStorage.getItem("last_auto_update_ts") || "0", 10);
