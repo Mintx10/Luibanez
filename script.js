@@ -156,7 +156,8 @@ const pomodoroEstado = {
     activo: false,
     intervalId: null,
     ciclosCompletados: 0,
-    audioCtx: null
+    audioCtx: null,
+    finTimestamp: null
 };
 
 const estadoFlotante = {
@@ -884,7 +885,6 @@ const dom = {
     labCompletedCard: document.getElementById("labCompletedCard"),
     labCompletedDesc: document.getElementById("labCompletedDesc"),
     labCompletedXpReward: document.getElementById("labCompletedXpReward"),
-    labBtnSiguienteCasoModal: document.getElementById("labBtnSiguienteCasoModal"),
 
     /* Modal de Configuración & PDF */
     labConfigModal: document.getElementById("labConfigModal"),
@@ -1243,7 +1243,10 @@ function mostrarToast(mensaje, duracion = 3200) {
 
     const toast = document.createElement("div");
     toast.className = "app-toast-item" + (tipo ? ` app-toast-item--${tipo}` : "");
-    toast.innerHTML = `<span class="app-toast-text">${mensaje}</span>`;
+    const spanTexto = document.createElement("span");
+    spanTexto.className = "app-toast-text";
+    spanTexto.textContent = mensaje;
+    toast.appendChild(spanTexto);
 
     container.appendChild(toast);
 
@@ -2728,6 +2731,7 @@ function iniciarPomodoro() {
     }
     if (dom.pomodoroDisplay) dom.pomodoroDisplay.classList.remove("is-pulsing");
 
+    pomodoroEstado.finTimestamp = Date.now() + (pomodoroEstado.segundosRestantes * 1000);
     renderPomodoro();
     pomodoroEstado.intervalId = setInterval(tickPomodoro, 1000);
 }
@@ -2737,6 +2741,7 @@ function pausarPomodoro() {
 
     clearInterval(pomodoroEstado.intervalId);
     pomodoroEstado.intervalId = null;
+    pomodoroEstado.finTimestamp = null;
     pomodoroEstado.activo = false;
 
     if (dom.pomodoroToggleIcon) dom.pomodoroToggleIcon.textContent = "▶";
@@ -2813,11 +2818,16 @@ function siguienteFasePomodoro() {
 }
 
 function tickPomodoro() {
-    if (pomodoroEstado.segundosRestantes > 1) {
-        pomodoroEstado.segundosRestantes--;
+    const restantes = pomodoroEstado.finTimestamp
+        ? Math.round((pomodoroEstado.finTimestamp - Date.now()) / 1000)
+        : pomodoroEstado.segundosRestantes - 1;
+
+    if (restantes > 0) {
+        pomodoroEstado.segundosRestantes = restantes;
         renderPomodoro();
     } else {
         pomodoroEstado.segundosRestantes = 0;
+        pomodoroEstado.finTimestamp = null;
         renderPomodoro();
         pausarPomodoro();
         reproducirAlarmaPomodoro();
@@ -15445,7 +15455,7 @@ function iniciarAplicacion() {
 // =========================================================
 // GESTOR DE VERSIONES Y ACTUALIZACIÓN AUTOMÁTICA
 // =========================================================
-const APP_BUILD_VERSION = "29.51";
+const APP_BUILD_VERSION = "29.52";
 
 async function forzarActualizacionCompleta(mostrarNotificacion = true) {
     const lastAttempt = parseInt(sessionStorage.getItem("last_auto_update_ts") || "0", 10);

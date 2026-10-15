@@ -17,6 +17,8 @@
     --color-text-main: #0F172A;
     --color-text-secondary: #94A3B8;
     --color-text-muted: #64748B;
+    --color-text-primary: #F8FAFC;
+    --color-accent: #38bdf8;
     --font-heading: "Satoshi", "Inter", system-ui, -apple-system, sans-serif;
     --font-body: "Inter", system-ui, -apple-system, sans-serif;
     --font-family: var(--font-body);
@@ -53,6 +55,8 @@
     --color-text: #0F172A;
     --color-text-secondary: #475569;
     --color-text-muted: #64748B;
+    --color-text-primary: #0F172A;
+    --color-accent: #0284c7;
     --shadow-subtle: 0 2px 4px rgba(0, 0, 0, 0.04);
     --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.06);
     --shadow-md: 0 12px 28px rgba(0, 0, 0, 0.09);

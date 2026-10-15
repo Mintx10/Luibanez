@@ -1,13 +1,9 @@
-const CACHE_NAME = "luibanez-cache-v29.51";
+const CACHE_NAME = "luibanez-cache-v29.52";
 const STATIC_ASSETS = [
     "./",
     "./index.html",
-    "./style.css?v=29.51",
-    "./script.js?v=29.51",
-    "./ivan_doctor.mp4",
-    "./ivan_doctor.png",
-    "./ivan_avatar_head.png",
-    "./ivan_doctor_transparent.png",
+    "./style.css?v=29.52",
+    "./script.js?v=29.52",
     "./version.json",
     "./mqtt.min.js",
     "./jszip.min.js",
@@ -17,7 +13,7 @@ const STATIC_ASSETS = [
     "./icon-512.png"
 ];
 
-// 1. INSTALACIÓN: Precarga forzando recarga de red (sin usar caché HTTP previo)
+// 1. INSTALACIÓN: Precarga de recursos esenciales livianos
 self.addEventListener("install", (evento) => {
     evento.waitUntil(
         caches.open(CACHE_NAME).then((cache) => {
@@ -38,13 +34,12 @@ self.addEventListener("install", (evento) => {
     self.skipWaiting();
 });
 
-// 2. ACTIVACIÓN: Purga total inmediata de cachés anteriores y toma control
+// 2. ACTIVACIÓN: Purga total de cachés anteriores
 self.addEventListener("activate", (evento) => {
     evento.waitUntil(
         caches.keys().then((keys) => {
             return Promise.all(
                 keys.filter((key) => key !== CACHE_NAME).map((key) => {
-                    console.log("Purgando caché vieja de Luibañez:", key);
                     return caches.delete(key);
                 })
             );
@@ -53,21 +48,18 @@ self.addEventListener("activate", (evento) => {
     self.clients.claim();
 });
 
-// Mensaje para forzar activación inmediata desde el cliente
 self.addEventListener("message", (evento) => {
     if (evento.data && (evento.data.type === "SKIP_WAITING" || evento.data === "skipWaiting")) {
         self.skipWaiting();
     }
 });
 
-// 3. FETCH: Network-First con fallback a caché para offline
+// 3. FETCH: Network-First con ignoreSearch para que funcione offline con ?v=
 self.addEventListener("fetch", (evento) => {
-    // No interceptar peticiones externas (CDN, fuentes, etc.)
     if (!evento.request.url.startsWith(self.location.origin)) {
         return;
     }
 
-    // Bypass total para APIs serverless y version.json
     if (evento.request.url.includes("/api/") || evento.request.url.includes("version.json")) {
         return;
     }
@@ -84,12 +76,12 @@ self.addEventListener("fetch", (evento) => {
                 return networkResponse;
             })
             .catch(() => {
-                return caches.match(evento.request).then((cachedResponse) => {
+                return caches.match(evento.request, { ignoreSearch: true }).then((cachedResponse) => {
                     if (cachedResponse) {
                         return cachedResponse;
                     }
                     if (evento.request.mode === "navigate") {
-                        return caches.match("./index.html").then(res => res || caches.match("./"));
+                        return caches.match("./index.html", { ignoreSearch: true }).then(res => res || caches.match("./"));
                     }
                 });
             })

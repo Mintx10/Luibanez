@@ -61,13 +61,13 @@ function equilibrarOpcionesArray(opcionesArray) {
         return cleanDangling(s);
     });
 
-    // 3. Recortar cualquier opción que supere 12 palabras para que no delate la respuesta
+// 3. Recortar de forma segura en una coma solo si supera las 22 palabras
     cleaned = cleaned.map(s => {
         const words = s.split(/\s+/).filter(Boolean);
-        if (words.length > 12) {
-            return cleanDangling(words.slice(0, 11).join(' '));
+        if (words.length > 22 && s.includes(',')) {
+            return cleanDangling(s.split(',').slice(0, 2).join(','));
         }
-        return s;
+        return cleanDangling(s);
     });
 
     // 4. Si algunos distractores quedaron demasiado cortos (<= 6 palabras), expandir con marco académico
@@ -90,52 +90,31 @@ function equilibrarOpcionesArray(opcionesArray) {
 
     return cleaned;
 }
-
 module.exports = async function handler(req, res) {
-    // 1. Encabezados CORS
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
-    res.setHeader('Access-Control-Allow-Origin', '*');
+    // 1. Encabezados CORS seguros (solo tu dominio y entorno local)
+    const allowedOrigins = [
+        'https://luibanez.vercel.app',
+        'http://localhost:3000',
+        'http://127.0.0.1:5500'
+    ];
+    const origin = req.headers.origin;
+    if (allowedOrigins.includes(origin)) {
+        res.setHeader('Access-Control-Allow-Origin', origin);
+    }
     res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,POST');
-    res.setHeader(
-        'Access-Control-Allow-Headers',
-        'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, x-gemini-key'
-    );
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-gemini-key');
 
     // Responder a preflight OPTIONS
     if (req.method === 'OPTIONS') {
         return res.status(200).end();
     }
 
-    // Health-check y listado de modelos en GET
+    // Health-check liviano sin consumir cuota ni exponer errores internos
     if (req.method === 'GET') {
-        const apiKey = process.env.GEMINI_API_KEY;
-        const hasKey = Boolean(apiKey);
-        let availableModels = [];
-        let listError = null;
-
-        if (apiKey) {
-            try {
-                const listRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
-                const listData = await listRes.json();
-                if (listData.models) {
-                    availableModels = listData.models
-                        .filter(m => m.supportedGenerationMethods && m.supportedGenerationMethods.includes('generateContent'))
-                        .map(m => m.name.replace('models/', ''));
-                } else {
-                    listError = listData;
-                }
-            } catch (err) {
-                listError = err.message;
-            }
-        }
-
         return res.status(200).json({
             status: 'ok',
             service: 'Luibañez Gemini API Gateway',
-            hasServerKey: hasKey,
-            availableModels,
-            listError,
-            endpoints: ['POST /api/gemini']
+            hasServerKey: Boolean(process.env.GEMINI_API_KEY)
         });
     }
 
