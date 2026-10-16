@@ -36,6 +36,51 @@ function crearDebounce(fn, delayMs = 120) {
     };
 }
 
+/* Utilidades Centrales de Ciberseguridad (Anti-XSS, Sanitización de URLs y Anti-Prototype Pollution) */
+function escapeHtml(str) {
+    if (str === null || str === undefined) return "";
+    return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+function sanitizarUrlSegura(url) {
+    if (!url || typeof url !== "string") return "";
+    const trimmed = url.trim();
+    if (/^data:image\/(png|jpeg|jpg|webp|gif);base64,[a-zA-Z0-9+/=\s]+$/i.test(trimmed)) {
+        return trimmed;
+    }
+    if (/^data:audio\/(webm|mp3|mpeg|ogg|wav|mp4|x-m4a);base64,[a-zA-Z0-9+/=\s]+$/i.test(trimmed)) {
+        return trimmed;
+    }
+    if (/^blob:/i.test(trimmed)) {
+        return trimmed;
+    }
+    if (/^https:\/\//i.test(trimmed) && !/["'<>]/.test(trimmed)) {
+        return trimmed;
+    }
+    if (/^[a-zA-Z0-9_.-]+\.(png|jpg|jpeg|webp|svg|mp4)$/i.test(trimmed)) {
+        return trimmed;
+    }
+    return "";
+}
+
+function asignarPropiedadesSeguras(destino, origen, clavesPermitidas = null) {
+    if (!destino || !origen || typeof origen !== "object") return destino;
+    const bloqueadas = new Set(["__proto__", "constructor", "prototype"]);
+    for (const key of Object.keys(origen)) {
+        if (bloqueadas.has(key)) continue;
+        if (clavesPermitidas && !clavesPermitidas.includes(key)) continue;
+        if (Object.prototype.hasOwnProperty.call(origen, key)) {
+            destino[key] = origen[key];
+        }
+    }
+    return destino;
+}
+
 /* ==========================================================
    ARQUITECTURA Y REGISTRO CENTRAL DE MÓDULOS (LUIBAÑEZ CORE)
    ========================================================== */
@@ -1936,12 +1981,23 @@ function inicializarDrawerMenu() {
                     desactivarModoDev();
                     mostrarToast("🔒 Modo Desarrollador desactivado", "info");
                 } else {
-                    const pass = prompt("🔐 Acceso Desarrollador Luibañez\nIngresá la clave de acceso de Lucas:");
-                    if (pass && (pass.toLowerCase().trim() === "lucas" || pass.trim() === "1234" || pass.toLowerCase().trim() === "mintx")) {
-                        activarModoDev();
-                        mostrarToast("🛠️ ¡Modo Desarrollador activado para Lucas!", "exito");
-                    } else if (pass !== null) {
-                        mostrarToast("❌ Clave incorrecta.", "error");
+                    const pass = prompt("🔐 Acceso Desarrollador Luibañez\nIngresá la clave de acceso:");
+                    if (pass) {
+                        const cleanPass = pass.toLowerCase().trim();
+                        crypto.subtle.digest("SHA-256", new TextEncoder().encode(cleanPass)).then(buf => {
+                            const hashHex = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
+                            const validHashes = new Set([
+                                "7cadab457ad8d811f134612436daaa5e5914b20dc2502865f714035b0f267680",
+                                "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4",
+                                "cf38c3b07879b4429755d11b0f0c891aded823365e2888533849f1a5aec8ead5"
+                            ]);
+                            if (validHashes.has(hashHex)) {
+                                activarModoDev();
+                                mostrarToast("🛠️ ¡Modo Desarrollador activado!", "exito");
+                            } else {
+                                mostrarToast("❌ Clave incorrecta.", "error");
+                            }
+                        }).catch(() => {});
                     }
                 }
             }
@@ -2928,7 +2984,7 @@ function renderPomodoro() {
 function actualizarContextoPomodoro(titulo) {
     if (!dom.pomodoroContext) return;
     if (titulo) {
-        dom.pomodoroContext.innerHTML = `Tema en estudio: <strong>${titulo}</strong>`;
+        dom.pomodoroContext.innerHTML = `Tema en estudio: <strong>${escapeHtml(titulo)}</strong>`;
     } else {
         dom.pomodoroContext.textContent = "Listo para estudiar";
     }
@@ -3532,9 +3588,10 @@ function actualizarUIAuthHeader() {
         const carrera = perfilUsuario.carrera || "Estudiante";
 
         const userAvatar = document.getElementById("userHeaderAvatar");
+        const safeFotoUrl = sanitizarUrlSegura(perfilUsuario.fotoDataUrl);
         if (userAvatar) {
-            if (perfilUsuario.fotoDataUrl) {
-                userAvatar.innerHTML = `<img src="${perfilUsuario.fotoDataUrl}" alt="${apodo}" class="user-header-avatar-img">`;
+            if (safeFotoUrl) {
+                userAvatar.innerHTML = `<img src="${safeFotoUrl}" alt="${escapeHtml(apodo)}" class="user-header-avatar-img">`;
             } else {
                 userAvatar.textContent = perfilUsuario.avatar || "👤";
             }
@@ -3553,8 +3610,8 @@ function actualizarUIAuthHeader() {
         if (drawerName) drawerName.textContent = apodo;
         if (drawerCareer) drawerCareer.textContent = carrera;
         if (drawerAvatar) {
-            if (perfilUsuario.fotoDataUrl) {
-                drawerAvatar.innerHTML = `<img src="${perfilUsuario.fotoDataUrl}" alt="${apodo}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+            if (safeFotoUrl) {
+                drawerAvatar.innerHTML = `<img src="${safeFotoUrl}" alt="${escapeHtml(apodo)}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
             } else {
                 drawerAvatar.textContent = perfilUsuario.avatar || "👤";
             }
@@ -4096,9 +4153,9 @@ function renderizarListaPdfsMedicina(materia) {
     listElem.innerHTML = items.map((doc, idx) => `
         <li class="med-pdf-item">
             <span aria-hidden="true">📄</span>
-            <span class="med-pdf-item-name" title="${doc.name}">${doc.name}</span>
-            <span class="med-pdf-item-meta">${doc.pages || 1} pág.</span>
-            <button type="button" class="med-pdf-item-remove" data-materia="${materia}" data-idx="${idx}" title="Quitar archivo">✕</button>
+            <span class="med-pdf-item-name" title="${escapeHtml(doc.name)}">${escapeHtml(doc.name)}</span>
+            <span class="med-pdf-item-meta">${Number(doc.pages) || 1} pág.</span>
+            <button type="button" class="med-pdf-item-remove" data-materia="${escapeHtml(materia)}" data-idx="${idx}" title="Quitar archivo">✕</button>
         </li>
     `).join("");
 
@@ -7382,14 +7439,16 @@ function obtenerMarcoEvolutivo(victorias, rachaActual = 0, esLider = false) {
 }
 
 function renderAvatarHTML(jugador, racha = 0, esLider = false, size = 48) {
-    const vics = jugador?.victorias || 0;
+    const vics = Number(jugador?.victorias) || 0;
     const { frameClasses } = obtenerMarcoEvolutivo(vics, racha, esLider);
-    const styleAttr = `style="width:${size}px; height:${size}px; font-size:${Math.round(size * 0.55)}px;"`;
+    const safeSize = Number(size) || 48;
+    const styleAttr = `style="width:${safeSize}px; height:${safeSize}px; font-size:${Math.round(safeSize * 0.55)}px;"`;
+    const safeFoto = sanitizarUrlSegura(jugador?.fotoDataUrl);
 
-    if ((jugador?.tipoAvatar === "foto" || jugador?.tipoAvatar === "imagen" || Boolean(jugador?.fotoDataUrl)) && jugador.fotoDataUrl) {
-        return `<div class="duelo-avatar-circle ${frameClasses}" ${styleAttr}><img src="${jugador.fotoDataUrl}" alt="${jugador.apodo || 'Avatar'}"></div>`;
+    if ((jugador?.tipoAvatar === "foto" || jugador?.tipoAvatar === "imagen" || Boolean(safeFoto)) && safeFoto) {
+        return `<div class="duelo-avatar-circle ${frameClasses}" ${styleAttr}><img src="${safeFoto}" alt="${escapeHtml(jugador?.apodo || 'Avatar')}"></div>`;
     }
-    return `<div class="duelo-avatar-circle ${frameClasses}" ${styleAttr}>${jugador?.avatar || '👤'}</div>`;
+    return `<div class="duelo-avatar-circle ${frameClasses}" ${styleAttr}>${escapeHtml(jugador?.avatar || '👤')}</div>`;
 }
 
 let tempAvatarSeleccionado = {
@@ -7604,16 +7663,6 @@ function publicarMensajeSala(data) {
     if (!onlineDueloEstado.clienteMqtt || !onlineDueloEstado.codigoSala) return;
     const topic = obtenerTopicSala(onlineDueloEstado.codigoSala);
     onlineDueloEstado.clienteMqtt.publish(topic, JSON.stringify(data), { qos: 0 });
-}
-
-function escapeHtml(str) {
-    if (!str) return "";
-    return String(str)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
 }
 
 function iniciarDiscoveryLobbiesOnline() {
@@ -8153,9 +8202,10 @@ function renderJugadoresSalaEspera() {
                 readyBadgeHTML = '<span class="duelo-slot-ready-badge is-waiting">⏳ ESPERANDO...</span>';
             }
 
+            const safeNom = escapeHtml(j.apodo || j.nombre || "Jugador");
             card.innerHTML = `
                 ${renderAvatarHTML(j, 0, false, 44)}
-                <span class="duelo-online-player-chip__name" title="${j.apodo || j.nombre}">${j.apodo || j.nombre} ${isSelf ? "(Vos)" : ""}</span>
+                <span class="duelo-online-player-chip__name" title="${safeNom}">${safeNom} ${isSelf ? "(Vos)" : ""}</span>
                 ${readyBadgeHTML}
             `;
             dom.dueloOnlinePlayersGrid.appendChild(card);
@@ -9233,10 +9283,12 @@ function renderBombaOnlineTracker() {
             statusClass = "status-c3";
         }
 
+        const safeAvatar = escapeHtml(j.avatar || '👤');
+        const safeApodo = escapeHtml(j.apodo || 'Jugador');
         chip.innerHTML = `
             <div class="bomba-rival-top">
-                <span class="bomba-rival-avatar">${j.avatar || '👤'}</span>
-                <span class="bomba-rival-name" title="${j.apodo}">${j.apodo} ${esTu ? '(Tú)' : ''}</span>
+                <span class="bomba-rival-avatar">${safeAvatar}</span>
+                <span class="bomba-rival-name" title="${safeApodo}">${safeApodo} ${esTu ? '(Tú)' : ''}</span>
             </div>
             <div class="bomba-rival-status ${statusClass}">${statusText}</div>
             <div class="bomba-rival-progress">
@@ -9576,7 +9628,7 @@ function procesarVotoOnlineRecibido(votanteId, votanteNombre, voto) {
             dom.dueloLiveVoteChips.appendChild(chip);
         }
         const emojiVoto = voto === 10 ? "🟢 +10 pts (Impecable)" : voto === 5 ? "🟡 +5 pts (Con ayuda)" : "🔴 0 pts (A repasar)";
-        chip.innerHTML = `<strong>${votanteNombre}:</strong> ${emojiVoto}`;
+        chip.innerHTML = `<strong>${escapeHtml(votanteNombre)}:</strong> ${emojiVoto}`;
     }
 
     // Si es el host, verificar si todos los votantes esperados ya votaron
@@ -9718,20 +9770,23 @@ function recibirMensajeChatEnVivo(msg) {
     const msgDiv = document.createElement("div");
     msgDiv.className = `duelo-chat-msg ${esMio ? "duelo-chat-msg--mine" : "duelo-chat-msg--other"}`;
 
-    const horaStr = new Date(msg.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    const horaStr = new Date(msg.timestamp || Date.now()).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    const safeSender = escapeHtml(msg.senderName || "Estudiante");
+    const safePhoto = sanitizarUrlSegura(msg.photoDataUrl);
+    const safeAudio = sanitizarUrlSegura(msg.audioDataUrl);
 
     let contenidoHtml = "";
     if (msg.text) {
-        contenidoHtml += `<div class="duelo-chat-bubble">${msg.text}</div>`;
+        contenidoHtml += `<div class="duelo-chat-bubble">${escapeHtml(msg.text)}</div>`;
     }
-    if (msg.photoDataUrl) {
-        contenidoHtml += `<img src="${msg.photoDataUrl}" class="duelo-chat-img" alt="Foto de apunte" onclick="abrirLightboxFoto('${msg.photoDataUrl}')">`;
+    if (safePhoto) {
+        contenidoHtml += `<img src="${safePhoto}" class="duelo-chat-img" alt="Foto de apunte">`;
     }
-    if (msg.audioDataUrl) {
+    if (safeAudio) {
         contenidoHtml += `
             <div class="duelo-chat-bubble">
                 <div class="duelo-audio-player">
-                    <button type="button" class="duelo-audio-play-btn" onclick="reproducirAudioNota(this, '${msg.audioDataUrl}')">▶</button>
+                    <button type="button" class="duelo-audio-play-btn">▶</button>
                     <span class="duelo-audio-time">Nota de voz 🎙️</span>
                 </div>
             </div>
@@ -9740,11 +9795,20 @@ function recibirMensajeChatEnVivo(msg) {
 
     msgDiv.innerHTML = `
         <div class="duelo-chat-msg-header">
-            <span>${msg.senderName}</span>
-            <span>• ${horaStr}</span>
+            <span>${safeSender}</span>
+            <span>• ${escapeHtml(horaStr)}</span>
         </div>
         ${contenidoHtml}
     `;
+
+    if (safePhoto) {
+        const imgEl = msgDiv.querySelector(".duelo-chat-img");
+        if (imgEl) imgEl.addEventListener("click", () => abrirLightboxFoto(safePhoto));
+    }
+    if (safeAudio) {
+        const audioBtn = msgDiv.querySelector(".duelo-audio-play-btn");
+        if (audioBtn) audioBtn.addEventListener("click", () => reproducirAudioNota(audioBtn, safeAudio));
+    }
 
     dom.dueloChatMessages.appendChild(msgDiv);
     dom.dueloChatMessages.scrollTop = dom.dueloChatMessages.scrollHeight;
@@ -12506,6 +12570,22 @@ const supabaseService = {
         }
     },
 
+    async eliminarTodosDocumentosUsuario(ids = []) {
+        const client = obtenerSupabaseClient();
+        if (!client) return;
+        try {
+            const miUserId = (perfilUsuario && perfilUsuario.id) ? String(perfilUsuario.id) : null;
+            if (miUserId && !miUserId.startsWith("guest_")) {
+                await client.from("documentos_pdf").delete().eq("user_id", miUserId);
+            }
+            if (Array.isArray(ids) && ids.length > 0) {
+                await client.from("documentos_pdf").delete().in("id", ids.map(String));
+            }
+        } catch (err) {
+            console.warn("[Supabase] No se pudieron limpiar documentos en nube:", err);
+        }
+    },
+
     async guardarPerfil(perfil) {
         const client = obtenerSupabaseClient();
         if (!client || !perfil || !perfil.id) return;
@@ -12584,6 +12664,15 @@ window.supabaseService = supabaseService;
 // Cargar apuntes persistidos desde IndexedDB (o fallback localStorage)
 async function cargarApuntesGuardados() {
     try {
+        const limpiadoManual = localStorage.getItem("luibanez_apuntes_limpiados_manual") === "true";
+        if (limpiadoManual) {
+            apuntesColeccion.length = 0;
+            sincronizarApuntesEstadoLegacy();
+            actualizarUIIndicadoresPDF();
+            asegurarSincronizacionNube();
+            return;
+        }
+
         const idbColeccion = await obtenerApunteDeIDB("apuntesColeccion");
         const yaMigrado = localStorage.getItem("luibanez_apuntes_migrado_v1") === "true";
 
@@ -12716,13 +12805,11 @@ async function asegurarSincronizacionNube() {
             // Sincronizar y depurar perfiles oficiales (elimina cuentas viejas y deja a Iván y Lucas)
             await sincronizarPerfilesPorDefectoEnSupabase();
 
-            // 1. Si hay documentos locales, respaldarlos de inmediato en Supabase
+            // 1. Si hay documentos locales activos, respaldarlos en Supabase (no re-descargar PDFs viejos eliminados)
             if (apuntesColeccion.length > 0) {
                 await supabaseService.sincronizarColeccionConNube(apuntesColeccion);
             }
-            // 2. Traer novedades desde la nube
-            await supabaseService.sincronizarColeccionDesdeNube();
-            // 3. Respaldar perfil del estudiante (solo cuentas creadas y registradas)
+            // 2. Respaldar perfil del estudiante (solo cuentas creadas y registradas)
             if (perfilUsuario && perfilUsuario.id && !perfilUsuario.esInvitado && perfilUsuario.apodo !== "Invitado") {
                 await supabaseService.guardarPerfil(perfilUsuario);
             }
@@ -12749,7 +12836,7 @@ async function guardarColeccionEnStorage() {
         localStorage.setItem(APUNTES_COLECCION_KEY + "_meta", JSON.stringify(metadata));
 
         // Sincronizar en segundo plano con Supabase si está disponible
-        if (supabaseService.isAvailable()) {
+        if (supabaseService.isAvailable() && apuntesColeccion.length > 0) {
             supabaseService.sincronizarColeccionConNube(apuntesColeccion).catch(() => {});
         }
     } catch (e) {
@@ -12758,8 +12845,59 @@ async function guardarColeccionEnStorage() {
 }
 window.guardarApuntesEnStorage = guardarColeccionEnStorage;
 
+async function limpiarTodosLosApuntes() {
+    const ids = apuntesColeccion.map(d => d.id).filter(Boolean);
+    apuntesColeccion.length = 0;
+    apuntesEstado.global = null;
+    apuntesEstado.bolillero = null;
+    apuntesEstado.bomba = null;
+    apuntesEstado.impostor = null;
+    apuntesEstado.memotest = null;
+
+    if (typeof bolilleroSetupEstado === "object" && bolilleroSetupEstado) {
+        bolilleroSetupEstado.archivoTexto = "";
+        bolilleroSetupEstado.archivoNombre = "";
+        bolilleroSetupEstado.archivoPaginas = 0;
+    }
+    if (typeof bombaSetupEstado === "object" && bombaSetupEstado) {
+        bombaSetupEstado.archivoTexto = "";
+        bombaSetupEstado.archivoNombre = "";
+        bombaSetupEstado.archivoPaginas = 0;
+    }
+    if (typeof impostorSetupEstado === "object" && impostorSetupEstado) {
+        impostorSetupEstado.archivoTexto = "";
+        impostorSetupEstado.archivoNombre = "";
+        impostorSetupEstado.archivoPaginas = 0;
+    }
+    if (typeof memotestSetupEstado === "object" && memotestSetupEstado) {
+        memotestSetupEstado.archivoTexto = "";
+        memotestSetupEstado.archivoNombre = "";
+        memotestSetupEstado.archivoPaginas = 0;
+    }
+
+    try {
+        localStorage.setItem("luibanez_apuntes_migrado_v1", "true");
+        localStorage.setItem("luibanez_apuntes_limpiados_manual", "true");
+        localStorage.removeItem(APUNTES_STORAGE_KEY);
+        localStorage.removeItem(APUNTES_COLECCION_KEY + "_meta");
+    } catch (_) {}
+
+    await guardarApunteEnIDB("apuntesColeccion", []);
+    await guardarApunteEnIDB("apuntesEstado", null);
+    sincronizarApuntesEstadoLegacy();
+    actualizarUIIndicadoresPDF();
+
+    if (supabaseService.isAvailable()) {
+        supabaseService.eliminarTodosDocumentosUsuario(ids).catch(() => {});
+    }
+}
+window.limpiarTodosLosApuntes = limpiarTodosLosApuntes;
+
 async function agregarDocumentosAColeccion(nuevosDocs) {
     if (!Array.isArray(nuevosDocs)) nuevosDocs = [nuevosDocs];
+    try {
+        localStorage.removeItem("luibanez_apuntes_limpiados_manual");
+    } catch (_) {}
     for (const doc of nuevosDocs) {
         if (!doc || !doc.texto) continue;
         const indexExistente = apuntesColeccion.findIndex(d => d.nombre === doc.nombre);
@@ -12801,6 +12939,9 @@ async function eliminarDocumentoColeccion(docId) {
     if (index === -1) return;
     const eliminado = apuntesColeccion.splice(index, 1)[0];
     localStorage.setItem("luibanez_apuntes_migrado_v1", "true");
+    if (apuntesColeccion.length === 0) {
+        localStorage.setItem("luibanez_apuntes_limpiados_manual", "true");
+    }
     localStorage.removeItem(APUNTES_STORAGE_KEY);
     await guardarApunteEnIDB("apuntesEstado", null);
     await guardarColeccionEnStorage();
@@ -12875,13 +13016,15 @@ function renderizarBandejaMultiPdf(trayId, countId, metaId, listId, dropzoneId) 
     apuntesColeccion.forEach(doc => {
         const item = document.createElement("div");
         item.className = `setup-multi-pdf-item ${doc.activo !== false ? "" : "is-inactive"}`;
+        const safeDocName = escapeHtml(doc.nombre || "Documento");
+        const safeIcon = escapeHtml(doc.icono || "📄");
         item.innerHTML = `
             <div class="setup-multi-pdf-item__left">
                 <input type="checkbox" class="setup-multi-pdf-item__checkbox" ${doc.activo !== false ? "checked" : ""} title="${doc.activo !== false ? "Desmarcar para excluir de las preguntas" : "Marcar para incluir en las preguntas"}">
-                <span class="setup-multi-pdf-item__icon">${doc.icono || "📄"}</span>
+                <span class="setup-multi-pdf-item__icon">${safeIcon}</span>
                 <div class="setup-multi-pdf-item__info">
-                    <span class="setup-multi-pdf-item__name" title="${doc.nombre}">${doc.nombre}</span>
-                    <span class="setup-multi-pdf-item__meta">${doc.paginas || 1} pág(s) • ${doc.palabras || 0} palabras</span>
+                    <span class="setup-multi-pdf-item__name" title="${safeDocName}">${safeDocName}</span>
+                    <span class="setup-multi-pdf-item__meta">${Number(doc.paginas) || 1} pág(s) • ${Number(doc.palabras) || 0} palabras</span>
                 </div>
             </div>
             <button type="button" class="setup-multi-pdf-item__remove" title="Quitar este documento">✕</button>
@@ -12981,7 +13124,8 @@ function actualizarUIIndicadoresPDF() {
     // 5. Tarjeta en Estudiar Solo
     if (dom.soloPdfCardDesc) {
         if (apunteActivo) {
-            dom.soloPdfCardDesc.innerHTML = `<strong style="color: #34d399;">📚 Archivos activos (${apunteActivo.activosDocs || 1}):</strong> ${apunteActivo.nombreDisplay || apunteActivo.nombre} (${apunteActivo.paginas} págs). Los juegos de la plataforma están usando este material para formular desafíos.`;
+            const safeDisplay = escapeHtml(apunteActivo.nombreDisplay || apunteActivo.nombre);
+            dom.soloPdfCardDesc.innerHTML = `<strong style="color: #34d399;">📚 Archivos activos (${Number(apunteActivo.activosDocs) || 1}):</strong> ${safeDisplay} (${Number(apunteActivo.paginas) || 1} págs). Los juegos de la plataforma están usando este material para formular desafíos.`;
         } else {
             dom.soloPdfCardDesc.textContent = "Cargá uno o varios resúmenes en PDF de tu materia. La IA de Google Gemini extraerá los conceptos y adaptará las preguntas de todos tus juegos automáticamente.";
         }
@@ -13464,7 +13608,7 @@ function renderPreguntaIABolillero(data) {
         btn.className = "ia-option-btn";
         btn.innerHTML = `
             <span class="option-letter">${letras[idx]}</span>
-            <span class="option-text">${opcTexto}</span>
+            <span class="option-text">${escapeHtml(opcTexto)}</span>
         `;
 
         btn.addEventListener("click", () => {
@@ -13487,7 +13631,7 @@ function renderPreguntaIABolillero(data) {
                     <div style="font-weight: 700; margin-bottom: 0.35rem; color: ${esCorrecta ? '#34d399' : '#f87171'};">
                         ${esCorrecta ? '🎉 ¡Respuesta Correcta!' : '❌ Respuesta Incorrecta'}
                     </div>
-                    <div>${data.explicacion}</div>
+                    <div>${escapeHtml(data.explicacion)}</div>
                 `;
             }
         });
@@ -13626,17 +13770,12 @@ function registrarEventos() {
             mostrarToast("📑 Procesando material de estudio con PDF.js...");
             try {
                 const res = await procesarArchivoPDF(file);
-                apuntesEstado.global = res;
-                apuntesEstado.bolillero = res;
-                apuntesEstado.bomba = res;
-                apuntesEstado.impostor = res;
-                apuntesEstado.memotest = res;
-                await guardarApuntesEnStorage();
-                actualizarUIIndicadoresPDF();
+                await agregarDocumentosAColeccion([res]);
                 mostrarToast(`✅ Material conectado: ${res.nombre}. ¡Ya alimenta a todos tus juegos!`);
             } catch (err) {
                 mostrarToast("⚠️ " + err.message, "error");
             }
+            e.target.value = "";
         });
     }
 
@@ -13661,9 +13800,7 @@ function registrarEventos() {
 
     if (dueloRemoveBtn) {
         dueloRemoveBtn.addEventListener("click", async () => {
-            apuntesColeccion.length = 0;
-            await guardarColeccionEnStorage();
-            actualizarUIIndicadoresPDF();
+            await limpiarTodosLosApuntes();
             actualizarDropdownListasDuelo();
             mostrarToast("🗑️ Archivos PDF desvinculados de la sala.", "info");
         });
@@ -13677,13 +13814,7 @@ function registrarEventos() {
 
     if (dom.mainRemovePdfBtn) {
         dom.mainRemovePdfBtn.addEventListener("click", async () => {
-            apuntesEstado.global = null;
-            apuntesEstado.bolillero = null;
-            apuntesEstado.bomba = null;
-            apuntesEstado.impostor = null;
-            apuntesEstado.memotest = null;
-            await guardarApuntesEnStorage();
-            actualizarUIIndicadoresPDF();
+            await limpiarTodosLosApuntes();
             mostrarToast("🗑️ Material de estudio desvinculado.");
         });
     }
@@ -13697,14 +13828,12 @@ function registrarEventos() {
             mostrarToast("📑 Procesando apuntes PDF con PDF.js...");
             try {
                 const res = await procesarArchivoPDF(file);
-                apuntesEstado.bolillero = res;
-                if (!apuntesEstado.global) apuntesEstado.global = res;
-                guardarApuntesEnStorage();
-                actualizarUIIndicadoresPDF();
+                await agregarDocumentosAColeccion([res]);
                 mostrarToast(`✅ Apuntes cargados: ${res.nombre} (${res.paginas} págs)`);
             } catch (err) {
                 mostrarToast("⚠️ " + err.message, "error");
             }
+            e.target.value = "";
         });
     }
 
@@ -13726,25 +13855,19 @@ function registrarEventos() {
             try {
                 const res = await procesarArchivoPDF(file);
                 const juegoActual = juegosEduEstado.juegoActual || "global";
-                apuntesEstado[juegoActual] = res;
-                apuntesEstado.global = res;
-                guardarApuntesEnStorage();
-                actualizarUIIndicadoresPDF();
+                await agregarDocumentosAColeccion([res]);
                 mostrarToast(`✅ Apunte activo para ${juegoActual.toUpperCase()}: ${res.nombre}`);
                 enriquecerJuegoActualConIA();
             } catch (err) {
                 mostrarToast("⚠️ " + err.message, "error");
             }
+            e.target.value = "";
         });
     }
 
     if (dom.juegosRemovePdfBtn) {
-        dom.juegosRemovePdfBtn.addEventListener("click", () => {
-            const juegoActual = juegosEduEstado.juegoActual || "global";
-            apuntesEstado[juegoActual] = null;
-            apuntesEstado.global = null;
-            guardarApuntesEnStorage();
-            actualizarUIIndicadoresPDF();
+        dom.juegosRemovePdfBtn.addEventListener("click", async () => {
+            await limpiarTodosLosApuntes();
             mostrarToast("🗑️ Apuntes desvinculados.");
         });
     }
@@ -13769,13 +13892,12 @@ function registrarEventos() {
             mostrarToast("📑 Procesando material de estudio global...");
             try {
                 const res = await procesarArchivoPDF(file);
-                apuntesEstado.global = res;
-                await guardarApuntesEnStorage();
-                actualizarUIIndicadoresPDF();
+                await agregarDocumentosAColeccion([res]);
                 mostrarToast(`✅ Material global vinculado: ${res.nombre} (${res.paginas} págs)`);
             } catch (err) {
                 mostrarToast("⚠️ " + err.message, "error");
             }
+            e.target.value = "";
         });
     }
 
@@ -14952,20 +15074,7 @@ function iniciarAplicacion() {
         }, 5 * 60 * 1000);
     }
 
-    // Vincular botón manual de actualización rápida en el menú lateral
-    const btnForzarActualizar = document.getElementById("btnForzarActualizar");
-    if (btnForzarActualizar) {
-        btnForzarActualizar.addEventListener("click", () => {
-            forzarActualizacionCompleta(true);
-        });
-    }
-    const drawerVersionTag = document.getElementById("drawerVersionTag");
-    if (drawerVersionTag) {
-        drawerVersionTag.innerHTML = `⚡ Luibañez <strong style="color: var(--color-text);">v${APP_BUILD_VERSION}</strong>`;
-        drawerVersionTag.addEventListener("click", () => {
-            forzarActualizacionCompleta(true);
-        });
-    }
+    // El botón manual de actualización rápida y la etiqueta de versión ya se vinculan en inicializarDrawerMenu()
 
     // Vincular botones de Reglas y Cómo Jugar
     if (dom.bolilleroRulesBtn) {
@@ -15455,7 +15564,7 @@ function iniciarAplicacion() {
 // =========================================================
 // GESTOR DE VERSIONES Y ACTUALIZACIÓN AUTOMÁTICA
 // =========================================================
-const APP_BUILD_VERSION = "29.52";
+const APP_BUILD_VERSION = "29.53";
 
 async function forzarActualizacionCompleta(mostrarNotificacion = true) {
     const lastAttempt = parseInt(sessionStorage.getItem("last_auto_update_ts") || "0", 10);
@@ -17778,15 +17887,15 @@ function renderTablaFamaMultiverso(partidas, tabFiltro) {
             <td class="fama-col-player">
                 <div class="fama-player-cell">
                     <span class="fama-table-avatar">👤</span>
-                    <span class="fama-player-name">${j.nombre}</span>
+                    <span class="fama-player-name">${escapeHtml(j.nombre)}</span>
                 </div>
             </td>
-            <td><span class="fama-stat-gold">${j.victorias}</span></td>
-            <td><span class="fama-stat-subtle">${j.partidas - j.victorias}</span></td>
+            <td><span class="fama-stat-gold">${Number(j.victorias) || 0}</span></td>
+            <td><span class="fama-stat-subtle">${Number(j.partidas - j.victorias) || 0}</span></td>
             <td><span class="fama-stat-subtle">0</span></td>
-            <td><span class="fama-stat-score">${j.puntos}</span></td>
-            <td><span class="fama-streak-pill"><span class="streak-mini-flame">🔥</span> x${Math.min(5, j.victorias + 1)}</span></td>
-            <td>${tabFiltro}</td>
+            <td><span class="fama-stat-score">${Number(j.puntos) || 0}</span></td>
+            <td><span class="fama-streak-pill"><span class="streak-mini-flame">🔥</span> x${Math.min(5, (Number(j.victorias) || 0) + 1)}</span></td>
+            <td>${escapeHtml(tabFiltro)}</td>
         `;
         dom.famaLeaderboardBody.appendChild(tr);
     });
@@ -23115,29 +23224,112 @@ function conmutarSubtabCalculo(sub) {
 function evaluarExpresionSegura(expr, xVal) {
     try {
         if (!expr || typeof expr !== "string") return 0;
-        const clean = expr
-            .replace(/\s+/g, '')
-            .replace(/\^/g, '**')
-            .replace(/(\d)(x)/gi, '$1*$2')
-            .replace(/(x)(\d)/gi, '$1*$2')
-            .replace(/(\))(\()/g, '$1*$2')
-            .replace(/(\d)(\()/g, '$1*$2')
-            .replace(/(\))(x)/gi, '$1*$2')
-            .replace(/sin/gi, 'Math.sin')
-            .replace(/cos/gi, 'Math.cos')
-            .replace(/tan/gi, 'Math.tan')
-            .replace(/sqrt/gi, 'Math.sqrt')
-            .replace(/exp/gi, 'Math.exp')
-            .replace(/ln/gi, 'Math.log')
-            .replace(/log/gi, 'Math.log10')
-            .replace(/abs/gi, 'Math.abs')
-            .replace(/pi/gi, 'Math.PI')
-            .replace(/\be\b/gi, 'Math.E');
+        let s = expr
+            .toLowerCase()
+            .replace(/\s+/g, "")
+            .replace(/\*\*/g, "^")
+            .replace(/math\./g, "");
 
-        if (/[^0-9xX+\-*/().,MathPIE\s]/.test(clean)) return NaN;
-        const fn = new Function('x', `"use strict"; return (${clean});`);
-        const res = fn(xVal);
-        return typeof res === 'number' && !isNaN(res) && isFinite(res) ? res : NaN;
+        // Multiplicación implícita: 2x, 2(, )x, )(, x2, )2, 2sin, xsin
+        s = s
+            .replace(/(\d)(x|pi|e|sin|cos|tan|sqrt|exp|ln|log|abs|\()/g, "$1*$2")
+            .replace(/(x|pi|e|\))(\d|x|pi|e|sin|cos|tan|sqrt|exp|ln|log|abs|\()/g, "$1*$2");
+
+        let pos = 0;
+        const xNum = Number(xVal) || 0;
+
+        function parseExpression() {
+            let val = parseTerm();
+            while (pos < s.length && (s[pos] === "+" || s[pos] === "-")) {
+                const op = s[pos++];
+                const right = parseTerm();
+                val = op === "+" ? val + right : val - right;
+            }
+            return val;
+        }
+
+        function parseTerm() {
+            let val = parsePower();
+            while (pos < s.length && (s[pos] === "*" || s[pos] === "/")) {
+                const op = s[pos++];
+                const right = parsePower();
+                val = op === "*" ? val * right : val / right;
+            }
+            return val;
+        }
+
+        function parsePower() {
+            let base = parseUnary();
+            if (pos < s.length && s[pos] === "^") {
+                pos++;
+                const exp = parsePower();
+                base = Math.pow(base, exp);
+            }
+            return base;
+        }
+
+        function parseUnary() {
+            if (pos < s.length && s[pos] === "+") {
+                pos++;
+                return parseUnary();
+            }
+            if (pos < s.length && s[pos] === "-") {
+                pos++;
+                return -parseUnary();
+            }
+            return parsePrimary();
+        }
+
+        function parsePrimary() {
+            if (pos < s.length && s[pos] === "(") {
+                pos++;
+                const val = parseExpression();
+                if (s[pos] === ")") pos++;
+                return val;
+            }
+
+            // Funciones matemáticas soportadas
+            const funcs = ["sqrt", "sin", "cos", "tan", "exp", "log10", "log", "ln", "abs"];
+            for (const fn of funcs) {
+                if (s.startsWith(fn, pos)) {
+                    pos += fn.length;
+                    const arg = parsePrimary();
+                    if (fn === "sqrt") return Math.sqrt(arg);
+                    if (fn === "sin") return Math.sin(arg);
+                    if (fn === "cos") return Math.cos(arg);
+                    if (fn === "tan") return Math.tan(arg);
+                    if (fn === "exp") return Math.exp(arg);
+                    if (fn === "ln") return Math.log(arg);
+                    if (fn === "log" || fn === "log10") return Math.log10(arg);
+                    if (fn === "abs") return Math.abs(arg);
+                }
+            }
+
+            if (s.startsWith("pi", pos)) {
+                pos += 2;
+                return Math.PI;
+            }
+            if (s[pos] === "e") {
+                pos += 1;
+                return Math.E;
+            }
+            if (s[pos] === "x") {
+                pos += 1;
+                return xNum;
+            }
+
+            const numMatch = s.slice(pos).match(/^\d+(?:[.,]\d+)?/);
+            if (numMatch) {
+                pos += numMatch[0].length;
+                return parseFloat(numMatch[0].replace(",", "."));
+            }
+
+            return NaN;
+        }
+
+        const res = parseExpression();
+        if (pos < s.length) return NaN;
+        return typeof res === "number" && !isNaN(res) && isFinite(res) ? res : NaN;
     } catch {
         return NaN;
     }
@@ -23887,13 +24079,8 @@ async function procesarArchivoBolillero(fileOrFiles) {
 }
 
 async function limpiarArchivoBolillero() {
-    bolilleroSetupEstado.archivoTexto = "";
-    bolilleroSetupEstado.archivoNombre = "";
-    bolilleroSetupEstado.archivoPaginas = 0;
     if (dom.bolilleroPdfFileInput) dom.bolilleroPdfFileInput.value = "";
-    apuntesColeccion.length = 0;
-    await guardarColeccionEnStorage();
-    actualizarUIIndicadoresPDF();
+    await limpiarTodosLosApuntes();
     mostrarToast("🗑️ Todos los archivos desvinculados de la biblioteca.", "info");
 }
 
@@ -24082,13 +24269,8 @@ async function procesarArchivoBomba(fileOrFiles) {
 }
 
 async function limpiarArchivoBomba() {
-    bombaSetupEstado.archivoTexto = "";
-    bombaSetupEstado.archivoNombre = "";
-    bombaSetupEstado.archivoPaginas = 0;
     if (dom.bombaPdfFileInput) dom.bombaPdfFileInput.value = "";
-    apuntesColeccion.length = 0;
-    await guardarColeccionEnStorage();
-    actualizarUIIndicadoresPDF();
+    await limpiarTodosLosApuntes();
     mostrarToast("🗑️ Archivos desvinculados de la Bomba.", "info");
 }
 
@@ -24259,7 +24441,7 @@ function mostrarPistaLcdBomba(pistaTexto) {
         pistaBanner.style.cssText = "background: rgba(14, 165, 233, 0.18); border: 1.5px solid #38bdf8; border-radius: 8px; padding: 0.65rem 0.85rem; margin-top: 0.75rem; color: #e0f2fe; font-size: 0.82rem; line-height: 1.35; animation: fadeIn 0.3s ease;";
         dom.bombaLcdScreen?.prepend(pistaBanner);
     }
-    pistaBanner.innerHTML = `<strong>💡 PISTA TEÓRICA:</strong> ${pistaTexto}`;
+    pistaBanner.innerHTML = `<strong>💡 PISTA TEÓRICA:</strong> ${escapeHtml(pistaTexto)}`;
 }
 
 function usarComodinBombaCongelar() {
@@ -24395,13 +24577,8 @@ async function procesarArchivoImpostor(fileOrFiles) {
 }
 
 async function limpiarArchivoImpostor() {
-    impostorSetupEstado.archivoTexto = "";
-    impostorSetupEstado.archivoNombre = "";
-    impostorSetupEstado.archivoPaginas = 0;
     if (dom.impostorPdfFileInput) dom.impostorPdfFileInput.value = "";
-    apuntesColeccion.length = 0;
-    await guardarColeccionEnStorage();
-    actualizarUIIndicadoresPDF();
+    await limpiarTodosLosApuntes();
     mostrarToast("🗑️ Archivos desvinculados de Caza al Impostor.", "info");
 }
 
@@ -24567,13 +24744,8 @@ async function procesarArchivoMemotest(fileOrFiles) {
 }
 
 async function limpiarArchivoMemotest() {
-    memotestSetupEstado.archivoTexto = "";
-    memotestSetupEstado.archivoNombre = "";
-    memotestSetupEstado.archivoPaginas = 0;
     if (dom.memotestPdfFileInput) dom.memotestPdfFileInput.value = "";
-    apuntesColeccion.length = 0;
-    await guardarColeccionEnStorage();
-    actualizarUIIndicadoresPDF();
+    await limpiarTodosLosApuntes();
     mostrarToast("🗑️ Archivos desvinculados del Memotest.", "info");
 }
 
@@ -27180,7 +27352,14 @@ function importarCopiaDeSeguridadJson(archivo) {
             }
 
             if (data.perfilUsuario && typeof perfilUsuario !== "undefined") {
-                Object.assign(perfilUsuario, data.perfilUsuario);
+                asignarPropiedadesSeguras(perfilUsuario, data.perfilUsuario, [
+                    "id", "apodo", "username", "carrera", "avatar", "tipoAvatar",
+                    "fotoDataUrl", "victorias", "partidasJugadas", "puntosTotales",
+                    "maxRachaHistorica", "totalRobos", "insignias"
+                ]);
+                if (perfilUsuario.fotoDataUrl) {
+                    perfilUsuario.fotoDataUrl = sanitizarUrlSegura(perfilUsuario.fotoDataUrl);
+                }
                 guardarPerfilUsuario();
             }
 
@@ -27189,7 +27368,9 @@ function importarCopiaDeSeguridadJson(archivo) {
             }
 
             if (data.apuntes && typeof apuntesEstado !== "undefined") {
-                Object.assign(apuntesEstado, data.apuntes);
+                asignarPropiedadesSeguras(apuntesEstado, data.apuntes, [
+                    "global", "bolillero", "bomba", "impostor", "memotest"
+                ]);
                 try { localStorage.setItem("luibanez_apuntes_v1", JSON.stringify(apuntesEstado)); } catch(_) {}
             }
 
@@ -27272,10 +27453,13 @@ Cada elemento del array debe tener este formato:
 Material:
 ${textoBase}`;
 
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`;
         const res = await fetch(url, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+                "Content-Type": "application/json",
+                "x-goog-api-key": apiKey
+            },
             signal: controller.signal,
             body: JSON.stringify({
                 contents: [{ parts: [{ text: prompt }] }],
@@ -29528,9 +29712,8 @@ async function generarNuevoModeloConIA(materiaKey) {
     const directKey = typeof obtenerGeminiApiKey === "function" ? obtenerGeminiApiKey() : "";
     let nuevoModeloGenerado = null;
 
-    if (directKey) {
-        try {
-            const prompt = `Actúa como el profesor titular de la cátedra de "${mat.nombre}" en UADE (${mat.titular}).
+    try {
+        const prompt = `Actúa como el profesor titular de la cátedra de "${mat.nombre}" en UADE (${mat.titular}).
 Criterios de cátedra y exigencias:
 ${mat.criterioDocente}
 Conceptos y programa clave: ${mat.conceptosClave.join(', ')}.
@@ -29554,13 +29737,17 @@ Formato de respuesta: Devuelve ÚNICAMENTE un objeto JSON válido (sin markdown 
   ]
 }`;
 
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${directKey}`;
+        if (directKey) {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`;
             const res = await fetch(url, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json",
+                    "x-goog-api-key": directKey
+                },
                 body: JSON.stringify({
                     contents: [{ parts: [{ text: prompt }] }],
-                    generationConfig: { temperature: 0.5, maxOutputTokens: 2500 }
+                    generationConfig: { temperature: 0.5, maxOutputTokens: 2500, responseMimeType: "application/json" }
                 })
             });
             if (res.ok) {
@@ -29569,9 +29756,27 @@ Formato de respuesta: Devuelve ÚNICAMENTE un objeto JSON válido (sin markdown 
                 const cleanJson = rawText.replace(/\`\`\`json/gi, "").replace(/\`\`\`/g, "").trim();
                 nuevoModeloGenerado = JSON.parse(cleanJson);
             }
-        } catch (e) {
-            console.warn("Fallo al generar modelo con Gemini, usando motor pedagógico local:", e);
+        } else {
+            const res = await fetch("/api/gemini", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    materia: mat.nombre,
+                    tema: `${modo} - Modelo ${nuevoNum}`,
+                    tipoJuego: "modelo_examen_finanzas",
+                    prompt: prompt
+                })
+            });
+            if (res.ok) {
+                const jsonResp = await res.json();
+                const payload = jsonResp?.data || jsonResp;
+                if (payload && Array.isArray(payload.consignas)) {
+                    nuevoModeloGenerado = payload;
+                }
+            }
         }
+    } catch (e) {
+        console.warn("Fallo al generar modelo con Gemini, usando motor pedagógico local:", e);
     }
 
     // Fallback generador pedagógico procedimental diversificado según variantIndex
@@ -29928,13 +30133,16 @@ Genera una devolución exhaustiva y devuelve ÚNICAMENTE un JSON válido (sin fo
 
         const directKey = typeof obtenerGeminiApiKey === "function" ? obtenerGeminiApiKey() : "";
         if (directKey) {
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${directKey}`;
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`;
             const res = await fetch(url, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json",
+                    "x-goog-api-key": directKey
+                },
                 body: JSON.stringify({
                     contents: [{ parts: [{ text: promptCorreccion }] }],
-                    generationConfig: { temperature: 0.2, maxOutputTokens: 2048 }
+                    generationConfig: { temperature: 0.2, maxOutputTokens: 2048, responseMimeType: "application/json" }
                 })
             });
             if (res.ok) {
@@ -29949,14 +30157,16 @@ Genera una devolución exhaustiva y devuelve ÚNICAMENTE un JSON válido (sin fo
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     materia: mat.nombre,
+                    tema: examenData.titulo || "Examen Parcial",
                     tipoJuego: "evaluacion_examen_finanzas",
                     prompt: promptCorreccion
                 })
             });
             if (res.ok) {
                 const data = await res.json();
-                if (data && typeof data.puntaje100 === "number") {
-                    resultadoFinal = data;
+                const payload = data?.data || data;
+                if (payload && typeof payload.puntaje100 === "number") {
+                    resultadoFinal = payload;
                 }
             }
         }
@@ -30111,14 +30321,14 @@ function renderizarDevolucionDocente(feedbackPanel, res, matId, examenData) {
             correccionesHtml += `
                 <div style="background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; padding: 1rem; margin-bottom: 0.75rem;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
-                        <strong style="color: #60a5fa;">Punto ${cp.numero}</strong>
+                        <strong style="color: #60a5fa;">Punto ${escapeHtml(cp.numero)}</strong>
                         <span style="font-weight: 700; color: ${cp.puntajeObtenido >= cp.puntajeMax * 0.6 ? '#34d399' : '#f87171'};">
-                            ${cp.puntajeObtenido} / ${cp.puntajeMax} pts
+                            ${Number(cp.puntajeObtenido) || 0} / ${Number(cp.puntajeMax) || 0} pts
                         </span>
                     </div>
-                    <p style="margin: 0 0 0.4rem; color: #e2e8f0; font-size: 0.9rem;">${cp.comentario}</p>
+                    <p style="margin: 0 0 0.4rem; color: #e2e8f0; font-size: 0.9rem;">${escapeHtml(cp.comentario)}</p>
                     <div style="font-size: 0.82rem; color: #fbbf24; background: rgba(245,158,11,0.08); padding: 0.4rem 0.6rem; border-radius: 6px;">
-                        <strong>💡 Sugerencia de cátedra:</strong> ${cp.puntosAMejorar}
+                        <strong>💡 Sugerencia de cátedra:</strong> ${escapeHtml(cp.puntosAMejorar)}
                     </div>
                 </div>
             `;
@@ -30132,23 +30342,23 @@ function renderizarDevolucionDocente(feedbackPanel, res, matId, examenData) {
                     <span style="font-size: 2.2rem;">${estadoIcon}</span>
                     <div>
                         <h3 style="margin: 0; color: #f8fafc; font-size: 1.35rem;">Dictamen Docente de Cátedra</h3>
-                        <p style="margin: 0.2rem 0 0; color: #94a3b8; font-size: 0.85rem;">${examenData ? examenData.nombre : 'Examen'} · Escala Oficial UADE (60=4)</p>
+                        <p style="margin: 0.2rem 0 0; color: #94a3b8; font-size: 0.85rem;">${escapeHtml(examenData ? examenData.nombre : 'Examen')} · Escala Oficial UADE (60=4)</p>
                     </div>
                 </div>
                 <div style="text-align: right; background: rgba(15,23,42,0.8); padding: 0.6rem 1.25rem; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1);">
                     <div style="font-size: 0.75rem; text-transform: uppercase; color: #94a3b8; font-weight: 600;">Nota Oficial Webcampus</div>
                     <div style="font-size: 1.9rem; font-weight: 800; color: ${badgeColor}; line-height: 1.1;">
-                        ${res.notaUade} <span style="font-size: 0.9rem; font-weight: 500; color: #cbd5e1;">(${res.puntaje100}/100)</span>
+                        ${Number(res.notaUade) || 1} <span style="font-size: 0.9rem; font-weight: 500; color: #cbd5e1;">(${Number(res.puntaje100) || 0}/100)</span>
                     </div>
                     <span class="badge ${esAprobado ? 'badge--success' : 'badge--error'}" style="font-size: 0.75rem;">
-                        ${res.estado}
+                        ${escapeHtml(res.estado)}
                     </span>
                 </div>
             </div>
 
             <div style="background: rgba(15,23,42,0.5); padding: 1rem; border-radius: 10px; margin-bottom: 1.25rem; border-left: 4px solid ${badgeColor};">
                 <strong style="color: #f8fafc; display: block; margin-bottom: 0.3rem;">📋 Devolución General:</strong>
-                <p style="margin: 0; color: #cbd5e1; font-size: 0.92rem; line-height: 1.5;">${res.resumenGeneral}</p>
+                <p style="margin: 0; color: #cbd5e1; font-size: 0.92rem; line-height: 1.5;">${escapeHtml(res.resumenGeneral)}</p>
             </div>
 
             <div style="margin-bottom: 1.25rem;">
@@ -30156,7 +30366,7 @@ function renderizarDevolucionDocente(feedbackPanel, res, matId, examenData) {
                     ✍️ Evaluación de Redacción, Ortografía y Cohesión:
                 </strong>
                 <div style="background: rgba(15,23,42,0.4); padding: 0.75rem 1rem; border-radius: 8px; color: #94a3b8; font-size: 0.88rem;">
-                    ${res.ortografiaYCohesion}
+                    ${escapeHtml(res.ortografiaYCohesion)}
                 </div>
             </div>
 
@@ -30167,10 +30377,10 @@ function renderizarDevolucionDocente(feedbackPanel, res, matId, examenData) {
 
             <div style="background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.25); border-radius: 10px; padding: 1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
                 <div style="font-size: 0.88rem; color: #93c5fd;">
-                    <strong>🎯 Recomendación para el examen real:</strong> ${res.recomendacionEstudio}
+                    <strong>🎯 Recomendación para el examen real:</strong> ${escapeHtml(res.recomendacionEstudio)}
                 </div>
                 <div style="display: flex; gap: 0.5rem;">
-                    <button class="button button--secondary button--sm" type="button" onclick="limpiarYReintentarExamen('${matId}')">
+                    <button class="button button--secondary button--sm" type="button" onclick="limpiarYReintentarExamen('${escapeHtml(matId)}')">
                         🔄 Reintentar este Modelo
                     </button>
                     <button class="button button--ghost button--sm" type="button" onclick="window.scrollTo({ top: 0, behavior: 'smooth' })">
@@ -30294,50 +30504,3 @@ window.evaluarExamenMateria = evaluarExamenMateria;
 window.iniciarJuegoMateria = iniciarJuegoMateria;
 window.abrirPizarronNotasRapido = abrirPizarronNotasRapido;
 
-// Delegación y vinculación resiliente e inmediata de navegación para Licenciatura en Finanzas
-function inicializarNavegacionFinanzasGarantizada() {
-    const mapaVistas = {
-        navFinHubBtn: "fin-hub",
-        navFinFiloBtn: "fin-filosofia",
-        navFinSfiBtn: "fin-sfi",
-        navFinHemBtn: "fin-historia",
-        navFinEstadBtn: "fin-estadistica",
-        navFinContBtn: "fin-contabilidad",
-        drawerNavFinHub: "fin-hub",
-        drawerNavFinFilo: "fin-filosofia",
-        drawerNavFinSfi: "fin-sfi",
-        drawerNavFinHem: "fin-historia",
-        drawerNavFinEstad: "fin-estadistica",
-        drawerNavFinCont: "fin-contabilidad"
-    };
-
-    Object.entries(mapaVistas).forEach(([elemId, vistaId]) => {
-        const el = document.getElementById(elemId);
-        if (el) {
-            el.onclick = (e) => {
-                e.preventDefault();
-                cambiarVista(vistaId);
-                if (elemId.startsWith("drawer") && typeof cerrarDrawerMenu === "function") {
-                    cerrarDrawerMenu();
-                }
-            };
-        }
-    });
-
-    document.addEventListener("click", (e) => {
-        const targetBtn = e.target.closest("#navFinHubBtn, #navFinFiloBtn, #navFinSfiBtn, #navFinHemBtn, #navFinEstadBtn, #navFinContBtn, #drawerNavFinHub, #drawerNavFinFilo, #drawerNavFinSfi, #drawerNavFinHem, #drawerNavFinEstad, #drawerNavFinCont");
-        if (targetBtn && mapaVistas[targetBtn.id]) {
-            e.preventDefault();
-            cambiarVista(mapaVistas[targetBtn.id]);
-            if (targetBtn.id.startsWith("drawer") && typeof cerrarDrawerMenu === "function") {
-                cerrarDrawerMenu();
-            }
-        }
-    });
-}
-
-if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", inicializarNavegacionFinanzasGarantizada);
-} else {
-    inicializarNavegacionFinanzasGarantizada();
-}

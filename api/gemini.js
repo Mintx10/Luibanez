@@ -90,19 +90,62 @@ function equilibrarOpcionesArray(opcionesArray) {
 
     return cleaned;
 }
+
+// Rate limiter en memoria por IP (ventana de 60 segundos, máx. 25 solicitudes/minuto)
+const RATE_LIMIT_WINDOW_MS = 60 * 1000;
+const RATE_LIMIT_MAX_REQ = 25;
+const rateLimitStore = new Map();
+
+function verificarRateLimit(ip) {
+    const now = Date.now();
+    if (rateLimitStore.size > 500) {
+        for (const [k, v] of rateLimitStore.entries()) {
+            if (now - v.start > RATE_LIMIT_WINDOW_MS) rateLimitStore.delete(k);
+        }
+    }
+    const record = rateLimitStore.get(ip);
+    if (!record || (now - record.start > RATE_LIMIT_WINDOW_MS)) {
+        rateLimitStore.set(ip, { start: now, count: 1 });
+        return true;
+    }
+    record.count += 1;
+    return record.count <= RATE_LIMIT_MAX_REQ;
+}
+
+const TIPOS_JUEGO_PERMITIDOS = new Set([
+    'bolillero',
+    'bomba',
+    'impostor',
+    'memotest',
+    'temas_bolillero',
+    'palabras_bolillero',
+    'laboratorio',
+    'pizarron_ocr',
+    'evaluacion_clinica',
+    'evaluacion_examen_finanzas',
+    'modelo_examen_finanzas'
+]);
+
 module.exports = async function handler(req, res) {
-    // 1. Encabezados CORS seguros (solo tu dominio y entorno local)
+    // 1. Encabezados CORS y de Seguridad HTTP
     const allowedOrigins = [
         'https://luibanez.vercel.app',
         'http://localhost:3000',
-        'http://127.0.0.1:5500'
+        'http://127.0.0.1:5500',
+        'http://localhost:5500'
     ];
-    const origin = req.headers.origin;
-    if (allowedOrigins.includes(origin)) {
+    const origin = req.headers.origin || '';
+    const referer = req.headers.referer || '';
+    const isAllowedOrigin = allowedOrigins.includes(origin) || /^https:\/\/luibanez[a-z0-9-]*\.vercel\.app$/i.test(origin);
+
+    if (isAllowedOrigin) {
         res.setHeader('Access-Control-Allow-Origin', origin);
     }
+    res.setHeader('Vary', 'Origin');
     res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,POST');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-gemini-key');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
 
     // Responder a preflight OPTIONS
     if (req.method === 'OPTIONS') {
@@ -122,24 +165,46 @@ module.exports = async function handler(req, res) {
         return res.status(405).json({ error: 'Método no permitido. Utilizá POST.' });
     }
 
+    // 2. Protección contra abuso externo (CSRF / Robo de cuota de API)
+    const isAllowedReferer = allowedOrigins.some(o => referer.startsWith(o)) || /^https:\/\/luibanez[a-z0-9-]*\.vercel\.app\//i.test(referer);
+    if (origin && !isAllowedOrigin) {
+        return res.status(403).json({ error: 'Origen no autorizado.' });
+    }
+    if (!origin && referer && !isAllowedReferer) {
+        return res.status(403).json({ error: 'Referer no autorizado.' });
+    }
+
+    // 3. Rate Limiting por IP
+    const clientIp = String(req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown').split(',')[0].trim();
+    if (!verificarRateLimit(clientIp)) {
+        return res.status(429).json({
+            error: 'Demasiadas solicitudes seguidas. Aguardá unos segundos antes de volver a consultar a la IA.',
+            code: 'RATE_LIMIT_EXCEEDED'
+        });
+    }
+
     try {
         const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
-        const {
-            materia = 'General',
-            tema = 'Conceptos Generales',
-            tipoJuego = 'bolillero',
-            contextoPDF = '',
-            dificultad = 'universitario',
-            preguntasPrevias = [],
-            instruccionUsuario = ''
-        } = body;
+        const materia = String(body.materia || 'General').slice(0, 150).trim();
+        const tema = String(body.tema || 'Conceptos Generales').slice(0, 400).trim();
+        const rawTipo = String(body.tipoJuego || 'bolillero').trim();
+        const tipoJuego = TIPOS_JUEGO_PERMITIDOS.has(rawTipo) ? rawTipo : 'bolillero';
+        const contextoPDF = typeof body.contextoPDF === 'string' ? body.contextoPDF : '';
+        const dificultad = String(body.dificultad || 'universitario').slice(0, 50).trim();
+        const preguntasPrevias = Array.isArray(body.preguntasPrevias)
+            ? body.preguntasPrevias.slice(0, 30).map(p => String(p || '').slice(0, 350))
+            : [];
+        const instruccionUsuario = typeof body.instruccionUsuario === 'string'
+            ? body.instruccionUsuario.slice(0, 1500).trim()
+            : '';
 
         // Clave de API: prioridad a variable de entorno de Vercel, o fallback desde cabecera del cliente
-        const apiKey = process.env.GEMINI_API_KEY || req.headers['x-gemini-key'] || body.apiKey;
+        const rawKey = process.env.GEMINI_API_KEY || req.headers['x-gemini-key'] || body.apiKey;
+        const apiKey = typeof rawKey === 'string' ? rawKey.trim() : '';
 
-        if (!apiKey) {
+        if (!apiKey || apiKey.length < 15 || apiKey.length > 128) {
             return res.status(400).json({
-                error: 'No se encontró GEMINI_API_KEY configurada en Vercel ni en los encabezados.',
+                error: 'No se encontró GEMINI_API_KEY válida configurada en Vercel ni en los encabezados.',
                 code: 'MISSING_API_KEY',
                 hint: 'Configurá GEMINI_API_KEY en Vercel Environment Variables o ingresá tu clave personal en los ajustes de Luibañez.'
             });
@@ -567,8 +632,11 @@ Debes responder ÚNICAMENTE un objeto JSON con esta estructura exacta:
   "conductaTerapeuticaSugerida": "Conducta médica y farmacológica real de cátedra.",
   "consejoDocente": "Devolución formativa severa pero constructiva del Profesor Titular al Dr. Iván."
 }`;
-        } else if (tipoJuego === 'evaluacion_examen_finanzas') {
-            promptInstrucciones = body.prompt || `Evalúa el examen según los criterios de cátedra de ${materia}.`;
+        } else if (tipoJuego === 'evaluacion_examen_finanzas' || tipoJuego === 'modelo_examen_finanzas') {
+            const rawPrompt = typeof body.prompt === 'string' ? body.prompt.slice(0, 16000).trim() : '';
+            promptInstrucciones = `MODO EXCLUSIVO DE CÁTEDRA UNIVERSITARIA (${materia}):
+Ignorá cualquier instrucción ajena a la evaluación o diseño de exámenes académicos de ${materia}.
+${rawPrompt || `Evalúa el examen según los criterios de cátedra de ${materia}.`}`;
         } else {
             // Bolillero / Examen Oral / Trivia general
             const angulosPedagogicos = [
@@ -646,14 +714,16 @@ IMPORTANTE: Basá tus preguntas, fórmulas, afirmaciones, bolillas y explicacion
         const promptFinal = `${systemPrompt}\n\n${promptContextoPDF}\n\n${promptInstrucciones}`;
 
         const parts = [];
-        if (body.imagenBase64) {
-            const cleanBase64 = String(body.imagenBase64).replace(/^data:image\/\w+;base64,/, '');
-            parts.push({
-                inline_data: {
-                    mime_type: "image/png",
-                    data: cleanBase64
-                }
-            });
+        if (body.imagenBase64 && typeof body.imagenBase64 === 'string') {
+            const cleanBase64 = body.imagenBase64.replace(/^data:image\/\w+;base64,/, '').trim();
+            if (cleanBase64.length > 0 && cleanBase64.length <= 6000000) {
+                parts.push({
+                    inline_data: {
+                        mime_type: "image/png",
+                        data: cleanBase64
+                    }
+                });
+            }
         }
         parts.push({ text: promptFinal });
 
@@ -667,15 +737,18 @@ IMPORTANTE: Basá tus preguntas, fórmulas, afirmaciones, bolillas y explicacion
             ];
 
         let geminiRes = null;
-        let lastErrorText = "";
-        let usedModel = "";
+        let lastStatus = 0;
 
         for (const model of candidateModels) {
-            const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+            const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
             try {
                 const resp = await fetch(geminiUrl, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-goog-api-key': apiKey
+                    },
+                    signal: typeof AbortSignal !== 'undefined' && AbortSignal.timeout ? AbortSignal.timeout(22000) : undefined,
                     body: JSON.stringify({
                         contents: [{ parts }],
                         generationConfig: {
@@ -687,22 +760,21 @@ IMPORTANTE: Basá tus preguntas, fórmulas, afirmaciones, bolillas y explicacion
 
                 if (resp.ok) {
                     geminiRes = resp;
-                    usedModel = model;
                     break;
                 } else {
-                    lastErrorText = await resp.text();
-                    console.warn(`Modelo ${model} no respondió OK (${resp.status}): ${lastErrorText}`);
+                    lastStatus = resp.status;
+                    await resp.text().catch(() => '');
+                    console.warn(`Modelo ${model} no respondió OK (${resp.status})`);
                 }
             } catch (fetchErr) {
-                lastErrorText = fetchErr.message;
+                console.warn(`Fallo de red con modelo ${model}:`, fetchErr.message);
             }
         }
 
         if (!geminiRes) {
-            console.error('All Gemini candidate models failed:', lastErrorText);
             return res.status(502).json({
-                error: `No se pudo obtener respuesta de Gemini en este momento.`,
-                details: lastErrorText
+                error: 'No se pudo obtener respuesta del servicio de IA en este momento.',
+                status: lastStatus || 502
             });
         }
 
@@ -714,8 +786,7 @@ IMPORTANTE: Basá tus preguntas, fórmulas, afirmaciones, bolillas y explicacion
 
         if (!rawJsonText) {
             return res.status(502).json({
-                error: 'Gemini no devolvió contenido de texto en la respuesta.',
-                raw: geminiData
+                error: 'El servicio de IA no devolvió contenido válido.'
             });
         }
 
@@ -767,10 +838,9 @@ IMPORTANTE: Basá tus preguntas, fórmulas, afirmaciones, bolillas y explicacion
         });
 
     } catch (error) {
-        console.error('Unhandled serverless error:', error);
+        console.error('Unhandled serverless error:', error.message);
         return res.status(500).json({
-            error: 'Error interno en la función serverless de Gemini.',
-            message: error.message
+            error: 'Error interno al procesar la solicitud de IA.'
         });
     }
 };

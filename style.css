@@ -21,8 +21,10 @@
     --color-accent: #38bdf8;
     --font-heading: "Satoshi", "Inter", system-ui, -apple-system, sans-serif;
     --font-body: "Inter", system-ui, -apple-system, sans-serif;
+    --font-main: var(--font-body);
     --font-family: var(--font-body);
     --sidebar-width: 280px;
+    --radius-xs: .3rem;
     --radius-sm: .45rem;
     --radius-md: .75rem;
     --radius-lg: 14px;
@@ -31,6 +33,7 @@
     --shadow-subtle: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
     --shadow-sm: 0 4px 14px rgba(0, 0, 0, 0.25);
     --shadow-md: 0 10px 28px rgba(0, 0, 0, 0.35);
+    --shadow-lg: 0 20px 42px rgba(0, 0, 0, 0.48);
     --shadow-glow: 0 0 25px rgba(37, 99, 235, 0.25);
     --transition: .2s cubic-bezier(0.16, 1, 0.3, 1);
 
@@ -60,6 +63,7 @@
     --shadow-subtle: 0 2px 4px rgba(0, 0, 0, 0.04);
     --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.06);
     --shadow-md: 0 12px 28px rgba(0, 0, 0, 0.09);
+    --shadow-lg: 0 18px 36px rgba(0, 0, 0, 0.12);
     --shadow-glow: 0 0 20px rgba(37, 99, 235, 0.15);
 
     --nav-bg: rgba(255, 255, 255, 0.90);
