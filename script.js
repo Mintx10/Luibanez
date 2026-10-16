@@ -15602,7 +15602,7 @@ function iniciarAplicacion() {
 // =========================================================
 // GESTOR DE VERSIONES Y ACTUALIZACIÓN AUTOMÁTICA
 // =========================================================
-const APP_BUILD_VERSION = "29.55";
+const APP_BUILD_VERSION = "29.56";
 
 async function forzarActualizacionCompleta(mostrarNotificacion = true) {
     const lastAttempt = parseInt(sessionStorage.getItem("last_auto_update_ts") || "0", 10);
@@ -28408,12 +28408,12 @@ c) Si los Treasuries a 10 años rinden 4.2% anual y el bono argentino rinde 14.5
         titular: "Prof. Andrea Picardi",
         color: "#3b82f6",
         criterioDocente: `CRITERIO DE EVALUACIÓN DE CÁTEDRA (Prof. Andrea Picardi):
-- Estructura oficial del examen: 100 puntos totales distribuidos en dos bloques obligatorios.
+- Estructura oficial del examen: 100 puntos totales distribuidos en dos bloques obligatorios:
   • PARTE I (40 puntos): Elegir 1 de 2 grandes temas históricos estructurales. Exige desarrollo EXTENSO, PROFUNDO y MULTIDIMENSIONAL (articulando dimensiones política, económica, agraria, tecnológica, demográfica, social e institucional).
-  • PARTE II (60 puntos): Elegir y desarrollar 3 de 4 consignas de 20 puntos cada una.
+  • PARTE II (60 puntos): 3 consignas de desarrollo analítico de 20 puntos cada una (total 100 pts).
 - Se penaliza duramente el esquematismo, respuestas breves de 3 renglones o falta de contexto histórico.
-- Dominio riguroso de autores de cátedra: Cameron, Marichal, debate Dobb-Sweezy y Brenner sobre la transición del feudalismo al capitalismo.`,
-        conceptosClave: ["Transición Feudalismo-Capitalismo", "Crisis del Siglo XIV", "Debate Dobb-Sweezy-Brenner", "Revolución Agrícola", "Cercamientos (Enclosures)", "Revolución Gloriosa 1688", "Revolución Industrial Británica", "Industria Textil Algodonera", "Máquina de Vapor (Watt)", "Segunda Revolución Industrial", "Taylorismo y Fordismo", "Mercantilismo", "Metalismo", "Balanza Comercial Favorable", "Patrón Oro Internacional", "Reglas del Juego", "Mecanismo Precio-Flujo de Hume"],
+- Dominio riguroso de autores y doctrinas de cátedra: Cameron, Marichal, David Ricardo (teoría del valor, Corn Laws, ventajas comparativas), Karl Marx (crítica de la economía política, plusvalía), Friedrich List (proteccionismo nacional de industrias nacientes), Patrón Oro clásico (ajuste de Hume) y crisis estructurales (1929, Bretton Woods, 1973).`,
+        conceptosClave: ["Transición Feudalismo-Capitalismo", "Crisis del Siglo XIV", "Debate Dobb-Sweezy-Brenner", "Revolución Agrícola", "Cercamientos (Enclosures)", "Revolución Gloriosa 1688", "Revolución Industrial Británica", "Industria Textil Algodonera", "Máquina de Vapor (Watt)", "Segunda Revolución Industrial", "Taylorismo y Fordismo", "Mercantilismo", "Metalismo", "Balanza Comercial Favorable", "Patrón Oro Internacional", "Reglas del Juego", "Mecanismo Precio-Flujo de Hume", "David Ricardo y Ventajas Comparativas", "Debate Corn Laws y Librecambio", "Karl Marx y Plusvalía", "Friedrich List y Proteccionismo", "Imperialismo Decimonónico", "Tratado de Versalles e Hiperinflación 1923", "Gran Depresión de 1929", "New Deal y Glass-Steagall", "Acuerdos de Bretton Woods 1944", "Treinta Gloriosos", "Crisis del Petróleo 1973/79 y Estanflación", "Neoliberalismo y Consenso de Washington"],
         temarioPorModo: {
             "1er_parcial": {
                 nombre: "1er Parcial",
@@ -28422,8 +28422,22 @@ c) Si los Treasuries a 10 años rinden 4.2% anual y el bono argentino rinde 14.5
             },
             "2do_parcial": {
                 nombre: "2do Parcial",
-                unidades: "Unidades 5 a 8 (El Siglo XX: Guerras, Gran Depresión, Bretton Woods, Treinta Gloriosos y Crisis del Petróleo)",
-                conceptos: ["Primera Guerra Mundial y Consecuencias Económicas de la Paz (Tratado de Versalles, crítica de Keynes, reparaciones punitivas a Alemania e hiperinflación de 1923)", "La Gran Depresión de 1929 (Crash de Wall Street, deflación, quiebras bancarias en cadena, colapso del crédito, proteccionismo arancelario Smoot-Hawley)", "El New Deal de Roosevelt (Regulación financiera Ley Glass-Steagall, creación de la SEC, obras públicas, seguro de depósitos FDIC y política keynesiana)", "Segunda Guerra Mundial y Economía de Planificación Bélica", "Orden Económico de Posguerra y Acuerdos de Bretton Woods (1944: Creación del FMI, Banco Mundial, GATT, patrón cambio-oro con ancla en el dólar a $35 la onza)", "El Plan Marshall y la Reconstrucción Europea (integración productiva y contención de la Guerra Fría)", "Los 'Treinta Gloriosos' (1945-1973: Edad de Oro del Capitalismo, estado de bienestar, productividad fordista y pleno empleo en las economías occidentales)", "Crisis del Petróleo de 1973 y 1979 (Shocks de oferta de la OPEP, fin unilateral de la convertibilidad oro por Nixon en 1971, estanflación y crisis del paradigma keynesiano)", "Ascenso del Monetarismo, Neoliberalismo y Globalización (Reagan, Thatcher y Consenso de Washington)"]
+                unidades: "Unidad II (Segunda Rev. Industrial, Doctrinas Económicas e Imperialismo) + Siglo XX (Guerras Mundiales, Gran Depresión, Bretton Woods, Treinta Gloriosos y Neoliberalismo)",
+                conceptos: [
+                    "Segunda Revolución Industrial (1850-1914): Avances tecnológicos (acero Bessemer/Siemens, química pesada, electricidad, petróleo, motor de combustión), profundización fabril, capitalismo monopólico-financiero (trusts, cárteles, banca mixta), inversiones y migraciones masivas",
+                    "Consolidación de la División Internacional del Trabajo: Centro industrializado (Gran Bretaña, Alemania, EE.UU.) vs Periferia agroexportadora proveedora de alimentos y materias primas",
+                    "Liberalismo Económico - David Ricardo: Teoría del valor, renta diferencial de la tierra, ley de rendimientos decrecientes, ventajas comparativas, debate y derogación de las Corn Laws de 1846 e instauración del librecambio británico",
+                    "Socialismo Científico - Karl Marx: Crítica de la economía política, teoría del valor-trabajo, plusvalía absoluta y relativa, explotación laboral y contradicciones estructurales del modo de producción capitalista",
+                    "Debate Librecambio vs Proteccionismo - Friedrich List: 'Sistema Nacional de Economía Política', crítica al cosmopolitismo ricardiano ('patear la escalera'), proteccionismo educador para industrias nacientes y Zollverein alemán",
+                    "Vigencia del Patrón Oro Clásico (1870-1914): Libre convertibilidad, paridades fijas respaldadas en metal, mecanismo de ajuste precio-flujo de especie de David Hume, hegemonía de la libra esterlina y Banco de Inglaterra",
+                    "El Imperialismo y camino a la Primera Guerra Mundial: Reparto colonial de África y Asia, búsqueda de materias primas y mercados cautivos, exportación de excedentes de capital (Hobson, Lenin) y tensiones interimperialistas",
+                    "Primera Guerra Mundial y Consecuencias Económicas de la Paz: Tratado de Versalles, crítica de Keynes, reparaciones punitivas a Alemania, deuda interaliada e hiperinflación de 1923 (Rentenmark y Plan Dawes)",
+                    "La Gran Depresión de 1929: Causas estructurales, crash bursátil de Wall Street, espiral deflacionaria, corridas bancarias en cadena, arancel proteccionista Smoot-Hawley (1930) y propagación mundial a la periferia",
+                    "El New Deal de Roosevelt: Regulación financiera y bancaria (Ley Glass-Steagall, seguro de depósitos FDIC, supervisión de la SEC), obras públicas (TVA, WPA) y políticas de estímulo a la demanda agregada",
+                    "Acuerdos de Bretton Woods (1944) y Posguerra: Conferencia monetaria (Plan Keynes vs Plan White), creación del FMI y Banco Mundial, patrón de cambio oro-dólar ($35 la onza) y Plan Marshall para la reconstrucción europea",
+                    "Los 'Treinta Gloriosos' (1945-1973): Edad de Oro del Capitalismo, concertación social capital-trabajo, consolidación del Estado de Bienestar, productividad fordista y pleno empleo en economías occidentales",
+                    "Crisis Petroleras de 1973 y 1979, Estanflación y Neoliberalismo: Ruptura unilateral de convertibilidad oro por Nixon en 1971, shocks de precios de la OPEP, crisis del paradigma keynesiano, estanflación y ascenso del Monetarismo y Neoliberalismo (Reagan, Thatcher y Consenso de Washington)"
+                ]
             },
             "final": {
                 nombre: "Examen Final Integral",
@@ -28542,29 +28556,95 @@ Analice la relación asimétrica entre los países centrales industrializados (G
                 modelos: [
                     {
                         id: "hem_p2_m1",
-                        nombre: "Modelo 1 (Crack del 29, Posguerra y Petróleo)",
-                        badge: "Oficial",
-                        titulo: "2do Parcial · Modelo 1 (El Siglo XX Corto)",
-                        subtitulo: "De la Primera Guerra Mundial a las Crisis del Petróleo y la Globalización",
+                        nombre: "Modelo 1 (Oficial Andrea Picardi: Unidad II + Siglo XX)",
+                        badge: "Examen Real",
+                        titulo: "2do Parcial · Modelo 1 (Cátedra Andrea Picardi)",
+                        subtitulo: "100 Puntos Oficiales · Bloque I (40 pts) + Bloque II (3 consignas de 20 pts)",
                         duracion: "120 min · 60 pts para aprobar",
                         consignas: [
                             {
                                 numero: 1,
-                                puntos: 35,
-                                pregunta: "La Gran Depresión de 1929: Causas estructurales, propagación deflacionaria internacional, arancel Smoot-Hawley y el New Deal de Roosevelt.",
-                                placeholder: "Desarrolle la crisis del 29 y el New Deal..."
+                                puntos: 40,
+                                pregunta: `PARTE I (40 PUNTOS): TEMA ESTRUCTURAL A ELECCIÓN
+Elige y desarrolla en profundidad UNA (1) de las siguientes dos opciones con enfoque multidimensional (articulando dimensiones política, económica, agraria, tecnológica, demográfica, social e institucional):
+
+• OPCIÓN A: LA SEGUNDA REVOLUCIÓN INDUSTRIAL (1850-1914), EL CAPITALISMO CORPORATIVO Y EL IMPERIALISMO.
+1) Los sectores dinámicos y matrices energéticas (acero Bessemer/Siemens, química pesada, electricidad, petróleo y motor de combustión interna) frente a la Primera Revolución Industrial.
+2) La gran empresa moderna y la concentración empresarial: cárteles en Alemania, trusts en EE.UU. y el rol articulador de la banca mixta de inversión (Grossbanken).
+3) El afianzamiento de la División Internacional del Trabajo: flujos de capital británicos, migraciones masivas europeas y el rol de las economías periféricas proveedoras de materias primas.
+4) Las teorías del Imperialismo (Hobson, Lenin) y el reparto colonial de África y Asia como válvula de escape a los excedentes de producción y capital, antesala de la Primera Guerra Mundial.
+
+• OPCIÓN B: LA GRAN DEPRESIÓN DE 1929 Y LA RUPTURA DEL MODELO LIBERAL DE ENTREGUERRAS.
+1) Las causas estructurales en la economía norteamericana: sobreproducción industrial y agrícola, endeudamiento, especulación bursátil a crédito y fragilidad bancaria.
+2) La dinámica de la crisis: el Crack de Wall Street de octubre de 1929, la espiral deflacionaria, las quiebras bancarias en cadena y la contracción de la oferta monetaria.
+3) Los mecanismos de propagación internacional: corte del crédito externo estadounidense, colapso del comercio mundial y el arancel proteccionista Smoot-Hawley de 1930.
+4) La respuesta del New Deal de Roosevelt: regulación financiera (Ley Glass-Steagall, seguro FDIC, SEC), programas de empleo y obras públicas (TVA, WPA) y el cambio en la doctrina de intervención estatal.`,
+                                placeholder: "Indique la opción elegida (OPCIÓN A u OPCIÓN B) y desarrolle su análisis multidimensional exhaustivo..."
                             },
                             {
                                 numero: 2,
-                                puntos: 35,
-                                pregunta: "El Orden Económico de Posguerra (Bretton Woods 1944): FMI, Banco Mundial, patrón cambio oro-dólar y los Treinta Años Dorados del estado de bienestar.",
-                                placeholder: "Desarrolle Bretton Woods y el auge económico keynesiano..."
+                                puntos: 20,
+                                pregunta: "PARTE II - CONSIGNA 1: DEBATES DOCTRINARIOS DEL SIGLO XIX: LIBERALISMO RICARDIANO Y CRÍTICA MARXISTA. Confronte detalladamente: a) La teoría ricardiana de las ventajas comparativas, la renta diferencial de la tierra y la derogación de las Corn Laws de 1846 en Inglaterra; b) La crítica de Karl Marx a la economía política clásica: el concepto de plusvalía (absoluta y relativa), la explotación laboral y las contradicciones estructurales de la acumulación capitalista.",
+                                placeholder: "Confronte a David Ricardo (Corn Laws, ventajas comparativas) y Karl Marx (plusvalía, contradicciones del capital)..."
                             },
                             {
                                 numero: 3,
-                                puntos: 30,
-                                pregunta: "Las Crisis del Petróleo de 1973 y 1979: El shock petrolero, estanflación, caída de Bretton Woods y el giro neoliberal con Thatcher y Reagan.",
-                                placeholder: "Analice la estanflación y el cambio de paradigma de los años 70..."
+                                puntos: 20,
+                                pregunta: "PARTE II - CONSIGNA 2: EL PATRÓN ORO CLÁSICO (1870-1914) Y EL COLAPSO MONETARIO DE ENTREGUERRAS. Explique los tres pilares del Patrón Oro Clásico (paridades fijas, convertibilidad y libre flujo de metal) y el mecanismo de ajuste precio-flujo de David Hume. Luego detalle por qué se quebró en 1914 con la Primera Guerra Mundial y cómo las reparaciones del Tratado de Versalles desembocaron en la hiperinflación alemana de 1923 (analice el papel del Rentenmark y el Plan Dawes).",
+                                placeholder: "Desarrolle el funcionamiento del patrón oro, el mecanismo de Hume y la hiperinflación alemana de 1923..."
+                            },
+                            {
+                                numero: 4,
+                                puntos: 20,
+                                pregunta: "PARTE II - CONSIGNA 3: LOS ACUERDOS DE BRETTON WOODS (1944) Y LA CRISIS DE LOS AÑOS SETENTA. Analice el orden monetario internacional acordado en Bretton Woods (FMI, Banco Mundial, patrón de cambio oro-dólar a USD 35 la onza) y el auge de los 'Treinta Gloriosos' (1945-1973). Luego explique las causas estructurales de su colapso: el fin unilateral de la convertibilidad oro por Richard Nixon en 1971, los shocks petroleros de la OPEP (1973/79) y el fenómeno inédito de la estanflación.",
+                                placeholder: "Analice la arquitectura de Bretton Woods, los Treinta Gloriosos y la ruptura estanflacionaria de los 70..."
+                            }
+                        ]
+                    },
+                    {
+                        id: "hem_p2_m2",
+                        nombre: "Modelo 2 (Cátedra Andrea Picardi: Proteccionismo, Guerras y Posguerra)",
+                        badge: "Variante B",
+                        titulo: "2do Parcial · Modelo 2 (Cátedra Andrea Picardi)",
+                        subtitulo: "100 Puntos Oficiales · Bloque I (40 pts) + Bloque II (3 consignas de 20 pts)",
+                        duracion: "120 min · 60 pts para aprobar",
+                        consignas: [
+                            {
+                                numero: 1,
+                                puntos: 40,
+                                pregunta: `PARTE I (40 PUNTOS): TEMA ESTRUCTURAL A ELECCIÓN
+Elige y desarrolla en profundidad UNA (1) de las siguientes dos opciones con articulación multidimensional:
+
+• OPCIÓN A: REGÍMENES MONETARIOS Y COMERCIO GLOBAL: DEL PATRÓN ORO CLÁSICO A BRETTON WOODS.
+1) El Patrón Oro Internacional (1870-1914): el rol de la City de Londres y la libra esterlina como ancla, disciplina monetaria y mecanismo de Hume.
+2) El desorden monetario de entreguerras: abandono de la convertibilidad en la Gran Guerra, hiperinflación alemana de 1923, devaluaciones competitivas y bloques comerciales cerrados.
+3) Los acuerdos de Bretton Woods de 1944: el debate Keynes (Bancor) vs White (Dólar), paridades fijas ajustables con el dólar vinculado al oro ($35/oz), FMI y Banco Mundial.
+4) La crisis y disolución del régimen en 1971: el Dilema de Triffin, la expansión de los eurodólares, la sangría de reservas estadounidenses y el fin de la convertibilidad decretado por Nixon.
+
+• OPCIÓN B: EL ROL DEL ESTADO EN LA ECONOMÍA MUNDIAL: DE LA SEGUNDA INDUSTRIALIZACIÓN AL ESTADO DE BIENESTAR Y EL NEOLIBERALISMO.
+1) El capitalismo corporativo y el estado en la Segunda Revolución Industrial: proteccionismo arancelario (Friedrich List en Alemania, aranceles en EE.UU.), compras estatales, ferrocarriles y leyes antimonopolio (Sherman Act de 1890).
+2) El quiebre del liberalismo tras el Crack del 29: el intervencionismo estatal del New Deal (Roosevelt) y la justificación keynesiana del sostenimiento de la demanda efectiva.
+3) La consolidación del Estado de Bienestar en los 'Treinta Gloriosos' (1945-1973): pacto social capital-trabajo, servicios públicos universales y pleno empleo.
+4) La crisis fiscal y la ofensiva neoliberal (décadas de 1970 y 1980): estanflación, agotamiento del modelo fordista, desregulación financiera, privatizaciones y el Consenso de Washington.`,
+                                placeholder: "Indique la opción elegida (OPCIÓN A u OPCIÓN B) y desarrolle su análisis multidimensional..."
+                            },
+                            {
+                                numero: 2,
+                                puntos: 20,
+                                pregunta: "PARTE II - CONSIGNA 1: FRIEDRICH LIST Y EL PROTECCIONISMO DE INDUSTRIAS NACIENTES. Analice los postulados centrales de Friedrich List en su 'Sistema Nacional de Economía Política' (1841). Explique por qué criticaba el librecambio ricardiano acusándolo de 'patear la escalera', cuál era su doctrina sobre la protección arancelaria transitoria a las industrias nacientes y cómo influyeron sus ideas en el Zollverein y el despegue manufacturero de Alemania.",
+                                placeholder: "Desarrolle la doctrina de Friedrich List, la crítica al librecambio y el Zollverein..."
+                            },
+                            {
+                                numero: 3,
+                                puntos: 20,
+                                pregunta: "PARTE II - CONSIGNA 2: LA CRISIS DE 1929: TRANSMISIÓN INTERNACIONAL Y REPERCUSIONES EN AMÉRICA LATINA. Analice los canales de transmisión del colapso económico de 1929 hacia los países exportadores de materias primas y alimentos (periferia agroexportadora). Explique el desplome de los términos de intercambio, el cese de los flujos de crédito exterior, la cesación de pagos de la deuda soberana y el surgimiento del modelo de Industrialización por Sustitución de Importaciones (ISI).",
+                                placeholder: "Analice la transmisión global de la crisis de 1929 y el surgimiento del modelo ISI en América Latina..."
+                            },
+                            {
+                                numero: 4,
+                                puntos: 20,
+                                pregunta: "PARTE II - CONSIGNA 3: EL PLAN MARSHALL Y LA EDAD DE ORO DEL CAPITALISMO (1945-1973). Analice los objetivos geopolíticos y económicos del Plan Marshall (1948) para la reconstrucción de Europa Occidental y la contención en el marco de la Guerra Fría. Luego describa los pilares productivos e institucionales de los 'Treinta Gloriosos': organización científica del trabajo (taylorismo y fordismo masivo), aumentos salariales indexados a la productividad y expansión de los derechos sociales.",
+                                placeholder: "Desarrolle el Plan Marshall, la reconstrucción europea y el modelo socio-productivo de los Treinta Gloriosos..."
                             }
                         ]
                     }
@@ -29853,16 +29933,44 @@ async function generarNuevoModeloConIA(materiaKey, modoForzado = null) {
 
     let reglasExclusivas = "";
     if (modo === "2do_parcial") {
-        const conceptos1er = (mat.temarioPorModo && mat.temarioPorModo["1er_parcial"] && Array.isArray(mat.temarioPorModo["1er_parcial"].conceptos)) 
-            ? mat.temarioPorModo["1er_parcial"].conceptos.join("; ") 
-            : "";
-        reglasExclusivas = `
+        if (matId === "historia") {
+            reglasExclusivas = `
+ATENCIÓN - REGLA OBLIGATORIA DE CÁTEDRA PARA EL 2DO PARCIAL DE HISTORIA ECONÓMICA MUNDIAL (Prof. Andrea Picardi):
+En este 2do Parcial, el cronograma oficial de evaluación INCLUYE OBLIGATORIAMENTE tanto la UNIDAD II (Segunda Revolución Industrial, Doctrinas Económicas e Imperialismo) como el SIGLO XX completo.
+DEBES INCLUIR EQUILIBRADAMENTE CONSIGNAS DE AMBOS BLOQUES TEMÁTICOS:
+1) BLOQUE UNIDAD II (1850-1914):
+   - Avances técnicos y energéticos de la Segunda Revolución Industrial (acero, química, electricidad, petróleo).
+   - Capitalismo monopólico-financiero: trusts, cárteles y banca mixta de inversión (Grossbanken).
+   - Afianzamiento de la División Internacional del Trabajo, flujos de inversión y migraciones masivas europeas.
+   - Doctrinas del Siglo XIX: David Ricardo (teoría del valor, renta de la tierra, ventajas comparativas y debate/derogación de las Corn Laws de 1846); Karl Marx (crítica de la economía política, plusvalía absoluta y relativa, contradicciones del capitalismo); Friedrich List (proteccionismo nacional para industrias nacientes frente al librecambio cosmopolita).
+   - Patrón Oro Clásico (1870-1914: paridades fijas, libre convertibilidad, mecanismo de ajuste precio-flujo de David Hume y hegemonía de la libra esterlina).
+   - El Imperialismo decimonónico: reparto colonial, exportación de excedentes de capital (Hobson, Lenin) y tensiones interimperialistas.
+2) BLOQUE SIGLO XX:
+   - Primera Guerra Mundial, consecuencias económicas del Tratado de Versalles, reparaciones de guerra e hiperinflación alemana de 1923 (Rentenmark y Plan Dawes).
+   - La Gran Depresión de 1929: causas estructurales, colapso de Wall Street, quiebras bancarias en cadena, deflación, arancel Smoot-Hawley y repercusión en la periferia.
+   - El New Deal de Roosevelt: regulación bancaria (Glass-Steagall, FDIC, SEC), obras públicas y políticas keynesianas.
+   - Acuerdos de Bretton Woods (1944): debate Keynes vs White, FMI, Banco Mundial, patrón de cambio oro-dólar ($35/oz) y Plan Marshall.
+   - Los 'Treinta Gloriosos' (1945-1973): estado de bienestar, auge fordista y pleno empleo.
+   - Crisis del Petróleo de 1973 y 1979, estanflación, quiebre unilateral de Bretton Woods (1971) y ascenso del Neoliberalismo y Monetarismo (Reagan, Thatcher).
+
+ESTRUCTURA EXACTA REQUERIDA DE 100 PUNTOS (Cátedra Andrea Picardi):
+- Consigna 1 (40 puntos): PARTE I: TEMA ESTRUCTURAL A ELECCIÓN. Proponer 2 opciones completas (Opción A y Opción B) de desarrollo extenso y multidimensional, donde al menos una opción aborde Unidad II (Segunda Rev Industrial / Imperialismo / Doctrinas) o Siglo XX (Crack 29 / Regímenes Monetarios).
+- Consigna 2 (20 puntos): PARTE II - Consigna analítica sobre Unidad II (Doctrinas: Ricardo, Marx o List; o Patrón Oro Clásico; o Segunda Rev Industrial).
+- Consigna 3 (20 puntos): PARTE II - Consigna analítica sobre Entreguerras / Gran Depresión / New Deal o Primera Guerra y Versalles.
+- Consigna 4 (20 puntos): PARTE II - Consigna analítica sobre Posguerra (Bretton Woods, Plan Marshall, Treinta Gloriosos o Crisis Petroleras y Neoliberalismo).
+Total: exactamente 4 consignas que suman 40 + 20 + 20 + 20 = 100 puntos.`;
+        } else {
+            const conceptos1er = (mat.temarioPorModo && mat.temarioPorModo["1er_parcial"] && Array.isArray(mat.temarioPorModo["1er_parcial"].conceptos)) 
+                ? mat.temarioPorModo["1er_parcial"].conceptos.join("; ") 
+                : "";
+            reglasExclusivas = `
 ATENCIÓN - REGLA CRÍTICA DE EXCLUSIÓN TEMÁTICA (SEGUNDO PARCIAL):
 Este examen evalúa EXCLUSIVAMENTE los contenidos del SEGUNDO PARCIAL (${temarioModo ? temarioModo.unidades : 'Segunda Mitad del Programa'}).
 TEMARIO OFICIAL DEL 2DO PARCIAL: ${conceptosModo.join('; ')}.
 ESTÁ TERMINANTEMENTE PROHIBIDO incluir consignas, autores o problemáticas del PRIMER PARCIAL.
 EN PARTICULAR, NO INCLUYAS NADA DE: ${conceptos1er}.
 Todas y cada una de las consignas deben pertenecer al temario del 2DO PARCIAL sin mezclar temas previos.`;
+        }
     } else if (modo === "1er_parcial") {
         reglasExclusivas = `
 ATENCIÓN - ENFOQUE EXCLUSIVO DEL PRIMER PARCIAL:
@@ -30857,81 +30965,105 @@ function crearModeloIneditoProcedural(matId, modo, num, variantIndex = 0) {
             [
                 {
                     "numero": 1,
-                    "puntos": 35,
-                    "pregunta": "La Gran Depresión de 1929 y el Colapso del Comercio Mundial: Analice las causas estructurales del colapso de Wall Street, la deflación de precios, las quiebras bancarias en cadena en EE.UU., la contracción monetaria y la aprobación del arancel proteccionista Smoot-Hawley.",
-                    "placeholder": "Desarrolle las causas y mecanismos de transmisión de la crisis de 1929..."
+                    "puntos": 40,
+                    "pregunta": "PARTE I (40 PUNTOS): TEMA ESTRUCTURAL A ELECCIÓN\nElige y desarrolla en profundidad UNA (1) de las siguientes dos opciones con enfoque multidimensional:\n\n• OPCIÓN A: LA SEGUNDA REVOLUCIÓN INDUSTRIAL (1850-1914), EL CAPITALISMO CORPORATIVO Y EL IMPERIALISMO.\n1) Nuevos sectores dinámicos y fuentes de energía: acero Bessemer/Siemens, electricidad, química pesada y motores de combustión interna vs la Primera Revolución Industrial.\n2) Concentración empresarial y financiamiento: cárteles en Alemania, trusts en EE.UU. y el rol articulador de la banca mixta de inversión (Grossbanken).\n3) Afianzamiento de la División Internacional del Trabajo: flujos de capital británicos, migraciones masivas europeas y economías primario-exportadoras periféricas.\n4) Las teorías del Imperialismo (Hobson, Lenin) y el reparto colonial de África y Asia como válvula de escape a excedentes de capital, antesala de la Primera Guerra Mundial.\n\n• OPCIÓN B: LA GRAN DEPRESIÓN DE 1929 Y LA CRISIS DEL CAPITALISMO LIBERAL.\n1) Causas estructurales en EE.UU.: sobreproducción agrícola e industrial, burbuja especulativa bursátil y fragilidad del sistema bancario fraccionario.\n2) La dinámica de la crisis: el Crack de Wall Street de 1929, la espiral deflacionaria, las corridas bancarias en cadena y la contracción de la oferta monetaria.\n3) Transmisión global: corte de préstamos externos, colapso del comercio y el arancel proteccionista Smoot-Hawley (1930).\n4) Las reformas del New Deal: Ley Glass-Steagall, seguro de depósitos FDIC, supervisión de la SEC y gasto público reactivador (TVA, WPA).",
+                    "placeholder": "Indique la opción elegida (OPCIÓN A u OPCIÓN B) y desarrolle su análisis multidimensional exhaustivo..."
                 },
                 {
                     "numero": 2,
-                    "puntos": 35,
-                    "pregunta": "El New Deal de Roosevelt y los Acuerdos de Bretton Woods (1944): Describa las reformas bancarias del New Deal (Ley Glass-Steagall, creación de la SEC y seguro de depósitos FDIC). Luego explique los pilares de Bretton Woods: FMI, Banco Mundial y el patrón cambio-oro anclado al dólar a USD 35 la onza.",
-                    "placeholder": "Desarrolle el New Deal y la arquitectura monetaria de Bretton Woods..."
+                    "puntos": 20,
+                    "pregunta": "PARTE II - CONSIGNA 1: DEBATES DOCTRINARIOS DEL SIGLO XIX: DAVID RICARDO Y KARL MARX. Confronte la teoría de las ventajas comparativas y la renta diferencial de la tierra de David Ricardo (en el marco del debate y derogación de las Corn Laws de 1846 en Inglaterra) con la crítica de la economía política de Karl Marx (el concepto de plusvalía absoluta y relativa, la explotación laboral y las contradicciones intrínsecas de la acumulación capitalista).",
+                    "placeholder": "Confronte a David Ricardo (Corn Laws, ventajas comparativas) y Karl Marx (plusvalía, contradicciones del capital)..."
                 },
                 {
                     "numero": 3,
-                    "puntos": 30,
-                    "pregunta": "Las Crisis del Petróleo de 1973 y 1979 y la Estanflación: Explique el embargo de la OPEP, el shock de oferta energética y el fin unilateral de la convertibilidad oro por Richard Nixon en 1971. ¿Por qué la estanflación (inflación con desempleo) invalidó el paradigma keynesiano tradicional y dio paso a las políticas monetaristas de Reagan y Thatcher?",
-                    "placeholder": "Analice la crisis petrolera, la estanflación y el cambio de paradigma..."
+                    "puntos": 20,
+                    "pregunta": "PARTE II - CONSIGNA 2: EL PATRÓN ORO CLÁSICO (1870-1914) Y EL DESORDEN MONETARIO DE ENTREGUERRAS. Explique el funcionamiento del Patrón Oro Clásico (paridades fijas, convertibilidad y el mecanismo de ajuste precio-flujo de David Hume). Explique por qué colapsó en 1914 con la Primera Guerra Mundial y cómo las reparaciones de Versalles desembocaron en la hiperinflación alemana de 1923.",
+                    "placeholder": "Desarrolle el funcionamiento del patrón oro clásico, el ajuste de Hume y la crisis de posguerra..."
+                },
+                {
+                    "numero": 4,
+                    "puntos": 20,
+                    "pregunta": "PARTE II - CONSIGNA 3: LOS ACUERDOS DE BRETTON WOODS (1944) Y LOS TREINTA GLORIOSOS. Analice la arquitectura monetaria acordada en Bretton Woods (FMI, Banco Mundial, patrón de cambio oro-dólar a USD 35 la onza) y el Plan Marshall. Explique los factores que sostuvieron la 'Edad de Oro del Capitalismo' (1945-1973): productividad fordista, estado de bienestar keynesiano y pleno empleo.",
+                    "placeholder": "Desarrolle la arquitectura de Bretton Woods, el Plan Marshall y los Treinta Gloriosos..."
                 }
             ],
             [
                 {
                     "numero": 1,
-                    "puntos": 35,
-                    "pregunta": "La Primera Guerra Mundial y las Consecuencias Económicas de la Paz (1919): Analice el endeudamiento bélico interaliado, las reparaciones impuestas a Alemania en el Tratado de Versalles según las advertencias de John Maynard Keynes y el fenómeno de la hiperinflación de la República de Weimar en 1923.",
-                    "placeholder": "Desarrolle el impacto del Tratado de Versalles y la hiperinflación alemana..."
+                    "puntos": 40,
+                    "pregunta": "PARTE I (40 PUNTOS): TEMA ESTRUCTURAL A ELECCIÓN\nElige y desarrolla en profundidad UNA (1) de las siguientes dos opciones con articulación multidimensional:\n\n• OPCIÓN A: REGÍMENES MONETARIOS INTERNACIONALES: DEL PATRÓN ORO A LA CAÍDA DE BRETTON WOODS.\n1) El Patrón Oro Clásico (1870-1914): el rol de la City de Londres y la libra esterlina como moneda vehicular, disciplina monetaria y ajuste de Hume.\n2) La Primera Guerra Mundial, el abandono de la paridad oro, el Tratado de Versalles y la hiperinflación de Weimar en 1923.\n3) El sistema de Bretton Woods (1944): el debate Keynes (Bancor) vs White (Dólar), paridades fijas ajustables y el Fondo Monetario Internacional.\n4) La crisis del sistema en 1971: el Dilema de Triffin, los eurodólares, la sangría de oro de la Reserva Federal y la inconvertibilidad decretada por Richard Nixon.\n\n• OPCIÓN B: EL ROL DEL ESTADO EN LA ECONOMÍA: DEL PROTECCIONISMO A LOS TREINTA GLORIOSOS Y LA OFENSIVA NEOLIBERAL.\n1) El debate librecambio vs proteccionismo en el siglo XIX: la postura de Friedrich List para el desarrollo de industrias nacientes en Alemania y EE.UU. frente al libre comercio británico.\n2) El intervencionismo estatal tras la crisis de 1929: el New Deal rooseveltiano y el quiebre de la ortodoxia neoclásica.\n3) El Estado de Bienestar en la posguerra (1945-1973): pacto social capital-trabajo, servicios públicos universales y pleno empleo.\n4) La crisis del estado keynesiano en los 70: los shocks petroleros de 1973/79, la estanflación y el ascenso del neoliberalismo (Reagan y Thatcher).",
+                    "placeholder": "Indique la opción elegida (OPCIÓN A u OPCIÓN B) y desarrolle su análisis multidimensional..."
                 },
                 {
                     "numero": 2,
-                    "puntos": 35,
-                    "pregunta": "El Plan Marshall y los 'Treinta Gloriosos' (1945-1973): Analice la ayuda financiera estadounidense para la reconstrucción europea, el auge del modelo fordista-keynesiano, el estado de bienestar, la productividad laboral y el pleno empleo en Europa Occidental y Japón.",
-                    "placeholder": "Desarrolle el Plan Marshall y la edad dorada del capitalismo occidental..."
+                    "puntos": 20,
+                    "pregunta": "PARTE II - CONSIGNA 1: FRIEDRICH LIST Y EL PROTECCIONISMO DE INDUSTRIAS NACIENTES. Analice los postulados de Friedrich List en su 'Sistema Nacional de Economía Política'. Explique por qué cuestionaba el libre comercio propugnado por David Ricardo calificándolo de 'retirar la escalera' y cómo influyeron sus ideas en el Zollverein y el despegue manufacturero de Alemania.",
+                    "placeholder": "Desarrolle la doctrina de Friedrich List, la crítica al librecambio y el Zollverein..."
                 },
                 {
                     "numero": 3,
-                    "puntos": 30,
-                    "pregunta": "El Colapso del Régimen de Bretton Woods y el Auge Neoliberal: Analice el Dilema de Triffin (el déficit externo estadounidense como fuente de liquidez vs pérdida de respaldo oro), el nacimiento de los eurodólares, la ruptura del sistema en 1971 y el advenimiento del Consenso de Washington.",
-                    "placeholder": "Explique el colapso de Bretton Woods y las reformas pro-mercado de los 80..."
-                }
-            ],
-            [
-                {
-                    "numero": 1,
-                    "puntos": 35,
-                    "pregunta": "La Hiperinflación Alemana de 1923 y la Estabilización Monetaria: Analice los factores desencadenantes: ocupación franco-belga del Ruhr, huelga pasiva financiada con emisión descontrolada del Reichsbank y el colapso del marco. ¿Cómo se restauró la estabilidad con el Rentenmark y el Plan Dawes de 1924?",
+                    "puntos": 20,
+                    "pregunta": "PARTE II - CONSIGNA 2: LA HIPERINFLACIÓN ALEMANA DE 1923 Y EL PLAN DAWES. Analice las causas de la hiperinflación en la República de Weimar: el peso insostenible de las reparaciones de Versalles, la ocupación militar franco-belga del Ruhr y la monetización del déficit por el Reichsbank. Explique cómo se detuvo el colapso mediante el Rentenmark (1923) y la renegociación del Plan Dawes (1924).",
                     "placeholder": "Analice la hiperinflación de 1923 y el plan de estabilización del Rentenmark..."
                 },
                 {
-                    "numero": 2,
-                    "puntos": 35,
-                    "pregunta": "La Regulación Financiera y el Estado de Bienestar del New Deal: Explique el papel de la Tennessee Valley Authority (TVA) en obras públicas, la Ley de Seguridad Social (Social Security Act) de 1935 y el cambio en la relación entre el estado federal y los sindicatos laborales.",
-                    "placeholder": "Desarrolle las instituciones sociales y regulatorias del New Deal..."
-                },
-                {
-                    "numero": 3,
-                    "puntos": 30,
-                    "pregunta": "La Crisis Energética de los Años 70 y la Quiebra de la Curva de Phillips: Explique por qué el aumento del precio del crudo generó una inflación de costos simultánea a una recesión económica. ¿Cómo respondió Paul Volcker desde la Reserva Federal a partir de 1979 con tasas de interés récord?",
+                    "numero": 4,
+                    "puntos": 20,
+                    "pregunta": "PARTE II - CONSIGNA 3: LAS CRISIS PETROLERAS (1973 Y 1979) Y LA ESTANFLACIÓN. Explique el accionar del cártel de la OPEP, el shock de oferta energética y por qué la combinación de inflación acelerada con estancamiento y desempleo (estanflación) invalidó los preceptos de la Curva de Phillips keynesiana, abriendo paso a las políticas monetaristas de Milton Friedman y Paul Volcker.",
                     "placeholder": "Analice el shock de oferta, la estanflación y el shock de tasas de Volcker..."
                 }
             ],
             [
                 {
                     "numero": 1,
-                    "puntos": 35,
-                    "pregunta": "Impacto de la Crisis de 1929 en la Periferia y América Latina: Analice el derrumbe de los precios internacionales de los productos agropecuarios y minerales, la cesación de pagos de la deuda externa soberana y el surgimiento del modelo de Industrialización por Sustitución de Importaciones (ISI).",
-                    "placeholder": "Desarrolle el impacto del crack del 29 en los países agroexportadores y la ISI..."
+                    "puntos": 40,
+                    "pregunta": "PARTE I (40 PUNTOS): TEMA ESTRUCTURAL A ELECCIÓN\nElige y desarrolla en profundidad UNA (1) de las siguientes dos opciones:\n\n• OPCIÓN A: LA SEGUNDA MITAD DEL SIGLO XIX: CAPITALISMO MONOPÓLICO, DOCTRINAS Y DIVISIÓN DEL TRABAJO.\n1) La conformación de grandes conglomerados corporativos: cárteles en Alemania y trusts en EE.UU., y el tránsito hacia el capitalismo financiero según Rudolf Hilferding.\n2) El avance del liberalismo económico en Gran Bretaña: David Ricardo, la ventaja comparativa y la derogación de las Corn Laws en 1846.\n3) La crítica de Karl Marx al modo de producción capitalista: plusvalía, pauperización proletaria y contradicciones de clase.\n4) La integración del mercado mundial: migraciones masivas desde Europa, inversiones de capital en transporte (ferrocarril y vapores) y el patrón oro.\n\n• OPCIÓN B: EL IMPACTO GLOBAL DE LA CRISIS DE 1929 Y LA RESPUESTA INSTITUCIONAL.\n1) Causas estructurales y desencadenamiento del Crack de Wall Street de 1929: exceso de especulación a crédito y saturación de la demanda de durables.\n2) El colapso del sistema bancario estadounidense: corridas, falta de liquidez y contracción de la masa monetaria según Friedman y Schwartz.\n3) El impacto demoledor sobre la periferia agroexportadora (especialmente América Latina) y el inicio de la Industrialización por Sustitución de Importaciones (ISI).\n4) La regulación financiera del New Deal: separación de banca comercial y de inversión (Glass-Steagall) y supervisión del mercado de capitales.",
+                    "placeholder": "Indique la opción elegida (OPCIÓN A u OPCIÓN B) y desarrolle su desarrollo multidimensional..."
                 },
                 {
                     "numero": 2,
-                    "puntos": 35,
-                    "pregunta": "Bretton Woods: El Plan White (EE.UU.) frente al Plan Keynes (Gran Bretaña): Confronte la propuesta británica de crear una Unión Internacional de Compensación y la moneda Bancor frente a la propuesta estadounidense basada en el dólar como ancla única. ¿Por qué triunfó la visión norteamericana?",
-                    "placeholder": "Compare las propuestas de Keynes y White en la conferencia de 1944..."
+                    "puntos": 20,
+                    "pregunta": "PARTE II - CONSIGNA 1: DAVID RICARDO: TEORÍA DE LA RENTA Y DEROGACIÓN DE LAS CORN LAWS (1846). Explique la teoría ricardiana de la renta diferencial de la tierra: por qué el avance sobre tierras menos fértiles elevaba el precio del trigo, encarecía los alimentos de subsistencia, obligaba a subir los salarios nominales y estrangulaba la tasa media de ganancia de los industriales. ¿Por qué la derogación de las Corn Laws selló el triunfo del librecambio británico?",
+                    "placeholder": "Analice el debate de las leyes de cereales y el librecambio ricardiano..."
                 },
                 {
                     "numero": 3,
-                    "puntos": 30,
-                    "pregunta": "El Fin de la Edad de Oro del Capitalismo y la Ofensiva Neoliberal: Analice el agotamiento del modelo fordista, la caída en las tasas de ganancia corporativa, las políticas de desregulación financiera y flexibilización laboral en EE.UU. y Gran Bretaña bajo Reagan y Thatcher.",
-                    "placeholder": "Analice el cambio estructural de los años 70 y 80 hacia el libre mercado..."
+                    "puntos": 20,
+                    "pregunta": "PARTE II - CONSIGNA 2: TEORÍAS DEL IMPERIALISMO Y EL CAMINO A LA PRIMERA GUERRA MUNDIAL. Analice las teorías económicas del imperialismo formuladas a fines del siglo XIX y principios del XX (John A. Hobson, Rudolf Hilferding, Vladimir Lenin). Explique la exportación de capitales, la pugna por mercados coloniales cerrados y su papel decisivo en el estallido de la Primera Guerra Mundial en 1914.",
+                    "placeholder": "Desarrolle las teorías del imperialismo y el conflicto interimperialista..."
+                },
+                {
+                    "numero": 4,
+                    "puntos": 20,
+                    "pregunta": "PARTE II - CONSIGNA 3: EL PLAN MARSHALL Y LA EDAD DE ORO DEL CAPITALISMO (1945-1973). Explique las motivaciones geopolíticas y económicas del Plan Marshall en Europa Occidental. Describa los pilares productivos e institucionales de los 'Treinta Gloriosos': organización científica del trabajo (taylorismo/fordismo), pacto salarial vinculado a la productividad y expansión de la seguridad social.",
+                    "placeholder": "Desarrolle el Plan Marshall, la reconstrucción europea y el modelo de los Treinta Gloriosos..."
+                }
+            ],
+            [
+                {
+                    "numero": 1,
+                    "puntos": 40,
+                    "pregunta": "PARTE I (40 PUNTOS): TEMA ESTRUCTURAL A ELECCIÓN\nElige y desarrolla en profundidad UNA (1) de las siguientes dos opciones:\n\n• OPCIÓN A: DISPUTAS DOCTRINARIAS Y ORGANIZACIÓN DEL TRABAJO: DEL LIBERALISMO CLÁSICO AL TAYLORISMO Y FORDISMO.\n1) Las doctrinas del siglo XIX: confrontación entre el librecambio ricardiano, el proteccionismo pedagógico de Friedrich List y la crítica de la economía política de Karl Marx (plusvalía).\n2) La Segunda Revolución Industrial y la transformación del proceso de trabajo: del oficio artesanal a la división minuciosa de tareas con el taylorismo y la cadena de montaje fordista.\n3) El surgimiento de la gran corporación moderna (Chandler): separación de propiedad y gestión, jerarquías gerenciales y economías de escala y alcance.\n4) El Patrón Oro Clásico (1870-1914): libre movilidad del metal, paridad cambiaria fija y hegemonía financiera británica.\n\n• OPCIÓN B: EL COLAPSO DEL ORDEN LIBERAL DE ENTREGUERRAS Y LA EDIFICACIÓN DE BRETTON WOODS.\n1) Los tratados de paz post-1918: consecuencias económicas de la paz según Keynes, desarticulación monetaria y la catástrofe inflacionaria de Alemania en 1923.\n2) La Gran Depresión de 1929: deflación, quiebras masivas de bancos comerciales y el fin del patrón oro de entreguerras.\n3) El diseño del orden de posguerra en Bretton Woods (1944): debate Keynes vs White, el dólar convertible en oro y los roles del FMI y Banco Mundial.\n4) Los límites del sistema: el Dilema de Triffin, la pérdida de reservas de EE.UU. por la Guerra de Vietnam, la decisión de Nixon de 1971 y los shocks de la OPEP de 1973/79.",
+                    "placeholder": "Indique la opción elegida (OPCIÓN A u OPCIÓN B) y desarrolle su análisis multidimensional..."
+                },
+                {
+                    "numero": 2,
+                    "puntos": 20,
+                    "pregunta": "PARTE II - CONSIGNA 1: KARL MARX: PLUSVALÍA ABSOLUTA, PLUSVALÍA RELATIVA Y TASA DE GANANCIA. Explique detalladamente la distinción en la teoría marxista entre plusvalía absoluta (prolongación de la jornada laboral) y plusvalía relativa (aumento de la productividad social que abarata los medios de subsistencia del obrero). Explique por qué Marx postula la ley de la tendencia decreciente de la tasa media de ganancia.",
+                    "placeholder": "Explique la plusvalía absoluta y relativa y las contradicciones del capitalismo en Marx..."
+                },
+                {
+                    "numero": 3,
+                    "puntos": 20,
+                    "pregunta": "PARTE II - CONSIGNA 2: EL AJUSTE DE HUME Y LAS REGLAS DEL JUEGO DEL PATRÓN ORO CLÁSICO. Detalle conceptualmente y con su lógica económica el mecanismo precio-flujo de especie formulado por David Hume para corregir desequilibrios en la balanza de pagos. Explique las 'reglas del juego' que debían acatar los bancos centrales para no esterilizar los flujos de oro y preservar la convertibilidad.",
+                    "placeholder": "Desarrolle las reglas del patrón oro y el mecanismo de Hume..."
+                },
+                {
+                    "numero": 4,
+                    "puntos": 20,
+                    "pregunta": "PARTE II - CONSIGNA 3: EL NEW DEAL DE ROOSEVELT: REFORMA BANCARIA Y RECUPERACIÓN ECONÓMICA. Analice el 'Primer New Deal' (1933-1934): el feriado bancario (Bank Holiday), la Ley Glass-Steagall (separación entre banca de depósitos y de inversión), la creación de la FDIC y los planes de obras públicas. Evalúe cómo estas medidas buscaron restaurar la confianza y cortar la espiral deflacionaria.",
+                    "placeholder": "Desarrolle el New Deal y la arquitectura monetaria y social..."
                 }
             ]
         ],
