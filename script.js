@@ -3619,18 +3619,26 @@ function actualizarUIAuthHeader() {
         const esIvan = esCuentaIvanActiva();
         actualizarNavExclusivoIvan(esIvan);
 
-        // Control de vista Home: Siempre asegurar el "Inicio de entrada" visible para todos
         const heroElem = document.querySelector("#viewHome .hero");
         const portalHub = document.querySelector("#viewHome .portal-hub-container");
+        const panelMed = document.getElementById("panelMedicinaIvan");
         const shockRoom = document.getElementById("medShockRoomHome");
 
-        if (heroElem) heroElem.classList.remove("hidden");
-        if (portalHub) portalHub.classList.remove("hidden");
-        sincronizarPortalCardsHome(esIvan);
-
         if (esIvan) {
+            // Para el Dr. Iván, su pantalla de Inicio es el Shock Room
+            if (heroElem) heroElem.classList.add("hidden");
+            if (portalHub) portalHub.classList.add("hidden");
+            if (panelMed) panelMed.classList.add("hidden");
+            if (shockRoom) {
+                shockRoom.classList.remove("hidden");
+                sincronizarShockRoomHome();
+            }
             asegurarMateriasMedicinaIvan();
         } else {
+            if (heroElem) heroElem.classList.remove("hidden");
+            if (portalHub) portalHub.classList.remove("hidden");
+            if (panelMed) panelMed.classList.add("hidden");
+            sincronizarPortalCardsHome(false);
             if (shockRoom) {
                 shockRoom.classList.add("hidden");
                 detenerEcgMonitorCanvas();
@@ -3646,10 +3654,12 @@ function actualizarUIAuthHeader() {
         actualizarNavExclusivoIvan(false);
         const heroElem = document.querySelector("#viewHome .hero");
         const portalHub = document.querySelector("#viewHome .portal-hub-container");
+        const panelMed = document.getElementById("panelMedicinaIvan");
         const shockRoom = document.getElementById("medShockRoomHome");
 
         if (heroElem) heroElem.classList.remove("hidden");
         if (portalHub) portalHub.classList.remove("hidden");
+        if (panelMed) panelMed.classList.add("hidden");
         sincronizarPortalCardsHome(false);
 
         if (shockRoom) {
@@ -5227,15 +5237,27 @@ function sincronizarShockRoomHome() {
     const panelMed = document.getElementById("panelMedicinaIvan");
     const shockRoom = document.getElementById("medShockRoomHome");
 
-    if (heroElem) heroElem.classList.remove("hidden");
-    if (portalHub) portalHub.classList.remove("hidden");
-    if (panelMed) panelMed.classList.add("hidden");
-
-    sincronizarPortalCardsHome(esIvan);
-
-    if (!esIvan && shockRoom) {
-        shockRoom.classList.add("hidden");
-        detenerEcgMonitorCanvas();
+    if (esIvan) {
+        if (heroElem) heroElem.classList.add("hidden");
+        if (portalHub) portalHub.classList.add("hidden");
+        if (panelMed) panelMed.classList.add("hidden");
+        if (shockRoom) {
+            shockRoom.classList.remove("hidden");
+            if (!casoShockRoomActivo) {
+                generarCasoShockRoomHome();
+            } else if (!ecgAnimationId) {
+                iniciarEcgMonitorCanvas(casoShockRoomActivo.signosVitales?.ritmoEcg || "st_elevado");
+            }
+        }
+    } else {
+        if (heroElem) heroElem.classList.remove("hidden");
+        if (portalHub) portalHub.classList.remove("hidden");
+        if (panelMed) panelMed.classList.add("hidden");
+        if (shockRoom) {
+            shockRoom.classList.add("hidden");
+            detenerEcgMonitorCanvas();
+        }
+        sincronizarPortalCardsHome(false);
     }
 }
 
@@ -15580,7 +15602,7 @@ function iniciarAplicacion() {
 // =========================================================
 // GESTOR DE VERSIONES Y ACTUALIZACIÓN AUTOMÁTICA
 // =========================================================
-const APP_BUILD_VERSION = "29.54";
+const APP_BUILD_VERSION = "29.55";
 
 async function forzarActualizacionCompleta(mostrarNotificacion = true) {
     const lastAttempt = parseInt(sessionStorage.getItem("last_auto_update_ts") || "0", 10);
