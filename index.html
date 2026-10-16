@@ -72,6 +72,16 @@
         <button id="navFinHubBtn" class="nav-link hidden" type="button" data-view="fin-hub" title="Ir a FinHub (Lic. en Finanzas)">
             📈 FinHub
         </button>
+        <!-- Materias Médicas Exclusivas de Dr. Iván en Barra Superior -->
+        <button id="navMedInternaBtn" class="nav-link hidden" type="button" data-view="med-interna" title="Ir a Medicina Interna">
+            🫀 Medicina Interna
+        </button>
+        <button id="navFarmaBtn" class="nav-link hidden" type="button" data-view="farmacologia-2" title="Ir a Farmacología 2">
+            💊 Farmacología 2
+        </button>
+        <button id="navSaludBtn" class="nav-link hidden" type="button" data-view="salud-publica" title="Ir a Salud Pública">
+            📊 Salud Pública
+        </button>
     </nav>
 
     <div class="top-nav__actions">
@@ -345,6 +355,38 @@
                     </div>
                     <span class="home-simple-banner__arrow">➜</span>
                 </button>
+
+                <!-- Botones Simples de Iván (Medicina) -->
+                <button type="button" class="home-simple-banner home-simple-banner--med hidden" id="homeSimpleMedBtn" onclick="cambiarVista('med-interna')">
+                    <div class="home-simple-banner__content">
+                        <span class="home-simple-banner__icon">🫀</span>
+                        <div class="home-simple-banner__texts">
+                            <strong class="home-simple-banner__title">Medicina Interna</strong>
+                            <span class="home-simple-banner__sub">Ateneo de Casos Clínicos y Shock Room</span>
+                        </div>
+                    </div>
+                    <span class="home-simple-banner__arrow">➜</span>
+                </button>
+                <button type="button" class="home-simple-banner home-simple-banner--farma hidden" id="homeSimpleFarmaBtn" onclick="cambiarVista('farmacologia-2')">
+                    <div class="home-simple-banner__content">
+                        <span class="home-simple-banner__icon">💊</span>
+                        <div class="home-simple-banner__texts">
+                            <strong class="home-simple-banner__title">Farmacología 2</strong>
+                            <span class="home-simple-banner__sub">Fichero 4x4 y Desafíos Farmacológicos</span>
+                        </div>
+                    </div>
+                    <span class="home-simple-banner__arrow">➜</span>
+                </button>
+                <button type="button" class="home-simple-banner home-simple-banner--salud hidden" id="homeSimpleSaludBtn" onclick="cambiarVista('salud-publica')">
+                    <div class="home-simple-banner__content">
+                        <span class="home-simple-banner__icon">📊</span>
+                        <div class="home-simple-banner__texts">
+                            <strong class="home-simple-banner__title">Salud Pública</strong>
+                            <span class="home-simple-banner__sub">Sala de Situación y Asistente de TPs</span>
+                        </div>
+                    </div>
+                    <span class="home-simple-banner__arrow">➜</span>
+                </button>
             </div>
 
             <!-- 2. VISTA DETALLADA: Las 3 Tarjetas Portal Completas -->
@@ -397,6 +439,57 @@
                     <div class="portal-card__actions">
                         <button id="homeGoToLabBtn" class="button button--primary button--full button--lab" type="button">
                             🔬 Entrar al Laboratorio ➜
+                        </button>
+                    </div>
+                </article>
+
+                <!-- Tarjeta Portal Iván 1: Medicina Interna -->
+                <article id="homeCardMedInterna" class="portal-hub-card portal-hub-card--med hidden">
+                    <div class="portal-card__header">
+                        <div class="module-card__icon module-card__icon--primary portal-card__icon">🫀</div>
+                        <span class="badge badge--error">Ateneo & Guardia</span>
+                    </div>
+                    <h3 class="portal-card__title">Medicina Interna</h3>
+                    <p class="portal-card__desc">
+                        Ateneo de Casos Clínicos de alta complejidad, Fisiopatología, <strong>Shock Room de Resucitación</strong> y Biblioteca Multi-PDF de consensos y guías.
+                    </p>
+                    <div class="portal-card__actions">
+                        <button class="button button--primary button--full" type="button" onclick="cambiarVista('med-interna')">
+                            🫀 Entrar a Medicina Interna ➜
+                        </button>
+                    </div>
+                </article>
+
+                <!-- Tarjeta Portal Iván 2: Farmacología 2 -->
+                <article id="homeCardFarma" class="portal-hub-card portal-hub-card--farma hidden">
+                    <div class="portal-card__header">
+                        <div class="module-card__icon module-card__icon--accent portal-card__icon">💊</div>
+                        <span class="badge badge--warning">Fichero 4x4</span>
+                    </div>
+                    <h3 class="portal-card__title">Farmacología 2</h3>
+                    <p class="portal-card__desc">
+                        Matriz rápida 4x4 (Farmacodinamia, Farmacocinética, Usos y Efectos Adversos), desafíos de prescripción clínica y biblioteca de apuntes.
+                    </p>
+                    <div class="portal-card__actions">
+                        <button class="button button--primary button--full" type="button" onclick="cambiarVista('farmacologia-2')">
+                            💊 Entrar a Farmacología 2 ➜
+                        </button>
+                    </div>
+                </article>
+
+                <!-- Tarjeta Portal Iván 3: Salud Pública -->
+                <article id="homeCardSalud" class="portal-hub-card portal-hub-card--salud hidden">
+                    <div class="portal-card__header">
+                        <div class="module-card__icon module-card__icon--lab portal-card__icon">📊</div>
+                        <span class="badge badge--success">Epidemiología & TPs</span>
+                    </div>
+                    <h3 class="portal-card__title">Salud Pública</h3>
+                    <p class="portal-card__desc">
+                        Sala de Situación Sanitaria, Asistente de Trabajos Prácticos con IA, cálculo de tasas epidemiológicas y conceptos de APS Alma-Ata.
+                    </p>
+                    <div class="portal-card__actions">
+                        <button class="button button--primary button--full" type="button" onclick="cambiarVista('salud-publica')">
+                            📊 Entrar a Salud Pública ➜
                         </button>
                     </div>
                 </article>
@@ -4883,6 +4976,9 @@
                     <div class="med-header-actions">
                         <button id="medInternaToBolilleroBtn" class="button button--secondary button--sm" type="button">
                             🎲 Bolillero Oral de Fisiopato
+                        </button>
+                        <button id="medInternaToShockBtn" class="button button--primary button--sm" type="button" title="Abrir Shock Room y Centro de Resucitación Clínica">
+                            🚨 Shock Room · Resucitación
                         </button>
                     </div>
                 </div>

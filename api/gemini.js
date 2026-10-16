@@ -753,7 +753,7 @@ IMPORTANTE: Basá tus preguntas, fórmulas, afirmaciones, bolillas y explicacion
                         contents: [{ parts }],
                         generationConfig: {
                             responseMimeType: "application/json",
-                            temperature: (tipoJuego === 'bolillero' || tipoJuego === 'laboratorio') ? 0.9 : 0.4
+                            temperature: (tipoJuego === 'bolillero' || tipoJuego === 'laboratorio' || tipoJuego === 'modelo_examen_finanzas') ? 0.85 : 0.4
                         }
                     })
                 });
