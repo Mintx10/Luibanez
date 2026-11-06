@@ -1,0 +1,37 @@
+{
+  "name": "luibanez",
+  "version": "30.0.0",
+  "private": true,
+  "scripts": {
+    "test": "node --test tests/*.test.cjs",
+    "test:e2e": "playwright test",
+    "audit:controls": "node scripts/audit-controls.cjs",
+    "check": "node --check script.js && node --check api/gemini.js && node --check sw.js",
+    "dev": "node scripts/dev-server.cjs",
+    "vendor": "node scripts/vendor-assets.cjs",
+    "build": "node scripts/vendor-assets.cjs && node scripts/build-static.cjs",
+    "pretest:e2e": "npm run build",
+    "audit:css": "node scripts/audit-css.cjs",
+    "preview": "node scripts/dev-server.cjs --dist --port 5501",
+    "audit:browser": "node scripts/audit-browser-controls.cjs"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.3.14",
+    "@playwright/test": "1.56.1",
+    "acorn": "8.15.0",
+    "css-tree": "^3.2.1",
+    "eslint-scope": "^9.1.2",
+    "globals": "^17.14.0",
+    "parse5": "7.3.0"
+  },
+  "dependencies": {
+    "@fortawesome/fontawesome-free": "7.3.1",
+    "@supabase/supabase-js": "2.119.0",
+    "dompurify": "3.4.17",
+    "katex": "0.19.1",
+    "pdfjs-dist": "6.5.438"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

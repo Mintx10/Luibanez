@@ -1,0 +1,67 @@
+[
+  {
+    "name": "desambiguarApodoSala",
+    "characters": 421,
+    "evidence": "Función privada sin referencias de lectura en el análisis de ámbitos; sin eval ni nombres globales implícitos."
+  },
+  {
+    "name": "irASeccionEstudio",
+    "characters": 873,
+    "evidence": "Función privada sin referencias de lectura en el análisis de ámbitos; sin eval ni nombres globales implícitos."
+  },
+  {
+    "name": "obtenerBadgesEspecialesHtml",
+    "characters": 822,
+    "evidence": "Función privada sin referencias de lectura en el análisis de ámbitos; sin eval ni nombres globales implícitos."
+  },
+  {
+    "name": "actualizarUIUsuarioActivo",
+    "characters": 73,
+    "evidence": "Función privada sin referencias de lectura en el análisis de ámbitos; sin eval ni nombres globales implícitos."
+  },
+  {
+    "name": "guardarCuentasEnStorage",
+    "characters": 66,
+    "evidence": "Función privada sin referencias de lectura en el análisis de ámbitos; sin eval ni nombres globales implícitos."
+  },
+  {
+    "name": "generarHashTexto",
+    "characters": 293,
+    "evidence": "Función privada sin referencias de lectura en el análisis de ámbitos; sin eval ni nombres globales implícitos."
+  },
+  {
+    "name": "obtenerSupabaseClient",
+    "characters": 56,
+    "evidence": "Función privada sin referencias de lectura en el análisis de ámbitos; sin eval ni nombres globales implícitos."
+  },
+  {
+    "name": "abrirIndexedDB",
+    "characters": 52,
+    "evidence": "Función privada sin referencias de lectura en el análisis de ámbitos; sin eval ni nombres globales implícitos."
+  },
+  {
+    "name": "iniciarCronometroTurnoDuelo",
+    "characters": 115,
+    "evidence": "Función privada sin referencias de lectura en el análisis de ámbitos; sin eval ni nombres globales implícitos."
+  },
+  {
+    "name": "iniciarBombaOnlineHost",
+    "characters": 4082,
+    "evidence": "Función privada sin referencias de lectura en el análisis de ámbitos; sin eval ni nombres globales implícitos."
+  },
+  {
+    "name": "procesarMensajeDiscoveryLobby",
+    "characters": 774,
+    "evidence": "Función privada sin referencias de lectura en el análisis de ámbitos; sin eval ni nombres globales implícitos."
+  },
+  {
+    "name": "renderPerfilUsuarioDuelo",
+    "characters": 72,
+    "evidence": "Función privada sin referencias de lectura en el análisis de ámbitos; sin eval ni nombres globales implícitos."
+  },
+  {
+    "name": "asignarPropiedadesSeguras",
+    "characters": 534,
+    "evidence": "Función privada sin referencias de lectura en el análisis de ámbitos; sin eval ni nombres globales implícitos."
+  }
+]

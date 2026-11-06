@@ -5,3 +5,8 @@ scratch/
 node_modules/
 .DS_Store
 Thumbs.db
+
+!.env.example
+dist/
+test-results/
+playwright-report/

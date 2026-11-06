@@ -1,3 +1,17 @@
+import { validateStudyFile, validateOfficeArchive, validateExtractedText } from './modules/file-limits.mjs';
+import { buildFinanceStudyList } from './modules/finance-catalog.mjs';
+import { parseBackup, normalizeLists } from './modules/study-data.mjs';
+import { readValue, writeValue } from './modules/database.mjs';
+import { initializePWA } from './modules/pwa.mjs';
+import { evaluateExpression } from './modules/math.mjs';
+import { setHTML } from './modules/safe-html.mjs';
+import { loadPDF, pdfOptions } from './modules/pdf.mjs';
+import { normalizeRoute, showRoute } from './modules/navigation.mjs';
+import { studyStorage } from './modules/storage.mjs';
+import { getClient, currentUser, currentAppearance, withAuthAction, register as registerAccount, signIn, signOut, resetPassword } from './modules/session.mjs';
+import { requestAI } from './modules/ai-client.mjs';
+import { createCloudService } from './modules/cloud.mjs';
+import { setupAccountTools, muestrearContexto } from './modules/account-tools.mjs';
 "use strict";
 
 // Limpieza de parámetros transitorios de recarga en la URL
@@ -19,9 +33,8 @@ const PIN_STORAGE_KEY = "luibanez-pomodoro-pinned";
 const POS_STORAGE_KEY = "luibanez-pomodoro-pos";
 const DUELO_STORAGE_KEY = "luibanez-duelo-historial";
 const DUELO_PREFS_KEY = "luibanez-duelo-prefs";
-const ACCOUNTS_STORAGE_KEY = "luibanez_cuentas_v2";
 const ACTIVE_USER_STORAGE_KEY = "luibanez_perfil_activo_v2";
-const MQTT_BROKER_URL = "wss://broker.emqx.io:8084/mqtt";
+
 const LOBBY_DISCOVERY_TOPIC = "luibanez/lobbies/discover";
 
 /* Helper utilitario de alto rendimiento para debouncing de eventos interactivos */
@@ -68,18 +81,6 @@ function sanitizarUrlSegura(url) {
     return "";
 }
 
-function asignarPropiedadesSeguras(destino, origen, clavesPermitidas = null) {
-    if (!destino || !origen || typeof origen !== "object") return destino;
-    const bloqueadas = new Set(["__proto__", "constructor", "prototype"]);
-    for (const key of Object.keys(origen)) {
-        if (bloqueadas.has(key)) continue;
-        if (clavesPermitidas && !clavesPermitidas.includes(key)) continue;
-        if (Object.prototype.hasOwnProperty.call(origen, key)) {
-            destino[key] = origen[key];
-        }
-    }
-    return destino;
-}
 
 /* ==========================================================
    ARQUITECTURA Y REGISTRO CENTRAL DE MÓDULOS (LUIBAÑEZ CORE)
@@ -142,7 +143,7 @@ const perfilUsuario = {
 const onlineDueloEstado = {
     fuenteMaterial: "pdf",
     conectado: false,
-    clienteMqtt: null,
+    transporteOnline: null,
     esHost: false,
     modo: "online", // "online" | "local"
     formatoModo: "versus", // "versus" | "coop"
@@ -1344,86 +1345,15 @@ window.abrirTarjetaScratchpad = abrirTarjetaScratchpad;
 /* ==========================================================
    MODO DESARROLLADOR (ACCESO EXCLUSIVO LUCAS - ESTUDIAR JUNTOS)
    ========================================================== */
-function esModoDevActivo() {
-    try {
-        return localStorage.getItem("modo_dev_lucas") === "true";
-    } catch (e) {
-        return false;
-    }
-}
 
-function activarModoDev(silencioso = false) {
-    try {
-        localStorage.setItem("modo_dev_lucas", "true");
-    } catch (e) {}
-    aplicarModoDevUI();
-    if (!silencioso) {
-        mostrarToast("🛠️ ¡Modo Desarrollador activado! Acceso exclusivo concedido a Lucas.", "exito");
-    }
-}
-
-function desactivarModoDev() {
-    try {
-        localStorage.removeItem("modo_dev_lucas");
-    } catch (e) {}
-    aplicarModoDevUI();
-    mostrarToast("🔒 Modo Desarrollador desactivado. Estudiar Juntos vuelve a estar bloqueado.");
-    if (estado && estado.interfaz && (estado.interfaz.vistaActual === "juntos" || estado.interfaz.vistaActual === "duelo")) {
-        cambiarVista("home");
-    }
-}
-
-function aplicarModoDevUI() {
-    const activo = esModoDevActivo();
-    document.body.classList.toggle("modo-dev-activo", activo);
-
-    const devBadge = document.getElementById("juntosDevBadgeNotice");
-    if (devBadge) devBadge.style.display = "none";
-
-    if (dom.navJuntosBtn) {
-        dom.navJuntosBtn.classList.remove("nav-link--locked");
-        dom.navJuntosBtn.title = "Estudiar Juntos";
-        dom.navJuntosBtn.innerHTML = `🤝 Estudiar Juntos`;
-    }
-
-    if (dom.drawerNavJuntos) {
-        dom.drawerNavJuntos.classList.remove("drawer-nav-item--locked");
-        const txt = dom.drawerNavJuntos.querySelector(".drawer-nav-text");
-        if (txt) txt.textContent = "Estudiar Juntos";
-    }
-
-    if (dom.heroGoJuntosBtn) {
-        dom.heroGoJuntosBtn.classList.remove("is-locked-btn");
-        dom.heroGoJuntosBtn.innerHTML = `🤝 Entrar a Estudiar Juntos`;
-        dom.heroGoJuntosBtn.title = "Ir a Estudiar Juntos";
-    }
-
-    if (dom.homeGoToJuntosBtn) {
-        dom.homeGoToJuntosBtn.classList.remove("is-locked-btn");
-        dom.homeGoToJuntosBtn.innerHTML = `🤝 Entrar a Estudiar Juntos`;
-        dom.homeGoToJuntosBtn.title = "Ir a Estudiar Juntos";
-    }
-}
-
-function inicializarModoDev() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const hash = window.location.hash.toLowerCase();
-    if (urlParams.get("dev") === "true" || hash === "#dev" || hash.includes("dev=true")) {
-        activarModoDev();
-        if (window.history.replaceState) {
-            const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
-            window.history.replaceState({ path: cleanUrl }, '', cleanUrl);
-        }
-    } else {
-        aplicarModoDevUI();
-    }
-}
 
 /* ==========================================================
    NAVEGACIÓN SPA (VISTAS: HOME / BOLILLERO / DUELO / FAMA)
    ========================================================== */
-function cambiarVista(vista) {
-    let rawTarget = (vista === "duelo" || vista === "juntos") ? "juntos" : vista;
+let navigationSequence = 0;
+async function cambiarVista(vista) {
+    const request = ++navigationSequence;
+    let rawTarget = normalizeRoute(vista);
 
     // Validación de acceso exclusivo por carrera y perfil
     if (typeof esCarreraFinanzasActiva === "function" && rawTarget.startsWith("fin-") && !esCarreraFinanzasActiva()) {
@@ -1431,44 +1361,16 @@ function cambiarVista(vista) {
         rawTarget = "home";
     }
     if (typeof esCuentaIvanActiva === "function" && (rawTarget.startsWith("med-") || rawTarget === "farmacologia-2" || rawTarget === "salud-publica") && !esCuentaIvanActiva()) {
-        mostrarToast("🔒 El módulo médico es exclusivo para el Dr. Iván.", "aviso");
+        mostrarToast("🔒 Elegí Medicina en Cuenta y datos para acceder a estas materias.", "aviso");
         rawTarget = "home";
     }
 
-    const vistasValidas = [
-        "home", "solo", "juntos", "bolillero", "fama", "juegos", "laboratorio", "podio",
-        "med-interna", "farmacologia-2", "salud-publica",
-        "fin-hub", "fin-filosofia", "fin-sfi", "fin-historia", "fin-estadistica", "fin-contabilidad"
-    ];
-    const vistaDestino = vistasValidas.includes(rawTarget) ? rawTarget : "home";
-
-    const vistas = [
-        { id: "home", domView: dom.viewHome },
-        { id: "solo", domView: dom.viewSolo },
-        { id: "juntos", domView: dom.viewDuelo },
-        { id: "bolillero", domView: dom.viewBolillero },
-        { id: "fama", domView: dom.viewFama },
-        { id: "juegos", domView: dom.viewJuegosEdu },
-        { id: "laboratorio", domView: dom.viewLaboratorio },
-        { id: "podio", domView: dom.viewPodioOnline },
-        { id: "med-interna", domView: document.getElementById("viewMedInterna") },
-        { id: "farmacologia-2", domView: document.getElementById("viewFarmacologia2") },
-        { id: "salud-publica", domView: document.getElementById("viewSaludPublica") },
-        { id: "fin-hub", domView: document.getElementById("viewFinanzasHub") },
-        { id: "fin-filosofia", domView: document.getElementById("viewFinFilosofia") },
-        { id: "fin-sfi", domView: document.getElementById("viewFinSFI") },
-        { id: "fin-historia", domView: document.getElementById("viewFinHistoria") },
-        { id: "fin-estadistica", domView: document.getElementById("viewFinEstadistica") },
-        { id: "fin-contabilidad", domView: document.getElementById("viewFinContabilidad") }
-    ];
-
-    // 1. Alternar visibilidad de las vistas
-    vistas.forEach(({ id, domView }) => {
-        if (!domView) return;
-        const esActiva = id === vistaDestino;
-        domView.classList.toggle("view--hidden", !esActiva);
-        domView.classList.toggle("view--active", esActiva);
-    });
+    const vistaDestino = normalizeRoute(rawTarget);
+    if (vistaDestino.startsWith("fin-")) { try { await loadFinance(); } catch { mostrarToast("No se pudo cargar Finanzas. Revisá tu conexión y reintentá.", "error"); return; } }
+    if (request !== navigationSequence) return;
+    showRoute(vistaDestino);
+    if (vistaDestino !== "laboratorio" && animacionFisicaId !== null) { cancelAnimationFrame(animacionFisicaId); animacionFisicaId = null; estadoSimulacionFisica.corriendo = false; }
+    if (!['home','med-interna','farmacologia-2','salud-publica'].includes(vistaDestino) || !esCuentaIvanActiva()) detenerEcgMonitorCanvas();
 
     // 2. Sincronizar botones de la barra superior (Navbar)
     if (dom.navHomeBtn) dom.navHomeBtn.classList.toggle("is-active", vistaDestino === "home");
@@ -1521,6 +1423,10 @@ function cambiarVista(vista) {
         if (btn) btn.classList.toggle("is-active", id === vistaDestino);
     });
 
+    if (estado.interfaz.vistaActual === 'juegos' && vistaDestino !== 'juegos') {
+      if (!juegosEduEstado.esOnline) detenerPracticaLocal();
+      import('./modules/online-game.mjs').then(module => module.stopOnlineGame());
+    }
     estado.interfaz.vistaActual = vistaDestino;
 
     // El pizarrón flotante y el modal de materias viven fuera de la vista: cerrarlos al salir
@@ -1539,14 +1445,7 @@ function cambiarVista(vista) {
     }
 
     if (vistaDestino === "bolillero") {
-        if (!window._bolilleroModalYaVisto) {
-            window._bolilleroModalYaVisto = true;
-            setTimeout(() => {
-                if (typeof abrirModalConfigBolillero === "function") {
-                    abrirModalConfigBolillero();
-                }
-            }, 120);
-        }
+        // Configuration opens only in response to its button.
     } else if (vistaDestino === "juntos") {
         const dueloEnCurso = Boolean(vista === "duelo" && dueloEstado.partida && dueloEstado.partida.activa);
         if (dueloEnCurso) {
@@ -1571,6 +1470,7 @@ function cambiarVista(vista) {
         }
     } else if (vistaDestino === "fama") {
         renderSalonDeLaFama();
+        import("./modules/results.mjs").then(module => module.showVerifiedResults()).catch(error => mostrarToast(error.message,"error"));
     } else if (vistaDestino === "bolillero") {
         comprobarYMostrarReglas("bolillero");
     } else if (vistaDestino === "laboratorio") {
@@ -1613,9 +1513,6 @@ function cambiarVista(vista) {
 }
 window.cambiarVista = cambiarVista;
 
-function renderPerfilUsuarioDuelo() {
-    actualizarUIPerfilUsuario();
-}
 
 function inicializarRutas() {
     const urlParams = new URLSearchParams(window.location.search);
@@ -1624,21 +1521,21 @@ function inicializarRutas() {
         cambiarVista("juntos");
         return;
     }
-    // Cada vez que entran o recargan la página, aparece el inicio de entrada
-    cambiarVista("home");
+    // Restore deep links and reloads using the same validated route registry.
+    cambiarVista(normalizeRoute(window.location.hash));
 }
 
 /* ==========================================================
    MODO CLARO / OSCURO (TEMA)
    ========================================================== */
 function inicializarTema() {
-    const temaGuardado = localStorage.getItem(THEME_STORAGE_KEY) || "dark";
+    const temaGuardado = studyStorage.getItem(THEME_STORAGE_KEY) || "dark";
     aplicarTema(temaGuardado);
 }
 
 function aplicarTema(tema) {
     document.documentElement.setAttribute("data-theme", tema);
-    localStorage.setItem(THEME_STORAGE_KEY, tema);
+    studyStorage.setItem(THEME_STORAGE_KEY, tema);
 
     if (dom.themeToggleIcon) {
         dom.themeToggleIcon.textContent = tema === "dark" ? "☀️" : "🌙";
@@ -1671,7 +1568,7 @@ function alternarTema() {
 function inicializarModoRendimiento() {
     let modo = "full";
     try {
-        const guardado = localStorage.getItem("bolillero_perf_mode");
+        const guardado = studyStorage.getItem("bolillero_perf_mode");
         if (guardado) {
             modo = guardado;
         } else if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
@@ -1687,7 +1584,7 @@ function aplicarModoRendimiento(modo, notificar = false) {
     const modoNormalizado = modo === "lite" ? "lite" : "full";
     window.bolilleroPerfMode = modoNormalizado;
     try {
-        localStorage.setItem("bolillero_perf_mode", modoNormalizado);
+        studyStorage.setItem("bolillero_perf_mode", modoNormalizado);
     } catch (e) {
         console.warn("No se pudo guardar bolillero_perf_mode", e);
     }
@@ -1930,7 +1827,7 @@ function inicializarDrawerMenu() {
             drawerLayoutDetailedBtn.setAttribute("aria-checked", !esSimple ? "true" : "false");
         }
         if (guardar) {
-            try { localStorage.setItem("luibanez_drawer_mode", esSimple ? "simple" : "detailed"); } catch (e) {}
+            try { studyStorage.setItem("luibanez_drawer_mode", esSimple ? "simple" : "detailed"); } catch (e) {}
         }
     }
 
@@ -1938,7 +1835,7 @@ function inicializarDrawerMenu() {
     if (drawerLayoutDetailedBtn) drawerLayoutDetailedBtn.addEventListener("click", () => aplicarModoDrawer("detailed"));
 
     try {
-        const drawerModoGuardado = localStorage.getItem("luibanez_drawer_mode") || "detailed";
+        const drawerModoGuardado = studyStorage.getItem("luibanez_drawer_mode") || "detailed";
         aplicarModoDrawer(drawerModoGuardado, false);
     } catch (e) {}
 
@@ -1954,55 +1851,19 @@ function inicializarDrawerMenu() {
     }
     const drawerVersionTag = document.getElementById("drawerVersionTag");
     if (drawerVersionTag) {
-        drawerVersionTag.innerHTML = `⚡ Luibañez <strong style="color: var(--color-text);">v${APP_BUILD_VERSION}</strong>`;
+        setHTML(drawerVersionTag, `⚡ Luibañez <strong style="color: var(--color-text);">v${APP_BUILD_VERSION}</strong>`);
         drawerVersionTag.addEventListener("click", (e) => {
             e.stopPropagation();
             forzarActualizacionCompleta(true);
         });
     }
 
-    // Easter Egg / Acceso Secreto Desarrollador (5 toques en la versión para Lucas)
-    let versionClickCount = 0;
-    let versionClickTimer = null;
-    const versionRow = document.querySelector(".drawer-version-row");
-    if (versionRow) {
-        versionRow.addEventListener("click", (e) => {
-            if (e.target && (e.target.id === "btnForzarActualizar" || e.target.closest("#btnForzarActualizar") || e.target.id === "drawerVersionTag" || e.target.closest("#drawerVersionTag"))) return;
-            versionClickCount++;
-            clearTimeout(versionClickTimer);
-            versionClickTimer = setTimeout(() => { versionClickCount = 0; }, 2500);
-            if (versionClickCount >= 5) {
-                versionClickCount = 0;
-                if (esModoDevActivo()) {
-                    desactivarModoDev();
-                    mostrarToast("🔒 Modo Desarrollador desactivado", "info");
-                } else {
-                    const pass = prompt("🔐 Acceso Desarrollador Luibañez\nIngresá la clave de acceso:");
-                    if (pass) {
-                        const cleanPass = pass.toLowerCase().trim();
-                        crypto.subtle.digest("SHA-256", new TextEncoder().encode(cleanPass)).then(buf => {
-                            const hashHex = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
-                            const validHashes = new Set([
-                                "7cadab457ad8d811f134612436daaa5e5914b20dc2502865f714035b0f267680",
-                                "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4",
-                                "cf38c3b07879b4429755d11b0f0c891aded823365e2888533849f1a5aec8ead5"
-                            ]);
-                            if (validHashes.has(hashHex)) {
-                                activarModoDev();
-                                mostrarToast("🛠️ ¡Modo Desarrollador activado!", "exito");
-                            } else {
-                                mostrarToast("❌ Clave incorrecta.", "error");
-                            }
-                        }).catch(() => {});
-                    }
-                }
-            }
-        });
-    }
+
 }
 
 function abrirDrawerMenu() {
     if (!dom.drawerMenu) return;
+    dom.drawerMenu.inert = false;
     dom.drawerMenu.classList.add("is-open");
     dom.drawerMenu.setAttribute("aria-hidden", "false");
     if (dom.drawerBackdrop) {
@@ -2017,6 +1878,7 @@ function abrirDrawerMenu() {
 function cerrarDrawerMenu() {
     if (!dom.drawerMenu) return;
     dom.drawerMenu.classList.remove("is-open");
+    dom.drawerMenu.inert = true;
     dom.drawerMenu.setAttribute("aria-hidden", "true");
     if (dom.drawerBackdrop) {
         dom.drawerBackdrop.classList.remove("is-open");
@@ -2101,7 +1963,7 @@ function seleccionarLista(id) {
    ========================================================== */
 function inicializarTarjetaFlotante() {
     // Restaurar si estaba fijada
-    const estabaFijada = localStorage.getItem(PIN_STORAGE_KEY) === "true";
+    const estabaFijada = studyStorage.getItem(PIN_STORAGE_KEY) === "true";
     if (estabaFijada) {
         estadoFlotante.fijado = true;
         dom.pinPomodoroBtn.classList.add("is-pinned");
@@ -2111,7 +1973,7 @@ function inicializarTarjetaFlotante() {
 
     // Restaurar posición si fue guardada
     try {
-        const posGuardada = localStorage.getItem(POS_STORAGE_KEY);
+        const posGuardada = studyStorage.getItem(POS_STORAGE_KEY);
         if (posGuardada) {
             const { left, top } = JSON.parse(posGuardada);
             if (left && top) {
@@ -2160,7 +2022,7 @@ function toggleFijarTarjeta() {
     dom.pinPomodoroBtn.title = estadoFlotante.fijado
         ? "Tarjeta fijada en pantalla (📌)"
         : "Fijar en pantalla (📌)";
-    localStorage.setItem(PIN_STORAGE_KEY, String(estadoFlotante.fijado));
+    studyStorage.setItem(PIN_STORAGE_KEY, String(estadoFlotante.fijado));
 }
 
 function iniciarArrastre(e) {
@@ -2209,7 +2071,7 @@ function finalizarArrastre(e) {
         left: dom.pomodoroFloatingCard.style.left,
         top: dom.pomodoroFloatingCard.style.top
     };
-    localStorage.setItem(POS_STORAGE_KEY, JSON.stringify(pos));
+    studyStorage.setItem(POS_STORAGE_KEY, JSON.stringify(pos));
 }
 
 /* ==========================================================
@@ -2223,7 +2085,7 @@ function crearDatosIniciales() {
 }
 
 function guardarDatos() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+    studyStorage.setItem(STORAGE_KEY, JSON.stringify({
         listas: estado.listas,
         listaSeleccionadaId: estado.listaSeleccionadaId
     }));
@@ -2231,7 +2093,7 @@ function guardarDatos() {
 
 function cargarDatos() {
     try {
-        const guardados = localStorage.getItem(STORAGE_KEY);
+        const guardados = studyStorage.getItem(STORAGE_KEY);
         if (!guardados) {
             const iniciales = crearDatosIniciales();
             estado.listas = iniciales.listas;
@@ -2240,7 +2102,7 @@ function cargarDatos() {
             return;
         }
         const parsed = JSON.parse(guardados);
-        let listArr = Array.isArray(parsed.listas) ? parsed.listas : [];
+        let listArr = normalizeLists(parsed.listas || []);
         // Limpiar lista de ejemplo predeterminada si existiera
         listArr = listArr.filter(l => l.nombre !== "SFI 1ER PARCIAL");
         estado.listas = listArr;
@@ -2382,13 +2244,13 @@ function renderResultado() {
         if (dom.bolilleroIARetryBtn) {
             if (historial.length >= 5) {
                 dom.bolilleroIARetryBtn.disabled = true;
-                dom.bolilleroIARetryBtn.innerHTML = "✅ Límite alcanzado (5/5)";
+                setHTML(dom.bolilleroIARetryBtn, "✅ Límite alcanzado (5/5)");
             } else if (historial.length > 0) {
                 dom.bolilleroIARetryBtn.disabled = false;
-                dom.bolilleroIARetryBtn.innerHTML = `🔄 Repreguntar (${historial.length}/5)`;
+                setHTML(dom.bolilleroIARetryBtn, `🔄 Repreguntar (${historial.length}/5)`);
             } else {
                 dom.bolilleroIARetryBtn.disabled = false;
-                dom.bolilleroIARetryBtn.innerHTML = "🔄 Repreguntar (1/5)";
+                setHTML(dom.bolilleroIARetryBtn, "🔄 Repreguntar (1/5)");
             }
         }
     }
@@ -2660,7 +2522,7 @@ function eliminarTema(id) {
    ========================================================== */
 function cargarConfigPomodoro() {
     try {
-        const guardado = localStorage.getItem(POMODORO_STORAGE_KEY);
+        const guardado = studyStorage.getItem(POMODORO_STORAGE_KEY);
         if (!guardado) {
             const duracion = obtenerDuracionModoSegundos(pomodoroEstado.modoActual);
             pomodoroEstado.totalSegundosModo = duracion;
@@ -2695,7 +2557,7 @@ function cargarConfigPomodoro() {
 
 function guardarConfigPomodoro() {
     try {
-        localStorage.setItem(POMODORO_STORAGE_KEY, JSON.stringify(pomodoroEstado.config));
+        studyStorage.setItem(POMODORO_STORAGE_KEY, JSON.stringify(pomodoroEstado.config));
     } catch (error) {
         console.warn("No se pudo guardar la configuración de Pomodoro:", error);
     }
@@ -2980,7 +2842,7 @@ function renderPomodoro() {
 function actualizarContextoPomodoro(titulo) {
     if (!dom.pomodoroContext) return;
     if (titulo) {
-        dom.pomodoroContext.innerHTML = `Tema en estudio: <strong>${escapeHtml(titulo)}</strong>`;
+        setHTML(dom.pomodoroContext, `Tema en estudio: <strong>${escapeHtml(titulo)}</strong>`);
     } else {
         dom.pomodoroContext.textContent = "Listo para estudiar";
     }
@@ -3040,465 +2902,44 @@ function guardarFormularioPomodoro(evento) {
    MÓDULO 1: CUENTAS CON PIN, USUARIO IVÁN (MEDICINA) & HEADER AUTH
    ========================================================== */
 
-const CUENTA_PREDEFINIDA_IVAN = {
-    id: "acc_ivan_medicina",
-    username: "ivi",
-    apodo: "Iván",
-    nombre: "Iván",
-    carrera: "Medicina",
-    avatar: "🩺",
-    tipoAvatar: "imagen",
-    fotoDataUrl: "ivan_avatar_head.png",
-    pin: "1234",
-    email: "ivan@medicina.edu",
-    victorias: 15,
-    partidasJugadas: 24,
-    puntosTotales: 3400,
-    maxRachaHistorica: 12,
-    totalRobos: 6,
-    fechaCreacion: 1700000000000
-};
 
-const CUENTA_PREDEFINIDA_LUCAS = {
-    id: "acc_lucas_finanzas",
-    username: "lucas",
-    apodo: "Lucas",
-    nombre: "Lucas",
-    carrera: "Licenciatura en Finanzas",
-    avatar: "🦁",
-    tipoAvatar: "emoji",
-    fotoDataUrl: "",
-    pin: "1234",
-    email: "lucas@finanzas.edu",
-    victorias: 15,
-    partidasJugadas: 24,
-    puntosTotales: 3400,
-    maxRachaHistorica: 12,
-    totalRobos: 6,
-    fechaCreacion: 1700000000000
-};
+const MATERIAS_MEDICINA_IVAN = [];
 
-const MATERIAS_MEDICINA_IVAN = [
-    {
-        id: "lista_medicina_interna",
-        nombre: "MEDICINA INTERNA (FISIOPATO - DX - TTO)",
-        temas: [
-            { id: "med_tema_1", titulo: "Insuficiencia Cardíaca Congestiva (ICC): Fisiopatología, estadios NYHA y manejo médico" },
-            { id: "med_tema_2", titulo: "Síndrome Coronario Agudo: SCACEST vs SCASEST, biomarcadores y reperfusión" },
-            { id: "med_tema_3", titulo: "Tromboembolismo Pulmonar (TEP): Fisiopatología, Score de Wells y dímero D" },
-            { id: "med_tema_4", titulo: "Neumonía Adquirida en la Comunidad (NAC): Criterios CURB-65 y tratamiento antibiótico" },
-            { id: "med_tema_5", titulo: "Accidente Cerebrovascular (ACV) Isquémico: Escala NIHSS y ventana de trombolisis" },
-            { id: "med_tema_6", titulo: "EPOC Exacerbado: Criterios de Anthonisen, gasometría y broncodilatadores" },
-            { id: "med_tema_7", titulo: "Cetoacidosis Diabética (CAD) vs Síndrome Hiperosmolar: Fisiopatología y corrección iónica" },
-            { id: "med_tema_8", titulo: "Cirrosis Descompensada: Hipertensión portal, ascitis, PBE y encefalopatía" },
-            { id: "med_tema_9", titulo: "Injuria Renal Aguda (IRA): Etiologías prerrenal, parenquimatosa y posrenal" },
-            { id: "med_tema_10", titulo: "Shock Séptico: Criterios SOFA/qSOFA, reanimación hídrica y vasopresores" }
-        ]
-    },
-    {
-        id: "lista_farmacologia_2",
-        nombre: "FARMACOLOGÍA 2 (CINÉTICA - DINAMIA - DROGAS)",
-        temas: [
-            { id: "farma_tema_1", titulo: "Betabloqueantes: Selectividad β1 vs β2, farmacocinética y efectos adversos" },
-            { id: "farma_tema_2", titulo: "IECA y ARA II: Mecanismo de acción, nefroprotección y contraindicaciones" },
-            { id: "farma_tema_3", titulo: "Antagonistas del Calcio: Dihidropiridinas vs No dihidropiridinas y usos clínicos" },
-            { id: "farma_tema_4", titulo: "Betalactámicos: Cefalosporinas, Carbapenemes y mecanismos de resistencia bacteriana" },
-            { id: "farma_tema_5", titulo: "Macrólidos y Quinolonas: Espectro antibacteriano, farmacocinética y riesgo de QT largo" },
-            { id: "farma_tema_6", titulo: "Aminoglucósidos: Cinética de eliminación, ototoxicidad y nefrotoxicidad" },
-            { id: "farma_tema_7", titulo: "Opioides Mayores y Menores: Receptores mu/kappa, efectos adversos y Naloxona" },
-            { id: "farma_tema_8", titulo: "AINEs y Coxibs: Inhibición COX-1 vs COX-2, gastropatía y toxicidad renal" },
-            { id: "farma_tema_9", titulo: "Anticoagulantes Orales: Antagonistas de Vit K vs DOACs (Apixabán, Rivaroxabán)" },
-            { id: "farma_tema_10", titulo: "Benzodiazepinas: Modulación alostérica GABA-A, tolerancia y Flumazenil" },
-            { id: "farma_tema_11", titulo: "Antidepresivos ISRS: Mecanismo serotoninérgico, interacciones y efectos secundarios" }
-        ]
-    },
-    {
-        id: "lista_salud_publica",
-        nombre: "SALUD PÚBLICA (TRABAJOS PRÁCTICOS & APS)",
-        temas: [
-            { id: "salud_tema_1", titulo: "Indicadores de Mortalidad: Tasa de Mortalidad Infantil (Neonatal/Postneonatal) y Materna" },
-            { id: "salud_tema_2", titulo: "Medidas de Frecuencia: Prevalencia de Punto vs Incidencia Acumulada y Densidad de Incidencia" },
-            { id: "salud_tema_3", titulo: "Historia Natural de la Enfermedad y Niveles de Prevención (Leavell & Clark)" },
-            { id: "salud_tema_4", titulo: "Atención Primaria de la Salud (APS): Declaración de Alma-Ata y APS Integral vs Selectiva" },
-            { id: "salud_tema_5", titulo: "Diseños de Estudios Epidemiológicos: Transversales, Casos y Controles, Cohortes y Ensayos" },
-            { id: "salud_tema_6", titulo: "Vigilancia Epidemiológica: Eventos de Notificación Obligatoria, canal endémico e investigación de brotes" },
-            { id: "salud_tema_7", titulo: "Transición Epidemiológica y Demográfica: Patrón de morbimortalidad y envejecimiento poblacional" },
-            { id: "salud_tema_8", titulo: "Determinantes Sociales de la Salud: Modelo de Dahlgren-Whitehead y equidad sanitaria" },
-            { id: "salud_tema_9", titulo: "Sistemas de Salud: Estructura del Modelo Sanitario Argentino (Público, Obras Sociales, Privado)" }
-        ]
-    }
-];
+const CASOS_CLINICOS_MEDICINA = [];
 
-const CASOS_CLINICOS_MEDICINA = [
-    {
-        especialidad: "Cardiología / Urgencias",
-        titulo: "Paciente masculino de 58 años",
-        descripcion: "Dolor precordial opresivo retroesternal de 45 min de evolución, de inicio en reposo, con irradiación a mandíbula y brazo izquierdo, acompañado de diaforesis profusa, náuseas y disnea leve.",
-        vitales: "TA 155/95 mmHg · FC 104 lpm · FR 22 rpm · SatO2 94% · T 36.8°C",
-        antecedentes: "Hipertensión arterial mal controlada (10 años), Tabaquismo activo (30 paquetes/año), Dislipemia mixta.",
-        fisiopatologia: "Rotura o erosión de placa ateromatosa vulnerable en arteria coronaria epicárdica con exposición del factor tisular subendotelial. Agregación plaquetaria inmediata y activación de la cascada de coagulación que forman un trombo oclusivo agudo transmural, provocando isquemia miocárdica severa y necrosis miocítica progresiva.",
-        diagnostico: "<strong>Diagnóstico Presuntivo:</strong> Síndrome Coronario Agudo con Elevación del Segmento ST (SCACEST) de cara anterior o inferior.<br><strong>Diagnósticos Diferenciales:</strong> Síndrome aórtico agudo (disección aórtica), Tromboembolismo pulmonar masivo (TEP), Pericarditis aguda con derrame, Neumotórax a tensión, Espasmo esofágico difuso.",
-        tratamiento: "<strong>Conducta Inmediata:</strong><br>• Monitoreo electrocardiográfico continuo y vía periférica.<br>• Oxigenoterapia sólo si SatO2 &lt; 90%.<br>• Doble antiagregación plaquetaria: Aspirina (carga 300 mg masticable) + Ticagrelor (carga 180 mg) o Clopidogrel (carga 600 mg).<br>• Anticoagulación parenteral: Enoxaparina 1 mg/kg SC o Heparina No Fraccionada (bolo + infusión).<br>• Nitroglicerina sublingual si TA &gt; 100 mmHg y no tomó inhibidores PDE5.<br>• <strong>Estrategia de Reperfusión Urgente:</strong> Angioplastia Coronaria Primaria (ATC) antes de 120 min del primer contacto médico. Si no se dispone de hemodinamia en tiempo, fibrinolíticos (Tenecteplasa / Alteplasa) dentro de los primeros 30 min."
-    },
-    {
-        especialidad: "Endocrinología / Terapia Intensiva",
-        titulo: "Paciente femenina de 23 años",
-        descripcion: "Ingresa por somnolencia, deshidratación severa con signo del pliegue positivo, vómitos reiterados, dolor abdominal difuso y polidipsia intensa en las últimas 48 horas tras discontinuar tratamiento.",
-        vitales: "TA 90/60 mmHg · FC 122 lpm · FR 28 rpm (Kussmaul) · SatO2 98% · Aliento cetónico característico",
-        antecedentes: "Diabetes Mellitus Tipo 1 desde los 12 años en tratamiento con insulina basal/bolo.",
-        fisiopatologia: "Déficit absoluto de insulina asociado a un aumento marcado de hormonas contrarreguladoras (glucagón, cortisol, catecolaminas y GH). Esto desencadena una lipólisis acelerada con liberación de ácidos grasos libres que sufren beta-oxidación hepática, produciendo acetoacetato y beta-hidroxibutirato en cantidades que desbordan los tampones plasmáticos, causando acidosis metabólica con anión gap elevado y deshidratación osmótica severa.",
-        diagnostico: "<strong>Diagnóstico Presuntivo:</strong> Cetoacidosis Diabética (CAD) moderada-severa.<br><strong>Diagnósticos Diferenciales:</strong> Estado Hiperglucémico Hiperosmolar, Acidosis láctica, Abdomen agudo quirúrgico, Intoxicación por salicilatos o metanol, Cetoacidosis alcohólica.",
-        tratamiento: "<strong>Pilares Terapéuticos:</strong><br>1. <strong>Expansión de Volumen:</strong> Solución Fisiológica 0.9% a 1000-1500 ml en la primera hora para restaurar perfusión tisular.<br>2. <strong>Control del Potasio:</strong> Si K &lt; 3.3 mEq/L, reponer potasio antes de administrar insulina. Si K entre 3.3 y 5.3 mEq/L, agregar KCl al plan de hidratación.<br>3. <strong>Insulinoterapia:</strong> Insulina corriente / regular en infusión IV continua a 0.1 UI/kg/hora. Cuando la glucemia alcance 200 mg/dL, rotar soluciones a Dextrosa al 5% para prevenir hipoglucemia mientras se cierra el anión gap.<br>4. <strong>Monitoreo:</strong> Gasometría, ionograma cada 2-4 horas y corrección de la causa desencadenante (infección o transgresión)."
-    },
-    {
-        especialidad: "Neumonología / Medicina General",
-        titulo: "Paciente masculino de 66 años",
-        descripcion: "Presenta tos productiva con esputo herrumbroso, fiebre alta con escalofríos de 3 días de evolución, dolor tipo puntada en hemitórax derecho que aumenta con la inspiración profunda y disnea progresiva.",
-        vitales: "TA 110/70 mmHg · FC 106 lpm · FR 26 rpm · SatO2 91% aire ambiente · T 38.9°C",
-        antecedentes: "EPOC grado moderado en uso de inhaladores, extabaquista, sin vacunación antigripal ni antineumocócica reciente.",
-        fisiopatologia: "Inhalación y colonización de la vía aérea distal por Streptococcus pneumoniae que burla los macrófagos alveolares. Se desencadena una respuesta inflamatoria alveolar aguda con vasodilatación capilar, extravasación de exudado fibrinoso, leucocitos polimorfonucleares y eritrocitos, consolidando el parénquima pulmonar y generando un shunt intrapulmonar con desequilibrio V/Q.",
-        diagnostico: "<strong>Diagnóstico Presuntivo:</strong> Neumonía Adquirida en la Comunidad (NAC) típica con consolidación lobar derecha.<br><strong>Estratificación de Riesgo:</strong> CURB-65 = 2 (Urea pendiente, FR &ge; 30 rpm dudosa, Edad &ge; 65), amerita internación hospitalaria.<br><strong>Diferenciales:</strong> Infarto pulmonar por TEP, Atelectasia por tapón mucoso o neoplasia, Insuficiencia cardíaca descompensada, Exacerbación de EPOC pura.",
-        tratamiento: "<strong>Conducta:</strong><br>• Internación en sala general de cuidados clínicos.<br>• Oxigenoterapia con cánula nasal para mantener SatO2 entre 92-95%.<br>• <strong>Esquema Antibiótico Empírico:</strong> Ampicilina-Sulbactam 1.5g c/6h IV + Claritromicina 500mg c/12h VO, o Ceftriaxona 2g/día IV + Azitromicina 500mg/día.<br>• Hidratación parenteral, analgesia con paracetamol para el dolor torácico, kinesioterapia respiratoria y profilaxis con HBPM."
-    },
-    {
-        especialidad: "Gastroenterología / Hepatología",
-        titulo: "Paciente masculino de 53 años",
-        descripcion: "Consulta por marcado aumento del perímetro abdominal con sensación de pesadez en hipocondrio derecho, ictericia escleral, febrícula (37.9°C) y dolor abdominal difuso en las últimas 24 horas.",
-        vitales: "TA 105/65 mmHg · FC 98 lpm · FR 18 rpm · SatO2 97% · T 37.9°C",
-        antecedentes: "Cirrosis hepática Child-Pugh B por consumo crónico de alcohol. Sin hemorragia digestiva previa.",
-        fisiopatologia: "La fibrosis hepática y distorsión de la arquitectura vascular generan hipertensión portal sinusoidal sostenida. La vasodilatación esplácnica inducida por óxido nítrico disminuye el volumen arterial circulante eficaz, activando el SRAA y el sistema simpático con retención ávida de sodio y agua (ascitis). La disminución de la función de filtro reticuloendotelial y el aumento de la permeabilidad intestinal facilitan la translocación de bacterias entéricas a los ganglios linfáticos mesentéricos y al líquido ascítico (infección monobacteriana espontánea).",
-        diagnostico: "<strong>Diagnóstico Presuntivo:</strong> Cirrosis hepática descompensada con Ascitis y sospecha clínica de Peritonitis Bacteriana Espontánea (PBE).<br><strong>Conducta Diagnóstica Inmediata:</strong> Paracentesis diagnóstica con recuento celular (positivo si PMN &gt; 250/mm³) y cultivo de líquido en frascos de hemocultivo.<br><strong>Diferenciales:</strong> Peritonitis secundaria (polimicrobiana por perforación), Carcinomatosis peritoneal, Ascitis quilosa o tuberculosa.",
-        tratamiento: "<strong>Tratamiento Médico:</strong><br>• Cefalosporina de 3ra generación: Cefotaxima 2g c/8h IV o Ceftriaxona 2g/día IV por 5 días.<br>• <strong>Albúmina Humana IV:</strong> 1.5 g/kg dentro de las primeras 6 horas y 1 g/kg al día 3, para prevenir el síndrome hepatorrenal y reducir la mortalidad.<br>• Restricción moderada de sodio (2g sal/día). Suspender transitoriamente diuréticos si hay deterioro de función renal.<br>• Profilaxis secundaria de por vida con Norfloxacino 400 mg/día o TMS."
-    },
-    {
-        especialidad: "Nefrología / Medicina Interna",
-        titulo: "Paciente femenina de 71 años",
-        descripcion: "Familiares refieren que en los últimos 4 días tuvo diarrea acuosa profusa de 6-8 deposiciones diarias. Desde hace 24 horas no orina (anuria) y se encuentra desorientada en tiempo y espacio.",
-        vitales: "TA 85/55 mmHg · FC 112 lpm (filiforme) · FR 20 rpm · SatO2 96% · Mucosas secas",
-        antecedentes: "Hipertensión y gonartrosis tratada con Enalapril 20 mg/día, Hidroclorotiazida y Diclofenac 75 mg c/12h.",
-        fisiopatologia: "Hipovolemia severa por pérdidas gastrointestinales que causa disminución del gasto cardíaco y del flujo plasmático renal. La administración de Enalapril (bloquea la vasoconstricción de la arteriola eferente) sumada al Diclofenac (inhibe la síntesis de prostaglandinas que vasodilatan la arteriola aferente) anula por completo los mecanismos compensadores de autorregulación hemodinámica intraglomerular, provocando una caída drástica de la presión de filtración y necrosis tubular aguda isquémica inminente.",
-        diagnostico: "<strong>Diagnóstico Presuntivo:</strong> Injuria Renal Aguda (IRA) prerrenal con riesgo de transformación a Parenquimatosa (NTA isquémica).<br><strong>Diferenciales:</strong> Nefritis intersticial inmunoalérgica por AINEs, Uropatía obstructiva posrenal aguda (globo vesical), Shock distributivo séptico.",
-        tratamiento: "<strong>Conducta Inmediata:</strong><br>• Suspensión inmediata de todos los fármacos nefrotóxicos y moduladores hemodinámicos (Enalapril, Diuréticos, AINEs).<br>• Resucitación con cristaloides isotónicos (Solución Ringer Lactato o Solución Fisiológica) guiada por parámetros dinámicos de volemia.<br>• Colocación de sonda vesical para monitoreo horario del débito urinario.<br>• Laboratorio urgente con sedimento urinario, sodio y creatinina en orina para calcular FENa (FENa &lt; 1% orienta a prerrenal; &gt; 2% a NTA)."
-    }
-];
+const DATOS_FARMACOLOGIA_2 = {};
 
-const DATOS_FARMACOLOGIA_2 = {
-    beta_bloqueantes: {
-        titulo: "Betabloqueantes (Atenolol, Propranolol, Bisoprolol, Carvedilol, Metoprolol)",
-        subtitulo: "Sistema Cardiovascular / SNA Simpático",
-        dinamia: "Antagonismo competitivo y selectivo o no selectivo de receptores adrenérgicos β1 y β2 cardíacos y vasculares. Provocan efectos cronotrópico negativo (FC ↓), inotrópico negativo (contractilidad ↓), dromotrópico negativo (conducción AV ↓) y batmotrópico negativo. Inhiben la liberación de renina por las células yuxtaglomerulares renales.",
-        cinetica: "<strong>Absorción:</strong> Alta biodisponibilidad VO pero con extenso primer paso hepático.<br><strong>Liposolubilidad:</strong> Propranolol muy liposoluble (atraviesa barrera hematoencefálica y placenta); Atenolol hidrosoluble (excreción renal casi exclusiva).<br><strong>Metabolismo:</strong> Hepático oxidativo (CYP2D6). Semivida: Propranolol 3-5h, Bisoprolol 10-12h.",
-        usos: "• Insuficiencia Cardíaca con FEVI reducida (Bisoprolol, Carvedilol, Metoprolol succinato - reducen mortalidad).<br>• Cardiopatía isquémica post-IAM y angina de pecho.<br>• Control de frecuencia en Fibrilación Auricular y arritmias supraventriculares.<br>• Hipertensión arterial en pacientes con co-indicación.<br>• Profilaxis de migraña y temblor esencial (Propranolol).",
-        adversos: "<strong>Efectos Adversos:</strong> Bradicardia sinusal, bloqueo auriculoventricular, broncoespasmo (especialmente los no cardioselectivos en asmáticos), frialdad distal de extremidades (fenómeno de Raynaud), astenia y disfunción eréctil. Enmascaran síntomas adrenérgicos de hipoglucemia en diabéticos.<br><strong>Contraindicaciones:</strong> Asma bronquial activa, bloqueo AV de 2° o 3° grado sin marcapasos, bradicardia severa (&lt; 50 lpm), shock cardiogénico e insuficiencia cardíaca aguda descompensada."
-    },
-    ieca_ara2: {
-        titulo: "IECA (Enalapril, Ramipril) y ARA II (Losartán, Valsartán, Telmisartán)",
-        subtitulo: "Sistema Renina-Angiotensina-Aldosterona (SRAA)",
-        dinamia: "<strong>IECA:</strong> Inhiben competitivamente a la Enzima Convertidora de Angiotensina (ECA/cininasa II), impidiendo la conversión de Angiotensina I a Angiotensina II y degradación de bradicininas.<br><strong>ARA II:</strong> Bloquean de forma competitiva y altamente selectiva los receptores AT1 de Angiotensina II. Ambos disminuyen la resistencia vascular periférica, la retención de agua/sodio por aldosterona y el remodelado ventricular patológico.",
-        cinetica: "<strong>Enalapril:</strong> Es un profármaco que requiere hidrólisis hepática a Enalaprilat. Excreción renal predominante (requiere ajuste en insuficiencia renal).<br><strong>Losartán:</strong> Metabolismo hepático a metabolito activo EXP3174 (10 a 40 veces más potente). Semivida de ARA II permite dosificación cada 12 o 24 horas.",
-        usos: "• Hipertensión arterial esencial (fármacos de primera línea).<br>• Insuficiencia cardíaca congestiva con fracción de eyección reducida (reducen remodelado y morbimortalidad).<br>• Nefroprotección en Diabetes Mellitus y enfermedad renal crónica con proteinuria (dilatación de arteriola eferente que baja presión intraglomerular).<br>• Post-infarto agudo de miocardio.",
-        adversos: "<strong>Efectos Adversos:</strong> Tos seca persistente (IECA, por acumulación de bradicininas en vía aérea; no ocurre en ARA II), hiperpotasemia, hipotensión de primera dosis, deterioro de la función renal si hay hipovolemia, y angioedema (raro pero potencialmente mortal).<br><strong>Contraindicaciones Absolutas:</strong> Embarazo (teratogénicos en 2do y 3er trimestre: disgenesia renal fetal y oligohidramnios), estenosis bilateral de arteria renal o estenosis de arteria de riñón único, antecedentes de angioedema."
-    },
-    antibioticos_beta: {
-        titulo: "Betalactámicos (Amoxicilina, Cefalosporinas 1°-4°, Meropenem, Pip/Tazo)",
-        subtitulo: "Antimicrobianos bactericidas tiempo-dependientes",
-        dinamia: "Inhiben la síntesis de la pared bacteriana de peptidoglicano mediante unión covalente e inactivación irreversible de las PBPs (Penicillin-Binding Proteins / transpeptidasas). Esto desestabiliza la pared osmótica e induce lisis bacteriana autolítica. Efecto bactericida dependiente del tiempo en que la concentración libre supera la CIM (T &gt; CIM).",
-        cinetica: "Distribución amplia en líquidos corporales. Cefalosporinas de 3ra generación (Ceftriaxona, Cefotaxima) y Carbapenemes cruzan adecuadamente la barrera hematoencefálica con meninges inflamadas. Eliminación renal casi universal por filtración y secreción tubular activa (excepción: Ceftriaxona que tiene excreción biliar importante). Semivida corta (1-2h), requiriendo dosis frecuentes o infusión continua.",
-        usos: "• Amoxi-Clavulánico: Infecciones respiratorias altas y bajas, mordeduras.<br>• Cefalexina / Cefazolina: Infecciones de piel y partes blandas (S. aureus sensible) y profilaxis quirúrgica.<br>• Ceftriaxona: Meningitis bacteriana, neumonía grave, pielonefritis, gonorrea.<br>• Meropenem y Pip/Tazo: Infecciones nosocomiales graves, neutropenia febril, sepsis polimicrobiana abdominal (cubren Pseudomonas aeruginosa).",
-        adversos: "<strong>Efectos Adversos:</strong> Reacciones de hipersensibilidad (exantemas cutáneos hasta anafilaxia grave y síndrome de Stevens-Johnson), diarrea asociada a antibióticos y colitis pseudomembranosa por Clostridioides difficile, nefritis intersticial aguda, convulsiones a altas dosis de carbapenemes en insuficiencia renal.<br><strong>Contraindicación:</strong> Alergia severa previa demostrada al grupo betalactámico."
-    },
-    aines: {
-        titulo: "AINEs y Coxibs (Ibuprofeno, Naproxeno, Diclofenac, Ketorolac, Celecoxib)",
-        subtitulo: "Analgésicos, Antiinflamatorios y Antipiréticos",
-        dinamia: "Inhibición de la enzima Ciclooxigenasa (COX-1 constitutiva y/o COX-2 inducible), bloqueando la biosíntesis de prostaglandinas inflamatorias (PGE2, PGI2) y tromboxano A2 (TXA2). Suprimen la sensibilización de nociceptores periféricos y reducen la respuesta pirógena en el hipotálamo.",
-        cinetica: "Rápida y completa absorción oral. Muy alta unión a proteínas plasmáticas (albúmina &gt; 98%), con potencial de desplazamiento de otros fármacos como anticoagulantes orales. Metabolismo hepático vía citocromo P450 y excreción urinaria de metabolitos conjugados.",
-        usos: "• Dolor inflamatorio agudo musculoesquelético, odontalgia, dismenorrea primaria.<br>• Tratamiento sintomático de cefaleas tensionales y migraña leve.<br>• Enfermedades reumáticas inflamatorias (artritis reumatoidea, osteoartritis, espondiloartritis).<br>• Cierre farmacológico del conducto arterioso permeable en neonatos (Indometacina / Ibuprofeno IV).",
-        adversos: "<strong>Gastrointestinales:</strong> Gastritis erosiva, úlceras pépticas y hemorragia digestiva alta (por pérdida de PGE2 protectora de mucosa).<br><strong>Renales:</strong> Injuria renal aguda por vasoconstricción de arteriola aferente, retención de sodio/agua, empeoramiento de HTA e hiperpotasemia.<br><strong>Cardiovasculares:</strong> Aumento de riesgo de trombosis e IAM (especialmente con Coxibs al inhibir prostaciclina endotelial sin bloquear TXA2 plaquetario).<br><strong>Contraindicaciones:</strong> Úlcera péptica activa, insuficiencia renal moderada-severa, insuficiencia cardíaca descompensada y tercer trimestre de gestación."
-    },
-    opioides: {
-        titulo: "Opioides Mayores y Menores (Morfina, Fentanilo, Tramadol, Oxicodona, Naloxona)",
-        subtitulo: "Analgésicos Centrales Narcóticos",
-        dinamia: "Agonistas sobre receptores opioides acoplados a proteína Gi/o (principalmente receptor μ / Mu, además de κ y δ) en asta dorsal medular, tronco encefálico y sistema límbico. Abren canales de K+ e inhiben canales de Ca2+ voltaje-dependientes, bloqueando la liberación de sustancia P y glutamato en la sinapsis del dolor.",
-        cinetica: "Morfina sufre extenso metabolismo de primer paso (biodisponibilidad VO ~25-30%); su metabolito morfina-6-glucurónido es activo y se acumula en falla renal. Fentanilo altamente liposoluble, ideal para vía transdérmica, transmucosa o IV en anestesia. Tramadol requiere metabolismo por CYP2D6 para activar su metabolito O-desmetiltramadol (agonismo opioide + inhibición de recaptación de serotonina y noradrenalina).",
-        usos: "• Dolor oncológico severo y cuidados paliativos.<br>• Dolor postoperatorio moderado a severo.<br>• Dolor agudo por infarto agudo de miocardio y edema agudo de pulmón (Morfina reduce precarga por venodilatación).<br>• Sedoanalgesia en pacientes críticos ventilados (Fentanilo).<br>• Antídoto de intoxicación: <strong>Naloxona</strong> (antagonista puro de receptores μ).",
-        adversos: "<strong>Efectos Adversos:</strong> Sedación, depresión respiratoria dosis-dependiente (principal causa de letalidad), constipación tenaz (no genera tolerancia), náuseas y vómitos por estimulación del área postrema, prurito por liberación de histamina, miosis pupilar en punta de alfiler, tolerancia y dependencia física.<br><strong>Precauciones:</strong> EPOC severo, hipertensión endocraneana, insuficiencia hepática o renal."
-    },
-    ansioliticos: {
-        titulo: "Benzodiazepinas (Diazepam, Clonazepam, Alprazolam, Lorazepam, Midazolam)",
-        subtitulo: "Psicofármacos Moduladores GABAérgicos",
-        dinamia: "Moduladores alostéricos positivos del receptor GABA-A en el SNC. Incrementan la frecuencia de apertura de los canales de cloro activados por GABA, hiperpolarizando la membrana neuronal e induciendo una potente inhibición sináptica. Generan 5 efectos farmacológicos: ansiolítico, sedante/hipnótico, miorrelajante, anticonvulsivante y amnesia anterógrada.",
-        cinetica: "Alta liposolubilidad y paso rápido al SNC. Se dividen según vida media:<br>• Larga (&gt; 24h): Diazepam, Clonazepam (metabolitos activos de larga duración).<br>• Intermedia (10-20h): Lorazepam, Alprazolam (Lorazepam se glucuroniza directamente sin depender de CYP hepático, seguro en ancianos y hepatópatas).<br>• Corta/Ultracorta (&lt; 6h): Midazolam (ideal para inducción anestésica y crisis convulsivas agudas).",
-        usos: "• Crisis de angustia y trastorno de pánico (Alprazolam, Clonazepam).<br>• Trastornos de ansiedad generalizada (ciclos cortos).<br>• Estatus epiléptico y convulsiones agudas (Diazepam IV / Lorazepam IV).<br>• Insomnio transitorio.<br>• Síndrome de abstinencia alcohólica (Diazepam).<br>• Antagonista específico en sobredosis: <strong>Flumazenil</strong>.",
-        adversos: "<strong>Efectos Adversos:</strong> Sedación residual diurna, ataxia, enlentecimiento psicomotor, caídas y fracturas en ancianos, amnesia anterógrada, desarrollo rápido de tolerancia a efectos hipnóticos y marcada dependencia física/psíquica con síndrome de abstinencia tras suspensión brusca.<br><strong>Contraindicaciones:</strong> Miastenia gravis, apnea obstructiva del sueño, insuficiencia respiratoria severa, glaucoma de ángulo estrecho."
-    },
-    antidepresivos: {
-        titulo: "ISRS (Sertralina, Escitalopram, Fluoxetina, Paroxetina, Citalopram)",
-        subtitulo: "Inhibidores Selectivos de la Recaptación de Serotonina",
-        dinamia: "Bloquean con alta afinidad y selectividad el transportador de recaptación de serotonina (SERT / 5-HTT) en la terminal presináptica. Esto incrementa de inmediato la disponibilidad de serotonina (5-HT) en la hendidura sináptica, desencadenando con el paso de las semanas (2 a 4 semanas) una desensibilización de autorreceptores 5-HT1A somatodendríticos y remodelado neurotrófico (BDNF).",
-        cinetica: "Buena biodisponibilidad por vía oral. Fluoxetina tiene la semivida más prolongada (su metabolito norfluoxetina persiste hasta 7-14 días), con menor riesgo de síndrome de discontinuación. Escitalopram es el más selectivo sobre SERT. Fluoxetina y Paroxetina son potentes inhibidores del citocromo CYP2D6 (interacción con betabloqueantes y tamoxifeno).",
-        usos: "• Trastorno Depresivo Mayor (fármacos de primera elección).<br>• Trastorno de Ansiedad Generalizada (TAG) y Trastorno de Pánico.<br>• Trastorno Obsesivo Compulsivo (TOC - requieren dosis más altas).<br>• Fobia Social y Trastorno por Estrés Postraumático (TEPT).<br>• Bulimia nerviosa (Fluoxetina aprobada a dosis de 60 mg).",
-        adversos: "<strong>Efectos Adversos:</strong> Disfunción sexual (disminución de la libido, anorgasmia y retraso eyaculatorio en hasta 40-50% de pacientes), náuseas, vómitos, insomnio o somnolencia inicial, ganancia de peso (más marcada con Paroxetina), hiponatremia por SIADH en adultos mayores.<br><strong>Riesgo Crítico:</strong> Síndrome Serotoninérgico si se asocian con IMAO, Tramadol o Linezolid (hipertermia, mioclonías, rigidez, hiperreflexia y confusión mental)."
-    }
-};
-
-const RESPUESTAS_TP_SALUD_PUBLICA = {
-    tasa_mortalidad: {
-        titulo: "Tasas de Mortalidad Infantil y Materna (Indicadores de Salud)",
-        contenido: `📊 ESTRUCTURA TÉCNICA PARA TRABAJO PRÁCTICO:
-
-1. DEFINICIÓN DEL INDICADOR:
-• Tasa de Mortalidad Infantil (TMI): Relaciona el número de defunciones de menores de 1 año de edad ocurridas en una población durante un año determinado, con el total de nacidos vivos registrados en el mismo período.
-• Se expresa habitualmente cada 1.000 nacidos vivos (NV).
-
-2. COMPONENTES Y FÓRMULAS:
-• TMI = (Total de defunciones de < 1 año / Total de Nacidos Vivos) × 1.000
-• Componente Neonatal (0 a 27 días): Vinculado a factores biológicos, control del embarazo y atención perinatal hospitalaria.
-• Componente Postneonatal (28 días a 11 meses): Fuertemente condicionado por factores socioeconómicos, nutrición, saneamiento básico y acceso a vacunación.
-• Razón de Mortalidad Materna (RMM) = (Muertes maternas por causas obstétricas / Nacidos Vivos) × 100.000 NV.
-
-3. INTERPRETACIÓN SANITARIA Y DE GESTIÓN:
-• La TMI es el indicador sociosanitario más sensible del nivel de desarrollo de una comunidad.
-• Si predomina la mortalidad postneonatal, la intervención prioritaria radica en agua potable, vivienda digna y controles de APS en el centro de salud. Si predomina la neonatal, se deben fortalecer las maternidades y la regionalización perinatológica.
-
-4. ESTRATEGIA COMUNITARIA (APS):
-• Captación precoz de embarazadas antes de las 13 semanas.
-• Promoción y protección de la lactancia materna exclusiva hasta los 6 meses.
-• Cumplimiento del Calendario Nacional de Vacunación.`
-    },
-    incidencia_prevalencia: {
-        titulo: "Prevalencia vs. Incidencia Acumulada",
-        contenido: `📊 ESTRUCTURA TÉCNICA PARA TRABAJO PRÁCTICO:
-
-1. DEFINICIONES OPERATIVAS:
-• Incidencia: Mide la aparición de CASOS NUEVOS de una enfermedad en una población susceptible en un período determinado. Cuantifica el RIESGO o VELOCIDAD de enfermar.
-• Prevalencia: Mide el número TOTAL de casos (antiguos + nuevos) presentes en un momento o período específico. Mide la CARGA de la enfermedad.
-
-2. FÓRMULAS DE CÁLCULO:
-• Incidencia Acumulada (IA) = (Casos nuevos en el período t / Población susceptible al inicio de t) × 10^k
-• Tasa o Densidad de Incidencia = (Casos nuevos / Suma de personas-tiempo de observación) × 10^k
-• Prevalencia de Punto (P) = (Total de personas enfermas en el punto t / Población total en el punto t) × 100
-
-3. RELACIÓN CLÍNICO-EPIDEMIOLÓGICA:
-• Prevalencia ≈ Incidencia × Duración media de la enfermedad (P = I × D).
-• Una nueva droga que cura la enfermedad disminuye la prevalencia.
-• Un nuevo tratamiento que prolonga la sobrevida sin curar aumenta la prevalencia (ej: terapia antirretroviral en VIH).
-
-4. APLICACIÓN PRÁCTICA EN EL TP:
-• Para evaluar el impacto de un factor de riesgo: Utilizar Incidencia (Estudios de Cohorte).
-• Para planificar recursos hospitalarios y fármacos crónicos: Utilizar Prevalencia.`
-    },
-    niveles_prevencion: {
-        titulo: "Niveles de Prevención de Leavell & Clark",
-        contenido: `📊 ESTRUCTURA TÉCNICA PARA TRABAJO PRÁCTICO:
-
-1. ESQUEMA DE HISTORIA NATURAL DE LA ENFERMEDAD:
-• Período Prepatogénico: Interacción entre Huésped, Agente y Medio Ambiente (Tríada Ecológica).
-• Período Patogénico: Desde el estímulo inicial, pasando por el horizonte clínico (etapa subclínica), hasta los signos/síntomas y el desenlace (cura, cronicidad, secuela o muerte).
-
-2. NIVELES DE INTERVENCIÓN SANITARIA:
-• Prevención Primaria (Período Prepatogénico):
-  - Promoción de la salud: Educación sanitaria, saneamiento ambiental, actividad física.
-  - Protección específica: Inmunizaciones (vacunas), quimioprofilaxis, fluoración del agua.
-• Prevención Secundaria (Período Patogénico inicial):
-  - Diagnóstico precoz y Tratamiento oportuno: Tamizajes/Screening masivo (PAP, Mamografía, FODA, Test rápido de VIH, medición de TA).
-  - Limitación del daño: Evitar que la patología progrese a secuelas irreversibles.
-• Prevención Terciaria (Período Patogénico avanzado):
-  - Rehabilitación física, psicológica y reinserción social laboral (ej: terapia post-ACV, kinesiología).
-• Prevención Cuaternaria (Moderno):
-  - Evitar el sobretratamiento médico, sobrediagnóstico y la iatrogenia farmacológica.`
-    },
-    aps_alma_ata: {
-        titulo: "Atención Primaria de la Salud (Alma-Ata / APS)",
-        contenido: `📊 ESTRUCTURA TÉCNICA PARA TRABAJO PRÁCTICO:
-
-1. DECLARACIÓN DE ALMA-ATA (1978):
-• Definición: La asistencia sanitaria esencial basada en métodos y tecnologías prácticos, científicamente fundados y socialmente aceptables, puesta al alcance de todos los individuos y familias de la comunidad mediante su plena participación.
-• Lema histórico: "Salud para todos en el año 2000".
-
-2. OCHO ELEMENTOS ESENCIALES DE LA APS:
-1) Educación sobre los principales problemas de salud y métodos de prevención.
-2) Promoción del suministro de alimentos y nutrición adecuada.
-3) Abastecimiento de agua potable y saneamiento básico.
-4) Asistencia materno-infantil y planificación familiar.
-5) Inmunización contra las principales enfermedades infecciosas.
-6) Prevención y control de enfermedades endémicas locales.
-7) Tratamiento apropiado de las enfermedades y traumatismos comunes.
-8) Suministro de medicamentos esenciales.
-
-3. ENFOQUES: APS INTEGRAL VS. SELECTIVA:
-• APS Integral: Filosofía de justicia social y derecho universal, transformación de determinantes sociales de la salud.
-• APS Selectiva: Paquete focalizado de bajo costo para países en desarrollo (estrategia GOBI-FFF: Crecimiento, Rehidratación oral, Lactancia, Inmunizaciones).`
-    },
-    transicion_epidemiologica: {
-        titulo: "Transición Epidemiológica y Demográfica",
-        contenido: `📊 ESTRUCTURA TÉCNICA PARA TRABAJO PRÁCTICO:
-
-1. TRANSICIÓN DEMOGRÁFICA:
-• Paso de un régimen demográfico tradicional (alta natalidad y alta mortalidad) a uno moderno (baja natalidad y baja mortalidad).
-• Genera el envejecimiento progresivo de la pirámide poblacional (estrechamiento de la base y engrosamiento de la cúspide).
-
-2. TRANSICIÓN EPIDEMIOLÓGICA (Modelo de Omran):
-• Desplazamiento del patrón predominante de morbimortalidad:
-  - De las enfermedades infectocontagiosas, perinatales y por desnutrición...
-  - Hacia las Enfermedades No Transmisibles (ENT) y de causa externa (Cardiovasculares, Cáncer, Diabetes, Traumatismos por tránsito).
-
-3. DESAFÍOS SANITARIOS EN AMÉRICA LATINA:
-• "Transición Incompleta o Doble Carga de Enfermedad":
-  Convivencia simultánea de enfermedades de la pobreza (Chagas, Dengue, TBC) con patologías crónico-degenerativas propias de países desarrollados.`
-    }
-};
+const RESPUESTAS_TP_SALUD_PUBLICA = {};
 
 let indiceCasoClinicoActual = 0;
 
-function obtenerCuentasGuardadas() {
-    try {
-        const data = localStorage.getItem(ACCOUNTS_STORAGE_KEY);
-        let cuentas = data ? JSON.parse(data) : [];
-        if (!Array.isArray(cuentas)) cuentas = [];
-        
-        // 1. Purgar y eliminar cualquier cuenta de prueba o corrupta vieja (ej: 'asd', o 'Lucas' con user 'ivi')
-        cuentas = cuentas.filter(c => {
-            if (!c) return false;
-            if (c.id === "acc_1790905602677_uyds" || c.id === "acc_1791509383895_dbtl") return false;
-            if (c.username === "asd" || c.apodo === "asd") return false;
-            if (c.username === "ivi" && c.apodo === "Lucas") return false;
-            return true;
-        });
 
-        // 2. Garantizar cuenta 1 por default: Iván ('ivi' / '1234') -> Hub Doctor / Medicina
-        const idxIvan = cuentas.findIndex(c => 
-            c.id === CUENTA_PREDEFINIDA_IVAN.id || 
-            (c.username && c.username.toLowerCase() === "ivi")
-        );
-        if (idxIvan === -1) {
-            cuentas.unshift({ ...CUENTA_PREDEFINIDA_IVAN });
-        } else {
-            cuentas[idxIvan] = {
-                ...CUENTA_PREDEFINIDA_IVAN,
-                ...cuentas[idxIvan],
-                username: "ivi",
-                apodo: "Iván",
-                carrera: "Medicina",
-                fotoDataUrl: "ivan_avatar_head.png",
-                pin: "1234"
-            };
-        }
+function esCuentaIvanActiva() { return !perfilUsuario.esInvitado && perfilUsuario.carrera === "Medicina"; }
 
-        // 3. Garantizar cuenta 2 por default: Lucas ('lucas' / '1234') -> Hub Finanzas
-        const idxLucas = cuentas.findIndex(c => 
-            c.id === CUENTA_PREDEFINIDA_LUCAS.id || 
-            (c.username && c.username.toLowerCase() === "lucas")
-        );
-        if (idxLucas === -1) {
-            cuentas.splice(1, 0, { ...CUENTA_PREDEFINIDA_LUCAS });
-        } else {
-            cuentas[idxLucas] = {
-                ...CUENTA_PREDEFINIDA_LUCAS,
-                ...cuentas[idxLucas],
-                username: "lucas",
-                apodo: "Lucas",
-                carrera: "Licenciatura en Finanzas",
-                pin: "1234"
-            };
-        }
+function esCuentaLucasActiva() { return !perfilUsuario.esInvitado && perfilUsuario.carrera === "Licenciatura en Finanzas"; }
 
-        guardarCuentas(cuentas);
-        return cuentas;
-    } catch {
-        return [{ ...CUENTA_PREDEFINIDA_IVAN }, { ...CUENTA_PREDEFINIDA_LUCAS }];
-    }
-}
-
-function guardarCuentas(cuentas) {
-    try {
-        localStorage.setItem(ACCOUNTS_STORAGE_KEY, JSON.stringify(cuentas));
-    } catch {}
-}
-
-function esCuentaIvanActiva() {
-    return !perfilUsuario.esInvitado && (
-        (perfilUsuario.username && (perfilUsuario.username.toLowerCase() === "ivi" || perfilUsuario.username.toLowerCase() === "ivan")) ||
-        (perfilUsuario.apodo && (perfilUsuario.apodo.toLowerCase().includes("iván") || perfilUsuario.apodo.toLowerCase().includes("ivan"))) ||
-        (perfilUsuario.carrera && perfilUsuario.carrera.toLowerCase().includes("medicina")) ||
-        perfilUsuario.id === CUENTA_PREDEFINIDA_IVAN.id
-    );
-}
-
-function esCuentaLucasActiva() {
-    return !perfilUsuario.esInvitado && (
-        (perfilUsuario.username && perfilUsuario.username.toLowerCase() === "lucas") ||
-        perfilUsuario.id === CUENTA_PREDEFINIDA_LUCAS.id
-    );
-}
-
-function removerMateriasMedicinaSiNoEsIvan() {
-    const idsMed = ["lista_medicina_interna", "lista_farmacologia_2", "lista_salud_publica"];
-    const habia = estado.listas.some(l => idsMed.includes(l.id) || l.nombre.includes("MEDICINA INTERNA") || l.nombre.includes("FARMACOLOGÍA 2") || l.nombre.includes("SALUD PÚBLICA"));
-    if (habia) {
-        estado.listas = estado.listas.filter(l => !idsMed.includes(l.id) && !l.nombre.includes("MEDICINA INTERNA") && !l.nombre.includes("FARMACOLOGÍA 2") && !l.nombre.includes("SALUD PÚBLICA"));
-        if (!estado.listas.some(l => l.id === estado.listaSeleccionadaId)) {
-            estado.listaSeleccionadaId = estado.listas.length > 0 ? estado.listas[0].id : null;
-        }
-        guardarDatos();
-        actualizarInterfaz();
-    }
-}
 
 function cargarPerfilUsuario() {
-    try {
-        const data = localStorage.getItem(ACTIVE_USER_STORAGE_KEY);
-        if (data) {
-            const perfil = JSON.parse(data);
-            // Si el perfil guardado era un invitado o un test corrupto, resetear
-            if (perfil && (
-                perfil.esInvitado !== false || 
-                !perfil.pin || 
-                perfil.apodo === "Invitado" || 
-                perfil.username === "asd" || 
-                perfil.id === "acc_1790905602677_uyds" || 
-                perfil.id === "acc_1791509383895_dbtl" ||
-                (perfil.username === "ivi" && perfil.apodo === "Lucas")
-            )) {
-                perfilUsuario.esInvitado = true;
-                perfilUsuario.username = "";
-                perfilUsuario.apodo = "Invitado";
-                perfilUsuario.carrera = "";
-                perfilUsuario.fotoDataUrl = "";
-                perfilUsuario.avatar = "🦁";
-                perfilUsuario.pin = null;
-                localStorage.removeItem(ACTIVE_USER_STORAGE_KEY);
-            } else if (perfil && perfil.pin) {
-                Object.assign(perfilUsuario, perfil);
-            }
-        }
-    } catch {}
-
-    // Si NO es la cuenta de Iván, garantizar que no haya nada de medicina
-    if (esCuentaIvanActiva()) {
-        if (!perfilUsuario.fotoDataUrl || perfilUsuario.fotoDataUrl === "ivan_doctor.png") {
-            perfilUsuario.fotoDataUrl = "ivan_avatar_head.png";
-        }
-        asegurarMateriasMedicinaIvan();
-    } else {
-        if ((perfilUsuario.fotoDataUrl === "ivan_doctor.png" || perfilUsuario.fotoDataUrl === "ivan_avatar_head.png") && perfilUsuario.username !== "ivi") {
-            perfilUsuario.fotoDataUrl = "";
-        }
-        removerMateriasMedicinaSiNoEsIvan();
-    }
-
-    actualizarUIPerfilUsuario();
-    actualizarUIAuthHeader();
+ const user = currentUser();
+ let local = {};
+ try { local = JSON.parse(studyStorage.getItem(ACTIVE_USER_STORAGE_KEY) || '{}') || {}; } catch { /* Session identity comes from Auth even if local statistics are damaged. */ }
+ const meta = user?.user_metadata || {};
+ Object.assign(perfilUsuario, { victorias: 0, partidasJugadas: 0, puntosTotales: 0, maxRachaHistorica: 0, totalRobos: 0 },
+   Object.fromEntries(['victorias','partidasJugadas','puntosTotales','maxRachaHistorica','totalRobos'].map(k => [k, Number(local[k]) || 0])), {
+   id: user?.id || 'guest', esInvitado: !user, apodo: user ? (meta.apodo || 'Estudiante') : 'Invitado',
+   username: user ? (meta.apodo || 'Estudiante') : '', carrera: user ? (meta.carrera || 'General') : '',
+   avatar: currentAppearance().avatar ?? local.avatar ?? meta.avatar ?? '👤', tipoAvatar: currentAppearance().tipoAvatar ?? local.tipoAvatar ?? 'emoji', fotoDataUrl: currentAppearance().fotoDataUrl ?? local.fotoDataUrl ?? '', email: user?.email || ''
+ });
+ studyStorage.setItem(ACTIVE_USER_STORAGE_KEY, JSON.stringify(perfilUsuario));
+ if (esCuentaIvanActiva()) asegurarMateriasMedicinaIvan();
+ actualizarUIPerfilUsuario(); actualizarUIAuthHeader();
 }
 
 function guardarPerfilUsuario() {
-    try {
-        localStorage.setItem(ACTIVE_USER_STORAGE_KEY, JSON.stringify(perfilUsuario));
-    } catch {}
-    actualizarUIPerfilUsuario();
-    actualizarUIAuthHeader();
-    if (window.supabaseService && typeof window.supabaseService.guardarPerfil === "function") {
-        window.supabaseService.guardarPerfil(perfilUsuario).catch(() => {});
-    }
+ const {pin, ...safe} = perfilUsuario;
+ studyStorage.setItem(ACTIVE_USER_STORAGE_KEY, JSON.stringify(safe));
+ actualizarUIPerfilUsuario(); actualizarUIAuthHeader();
+ if (currentUser()) supabaseService.guardarPerfil(safe).catch(() => {});
 }
 
 function actualizarUIPerfilUsuario() {
@@ -3506,7 +2947,7 @@ function actualizarUIPerfilUsuario() {
     const rachaDias = perfilUsuario.maxRachaHistorica || perfilUsuario.victorias || 0;
 
     if (dom.dueloUserAvatarWrap) {
-        dom.dueloUserAvatarWrap.innerHTML = renderAvatarHTML(perfilUsuario, 0, false, 48);
+        setHTML(dom.dueloUserAvatarWrap, renderAvatarHTML(perfilUsuario, 0, false, 48));
     }
     if (dom.dueloUserNameDisplay) {
         dom.dueloUserNameDisplay.textContent = perfilUsuario.apodo || "Invitado";
@@ -3531,7 +2972,7 @@ function actualizarUIPerfilUsuario() {
     // Actualizar Tarjeta de Perfil & Racha en Salón de la Fama
     const famaAvatarWrap = document.getElementById("famaProfileAvatarWrap");
     if (famaAvatarWrap) {
-        famaAvatarWrap.innerHTML = renderAvatarHTML(perfilUsuario, 0, false, 52);
+        setHTML(famaAvatarWrap, renderAvatarHTML(perfilUsuario, 0, false, 52));
     }
     const famaUsername = document.getElementById("famaProfileUsername");
     if (famaUsername) {
@@ -3544,7 +2985,7 @@ function actualizarUIPerfilUsuario() {
     }
     const famaMeta = document.getElementById("famaProfileMeta");
     if (famaMeta) {
-        famaMeta.textContent = perfilUsuario.esInvitado ? "Estudiante Invitado • Sin PIN" : `Duelista Oficial • ${perfilUsuario.victorias || 0} victorias acumuladas`;
+        famaMeta.textContent = perfilUsuario.esInvitado ? "Estudiante invitado • Práctica local" : `Cuenta verificada • ${perfilUsuario.victorias || 0} victorias de práctica`;
     }
     const famaStreakNum = document.getElementById("famaProfileStreakNum");
     if (famaStreakNum) {
@@ -3562,12 +3003,12 @@ function actualizarUIPerfilUsuario() {
         dom.dueloJoinNamePreview.textContent = perfilUsuario.apodo || "Invitado";
     }
     if (dom.dueloJoinAvatarPreview) {
-        dom.dueloJoinAvatarPreview.innerHTML = renderAvatarHTML(perfilUsuario, 0, false, 24);
+        setHTML(dom.dueloJoinAvatarPreview, renderAvatarHTML(perfilUsuario, 0, false, 24));
     }
 }
 
 function actualizarUIAuthHeader() {
-    const tieneSesion = !perfilUsuario.esInvitado && Boolean(perfilUsuario.pin) && perfilUsuario.apodo && perfilUsuario.apodo !== "Invitado";
+    const tieneSesion = !perfilUsuario.esInvitado && Boolean(currentUser()) && perfilUsuario.apodo && perfilUsuario.apodo !== "Invitado";
 
     // Header Desktop
     const guestContainer = document.getElementById("topNavAuthGuest");
@@ -3589,7 +3030,7 @@ function actualizarUIAuthHeader() {
         const safeFotoUrl = sanitizarUrlSegura(perfilUsuario.fotoDataUrl);
         if (userAvatar) {
             if (safeFotoUrl) {
-                userAvatar.innerHTML = `<img src="${safeFotoUrl}" alt="${escapeHtml(apodo)}" class="user-header-avatar-img">`;
+                setHTML(userAvatar, `<img src="${safeFotoUrl}" alt="${escapeHtml(apodo)}" class="user-header-avatar-img">`);
             } else {
                 userAvatar.textContent = perfilUsuario.avatar || "👤";
             }
@@ -3609,7 +3050,7 @@ function actualizarUIAuthHeader() {
         if (drawerCareer) drawerCareer.textContent = carrera;
         if (drawerAvatar) {
             if (safeFotoUrl) {
-                drawerAvatar.innerHTML = `<img src="${safeFotoUrl}" alt="${escapeHtml(apodo)}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+                setHTML(drawerAvatar, `<img src="${safeFotoUrl}" alt="${escapeHtml(apodo)}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`);
             } else {
                 drawerAvatar.textContent = perfilUsuario.avatar || "👤";
             }
@@ -3643,7 +3084,6 @@ function actualizarUIAuthHeader() {
                 shockRoom.classList.add("hidden");
                 detenerEcgMonitorCanvas();
             }
-            removerMateriasMedicinaSiNoEsIvan();
         }
 
         const medBtn = document.getElementById("userDropdownMedBtn");
@@ -3670,14 +3110,12 @@ function actualizarUIAuthHeader() {
         if (medBtn) {
             medBtn.classList.add("hidden");
         }
-        removerMateriasMedicinaSiNoEsIvan();
     }
 }
 
 function abrirModalAuth(pestaña = "login") {
     if (!dom.authAccountModal) return;
     cambiarPestañaAuth(pestaña);
-    poblarSelectCuentasAuth();
     if (dom.authLoginUserInput && pestaña === "login") {
         dom.authLoginUserInput.value = "";
     }
@@ -3688,7 +3126,7 @@ function abrirModalAuth(pestaña = "login") {
         dom.authRegApodo.value = perfilUsuario.apodo !== "Invitado" ? perfilUsuario.apodo : "";
     }
     if (dom.authRegAvatarPreview) {
-        dom.authRegAvatarPreview.innerHTML = renderAvatarHTML(perfilUsuario, 0, false, 40);
+        setHTML(dom.authRegAvatarPreview, renderAvatarHTML(perfilUsuario, 0, false, 40));
     }
     try {
         dom.authAccountModal.showModal();
@@ -3708,197 +3146,30 @@ function cambiarPestañaAuth(pestaña) {
     if (dom.authLoginError) dom.authLoginError.classList.add("hidden");
 }
 
-function poblarSelectCuentasAuth() {
-    if (!dom.authLoginSelect) return;
-    const cuentas = obtenerCuentasGuardadas();
-    dom.authLoginSelect.innerHTML = "<option value=''>-- O seleccioná una cuenta registrada --</option>";
-    cuentas.forEach(c => {
-        const opt = document.createElement("option");
-        opt.value = c.username || c.id;
-        opt.textContent = `${c.avatar || "👤"} ${c.apodo} (@${c.username || c.apodo.toLowerCase()})`;
-        dom.authLoginSelect.appendChild(opt);
-    });
+
+async function crearOActualizarCuenta(apodo, avatar, tipoAvatar, fotoDataUrl, password, email = '', carrera = 'General') {
+ return withAuthAction(dom.authSubmitRegisterBtn, async () => {
+  if (!currentUser() && !dom.authRegisterForm.reportValidity()) return;
+  await registerAccount({ apodo, avatar, tipoAvatar, fotoDataUrl, password, email, carrera });
+  mostrarToast('Revisá tu correo para verificar tu cuenta y luego iniciá sesión.', 'info');
+  cambiarPestañaAuth('login');
+ }, mostrarToast);
 }
 
-function crearOActualizarCuenta(apodo, avatar, tipoAvatar, fotoDataUrl, pin, email = "", carrera = "Licenciatura en Finanzas") {
-    if (!apodo || apodo.trim().length === 0) {
-        mostrarToast("⚠️ Por favor ingresá un apodo o nombre válido.", "aviso");
-        return null;
-    }
-    if (!pin || pin.length !== 4 || !/^\d{4}$/.test(pin)) {
-        mostrarToast("⚠️ La contraseña o PIN debe contener exactamente 4 números.", "aviso");
-        return null;
-    }
-
-    const cuentas = obtenerCuentasGuardadas();
-    let cuenta = cuentas.find(c => c.apodo.toLowerCase() === apodo.trim().toLowerCase());
-
-    if (!cuenta) {
-        cuenta = {
-            id: "acc_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6),
-            username: apodo.trim().toLowerCase().replace(/\s+/g, ""),
-            apodo: apodo.trim(),
-            carrera: carrera || "Licenciatura en Finanzas",
-            avatar: avatar || "🦁",
-            tipoAvatar: tipoAvatar || "emoji",
-            fotoDataUrl: fotoDataUrl || "",
-            pin: String(pin),
-            email: email ? email.trim() : "",
-            victorias: perfilUsuario.victorias || 0,
-            partidasJugadas: perfilUsuario.partidasJugadas || 0,
-            puntosTotales: perfilUsuario.puntosTotales || 0,
-            maxRachaHistorica: perfilUsuario.maxRachaHistorica || 0,
-            totalRobos: perfilUsuario.totalRobos || 0,
-            fechaCreacion: Date.now()
-        };
-        cuentas.push(cuenta);
-    } else {
-        cuenta.pin = String(pin);
-        cuenta.avatar = avatar || cuenta.avatar;
-        cuenta.tipoAvatar = tipoAvatar || cuenta.tipoAvatar;
-        cuenta.fotoDataUrl = fotoDataUrl !== undefined ? fotoDataUrl : cuenta.fotoDataUrl;
-        if (carrera) cuenta.carrera = carrera;
-        if (email) cuenta.email = email.trim();
-        cuenta.victorias += (perfilUsuario.victorias || 0);
-        cuenta.puntosTotales += (perfilUsuario.puntosTotales || 0);
-        if ((perfilUsuario.maxRachaHistorica || 0) > cuenta.maxRachaHistorica) {
-            cuenta.maxRachaHistorica = perfilUsuario.maxRachaHistorica;
-        }
-        cuenta.totalRobos += (perfilUsuario.totalRobos || 0);
-    }
-
-    guardarCuentas(cuentas);
-
-    // Activar perfil
-    perfilUsuario.esInvitado = false;
-    perfilUsuario.id = cuenta.id;
-    perfilUsuario.username = cuenta.username || cuenta.apodo;
-    perfilUsuario.apodo = cuenta.apodo;
-    perfilUsuario.carrera = cuenta.carrera || "Licenciatura en Finanzas";
-    perfilUsuario.avatar = cuenta.avatar;
-    perfilUsuario.tipoAvatar = cuenta.tipoAvatar;
-    perfilUsuario.fotoDataUrl = cuenta.fotoDataUrl;
-    perfilUsuario.victorias = cuenta.victorias;
-    perfilUsuario.puntosTotales = cuenta.puntosTotales;
-    perfilUsuario.maxRachaHistorica = cuenta.maxRachaHistorica;
-    perfilUsuario.totalRobos = cuenta.totalRobos;
-    perfilUsuario.pin = cuenta.pin;
-    perfilUsuario.email = cuenta.email;
-
-    guardarPerfilUsuario();
-    actualizarNavPorCarrera();
-    if (dom.authAccountModal) dom.authAccountModal.close();
-    removerMateriasMedicinaSiNoEsIvan();
-    mostrarToast(`✨ ¡Cuenta de ${cuenta.apodo} lista para ${perfilUsuario.carrera}!`, "exito");
-    return cuenta;
+async function iniciarSesionConPin(email, password) {
+ return withAuthAction(dom.authSubmitLoginBtn, () => signIn(email, password), mostrarToast);
 }
 
-function iniciarSesionConPin(identificador, pinIngresado) {
-    const cuentas = obtenerCuentasGuardadas();
-    const identClean = String(identificador || "").trim().toLowerCase();
-    const pinClean = String(pinIngresado || "").trim();
-
-    const cuenta = cuentas.find(c =>
-        c.id === identificador ||
-        (c.username && c.username.toLowerCase() === identClean) ||
-        (c.apodo && c.apodo.toLowerCase() === identClean) ||
-        (c.email && c.email.toLowerCase() === identClean)
-    );
-
-    if (!cuenta || String(cuenta.pin).trim() !== pinClean) {
-        if (dom.authLoginError) dom.authLoginError.classList.remove("hidden");
-        mostrarToast("⚠️ Usuario o contraseña incorrectos. Cuentas oficiales: 'lucas' o 'ivi' (clave: 1234).", "aviso");
-        return false;
-    }
-
-    perfilUsuario.esInvitado = false;
-    perfilUsuario.id = cuenta.id;
-    perfilUsuario.username = cuenta.username || cuenta.apodo;
-    perfilUsuario.apodo = cuenta.apodo;
-    perfilUsuario.avatar = cuenta.avatar || "👤";
-    perfilUsuario.tipoAvatar = cuenta.tipoAvatar || "emoji";
-    perfilUsuario.fotoDataUrl = cuenta.fotoDataUrl || "";
-    perfilUsuario.carrera = cuenta.carrera || "";
-    perfilUsuario.victorias = cuenta.victorias || 0;
-    perfilUsuario.puntosTotales = cuenta.puntosTotales || 0;
-    perfilUsuario.maxRachaHistorica = cuenta.maxRachaHistorica || 0;
-    perfilUsuario.totalRobos = cuenta.totalRobos || 0;
-    perfilUsuario.pin = cuenta.pin;
-    perfilUsuario.email = cuenta.email || "";
-
-    guardarPerfilUsuario();
-    if (dom.authAccountModal) dom.authAccountModal.close();
-
-    const esIvan = esCuentaIvanActiva();
-    const esLucas = esCuentaLucasActiva();
-
-    if (esIvan) {
-        asegurarMateriasMedicinaIvan();
-        mostrarAnimacionBienvenidaIvan();
-        mostrarToast("🩺 ¡Bienvenido, Dr. Iván! Sesión iniciada y Modo Medicina activado.", "exito");
-    } else if (esLucas || esCarreraFinanzasActiva()) {
-        removerMateriasMedicinaSiNoEsIvan();
-        if (typeof cambiarVista === "function") {
-            cambiarVista("fin-hub");
-        }
-        mostrarToast(`📈 ¡Bienvenido, ${cuenta.apodo}! Hub de Licenciatura en Finanzas activado.`, "exito");
-    } else {
-        removerMateriasMedicinaSiNoEsIvan();
-        mostrarToast(`👋 ¡Bienvenido de nuevo, ${cuenta.apodo}!`, "exito");
-    }
-
-    actualizarUIAuthHeader();
-    return true;
+async function cerrarSesionPerfil() {
+ if (!currentUser()) { dom.authAccountModal?.close(); return; }
+ return withAuthAction(document.getElementById('userDropdownLogoutBtn'), () => signOut(), mostrarToast);
 }
 
-function cerrarSesionPerfil() {
-    perfilUsuario.esInvitado = true;
-    perfilUsuario.id = "guest_" + Math.random().toString(36).slice(2, 8);
-    perfilUsuario.username = "";
-    perfilUsuario.apodo = "Invitado";
-    perfilUsuario.carrera = "";
-    perfilUsuario.avatar = "🦁";
-    perfilUsuario.tipoAvatar = "emoji";
-    perfilUsuario.fotoDataUrl = "";
-    perfilUsuario.victorias = 0;
-    perfilUsuario.puntosTotales = 0;
-    perfilUsuario.pin = null;
-    perfilUsuario.email = "";
-    localStorage.removeItem(ACTIVE_USER_STORAGE_KEY);
-    guardarPerfilUsuario();
-    const dropdown = document.getElementById("userHeaderDropdown");
-    if (dropdown) dropdown.classList.add("hidden");
-    removerMateriasMedicinaSiNoEsIvan();
-    actualizarUIAuthHeader();
-    if (estado.interfaz && estado.interfaz.vistaActual) {
-        const vAct = estado.interfaz.vistaActual;
-        if (vAct.startsWith("fin-") || vAct.startsWith("med-") || vAct === "farmacologia-2" || vAct === "salud-publica") {
-            cambiarVista("home");
-        }
-    }
-    mostrarToast("🔒 Sesión cerrada. Has vuelto al modo visitante.", "info");
-}
-
-function recuperarPin() {
-    const cuentas = obtenerCuentasGuardadas();
-    if (cuentas.length === 0) {
-        mostrarToast("ℹ️ No hay cuentas registradas en este dispositivo.", "info");
-        return;
-    }
-    const ident = prompt("Ingresá tu usuario ('lucas' o 'ivi'), apodo o email para recuperar el PIN:");
-    if (!ident) return;
-
-    const encontrada = cuentas.find(c =>
-        (c.username && c.username.toLowerCase() === ident.trim().toLowerCase()) ||
-        c.apodo.toLowerCase() === ident.trim().toLowerCase() ||
-        (c.email && c.email.toLowerCase() === ident.trim().toLowerCase())
-    );
-
-    if (encontrada) {
-        mostrarToast(`🔑 ¡Cuenta encontrada! Usuario: ${encontrada.username || encontrada.apodo} • PIN/Contraseña: ${encontrada.pin}`, 8000);
-    } else {
-        mostrarToast("⚠️ No se encontró ninguna cuenta con ese usuario o email.", "aviso");
-    }
+async function recuperarPin() {
+ return withAuthAction(dom.authForgotPinBtn, async () => {
+  await resetPassword(dom.authLoginUserInput?.value);
+  mostrarToast('Si el correo está registrado, recibirás un enlace para cambiar tu contraseña.', 'info');
+ }, mostrarToast);
 }
 
 function asegurarMateriasMedicinaIvan() {
@@ -3926,14 +3197,7 @@ function asegurarMateriasMedicinaIvan() {
 /* ==========================================================
    PERSONALIZACIÓN EXCLUSIVA DE NAVEGACIÓN PARA DR. IVÁN ('ivi')
    ========================================================== */
-function esCarreraFinanzasActiva() {
-    if (perfilUsuario.esInvitado) return false;
-    if (esCuentaIvanActiva()) return false;
-    return esCuentaLucasActiva() ||
-           (Boolean(perfilUsuario.carrera) && perfilUsuario.carrera.toLowerCase().includes("finanza")) ||
-           (Boolean(perfilUsuario.username) && (perfilUsuario.username.toLowerCase() === "lucas" || perfilUsuario.username.toLowerCase() === "lukit")) ||
-           (Boolean(perfilUsuario.apodo) && (perfilUsuario.apodo.toLowerCase().includes("lucas") || perfilUsuario.apodo.toLowerCase().includes("finanza")));
-}
+function esCarreraFinanzasActiva() { return esCuentaLucasActiva(); }
 
 function sincronizarPortalCardsHome(esIvan) {
     const cardJuntos = document.querySelector(".portal-hub-card--juntos");
@@ -4101,7 +3365,7 @@ const estadoMultiPdfMedicina = {
 
 function cargarEstadoPdfsMedicina() {
     try {
-        const guardado = localStorage.getItem(MED_MULTI_PDF_KEY);
+        const guardado = studyStorage.getItem(MED_MULTI_PDF_KEY);
         if (guardado) {
             const parsed = JSON.parse(guardado);
             if (parsed.interna) estadoMultiPdfMedicina.interna = parsed.interna;
@@ -4119,7 +3383,7 @@ function cargarEstadoPdfsMedicina() {
 function guardarEstadoPdfsMedicina() {
     try {
         // Guardamos metadatos y extractos de texto optimizados
-        localStorage.setItem(MED_MULTI_PDF_KEY, JSON.stringify(estadoMultiPdfMedicina));
+        studyStorage.setItem(MED_MULTI_PDF_KEY, JSON.stringify(estadoMultiPdfMedicina));
     } catch (e) {
         console.warn("Error guardando multi-PDF en localStorage:", e);
     }
@@ -4170,18 +3434,18 @@ function renderizarListaPdfsMedicina(materia) {
     }
 
     if (items.length === 0) {
-        listElem.innerHTML = `<li class="med-pdf-empty">No hay archivos cargados. El simulador usará casos y teoría avanzada del banco universitario.</li>`;
+        setHTML(listElem, `<li class="med-pdf-empty">No hay archivos cargados. El simulador usará casos y teoría avanzada del banco universitario.</li>`);
         return;
     }
 
-    listElem.innerHTML = items.map((doc, idx) => `
+    setHTML(listElem, items.map((doc, idx) => `
         <li class="med-pdf-item">
             <span aria-hidden="true">📄</span>
             <span class="med-pdf-item-name" title="${escapeHtml(doc.name)}">${escapeHtml(doc.name)}</span>
             <span class="med-pdf-item-meta">${Number(doc.pages) || 1} pág.</span>
             <button type="button" class="med-pdf-item-remove" data-materia="${escapeHtml(materia)}" data-idx="${idx}" title="Quitar archivo">✕</button>
         </li>
-    `).join("");
+    `).join(""));
 
     listElem.querySelectorAll(".med-pdf-item-remove").forEach(btn => {
         btn.onclick = (e) => {
@@ -4247,530 +3511,7 @@ let casoFarmaActivoActual = null;
 let casoShockRoomActivo = null;
 let ecgAnimationId = null;
 
-const BANCO_CASOS_SHOCK_ROOM = [
-    {
-        id: "SR-01",
-        cama: "BOX 01 · REANIMACIÓN CRÍTICA",
-        titulo: "IAMCEST Anteroseptal en Shock Cardiogénico e Hipoperfusión",
-        sindrome: "Emergencia Cardiovascular / Shock Cardiogénico",
-        edad: "Varón, 58 años",
-        ingreso: "Hace 14 minutos (SAME Cód. Rojo)",
-        motivoIngreso: "Ingresa trasladado por ambulancia con dolor precordial opresivo desgarrador retroesternal de 2 horas de evolución irradiado a mandíbula y brazo izquierdo, asociado a disnea súbita en reposo, diaforesis fría profusa y palidez mucocutánea intensa.",
-        antecedentes: "Hipertensión arterial mal controlada, tabaquista pesado (40 paquetes/año), dislipemia severa sin tratamiento. Niega alergias medicamentosas.",
-        signosVitales: {
-            fc: 124, fcRitmo: "TAQUICARDIA SINUSAL · ST ELEVADO", fcTrend: "▲ Taquicardia",
-            pa: "82/50", tam: "60", paTrend: "TAM: 60 mmHg (Baja)", paStatus: "danger",
-            spo2: 90, spo2Trend: "FiO2 21% (Hipoxia)", spo2Status: "warning",
-            fr: 28, frTrend: "▲ Taquipnea",
-            temp: "36.2", tempTrend: "Afebril",
-            glasgow: "13/15", glasgowNota: "AO:3 RV:4 RM:6 (Sopor)",
-            ritmoEcg: "st_elevado"
-        },
-        organos: {
-            cerebro: {
-                titulo: "Sistema Nervioso Central (SNC)",
-                estado: "Deprimido",
-                statusClass: "shock-status-badge--warn",
-                icon: "🧠",
-                hallazgos: "Glasgow 13/15. Paciente somnoliento con tendencia al estupor superficial pero responde a la voz. Pupilas isocóricas reactivas. Sin signos de foco neurológico motor o sensitivo."
-            },
-            pulmon: {
-                titulo: "Aparato Respiratorio / Pulmones",
-                estado: "Crítico",
-                statusClass: "shock-status-badge--crit",
-                icon: "🫁",
-                hallazgos: "FR 28 rpm. Tiraje intercostal leve. A la auscultación: rales crepitantes húmedos bilaterales en tercio medio y bases (patrón Killip & Kimball II-III por congestión venocapilar pulmonar aguda)."
-            },
-            corazon: {
-                titulo: "Aparato Cardiovascular",
-                estado: "Crítico",
-                statusClass: "shock-status-badge--crit",
-                icon: "🫀",
-                hallazgos: "R1 y R2 taquicárdicos, hipofonéticos. Presencia de R3 (galope ventricular izquierdo). Sin soplos valvulares primarios. Ingurgitación yugular 2/3 con colapso parcial. Pulsos periféricos filiformes y simétricos."
-            },
-            abdomen: {
-                titulo: "Abdomen & Gastrointestinal",
-                estado: "Compensado",
-                statusClass: "shock-status-badge--norm",
-                icon: "🩺",
-                hallazgos: "Abdomen blando, depresible, no doloroso a la palpación superficial ni profunda. Ruidos hidroaéreos presentes, normoactivos. Hígado al ras del reborde costal, sin signos de peritonismo."
-            },
-            renal: {
-                titulo: "Renal & Vascular Periférico",
-                estado: "Hipoperfusión Grave",
-                statusClass: "shock-status-badge--crit",
-                icon: "🩸",
-                hallazgos: "Diuresis por sonda vesical: 15 mL/h (oligoanuria aguda por bajo gasto). Extremidades frías, acrocianosis distal en lechos ungueales. Relleno capilar enlentecido: 5 segundos. Livideces en rodillas (Mottling 2)."
-            }
-        },
-        organoFocoDefault: "corazon",
-        laboratorio: [
-            { parametro: "Troponina T Ultrasensible", valor: "2.450 ng/L", ref: "< 14 ng/L", alerta: "CRÍTICO 🚨", flagClass: "shock-lab-flag--crit" },
-            { parametro: "CPK-MB masa", valor: "78 ng/mL", ref: "0 - 5 ng/mL", alerta: "CRÍTICO 🚨", flagClass: "shock-lab-flag--crit" },
-            { parametro: "Ácido Láctico sérico", valor: "4.8 mmol/L", ref: "0.5 - 1.6 mmol/L", alerta: "ALTO ⚠️", flagClass: "shock-lab-flag--crit" },
-            { parametro: "Gases Arteriales (pH / PaO2)", valor: "pH 7.28 | PaO2 64 mmHg", ref: "7.35-7.45 | > 80", alerta: "ACIDOSIS ⚠️", flagClass: "shock-lab-flag--crit" },
-            { parametro: "Bicarbonato (HCO3)", valor: "16 mEq/L", ref: "22 - 26 mEq/L", alerta: "BAJO ⚠️", flagClass: "shock-lab-flag--warn" },
-            { parametro: "Leucocitos", valor: "14.200 /mm³ (78% Neu)", ref: "4.500 - 10.000", alerta: "LEUCOCITOSIS", flagClass: "shock-lab-flag--warn" },
-            { parametro: "Hemoglobina / Hto", valor: "14.1 g/dL | 42%", ref: "13.0 - 17.0", alerta: "NORMAL", flagClass: "shock-lab-flag--norm" },
-            { parametro: "Plaquetas", valor: "220.000 /mm³", ref: "150.000 - 450.000", alerta: "NORMAL", flagClass: "shock-lab-flag--norm" },
-            { parametro: "Urea / Creatinina", valor: "58 mg/dL | 1.6 mg/dL", ref: "15-45 | 0.7-1.2", alerta: "ELEVADO ⚠️", flagClass: "shock-lab-flag--warn" },
-            { parametro: "Glucemia al Azar", valor: "188 mg/dL", ref: "70 - 110 mg/dL", alerta: "HIPERGLUCEMIA", flagClass: "shock-lab-flag--warn" }
-        ],
-        estudios: {
-            radiografia: {
-                titulo: "Radiografía de Tórax de Frente (Portátil)",
-                hallazgos: "Índice cardiotorácico aumentado (> 0.55, cardiomegalia). Congestión perihiliar bilateral con redistribución de flujo hacia vértices (alas de mariposa incipientes), líneas B de Kerley en bases pulmonares.",
-                impresion: "Signos radiológicos de congestión venocapilar pulmonar por Edema Agudo de Pulmón cardiogénico (Killip II-III)."
-            },
-            tomografia: {
-                titulo: "Angio-TC de Tórax & Grandes Vasos",
-                hallazgos: "Estudio solicitado para descarte de disección aórtica tipo A vs TEP masivo. Aorta torácica de calibre conservado sin flap intimal de disección ni hematoma intramural. Arterias pulmonares permeables sin defectos de repleción.",
-                impresion: "Se descarta disección aórtica aguda y tromboembolismo pulmonar. Compatible con causa miocárdica pura."
-            },
-            ecg: {
-                titulo: "Electrocardiograma 12D de Superficie",
-                hallazgos: "Ritmo sinusal a 124 lpm. Eje QRS a 0°. Elevación convexa marcada del segmento ST de 4 a 6 mm en derivaciones precordiales V1, V2, V3 y V4 con ondas T picudas. Infradesnivel especular recíproco en cara inferior (DII, DIII, aVF).",
-                impresion: "Infarto Agudo de Miocardio con Elevación del ST (IAMCEST) anteroseptal hiperagudo en shock cardiogénico."
-            }
-        },
-        diagnosticoOficial: "Infarto Agudo de Miocardio con Elevación del ST (IAMCEST) anteroseptal en Shock Cardiogénico (Killip & Kimball IV). Conducta inmediata: Activación inmediata de sala de hemodinamia para Angioplastia Coronaria Primaria (<90 min), doble antiagregación plaquetaria (AAS 300mg + Ticagrelor 180mg), anticoagulación con Heparina no fraccionada, soporte inotrópico y vasopresor con Noradrenalina titulada para PAM ≥ 65 mmHg y Dobutamina, oxigenoterapia por VNI / intubación según mecánica."
-    },
-    {
-        id: "SR-02",
-        cama: "BOX 02 · RESUCITACIÓN METABÓLICA",
-        titulo: "Cetoacidosis Diabética Severa (CAD) con Shock Hipovolémico y Acidosis Extrema",
-        sindrome: "Emergencia Endocrinológica / Acidosis Metabólica Grave",
-        edad: "Mujer, 23 años",
-        ingreso: "Hace 22 minutos (Guardia Médica)",
-        motivoIngreso: "Paciente traída por familiares por vómitos incoercibles de 24 horas de evolución, dolor abdominal difuso severo, polidipsia intensa, respiración muy agitada y rápida, y deterioro progresivo del estado de conciencia con tendencia al coma.",
-        antecedentes: "Diabetes Mellitus tipo 1 desde los 12 años tratada con Insulina Glargina y Lispro. Suspensión voluntaria de insulina en las últimas 48 horas por cuadro gastrointestinal intercurrente.",
-        signosVitales: {
-            fc: 136, fcRitmo: "TAQUICARDIA SINUSAL COMPENSATORIA", fcTrend: "▲ Taquicardia severa",
-            pa: "75/45", tam: "55", paTrend: "TAM: 55 mmHg (Shock)", paStatus: "danger",
-            spo2: 97, spo2Trend: "Aire ambiente", spo2Status: "normal",
-            fr: 34, frTrend: "▲ Kussmaul profunda",
-            temp: "37.1", tempTrend: "Normotérmica",
-            glasgow: "11/15", glasgowNota: "AO:2 RV:4 RM:5 (Estupor)",
-            ritmoEcg: "taquicardia"
-        },
-        organos: {
-            cerebro: {
-                titulo: "Sistema Nervioso Central (SNC)",
-                estado: "Estupor Metabólico",
-                statusClass: "shock-status-badge--crit",
-                icon: "🧠",
-                hallazgos: "Glasgow 11/15. Somnolienta, responde con palabras confusas al estímulo doloroso. Aliento cetónico característico ('manzanas podridas'). Pupilas intermedias reactivas."
-            },
-            pulmon: {
-                titulo: "Aparato Respiratorio / Pulmones",
-                estado: "Respiración de Kussmaul",
-                statusClass: "shock-status-badge--crit",
-                icon: "🫁",
-                hallazgos: "FR 34 rpm. Respiración hiperpneica profunda y rápida (Kussmaul) para compensación respiratoria de acidosis metabólica extrema. Sin ruidos sobreagregados pulmonares."
-            },
-            corazon: {
-                titulo: "Aparato Cardiovascular",
-                estado: "Taquicardia por Deshidratación",
-                statusClass: "shock-status-badge--warn",
-                icon: "🫀",
-                hallazgos: "Taquicardia regular a 136 lpm. R1 y R2 taquicárdicos sin soplos. Pulsos periféricos filiformes y débiles. Hipovolemia severa por diuresis osmótica masiva."
-            },
-            abdomen: {
-                titulo: "Abdomen & Gastrointestinal",
-                estado: "Dolor Pseudo-quirúrgico",
-                statusClass: "shock-status-badge--warn",
-                icon: "🩺",
-                hallazgos: "Abdomen doloroso en forma difusa a la palpación profunda pero blando, sin defensa peritoneal real (dolor abdominal por cetoacidosis / gastroparesia diabética). Ruidos hidroaéreos disminuidos."
-            },
-            renal: {
-                titulo: "Renal & Estado de Hidratación",
-                estado: "Deshidratación Extrema",
-                statusClass: "shock-status-badge--crit",
-                icon: "🩸",
-                hallazgos: "Mucosas orales secas sin saliva. Signo del pliegue positivo persistente. Oliguria severa (10 mL/h). Relleno capilar 4 segundos. Pérdida estimada de fluidos: 6 a 8 litros."
-            }
-        },
-        organoFocoDefault: "renal",
-        laboratorio: [
-            { parametro: "Glucemia Plasmática", valor: "620 mg/dL", ref: "70 - 110 mg/dL", alerta: "CRÍTICO 🚨", flagClass: "shock-lab-flag--crit" },
-            { parametro: "pH Arterial", valor: "6.98", ref: "7.35 - 7.45", alerta: "CRÍTICO 🚨", flagClass: "shock-lab-flag--crit" },
-            { parametro: "Bicarbonato (HCO3)", valor: "5.2 mEq/L", ref: "22 - 26 mEq/L", alerta: "CRÍTICO 🚨", flagClass: "shock-lab-flag--crit" },
-            { parametro: "Anion Gap", valor: "28 mEq/L", ref: "8 - 12 mEq/L", alerta: "ALTO ⚠️", flagClass: "shock-lab-flag--crit" },
-            { parametro: "Cetonemia / Cetonuria", valor: "++++ (4.8 mmol/L)", ref: "Negativo", alerta: "POSITIVO 🚨", flagClass: "shock-lab-flag--crit" },
-            { parametro: "Potasio sérico (K+)", valor: "5.8 mEq/L", ref: "3.5 - 5.0 mEq/L", alerta: "ELEVADO*", flagClass: "shock-lab-flag--warn" },
-            { parametro: "Sodio sérico medido", valor: "128 mEq/L (Correg: 136)", ref: "135 - 145", alerta: "PSEUDOHIPONATREMIA", flagClass: "shock-lab-flag--warn" },
-            { parametro: "Urea / Creatinina", valor: "74 mg/dL | 2.4 mg/dL", ref: "15-45 | 0.7-1.2", alerta: "FALLA PRERRENAL", flagClass: "shock-lab-flag--crit" },
-            { parametro: "Leucocitos", valor: "22.000 /mm³", ref: "4.500 - 10.000", alerta: "LEUCOCITOSIS", flagClass: "shock-lab-flag--warn" },
-            { parametro: "Ácido Láctico", valor: "3.2 mmol/L", ref: "0.5 - 1.6", alerta: "ELEVADO", flagClass: "shock-lab-flag--warn" }
-        ],
-        estudios: {
-            radiografia: {
-                titulo: "Radiografía de Tórax de Frente",
-                hallazgos: "Campos pulmonares libres de infiltrados neumónicos. Silueta cardíaca pequeña y alargada ('corazón en gota'), signo radiográfico de deshidratación intravascular severa.",
-                impresion: "Sin foco infeccioso pulmonar evidente. Compatible con depleción de volumen extremo."
-            },
-            tomografia: {
-                titulo: "TC de Abdomen y Pelvis",
-                hallazgos: "Estudio realizado para descartar pancreatitis aguda o perforación visceral como desencadenante. Sin líquido libre intrabdominal, páncreas de tamaño y densidad conservada.",
-                impresion: "Se descarta patología quirúrgica intraabdominal aguda."
-            },
-            ecg: {
-                titulo: "Electrocardiograma de 12 Derivaciones",
-                hallazgos: "Taquicardia sinusal a 136 lpm. Ondas T altas y simétricas en precordiales secundarias a hiperpotasemia celular inicial por acidosis severa.",
-                impresion: "Taquicardia sinusal con cambios de repolarización por hipercalemia extracelular y acidosis."
-            }
-        },
-        diagnosticoOficial: "Cetoacidosis Diabética Severa (CAD) con Shock Hipovolémico y Acidosis Metabólica Extrema (pH < 7.00, Anion Gap aumentado). Conducta inmediata: 1) Hidratación parenteral masiva agresiva con Solución Fisiológica al 0.9% (1.000-1.500 mL en la primera hora). 2) NO administrar insulina hasta asegurar potasio sérico > 3.3 mEq/L. 3) Iniciar bomba de Insulina Corriente IV continua a 0.1 UI/kg/h cuando comience la expansión. 4) Reposición precoz de Cloruro de Potasio (el potasio corporal total está severamente depletado a pesar del valor sérico). 5) Monitoreo horario de glucemia capilar y medio interno en UTI."
-    },
-    {
-        id: "SR-03",
-        cama: "BOX 03 · UNIDAD CARDIOVASCULAR",
-        titulo: "Tromboembolismo Pulmonar Masivo (TEP) con Cor Pulmonale Agudo y Shock Obstructivo",
-        sindrome: "Emergencia Vascular / Shock Obstructivo",
-        edad: "Mujer, 61 años",
-        ingreso: "Hace 10 minutos (SAME Cód. Rojo)",
-        motivoIngreso: "Paciente que ingresa en colapso hemodinámico tras presentar disnea súbita extrema en reposo, dolor pleurítico retroesternal agudo, síncope presenciado en su domicilio y sensación inminente de muerte.",
-        antecedentes: "Reemplazo total de cadera derecha hace 12 días con reposo prolongado en cama y profilaxis antitrombótica suspendida precozmente. Obesidad grado II.",
-        signosVitales: {
-            fc: 130, fcRitmo: "TAQUICARDIA SINUSAL · PATRÓN S1Q3T3", fcTrend: "▲ Taquicardia severa",
-            pa: "80/52", tam: "61", paTrend: "TAM: 61 mmHg (Shock)", paStatus: "danger",
-            spo2: 84, spo2Trend: "FiO2 50% (Hipoxemia severa)", spo2Status: "danger",
-            fr: 32, frTrend: "▲ Taquipnea severa",
-            temp: "36.8", tempTrend: "Afebril",
-            glasgow: "14/15", glasgowNota: "AO:4 RV:4 RM:6 (Angustia)",
-            ritmoEcg: "tep"
-        },
-        organos: {
-            cerebro: {
-                titulo: "Sistema Nervioso Central (SNC)",
-                estado: "Ansiedad & Hipoxia",
-                statusClass: "shock-status-badge--warn",
-                icon: "🧠",
-                hallazgos: "Glasgow 14/15. Paciente sumamente inquieta, taquipsíquica, con intensa sensación inminente de asfixia y muerte. Sin déficit focal."
-            },
-            pulmon: {
-                titulo: "Aparato Respiratorio / Pulmones",
-                estado: "Hipoxemia Refractaria",
-                statusClass: "shock-status-badge--crit",
-                icon: "🫁",
-                hallazgos: "FR 32 rpm. Pulmones limpios a la auscultación sin ruidos agregados a pesar de saturación de 84% con máscara con reservorio: clásica disociación clínico-auscultatoria del TEP."
-            },
-            corazon: {
-                titulo: "Aparato Cardiovascular",
-                estado: "Falla Ventricular Derecha",
-                statusClass: "shock-status-badge--crit",
-                icon: "🫀",
-                hallazgos: "Latido paraesternal izquierdo palpable (signo de Dressler). R2 pulmonar marcadamente hiperfonético. Soplo holosistólico tricuspídeo. Ingurgitación yugular 3/3 sin colapso inspiratorio."
-            },
-            abdomen: {
-                titulo: "Abdomen & Reflujo",
-                estado: "Congestión Hepática",
-                statusClass: "shock-status-badge--warn",
-                icon: "🩺",
-                hallazgos: "Abdomen blando. Hepatomegalia palpable dolorosa a 3 cm del reborde costal con reflujo hepatoyugular francamente positivo."
-            },
-            renal: {
-                titulo: "Miembros Inferiores & Vascular",
-                estado: "TVP Asimétrica",
-                statusClass: "shock-status-badge--crit",
-                icon: "🩸",
-                hallazgos: "Miembro inferior derecho con aumento de diámetro de 4 cm respecto al contralateral, calor local, edema duro con signo de Godet y dolor intenso a la dorsiflexión (Signo de Homans positivo)."
-            }
-        },
-        organoFocoDefault: "corazon",
-        laboratorio: [
-            { parametro: "Dímero D Ultrasensible", valor: "8.450 ng/mL", ref: "< 500 ng/mL", alerta: "CRÍTICO 🚨", flagClass: "shock-lab-flag--crit" },
-            { parametro: "Troponina I", valor: "0.85 ng/mL", ref: "< 0.04 ng/mL", alerta: "INJURIA VD 🚨", flagClass: "shock-lab-flag--crit" },
-            { parametro: "BNP (Péptido Natriurético)", valor: "980 pg/mL", ref: "< 100 pg/mL", alerta: "ALTO ⚠️", flagClass: "shock-lab-flag--crit" },
-            { parametro: "Gases Arteriales (PaO2)", valor: "PaO2 52 mmHg (FiO2 50%)", ref: "> 80 mmHg", alerta: "HIPOXEMIA GRAVE", flagClass: "shock-lab-flag--crit" },
-            { parametro: "PaCO2 / pH", valor: "PaCO2 26 mmHg | pH 7.48", ref: "35-45 | 7.35-7.45", alerta: "ALCALOSIS RESP", flagClass: "shock-lab-flag--warn" },
-            { parametro: "Ácido Láctico", valor: "3.9 mmol/L", ref: "0.5 - 1.6", alerta: "ALTO ⚠️", flagClass: "shock-lab-flag--warn" },
-            { parametro: "Plaquetas", valor: "195.000 /mm³", ref: "150.000 - 450.000", alerta: "NORMAL", flagClass: "shock-lab-flag--norm" },
-            { parametro: "Hemoglobina / Hto", valor: "13.4 g/dL | 40%", ref: "12 - 16", alerta: "NORMAL", flagClass: "shock-lab-flag--norm" },
-            { parametro: "Creatinina sérica", valor: "1.4 mg/dL", ref: "0.6 - 1.1", alerta: "ELEVADO", flagClass: "shock-lab-flag--warn" },
-            { parametro: "Coagulograma (TP / Quick)", valor: "TP 13.5s | Quick 82%", ref: "70 - 120%", alerta: "NORMAL", flagClass: "shock-lab-flag--norm" }
-        ],
-        estudios: {
-            radiografia: {
-                titulo: "Radiografía de Tórax (Portátil)",
-                hallazgos: "Oligohemia focal en campo medio derecho (signo de Westermark) y opacidad cuneiforme de base pleural en campo inferior derecho (Joroba de Hampton). Agrandamiento del tronco de la arteria pulmonar.",
-                impresion: "Signos radiológicos altamente sugestivos de embolia e infarto pulmonar."
-            },
-            tomografia: {
-                titulo: "Angio-TC de Tórax Protocolo TEP",
-                hallazgos: "Defecto de repleción intraluminal masivo que cabalga sobre la bifurcación del tronco de la arteria pulmonar ('émbolo en silla de montar') extendiéndose a ambas arterias lobares con oclusión casi total del lecho vascular derecho.",
-                impresion: "Tromboembolismo Pulmonar Masivo Bilateral con sobrecarga y dilatación aguda de cavidades derechas (relación VD/VI > 1.3)."
-            },
-            ecg: {
-                titulo: "Electrocardiograma de 12 Derivaciones",
-                hallazgos: "Taquicardia sinusal a 130 lpm. Presencia del clásico patrón de McGinn-White (S1Q3T3: onda S profunda en DI, onda Q patológica en DIII e inversión de onda T en DIII). Bloqueo incompleto de rama derecha e inversión de T en V1-V4.",
-                impresion: "Sobrecarga sistólica y dilatación ventricular derecha aguda (Cor Pulmonale)."
-            }
-        },
-        diagnosticoOficial: "Tromboembolismo Pulmonar Masivo de Alto Riesgo Hemodinámico con Shock Obstructivo y Falla Ventricular Derecha Aguda. Conducta inmediata: 1) Trombólisis sistémica de emergencia con rtPA (Alteplasa 100 mg en infusión continua de 2 horas o Tenecteplasa bolo). 2) Soporte hemodinámico con Noradrenalina titulada precozmente. 3) Oxigenoterapia con alto flujo. 4) Anticoagulación parenteral de rescate con Heparina no fraccionada en bolo e infusión continua. 5) Si hay contraindicación absoluta para fibrinolíticos: embolectomía quirúrgica o por catéter percutáneo de urgencia."
-    },
-    {
-        id: "SR-04",
-        cama: "BOX 04 · AISLAMIENTO / SEPSIS",
-        titulo: "Shock Séptico Refractario de Foco Abdominal (Peritonitis Perforativa)",
-        sindrome: "Emergencia Infecciosa / Shock Séptico Sepsis-3",
-        edad: "Varón, 71 años",
-        ingreso: "Hace 18 minutos (Shock Room)",
-        motivoIngreso: "Ingresa en camilla con deterioro agudo del estado general, fiebre de 39.4°C seguida de hipotermia y escalofríos, distensión y dolor abdominal intolerable generalizado en las últimas 12 horas, náuseas y anuria.",
-        antecedentes: "Enfermedad diverticular crónica del colon, hipertensión arterial y diabetes tipo 2. Uso frecuente de AINEs por lumbalgia.",
-        signosVitales: {
-            fc: 138, fcRitmo: "TAQUICARDIA SINUSAL HIPERDINÁMICA", fcTrend: "▲ Taquicardia extrema",
-            pa: "78/40", tam: "52", paTrend: "TAM: 52 mmHg (Shock Séptico)", paStatus: "danger",
-            spo2: 92, spo2Trend: "FiO2 35%", spo2Status: "warning",
-            fr: 30, frTrend: "▲ Taquipnea",
-            temp: "39.4", tempTrend: "Fiebre alta (SIRS)",
-            glasgow: "12/15", glasgowNota: "AO:3 RV:4 RM:5 (Confuso)",
-            ritmoEcg: "taquicardia"
-        },
-        organos: {
-            cerebro: {
-                titulo: "Sistema Nervioso Central (SNC)",
-                estado: "Encefalopatía Séptica",
-                statusClass: "shock-status-badge--crit",
-                icon: "🧠",
-                hallazgos: "Glasgow 12/15. Desorientado en tiempo y espacio, respuesta lenta a órdenes simples. Encefalopatía asociada a sepsis por hipoperfusión cerebral y tormenta de citoquinas."
-            },
-            pulmon: {
-                titulo: "Aparato Respiratorio / Pulmones",
-                estado: "Compensación & Distress",
-                statusClass: "shock-status-badge--warn",
-                icon: "🫁",
-                hallazgos: "FR 30 rpm. Tiraje subcostal. Murmullo vesicular disminuido en bases por hipomovilidad diafragmática refleja al dolor peritoneal. Sin consolidación focal."
-            },
-            corazon: {
-                titulo: "Aparato Cardiovascular",
-                estado: "Shock Vasopléjico",
-                statusClass: "shock-status-badge--crit",
-                icon: "🫀",
-                hallazgos: "Vasoplejía severa con PAM < 65 mmHg a pesar de infusión de 2.000 mL de solución fisiológica. Ruidos cardíacos taquicárdicos, galope ausente."
-            },
-            abdomen: {
-                titulo: "Abdomen & Peritonitis",
-                estado: "Abdomen en Tabla",
-                statusClass: "shock-status-badge--crit",
-                icon: "🩺",
-                hallazgos: "Vientre en tabla con contractura muscular involuntaria generalizada. Dolor exquisito a la descompresión brusca en los 4 cuadrantes (Signo de Blumberg francamente positivo bilateral). Silencio abdominal completo (íleo paralítico)."
-            },
-            renal: {
-                titulo: "Renal & Microcirculación",
-                estado: "Falla Multiorgánica",
-                statusClass: "shock-status-badge--crit",
-                icon: "🩸",
-                hallazgos: "Anuria completa en las últimas 2 horas (< 5 mL/h). Livideces reticulares en rodillas (Mottling score 3). Tiempo de relleno capilar 6 segundos. Falla multiorgánica aguda."
-            }
-        },
-        organoFocoDefault: "abdomen",
-        laboratorio: [
-            { parametro: "Ácido Láctico sérico", valor: "6.2 mmol/L", ref: "0.5 - 1.6 mmol/L", alerta: "CRÍTICO 🚨", flagClass: "shock-lab-flag--crit" },
-            { parametro: "Procalcitonina", valor: "45 ng/mL", ref: "< 0.5 ng/mL", alerta: "SEPSIS GRAVE 🚨", flagClass: "shock-lab-flag--crit" },
-            { parametro: "Leucocitos totales", valor: "24.500 /mm³ (22% cayados)", ref: "4.500 - 10.000", alerta: "DESVIACIÓN IZQ 🚨", flagClass: "shock-lab-flag--crit" },
-            { parametro: "Plaquetas", valor: "72.000 /mm³", ref: "150.000 - 450.000", alerta: "TROMBOCITOPENIA", flagClass: "shock-lab-flag--crit" },
-            { parametro: "Gases Arteriales (pH / HCO3)", valor: "pH 7.16 | HCO3 12 mEq/L", ref: "7.35-7.45 | 22-26", alerta: "ACIDOSIS MET 🚨", flagClass: "shock-lab-flag--crit" },
-            { parametro: "Creatinina sérica", valor: "3.4 mg/dL", ref: "0.7 - 1.2", alerta: "FALLA RENAL AGUDA", flagClass: "shock-lab-flag--crit" },
-            { parametro: "Bilirrubina Total", valor: "3.1 mg/dL", ref: "< 1.2 mg/dL", alerta: "DISFUNCIÓN HEPÁTICA", flagClass: "shock-lab-flag--warn" },
-            { parametro: "Coagulograma (Quick)", valor: "Quick 48% | KPTT 54s", ref: "70-120% | 25-38s", alerta: "COAGULOPATÍA", flagClass: "shock-lab-flag--warn" },
-            { parametro: "Glucemia", valor: "165 mg/dL", ref: "70 - 110 mg/dL", alerta: "ESTRÉS SÉPTICO", flagClass: "shock-lab-flag--warn" },
-            { parametro: "Score SOFA Calculado", valor: "14 Puntos", ref: "< 2 Puntos", alerta: "MORTALIDAD >50%", flagClass: "shock-lab-flag--crit" }
-        ],
-        estudios: {
-            radiografia: {
-                titulo: "Radiografía de Tórax y Abdomen de Pie",
-                hallazgos: "Presencia de aire libre subdiafragmático en semiluna bajo ambos hemidiafragmas ('Signo de Popper' / neumoperitoneo evidente). Borramiento de las líneas del psoas.",
-                impresion: "Neumoperitoneo masivo secundario a perforación de víscera hueca intraabdominal."
-            },
-            tomografia: {
-                titulo: "TC de Abdomen y Pelvis con Contraste",
-                hallazgos: "Neumoperitoneo masivo y abundante líquido libre denso en espacio subhepático, goteras paracólicas y pelvis menor (peritonitis fecal / purulenta). Engrosamiento y defecto focal de la pared en colon sigmoideo compatible con diverticulitis perforada Hinchey IV.",
-                impresion: "Perforación diverticular sigmoidea con peritonitis fecal generalizada y shock séptico."
-            },
-            ecg: {
-                titulo: "Electrocardiograma de 12 Derivaciones",
-                hallazgos: "Taquicardia sinusal regular a 138 lpm sin signos de isquemia coronaria primaria.",
-                impresion: "Taquicardia sinusal en respuesta a shock distributivo y tormenta inflamatoria sistémica."
-            }
-        },
-        diagnosticoOficial: "Shock Séptico Refractario con Falla Multiorgánica secundario a Peritonitis Fecal por Perforación Diverticular Sigmoidea (Hinchey IV). Conducta inmediata: 1) Resucitación con cristaloides balanceados (30 mL/kg) y soporte vasopresor de 1° línea con Noradrenalina titulada precozmente para PAM ≥ 65 mmHg. 2) Segunda línea: Vasopresina 0.03 UI/min + Hidrocortisona 200 mg/día. 3) Toma de hemocultivos x 2 e inicio de antibióticos empíricos de amplio espectro dentro de la 'hora de oro' (Meropenem 1 g c/8h + Vancomicina 15-20 mg/kg). 4) Pase urgente a quirófano para laparotomía exploradora y control del foco (Operación de Hartmann)."
-    },
-    {
-        id: "SR-05",
-        cama: "BOX 05 · TRAUMA SHOCK",
-        titulo: "Neumotórax Hipertensivo a Tensión con Shock Obstructivo Post-Traumático",
-        sindrome: "Emergencia de Trauma / Shock Obstructivo",
-        edad: "Varón, 32 años",
-        ingreso: "Hace 8 minutos (Trauma Cód. Rojo)",
-        motivoIngreso: "Paciente traído de urgencia tras colisión vehicular moto-auto con traumatismo torácico cerrado de alta energía. Ingresa en fallo ventilatorio extremo, con asfixia inminente, hipotensión profunda y cianosis central progresiva.",
-        antecedentes: "Joven previamente sano. Sin antecedentes de relevancia ni cirugías previas.",
-        signosVitales: {
-            fc: 142, fcRitmo: "TAQUICARDIA SINUSAL EXTREMA", fcTrend: "▲ Taquicardia extrema",
-            pa: "70/40", tam: "50", paTrend: "TAM: 50 mmHg (Colapso)", paStatus: "danger",
-            spo2: 78, spo2Trend: "FiO2 100% (Asfixia)", spo2Status: "danger",
-            fr: 36, frTrend: "▲ Disnea agónica",
-            temp: "36.4", tempTrend: "Normotérmico",
-            glasgow: "13/15", glasgowNota: "AO:3 RV:4 RM:6 (Agitado)",
-            ritmoEcg: "taquicardia"
-        },
-        organos: {
-            cerebro: {
-                titulo: "Sistema Nervioso Central (SNC)",
-                estado: "Agitación Hipóxica",
-                statusClass: "shock-status-badge--crit",
-                icon: "🧠",
-                hallazgos: "Glasgow 13/15. Agitación psicomotriz extrema secundaria a hipoxemia crítica y narcosis por retención de CO2. Pupilas reactivas."
-            },
-            pulmon: {
-                titulo: "Aparato Respiratorio / Pulmones",
-                estado: "Neumotórax a Tensión",
-                statusClass: "shock-status-badge--crit",
-                icon: "🫁",
-                hallazgos: "Hemitórax derecho inmóvil, hiperexpansivo. Abolición total del murmullo vesicular en todo el campo pulmonar derecho. Timpanismo metálico resonante a la percusión. Desviación traqueal visible hacia la izquierda."
-            },
-            corazon: {
-                titulo: "Aparato Cardiovascular",
-                estado: "Colapso de Retorno Venoso",
-                statusClass: "shock-status-badge--crit",
-                icon: "🫀",
-                hallazgos: "Ruidos cardíacos muy apagados y alejados. Ingurgitación yugular masiva bilateral por compresión y colapso de la vena cava superior e inferior. Pulsos filiformes imperceptibles."
-            },
-            abdomen: {
-                titulo: "Abdomen & Pelvis",
-                estado: "FAST Negativo",
-                statusClass: "shock-status-badge--norm",
-                icon: "🩺",
-                hallazgos: "Abdomen blando, sin defensa. Ecografía FAST en shock room descarta líquido libre intraabdominal y taponamiento cardíaco (espacio pericárdico libre)."
-            },
-            renal: {
-                titulo: "Piel & Miembros",
-                estado: "Cianosis Central",
-                statusClass: "shock-status-badge--crit",
-                icon: "🩸",
-                hallazgos: "Cianosis central peribucal y acrocianosis generalizada. Piel sudorosa y fría. Enfisema subcutáneo palpable en base de cuello y hemitórax derecho."
-            }
-        },
-        organoFocoDefault: "pulmon",
-        laboratorio: [
-            { parametro: "Gases Arteriales (pH)", valor: "pH 7.15", ref: "7.35 - 7.45", alerta: "CRÍTICO 🚨", flagClass: "shock-lab-flag--crit" },
-            { parametro: "PaO2 (Gasometría)", valor: "48 mmHg (con O2)", ref: "> 80 mmHg", alerta: "HIPOXEMIA GRAVE", flagClass: "shock-lab-flag--crit" },
-            { parametro: "PaCO2 (Gasometría)", valor: "62 mmHg", ref: "35 - 45 mmHg", alerta: "HIPERCAPNIA SEVERA", flagClass: "shock-lab-flag--crit" },
-            { parametro: "Ácido Láctico", valor: "4.2 mmol/L", ref: "0.5 - 1.6", alerta: "ALTO ⚠️", flagClass: "shock-lab-flag--crit" },
-            { parametro: "Hemoglobina / Hto", valor: "13.8 g/dL | 41%", ref: "13.0 - 17.0", alerta: "NORMAL", flagClass: "shock-lab-flag--norm" },
-            { parametro: "Plaquetas", valor: "240.000 /mm³", ref: "150.000 - 450.000", alerta: "NORMAL", flagClass: "shock-lab-flag--norm" },
-            { parametro: "Leucocitos", valor: "11.200 /mm³", ref: "4.500 - 10.000", alerta: "LEVE AUMENTO", flagClass: "shock-lab-flag--norm" },
-            { parametro: "Coagulograma (Quick)", valor: "Quick 88%", ref: "70 - 120%", alerta: "NORMAL", flagClass: "shock-lab-flag--norm" },
-            { parametro: "Urea / Creatinina", valor: "38 mg/dL | 1.0 mg/dL", ref: "15-45 | 0.7-1.2", alerta: "NORMAL", flagClass: "shock-lab-flag--norm" },
-            { parametro: "Glucemia", valor: "142 mg/dL", ref: "70 - 110 mg/dL", alerta: "LEVE AUMENTO", flagClass: "shock-lab-flag--warn" }
-        ],
-        estudios: {
-            radiografia: {
-                titulo: "Radiografía de Tórax Portátil en Camilla",
-                hallazgos: "Colapso completo del muñón pulmonar derecho hacia el hilio. Ausencia total de trama vascular en todo el hemitórax derecho con hiperclaridad. Aplanamiento e inversión del hemidiafragma derecho y desviación contralateral masiva del mediastino y corazón hacia la izquierda.",
-                impresion: "Neumotórax Hipertensivo Derecho con colapso vascular y mediastínico."
-            },
-            tomografia: {
-                titulo: "TC Multislice de Tórax",
-                hallazgos: "ESTUDIO CONTRAINDICADO FORMALMENTE: el paciente se encuentra inestable en shock; el diagnóstico de neumotórax hipertensivo es estrictamente clínico y requiere descompresión inmediata sin demoras.",
-                impresion: "Conducta de oro: no trasladar a tomografía con sospecha clínica de neumotórax hipertensivo."
-            },
-            ecg: {
-                titulo: "Electrocardiograma de 12 Derivaciones",
-                hallazgos: "Taquicardia sinusal a 142 lpm con bajo voltaje generalizado secundario a desplazamiento mediastínico y pérdida de retorno venoso.",
-                impresion: "Taquicardia sinusal extrema con bajo gasto."
-            }
-        },
-        diagnosticoOficial: "Neumotórax Hipertensivo / a Tensión Derecho con Shock Obstructivo y Colapso Cardiorrespiratorio Post-traumático. Conducta inmediata: 1) DESCOMPRESIÓN INMEDIATA CON AGUJA GRUESA (Cánula 14G) en el 2° espacio intercostal línea medioclavicular (o 5° espacio intercostal línea axilar anterior) del lado derecho para transformar el neumotórax a tensión en un neumotórax simple normotensivo. 2) Colocación reglada inmediata de Tubo de Drenaje Pleural (28-32 Fr) con trampa de agua bajo sello hermético. 3) Oxigenoterapia con alto flujo / intubación según estado hemodinámico post-descompresión."
-    },
-    {
-        id: "SR-06",
-        cama: "BOX 06 · UNIDAD DE STROKE",
-        titulo: "ACV Isquémico Agudo en Ventana con Déficit Motor Hemisférico Severo",
-        sindrome: "Emergencia Neurológica / Stroke en Ventana",
-        edad: "Mujer, 68 años",
-        ingreso: "Hace 16 minutos (Código Ictus)",
-        motivoIngreso: "Paciente traída de urgencia tras presentar inicio brusco de hemiplejía fascio-braquio-crural izquierda, parálisis facial central, afasia de comprensión/disartria severa y desviación conjugada de la mirada. Tiempo exacto de inicio: 75 minutos antes de la admisión.",
-        antecedentes: "Fibrilación auricular crónica anticoagulada de forma errática con acenocumarol. Hipertensión arterial.",
-        signosVitales: {
-            fc: 88, fcRitmo: "FIBRILACIÓN AURICULAR IRREGULAR", fcTrend: "Ritmo irregular",
-            pa: "195/105", tam: "135", paTrend: "TAM: 135 mmHg (HTA reactiva)", paStatus: "warning",
-            spo2: 96, spo2Trend: "Aire ambiente", spo2Status: "normal",
-            fr: 18, frTrend: "Eupneica",
-            temp: "36.7", tempTrend: "Normotérmica",
-            glasgow: "12/15", glasgowNota: "AO:4 RV:3 RM:5 (Afasia/Déficit)",
-            ritmoEcg: "fibrilacion"
-        },
-        organos: {
-            cerebro: {
-                titulo: "Sistema Nervioso Central (SNC)",
-                estado: "Déficit Hemisférico Severo",
-                statusClass: "shock-status-badge--crit",
-                icon: "🧠",
-                hallazgos: "Hemiplejía izquierda fláccida grado 0/5. Parálisis facial central izquierda. Desviación conjugada de ojos hacia la derecha ('mira hacia su lesión cerebral'). Heminegligencia y anosognosia. Escala NIHSS: 18 puntos (Stroke severo)."
-            },
-            pulmon: {
-                titulo: "Aparato Respiratorio / Pulmones",
-                estado: "Sin Compromiso",
-                statusClass: "shock-status-badge--norm",
-                icon: "🫁",
-                hallazgos: "FR 18 rpm. Vía aérea permeable con reflejo deglutorio presente. Murmullo vesicular conservado bilateralmente sin ruidos adventicios."
-            },
-            corazon: {
-                titulo: "Aparato Cardiovascular",
-                estado: "Fibrilación Auricular",
-                statusClass: "shock-status-badge--warn",
-                icon: "🫀",
-                hallazgos: "R1 variable, ruidos cardíacos arrítmicos compatibles con fibrilación auricular. Sin soplos cardíacos. Pulsos irregulares y asincrónicos."
-            },
-            abdomen: {
-                titulo: "Abdomen & Renal",
-                estado: "Normal",
-                statusClass: "shock-status-badge--norm",
-                icon: "🩺",
-                hallazgos: "Abdomen blando e indoloro. Sin visceromegalias. Ruidos hidroaéreos normales."
-            },
-            renal: {
-                titulo: "Vascular Periférico",
-                estado: "Compensado",
-                statusClass: "shock-status-badge--norm",
-                icon: "🩸",
-                hallazgos: "Extremidades normoperfundidas. Relleno capilar 2 segundos. Pulsos periféricos femorales y tibiales presentes pero irregulares."
-            }
-        },
-        organoFocoDefault: "cerebro",
-        laboratorio: [
-            { parametro: "Glucemia Capilar", valor: "108 mg/dL", ref: "70 - 110 mg/dL", alerta: "DESCARTA HIPOGLUC", flagClass: "shock-lab-flag--norm" },
-            { parametro: "RIN / INR", valor: "1.1 (Infraterapéutico)", ref: "2.0 - 3.0", alerta: "HABILITA RTPA ✅", flagClass: "shock-lab-flag--norm" },
-            { parametro: "Plaquetas", valor: "235.000 /mm³", ref: "150.000 - 450.000", alerta: "NORMAL", flagClass: "shock-lab-flag--norm" },
-            { parametro: "KPTT / TP", valor: "32s | Quick 85%", ref: "Normal", alerta: "NORMAL", flagClass: "shock-lab-flag--norm" },
-            { parametro: "Hemoglobina / Hto", valor: "13.2 g/dL | 39%", ref: "12.0 - 16.0", alerta: "NORMAL", flagClass: "shock-lab-flag--norm" },
-            { parametro: "Leucocitos", valor: "7.800 /mm³", ref: "4.500 - 10.000", alerta: "NORMAL", flagClass: "shock-lab-flag--norm" },
-            { parametro: "Creatinina / Urea", valor: "0.9 mg/dL | 32 mg/dL", ref: "Normal", alerta: "NORMAL", flagClass: "shock-lab-flag--norm" },
-            { parametro: "Troponina Ultrasensible", valor: "< 10 ng/L", ref: "< 14 ng/L", alerta: "NEGATIVO", flagClass: "shock-lab-flag--norm" },
-            { parametro: "Ionograma (Na / K)", valor: "Na 140 | K 4.1 mEq/L", ref: "Normal", alerta: "NORMAL", flagClass: "shock-lab-flag--norm" },
-            { parametro: "Escala NIHSS de Stroke", valor: "18 Puntos", ref: "0 Puntos", alerta: "STROKE SEVERO 🚨", flagClass: "shock-lab-flag--crit" }
-        ],
-        estudios: {
-            radiografia: {
-                titulo: "Radiografía de Tórax de Frente",
-                hallazgos: "Silueta cardíaca moderadamente agrandada con dilatación de la aurícula izquierda compatible con su antecedente de fibrilación auricular. Parénquima pulmonar sin infiltrados.",
-                impresion: "Cardiomegalia leve a expensas de cavidades izquierdas."
-            },
-            tomografia: {
-                titulo: "TC de Encéfalo sin Contraste de Urgencia",
-                hallazgos: "Ausencia de hemorragia intracerebral (se descarta ACV hemorrágico). Signo de la arteria cerebral media derecha hiperdensa ('signo de la cuerda' por trombo intraluminal agudo). Borramiento incipiente de la diferenciación sustancia gris-blanca en ínsula derecha. Escala ASPECTS: 8 puntos.",
-                impresion: "ACV Isquémico Agudo extenso de arteria cerebral media derecha en ventana terapéutica."
-            },
-            ecg: {
-                titulo: "Electrocardiograma de 12 Derivaciones",
-                hallazgos: "Fibrilación auricular con respuesta ventricular controlada a 88 lpm. Ausencia completa de ondas P, línea de base con ondulaciones fibrilatorias 'f' finas, intervalos R-R absolutamente irregulares.",
-                impresion: "Fibrilación Auricular (fuente cardioembólica del stroke)."
-            }
-        },
-        diagnosticoOficial: "Accidente Cerebrovascular Isquémico Agudo (ACV) Cardioembólico de Territorio de la Arteria Cerebral Media Derecha (NIHSS 18) en Ventana Terapéutica (< 4.5 horas). Conducta inmediata: 1) Control de presión arterial para trombolisis (objetivo < 185/110 mmHg con Labetalol 10-20 mg IV en bolo). 2) Iniciar Trombolisis Intravenosa con rtPA (Alteplasa 0.9 mg/kg, 10% en bolo inicial de 1 minuto y 90% restante en infusión de 60 minutos). 3) Activación urgente del equipo de Neurointervencionismo para Trombectomía Mecánica endovascular inmediata de rescate (oclusión de gran vaso M1 en ventana extendida). 4) Ingreso a Unidad de Cuidados Críticos de Stroke."
-    }
-];
+const BANCO_CASOS_SHOCK_ROOM = [];
 
 let ecgCanvasObserver = null;
 let ecgIntersectionObserver = null;
@@ -5146,7 +3887,7 @@ function generarCasoShockRoomHome(forzarNuevo = false) {
     const feedbackPanel = document.getElementById("shockAiFeedbackPanel");
     if (feedbackPanel) {
         feedbackPanel.classList.add("hidden");
-        feedbackPanel.innerHTML = "";
+        setHTML(feedbackPanel, "");
     }
 
     // Restablecer pestaña activa a Historia Clínica por defecto
@@ -5167,7 +3908,7 @@ function renderizarTablaLaboratorioShock(datosLab) {
     if (!wrap) return;
 
     if (!datosLab || datosLab.length === 0) {
-        wrap.innerHTML = `<div style="padding:1rem;color:#94a3b8;font-size:0.8rem;text-align:center;">Sin datos de laboratorio disponibles.</div>`;
+        setHTML(wrap, `<div style="padding:1rem;color:#94a3b8;font-size:0.8rem;text-align:center;">Sin datos de laboratorio disponibles.</div>`);
         return;
     }
 
@@ -5186,7 +3927,7 @@ function renderizarTablaLaboratorioShock(datosLab) {
         </tr>
     `).join("");
 
-    wrap.innerHTML = `
+    setHTML(wrap, `
         <table class="shock-lab-table">
             <thead>
                 <tr>
@@ -5199,7 +3940,7 @@ function renderizarTablaLaboratorioShock(datosLab) {
                 ${rows}
             </tbody>
         </table>
-    `;
+    `);
 }
 
 function actualizarOrganoFocoShock(organoKey) {
@@ -5392,542 +4133,7 @@ function inicializarEventosShockRoom() {
     if (firstMobPanel) firstMobPanel.classList.add("is-mobile-visible");
 }
 
-const BANCO_CASOS_INTERNA_AVANZADOS = [
-    // 🫀 CARDIOLOGÍA
-    {
-        id: "HC-49210",
-        cama: "Cama 14 · UCO",
-        edad: "Varón, 64 años",
-        ingreso: "Guardia de Emergencias",
-        sistema: "cardio",
-        dificultad: 2,
-        enfermedadActual: "Paciente que consulta por disnea progresiva de 72 horas de evolución que se intensificó en las últimas 6 horas hasta clase funcional IV/IV (ortopnea y disnea paroxística nocturna), acompañada de tos con expectoración asalmonada, frialdad distal y sudoración profusa.",
-        antecedentes: "Hipertensión arterial de 15 años de diagnóstico (tratada irregularmente con Enalapril 10mg/día). Diabetes Mellitus tipo 2 (Metformina 850mg c/12h). Tabaquista de 30 paquetes/año. No refiere alergias conocidas.",
-        examenFisico: [
-            "PA: 175/105 mmHg | FC: 118 lpm regular",
-            "FR: 28 rpm con tiraje intercostal | SpO2: 88% aire ambiente",
-            "Aparato Respiratorio: Rales crepitantes húmedos bilaterales hasta campos medios (patrón en marea ascendente). Sibilancias espiratorias aisladas.",
-            "Aparato Cardiovascular: R1 y R2 taquicárdicos, R3 galope audible en ápex. Ingurgitación yugular 2/3 con reflujo hepatoyugular positivo."
-        ],
-        laboratorio: [
-            { c1: "Hemograma: Hb 13.8 g/dL, Leucocitos 11.200 /mm³", c2: "Glucemia: 184 mg/dL" },
-            { c1: "Urea: 64 mg/dL | Creatinina: 1.6 mg/dL", c2: "Ionograma: Na 137, K 4.9 mEq/L" },
-            { c1: "Biomarcadores: Troponina I: 0.08 ng/mL (ligeramente elevada)", c2: "NT-proBNP: 6.850 pg/mL" },
-            { c1: "ECG: Taquicardia sinusal, HVI (Sokolow-Lyon 38mm), sobrecarga sistólica anterior sin ST elevado.", c2: "" }
-        ],
-        preguntas: [
-            "¿Cuál es el mecanismo fisiopatológico primario desencadenante y el perfil hemodinámico de Stevenson?",
-            "Planteá los 2 diagnósticos diferenciales más importantes y los criterios clínicos utilizados.",
-            "¿Cuál es la conducta terapéutica inmediata en los primeros 15 minutos y qué fármacos están contraindicados de entrada?"
-        ],
-        discusion: `<strong>1. Diagnóstico Principal & Fisiopatología:</strong> Edema Agudo de Pulmón (EAP) cardiogénico hipertensivo. Perfil B de Stevenson (<em>Caliente y Húmedo</em>). La crisis hipertensiva eleva abruptamente la poscarga ventricular izquierda, transmitiendo presiones retrógradas a los capilares pulmonares (> 25 mmHg) que superan la presión oncótica plasmática, produciendo trasudado alveolar masivo.<br>
-<strong>2. Diagnósticos Diferenciales:</strong> <em>TEP Agudo:</em> Ausencia de hipotensión o signos de fallo de VD aislado. <em>Crisis asmática / EPOC:</em> Descartados por ritmo de galope R3, NT-proBNP marcadamente elevado y esputo asalmonado.<br>
-<strong>3. Conducta Terapéutica Inmediata:</strong> VMNI (CPAP 8-10 cmH2O) + Nitroglicerina IV en infusión continua (10-20 mcg/min iniciales para vasodilatación arterial) + Furosemida 40-80 mg IV. <em>Contraindicaciones inmediatas:</em> Betabloqueantes en fase congestiva descompensada y morfina de rutina.`
-    },
-    {
-        id: "HC-48102",
-        cama: "Cama 02 · Shock Room UCO",
-        edad: "Varón, 59 años",
-        ingreso: "Código Infarto",
-        sistema: "cardio",
-        dificultad: 3,
-        enfermedadActual: "Ingresa con dolor precordial opresivo retroesternal de intensidad 10/10 de 3 horas de evolución irradiado a mandíbula y brazo izquierdo, acompañado de palidez terrosa, sudoración fría profusa, oliguria y somnolencia progresiva.",
-        antecedentes: "Dislipemia severa sin tratamiento, tabaquista actual de 40 paq/año, sedentarismo y antecedentes familiares de muerte súbita paterna a los 52 años.",
-        examenFisico: [
-            "PA: 75/45 mmHg (Hipotensión severa / Shock) | FC: 122 lpm taquicárdico filiforme",
-            "FR: 30 rpm | SpO2: 89% con máscara simple | Relleno capilar: 5 segundos",
-            "Cardiovascular: Soplo holosistólico nuevo grado IV/VI en ápex irradiado a axila (sospecha de insuficiencia mitral aguda por rotura de músculo papilar). R3 audible.",
-            "Respiratorio: Rales crepitantes bibasales difusos hasta vértices. Frialdad cadavérica en miembros inferiores."
-        ],
-        laboratorio: [
-            { c1: "Troponina I ultrasensible: 18.400 ng/L (Positiva masiva)", c2: "Ácido Láctico: 4.8 mmol/L (Hiperlactatemia severa)" },
-            { c1: "Urea: 82 mg/dL | Creatinina: 2.3 mg/dL", c2: "Gases arteriales: pH 7.24, HCO3 14 mEq/L, EB -11" },
-            { c1: "ECG: Supradesnivel del segmento ST de 4 mm de V1 a V6 con ondas Q incipientes.", c2: "Ecocardiograma rápido: FEVI 25%, aquinesia anteroapical, insuficiencia mitral masiva." }
-        ],
-        preguntas: [
-            "¿Cuál es la clasificación hemodinámica de Forrester y Stevenson para este cuadro de shock?",
-            "¿Cuál es la estrategia de reperfusión de emergencia y soporte hemodinámico de elección?",
-            "¿Por qué los nitratos y diuréticos en bolo están contraindicados con esta presión arterial?"
-        ],
-        discusion: `<strong>1. Diagnóstico & Hemodinamia:</strong> Shock Cardiogénico secundario a IAM con elevación del ST (IAMCEST) anterior extenso complicado con insuficiencia mitral aguda. Perfil C de Stevenson (<em>Frío y Húmedo</em>) / Forrester IV (Índice Cardíaco < 2.2 L/min/m² y PCP > 18 mmHg). Hipoperfusión tisular crítica con acidosis láctica.<br>
-<strong>2. Conducta Inmediata:</strong> Coronariografía y angioplastia primaria urgente (< 90 min) de la arteria descendente anterior. Asistencia ventilatoria invasiva temprana (IOT) y soporte inotrópico/vasopresor con <strong>Noradrenalina</strong> (para mantener PAM ≥ 65 mmHg) + <strong>Dobutamina</strong> o asistencia circulatoria mecánica (Balón de Contrapulsación Intraaórtico - BCIA / Impella) antes de la resolución quirúrgica del músculo papilar.<br>
-<strong>3. Fármacos Prohibidos:</strong> Nitroglicerina y Furosemida IV agravan el colapso hemodinámico letal al reducir la precarga en un ventrículo dependiente de volumen de llenado.`
-    },
-    {
-        id: "HC-47319",
-        cama: "Cama 18 · Sala Coronaria",
-        edad: "Mujer, 67 años",
-        ingreso: "Derivación por Guardia",
-        sistema: "cardio",
-        dificultad: 1,
-        enfermedadActual: "Cuadro de 2 semanas de evolución caracterizado por episodios repetidos de opresión precordial desencadenados a esfuerzos cada vez menores (caminar una cuadra), que en las últimas 24 horas se presentó en reposo con duración de 25 minutos y alivió parcialmente con reposo.",
-        antecedentes: "Diabetes Mellitus tipo 2 tratada con Linagliptina 5mg/día. Hipertensión arterial tratada con Losartán 50mg/día. Sobrepeso (IMC 29.4).",
-        examenFisico: [
-            "PA: 135/85 mmHg | FC: 78 lpm regular",
-            "FR: 16 rpm | SpO2: 98% aire ambiente | Afebril",
-            "Aparato Cardiovascular: R1 y R2 normofonéticos, sin soplos ni galope R3. Pulsos periféricos simétricos.",
-            "Aparato Respiratorio: Buena entrada de aire bilateral, sin ruidos agregados."
-        ],
-        laboratorio: [
-            { c1: "Hemograma: Hb 12.4 g/dL, Plaquetas 240.000 /mm³", c2: "Glucemia: 142 mg/dL | HbA1c: 7.6%" },
-            { c1: "Troponina ultrasensible T: 38 pg/mL (Curva plana seriada a las 0h y 3h)", c2: "Lipidograma: Colesterol Total 240 mg/dL, LDL 162 mg/dL" },
-            { c1: "ECG: Ritmo sinusal, infradesnivel del ST de 1.5 mm en cara lateral (V5-V6, DI y aVL) que normaliza tras dolor.", c2: "" }
-        ],
-        preguntas: [
-            "Estratificá el riesgo isquémico según Score GRACE o TIMI.",
-            "¿Cuál es la doble antiagregación y esquema antitrombótico indicado?",
-            "¿En qué ventana temporal se debe indicar la cinecoronariografía invasiva?"
-        ],
-        discusion: `<strong>1. Diagnóstico:</strong> Síndrome Coronario Agudo sin elevación del ST (SCASEST) / Angina Inestable de alto riesgo con cambios dinámicos del ECG.<br>
-<strong>2. Esquema Terapéutico:</strong> Doble antiagregación plaquetaria con Aspirina 100-300 mg de carga + Clopidogrel 300-600 mg (o Ticagrelor 180 mg) + Anticoagulación parenteral con Enoxaparina 1 mg/kg SC cada 12 horas + Atorvastatina 80 mg/día + Betabloqueante (Bisoprolol 2.5-5 mg) si no hay contraindicaciones.<br>
-<strong>3. Estrategia Invasiva:</strong> Cinecoronariografía invasiva precoz (< 24 horas) por presentar criterios de alto riesgo (cambios dinámicos del ST y angina de reposo prolongada).`
-    },
-
-    // 🫁 NEUMONOLOGÍA
-    {
-        id: "HC-60293",
-        cama: "Cama 21 · Sala General",
-        edad: "Varón, 68 años",
-        ingreso: "Derivación Ambulatoria",
-        sistema: "neumo",
-        dificultad: 1,
-        enfermedadActual: "Paciente con tos productiva con expectoración mucopurulenta y herrumbrosa de 5 días de evolución, dolor pleurítico en puntada de costado derecho y picos febriles de hasta 39°C acompañados de chuchos de frío intensos.",
-        antecedentes: "EPOC estadio GOLD B con uso de Salmeterol/Fluticasona. Ex-fumador (40 paq/año). Vacunación antigripal al día, neumococo no refiere.",
-        examenFisico: [
-            "PA: 120/75 mmHg | FC: 96 lpm | Temp: 38.6 °C",
-            "FR: 24 rpm | SpO2: 91% aire ambiente (previa habitual 94%)",
-            "Examen Respiratorio: Matidez a la percusión en base derecha, aumento de vibraciones vocales, soplo tubario y crepitantes teleinspiratorios localizados en lóbulo inferior derecho."
-        ],
-        laboratorio: [
-            { c1: "Leucocitos: 16.400 /mm³ (84% neutrófilos, 6% en cayado)", c2: "Eritrosedimentación: 78 mm/h | PCR: 145 mg/L" },
-            { c1: "Urea: 34 mg/dL | Creatinina: 0.9 mg/dL", c2: "Rx de Tórax: Opacidad alveolar homogénea con broncograma aéreo en lóbulo inferior derecho" }
-        ],
-        preguntas: [
-            "Definí el síndrome semiológico respiratorio presente y el score de estratificación de riesgo CURB-65 / CRB-65.",
-            "¿Cuál es el agente etiológico más probable y cuál el esquema antibiótico empírico de elección ambulatorio vs internación?",
-            "¿Qué criterios clínicos definen la falla de tratamiento inicial a las 48-72 horas?"
-        ],
-        discusion: `<strong>1. Síndrome & Estratificación:</strong> Síndrome de condensación pulmonar consolidativo con broncograma aéreo. Score CURB-65: Confusión (0), Urea > 42 mg/dL (0), FR ≥ 30 (0), PA baja (0), Edad ≥ 65 (1 punto: riesgo intermedio, internación en sala general aconsejada por comorbilidad EPOC).<br>
-<strong>2. Etiología y Tratamiento:</strong> <em>Streptococcus pneumoniae</em> (Neumococo). Tratamiento de 1° línea internación en piso: Ampicilina/Sulbactam 1.5g c/6h IV + Claritromicina 500mg c/12h VO/IV, o Ceftriaxona 1-2g/día + Macrólido.<br>
-<strong>3. Criterios de Falla:</strong> Persistencia de fiebre > 72h sin descenso de leucocitosis/PCR, progresión radiológica > 50% o deterioro hemodinámico (sospechar empiema pleural, resistencia bacteriana o sobreinfección hospitalaria).`
-    },
-    {
-        id: "HC-61405",
-        cama: "Cama 09 · Cuidados Intermedios",
-        edad: "Mujer, 45 años",
-        ingreso: "Guardia Central",
-        sistema: "neumo",
-        dificultad: 2,
-        enfermedadActual: "Mujer que consulta por disnea súbita de 12 horas de evolución que inició tras levantarse de la cama, dolor torácico pleurítico retroesternal de tipo opresivo, palpitaciones taquicárdicas y dos episodios de hemoptisis en esputo fresco.",
-        antecedentes: "Fractura de fémur izquierdo hace 3 semanas inmovilizada con yeso cruropédico. Usuaria de anticonceptivos orales combinados (etinilestradiol/levonorgestrel). Tabaquista de 15 cigarrillos/día.",
-        examenFisico: [
-            "PA: 105/65 mmHg (normotensa en reposo) | FC: 114 lpm taquicardia sinusal",
-            "FR: 30 rpm taquipneica | SpO2: 89% aire ambiente corregida a 94% con cánula nasal",
-            "Miembro inferior izquierdo: Edema asimétrico de pantorrilla con dolor a la compresión (signo de Homans positivo) y empastamiento gemelar.",
-            "Cardiopulmonar: R2 reforzado en foco pulmonar, sin estertores francos. Rx de tórax: Signo de Westermark (oligohemia regional) sin condensación alveolar."
-        ],
-        laboratorio: [
-            { c1: "Dímero D (ELISA): 4.850 ng/mL (Positivo marcadamente elevado)", c2: "Troponina I: 0.12 ng/mL (Elevación de biomarcador miocárdico)" },
-            { c1: "NT-proBNP: 1.450 pg/mL (Sobrecarga de cavidades derechas)", c2: "Gases arteriales: Hipoxemia (PaO2 58 mmHg) e hipocapnia (PaCO2 29 mmHg) con alcalosis respiratoria" },
-            { c1: "ECG: Patrón S1Q3T3 (McGinn-White), T invertidas de V1 a V4.", c2: "Angio-TC de Tórax: Defecto de repleción bilateral en ramas principales de arterias pulmonares." }
-        ],
-        preguntas: [
-            "Calculá la probabilidad pre-test según el Score de Wells / Ginebra y estratificá el riesgo según PESI.",
-            "¿Cuál es la diferencia de conducta entre un TEP de Riesgo Intermedio-Alto vs TEP Masivo de Alto Riesgo?",
-            "¿Cuál es el esquema de anticoagulación inicial de elección y cuándo se indica trombólisis sistémica?"
-        ],
-        discusion: `<strong>1. Diagnóstico & Estratificación:</strong> Tromboembolismo Pulmonar (TEP) submasivo de <strong>Riesgo Intermedio-Alto</strong> (Score de Wells > 6 puntos: alta probabilidad. Paciente normotensa pero con disfunción de VD por ecografía/angio-TC y biomarcadores positivos: Troponina y NT-proBNP elevados).<br>
-<strong>2. Conducta Terapéutica:</strong> Anticoagulación inmediata con Heparina de Bajo Peso Molecular (Enoxaparina 1 mg/kg SC c/12h) o Anticoagulantes Orales Directos (DOAC: Apixabán o Rivaroxabán a dosis de carga). Monitorización estricta en unidad de cuidados intensivos/intermedios.<br>
-<strong>3. Rol de la Trombólisis:</strong> La trombólisis sistémica con rtPA (Alteplasa 100 mg en 2h) NO está indicada de entrada en este estadio, sino que se mantiene en reserva de rescate inmediato si la paciente evoluciona a descompensación hemodinámica con hipotensión persistente (PAS < 90 mmHg o shock obstructivo).`
-    },
-    {
-        id: "HC-62910",
-        cama: "Cama 04 · Terapia Intensiva",
-        edad: "Varón, 52 años",
-        ingreso: "UTI Pediátrica/Adultos",
-        sistema: "neumo",
-        dificultad: 3,
-        enfermedadActual: "Paciente internado por neumonía bilateral viral grave que al 4° día presenta taquipnea extrema, aleteo nasal, cianosis periférica refractaria a oxigenoterapia de alto flujo (PAFI en caída abrupta) y colapso respiratorio inminente.",
-        antecedentes: "Obesidad mórbida (IMC 41), hipertensión arterial y síndrome de apnea-hipopnea obstructiva del sueño (SAHOS).",
-        examenFisico: [
-            "PA: 130/80 mmHg | FC: 128 lpm | Temp: 38.8 °C",
-            "FR: 38 rpm con uso de musculatura accesoria | SpO2: 81% con máscara de reservorio al 100%",
-            "Aparato Respiratorio: Crepitantes secos y húmedos bilaterales difusos en velcro.",
-            "Rx y TC de Tórax: Infiltrados alveolo-intersticiales bilaterales extensos en 'vidrio esmerilado' y consolidaciones dependientes con derrame pleural mínimo."
-        ],
-        laboratorio: [
-            { c1: "Gases Arteriales (con FiO2 1.0): PaO2 62 mmHg", c2: "Relación PaFi (PaO2/FiO2): 62 (SDRA Severo < 100)" },
-            { c1: "pH: 7.22 | PaCO2: 58 mmHg | HCO3: 23 mEq/L", c2: "Ferritina: 2.100 ng/mL | Dímero D: 6.200 ng/mL" },
-            { c1: "Presión capilar pulmonar (PCP estimada por eco): 12 mmHg (No cardiogénico)", c2: "FEVI: 60% conservada sin valvulopatías significativas" }
-        ],
-        preguntas: [
-            "¿Cuáles son los 4 criterios diagnósticos de Berlín para definir SDRA?",
-            "¿Cuáles son los pilares de la ventilación mecánica protectora (volumen corriente y presión meseta)?",
-            "¿Cuándo se indica la posición prona y cuál es su beneficio fisiológico sobre el reclutamiento alveolar?"
-        ],
-        discusion: `<strong>1. Diagnóstico:</strong> Síndrome de Distrés Respiratorio Agudo (SDRA) grave (Criterios de Berlín: tiempo agudo < 7 días, opacidades radiológicas bilaterales no explicadas por falla cardíaca o sobrecarga de volumen, y PaFi < 100 con PEEP ≥ 5 cmH2O).<br>
-<strong>2. Ventilación Mecánica Protectora:</strong> IOT inmediata. Volumen corriente (Vt) bajo a <strong>4-6 mL/kg de peso predicho</strong> (evita volutrauma), Presión meseta (Plateau) ≤ 30 cmH2O (evita barotrauma), y Presión de distensión (Driving Pressure) < 15 cmH2O con PEEP alta titulada.<br>
-<strong>3. Posición Prona:</strong> Indicada obligatoriamente en SDRA con PaFi < 150 durante al menos 16 horas continuas por día. Mejora la relación ventilación/perfusión (V/Q), homogeneiza el gradiente de presión pleural dorsal y reduce el estrés mecánico ventilatorio.`
-    },
-
-    // 🧪 GASTROENTEROLOGÍA
-    {
-        id: "HC-70112",
-        cama: "Cama 11 · Sala de Agudos",
-        edad: "Varón, 55 años",
-        ingreso: "Guardia Médica",
-        sistema: "gastro",
-        dificultad: 1,
-        enfermedadActual: "Paciente que consulta por dos episodios de hematemesis abundante en 'borra de café' y tres deposiciones melénicas fétidas, pastosas y negras como el alquitrán en las últimas 12 horas, acompañadas de mareos ortostáticos.",
-        antecedentes: "Consumo crónico de Diclofenac 75mg c/12h por lumbociatalgia en las últimas 3 semanas sin protector gástrico. No refiere consumo de alcohol ni antecedentes hepáticos conocidos.",
-        examenFisico: [
-            "PA acostado: 110/70 mmHg -> De pie: 90/55 mmHg (Ortostatismo positivo) | FC: 108 lpm",
-            "FR: 18 rpm | SpO2: 97% | Palidez mucocutánea moderada con sudoración fría.",
-            "Abdomen: Blando, depresible, dolor leve en epigastrio a la palpación profunda sin signos de peritonismo ni ascitis.",
-            "Tacto Rectal: Dedal de guante con restos francos de melena fétida."
-        ],
-        laboratorio: [
-            { c1: "Hematocrito: 26% | Hemoglobina: 8.5 g/dL (previa 14.2 g/dL)", c2: "Plaquetas: 210.000 /mm³ | TP / RIN: 1.1 normal" },
-            { c1: "Urea: 78 mg/dL (Azoemia prerrenal por digestión de sangre)", c2: "Creatinina: 1.0 mg/dL" },
-            { c1: "Score de Glasgow-Blatchford: 9 puntos (Alto riesgo de intervención endoscópica)", c2: "" }
-        ],
-        preguntas: [
-            "¿Cuál es la conducta inicial de resucitación hemodinámica y qué soluciones se deben infundir?",
-            "¿Cuál es el tratamiento farmacológico con IBP previo a la endoscopía digestiva alta?",
-            "Clasificá los hallazgos de úlcera según la escala de Forrest y la necesidad de hemostasia endoscópica."
-        ],
-        discusion: `<strong>1. Diagnóstico:</strong> Hemorragia Digestiva Alta (HDA) no variceal secundaria a úlcera gastroduodenal péptica inducida por AINEs.<br>
-<strong>2. Resucitación Inmediata:</strong> Colocación de 2 accesos venosos periféricos de grueso calibre (14-16G), infusión rápida de cristaloides (Solución Fisiológica o Ringer Lactato) para restaurar volumen intravascular. Transfusión de glóbulos rojos guiada por umbral restrictivo (Hb < 7 g/dL o < 8 g/dL si comorbilidad cardiovascular).<br>
-<strong>3. Farmacología & Endoscopía:</strong> Omeprazol o Pantoprazol IV en bolo de 80 mg seguido de infusión continua a 8 mg/h (o 40 mg c/12h). Endoscopía Digestiva Alta (VEDA) dentro de las 24 horas. Lesiones Forrest Ia (chorro), Ib (napa) y IIa (vaso visible) requieren tratamiento endoscópico combinado dual (inyección de adrenalina + método térmico o clips).`
-    },
-    {
-        id: "HC-71580",
-        cama: "Cama 08 · Terapia Intermedia",
-        edad: "Mujer, 48 años",
-        ingreso: "Guardia de Emergencias",
-        sistema: "gastro",
-        dificultad: 2,
-        enfermedadActual: "Mujer que consulta por dolor abdominal de inicio brusco e intensidad intolerable (10/10) localizado en epigastrio con irradiación 'en cinturón' hacia ambos hipocondrios y dorso, acompañado de vómitos alimentarios y biliosos incoercibles y distensión abdominal tras ingesta copiosa de comida rica en grasas.",
-        antecedentes: "Colelitiasis vesicular sintomática conocida de 2 años de diagnóstico (postergó colecistectomía programada). No consume alcohol.",
-        examenFisico: [
-            "PA: 100/60 mmHg | FC: 115 lpm taquicárdica | Temp: 38.1 °C",
-            "FR: 26 rpm | SpO2: 93% aire ambiente | Ictericia leve escleral.",
-            "Abdomen: RHA disminuidos, distensión marcada, dolor intenso en hemiabdomen superior con defensa voluntaria pero sin signo de Blumberg franco.",
-            "Signos cutáneos: Ausencia de signo de Cullen o Turner en este momento."
-        ],
-        laboratorio: [
-            { c1: "Amilasa sérica: 1.840 U/L (VN: < 100) | Lipasa sérica: 2.450 U/L (VN: < 60)", c2: "Leucocitos: 18.200 /mm³ con 80% neutrófilos" },
-            { c1: "Bilirrubina Total: 3.4 mg/dL (Directa: 2.6 mg/dL)", c2: "Fosfatasa Alcalina: 420 U/L | TGO: 380, TGP: 410 U/L" },
-            { c1: "Calcio sérico: 7.8 mg/dL (Hipocalcemia)", c2: "Hematocrito: 46% (Hemoconcentración por secuestro a 3° espacio)" }
-        ],
-        preguntas: [
-            "Confirmá los criterios diagnósticos de Pancreatitis Aguda de Atlanta y etiología.",
-            "¿Cuál es el esquema de hidratación parenteral guiada por metas en las primeras 24 horas?",
-            "¿Está indicada la antibioticoterapia profiláctica y cuándo se solicita la TC contrastada?"
-        ],
-        discusion: `<strong>1. Diagnóstico:</strong> Pancreatitis Aguda litiásica moderadamente grave a grave (cumple los 3 criterios de Atlanta: dolor típico en cinturón, amilasa/lipasa > 3 veces el límite superior normal y colestasis con elevación de transaminasas compatible con pasaje litiásico por colédoco).<br>
-<strong>2. Hidratación Guiada por Metas:</strong> Resucitación con <strong>Ringer Lactato</strong> a 200-250 mL/h (o 5-10 mL/kg/h en las primeras 12h) evaluando respuesta: hematocrito < 40%, diuresis > 0.5 mL/kg/h y urea en descenso. Evitar sobrehidratación nociva.<br>
-<strong>3. Errores Comunes de Guía:</strong> Los antibióticos profilácticos están CONTRAINDICADOS; no reducen necrosis infectada ni mortalidad. La TC abdominal contrastada NO se realiza en las primeras 48h (subestima necrosis) y debe solicitarse a las 72-96h si hay persistencia de fallo orgánico.`
-    },
-    {
-        id: "HC-72904",
-        cama: "Cama 05 · Terapia Intensiva",
-        edad: "Varón, 61 años",
-        ingreso: "Guardia Central",
-        sistema: "gastro",
-        dificultad: 3,
-        enfermedadActual: "Paciente con cirrosis hepática conocida traído por familiares por desorientación temporoespacial, inversión del ritmo del sueño (somnolencia diurna y agitación nocturna), flapping tremor positivo, distensión abdominal masiva a tensión y fiebre de 38.4°C en las últimas 24 horas.",
-        antecedentes: "Cirrosis de etiología enólica (Child-Pugh B previo). Episodios de ascitis tratados con Espironolactona 100mg y Furosemida 40mg. Suspendió medicación hace 1 semana.",
-        examenFisico: [
-            "PA: 95/55 mmHg | FC: 104 lpm | Temp: 38.4 °C | SpO2: 95%",
-            "Sensorio: Estuporoso, desorientado, asterixis (flapping) franca (Encefalopatía Hepática grado III según West Haven).",
-            "Inspección: Estigmas cirróticos (telangiectasias aracniformes en tórax, eritema palmar, ginecomastia, circulación colateral porto-cava).",
-            "Abdomen: Muy globuloso por ascitis a tensión, onda ascítica positiva, dolor difuso con leve defensa a la descompresión."
-        ],
-        laboratorio: [
-            { c1: "Punción del Líquido Ascítico: Aspecto turbio", c2: "Recuento celular: 850 leucocitos /mm³, 620 PMN /mm³ (73%)" },
-            { c1: "Gradiente de Albúmina Suero-Ascitis (GASA): 1.8 g/dL", c2: "Urea: 74 mg/dL | Creatinina: 1.8 mg/dL (Injuria Renal Aguda asociada)" },
-            { c1: "Bilirrubina: 4.8 mg/dL | Albúmina: 2.3 g/dL", c2: "RIN: 2.1 | Sodio sérico: 128 mEq/L (Hiponatremia dilucional)" }
-        ],
-        preguntas: [
-            "Confirmá el diagnóstico del líquido ascítico y el criterio cardinal de Peritonitis Bacteriana Espontánea (PBE).",
-            "¿Cuál es el esquema antibiótico de elección y la indicación estricta de albúmina humana para prevenir el síndrome hepatorrenal?",
-            "¿Cómo se maneja la Encefalopatía Hepática desencadenada por la infección?"
-        ],
-        discusion: `<strong>1. Diagnóstico:</strong> Cirrosis hepática descompensada con <strong>Peritonitis Bacteriana Espontánea (PBE)</strong> (confirmada por > 250 polimorfonucleares/mm³ en líquido ascítico) complicada con Encefalopatía Hepática grado III y Síndrome Hepatorrenal incipiente.<br>
-<strong>2. Tratamiento de PBE & Albúmina:</strong> <strong>Ceftriaxona 2 g/día IV</strong> durante 5 a 7 días. Indicación obligatoria de <strong>Albúmina Humana IV</strong>: 1.5 g/kg en las primeras 6 horas y 1 g/kg al día 3 (reduce la incidencia de síndrome hepatorrenal del 30% al 10% y disminuye la mortalidad drásticamente).<br>
-<strong>3. Manejo de la Encefalopatía:</strong> Tratar el factor desencadenante (PBE). Lactulosa por sonda nasogástrica (20-30 mL c/4-6h) buscando 2-3 deposiciones blandas por día para atrapar amonio entérico + Rifaximina 550 mg c/12h. Evitar sedantes y corregir hipopotasemia.`
-    },
-
-    // 💧 NEFROLOGÍA E IONES
-    {
-        id: "HC-51084",
-        cama: "Cama 07 · Terapia Intensiva",
-        edad: "Mujer, 23 años",
-        ingreso: "Shock Room",
-        sistema: "nefro",
-        dificultad: 3,
-        enfermedadActual: "Ingresa traída por familiares por deterioro progresivo del sensorio (estuporosa), respiración ruidosa profunda (patrón de Kussmaul), aliento cetónico marcado, dolor abdominal difuso tipo cólico y vómitos incoercibles de 24 horas de evolución.",
-        antecedentes: "Diabetes Mellitus tipo 1 diagnosticada a los 14 años. Suspendió esquema de insulina Glargina y Lispro hace 48 horas tras cuadro febril y disuria no tratada.",
-        examenFisico: [
-            "PA: 85/50 mmHg (hipotensión severa) | FC: 130 lpm regular",
-            "FR: 34 rpm (Kussmaul) | Temp: 38.3 °C | SpO2: 96% aire ambiente",
-            "Piel y mucosas: Sequedad extrema de mucosas, signo del pliegue positivo, frialdad periférica.",
-            "Abdomen: Doloroso a la palpación difusa sin defensa franca ni peritonismo (abdomen agudo metabólico)."
-        ],
-        laboratorio: [
-            { c1: "Glucemia: 540 mg/dL | Cetonemia: 4.8 mmol/L", c2: "Estado Ácido-Base: pH 7.08, pCO2 18 mmHg" },
-            { c1: "HCO3: 6 mEq/L | EB: -24 mEq/L", c2: "Anion Gap: 26 mEq/L (Severamente elevado)" },
-            { c1: "Ionograma: Na 130 mEq/L, K 5.8 mEq/L", c2: "Urea: 88 mg/dL | Creatinina: 2.1 mg/dL" },
-            { c1: "Orina completa: Cetonuria ++++, Glucosuria ++++", c2: "Sedimento: Leucocitos abundantes, piocitos" }
-        ],
-        preguntas: [
-            "Calculá el Sodio Corregido por glucemia y analizá por qué el potasio sérico está falsamente elevado pese al déficit corporal total.",
-            "¿Cuál es la secuencia rigurosa del tratamiento de rescate: cuándo se inicia la insulina y cuál es el criterio estricto respecto al potasio?",
-            "¿Cuándo se considera resuelta la Cetoacidosis y se realiza la transición a insulina subcutánea?"
-        ],
-        discusion: `<strong>1. Fisiopatología & Na/K:</strong> Na corregido = 130 + 1.6 × ((540 - 100)/100) = 137 mEq/L. La hiperpotasemia aparente es un artefacto de redistribución por acidemia severa (salida de K+ celular por intercambio H+/K+) y falta de acción de insulina sobre la Na+/K+ ATPasa, aun cuando el paciente tiene un déficit masivo de K+ corporal por diuresis osmótica.<br>
-<strong>2. Secuencia Terapéutica Cardinal:</strong> 1° Expansión agresiva con Cristaloides (Solución Fisiológica 0.9% 1000-1500 mL en la primera hora). 2° Si K+ > 5.3 mEq/L: iniciar Insulina corriente IV continua a 0.1 U/kg/h. Si K+ < 3.3 mEq/L: ¡PROHIBIDO iniciar insulina hasta reponer potasio (riesgo de paro cardíaco por hipopotasemia súbita)!<br>
-<strong>3. Criterios de Resolución:</strong> Glucemia < 200 mg/dL, HCO3 ≥ 18 mEq/L, pH venoso > 7.30 y Anion Gap normalizado (≤ 12). La insulina basal SC se administra 2 horas ANTES de suspender la infusión continua.`
-    },
-    {
-        id: "HC-52410",
-        cama: "Cama 16 · Sala General",
-        edad: "Varón, 73 años",
-        ingreso: "Guardia Central",
-        sistema: "nefro",
-        dificultad: 1,
-        enfermedadActual: "Paciente traído por astenia intensa, somnolencia y marcada oliguria (diuresis de 200 mL en las últimas 24 horas) tras cuadro de gastroenteritis aguda febril con abundantes deposiciones diarreicas acuosas y escasa ingesta de líquidos durante 4 días.",
-        antecedentes: "Hipertensión arterial tratada con Enalapril 20mg e Hidroclorotiazida 25mg. Artrosis tratada con Meloxicam 15mg. Función renal basal previa normal (Creatinina 0.9 mg/dL).",
-        examenFisico: [
-            "PA: 90/60 mmHg (Hipotensión con ortostatismo) | FC: 102 lpm",
-            "FR: 18 rpm | SpO2: 97% | Afebril",
-            "Examen Clínico: Lengua tostada y seca, ojos hundidos, turgencia cutánea marcadamente disminuida, ausencia de edemas en miembros inferiores.",
-            "Yugulares: Colapsadas en decúbito dorsal a 0°."
-        ],
-        laboratorio: [
-            { c1: "Urea plasmática: 182 mg/dL | Creatinina plasmática: 3.4 mg/dL", c2: "Relación Urea/Creatinina: > 50 (Patrón prerrenal marcado)" },
-            { c1: "Ionograma plasmático: Na 142 mEq/L, K 5.2 mEq/L", c2: "Sodio urinario (NaU): 12 mEq/L (< 20 mEq/L)" },
-            { c1: "Fracción Excretada de Sodio (FeNa): 0.4% (< 1%)", c2: "Sedimento urinario: Cilindros hialinos transparentes sin cilindros granulosos pardos." }
-        ],
-        preguntas: [
-            "Diferenciá los índices urinarios de Injuria Renal Aguda Prerrenal vs Necrosis Tubular Aguda (NTA).",
-            "¿Cuál es el rol deletéreo de los fármacos que recibía el paciente (IECA + Diurético + AINE)?",
-            "¿Cuál es la prueba terapéutica inicial para confirmar el origen prerrenal?"
-        ],
-        discusion: `<strong>1. Diagnóstico:</strong> Injuria Renal Aguda (IRA) funcional o prerrenal por hipovolemia severa (estadio KDIGO 3). Confirmado por FeNa < 1%, Sodio urinario < 20 mEq/L, relación Urea/Creatinina > 40 y sedimento urinario acelular (cilindros hialinos).<br>
-<strong>2. El Fenómeno 'Triple Whammy':</strong> El diurético produjo depleción de volumen; el AINE bloqueó las prostaglandinas impidiendo la vasodilatación de la arteriola aferente; el IECA bloqueó la angiotensina II impidiendo la vasoconstricción de la arteriola eferente. Como resultado, colapsó por completo la presión hidrostática intraglomerular.<br>
-<strong>3. Conducta Terapéutica:</strong> Suspensión inmediata de IECA, diurético y AINE. Expansión rápida con Solución Fisiológica isotónica (1000-2000 mL en 2-4h). Si la causa es prerrenal pura, la diuresis debe recuperarse prontamente y la creatinina descender un 50% en 24-48 horas.`
-    },
-    {
-        id: "HC-53891",
-        cama: "Cama 23 · Nefrología",
-        edad: "Varón, 34 años",
-        ingreso: "Consultorios Externos",
-        sistema: "nefro",
-        dificultad: 2,
-        enfermedadActual: "Paciente que consulta por edema progresivo de 3 semanas de evolución que comenzó en párpados al despertar y progresó a ambos miembros inferiores con fóvea ++++/4 hasta raíces de muslos, escroto y pared abdominal (anasarca), con orina espumosa y aumento de 9 kg de peso.",
-        antecedentes: "Sin antecedentes patológicos previos de relevancia. No consume medicación habitual.",
-        examenFisico: [
-            "PA: 125/80 mmHg | FC: 72 lpm regular | Temp: 36.6 °C",
-            "FR: 16 rpm | SpO2: 98% aire ambiente",
-            "Edemas: Anasarca marcado con signo de la fóvea profundo hasta abdomen. Matidez en bases pulmonares compatible con derrame pleural bilateral leve.",
-            "Cardiovascular: R1 y R2 normales, sin signos de falla de bomba."
-        ],
-        laboratorio: [
-            { c1: "Proteinuria en orina de 24 horas: 8.4 g/día (VN: < 0.15 g)", c2: "Albúmina sérica: 1.8 g/dL (Hipoalbuminemia severa)" },
-            { c1: "Proteínas Totales: 4.1 g/dL | Creatinina: 0.9 mg/dL", c2: "Colesterol Total: 420 mg/dL | Triglicéridos: 380 mg/dL" },
-            { c1: "Sedimento Urinario: Gotas de grasa birrefringentes ('cruces de Malta'), cilindros grasos.", c2: "Serologías: VHB, VHC, VIH y ANA/anti-ADN negativos." }
-        ],
-        preguntas: [
-            "Definí la tétrada clásica del Síndrome Nefrótico primario.",
-            "¿Cuáles son las etiologías histopatológicas más frecuentes en el adulto joven y qué estudio confirma el diagnóstico?",
-            "¿Por qué este paciente tiene alto riesgo protrombótico y qué complicación vascular debe sospecharse ante dolor lumbar súbito?"
-        ],
-        discusion: `<strong>1. Diagnóstico:</strong> Síndrome Nefrótico puro en rango masivo (Tétrada: Proteinuria > 3.5 g/24h, Hipoalbuminemia < 3.0 g/dL, Edemas generalizados y Dislipemia severa con lipiduria).<br>
-<strong>2. Etiología & Confirmación:</strong> En un adulto joven las causas primarias más frecuentes son Glomerulopatía Membranosa o Glomeruloesclerosis Focal y Segmentaria. La indicación indiscutible es la <strong>Punción Biopsia Renal (PBR)</strong> percutánea ecoguiada para microscopía óptica, inmunofluorescencia y electrónica.<br>
-<strong>3. Estado Protrombótico:</strong> La pérdida urinaria masiva de antitrombina III, proteínas C y S sumada al aumento hepático de fibrinógeno genera riesgo extremo de tromboembolismo. Ante dolor lumbar súbito, hematuria y deterioro de función renal se debe sospechar de inmediato <strong>Trombosis de la Vena Renal</strong>.`
-    },
-
-    // 🧠 NEUROLOGÍA CLÍNICA
-    {
-        id: "HC-80120",
-        cama: "Cama 12 · Neurología Guardia",
-        edad: "Varón, 66 años",
-        ingreso: "Guardia Central",
-        sistema: "neuro",
-        dificultad: 1,
-        enfermedadActual: "Paciente que mientras desayunaba presentó episodio súbito de dificultad para emitir palabras (afasia motora de Broca) y pérdida transitoria de visión en el ojo izquierdo como una 'cortina negra que desciende' (amaurosis fugax), con debilidad en mano derecha que duró 25 minutos y recuperó ad integrum.",
-        antecedentes: "Hipertensión arterial mal controlada, tabaquismo activo de 30 paquetes/año y dislipemia.",
-        examenFisico: [
-            "PA: 160/90 mmHg | FC: 80 lpm regular",
-            "Examen Neurológico actual: Vigil, lúcido, lenguaje fluido y comprensivo, fuerza 5/5 en los 4 miembros, pares craneales normales. NIHSS actual: 0 puntos.",
-            "Cuello: Soplo carotídeo sistólico audible en región submandibular izquierda."
-        ],
-        laboratorio: [
-            { c1: "Glucemia: 110 mg/dL | Hemograma: Normal", c2: "TC de Encéfalo sin contraste: Sin signos de sangrado ni lesiones isquémicas agudas" },
-            { c1: "Score ABCD2: 6 puntos (Edad 1, PA 1, Clínica 2, Duración 2) -> Alto Riesgo de ACV", c2: "Eco-Doppler de Vasos de Cuello: Placa ateromatosa ulcerada con estenosis del 75% en carótida interna izquierda." }
-        ],
-        preguntas: [
-            "Definí el cuadro clínico y el significado de la amaurosis fugax en el territorio carotídeo.",
-            "¿Cuál es el valor del Score ABCD2 y por qué el paciente debe internarse obligatoriamente?",
-            "¿Cuál es el esquema de antiagregación dual de rescate precoz (CHANCE/POINT) y la conducta quirúrgica indicada?"
-        ],
-        discusion: `<strong>1. Diagnóstico:</strong> Accidente Isquémico Transitorio (AIT) de territorio carotídeo izquierdo (sistema anterior) con amaurosis fugax ipsilateral por émbolo a la arteria oftálmica.<br>
-<strong>2. Score ABCD2 & Riesgo:</strong> Con 6 puntos presenta un riesgo del 18% de sufrir un ACV isquémico discapacitante en las siguientes 48 horas. La internación en unidad de ACV / monitoreo es mandataria para estudio urgente y prevención secundaria.<br>
-<strong>3. Tratamiento Inmediato:</strong> Doble antiagregación plaquetaria con Aspirina 100 mg + Clopidogrel (carga 300 mg y luego 75 mg/día) durante 21 días (ensayos CHANCE y POINT) + Atorvastatina 80 mg/día. Evaluación urgente por cirugía vascular para <strong>Endarterectomía carotídea</strong> dentro de las primeras 2 semanas por estenosis sintomática > 70%.`
-    },
-    {
-        id: "HC-81349",
-        cama: "Cama 01 · Unidad de ACV (Stroke)",
-        edad: "Mujer, 72 años",
-        ingreso: "Código ACV Guardia",
-        sistema: "neuro",
-        dificultad: 2,
-        enfermedadActual: "Paciente que hace exactamente 1 hora y 45 minutos presentó de forma brusca caída de la comisura labial derecha, imposibilidad para hablar (afasia global) y parálisis completa del brazo y pierna derechos (hemiplejía fascio-braquio-crural derecha). La familia activó inmediatamente el sistema de emergencias.",
-        antecedentes: "Fibrilación auricular no valvular diagnosticada hace 6 meses (había suspendido la anticoagulación por temor a hematomas hace 15 días).",
-        examenFisico: [
-            "PA: 165/95 mmHg | FC: 112 lpm arrítmico irregular (FA) | Temp: 36.7 °C",
-            "FR: 18 rpm | SpO2: 97% aire ambiente | Glucemia capilar rápida: 128 mg/dL",
-            "Neurológico: Despierta, no comprende órdenes ni emite lenguaje verbal. Desviación de la mirada conjugada hacia la izquierda. Parálisis facial central derecha, plejía 0/5 en miembro superior y 1/5 en inferior derecho. Hemihipoestesia derecha franca. NIHSS: 17 puntos."
-        ],
-        laboratorio: [
-            { c1: "TC de Encéfalo sin contraste inmediata: Ausencia de hemorragia intracraneana.", c2: "Score ASPECTS: 9/10 (Signo de la arteria cerebral media izquierda hiperdensa precoz)" },
-            { c1: "Plaquetas: 220.000 /mm³ | KPTT: 31 seg | TP / RIN: 1.15", c2: "Angio-TC de Vasos Intracraneales: Oclusión proximal del segmento M1 de arteria cerebral media izquierda." }
-        ],
-        preguntas: [
-            "¿La paciente se encuentra dentro de la ventana terapéutica para trombólisis endovenosa con rtPA / Tenecteplasa?",
-            "¿Cuáles son los límites de presión arterial para poder administrar el fibrinolítico de manera segura?",
-            "¿Cuál es el siguiente paso terapéutico neurointervencionista endovascular si persiste ocluida la arteria M1?"
-        ],
-        discusion: `<strong>1. Diagnóstico:</strong> Accidente Cerebrovascular (ACV) Isquémico agudo cardioembólico de territorio de arteria cerebral media izquierda en <strong>ventana terapéutica</strong> (1h 45m de evolución, ventana estándar ≤ 4.5 horas).<br>
-<strong>2. Trombólisis Endovenosa:</strong> rtPA (Alteplasa 0.9 mg/kg IV, 10% en bolo y el resto en 60 min) o Tenecteplasa 0.25 mg/kg IV. La PA actual (165/95 mmHg) es apta (el límite estricto es < 185/110 mmHg antes del inicio y < 180/105 mmHg durante las siguientes 24 horas).<br>
-<strong>3. Trombectomía Mecánica:</strong> Al confirmarse oclusión de gran vaso proximal (M1) en angio-TC y NIHSS ≥ 6, está formalmente indicada la <strong>Trombectomía Mecánica endovascular</strong> con stent retriever / aspiración directa en sala de hemodinamia antes de las 6 a 24 horas.`
-    },
-    {
-        id: "HC-82701",
-        cama: "Cama 03 · Shock Room UTI",
-        edad: "Varón, 38 años",
-        ingreso: "Emergencias SAMU",
-        sistema: "neuro",
-        dificultad: 3,
-        enfermedadActual: "Paciente traído por ambulancia tras presentar crisis convulsiva tónico-clónica generalizada continua de más de 25 minutos de duración sin recuperar el sensorio entre episodios, con mordedura lateral de lengua, sialorrea espumosa, cianosis y relajación de esfínteres.",
-        antecedentes: "Epilepsia focal secundaria a traumatismo craneoencefálico previo con fractura deprimida tratada con Fenitoína (incumplimiento terapéutico en las últimas 72 horas por consumo excesivo de alcohol).",
-        examenFisico: [
-            "PA: 155/100 mmHg | FC: 138 lpm taquicárdico | Temp: 38.6 °C (hipertermia por actividad muscular sostenida)",
-            "FR: 28 rpm irregular con estridor por secreciones | SpO2: 86% con máscara de reservorio",
-            "Examen Neurológico: En pleno episodio convulsivo activo con contracciones tónico-clónicas bilaterales, pupilas midriáticas poco reactivas, trismus mandibular."
-        ],
-        laboratorio: [
-            { c1: "Glucemia: 160 mg/dL | Lactato sérico: 6.8 mmol/L (Acidosis láctica masiva)", c2: "Gases arteriales: pH 7.12, pCO2 48, HCO3 15 mEq/L" },
-            { c1: "CPK Total: 2.800 U/L (Rabdomiólisis temprana en curso)", c2: "Ionograma: Na 140, K 4.6, Ca iónico 1.18 mmol/L" },
-            { c1: "Nivel sérico de Fenitoína: < 2.5 mcg/mL (Infraterapéutico, rango 10-20)", c2: "" }
-        ],
-        preguntas: [
-            "Definí el concepto de Status Epiléptico Convulsivo y los tiempos operacionales T1 (daño neuronal) y T2.",
-            "¿Cuál es la primera línea farmacológica inmediata y por qué vía se administra?",
-            "Si fracasa la primera y segunda línea, ¿cuál es el esquema de tercera línea en terapia intensiva?"
-        ],
-        discusion: `<strong>1. Diagnóstico:</strong> <strong>Status Epiléptico Convulsivo</strong> generalizado prolongado (Superó el tiempo T1 de 5 minutos donde la crisis no aborta espontáneamente y se aproxima a T2 de 30 minutos donde ocurre lesión neuronal excitotóxica irreversible por glutamato).<br>
-<strong>2. Secuencia Farmacológica de Rescate:</strong>
-<br>• <em>Fase 1 (0-5 min):</em> <strong>Lorazepam 4 mg IV</strong> en bolo lento (o Diazepam 10 mg IV o Midazolam 10 mg IM). Puede repetirse una dosis a los 5 minutos si persiste.
-<br>• <em>Fase 2 (10-20 min):</em> Fármaco antiepiléptico IV de segunda línea: <strong>Levetiracetam 60 mg/kg IV</strong> (hasta 4500 mg) o Valproato de Sodio 40 mg/kg IV o Fenitoína 20 mg/kg IV.<br>
-<strong>3. Tercera Línea (Status Refractario):</strong> Si persiste la actividad a los 30 minutos: IOT inmediata con intubación orotraqueal y anestesia general con infusión continua de <strong>Midazolam</strong> (0.2 mg/kg bolo + infusión) o <strong>Propofol</strong>, guiado por monitoreo electroencefalográfico continuo (EEG) buscando patrón de salva-supresión.`
-    },
-
-    // 🦠 INFECTOLOGÍA
-    {
-        id: "HC-90215",
-        cama: "Cama 15 · Sala General",
-        edad: "Mujer, 62 años",
-        ingreso: "Guardia Médica",
-        sistema: "infecto",
-        dificultad: 1,
-        enfermedadActual: "Paciente que consulta por fiebre alta con escalofríos y chuchos de frío intensos de 48 horas de evolución, dolor lumbar derecho punzante constante que empeora con el movimiento, náuseas, anorexia y disuria con tenesmo vesical previo.",
-        antecedentes: "Diabetes Mellitus tipo 2 tratada con Metformina. Historia de infecciones urinarias bajas a repetición tratadas empíricamente con antibióticos orales múltiples.",
-        examenFisico: [
-            "PA: 110/65 mmHg | FC: 104 lpm | Temp: 39.2 °C",
-            "FR: 22 rpm | SpO2: 97% aire ambiente",
-            "Abdomen y dorso: Puñopercusión lumbar derecha marcadamente positiva (signo de Giordano francamente positivo). Dolor a la palpación del punto ureteral superior y medio derecho.",
-            "Piel: Caliente, sudorosa, sin lesiones cutáneas ni petequias."
-        ],
-        laboratorio: [
-            { c1: "Leucocitos: 17.800 /mm³ (82% neutrófilos, 8% en cayado)", c2: "PCR: 168 mg/L | Eritrosedimentación: 82 mm/h" },
-            { c1: "Urea: 42 mg/dL | Creatinina: 1.1 mg/dL", c2: "Sedimento Urinario: Campo cubierto de leucocitos, piocitos abundantes, cilindros leucocitarios." },
-            { c1: "Orina completa: Nitritos positivos, Estearasa leucocitaria +++", c2: "Ecografía Renal: Riñón derecho con aumento de tamaño difuso, sin ectasia pielocalicial ni litiasis obstructiva." }
-        ],
-        preguntas: [
-            "¿Cuál es el diagnóstico sindromático y por qué se considera una infección urinaria complicada?",
-            "¿Qué germen bacteriano causa el 80% de estos cuadros y cuál es la sospecha de resistencia bacteriana (BLEE)?",
-            "¿Cuál es el esquema antibiótico empírico parenteral de elección mientras se espera el urocultivo?"
-        ],
-        discusion: `<strong>1. Diagnóstico:</strong> Pielonefritis aguda bacteriana derecha (ITU alta) <strong>complicada</strong> por presentarse en paciente diabética con síndrome de respuesta inflamatoria sistémica (SIRS).<br>
-<strong>2. Microbiología:</strong> <em>Escherichia coli</em> uropatógena (seguida de <em>Klebsiella pneumoniae</em> y <em>Proteus mirabilis</em>). Al tener antecedentes de múltiples tratamientos previos, existe elevado riesgo de cepas productoras de Betalactamasas de Espectro Extendido (BLEE).<br>
-<strong>3. Tratamiento Empírico:</strong> Internación en sala general. Si el riesgo de BLEE es bajo/moderado: <strong>Ceftriaxona 1-2 g/día IV</strong>. Si existen factores para BLEE o sepsis grave: <strong>Piperacilina/Tazobactam 4.5 g c/6h IV</strong> o un carbapenem (Ertapenem 1 g/día o Meropenem). Duración total: 10 a 14 días ajustados al antibiograma.`
-    },
-    {
-        id: "HC-91430",
-        cama: "Cama 06 · Terapia Intermedia / Aislamiento",
-        edad: "Varón, 29 años",
-        ingreso: "Shock Room",
-        sistema: "infecto",
-        dificultad: 2,
-        enfermedadActual: "Paciente joven traído por familiares por cuadro de 24 horas de evolución de cefalea holocraneana explosiva refractaria a analgésicos, fiebre de 39.5°C, fotofobia extrema, vómitos en chorro y tendencia al sueño con confusión progresiva.",
-        antecedentes: "Previamente sano. Historia de sinusitis bacteriana aguda hace 10 días tratada incompletamente.",
-        examenFisico: [
-            "PA: 125/80 mmHg | FC: 110 lpm | Temp: 39.4 °C | SpO2: 98%",
-            "Sensorio: Somnoliento, responde al llamado con lenguaje incoherente (Glasgow 12/15).",
-            "Signos Meníngeos: Rigidez de nuca franca (resistencia insuperable a la flexión del cuello), signo de Kernig positivo bilateral y signo de Brudzinski marcadamente positivo.",
-            "Piel: Sin petequias ni púrpura fulminans (hace menos probable meningococo)."
-        ],
-        laboratorio: [
-            { c1: "Punción Lumbar (LCR): Aspecto turbio y purulento a presión de apertura de 32 cmH2O", c2: "Citoquímico de LCR: 3.400 células/mm³ (92% polimorfonucleares)" },
-            { c1: "Proteínas en LCR: 280 mg/dL (Hiperproteinorraquia marcada)", c2: "Glucosa en LCR: 14 mg/dL vs Glucemia plasmática 120 mg/dL (Relación < 0.2: Hipoglucorraquia severa)" },
-            { c1: "Tinción de Gram en LCR: Diplococos Gram positivos lanceolados abundantes", c2: "Leucocitos en sangre: 21.000 /mm³" }
-        ],
-        preguntas: [
-            "¿Cuál es el agente etiológico más probable según el Gram de LCR y el antecedente de sinusitis?",
-            "¿Cuál es el esquema antibiótico empírico dual de elección para el adulto y por qué se indica Dexametasona?",
-            "¿En qué momento exacto debe administrarse la Dexametasona respecto a los antibióticos?"
-        ],
-        discusion: `<strong>1. Diagnóstico & Germen:</strong> Meningitis Bacteriana Aguda comunitaria por <em>Streptococcus pneumoniae</em> (Neumococo, diplococos Gram positivos). El foco paranasal previo actuó como puerta de entrada por contigüidad.<br>
-<strong>2. Dexametasona y Beneficio Clínico:</strong> <strong>Dexametasona 10 mg IV cada 6 horas</strong>. Reduce la inflamación subaracnoidea letal desencadenada por la lisis bacteriana, disminuyendo significativamente la sordera neurosensorial, las secuelas neurológicas y la mortalidad por neumococo.<br>
-<strong>3. Regla de Oro del Momento:</strong> La Dexametasona debe administrarse <strong>15 a 20 minutos ANTES o junto con la primera dosis de antibiótico</strong> (Ceftriaxona 2 g c/12h IV + Vancomicina 15-20 mg/kg c/12h para cubrir cepas de neumococo con resistencia intermedia a penicilina). Si se administra después del antibiótico, pierde por completo su beneficio protector.`
-    },
-    {
-        id: "HC-92840",
-        cama: "Cama 01 · Terapia Intensiva",
-        edad: "Varón, 71 años",
-        ingreso: "Quirófano / Shock Room",
-        sistema: "infecto",
-        dificultad: 3,
-        enfermedadActual: "Paciente en postoperatorio inmediato de laparotomía exploradora por diverticulitis aguda perforada con peritonitis fecal generalizada (Hinchey IV). Ingresa intubado en shock severo con necesidad de dosis crecientes de vasopresores a pesar de 3.000 mL de cristaloides infundidos.",
-        antecedentes: "Enfermedad diverticular crónica, insuficiencia cardíaca con FEVI 45% y diabetes tipo 2.",
-        examenFisico: [
-            "PA: 78/42 mmHg bajo Noradrenalina a 0.35 mcg/kg/min | PAM: 54 mmHg | FC: 132 lpm",
-            "Temp: 35.4 °C (Hipotermia por shock séptico grave) | Diuresis: 10 mL/h (Anuria)",
-            "Perfusión: Extremidades moteadas con livideces en rodillas (Mottling score 3), tiempo de relleno capilar 6 segundos.",
-            "Abdomen: Abdomen abierto contenido con bolsa de Bogotá / sistema de aspiración negativa."
-        ],
-        laboratorio: [
-            { c1: "Ácido Láctico sérico: 5.6 mmol/L (Grave hiperlactatemia tisular)", c2: "Gases arteriales: pH 7.16, HCO3 12 mEq/L, PaO2 78 mmHg" },
-            { c1: "Leucocitos: 3.200 /mm³ (Leucopenia grave con 22% de formas inmaduras en banda)", c2: "Plaquetas: 68.000 /mm³ (Trombocitopenia de consumo)" },
-            { c1: "Creatinina: 3.1 mg/dL | Bilirrubina Total: 2.8 mg/dL", c2: "Score SOFA: 14 puntos (Mortalidad estimada > 50%)" }
-        ],
-        preguntas: [
-            "Definí los criterios de Shock Séptico según las guías internacionales Sepsis-3.",
-            "¿Cuál es el vasopresor de primera línea y cuál es la droga de segunda línea si no se alcanza la PAM ≥ 65 mmHg?",
-            "¿Cuál es el esquema antibiótico empírico de amplio espectro para peritonitis fecal nosocomial / postquirúrgica?"
-        ],
-        discusion: `<strong>1. Diagnóstico:</strong> <strong>Shock Séptico</strong> refractario de foco intraabdominal (Sepsis-3: Sepsis con necesidad de vasopresores para mantener PAM ≥ 65 mmHg y lactato sérico > 2 mmol/L a pesar de una adecuada reanimación con volumen). Falla multiorgánica (hemodinámica, renal, metabólica y coagulopatía).<br>
-<strong>2. Soporte Hemodinámico:</strong>
-<br>• 1° Línea: <strong>Noradrenalina</strong> titulada hasta alcanzar PAM ≥ 65 mmHg.
-<br>• 2° Línea complementaria: <strong>Vasopresina</strong> a infusión fija de 0.03 UI/min para reducir los requerimientos adrenérgicos.
-<br>• Si persiste disfunción miocárdica séptica: agregar <strong>Dobutamina</strong>.
-<br>• Corticoterapia: <strong>Hidrocortisona 200 mg/día IV</strong> en infusión continua ante shock séptico refractario a vasopresores.<br>
-<strong>3. Antibioticoterapia Empírica:</strong> Meropenem 1 g c/8h IV (o Piperacilina/Tazobactam) + Vancomicina (o Teicoplanina) + Fluconazol o Equinocandina (por alto riesgo de peritonitis fúngica por <em>Candida</em> en perforación colónica).`
-    }
-];
+const BANCO_CASOS_INTERNA_AVANZADOS = [];
 
 function generarCasoClinicoInterna(esUrgencia = false) {
     let casosFiltrados = BANCO_CASOS_INTERNA_AVANZADOS;
@@ -5969,7 +4175,7 @@ function generarCasoClinicoInterna(esUrgencia = false) {
     const revealBtn = document.getElementById("medRevealDiscussionBtn");
 
     if (pId) pId.textContent = `${casoElegido.id} · ${casoElegido.cama}`;
-    if (pMeta) pMeta.innerHTML = `${casoElegido.edad} · ${casoElegido.ingreso}${customNotice}`;
+    if (pMeta) setHTML(pMeta, `${casoElegido.edad} · ${casoElegido.ingreso}${customNotice}`);
     if (diffBadge) {
         const labels = { 1: "Nivel 1: Residente Jr.", 2: "Nivel 2: Médico de Planta", 3: "Nivel 3: Ateneo Complejo" };
         diffBadge.textContent = esUrgencia ? "🚨 Urgencia de Guardia" : (labels[casoElegido.dificultad] || "Ateneo Clínico");
@@ -5979,24 +4185,24 @@ function generarCasoClinicoInterna(esUrgencia = false) {
     if (antec) antec.textContent = casoElegido.antecedentes;
 
     if (exFis) {
-        exFis.innerHTML = casoElegido.examenFisico.map(it => `<li>${it}</li>`).join("");
+        setHTML(exFis, casoElegido.examenFisico.map(it => `<li>${it}</li>`).join(""));
     }
 
     if (labTable && casoElegido.laboratorio) {
-        labTable.innerHTML = `<tbody>` + casoElegido.laboratorio.map(row => `
+        setHTML(labTable, `<tbody>` + casoElegido.laboratorio.map(row => `
             <tr>
                 <td>${row.c1}</td>
                 <td>${row.c2 || ''}</td>
             </tr>
-        `).join("") + `</tbody>`;
+        `).join("") + `</tbody>`);
     }
 
     if (qList && casoElegido.preguntas) {
-        qList.innerHTML = casoElegido.preguntas.map(q => `<li>${q}</li>`).join("");
+        setHTML(qList, casoElegido.preguntas.map(q => `<li>${q}</li>`).join(""));
     }
 
     if (discContent) {
-        discContent.innerHTML = casoElegido.discusion;
+        setHTML(discContent, casoElegido.discusion);
     }
 
     // Resetear panel de discusión oculto
@@ -6009,7 +4215,7 @@ function generarCasoClinicoInterna(esUrgencia = false) {
     const feedbackPanel = document.getElementById("medAiEvaluationFeedback");
     if (feedbackPanel) {
         feedbackPanel.classList.add("hidden");
-        feedbackPanel.innerHTML = "";
+        setHTML(feedbackPanel, "");
     }
 
     // Actualizar monitores simulados según el cuadro clínico
@@ -6059,404 +4265,7 @@ function generarCasoClinicoInterna(esUrgencia = false) {
 let dificultadFarmaActiva = 2; // 1: Cinética & Diana, 2: Ajuste & Interacciones, 3: Toxicología & Crisis
 let familiaFarmaActiva = "todas";
 
-const BANCO_DESAFIOS_FARMACOLOGIA = [
-    // --- CARDIOVASCULAR ---
-    {
-        id: "DF-CARDIO-1",
-        subtitulo: "Selectividad Beta y Regulación de Receptores",
-        dificultad: 1,
-        familia: "cardio",
-        texto: "Varón de 45 años hipertenso y asmático moderado bajo tratamiento con salbutamol a demanda. En un chequeo de rutina, un colega le inicia Propranolol 40 mg c/12h para control de cifras tensionales y temblor esencial leve. A las 48 horas consulta en guardia con crisis de broncoespasmo severo y sibilancias bilaterales diseminadas.",
-        laboratorio: [
-            "Espirometría en guardia: VEF1 48% del predicho (caída del 35% respecto a su basal)",
-            "Presión Arterial: 125/80 mmHg | Frecuencia Cardíaca: 54 lpm (bradicardia sinusal)",
-            "SatO2: 91% aire ambiente (corrige a 97% con cánula a 2 L/min)",
-            "Gases en sangre: pH 7.37, pCO2 42, pO2 65 mmHg"
-        ],
-        preguntas: [
-            "¿Cuál es la base molecular farmacodinámica del broncoespasmo inducido por propranolol frente a un betabloqueante cardioselectivo?",
-            "¿Qué alternativa betabloqueante selectiva β1 hubiera sido segura en este paciente?",
-            "¿Qué fenómeno farmacológico de 'up-regulation' ocurriría si se suspende un betabloqueante de forma abrupta tras semanas de uso?"
-        ],
-        discusion: `<strong>1. Mecanismo Farmacodinámico:</strong> El Propranolol es un betabloqueante no selectivo (afinidad idéntica por β1 y β2). El bloqueo de los receptores <strong>β2 del músculo liso bronquial</strong> impide la estimulación de la adenilato ciclasa y la síntesis de AMPc, provocando broncoconstricción refleja severa y anulando la respuesta al salbutamol.<br>
-<strong>2. Alternativa Selectiva:</strong> Si un betabloqueante es estrictamente necesario, se deben usar agentes <strong>β1-cardioselectivos</strong> (Bisoprolol, Atenolol o Nebivolol) a dosis bajas, aunque con precaución en asma severa.<br>
-<strong>3. Up-Regulation y Rebote:</strong> El bloqueo crónico induce aumento de la densidad de receptores β (up-regulation). La suspensión abrupta desencadena una crisis simpática por hipersensibilidad (taquicardia severa, rebote hipertensivo y angina).`
-    },
-    {
-        id: "DF-804",
-        subtitulo: "Dilema Cardiorrenal y Transporte P-gp",
-        dificultad: 2,
-        familia: "cardio",
-        texto: "Paciente femenina de 71 años con fibrilación auricular no valvular (tratada crónicamente con Digoxina 0.25 mg/día y Acenocumarol) y artrosis severa. Por dolor agudo se automedica Ibuprofeno 600 mg c/8h durante 10 días y el médico de guardia agrega Claritromicina 500 mg c/12h por neumonía atípica. Ingresa obnubilada con náuseas intensas, xantopsias (visión amarillenta) y mareos.",
-        laboratorio: [
-            "Digoxinemia: 3.4 ng/mL (Rango terapéutico estrecho: 0.5 - 0.9 ng/mL)",
-            "Creatinina: 2.2 mg/dL (Previa: 1.0 mg/dL - ClCr estimado: 24 mL/min)",
-            "Potasio sérico: 3.1 mEq/L (Hipopotasemia moderada por diuréticos previos)",
-            "ECG: Bradicardia extrema con extrasístoles ventriculares acopladas en bigeminismo y cubeta digitálica."
-        ],
-        preguntas: [
-            "¿Por qué la combinación Claritromicina + Ibuprofeno triplicó la digoxinemia a nivel de transportadores (P-gp) y prostaglandinas?",
-            "¿Cómo potencia la hipopotasemia la toxicidad de la digoxina en la subunidad alfa de la bomba Na+/K+ ATPasa?",
-            "¿Cuál es el esquema de rescate farmacológico de elección y por qué el Calcio IV está terminantemente contraindicado?"
-        ],
-        discusion: `<strong>1. Doble Interacción Farmacocinética:</strong><br>
-• <em>Claritromicina:</em> Inhibidor potente de la <strong>Glicoproteína P (P-gp)</strong> en el túbulo renal proximal y enterocito. Reduce la secreción activa tubular de digoxina en un 50% y duplica su biodisponibilidad.<br>
-• <em>Ibuprofeno:</em> Inhibición de COX-1/2, bloqueando las prostaglandinas vasodilatadoras renales (PGE2/PGI2). Genera vasoconstricción de la arteriola aferente y caída abrupta del filtrado glomerular, provocando retención masiva del fármaco.<br>
-<strong>2. Farmacodinamia & Hipopotasemia:</strong> La digoxina y el K+ compiten por el mismo dominio extracelular en la subunidad alfa de la bomba Na+/K+ ATPasa. En hipopotasemia, la digoxina se fija con afinidad máxima sin competencia, llevando a una sobrecarga patológica de Ca2+ intracelular (postdespolarizaciones tardías y arritmias mortales).<br>
-<strong>3. Tratamiento:</strong> Suspensión de drogas, corrección cuidadosa del potasio con KCl IV, y administración de <strong>Anticuerpos Fab antidigoxina (DigiFab)</strong>. El Calcio IV está contraindicado porque precipita contractura sostenida irreversible ("corazón de piedra").`
-    },
-    {
-        id: "DF-915",
-        subtitulo: "Crisis por Inhibidores CYP450 y Anticoagulación",
-        dificultad: 3,
-        familia: "cardio",
-        texto: "Varón de 58 años portador de válvula aórtica mecánica metálica anticoagulado con Warfarina (RIN habitual en rango: 2.5 - 3.5). Consulta por micosis ungular y tiña pedis; un profesional le prescribe Fluconazol 150 mg/semana e itraconazol oral. Al 6° día consulta por hematuria macroscópica franca, epistaxis bilateral y hematomas espontáneos múltiples.",
-        laboratorio: [
-            "RIN: 9.8 (Rango seguro de anticoagulación: 2.5 - 3.5)",
-            "KPTT: 72 segundos | Tiempo de Protrombina: > 120 seg",
-            "Hemoglobina: 9.8 g/dL (caída de 3.5 g/dL respecto al basal)",
-            "Función Hepática: Normal (Bilirrubina 0.8, TGO/TGP normales)"
-        ],
-        preguntas: [
-            "¿Qué isoenzima del Citocromo P450 metaboliza al enantiómero activo S-Warfarina y cómo actúa el azol?",
-            "¿Cuál es la conducta farmacológica inmediata para revertir la anticoagulación crítica con sangrado activo?",
-            "¿Por qué no se debe dar dosis excesivas de Vitamina K1 (Fitomenadiona) en pacientes con válvulas mecánicas?"
-        ],
-        discusion: `<strong>1. Mecanismo Enzimático CYP450:</strong> La Warfarina es una mezcla racémica donde el enantiómero S es 5 veces más potente que el R. La S-Warfarina se metaboliza exclusivamente por la isoenzima <strong>CYP2C9</strong>. Los azoles (Fluconazol/Itraconazol) son inhibidores directos muy potentes del CYP2C9, reduciendo drásticamente su aclaramiento hepático y cuadruplicando su semivida plasmática (t1/2).<br>
-<strong>2. Reversión Inmediata con Sangrado Activo:</strong> Complejo Protrombínico Concentrado (CCP de 4 factores: factores II, VII, IX, X) a dosis de 25-50 UI/kg IV, o Plasma Fresco Congelado (PFC) si no hay CCP, más Vitamina K1 (Fitomenadiona) 5-10 mg IV lenta en infusión.<br>
-<strong>3. Riesgo de Resistencia en Válvula Mecánica:</strong> Dosis excesivas de Vitamina K1 pueden generar resistencia a la anticoagulación oral por semanas una vez superada la urgencia, dejando al paciente desprotegido frente a una trombosis protésica valvular aguda.`
-    },
-
-    // --- SISTEMA NERVIOSO CENTRAL (SNC) ---
-    {
-        id: "DF-SNC-1",
-        subtitulo: "Cinética de ISRS y Período de Latencia",
-        dificultad: 1,
-        familia: "snc",
-        texto: "Mujer de 32 años diagnosticada con Trastorno Depresivo Mayor e inicio de Sertralina 50 mg/día hace 5 días. Consulta angustiada manifestando que no siente mejoría de su estado de ánimo y que nota náuseas matinales y leve temblor distal, solicitando cambiar inmediatamente de psicofármaco.",
-        laboratorio: [
-            "Ionograma sérico: Na+ 139 mEq/L, K+ 4.1 mEq/L",
-            "ECG: Ritmo sinusal, QTc 410 ms (normal)",
-            "Perfil tiroideo (TSH): 2.1 uUI/mL (eutiroidea)"
-        ],
-        preguntas: [
-            "¿A qué se debe la discordancia temporal entre el bloqueo agudo del transportador SERT y el efecto clínico antidepresivo (latencia de 2 a 4 semanas)?",
-            "¿Por qué se producen las náuseas al inicio del tratamiento con ISRS?",
-            "¿Cuál es la conducta médica y explicación farmacológica adecuada para la paciente?"
-        ],
-        discusion: `<strong>1. Mecanismo de Latencia:</strong> Aunque el bloqueo del transportador <strong>SERT</strong> es inmediato (horas), el aumento inicial de serotonina estimula los autorreceptores presinápticos inhibitorios <strong>5-HT1A</strong> en el núcleo del rafe, frenando la liberación. El efecto antidepresivo clínico requiere de 2 a 4 semanas para lograr la <strong>desensibilización y down-regulation</strong> de estos autorreceptores y la estimulación de neurotrofinas (BDNF).<br>
-<strong>2. Náuseas Iniciales:</strong> La estimulación de receptores <strong>5-HT3</strong> en el área postrema y tracto digestivo provoca náuseas que suelen autolimitarse tras la primera semana.<br>
-<strong>3. Conducta:</strong> Contener a la paciente, explicar el período fisiológico de latencia terapéutica y mantener la dosis sin rotar el fármaco prematuramente.`
-    },
-    {
-        id: "DF-SNC-2",
-        subtitulo: "Síndrome Serotoninérgico vs Síndrome Neuroléptico",
-        dificultad: 2,
-        familia: "snc",
-        texto: "Varón de 39 años bajo tratamiento con Escitalopram 20 mg/día por depresión mayor. Tras una extracción dental compleja recibe Tramadol 100 mg c/8h y además toma Sumatriptán 50 mg por una crisis migrañosa. Ingresa con diaforesis profusa, agitación psicomotriz, clonus inducible en miembros inferiores e hipertermia de 39.4°C.",
-        laboratorio: [
-            "CPK total: 850 UI/L (leve elevación)",
-            "Leucocitos: 11.200 /mm³ sin desviación izquierda",
-            "Gasometría: Acidosis láctica leve compensada",
-            "Examen neurológico: Hiperreflexia rotuliana y aquílea masiva con clonus agotable bilateral y pupilas midriáticas reactivas."
-        ],
-        preguntas: [
-            "¿Cómo interactúan Tramadol, Escitalopram y Sumatriptán para desencadenar toxicidad serotoninérgica sinérgica?",
-            "¿Qué criterios clínicos diferencian el Síndrome Serotoninérgico del Síndrome Neuroléptico Maligno (SNM)?",
-            "¿Cuál es el antagonista de receptores de serotonina de elección para rescate?"
-        ],
-        discusion: `<strong>1. Triple Sinergia Serotoninérgica:</strong><br>
-• <em>Escitalopram:</em> Bloqueo selectivo de SERT.<br>
-• <em>Tramadol:</em> Analgésico opioide atípico que además bloquea la recaptación de 5-HT y noradrenalina.<br>
-• <em>Sumatriptán:</em> Agonista directo de receptores 5-HT1B/1D.<br>
-La convergencia produce sobreestimulación masiva de receptores <strong>5-HT2A y 5-HT1A</strong> postsinápticos.<br>
-<strong>2. Diagnóstico Diferencial con SNM:</strong> El Síndrome Serotoninérgico se caracteriza por <strong>hiperreflexia, clonus (signo cardinal) y temblor</strong> de instauración rápida (horas). El SNM (por bloqueo dopaminérgico con antipsicóticos) presenta rigidez en 'caño de plomo', hiporreflexia y elevación extrema de CPK (> 10.000) de desarrollo lento.<br>
-<strong>3. Rescate Farmacológico:</strong> Suspensión inmediata de serotonérgicos, enfriamiento activo, benzodiacepinas (Diazepam) para el temblor y administración de <strong>Ciproheptadina</strong> (antagonista 5-HT2A oral/por SNG).`
-    },
-    {
-        id: "DF-SNC-3",
-        subtitulo: "Cinética No Lineal de Fenitoína en Status Convulsivo",
-        dificultad: 3,
-        familia: "snc",
-        texto: "Mujer de 50 años con epilepsia focal estructural en tratamiento crónico con Fenitoína (Difenilhidantoína) 300 mg/día con niveles plasmáticos de 12 mcg/mL (rango terapéutico: 10 - 20 mcg/mL). Por presentar 2 crisis aisladas, su médico ambulatorio decide duplicar la dosis a 600 mg/día. Al 5° día es traída a guardia estuporosa, con ataxia cerebelosa severa, nistagmo multidireccional horizontal y vertical continuo.",
-        laboratorio: [
-            "Fenitoinemia actual: 44 mcg/mL (Rango terapéutico: 10 - 20 mcg/mL - Nivel tóxico crítico > 30)",
-            "Albúmina sérica: 3.2 g/dL (leve hipoalbuminemia)",
-            "ECG: Ensanchamiento leve del PR y bradicardia sinusal",
-            "TC cerebral sin contraste: Sin nuevas lesiones isquémicas ni hemorrágicas agudas."
-        ],
-        preguntas: [
-            "¿Por qué un incremento al doble de la dosis de fenitoína casi cuadruplicó su concentración plasmática (cinética de Michaelis-Menten / orden cero)?",
-            "¿Cómo influye la hipoalbuminemia en la fracción libre farmacológicamente activa de fenitoína?",
-            "¿Cuál es la conducta terapéutica y por qué la hemodiálisis no es efectiva para depurarla?"
-        ],
-        discusion: `<strong>1. Cinética de Saturación (Michaelis-Menten):</strong> La Fenitoína pasa de una cinética de primer orden (eliminación proporcional a la dosis) a una <strong>cinética de orden cero</strong> a concentraciones plasmáticas terapéuticas normales debido a la saturación completa de las enzimas hepáticas (CYP2C9 y CYP2C19). A partir de la saturación (Km), pequeños aumentos de dosis generan incrementos desproporcionados e impredecibles en la concentración plasmática y toxicidad severa.<br>
-<strong>2. Fracción Libre y Proteínas:</strong> La fenitoína tiene <strong>unión a albúmina del 90-95%</strong>. En hipoalbuminemia, la fracción libre activa aumenta sustancialmente; la concentración total subestima la toxicidad real.<br>
-<strong>3. Manejo:</strong> Suspensión inmediata de fenitoína y medidas de soporte. La hemodiálisis es ineficaz debido a su altísima unión proteica y gran volumen de distribución. Se debe rotar a fármacos de cinética lineal predecible (Levetiracetam o Valproato).`
-    },
-
-    // --- SISTEMA AUTÓNOMO ---
-    {
-        id: "DF-AUTO-1",
-        subtitulo: "Selectividad Muscarínica y Ojo Seco vs Glaucoma",
-        dificultad: 1,
-        familia: "autonomo",
-        texto: "Mujer de 64 años con vejiga hiperactiva a quien se le prescribe Oxibutinina 5 mg c/8h. A las 72 horas consulta por visión borrosa cercana severa, sequedad bucal extrema (xerostomía), constipación y un episodio de dolor ocular sordo unilateral con ojo rojo.",
-        laboratorio: [
-            "Presión intraocular (PIO): 34 mmHg en ojo derecho (normal: 10 - 21 mmHg)",
-            "Agudeza visual: Deterioro significativo para lectura cercana",
-            "Examen con lámpara de hendidura: Ángulo iridocorneal estrecho y midriasis media fija."
-        ],
-        preguntas: [
-            "¿Qué subtipos de receptores muscarínicos bloquea la oxibutinina y cómo explica la parálisis de la acomodación (cicloplejía) y la xerostomía?",
-            "¿Por qué los antimuscarínicos están estrictamente contraindicados en glaucoma de ángulo estrecho?",
-            "¿Qué alternativas farmacológicas modernas con menor perfil anticolinérgico existen para vejiga hiperactiva?"
-        ],
-        discusion: `<strong>1. Perfil Anticolinérgico:</strong> La Oxibutinina es un antagonista muscarínico no selectivo con afinidad por <strong>M1, M2 y M3</strong>. El bloqueo M3 en el músculo ciliar anula la contracción requerida para abombar el cristalino (cicloplejía / imposibilidad de visión cercana). El bloqueo M3 en glándulas salivales inhibe la secreción acuosa originando xerostomía.<br>
-<strong>2. Glaucoma de Ángulo Estrecho:</strong> La midriasis provocada por el bloqueo colinérgico del esfínter pupilar hace que el iris se repliegue hacia la periferia, ocluyendo la malla trabecular y bloqueando el drenaje del humor acuoso, precipitando una crisis de glaucoma agudo con riesgo de ceguera irreversible.<br>
-<strong>3. Alternativas Modernas:</strong> <em>Mirabegrón</em> (agonista selectivo β3 adrenérgico, sin efecto anticolinérgico) o antimuscarínicos con selectividad M3 vesicular preferencial (Solifenacina / Darifenacina).`
-    },
-    {
-        id: "DF-AUTO-2",
-        subtitulo: "Toxicología: Síndrome Colinérgico por Organofosforados",
-        dificultad: 2,
-        familia: "autonomo",
-        texto: "Varón de 28 años, trabajador rural que ingresa a emergencias tras fumigar en invernáculo sin equipo de protección. Presenta broncorrea masiva con estertores húmedos bilaterales, sialorrea, miosis puntiforme arreactiva, fasciculaciones musculares en deltoides y gemelos, bradicardia a 42 lpm y diarrea incontinente.",
-        laboratorio: [
-            "Gases en sangre: Acidosis respiratoria hipoxémica (pO2 55, pCO2 56 mmHg)",
-            "Actividad de Colinesterasa plasmática/eritrocitaria: Inhibición del 85% respecto al valor basal",
-            "ECG: Bradicardia sinusal con extrasístoles y prolongación de intervalo PR"
-        ],
-        preguntas: [
-            "¿Cuál es el mecanismo bioquímico por el cual los organofosforados inhiben a la Acetilcolinesterasa y qué significa el fenómeno de 'envejecimiento' (aging) de la enzima?",
-            "¿Qué manifestaciones corresponden al tono muscarínico y cuáles al nicotínico?",
-            "¿Cuál es el esquema de atropinización inmediata y qué rol específico cumple la Pralidoxima?"
-        ],
-        discusion: `<strong>1. Mecanismo & Envejecimiento:</strong> Los organofosforados fosforilan covalentemente el residuo de serina en el sitio activo de la <strong>Acetilcolinesterasa (AChE)</strong>, impidiendo la hidrólisis de acetilcolina. El 'envejecimiento' es la escisión posterior de un grupo alquilo de la molécula fosforilada; una vez que ocurre (en horas), la unión se vuelve irreversible y los reactivadores ya no funcionan.<br>
-<strong>2. Cuadro Muscarínico vs Nicotínico:</strong><br>
-• <em>Muscarínico (M2/M3):</em> Miosis, broncorrea, broncoespasmo, bradicardia, sialorrea, vómitos, diarrea (regla nemotécnica DUMBELS).<br>
-• <em>Nicotínico (Nm/Nn):</em> Fasciculaciones, debilidad muscular progresiva y parálisis diafragmática.<br>
-<strong>3. Rescate Terapéutico:</strong> <strong>Atropina IV</strong> a dosis repetidas (1-2 mg c/5-10 min) hasta lograr signos de 'atropinización' (pulmón seco y FC > 80 lpm, ¡la miosis no es el parámetro de respuesta!). Se asocia <strong>Pralidoxima (oxima)</strong> precozmente antes del envejecimiento para reactivar la AChE sobre la placa neuromuscular.`
-    },
-    {
-        id: "DF-AUTO-3",
-        subtitulo: "Bloqueo Alfa previo a Beta en Feocromocitoma",
-        dificultad: 3,
-        familia: "autonomo",
-        texto: "Mujer de 38 años con sospecha de feocromocitoma adrenal que consulta por palpitaciones severas, cefalea pulsátil y sudoración paroxística. Un médico no avezado decide iniciar de urgencia Atenolol 50 mg IV para controlar la taquicardia de 135 lpm. Minutos después de la infusión, la paciente desarrolla encefalopatía hipertensiva hiperaguda con PA de 260/150 mmHg y edema agudo de pulmón.",
-        laboratorio: [
-            "Metanefrinas libres plasmáticas: 12 veces por encima del límite superior normal",
-            "Fondo de ojo de urgencia: Hemorragias en llama y exudados retinianos agudos",
-            "Troponina I ultrasensible: 180 ng/L (daño miocárdico por sobrecarga aguda de postcarga)"
-        ],
-        preguntas: [
-            "¿Cuál es el fundamento hemodinámico y de receptores por el cual el bloqueo beta aislado provocó una crisis hipertensiva catastrófica ('vasoconstricción alfa desopuesta')?",
-            "¿Cuál es la secuencia farmacológica obligatoria recomendada por guías para preparar a estos pacientes?",
-            "¿Qué droga alfa-bloqueante irreversible de acción prolongada o competitiva se debe emplear?"
-        ],
-        discusion: `<strong>1. Vasoconstricción Alfa Desopuesta:</strong> Las catecolaminas circulantes en exceso estimulan tanto receptores α1 (vasoconstricción periférica) como β2 (vasodilatación en lecho muscular). Al administrar un betabloqueante solo, se anula la vasodilatación mediada por β2 y se disminuye el inotropismo cardíaco sin oponer resistencia al tono α1 masivo, desatando una <strong>vasoconstricción arterial sistémica desenfrenada</strong> y pico tensional letal.<br>
-<strong>2. Regla de Oro Farmacológica:</strong> NUNCA betabloquear sin un <strong>bloqueo alfa-adrenérgico completo y previo de al menos 7 a 14 días</strong> de duración.<br>
-<strong>3. Drogas de Elección:</strong> <strong>Fenoxibenzamina</strong> (alfa-bloqueante no competitivo irreversible) o antagonistas α1 selectivos como <strong>Doxazosina / Prazosina</strong>. Solo cuando el lecho vascular está vasodilatado y la volemia repuesta, se agrega el betabloqueante para tratar la taquicardia residual.`
-    },
-
-    // --- AINES Y ANALGÉSICOS ---
-    {
-        id: "DF-AINES-1",
-        subtitulo: "Selectividad COX-1 vs COX-2 y Riesgo Cardiovascular",
-        dificultad: 1,
-        familia: "aines",
-        texto: "Varón de 62 años con antecedentes de infarto de miocardio previo y stent medicado hace 2 años. Por gonartrosis crónica, un familiar le aconseja tomar Celecoxib 200 mg/día 'porque no daña el estómago'. Consulta para saber si esta medicación es segura considerando sus antecedentes cardiovasculares.",
-        laboratorio: [
-            "Lipidograma: LDL 68 mg/dL (bajo estatina de alta potencia)",
-            "Función renal: Creatinina 0.9 mg/dL, Filtrado glomerular 88 mL/min",
-            "ECG: Necrosis transmural anteroseptal antigua sin cambios isquémicos dinámicos."
-        ],
-        preguntas: [
-            "¿Por qué los inhibidores selectivos de COX-2 (coxibs) alteran el balance hemostático endotelial entre Prostaciclina (PGI2) y Tromboxano A2 (TXA2)?",
-            "¿Por qué el Celecoxib está contraindicado en pacientes con enfermedad coronaria establecida?",
-            "¿Qué estrategia analgésica de menor riesgo cardiovascular es de elección?"
-        ],
-        discusion: `<strong>1. Desbalance PGI2 / TXA2:</strong> La COX-2 endotelial sintetiza <strong>Prostaciclina (PGI2)</strong>, potente vasodilatador e inhibidor de la agregación plaquetaria. La COX-1 plaquetaria sintetiza <strong>Tromboxano A2 (TXA2)</strong>, proagregante y vasoconstrictor. Los inhibidores selectivos COX-2 suprimen la PGI2 protectora sin inhibir el TXA2 plaquetario mediado por COX-1, inclinando la balanza hacia un estado protrombótico endotelial.<br>
-<strong>2. Contraindicación:</strong> Aumentan significativamente el riesgo relativo de reinfarto, trombosis de stent y ACV isquémico.<br>
-<strong>3. Alternativa Preferida:</strong> Paracetamol como primer escalón; si se requiere AINE por inflamación refractaria, <strong>Naproxeno</strong> (menor perfil de riesgo trombótico coronario al tener un tiempo de bloqueo de COX-1 más continuo) asociado a protección gástrica estricta (IBP).`
-    },
-    {
-        id: "DF-AINES-2",
-        subtitulo: "La Triple Amenaza Nefrotóxica: IECA + Diurético + AINE",
-        dificultad: 2,
-        familia: "aines",
-        texto: "Mujer de 76 años hipertensa tratada con Enalapril 20 mg/día e Hidroclorotiazida 25 mg/día. Por una lumbalgia aguda toma Diclofenac 75 mg c/12h por cuenta propia. Al 6° día acude al hospital con astenia profunda, anuria de 18 horas y ortostatismo.",
-        laboratorio: [
-            "Creatinina sérica: 4.8 mg/dL (Basal de 3 meses atrás: 0.9 mg/dL)",
-            "Urea: 142 mg/dL",
-            "Potasio sérico: 6.3 mEq/L (Hiperpotasemia severa con ondas T picudas en ECG)",
-            "Ecografía renal: Riñones de tamaño normal sin ectasia de la vía urinaria."
-        ],
-        preguntas: [
-            "¿Cómo descompensa hemodinámicamente el glomérulo la combinación simultánea de Diclofenac + Enalapril + Diurético (Triple Whammy)?",
-            "¿Por qué el AINE genera además hiperpotasemia refractaria a nivel del túbulo colector?",
-            "¿Cuáles son las medidas terapéuticas inmediatas?"
-        ],
-        discusion: `<strong>1. Fisiopatología de la Triple Amenaza ('Triple Whammy'):</strong><br>
-• <em>Diurético:</em> Produce contracción de volumen intravascular y reduce el flujo plasmático renal.<br>
-• <em>AINE (Diclofenac):</em> Inhibe la síntesis de PGE2/PGI2, anulando la vasodilatación compensatoria de la <strong>arteriola aferente</strong>.<br>
-• <em>IECA (Enalapril):</em> Inhibe la angiotensina II, bloqueando la vasoconstricción protectora de la <strong>arteriola eferente</strong>.<br>
-Resultado: Caída catastrófica e inmediata de la presión hidrostática intraglomerular y colapso del filtrado.<br>
-<strong>2. Hiperpotasemia:</strong> Los AINEs inducen un estado de <strong>hipoaldosteronismo hiporreninémico</strong> por bloqueo de prostaglandinas renales, sumado a la retención de K+ generada por el IECA.<br>
-<strong>3. Conducta Inmediata:</strong> Suspensión de todos los fármacos nefrotóxicos, hidratación isotónica cuidadosa con solución fisiológica y estabilización de membrana miocárdica por hiperpotasemia con Gluconato de Calcio IV e infusión de Insulina + Dextrosa.`
-    },
-    {
-        id: "DF-AINES-3",
-        subtitulo: "Toxicidad por Paracetamol y Vía del NAPQI",
-        dificultad: 3,
-        familia: "aines",
-        texto: "Joven de 22 años que ingiere 18 gramos de Paracetamol en un intento de autolisis. Es traído a la guardia 6 horas después del evento, lúcido, con náuseas leves y vómitos aislados, refiriendo encontrarse 'mucho mejor' que al principio.",
-        laboratorio: [
-            "Paracetamolemia a las 6 horas: 240 mcg/mL (Línea de tratamiento de Rumack-Matthew: > 150 mcg/mL)",
-            "Transaminasas (TGO / TGP): 45 UI/L y 52 UI/L (aún normales a las 6h post-ingesta)",
-            "Tiempo de Protrombina: 88% | Bilirrubina total: 0.9 mg/dL"
-        ],
-        preguntas: [
-            "¿Por qué las transaminasas normales a las 6 horas son un engaño clínico peligroso en la intoxicación por paracetamol?",
-            "¿Qué vía metabólica hepática genera el metabolito reactivo tóxico NAPQI y por qué se satura el glutatión?",
-            "¿Cuál es el antídoto específico, su mecanismo de acción y la ventana temporal ideal para prevenir necrosis centrolobulillar letal?"
-        ],
-        discusion: `<strong>1. Falsa Seguridad Inicial:</strong> La hepatotoxicidad por paracetamol evoluciona en fases: en las primeras 24 horas (Fase 1) solo hay síntomas digestivos inespecíficos con enzimas hepáticas normales. La citólisis masiva y necrosis centrolobulillar explotan entre las 48 y 72 horas (Fase 3). Guiarse por transaminasas normales tempranas es un error mortal.<br>
-<strong>2. Metabolismo y NAPQI:</strong> A dosis terapéuticas el 90% se conjuga con glucurónido y sulfato. Con sobredosis, esas vías se saturan y el citocromo <strong>CYP2E1</strong> desvía el fármaco a <strong>N-acetil-p-benzoquinona imina (NAPQI)</strong>, un electrófilo citotóxico. Cuando el glutatión hepático se agota (> 70%), el NAPQI se une a proteínas mitocondriales produciendo necrosis hepática fulminante.<br>
-<strong>3. Antídoto:</strong> <strong>N-Acetilcisteína (NAC)</strong>. Actúa como donante de grupos sulfhidrilo (reponiendo glutatión) y se conjuga directamente con NAPQI. Administrado dentro de las <strong>primeras 8 horas</strong>, la prevención de insuficiencia hepática aguda es cercana al 100%.`
-    },
-
-    // --- ANTIMICROBIANOS (ANTIBIÓTICOS) ---
-    {
-        id: "DF-ANTIBIO-1",
-        subtitulo: "PK/PD de Betalactámicos vs Aminoglucósidos",
-        dificultad: 1,
-        familia: "antibio",
-        texto: "En ateneo de infectología se debate el esquema antibiótico para una bacteriemia grave por Pseudomonas aeruginosa sensible. Se discute si infundir Meropenem en bolo cada 8h o en infusión extendida de 3 a 4 horas, y si Amikacina debe dosificarse en multidosis diaria o en monodosis única diaria consolidada.",
-        laboratorio: [
-            "CIM de Meropenem para el aislamiento: 2 mcg/mL",
-            "CIM de Amikacina para el aislamiento: 4 mcg/mL",
-            "ClCr estimado del paciente: 75 mL/min"
-        ],
-        preguntas: [
-            "¿Qué índice farmacocinético/farmacodinámico (PK/PD) predice la eficacia bactericida de los betalactámicos frente a los aminoglucósidos?",
-            "¿Por qué la infusión prolongada de Meropenem optimiza la eliminación bacteriana?",
-            "¿Por qué la monodosis diaria de Amikacina maximiza la eficacia y reduce la toxicidad renal y coclear?"
-        ],
-        discusion: `<strong>1. Índices PK/PD Cardinales:</strong><br>
-• <em>Betalactámicos (Meropenem):</em> Bactericidas <strong>tiempo-dependientes</strong>. Su parámetro de eficacia es el <strong>%T > CIM</strong> (porcentaje del intervalo en que la concentración libre supera la CIM del germen; meta: ≥ 40-70% del tiempo).<br>
-• <em>Aminoglucósidos (Amikacina):</em> Bactericidas <strong>concentración-dependientes</strong> con marcado efecto post-antibiótico (PAE). Su parámetro de eficacia es el <strong>Cmax / CIM</strong> (pico plasmático sobre la CIM; meta: ≥ 8-10).<br>
-<strong>2. Infusión Extendida:</strong> Al prolongar la infusión a 3-4 horas, se sostiene la meseta de concentración por encima de la CIM durante casi todo el intervalo de dosificación sin necesidad de subir la dosis total diaria.<br>
-<strong>3. Monodosis de Amikacina:</strong> Genera un pico plasmático muy elevado (máxima muerte bacteriana) seguido de un valle casi nulo antes de la siguiente dosis, permitiendo la depuración tubular renal y el lavado del fármaco en el oído interno, reduciendo la oto y nefrotoxicidad.`
-    },
-    {
-        id: "DF-ANTIBIO-2",
-        subtitulo: "Nefrotoxicidad por Vancomicina y Monitoreo de Valles",
-        dificultad: 2,
-        familia: "antibio",
-        texto: "Varón de 65 años internado por neumonía intrahospitalaria por SAMR en tratamiento con Vancomicina 1 g IV c/12h y Piperacilina-Tazobactam. Al 5° día su diuresis cae a 400 mL/día y la creatinina sube de 0.8 a 2.3 mg/dL. El dosaje de nivel valle de vancomicina regresa en 28 mcg/mL (rango meta: 15 - 20 mcg/mL).",
-        laboratorio: [
-            "Valle de Vancomicina: 28 mcg/mL",
-            "Creatinina actual: 2.3 mg/dL | Urea: 98 mg/dL",
-            "Sedimento urinario: Cilindros granulosos y células tubulares epiteliales",
-            "Fracción excretada de sodio (FeNa): 2.4% (Injuria tubular aguda intrínseca)"
-        ],
-        preguntas: [
-            "¿Por qué la combinación Vancomicina + Piperacilina/Tazobactam incrementa sinérgicamente el riesgo de injuria renal aguda?",
-            "¿Cómo se define el parámetro de monitoreo moderno AUC24/CIM para Vancomicina y cuál es su rango de seguridad?",
-            "¿Cuál es la conducta terapéutica inmediata y qué alternativa farmacológica oral o IV existe sin nefrotoxicidad?"
-        ],
-        discusion: `<strong>1. Sinergia Nefrotóxica:</strong> Múltiples ensayos clínicos han demostrado que asociar Piperacilina/Tazobactam a Vancomicina duplica o triplica la incidencia de necrosis tubular aguda por estrés oxidativo y daño mitocondrial en células tubulares renales proximales.<br>
-<strong>2. Parámetro PK/PD AUC24/CIM:</strong> Las guías actuales (IDSA) recomiendan guiar la vancomicina por <strong>AUC24/CIM entre 400 y 600</strong> en lugar de valles aislados mayores a 15-20 mcg/mL, ya que niveles valles > 20 mcg/mL aumentan drásticamente la nefrotoxicidad sin mayor beneficio clínico.<br>
-<strong>3. Conducta:</strong> Suspender Vancomicina de inmediato o rotar a <strong>Linezolid</strong> (oxazolidinona sin toxicidad renal con excelente penetración pulmonar) o <strong>Daptomicina</strong> (si no fuera neumonía, ya que el surfactante la inactiva).`
-    },
-    {
-        id: "DF-ANTIBIO-3",
-        subtitulo: "Manejo de Multirresistencia y Ajuste de Colistín",
-        dificultad: 3,
-        familia: "antibio",
-        texto: "Paciente de 54 años en UTI en shock séptico refractario por bacteriemia asociada a catéter por Klebsiella pneumoniae productora de carbapenemasa (KPC). El antibiograma informa resistencia a todos los betalactámicos y quinolonas, sensible únicamente a Colistín (Colistimetato sódico) y Ceftazidima-Avibactam.",
-        laboratorio: [
-            "Aclaramiento de creatinina (ClCr): 22 mL/min (injuria renal estadio KDIGO 3)",
-            "Lactato sérico: 4.8 mmol/L | Saturación venosa central: 58%",
-            "Leucocitosis: 24.500 /mm³ con 18% en banda"
-        ],
-        preguntas: [
-            "¿Por qué Ceftazidima-Avibactam es de elección frente a Colistín en términos de mortalidad y nefrotoxicidad?",
-            "¿Cuál es el mecanismo de acción de Avibactam frente a las carbapenemasas clase A (KPC)?",
-            "Si se tuviera que usar Colistimetato sódico en falla renal, ¿por qué es indispensable administrar una dosis de carga completa a pesar del filtrado disminuido?"
-        ],
-        discusion: `<strong>1. Superioridad Clínica de CAZ-AVI:</strong> Los estudios prospectivos demuestran una reducción de la mortalidad a 30 días del 50% frente a Colistín, con una tasa de nefrotoxicidad radicalmente inferior (Colistín genera hasta 40-50% de insuficiencia renal aguda grave por lisis de membrana tubular).<br>
-<strong>2. Mecanismo de Avibactam:</strong> Es un inhibidor no betalactámico de betalactamasas (diaza-biciclooctano). A diferencia de tazobactam o clavulánico, se une de forma <strong>reversible y covalente</strong> inhibiendo serina-carbapenemasas de clase A de Ambler (KPC) y clase D (OXA-48), restaurando plenamente la potencia de la Ceftazidima.<br>
-<strong>3. Dosis de Carga de Colistín:</strong> El Colistimetato sódico es un profármaco que se convierte lentamente a colistín activo. La <strong>dosis de carga depende del volumen de distribución</strong> (que no cambia con la insuficiencia renal) para alcanzar niveles terapéuticos rápidos en shock; únicamente las dosis de mantenimiento posteriores se ajustan al aclaramiento renal.`
-    },
-
-    // --- ENDOCRINOLOGÍA Y METABOLISMO ---
-    {
-        id: "DF-ENDO-1",
-        subtitulo: "Metformina y Riesgo de Acidosis Láctica",
-        dificultad: 1,
-        familia: "endocrino",
-        texto: "Varón de 68 años diabético tipo 2 tratado crónicamente con Metformina 1000 mg c/12h. Concurre a realizarse una tomografía de abdomen contrastada con iodo endovenoso. En el interrogatorio previo se constata una creatinina sérica de 2.1 mg/dL y un filtrado glomerular estimado de 28 mL/min.",
-        laboratorio: [
-            "Creatinina: 2.1 mg/dL | ClCr estimado: 28 mL/min/1.73m²",
-            "Glucemia en ayunas: 138 mg/dL | HbA1c: 7.2%",
-            "Ionograma: Na+ 140, K+ 4.6, Cl- 102 mEq/L"
-        ],
-        preguntas: [
-            "¿A través de qué mecanismo celular hipoglucemia la metformina a nivel hepático (AMPK / Cadena mitocondrial)?",
-            "¿Por qué la insuficiencia renal severa predispone a la acumulación de metformina y acidosis láctica?",
-            "¿Cuál es la pauta estricta de suspensión respecto al uso de contrastes iodados?"
-        ],
-        discusion: `<strong>1. Mecanismo Celular:</strong> La Metformina inhibe levemente el <strong>Complejo I de la cadena respiratoria mitocondrial</strong>, reduciendo la producción de ATP y activando la <strong>Proteína Quinasa Activada por AMP (AMPK)</strong>. Esto reprime los genes gluconeogénicos hepáticos (PEPCK y G6Pasa) disminuyendo la producción hepática de glucosa y mejorando la sensibilidad periférica a la insulina.<br>
-<strong>2. Acidosis Láctica:</strong> La metformina no se metaboliza en hígado y se elimina 100% por secreción tubular renal activa. En fallo renal (FG < 30 mL/min) el fármaco se acumula; la inhibición mitocondrial prolongada desvía el metabolismo celular hacia glucólisis anaeróbica con acumulación masiva de lactato e inhibición de la gluconeogénesis a partir de lactato.<br>
-<strong>3. Pauta con Contraste Iodado:</strong> Debe suspenderse en el momento del estudio contrastado y reinstaurarse únicamente 48 horas después tras verificar estabilidad de la función renal.`
-    },
-    {
-        id: "DF-ENDO-2",
-        subtitulo: "Cetoacidosis Euglucémica por Inhibidores de SGLT2",
-        dificultad: 2,
-        familia: "endocrino",
-        texto: "Mujer de 59 años con diabetes tipo 2 tratada con Empagliflozina 25 mg/día. Cursa un cuadro febril agudo de 3 días con vómitos e intolerancia oral. Ingresa soporosa con respiración acidótica rápida y profunda. En el triage se constata glucemia capilar de 168 mg/dL (casi normal), pero la gasometría arterial informa pH 7.12 con cetonuria masiva (++++).",
-        laboratorio: [
-            "Glucemia sérica: 172 mg/dL (incompatible a priori con cetoacidosis diabética típica)",
-            "Gases arteriales: pH 7.14, HCO3- 9 mEq/L, pCO2 24 mmHg",
-            "Anion Gap: 25 mEq/L (severamente elevado)",
-            "Cetonemia sérica (Beta-hidroxibutirato): 5.8 mmol/L (marcadamente positiva)"
-        ],
-        preguntas: [
-            "¿Qué mecanismo farmacológico explica que la cetoacidosis curse con cifras de glucemia normales o apenas elevadas ('euglucémica') con iSGLT2?",
-            "¿Cómo estimula la glucosuria masiva la cetogénesis a nivel del adipocito e hígado?",
-            "¿Cuál es el protocolo de rescate con infusión de glucosa e insulina?"
-        ],
-        discusion: `<strong>1. Euglucemia por Glucosuria Forzada:</strong> Los iSGLT2 (Empagliflozina) bloquean el cotransportador sodio-glucosa en el túbulo contorneado proximal, eliminando persistentemente entre 70 y 100 g/día de glucosa por orina. Esto mantiene la glucemia plasmática relativamente baja a pesar de una severa deficiencia de insulina.<br>
-<strong>2. Cetogénesis Desencadenada:</strong> La baja disponibilidad de glucosa y el estrés infeccioso disminuyen la secreción endógena de insulina y aumentan el glucagón. La baja relación insulina/glucagón estimula la <strong>lipólisis masiva en adipocitos</strong>, liberando ácidos grasos libres que ingresan a la mitocondria hepática (vía CPT-1) transformándose en cuerpos cetónicos (beta-hidroxibutirato).<br>
-<strong>3. Manejo:</strong> No suspender la insulina por tener glucemia normal. Se debe infundir <strong>Solución Dextrosada al 5% o 10% simultáneamente con goteo continuo de Insulina corriente</strong> para frenar la cetogénesis, junto con hidratación salina vigorosa.`
-    },
-    {
-        id: "DF-ENDO-3",
-        subtitulo: "Tormenta Tiroidea: Bloqueo Escalonado de la Síntesis y Liberación",
-        dificultad: 3,
-        familia: "endocrino",
-        texto: "Mujer de 33 años con Enfermedad de Graves no tratada que ingresa a terapia intensiva en Tormenta Tiroidea (Escala de Burch-Wartofsky: 65 puntos) gatillada por neumonía. Presenta fiebre de 40.2°C, taquicardia ventricular rápida a 160 lpm, ictericia y delirio psicomotor.",
-        laboratorio: [
-            "T4 libre: > 6.0 ng/dL (marcadamente elevada)",
-            "T3 total: 480 ng/dL | TSH: < 0.01 uUI/mL",
-            "Bilirrubina total: 3.4 mg/dL a predominio directo",
-            "ECG: Fibrilación auricular de alta respuesta ventricular (165 lpm)"
-        ],
-        preguntas: [
-            "¿Cuál es la secuencia cronológica estricta obligatoria entre la administración de Tionamidas (PTU/Metimazol) y Solución de Yodo inorgánico (Lugol)?",
-            "¿Por qué administrar Yodo antes de la tionamida puede ser fatal (Efecto Jod-Basedow)?",
-            "¿Qué roles terapéuticos cumplen Propranolol e Hidrocortisona más allá de la hemodinámica?"
-        ],
-        discusion: `<strong>1. Secuencia Obligatoria de Administración:</strong> Se debe administrar primero la <strong>Tionamida (Propiltiouracilo o Metimazol)</strong> y ESPERAR AL MENOS 1 HORA antes de iniciar la solución de <strong>Yodo inorgánico (Solución de Lugol o Yoduro de Potasio)</strong>.<br>
-<strong>2. El Peligro del Efecto Jod-Basedow:</strong> Si se da yodo primero, la glándula tiroidea hiperfuncionante lo utiliza inmediatamente como sustrato para sintetizar más hormona tiroidea nueva, agravando la tirotoxicosis. Al dar la tionamida 1 hora antes, se bloquea la enzima <strong>Tiroperoxidasa (TPO)</strong>; luego el yodo actúa transitoriamente inhibiendo la liberación proteolítica de hormonas almacenadas (<strong>Efecto Wolff-Chaikoff</strong>).<br>
-<strong>3. Propranolol e Hidrocortisona:</strong><br>
-• <em>Propranolol:</em> Controla la hiperactividad adrenérgica (FC, temblor) y a dosis altas <strong>inhibe la enzima 5'-desyodasa periférica</strong> (conversión de T4 inactiva a T3 activa).<br>
-• <em>Hidrocortisona:</em> Previene la insuficiencia suprarrenal relativa y bloquea también la conversión periférica de T4 a T3.`
-    }
-];
+const BANCO_DESAFIOS_FARMACOLOGIA = [];
 
 function generarDesafioFarma() {
     let filtrados = BANCO_DESAFIOS_FARMACOLOGIA;
@@ -6487,20 +4296,20 @@ function generarDesafioFarma() {
     const revealBtn = document.getElementById("farmaRevealDiscussionBtn");
 
     if (cId) cId.textContent = `${desafio.id} · ${desafio.subtitulo}`;
-    if (cMeta) cMeta.innerHTML = `Desafío Farmacoterapéutico Universitario${customNotice}`;
+    if (cMeta) setHTML(cMeta, `Desafío Farmacoterapéutico Universitario${customNotice}`);
     if (diffBadge) {
         const labels = { 1: "Nivel 1: Cinética & Diana", 2: "Nivel 2: Ajuste & Interacciones", 3: "Nivel 3: Toxicología & Crisis" };
         diffBadge.textContent = labels[desafio.dificultad] || "Desafío Farmacológico";
     }
     if (cText) cText.textContent = desafio.texto;
     if (labList && desafio.laboratorio) {
-        labList.innerHTML = desafio.laboratorio.map(it => `<li>${it}</li>`).join("");
+        setHTML(labList, desafio.laboratorio.map(it => `<li>${it}</li>`).join(""));
     }
     if (qList && desafio.preguntas) {
-        qList.innerHTML = desafio.preguntas.map(it => `<li>${it}</li>`).join("");
+        setHTML(qList, desafio.preguntas.map(it => `<li>${it}</li>`).join(""));
     }
     if (discContent) {
-        discContent.innerHTML = desafio.discusion;
+        setHTML(discContent, desafio.discusion);
     }
     if (discPanel) discPanel.classList.add("hidden");
     if (revealBtn) revealBtn.textContent = "💡 Revelar Análisis Farmacoterapéutico";
@@ -6511,7 +4320,7 @@ function generarDesafioFarma() {
     const fbPanel = document.getElementById("farmaAiEvaluationFeedback");
     if (fbPanel) {
         fbPanel.classList.add("hidden");
-        fbPanel.innerHTML = "";
+        setHTML(fbPanel, "");
     }
 
     mostrarToast(`🧪 Desafío generado: ${desafio.id}`, "exito");
@@ -6566,18 +4375,18 @@ async function evaluarDiagnosticoConIA(materia = "interna") {
     const textoOriginalBoton = btnElem ? btnElem.innerHTML : "";
     if (btnElem) {
         btnElem.disabled = true;
-        btnElem.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Evaluando con IA Médica...`;
+        setHTML(btnElem, `<i class="fas fa-spinner fa-spin"></i> Evaluando con IA Médica...`);
     }
 
     if (feedbackPanel) {
         feedbackPanel.classList.remove("hidden");
-        feedbackPanel.innerHTML = `
+        setHTML(feedbackPanel, `
             <div class="med-ai-feedback-loading">
                 <i class="fas fa-brain fa-spin"></i>
                 <div style="font-weight:600;font-size:0.95rem;">Profesor Virtual Evaluando Razonamiento Clínico...</div>
                 <div style="font-size:0.8rem;color:#94a3b8;margin-top:0.35rem;">Analizando concordancia nosológica, fisiopatología y farmacovigilancia.</div>
             </div>
-        `;
+        `);
         feedbackPanel.scrollIntoView({ behavior: "smooth", block: "nearest" });
     }
 
@@ -6601,29 +4410,15 @@ async function evaluarDiagnosticoConIA(materia = "interna") {
             diagnosticoEstudiante: textoEstudiante
         };
 
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 14000);
-
-        const response = await fetch("/api/gemini", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload),
-            signal: controller.signal
-        });
-        clearTimeout(timeoutId);
-
-        if (response.ok) {
-            const data = await response.json();
-            if (data && typeof data.puntaje === "number") {
-                resultadoFinal = data;
-            }
-        }
+        resultadoFinal = await requestAI(payload);
+        resultadoFinal.fuente = 'Evaluación por IA';
     } catch (err) {
         console.warn("[Evaluador Clínico IA] Fallback a evaluación semántica local:", err);
     }
 
     if (!resultadoFinal) {
         resultadoFinal = evaluarDiagnosticoClinicoLocal(casoActivo, textoEstudiante, materia);
+        resultadoFinal.fuente = "Evaluación orientativa local · IA no disponible";
     }
 
     if (feedbackPanel) {
@@ -6632,7 +4427,7 @@ async function evaluarDiagnosticoConIA(materia = "interna") {
 
     if (btnElem) {
         btnElem.disabled = false;
-        btnElem.innerHTML = textoOriginalBoton;
+        setHTML(btnElem, textoOriginalBoton);
     }
 
     mostrarToast(`Evaluación completada: ${resultadoFinal.puntaje}/100 pts`, resultadoFinal.puntaje >= 60 ? "exito" : "advertencia");
@@ -6654,13 +4449,13 @@ function renderizarResultadoEvaluacionIA(container, data) {
         ? data.erroresUOmitidos.map(e => `<li><i class="fas fa-exclamation-triangle" style="color:#f59e0b;margin-right:0.4rem;"></i>${e}</li>`).join("")
         : `<li>Sin omisiones críticas detectadas en el planteo.</li>`;
 
-    container.innerHTML = `
+    setHTML(container, `
         <div class="med-ai-feedback-header">
             <div style="display:flex;align-items:center;gap:0.75rem;">
                 <i class="fas ${estadoIcon}" style="font-size:1.6rem;color:${estadoColor};"></i>
                 <div>
                     <h4 style="margin:0;font-size:1.05rem;color:#f8fafc;">${data.veredicto || "Dictamen de Cátedra"}</h4>
-                    <span style="font-size:0.75rem;color:#94a3b8;">Evaluación estructurada por Inteligencia Artificial Médica</span>
+                    <span style="font-size:0.75rem;color:#94a3b8;">${escapeHtml(data.fuente || "Evaluación orientativa local")}</span>
                 </div>
             </div>
             <div class="score-badge ${badgeClass}">
@@ -6696,7 +4491,7 @@ function renderizarResultadoEvaluacionIA(container, data) {
                 <strong><i class="fas fa-user-doctor" style="margin-right:0.35rem;"></i>Consejo del Docente:</strong> "${data.consejoDocente}"
             </div>
         ` : ""}
-    `;
+    `);
     container.classList.remove("hidden");
     container.scrollIntoView({ behavior: "smooth", block: "nearest" });
 }
@@ -6873,7 +4668,7 @@ function renderizarFichero4x4Farma() {
     const grid = document.getElementById("farmaFicheroGrid");
     if (!grid) return;
     if (!Array.isArray(FICHERO_4X4_DROGAS)) return;
-    grid.innerHTML = FICHERO_4X4_DROGAS.map(d => `
+    setHTML(grid, FICHERO_4X4_DROGAS.map(d => `
         <article class="med-fichero-card">
             <div class="med-fichero-card-header">
                 <span class="med-fichero-drug">${d.droga}</span>
@@ -6884,7 +4679,7 @@ function renderizarFichero4x4Farma() {
             <div class="med-fichero-row"><strong>🎯 Indicaciones:</strong> ${d.indicaciones}</div>
             <div class="med-fichero-row" style="color:#fca5a5;"><strong>⚠️ RAM & Riesgos:</strong> ${d.adversos}</div>
         </article>
-    `).join("");
+    `).join(""));
 }
 
 /* ==========================================================
@@ -6892,66 +4687,7 @@ function renderizarFichero4x4Farma() {
    ========================================================== */
 let dificultadSaludActiva = 2; // 1: Bioestadística & Tasas, 2: Estrategias APS, 3: Brote Epidémico
 
-const BANCO_TPS_SALUD_PUBLICA = [
-    {
-        id: "TP N° 4 · Brote Epidémico",
-        subtitulo: "Investigación de Brote por Transmisión Alimentaria",
-        dificultad: 3,
-        texto: "En una localidad de 25.000 habitantes se notificaron en una semana 140 casos de gastroenteritis aguda febril con diarrea acuosa profusa. De la investigación epidemiológica de campo surge que 120 de los casos concurrieron a un almuerzo comunitario escolar donde asistieron 300 personas. Entre los 200 asistentes que no enfermaron, 50 consumieron mayonesa casera, mientras que entre los 100 que enfermaron en ese grupo, 90 la habían consumido.",
-        tabla: {
-            encabezados: ["Exposición (Mayonesa)", "Enfermos (Casos)", "Sanos (No casos)", "Total Asistentes"],
-            filas: [
-                ["Consumió Mayonesa (+)", "90 (a)", "50 (b)", "140 (a + b)"],
-                ["No consumió (-)", "10 (c)", "150 (d)", "160 (c + d)"],
-                ["Total", "100", "200", "300"]
-            ]
-        },
-        preguntas: [
-            "Calculá la Tasa de Ataque en Expuestos (TAe), la Tasa de Ataque en No Expuestos (TAne) y la Tasa de Ataque General (TAG).",
-            "Calculá el Riesgo Relativo (RR) y la Fracción Atribuible en Expuestos (FAE). ¿Qué conclusión sanitaria se extrae?",
-            "Formulá 3 intervenciones prioritarias según los niveles de prevención de Leavell y Clark para contener el brote."
-        ],
-        discusion: `<strong>1. Tasas de Ataque:</strong><br>
-• TA(expuestos) = 90 / 140 = <strong>64.29%</strong><br>
-• TA(no expuestos) = 10 / 160 = <strong>6.25%</strong><br>
-• TA(general) = 100 / 300 = <strong>33.33%</strong><br><br>
-<strong>2. Medidas de Asociación:</strong><br>
-• <strong>Riesgo Relativo (RR):</strong> 64.29% / 6.25% = <strong>10.28</strong>. Las personas que consumieron mayonesa casera tuvieron 10.28 veces más riesgo de enfermar que quienes no la consumieron (asociación causal concluyente).<br>
-• <strong>Fracción Atribuible en Expuestos (FAE):</strong> ((10.28 - 1) / 10.28) × 100 = <strong>90.27%</strong>. El 90.27% de las gastroenteritis en los expuestos se explica por dicho alimento.<br><br>
-<strong>3. Intervenciones en APS (Leavell & Clark):</strong><br>
-• <em>Prevención Primaria:</em> Decomiso de remanentes, inspección bromatológica de la cocina escolar, capacitación en Buenas Prácticas de Manufactura (BPM) y prohibición de mayonesas con huevo crudo en comedores.<br>
-• <em>Prevención Secundaria:</em> Búsqueda activa comunitaria, coprocultivo para aislamiento de Salmonella spp., e hidratación oral precoz (SRO) en el Centro de Salud.<br>
-• <em>Prevención Terciaria:</em> Derivación y monitoreo de pacientes con signos de alarma (deshidratación grave, bacteriemia).`
-    },
-    {
-        id: "TP N° 2 · Indicadores Demográficos",
-        subtitulo: "Cálculo de Tasas de Incidencia, Prevalencia y Letalidad",
-        dificultad: 1,
-        texto: "En un municipio con una población media de 80.000 habitantes durante el año 2025, se registraron 640 casos nuevos de Tuberculosis pulmonar. Al inicio del año ya existían 320 pacientes bajo tratamiento. Durante el año fallecieron 48 personas por Tuberculosis y un total de 560 personas por todas las causas.",
-        tabla: {
-            encabezados: ["Variable Sanitaria", "Valor Observado", "Población Base"],
-            filas: [
-                ["Casos nuevos de TBC en el año", "640", "80.000 hab."],
-                ["Casos existentes al inicio", "320", "80.000 hab."],
-                ["Defunciones totales por TBC", "48", "80.000 hab."],
-                ["Defunciones por todas las causas", "560", "80.000 hab."]
-            ]
-        },
-        preguntas: [
-            "Calculá la Tasa de Incidencia Acumulada de Tuberculosis por 100.000 habitantes.",
-            "Calculá la Prevalencia de Período y la Tasa de Letalidad de la Tuberculosis.",
-            "Calculá la Tasa Bruta de Mortalidad General (por mil habitantes) y la Tasa de Mortalidad Específica por TBC."
-        ],
-        discusion: `<strong>1. Tasa de Incidencia Acumulada:</strong><br>
-• IA = (640 / 80.000) × 100.000 = <strong>800 por 100.000 habitantes</strong> (0.8%).<br><br>
-<strong>2. Prevalencia de Período y Letalidad:</strong><br>
-• Prevalencia de Período = ((320 + 640) / 80.000) × 100 = <strong>1.2%</strong> (1.200 por 100.000 hab).<br>
-• <strong>Tasa de Letalidad:</strong> (48 defunciones / 960 enfermos totales) × 100 = <strong>5.0%</strong>. Expresa la gravedad de la patología entre quienes la padecen.<br><br>
-<strong>3. Mortalidad:</strong><br>
-• Mortalidad Bruta General = (560 / 80.000) × 1.000 = <strong>7.0 por mil habitantes</strong>.<br>
-• Mortalidad Específica por TBC = (48 / 80.000) × 100.000 = <strong>60 por 100.000 habitantes</strong>.`
-    }
-];
+const BANCO_TPS_SALUD_PUBLICA = [];
 
 function generarEjercicioTpSalud() {
     const filtrados = BANCO_TPS_SALUD_PUBLICA.filter(t => t.dificultad === dificultadSaludActiva);
@@ -6974,7 +4710,7 @@ function generarEjercicioTpSalud() {
     const revealBtn = document.getElementById("saludRevealDiscussionBtn");
 
     if (tId) tId.textContent = tpElegido.id;
-    if (tMeta) tMeta.innerHTML = `${tpElegido.subtitulo}${customNotice}`;
+    if (tMeta) setHTML(tMeta, `${tpElegido.subtitulo}${customNotice}`);
     if (diffBadge) {
         const labels = { 1: "Nivel 1: TP Bioestadística", 2: "Nivel 2: TP Estrategias APS", 3: "Nivel 3: TP Investigación de Brote" };
         diffBadge.textContent = labels[tpElegido.dificultad] || "Trabajo Práctico";
@@ -6984,14 +4720,14 @@ function generarEjercicioTpSalud() {
     if (tTable && tpElegido.tabla) {
         let theadHtml = `<tr>` + tpElegido.tabla.encabezados.map(h => `<th>${h}</th>`).join("") + `</tr>`;
         let tbodyHtml = tpElegido.tabla.filas.map(row => `<tr>` + row.map((cell, i) => i === 0 ? `<td><strong>${cell}</strong></td>` : `<td>${cell}</td>`).join("") + `</tr>`).join("");
-        tTable.innerHTML = `<thead>${theadHtml}</thead><tbody>${tbodyHtml}</tbody>`;
+        setHTML(tTable, `<thead>${theadHtml}</thead><tbody>${tbodyHtml}</tbody>`);
     }
 
     if (qList && tpElegido.preguntas) {
-        qList.innerHTML = tpElegido.preguntas.map(it => `<li>${it}</li>`).join("");
+        setHTML(qList, tpElegido.preguntas.map(it => `<li>${it}</li>`).join(""));
     }
 
-    if (discContent) discContent.innerHTML = tpElegido.discusion;
+    if (discContent) setHTML(discContent, tpElegido.discusion);
     if (discPanel) discPanel.classList.add("hidden");
     if (revealBtn) revealBtn.textContent = "💡 Revelar Resolución Docente Paso a Paso";
 
@@ -7011,12 +4747,12 @@ function calcularIndicadoresSaludTp() {
 
     const res = document.getElementById("calcResultDisplay");
     if (res) {
-        res.innerHTML = `
+        setHTML(res, `
             <div class="med-calc-res-item"><span>Incidencia Acumulada:</span> <strong>${ia} por mil hab. (${((nuevos / pob) * 100).toFixed(3)}%)</strong></div>
             <div class="med-calc-res-item"><span>Prevalencia de Período:</span> <strong>${prev}% (${((totales / pob) * 1000).toFixed(2)} por mil)</strong></div>
             <div class="med-calc-res-item"><span>Tasa de Letalidad:</span> <strong>${letal}%</strong></div>
             <div class="med-calc-res-item"><span>Tasa Mortalidad Causa:</span> <strong>${mort} por mil (${(parseFloat(mort) * 100).toFixed(1)} por 100.000 hab)</strong></div>
-        `;
+        `);
         mostrarToast("⚡ Indicadores de TP calculados", "exito");
     }
 }
@@ -7508,7 +5244,7 @@ function abrirSelectorAvatar() {
 
 function renderCatalogoEmojis(catFiltro = "all", textoBusqueda = "") {
     if (!dom.avatarEmojisGrid) return;
-    dom.avatarEmojisGrid.innerHTML = "";
+    setHTML(dom.avatarEmojisGrid, "");
 
     const query = textoBusqueda.toLowerCase().trim();
     const filtrados = CATALOGO_EMOJIS.filter(item => {
@@ -7537,7 +5273,7 @@ function aplicarAvatarSeleccionado(tipo, valor, dataUrl) {
     guardarPerfilUsuario();
 
     if (dom.authRegAvatarPreview) {
-        dom.authRegAvatarPreview.innerHTML = renderAvatarHTML(perfilUsuario, 0, false, 40);
+        setHTML(dom.authRegAvatarPreview, renderAvatarHTML(perfilUsuario, 0, false, 40));
     }
     if (dom.avatarPickerModal) {
         dom.avatarPickerModal.close();
@@ -7591,13 +5327,13 @@ function procesarFotoSubida(file) {
 }
 
 /* ==========================================================
-   MÓDULO 3: MOTOR DUELO MULTIJUGADOR ONLINE (MQTT / WEBSOCKETS)
+   MÓDULO 3: MOTOR DUELO MULTIJUGADOR ONLINE (SUPABASE)
    ========================================================== */
 function generarCodigoSala() {
     const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
     let code = "";
     for (let i = 0; i < 5; i++) {
-        code += chars.charAt(Math.floor(Math.random() * chars.length));
+        code += chars.charAt(crypto.getRandomValues(new Uint32Array(1))[0] % chars.length);
     }
     return code;
 }
@@ -7606,107 +5342,39 @@ function obtenerTopicSala(codigo) {
     return `luibanez/duel/v1/${codigo.toUpperCase().trim()}`;
 }
 
-function conectarMqttSiEsNecesario(callback) {
-    if (typeof mqtt === "undefined") {
-        console.warn("Librería MQTT no disponible todavía.");
-        if (dom.dueloServerStatusBadge) {
-            dom.dueloServerStatusBadge.textContent = "🟡 Servidor Local";
-            dom.dueloServerStatusBadge.className = "badge badge--warning";
-        }
-        if (callback) callback();
-        return;
-    }
-
-    if (onlineDueloEstado.clienteMqtt && onlineDueloEstado.clienteMqtt.connected) {
-        if (dom.dueloServerStatusBadge) {
-            dom.dueloServerStatusBadge.textContent = "🟢 Servidor Conectado";
-            dom.dueloServerStatusBadge.className = "badge badge--success";
-        }
-        if (callback) callback();
-        return;
-    }
-
-    if (onlineDueloEstado.clienteMqtt && !onlineDueloEstado.clienteMqtt.connected) {
-        onlineDueloEstado.clienteMqtt.once("connect", () => {
-            onlineDueloEstado.conectado = true;
-            if (dom.dueloServerStatusBadge) {
-                dom.dueloServerStatusBadge.textContent = "🟢 Servidor Conectado";
-                dom.dueloServerStatusBadge.className = "badge badge--success";
-            }
-            if (callback) callback();
-        });
-        return;
-    }
-
-    const clientId = "luib_" + Math.random().toString(16).slice(2, 10);
-    try {
-        onlineDueloEstado.clienteMqtt = mqtt.connect(MQTT_BROKER_URL, {
-            clientId,
-            keepalive: 30,
-            reconnectPeriod: 2500,
-            connectTimeout: 8000
-        });
-
-        onlineDueloEstado.clienteMqtt.on("connect", () => {
-            onlineDueloEstado.conectado = true;
-            if (dom.dueloServerStatusBadge) {
-                dom.dueloServerStatusBadge.textContent = "🟢 Servidor Conectado";
-                dom.dueloServerStatusBadge.className = "badge badge--success";
-            }
-            if (!lobbyBrowserState.suscrito) {
-                onlineDueloEstado.clienteMqtt.subscribe(LOBBY_DISCOVERY_TOPIC, (err) => {
-                    if (!err) {
-                        lobbyBrowserState.suscrito = true;
-                        publicarMensajeDiscovery({ tipo: "LOBBY_DISCOVERY_PING" });
-                    }
-                });
-            }
-            if (callback) callback();
-        });
-
-        onlineDueloEstado.clienteMqtt.on("reconnect", () => {
-            if (dom.dueloServerStatusBadge) {
-                dom.dueloServerStatusBadge.textContent = "🟡 Reconectando...";
-                dom.dueloServerStatusBadge.className = "badge badge--warning";
-            }
-        });
-
-        onlineDueloEstado.clienteMqtt.on("error", err => {
-            console.warn("MQTT Error:", err);
-            if (dom.dueloServerStatusBadge) {
-                dom.dueloServerStatusBadge.textContent = "⚠️ Reintentando conexión";
-                dom.dueloServerStatusBadge.className = "badge badge--danger";
-            }
-        });
-
-        onlineDueloEstado.clienteMqtt.on("message", (topic, message) => {
-            try {
-                const data = JSON.parse(message.toString());
-                if (topic === LOBBY_DISCOVERY_TOPIC) {
-                    procesarMensajeDiscoveryLobby(data);
-                } else {
-                    procesarMensajeMqttSala(data);
-                }
-            } catch (e) {
-                console.error("Error al procesar mensaje MQTT:", e);
-            }
-        });
-    } catch (e) {
-        console.error("Error al iniciar MQTT:", e);
-        if (callback) callback();
-    }
+async function conectarSalaSiEsNecesario(callback) {
+ try {
+  if (!currentUser()) throw new Error('Iniciá sesión para jugar online.');
+  if (!onlineDueloEstado.transporteOnline) {
+   const { createRoomTransport } = await import('./modules/rooms.mjs');
+   onlineDueloEstado.transporteOnline = createRoomTransport({ receive: procesarMensajeSala, report: mostrarToast, discover: rows => {
+    lobbyBrowserState.activeLobbies.clear();
+    for (const row of rows) lobbyBrowserState.activeLobbies.set(row.code, { id: row.code, nombre: row.name, requierePass: row.requires_password, juego: row.config.juego, formatoModo: row.config.formatoModo, host: { apodo: 'Anfitrión' }, jugadores: [], jugadoresCount: 0, lastSeen: Date.now() });
+    renderizarLobbyBrowser();
+   } });
+  }
+  onlineDueloEstado.conectado = true;
+  if (dom.dueloServerStatusBadge) dom.dueloServerStatusBadge.textContent = '🟢 Sesión online';
+  if (callback) await callback();
+  return onlineDueloEstado.transporteOnline;
+ } catch (error) {
+  onlineDueloEstado.conectado = false;
+  if (dom.dueloServerStatusBadge) dom.dueloServerStatusBadge.textContent = '⚠️ Online no disponible';
+  mostrarToast(error.message, 'error');
+  return null;
+ }
 }
 
-function publicarMensajeSala(data) {
-    if (!onlineDueloEstado.clienteMqtt || !onlineDueloEstado.codigoSala) return;
+async function publicarMensajeSala(data) {
+    if (!onlineDueloEstado.transporteOnline || !onlineDueloEstado.codigoSala) return;
     const topic = obtenerTopicSala(onlineDueloEstado.codigoSala);
-    onlineDueloEstado.clienteMqtt.publish(topic, JSON.stringify(data), { qos: 0 });
+    return onlineDueloEstado.transporteOnline.publish(topic, JSON.stringify(data), { qos: 0 });
 }
 
 function iniciarDiscoveryLobbiesOnline() {
-    conectarMqttSiEsNecesario(() => {
-        if (onlineDueloEstado.clienteMqtt && !lobbyBrowserState.suscrito) {
-            onlineDueloEstado.clienteMqtt.subscribe(LOBBY_DISCOVERY_TOPIC, (err) => {
+    conectarSalaSiEsNecesario(() => {
+        if (onlineDueloEstado.transporteOnline && !lobbyBrowserState.suscrito) {
+            onlineDueloEstado.transporteOnline.subscribe(LOBBY_DISCOVERY_TOPIC, (err) => {
                 if (!err) {
                     lobbyBrowserState.suscrito = true;
                     publicarMensajeDiscovery({ tipo: "LOBBY_DISCOVERY_PING" });
@@ -7721,103 +5389,18 @@ function iniciarDiscoveryLobbiesOnline() {
     renderizarLobbyBrowser();
 }
 
-function publicarMensajeDiscovery(data) {
-    if (!onlineDueloEstado.clienteMqtt) return;
-    try {
-        onlineDueloEstado.clienteMqtt.publish(LOBBY_DISCOVERY_TOPIC, JSON.stringify(data), { qos: 0 });
-    } catch (e) {
-        console.warn("Error al emitir mensaje discovery MQTT:", e);
-    }
-}
+function publicarMensajeDiscovery() { /* Discovery no longer accepts client announcements. */ }
 
-function iniciarBroadcastingSalaPublica() {
-    detenerBroadcastingSalaPublica();
-    if (!onlineDueloEstado.esHost || !onlineDueloEstado.esPublica || !onlineDueloEstado.codigoSala) return;
+function iniciarBroadcastingSalaPublica() { /* Discovery is read from authenticated Supabase room records. */ }
 
-    const emitirBeacon = () => {
-        if (!onlineDueloEstado.esHost || !onlineDueloEstado.codigoSala) {
-            detenerBroadcastingSalaPublica();
-            return;
-        }
-        const apunte = apuntesEstado.global || apuntesEstado.bomba || apuntesEstado.bolillero;
-        const nombreMaterial = (onlineDueloEstado.fuenteMaterial === "pdf" && apunte && apunte.nombre)
-            ? apunte.nombre
-            : "General Universitario";
+function detenerBroadcastingSalaPublica() { clearInterval(lobbyBrowserState.intervaloBeacon); lobbyBrowserState.intervaloBeacon = null; }
 
-        publicarMensajeDiscovery({
-            tipo: "LOBBY_HEARTBEAT",
-            id: onlineDueloEstado.codigoSala,
-            nombre: onlineDueloEstado.nombreSala || "Sala de Repaso",
-            juego: onlineDueloEstado.juegoSeleccionado || "bomba",
-            formatoModo: onlineDueloEstado.formatoModo || "versus",
-            material: nombreMaterial,
-            esPublica: true,
-            requierePass: !!onlineDueloEstado.tienePassword,
-            host: {
-                id: perfilUsuario.id,
-                apodo: perfilUsuario.apodo,
-                avatar: perfilUsuario.avatar
-            },
-            jugadoresCount: onlineDueloEstado.jugadores.length,
-            maxJugadores: 8,
-            jugadoresAvatares: onlineDueloEstado.jugadores.map(j => ({
-                apodo: j.apodo,
-                avatar: j.avatar,
-                esHost: !!j.esHost
-            })),
-            timestamp: Date.now()
-        });
-    };
-
-    emitirBeacon();
-    lobbyBrowserState.intervaloBeacon = setInterval(emitirBeacon, 3500);
-}
-
-function detenerBroadcastingSalaPublica() {
-    if (lobbyBrowserState.intervaloBeacon) {
-        clearInterval(lobbyBrowserState.intervaloBeacon);
-        lobbyBrowserState.intervaloBeacon = null;
-    }
-    if (onlineDueloEstado.esHost && onlineDueloEstado.codigoSala) {
-        publicarMensajeDiscovery({
-            tipo: "LOBBY_CLOSED",
-            id: onlineDueloEstado.codigoSala
-        });
-    }
-}
-
-function procesarMensajeDiscoveryLobby(data) {
-    if (!data || !data.tipo) return;
-
-    if (data.tipo === "LOBBY_DISCOVERY_PING") {
-        if (onlineDueloEstado.esHost && onlineDueloEstado.esPublica && onlineDueloEstado.codigoSala) {
-            iniciarBroadcastingSalaPublica();
-        }
-        return;
-    }
-
-    if (data.tipo === "LOBBY_CLOSED") {
-        if (data.id && lobbyBrowserState.activeLobbies.has(data.id)) {
-            lobbyBrowserState.activeLobbies.delete(data.id);
-            renderizarLobbyBrowser();
-        }
-        return;
-    }
-
-    if (data.tipo === "LOBBY_HEARTBEAT" && data.id) {
-        lobbyBrowserState.activeLobbies.set(data.id, {
-            ...data,
-            lastSeen: Date.now()
-        });
-        renderizarLobbyBrowser();
-    }
-}
 
 function purgarLobbiesExpirados() {
     const ahora = Date.now();
     let huboCambios = false;
     for (const [id, lobby] of lobbyBrowserState.activeLobbies.entries()) {
-        if (ahora - lobby.lastSeen > 8500) {
+        if (ahora - lobby.lastSeen > 35000) {
             lobbyBrowserState.activeLobbies.delete(id);
             huboCambios = true;
         }
@@ -7843,7 +5426,7 @@ function renderizarLobbyBrowser() {
     }
 
     if (filtradas.length === 0) {
-        dom.dueloPublicLobbiesGrid.innerHTML = "";
+        setHTML(dom.dueloPublicLobbiesGrid, "");
         if (dom.dueloLobbiesEmptyState) {
             dom.dueloLobbiesEmptyState.classList.remove("hidden");
         }
@@ -7862,7 +5445,7 @@ function renderizarLobbyBrowser() {
         triatlon: { icon: "🏅", title: "Triatlón Académico", cardClass: "lobby-card--triatlon" }
     };
 
-    dom.dueloPublicLobbiesGrid.innerHTML = filtradas.map(lobby => {
+    setHTML(dom.dueloPublicLobbiesGrid, filtradas.map(lobby => {
         const meta = metaJuegos[lobby.juego] || metaJuegos.bomba;
         const esCoop = lobby.formatoModo === "coop";
         const modeBadge = esCoop
@@ -7888,7 +5471,7 @@ function renderizarLobbyBrowser() {
         const isFull = (lobby.jugadoresCount || jugadores.length) >= 8;
         const enterButton = isFull
             ? `<button type="button" class="lobby-card-enter-btn" disabled>🈵 Sala Llena</button>`
-            : `<button type="button" class="lobby-card-enter-btn" onclick="entrarALobbyDesdeCartelera('${escapeHtml(lobby.id)}', ${lobby.requierePass ? 'true' : 'false'})">🚀 Entrar a la Sala</button>`;
+            : `<button type="button" class="lobby-card-enter-btn" data-study-click="entrarALobbyDesdeCartelera('${escapeHtml(lobby.id)}', ${lobby.requierePass ? 'true' : 'false'})">🚀 Entrar a la Sala</button>`;
 
         const hostName = escapeHtml(lobby.host?.apodo || "Anfitrión");
         const hostAvatar = lobby.host?.avatar || "👑";
@@ -7935,7 +5518,7 @@ function renderizarLobbyBrowser() {
                 </div>
             </div>
         `;
-    }).join("");
+    }).join(""));
 }
 
 window.entrarALobbyDesdeCartelera = function(roomId, requierePass) {
@@ -7947,7 +5530,8 @@ window.entrarALobbyDesdeCartelera = function(roomId, requierePass) {
     unirseASalaOnline(roomId, pass);
 };
 
-function crearSalaOnline() {
+function crearSalaOnline() { return withAuthAction(dom.dueloCreateRoomBtn, crearSalaOnlineConfirmada, mostrarToast); }
+async function crearSalaOnlineConfirmada() {
     try {
         const tienePass = dom.dueloOnlineHasPassword ? dom.dueloOnlineHasPassword.checked : false;
         const pass = tienePass && dom.dueloOnlineRoomPassword ? dom.dueloOnlineRoomPassword.value.trim() : "";
@@ -7956,13 +5540,16 @@ function crearSalaOnline() {
         const nombreSala = dom.dueloCreateRoomName ? dom.dueloCreateRoomName.value.trim() : "Sala de Repaso";
         const esPublica = dom.dueloCreateRoomIsPublic ? dom.dueloCreateRoomIsPublic.checked : true;
 
+        const transport = await conectarSalaSiEsNecesario();
+        if (!transport) return;
+        await supabaseService.guardarPerfil(perfilUsuario);
         const codigo = generarCodigoSala();
         onlineDueloEstado.esHost = true;
         onlineDueloEstado.codigoSala = codigo;
         onlineDueloEstado.nombreSala = nombreSala || "Sala de Repaso";
         onlineDueloEstado.esPublica = esPublica;
         onlineDueloEstado.tienePassword = tienePass;
-        onlineDueloEstado.passwordSala = pass;
+        onlineDueloEstado.passwordSala = "";
         onlineDueloEstado.formatoModo = formatoModo;
         onlineDueloEstado.juegoSeleccionado = juego;
 
@@ -8054,6 +5641,9 @@ function crearSalaOnline() {
             listo: true
         }];
 
+        await transport.create({ codigo, nombre: onlineDueloEstado.nombreSala, password: pass, publica: esPublica, config: dueloEstado.config });
+        sessionStorage.setItem('study:activeRoom:' + currentUser().id, codigo);
+
         // Cerrar modal flotante si estaba abierto
         if (dom.dueloCreateRoomModal && typeof dom.dueloCreateRoomModal.close === "function") {
             try { dom.dueloCreateRoomModal.close(); } catch (_) {}
@@ -8067,28 +5657,34 @@ function crearSalaOnline() {
             iniciarBroadcastingSalaPublica();
         }
 
-        // Suscribirse a MQTT en paralelo
-        conectarMqttSiEsNecesario(() => {
+        // Suscribirse a los eventos autorizados de la sala
+        conectarSalaSiEsNecesario(() => {
             const topic = obtenerTopicSala(codigo);
-            if (onlineDueloEstado.clienteMqtt) {
-                onlineDueloEstado.clienteMqtt.subscribe(topic, (err) => {
+            if (onlineDueloEstado.transporteOnline) {
+                onlineDueloEstado.transporteOnline.subscribe(topic, (err) => {
                     if (err) console.warn("Error al suscribirse al topic:", err);
                 });
             }
         });
     } catch (err) {
+        onlineDueloEstado.codigoSala = ""; onlineDueloEstado.esHost = false; onlineDueloEstado.jugadores = [];
         console.error("Error al crear sala online:", err);
         mostrarToast("⚠️ Error al crear la sala: " + err.message, "error");
     }
 }
 
-function unirseASalaOnline(codigoIngresado, passIngresado = "") {
+function unirseASalaOnline(codigo, password = '') { return withAuthAction(dom.dueloJoinRoomBtn, () => unirseASalaOnlineConfirmada(codigo,password), mostrarToast); }
+async function unirseASalaOnlineConfirmada(codigoIngresado, passIngresado = "") {
     const codigo = (codigoIngresado || "").trim().toUpperCase();
     if (!codigo || codigo.length < 3) {
         mostrarToast("⚠️ Ingresá un código de sala válido.", "aviso");
         return;
     }
 
+    const transport = await conectarSalaSiEsNecesario();
+    if (!transport) return;
+    try { await supabaseService.guardarPerfil(perfilUsuario); await transport.join(codigo, passIngresado); sessionStorage.setItem('study:activeRoom:' + currentUser().id, codigo); }
+    catch (error) { sessionStorage.removeItem('study:activeRoom:' + currentUser()?.id); mostrarToast(error.message, 'error'); return; }
     // Cerrar modal de PIN si estaba abierto
     if (dom.dueloJoinByPinModal && typeof dom.dueloJoinByPinModal.close === "function") {
         try { dom.dueloJoinByPinModal.close(); } catch (_) {}
@@ -8096,15 +5692,15 @@ function unirseASalaOnline(codigoIngresado, passIngresado = "") {
 
     onlineDueloEstado.esHost = false;
     onlineDueloEstado.codigoSala = codigo;
-    onlineDueloEstado.passwordSala = passIngresado.trim();
+    onlineDueloEstado.passwordSala = "";
 
     // Mostrar de inmediato la sala de espera
     mostrarSalaDeEsperaOnline(codigo);
 
-    conectarMqttSiEsNecesario(() => {
+    conectarSalaSiEsNecesario(() => {
         const topic = obtenerTopicSala(codigo);
-        if (onlineDueloEstado.clienteMqtt) {
-            onlineDueloEstado.clienteMqtt.subscribe(topic, () => {
+        if (onlineDueloEstado.transporteOnline) {
+            onlineDueloEstado.transporteOnline.subscribe(topic, () => {
                 // Enviar saludo de unión con listo: false
                 publicarMensajeSala({
                     tipo: "INTENTO_UNION",
@@ -8207,7 +5803,7 @@ function mostrarSalaDeEsperaOnline(codigo) {
             btnReady.className = estaListo
                 ? "button button--warning button--lg button--ready-toggle"
                 : "button button--success button--lg button--ready-toggle";
-            btnReady.innerHTML = estaListo ? "⏳ Cancelar Listo" : "✅ ¡Estoy Listo!";
+            setHTML(btnReady, estaListo ? "⏳ Cancelar Listo" : "✅ ¡Estoy Listo!");
         }
     }
 
@@ -8216,7 +5812,7 @@ function mostrarSalaDeEsperaOnline(codigo) {
 
 function renderJugadoresSalaEspera() {
     if (!dom.dueloOnlinePlayersGrid) return;
-    dom.dueloOnlinePlayersGrid.innerHTML = "";
+    setHTML(dom.dueloOnlinePlayersGrid, "");
 
     const jugadores = onlineDueloEstado.jugadores || [];
     if (dom.dueloOnlineConnectedCount) {
@@ -8241,21 +5837,21 @@ function renderJugadoresSalaEspera() {
             }
 
             const safeNom = escapeHtml(j.apodo || j.nombre || "Jugador");
-            card.innerHTML = `
+            setHTML(card, `
                 ${renderAvatarHTML(j, 0, false, 44)}
                 <span class="duelo-online-player-chip__name" title="${safeNom}">${safeNom} ${isSelf ? "(Vos)" : ""}</span>
                 ${readyBadgeHTML}
-            `;
+            `);
             dom.dueloOnlinePlayersGrid.appendChild(card);
         } else {
             // Slot vacío
             const emptySlot = document.createElement("div");
             emptySlot.className = "duelo-online-slot-empty";
-            emptySlot.innerHTML = `
+            setHTML(emptySlot, `
                 <span class="empty-icon">➕</span>
                 <span>Esperando jugador...</span>
                 <span style="font-size: 0.7rem; opacity: 0.6;">Slot ${i + 1} de 8</span>
-            `;
+            `);
             dom.dueloOnlinePlayersGrid.appendChild(emptySlot);
         }
     }
@@ -8286,7 +5882,7 @@ function renderJugadoresSalaEspera() {
             dom.dueloLaunchOnlineMatchBtn.disabled = false;
             dom.dueloLaunchOnlineMatchBtn.classList.remove("button--disabled");
             dom.dueloLaunchOnlineMatchBtn.classList.remove("button--pulse-launch");
-            dom.dueloLaunchOnlineMatchBtn.innerHTML = "🚀 ¡INICIAR PARTIDA! (Solo / Práctica)";
+            setHTML(dom.dueloLaunchOnlineMatchBtn, "🚀 ¡INICIAR PARTIDA! (Solo / Práctica)");
             if (hintElem) hintElem.textContent = "Podés iniciar para probar en solitario o compartir el PIN para jugar en grupo.";
         } else {
             const todosListos = listosCount === totalInvitados;
@@ -8295,21 +5891,27 @@ function renderJugadoresSalaEspera() {
                 dom.dueloLaunchOnlineMatchBtn.disabled = false;
                 dom.dueloLaunchOnlineMatchBtn.classList.remove("button--disabled");
                 dom.dueloLaunchOnlineMatchBtn.classList.add("button--pulse-launch");
-                dom.dueloLaunchOnlineMatchBtn.innerHTML = `🚀 ¡TODOS LISTOS! (${listosCount}/${totalInvitados}) EMPEZAR PARTIDA`;
+                setHTML(dom.dueloLaunchOnlineMatchBtn, `🚀 ¡TODOS LISTOS! (${listosCount}/${totalInvitados}) EMPEZAR PARTIDA`);
                 if (hintElem) hintElem.textContent = "¡Todos tus compañeros están listos! Presioná empezar para arrancar a la vez.";
             } else {
                 // Faltan participantes por confirmar
                 dom.dueloLaunchOnlineMatchBtn.disabled = true;
                 dom.dueloLaunchOnlineMatchBtn.classList.add("button--disabled");
                 dom.dueloLaunchOnlineMatchBtn.classList.remove("button--pulse-launch");
-                dom.dueloLaunchOnlineMatchBtn.innerHTML = `⏳ Esperando que todos pongan 'Estoy Listo' (${listosCount}/${totalInvitados})`;
+                setHTML(dom.dueloLaunchOnlineMatchBtn, `⏳ Esperando que todos pongan 'Estoy Listo' (${listosCount}/${totalInvitados})`);
                 if (hintElem) hintElem.textContent = `Faltan ${totalInvitados - listosCount} jugador(es) por confirmar que están listos.`;
             }
         }
     }
+    if (onlineDueloEstado.partidaEnCurso && !onlineDueloEstado.esHost && dom.dueloGuestReadyBtn && onlineDueloEstado.juegoSeleccionado !== 'bolillero') {
+      setHTML(dom.dueloGuestReadyBtn, '▶ Reanudar partida');
+    }
 }
 
 function toggleReadyInvitado() {
+    if (onlineDueloEstado.partidaEnCurso && onlineDueloEstado.juegoSeleccionado !== 'bolillero') {
+      import('./modules/online-game.mjs').then(module => module.refreshOnlineGame(onlineDueloEstado.codigoSala, { ...onlineGameCallbacks(), forceNavigate: true })).catch(error => mostrarToast(error.message, 'error')); return;
+    }
     const miJugador = onlineDueloEstado.jugadores.find(j => j.id === perfilUsuario.id);
     if (!miJugador) return;
     miJugador.listo = !miJugador.listo;
@@ -8319,7 +5921,7 @@ function toggleReadyInvitado() {
         btnReady.className = miJugador.listo
             ? "button button--warning button--lg button--ready-toggle"
             : "button button--success button--lg button--ready-toggle";
-        btnReady.innerHTML = miJugador.listo ? "⏳ Cancelar Listo" : "✅ ¡Estoy Listo!";
+        setHTML(btnReady, miJugador.listo ? "⏳ Cancelar Listo" : "✅ ¡Estoy Listo!");
     }
 
     publicarMensajeSala({
@@ -8332,56 +5934,20 @@ function toggleReadyInvitado() {
 }
 window.toggleReadyInvitado = toggleReadyInvitado;
 
-function procesarMensajeMqttSala(data) {
+function procesarMensajeSala(data) {
     if (!data || !data.tipo) return;
-
-    // 1. Intento de unión de un jugador
-    if (data.tipo === "INTENTO_UNION") {
-        if (onlineDueloEstado.esHost) {
-            if (onlineDueloEstado.tienePassword && data.password !== onlineDueloEstado.passwordSala) {
-                publicarMensajeSala({
-                    tipo: "RECHAZO_PASSWORD",
-                    targetJugadorId: data.jugador.id
-                });
-                return;
-            }
-
-            // Evitar duplicados y verificar límite de 8 jugadores
-            const jugadorData = { ...data.jugador, listo: false };
-            const otrosJugadores = onlineDueloEstado.jugadores.filter(j => j.id !== jugadorData.id);
-            if (typeof desambiguarApodoSala === "function") {
-                jugadorData.apodo = desambiguarApodoSala(jugadorData.apodo, otrosJugadores);
-                jugadorData.nombre = jugadorData.apodo;
-            }
-            const idx = onlineDueloEstado.jugadores.findIndex(j => j.id === jugadorData.id);
-            if (idx === -1) {
-                if (onlineDueloEstado.jugadores.length >= 8) {
-                    publicarMensajeSala({
-                        tipo: "SALA_LLENA",
-                        targetJugadorId: jugadorData.id
-                    });
-                    return;
-                }
-                onlineDueloEstado.jugadores.push(jugadorData);
-            } else {
-                onlineDueloEstado.jugadores[idx] = jugadorData;
-            }
-
-            // Sincronizar estado completo a la sala
-            publicarMensajeSala({
-                tipo: "SINCRONIZAR_SALA",
-                jugadores: onlineDueloEstado.jugadores,
-                config: dueloEstado.config,
-                formatoModo: onlineDueloEstado.formatoModo,
-                juegoSeleccionado: onlineDueloEstado.juegoSeleccionado
-            });
-            renderJugadoresSalaEspera();
-        }
+    if (data.tipo === 'SALA_CERRADA') { salirDeSalaOnline(); cambiarVista('juntos'); return; }
+    if (data.tipo === 'SECURE_GAME_CHANGED') {
+      import('./modules/online-game.mjs').then(({ refreshOnlineGame }) => refreshOnlineGame(onlineDueloEstado.codigoSala, onlineGameCallbacks())).catch(error => mostrarToast(error.message, 'error'));
+      return;
     }
+
 
     // 2. Sincronización del Host
     if (data.tipo === "SINCRONIZAR_SALA") {
         onlineDueloEstado.jugadores = data.jugadores || [];
+        if (data.estadoSala) onlineDueloEstado.partidaEnCurso = data.estadoSala === "playing";
+        onlineDueloEstado.esHost = Boolean(onlineDueloEstado.jugadores.find(player => player.id === perfilUsuario.id)?.esHost);
         if (data.config) {
             dueloEstado.config = data.config;
         }
@@ -8654,9 +6220,7 @@ function procesarMensajeMqttSala(data) {
 
     // 8. Resultado oficial de la votación
     if (data.tipo === "RESULTADO_VOTACION") {
-        if (!onlineDueloEstado.esHost) {
-            aplicarResultadoVotacionOnline(data);
-        }
+        aplicarResultadoVotacionOnline(data);
     }
 
     // 9. Robo Relámpago activado para toda la sala
@@ -8773,7 +6337,7 @@ function procesarMensajeMqttSala(data) {
 
     // 15. Aplicar sincronización de estado recibida desde el Host
     if (data.tipo === "SYNC_ESTADO_ACTUAL") {
-        if (!onlineDueloEstado.esHost && (!data.destinatarioId || data.destinatarioId === perfilUsuario.id)) {
+        if ((!onlineDueloEstado.esHost || data.restoring) && (!data.destinatarioId || data.destinatarioId === perfilUsuario.id)) {
             if (typeof aplicarSincronizacionEstadoDesdeHost === "function") {
                 aplicarSincronizacionEstadoDesdeHost(data);
             }
@@ -8782,13 +6346,15 @@ function procesarMensajeMqttSala(data) {
 }
 
 function salirDeSalaOnline() {
+    if (currentUser()) sessionStorage.removeItem('study:activeRoom:' + currentUser().id);
+    import('./modules/online-game.mjs').then(module => module.stopOnlineGame());
     detenerBroadcastingSalaPublica();
-    if (onlineDueloEstado.clienteMqtt && onlineDueloEstado.codigoSala) {
+    if (onlineDueloEstado.transporteOnline && onlineDueloEstado.codigoSala) {
         publicarMensajeSala({
             tipo: "SALIDA_JUGADOR",
             jugadorId: perfilUsuario.id
         });
-        onlineDueloEstado.clienteMqtt.unsubscribe(obtenerTopicSala(onlineDueloEstado.codigoSala));
+        onlineDueloEstado.transporteOnline.unsubscribe(obtenerTopicSala(onlineDueloEstado.codigoSala));
     }
     onlineDueloEstado.codigoSala = "";
     onlineDueloEstado.esHost = false;
@@ -8847,10 +6413,10 @@ function arrancarBolilleroOnlineCliente(data) {
     if (dom.dueloSpinBtn) {
         if (onlineDueloEstado.esHost) {
             dom.dueloSpinBtn.disabled = false;
-            dom.dueloSpinBtn.innerHTML = '<span>🎰</span><span>GIRAR DOBLE RULETA</span>';
+            setHTML(dom.dueloSpinBtn, '<span>🎰</span><span>GIRAR DOBLE RULETA</span>');
         } else {
             dom.dueloSpinBtn.disabled = true;
-            dom.dueloSpinBtn.innerHTML = '<span>⏳</span><span>Esperando que el anfitrión gire la ruleta...</span>';
+            setHTML(dom.dueloSpinBtn, '<span>⏳</span><span>Esperando que el anfitrión gire la ruleta...</span>');
         }
     }
 
@@ -9022,10 +6588,12 @@ async function iniciarCombateOnlineDesdeHost() {
 
     const juego = onlineDueloEstado.juegoSeleccionado || (dom.dueloOnlineGameSelect ? dom.dueloOnlineGameSelect.value : "bomba");
 
-    // Si el desafío elegido es "Desactivá la Bomba":
-    if (juego === "bomba") {
-        await iniciarBombaOnlineHost();
-        return;
+    if (juego !== 'bolillero') {
+      return withAuthAction(dom.dueloLaunchOnlineMatchBtn, async () => {
+        const { startOnlineGame } = await import('./modules/online-game.mjs');
+        const rounds = await prepararActividadesOnline(juego);
+        await startOnlineGame(onlineDueloEstado.codigoSala, rounds, onlineGameCallbacks());
+      }, mostrarToast);
     }
 
     // Para el Bolillero:
@@ -9063,8 +6631,7 @@ async function iniciarCombateOnlineDesdeHost() {
         formatoModo: onlineDueloEstado.formatoModo
     };
 
-    publicarMensajeSala(payload);
-    arrancarBolilleroOnlineCliente(payload);
+    await publicarMensajeSala(payload);
 }
 
 // Extractor inteligente de oraciones y conceptos reales de PDF para Bomba (Fallback Offline / Sin Gemini)
@@ -9131,108 +6698,6 @@ function generarDesafioBombaDesdeTextoPDF(texto, nombreArchivo) {
     };
 }
 
-async function iniciarBombaOnlineHost() {
-    if (!onlineDueloEstado.esHost) return;
-    const listaId = dom.dueloOnlineListaSelect ? dom.dueloOnlineListaSelect.value : dueloEstado.config.listaId;
-    const apunte = (listaId === "pdf_global" || !listaId || listaId === "default_estudio")
-        ? (apuntesEstado.global || apuntesEstado.bomba || apuntesEstado.bolillero)
-        : (apuntesEstado.global || apuntesEstado.bomba);
-
-    const lista = estado.listas.find(l => l.id === listaId);
-
-    // Estado visual de carga en el botón del Host
-    if (dom.dueloLaunchOnlineMatchBtn) {
-        dom.dueloLaunchOnlineMatchBtn.disabled = true;
-        dom.dueloLaunchOnlineMatchBtn.innerHTML = "⏳ Generando preguntas con IA...";
-    }
-
-    let tema = null;
-    let listaNombre = "Materia de Estudio";
-
-    // 1. Si hay un PDF activo cargado:
-    if (apunte && apunte.texto) {
-        listaNombre = apunte.nombre;
-        const nombreLimpio = apunte.nombre.replace(/\.pdf$/i, '');
-        try {
-            mostrarToast(`⚡ Formulando preguntas de Bomba desde "${apunte.nombre}" con IA...`);
-            const data = await generarPreguntaIA({
-                materia: nombreLimpio,
-                tema: nombreLimpio,
-                tipoJuego: 'bomba',
-                contextoPDF: apunte.texto
-            });
-            if (data && data.fase1 && data.fase2 && data.fase3) {
-                tema = {
-                    id: "bomba_pdf_" + Date.now(),
-                    nombre: nombreLimpio,
-                    descripcion: `Desafío basado en el material: ${apunte.nombre}`,
-                    bomba: {
-                        fase1: data.fase1,
-                        fase2: data.fase2,
-                        fase3: data.fase3
-                    }
-                };
-            }
-        } catch (err) {
-            console.warn("Fallo consulta Gemini para Bomba Online, usando extractor inteligente de PDF:", err);
-            mostrarToast("⚠️ Conexión con Gemini sin respuesta directa: formulando preguntas directamente desde el texto de tu PDF");
-        }
-
-        // Si Gemini no respondió o no hay API key, extraer directamente del texto del PDF
-        if (!tema) {
-            tema = generarDesafioBombaDesdeTextoPDF(apunte.texto, apunte.nombre);
-        }
-    } else if (lista && lista.temas && lista.temas.length > 0) {
-        // 2. Si se eligió una lista de temas personalizada:
-        listaNombre = lista.titulo || lista.nombre;
-        const randIdx = Math.floor(Math.random() * lista.temas.length);
-        const temaSeleccionado = lista.temas[randIdx];
-        try {
-            const data = await generarPreguntaIA({
-                materia: listaNombre,
-                tema: temaSeleccionado.palabra || temaSeleccionado.nombre,
-                tipoJuego: 'bomba'
-            });
-            if (data && data.fase1 && data.fase2 && data.fase3) {
-                tema = {
-                    ...temaSeleccionado,
-                    bomba: {
-                        fase1: data.fase1,
-                        fase2: data.fase2,
-                        fase3: data.fase3
-                    }
-                };
-            }
-        } catch (err) {
-            console.warn("Gemini offline para lista temática, usando datos del tema:", err);
-        }
-        if (!tema) {
-            tema = asegurarDatosJuegoTema(temaSeleccionado, randIdx);
-        }
-    }
-
-    if (!tema) {
-        tema = asegurarDatosJuegoTema({ id: "t1", nombre: "Fundamentos y Principios Clave", descripcion: "Bases teóricas y postulados esenciales." }, 0);
-    }
-
-    const formatoModo = onlineDueloEstado.formatoModo || "versus";
-    const tiempo = formatoModo === "coop" ? 120 : 90;
-    const timestampFin = Date.now() + (tiempo * 1000);
-
-    const payload = {
-        tipo: "INICIO_BOMBA_ONLINE",
-        jugadores: onlineDueloEstado.jugadores,
-        formatoModo,
-        tema,
-        tiempo,
-        timestampFin,
-        codigoSala: onlineDueloEstado.codigoSala,
-        listaNombre: listaNombre
-    };
-
-    publicarMensajeSala(payload);
-    arrancarBombaOnlineCliente(payload);
-}
 
 function arrancarBombaOnlineCliente(data) {
     juegosEduEstado.esOnline = true;
@@ -9299,7 +6764,7 @@ function renderBombaOnlineTracker() {
     const grid = document.getElementById("bombaRivalsGrid");
     if (!grid || !juegosEduEstado.bombaOnline) return;
 
-    grid.innerHTML = "";
+    setHTML(grid, "");
     juegosEduEstado.bombaOnline.jugadores.forEach(j => {
         const esTu = j.id === perfilUsuario.id;
         const chip = document.createElement("div");
@@ -9323,7 +6788,7 @@ function renderBombaOnlineTracker() {
 
         const safeAvatar = escapeHtml(j.avatar || '👤');
         const safeApodo = escapeHtml(j.apodo || 'Jugador');
-        chip.innerHTML = `
+        setHTML(chip, `
             <div class="bomba-rival-top">
                 <span class="bomba-rival-avatar">${safeAvatar}</span>
                 <span class="bomba-rival-name" title="${safeApodo}">${safeApodo} ${esTu ? '(Tú)' : ''}</span>
@@ -9334,7 +6799,7 @@ function renderBombaOnlineTracker() {
                 <div class="bomba-rival-seg ${j.fase > 2 || j.desactivada ? 'done' : j.fase === 2 ? 'active' : ''}"></div>
                 <div class="bomba-rival-seg ${j.desactivada ? 'done' : j.fase === 3 ? 'active' : ''}"></div>
             </div>
-        `;
+        `);
         grid.appendChild(chip);
     });
 }
@@ -9523,7 +6988,7 @@ function transicionarAVotacionDuelo(jugadorId) {
     // Resetear estados y chips de votación
     onlineDueloEstado.votoEmitido = false;
     onlineDueloEstado.votosRecibidos = {};
-    if (dom.dueloLiveVoteChips) dom.dueloLiveVoteChips.innerHTML = "";
+    if (dom.dueloLiveVoteChips) setHTML(dom.dueloLiveVoteChips, "");
     if (dom.dueloVoteResultSummary) dom.dueloVoteResultSummary.classList.add("hidden");
     if (dom.dueloHostNextSpinArea) dom.dueloHostNextSpinArea.classList.add("hidden");
 
@@ -9666,7 +7131,7 @@ function procesarVotoOnlineRecibido(votanteId, votanteNombre, voto) {
             dom.dueloLiveVoteChips.appendChild(chip);
         }
         const emojiVoto = voto === 10 ? "🟢 +10 pts (Impecable)" : voto === 5 ? "🟡 +5 pts (Con ayuda)" : "🔴 0 pts (A repasar)";
-        chip.innerHTML = `<strong>${escapeHtml(votanteNombre)}:</strong> ${emojiVoto}`;
+        setHTML(chip, `<strong>${escapeHtml(votanteNombre)}:</strong> ${emojiVoto}`);
     }
 
     // Si es el host, verificar si todos los votantes esperados ya votaron
@@ -9709,7 +7174,6 @@ function computarResultadoVotacionOnline() {
     };
 
     publicarMensajeSala(payload);
-    aplicarResultadoVotacionOnline(payload);
 }
 
 function aplicarResultadoVotacionOnline(data) {
@@ -9831,13 +7295,13 @@ function recibirMensajeChatEnVivo(msg) {
         `;
     }
 
-    msgDiv.innerHTML = `
+    setHTML(msgDiv, `
         <div class="duelo-chat-msg-header">
             <span>${safeSender}</span>
             <span>• ${escapeHtml(horaStr)}</span>
         </div>
         ${contenidoHtml}
-    `;
+    `);
 
     if (safePhoto) {
         const imgEl = msgDiv.querySelector(".duelo-chat-img");
@@ -9945,7 +7409,7 @@ console.log("Modules syntax OK!");
    ========================================================== */
 function cargarPreferenciasDuelo() {
     try {
-        const guardado = localStorage.getItem(DUELO_PREFS_KEY);
+        const guardado = studyStorage.getItem(DUELO_PREFS_KEY);
         if (guardado) {
             const prefs = JSON.parse(guardado);
             if (Array.isArray(prefs.jugadores) && prefs.jugadores.length > 0) {
@@ -9966,7 +7430,7 @@ function cargarPreferenciasDuelo() {
 
 function guardarPreferenciasDuelo() {
     try {
-        localStorage.setItem(DUELO_PREFS_KEY, JSON.stringify(dueloEstado.config));
+        studyStorage.setItem(DUELO_PREFS_KEY, JSON.stringify(dueloEstado.config));
     } catch {}
 }
 
@@ -10006,7 +7470,7 @@ function actualizarDropdownListasDuelo() {
 
     selects.forEach(selectElem => {
         if (!selectElem) return;
-        selectElem.innerHTML = "";
+        setHTML(selectElem, "");
 
         // Si hay un PDF activo cargado, agregarlo como primera opción destacada
         if (apunte && apunte.nombre) {
@@ -10129,7 +7593,7 @@ async function procesarYVincularPdfGlobal(fileOrFiles) {
 
 function renderDueloPlayersChips() {
     if (!dom.dueloPlayersChips) return;
-    dom.dueloPlayersChips.innerHTML = "";
+    setHTML(dom.dueloPlayersChips, "");
 
     const avatars = ["🧑‍🎓", "👩‍🎓", "🧙‍♂️", "👩‍🔬", "🦁", "⚡", "🦊", "🚀", "🎯", "👑"];
 
@@ -10138,11 +7602,11 @@ function renderDueloPlayersChips() {
         chip.className = "duelo-player-chip";
         const avatar = avatars[idx % avatars.length];
 
-        chip.innerHTML = `
+        setHTML(chip, `
             <span class="duelo-player-chip__avatar" aria-hidden="true">${avatar}</span>
             <span>${nombre}</span>
             <button class="duelo-player-chip__delete" type="button" data-idx="${idx}" title="Eliminar a ${nombre}">✕</button>
-        `;
+        `);
         dom.dueloPlayersChips.appendChild(chip);
     });
 
@@ -10291,7 +7755,7 @@ function iniciarDueloPartida() {
     }
 
     if (dom.dueloTurnLog) {
-        dom.dueloTurnLog.innerHTML = `<li class="duelo-turn-log-item">¡Comienza el duelo de ${lista.nombre}! Buena suerte a todos.</li>`;
+        setHTML(dom.dueloTurnLog, `<li class="duelo-turn-log-item">¡Comienza el duelo de ${lista.nombre}! Buena suerte a todos.</li>`);
     }
 
     reproducirSonidoDuelo("fanfare");
@@ -10404,7 +7868,7 @@ function prepararTurnoActivoDuelo(jugador, tema, emitirRed = true) {
     if (dom.dueloTurnPlayerName) dom.dueloTurnPlayerName.textContent = jugador.apodo || jugador.nombre || "Jugador";
     const rawTopicTitle = (tema && (tema.titulo || tema.palabra || tema.nombre)) ? (tema.titulo || tema.palabra || tema.nombre) : "Tema Asignado";
     if (dom.dueloActiveTopicTitle) {
-        dom.dueloActiveTopicTitle.innerHTML = typeof renderizarFormulasLaTeX === "function" ? renderizarFormulasLaTeX(rawTopicTitle) : rawTopicTitle;
+        setHTML(dom.dueloActiveTopicTitle, typeof renderizarFormulasLaTeX === "function" ? renderizarFormulasLaTeX(rawTopicTitle) : rawTopicTitle);
     }
 
     // Descripción / Guía del Eje Temático
@@ -10412,7 +7876,7 @@ function prepararTurnoActivoDuelo(jugador, tema, emitirRed = true) {
         const rawTopicDesc = (tema && (tema.guia || tema.explicacion))
             ? (tema.guia || tema.explicacion)
             : "Desarrollá los conceptos principales, aplicaciones y relaciones de este tema oralmente.";
-        dom.dueloActiveTopicDesc.innerHTML = typeof renderizarFormulasLaTeX === "function" ? renderizarFormulasLaTeX(rawTopicDesc) : rawTopicDesc;
+        setHTML(dom.dueloActiveTopicDesc, typeof renderizarFormulasLaTeX === "function" ? renderizarFormulasLaTeX(rawTopicDesc) : rawTopicDesc);
     }
 
     // Badge de Fase: Exposición Oral en Vivo
@@ -10429,12 +7893,12 @@ function prepararTurnoActivoDuelo(jugador, tema, emitirRed = true) {
         if (soyOrador) {
             dom.dueloTurnRoleNotice.className = "duelo-turn-role-notice is-speaker";
             if (dom.dueloRoleNoticeIcon) dom.dueloRoleNoticeIcon.textContent = "🎙️";
-            if (dom.dueloRoleNoticeText) dom.dueloRoleNoticeText.innerHTML = "<strong>¡Es tu turno de exponer!</strong> Tenés el micrófono: explicá el tema a tus compañeros hasta terminar el tiempo o pulsar terminar.";
+            if (dom.dueloRoleNoticeText) setHTML(dom.dueloRoleNoticeText, "<strong>¡Es tu turno de exponer!</strong> Tenés el micrófono: explicá el tema a tus compañeros hasta terminar el tiempo o pulsar terminar.");
         } else {
             dom.dueloTurnRoleNotice.className = "duelo-turn-role-notice is-listener";
             if (dom.dueloRoleNoticeIcon) dom.dueloRoleNoticeIcon.textContent = "👂";
             const nomOrador = jugador.apodo || jugador.nombre || "Jugador";
-            if (dom.dueloRoleNoticeText) dom.dueloRoleNoticeText.innerHTML = `<strong>Escuchando a ${nomOrador}...</strong> Prestá atención para calificar su exposición cuando termine o intentar robar si pasa.`;
+            if (dom.dueloRoleNoticeText) setHTML(dom.dueloRoleNoticeText, `<strong>Escuchando a ${nomOrador}...</strong> Prestá atención para calificar su exposición cuando termine o intentar robar si pasa.`);
         }
     }
 
@@ -10453,7 +7917,7 @@ function prepararTurnoActivoDuelo(jugador, tema, emitirRed = true) {
     if (dom.dueloLocalEvalSection) dom.dueloLocalEvalSection.classList.add("hidden");
     if (dom.dueloVoteResultSummary) dom.dueloVoteResultSummary.classList.add("hidden");
     if (dom.dueloHostNextSpinArea) dom.dueloHostNextSpinArea.classList.add("hidden");
-    if (dom.dueloLiveVoteChips) dom.dueloLiveVoteChips.innerHTML = "";
+    if (dom.dueloLiveVoteChips) setHTML(dom.dueloLiveVoteChips, "");
 
     // Racha de Fuego
     const tieneRacha = dueloEstado.config.reglas.rachaFuego && jugador.rachaActual >= 2;
@@ -10672,9 +8136,6 @@ function detenerCronometroRed() {
     if (dom.dueloTimerToggleBtn) dom.dueloTimerToggleBtn.textContent = "▶";
 }
 
-function iniciarCronometroTurnoDuelo() {
-    iniciarCronometroRed(dueloEstado.config.tiempoTurnoSegundos, false);
-}
 
 function pausarCronometroTurnoDuelo() {
     if (!dueloTimerEstado.activo) return;
@@ -10757,14 +8218,14 @@ function usarComodinSocorro() {
     animarActivacionComodinCard(dom.dueloBtnSocorro);
 
     if (!dom.dueloSocorroOptions || !dom.dueloSocorroModal) return;
-    dom.dueloSocorroOptions.innerHTML = "";
+    setHTML(dom.dueloSocorroOptions, "");
 
     const companeros = partida.jugadores.filter(j => j.id !== jugador.id);
     companeros.forEach(comp => {
         const btn = document.createElement("button");
         btn.className = "duelo-socorro-player-btn";
         btn.type = "button";
-        btn.innerHTML = `<span>${comp.avatar}</span> <strong>${comp.nombre}</strong> <small>(${comp.puntos} pts)</small>`;
+        setHTML(btn, `<span>${comp.avatar}</span> <strong>${comp.nombre}</strong> <small>(${comp.puntos} pts)</small>`);
         btn.onclick = () => seleccionarCompaneroSocorro(comp.id);
         dom.dueloSocorroOptions.appendChild(btn);
     });
@@ -10973,7 +8434,7 @@ function iniciarRoboRelampago(otrosJugadores) {
     dom.dueloRoboBox.classList.remove("hidden");
     if (dom.dueloThiefActiveArea) dom.dueloThiefActiveArea.classList.add("hidden");
     dom.dueloBuzzerContainer.classList.remove("hidden");
-    dom.dueloBuzzerContainer.innerHTML = "";
+    setHTML(dom.dueloBuzzerContainer, "");
 
     otrosJugadores.forEach(j => {
         const btn = document.createElement("button");
@@ -11138,10 +8599,10 @@ function mostrarFinDeRondaUI(rondaTerminada, siguienteRonda) {
     if (dom.dueloFinRondaNextBtn) {
         if (onlineDueloEstado.modo === "online" && !onlineDueloEstado.esHost) {
             dom.dueloFinRondaNextBtn.disabled = true;
-            dom.dueloFinRondaNextBtn.innerHTML = `<span>⏳</span><span>Esperando que el anfitrión comience la Ronda ${siguienteRonda}...</span>`;
+            setHTML(dom.dueloFinRondaNextBtn, `<span>⏳</span><span>Esperando que el anfitrión comience la Ronda ${siguienteRonda}...</span>`);
         } else {
             dom.dueloFinRondaNextBtn.disabled = false;
-            dom.dueloFinRondaNextBtn.innerHTML = `<span>🎰</span><span>Comenzar Ronda ${siguienteRonda} (Girar Bolillero)</span>`;
+            setHTML(dom.dueloFinRondaNextBtn, `<span>🎰</span><span>Comenzar Ronda ${siguienteRonda} (Girar Bolillero)</span>`);
         }
     }
 }
@@ -11193,14 +8654,14 @@ function avanzarSiguienteTemaDuelo() {
         if (onlineDueloEstado.modo === "online") {
             if (onlineDueloEstado.esHost) {
                 dom.dueloSpinBtn.disabled = false;
-                dom.dueloSpinBtn.innerHTML = '<span>🎲</span><span>GIRAR DOBLE RULETA</span>';
+                setHTML(dom.dueloSpinBtn, '<span>🎲</span><span>GIRAR DOBLE RULETA</span>');
             } else {
                 dom.dueloSpinBtn.disabled = true;
-                dom.dueloSpinBtn.innerHTML = '<span>⏳</span><span>Esperando que el anfitrión gire la ruleta...</span>';
+                setHTML(dom.dueloSpinBtn, '<span>⏳</span><span>Esperando que el anfitrión gire la ruleta...</span>');
             }
         } else {
             dom.dueloSpinBtn.disabled = false;
-            dom.dueloSpinBtn.innerHTML = '<span>🎲</span><span>GIRAR DOBLE RULETA</span>';
+            setHTML(dom.dueloSpinBtn, '<span>🎲</span><span>GIRAR DOBLE RULETA</span>');
         }
     }
 }
@@ -11274,7 +8735,7 @@ function actualizarMarcadorDueloUI() {
     const partida = dueloEstado.partida;
     if (!partida.activa || !dom.dueloScoreboardList) return;
 
-    dom.dueloScoreboardList.innerHTML = "";
+    setHTML(dom.dueloScoreboardList, "");
 
     // Sincronizar banner cooperativo si corresponde
     if (dom.dueloCoopBanner) {
@@ -11306,14 +8767,14 @@ function actualizarMarcadorDueloUI() {
         ranking.forEach((j) => {
             const item = document.createElement("div");
             item.className = "duelo-scoreboard-item";
-            item.innerHTML = `
+            setHTML(item, `
                 <div class="duelo-score-info">
                     <span class="duelo-score-rank">🤝</span>
                     <span>${j.avatar || "👤"}</span>
                     <span class="duelo-score-name">${j.nombre || j.apodo}</span>
                 </div>
                 <span class="duelo-score-points" style="color: #6ee7b7;">+${j.puntosAportados || 0} pts</span>
-            `;
+            `);
             dom.dueloScoreboardList.appendChild(item);
         });
     } else {
@@ -11327,7 +8788,7 @@ function actualizarMarcadorDueloUI() {
             const medallas = ["🥇", "🥈", "🥉"];
             const rankStr = medallas[i] || `${i + 1}°`;
 
-            item.innerHTML = `
+            setHTML(item, `
                 <div class="duelo-score-info">
                     <span class="duelo-score-rank">${rankStr}</span>
                     <span>${j.avatar || "👤"}</span>
@@ -11335,7 +8796,7 @@ function actualizarMarcadorDueloUI() {
                     ${j.rachaActual >= 2 ? '<span title="Racha de fuego">🔥</span>' : ""}
                 </div>
                 <span class="duelo-score-points">${j.puntos} pts</span>
-            `;
+            `);
             dom.dueloScoreboardList.appendChild(item);
         });
     }
@@ -11359,7 +8820,7 @@ function agregarRegistroTurnoDuelo(mensaje, pts) {
     if (!dom.dueloTurnLog) return;
     const li = document.createElement("li");
     li.className = "duelo-turn-log-item";
-    li.innerHTML = `<span>${mensaje}</span> <strong style="color: ${pts > 0 ? "var(--color-success)" : "var(--color-text-muted)"}">${pts > 0 ? "+" + pts : "0"}</strong>`;
+    setHTML(li, `<span>${mensaje}</span> <strong style="color: ${pts > 0 ? "var(--color-success)" : "var(--color-text-muted)"}">${pts > 0 ? "+" + pts : "0"}</strong>`);
 
     const empty = dom.dueloTurnLog.querySelector(".duelo-log-empty");
     if (empty) empty.remove();
@@ -11459,7 +8920,7 @@ function mostrarModalVictoriaDuelo(partida) {
     }
 
     if (dom.dueloPodioContainer) {
-        dom.dueloPodioContainer.innerHTML = "";
+        setHTML(dom.dueloPodioContainer, "");
         const pos = partida.posiciones;
 
         // Estructura podio: 2° a la izquierda, 1° al medio, 3° a la derecha
@@ -11472,28 +8933,28 @@ function mostrarModalVictoriaDuelo(partida) {
             if (!j) return;
             const step = document.createElement("div");
             step.className = `podio-step ${clases[idx]}`;
-            step.innerHTML = `
+            setHTML(step, `
                 <span class="podio-avatar">${medallas[idx]}</span>
                 <span class="podio-name">${j.nombre}</span>
                 <span class="podio-points">${j.puntos} pts</span>
                 <div class="podio-box">${alturas[idx]}</div>
-            `;
+            `);
             dom.dueloPodioContainer.appendChild(step);
         });
     }
 
     if (dom.dueloSpecialMentions) {
-        dom.dueloSpecialMentions.innerHTML = "";
+        setHTML(dom.dueloSpecialMentions, "");
         if (partida.reyRacha && partida.reyRacha.racha > 1) {
             const chip = document.createElement("span");
             chip.className = "duelo-mention-chip";
-            chip.innerHTML = `🔥 <strong>Rey de la Racha:</strong> ${partida.reyRacha.nombre} (${partida.reyRacha.racha} seguidas)`;
+            setHTML(chip, `🔥 <strong>Rey de la Racha:</strong> ${partida.reyRacha.nombre} (${partida.reyRacha.racha} seguidas)`);
             dom.dueloSpecialMentions.appendChild(chip);
         }
         if (partida.ladronRelampago && partida.ladronRelampago.robos > 0) {
             const chip = document.createElement("span");
             chip.className = "duelo-mention-chip";
-            chip.innerHTML = `⚡ <strong>Ladrón Relámpago:</strong> ${partida.ladronRelampago.nombre} (${partida.ladronRelampago.robos} robos)`;
+            setHTML(chip, `⚡ <strong>Ladrón Relámpago:</strong> ${partida.ladronRelampago.nombre} (${partida.ladronRelampago.robos} robos)`);
             dom.dueloSpecialMentions.appendChild(chip);
         }
     }
@@ -11532,12 +8993,7 @@ function mostrarModalVictoriaDuelo(partida) {
             perfilUsuario.totalRobos = (perfilUsuario.totalRobos || 0) + (miPos.robosExitosos || 0);
             guardarPerfilUsuario();
 
-            const cuentas = obtenerCuentasGuardadas();
-            const idx = cuentas.findIndex(c => c.id === perfilUsuario.id);
-            if (idx !== -1) {
-                cuentas[idx] = { ...cuentas[idx], ...perfilUsuario };
-                guardarCuentas(cuentas);
-            }
+
         }
     }
 
@@ -11590,14 +9046,14 @@ function mostrarPodioOnline(partida) {
 
     // 1. Escenario 3D del Podio
     if (dom.podio3DStage) {
-        dom.podio3DStage.innerHTML = "";
+        setHTML(dom.podio3DStage, "");
 
         if (esCoop) {
             const victoria = partida.coopResultado ? partida.coopResultado.victoria : true;
             const pts = partida.coopResultado ? partida.coopResultado.puntos : (partida.ganador ? partida.ganador.puntos : 0);
             const card = document.createElement("div");
             card.className = `podio-coop-card ${victoria ? "is-victory" : "is-defeat"}`;
-            card.innerHTML = `
+            setHTML(card, `
                 <div class="podio-coop-banner-icon">${victoria ? "🏆" : "📚"}</div>
                 <h2 class="podio-coop-title">${victoria ? "¡EQUIPO TRIUNFADOR!" : "MESA DE REPASO FINALIZADA"}</h2>
                 <p class="podio-coop-desc">${partida.coopResultado && partida.coopResultado.motivo ? partida.coopResultado.motivo : "Evaluación colaborativa completada."}</p>
@@ -11605,7 +9061,7 @@ function mostrarPodioOnline(partida) {
                     <span>Puntos acumulados:</span>
                     <strong>${pts} pts</strong>
                 </div>
-            `;
+            `);
             dom.podio3DStage.appendChild(card);
         } else {
             const pos = partida.posiciones || [];
@@ -11614,7 +9070,7 @@ function mostrarPodioOnline(partida) {
                 const j = pos[0];
                 const step = document.createElement("div");
                 step.className = "podio-online-step podio-online-step--1";
-                step.innerHTML = `
+                setHTML(step, `
                     <div class="podio-step-avatar-wrap">
                         <span class="podio-step-crown-mini">👑</span>
                         <div class="podio-step-avatar">${j.avatar || "👑"}</div>
@@ -11622,7 +9078,7 @@ function mostrarPodioOnline(partida) {
                     <div class="podio-step-name" title="${j.nombre}">${j.nombre}</div>
                     <div class="podio-step-points">${j.puntos || 0} pts</div>
                     <div class="podio-step-pillar">1</div>
-                `;
+                `);
                 dom.podio3DStage.appendChild(step);
             } else {
                 // 2 o más jugadores: 2° a la izquierda, 1° al centro, 3° a la derecha
@@ -11635,7 +9091,7 @@ function mostrarPodioOnline(partida) {
                     if (!j) return;
                     const step = document.createElement("div");
                     step.className = `podio-online-step ${clases[idx]}`;
-                    step.innerHTML = `
+                    setHTML(step, `
                         <div class="podio-step-avatar-wrap">
                             ${coronas[idx] ? `<span class="podio-step-crown-mini">${coronas[idx]}</span>` : ""}
                             <div class="podio-step-avatar">${j.avatar || (indices[idx] === 1 ? "👑" : "👤")}</div>
@@ -11643,7 +9099,7 @@ function mostrarPodioOnline(partida) {
                         <div class="podio-step-name" title="${j.nombre}">${j.nombre}</div>
                         <div class="podio-step-points">${j.puntos || 0} pts</div>
                         <div class="podio-step-pillar">${indices[idx]}</div>
-                    `;
+                    `);
                     dom.podio3DStage.appendChild(step);
                 });
             }
@@ -11652,19 +9108,19 @@ function mostrarPodioOnline(partida) {
 
     // 2. Menciones de Honor
     if (dom.podioHonorsSection) {
-        dom.podioHonorsSection.innerHTML = "";
+        setHTML(dom.podioHonorsSection, "");
 
         if (partida.reyRacha && partida.reyRacha.racha > 1) {
             const chip = document.createElement("div");
             chip.className = "podio-honor-chip";
-            chip.innerHTML = `🔥 <span><strong>Rey de la Racha:</strong> ${partida.reyRacha.nombre} (${partida.reyRacha.racha} seguidas)</span>`;
+            setHTML(chip, `🔥 <span><strong>Rey de la Racha:</strong> ${partida.reyRacha.nombre} (${partida.reyRacha.racha} seguidas)</span>`);
             dom.podioHonorsSection.appendChild(chip);
         }
 
         if (partida.ladronRelampago && partida.ladronRelampago.robos > 0) {
             const chip = document.createElement("div");
             chip.className = "podio-honor-chip";
-            chip.innerHTML = `⚡ <span><strong>Ladrón Relámpago:</strong> ${partida.ladronRelampago.nombre} (${partida.ladronRelampago.robos} robos)</span>`;
+            setHTML(chip, `⚡ <span><strong>Ladrón Relámpago:</strong> ${partida.ladronRelampago.nombre} (${partida.ladronRelampago.robos} robos)</span>`);
             dom.podioHonorsSection.appendChild(chip);
         }
 
@@ -11674,7 +9130,7 @@ function mostrarPodioOnline(partida) {
             if (mejorEfectividad && parseInt(mejorEfectividad.efectividad || 0) >= 80) {
                 const chip = document.createElement("div");
                 chip.className = "podio-honor-chip";
-                chip.innerHTML = `🎯 <span><strong>Precisión Quirúrgica:</strong> ${mejorEfectividad.nombre} (${mejorEfectividad.efectividad})</span>`;
+                setHTML(chip, `🎯 <span><strong>Precisión Quirúrgica:</strong> ${mejorEfectividad.nombre} (${mejorEfectividad.efectividad})</span>`);
                 dom.podioHonorsSection.appendChild(chip);
             }
         }
@@ -11682,7 +9138,7 @@ function mostrarPodioOnline(partida) {
 
     // 3. Tabla Detallada de Jugadores
     if (dom.podioStatsTableBody) {
-        dom.podioStatsTableBody.innerHTML = "";
+        setHTML(dom.podioStatsTableBody, "");
         const pos = partida.posiciones || [];
         if (dom.podioPlayersCountBadge) dom.podioPlayersCountBadge.textContent = `${pos.length} jugador${pos.length === 1 ? "" : "es"}`;
 
@@ -11695,7 +9151,7 @@ function mostrarPodioOnline(partida) {
             const medallas = ["🥇", "🥈", "🥉"];
             const rankIcon = medallas[i] || `${i + 1}°`;
 
-            tr.innerHTML = `
+            setHTML(tr, `
                 <td>
                     <span class="podio-rank-badge ${rankClass}">${rankIcon}</span>
                 </td>
@@ -11710,7 +9166,7 @@ function mostrarPodioOnline(partida) {
                 <td><span style="color: #6ee7b7; font-weight: 700;">${j.efectividad || "—"}</span></td>
                 <td><span style="color: var(--color-text-muted);">${j.tiempo || "—"}</span></td>
                 <td><span style="font-size: 0.82rem; color: var(--color-text-secondary);">${j.detalles || "—"}</span></td>
-            `;
+            `);
             dom.podioStatsTableBody.appendChild(tr);
         });
     }
@@ -11996,7 +9452,7 @@ function mostrarPodioDesdeMemotest(pts, exito = true) {
    ========================================================== */
 function cargarHistorialDuelo() {
     try {
-        const data = localStorage.getItem(DUELO_STORAGE_KEY);
+        const data = studyStorage.getItem(DUELO_STORAGE_KEY);
         return data ? JSON.parse(data) : [];
     } catch {
         return [];
@@ -12005,7 +9461,7 @@ function cargarHistorialDuelo() {
 
 function guardarHistorialDuelo(historial) {
     try {
-        localStorage.setItem(DUELO_STORAGE_KEY, JSON.stringify(historial));
+        studyStorage.setItem(DUELO_STORAGE_KEY, JSON.stringify(historial));
     } catch {}
 }
 
@@ -12067,9 +9523,9 @@ function renderSalonDeLaFama() {
 
     // Renderizar cuerpo de la tabla
     if (dom.famaLeaderboardBody) {
-        dom.famaLeaderboardBody.innerHTML = "";
+        setHTML(dom.famaLeaderboardBody, "");
         if (rankingCampeones.length === 0) {
-            dom.famaLeaderboardBody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding: 2rem; color: var(--color-text-muted);">Aún no se han disputado duelos. ¡Iniciá uno para estrenar el medallero!</td></tr>`;
+            setHTML(dom.famaLeaderboardBody, `<tr><td colspan="8" style="text-align:center; padding: 2rem; color: var(--color-text-muted);">Aún no se han disputado duelos. ¡Iniciá uno para estrenar el medallero!</td></tr>`);
         } else {
             rankingCampeones.forEach((c, idx) => {
                 const tr = document.createElement("tr");
@@ -12086,7 +9542,7 @@ function renderSalonDeLaFama() {
                     ? `<span class="fama-table-avatar"><img src="${c.fotoDataUrl}" alt="${c.nombre}"></span>` 
                     : `<span class="fama-table-avatar">${c.avatar || "👤"}</span>`;
 
-                tr.innerHTML = `
+                setHTML(tr, `
                     <td class="fama-col-rank">${rankBadgeHtml}</td>
                     <td class="fama-col-player">
                         <div class="fama-player-cell">
@@ -12100,7 +9556,7 @@ function renderSalonDeLaFama() {
                     <td><span class="fama-stat-score">${c.puntosTotales}</span></td>
                     <td><span class="fama-streak-pill">${c.maxRachaHistorica > 1 ? `<span class="streak-mini-flame">🔥</span> ${c.maxRachaHistorica}` : (c.maxRachaHistorica || 0)}</span></td>
                     <td>${c.totalRobos > 0 ? c.totalRobos + " ⚡" : c.totalRobos}</td>
-                `;
+                `);
                 dom.famaLeaderboardBody.appendChild(tr);
             });
         }
@@ -12108,9 +9564,9 @@ function renderSalonDeLaFama() {
 
     // Renderizar tarjetas de partidas con efecto neón y corona
     if (dom.famaMatchesGrid) {
-        dom.famaMatchesGrid.innerHTML = "";
+        setHTML(dom.famaMatchesGrid, "");
         if (historial.length === 0) {
-            dom.famaMatchesGrid.innerHTML = `<div class="panel" style="text-align: center; padding: 3rem; color: var(--color-text-muted);">No hay historial de partidas guardado.</div>`;
+            setHTML(dom.famaMatchesGrid, `<div class="panel" style="text-align: center; padding: 3rem; color: var(--color-text-muted);">No hay historial de partidas guardado.</div>`);
             return;
         }
 
@@ -12147,7 +9603,7 @@ function renderSalonDeLaFama() {
                 `;
             });
 
-            card.innerHTML = `
+            setHTML(card, `
                 <div class="fama-match-header">
                     <div class="fama-winner-spotlight">
                         <span class="fama-crown-icon" aria-hidden="true">👑</span>
@@ -12184,7 +9640,7 @@ function renderSalonDeLaFama() {
                         🗑️ Eliminar
                     </button>
                 </div>
-            `;
+            `);
 
             dom.famaMatchesGrid.appendChild(card);
         });
@@ -12246,7 +9702,7 @@ function eliminarPartidaHistorial(partidaId) {
 }
 
 function borrarHistorialCompleto() {
-    localStorage.removeItem(DUELO_STORAGE_KEY);
+    studyStorage.removeItem(DUELO_STORAGE_KEY);
     renderSalonDeLaFama();
     mostrarToast("🗑️ Historial del Salón de la Fama reiniciado con éxito.", "info");
 }
@@ -12351,16 +9807,16 @@ function reproducirSonido(tipo) {
 }
 window.reproducirSonido = reproducirSonido;
 
-function enviarMensajeMQTT(data) {
+function enviarMensajeOnline(data) {
     try {
         if (typeof publicarMensajeSala === "function") {
             publicarMensajeSala(data);
         }
     } catch (e) {
-        console.warn("MQTT send warning:", e);
+        console.warn("Online send warning:", e);
     }
 }
-window.enviarMensajeMQTT = enviarMensajeMQTT;
+window.enviarMensajeOnline = enviarMensajeOnline;
 
 /* ==========================================================
    MÓDULO GOOGLE GEMINI API & APUNTES PDF CLIENT-SIDE
@@ -12432,277 +9888,25 @@ function sincronizarApuntesEstadoLegacy() {
 /* ==========================================================
    PERSISTENCIA ROBUSTA DE APUNTES CON INDEXEDDB (SIN LÍMITES)
    ========================================================== */
-const IDB_DB_NAME = "LuibanezStorage";
-const IDB_STORE_NAME = "apuntes";
 
-function abrirIndexedDB() {
-    return new Promise((resolve, reject) => {
-        if (!window.indexedDB) {
-            return reject(new Error("IndexedDB no soportado en este navegador"));
-        }
-        const req = window.indexedDB.open(IDB_DB_NAME, 1);
-        req.onupgradeneeded = (e) => {
-            const db = e.target.result;
-            if (!db.objectStoreNames.contains(IDB_STORE_NAME)) {
-                db.createObjectStore(IDB_STORE_NAME);
-            }
-        };
-        req.onsuccess = () => resolve(req.result);
-        req.onerror = () => reject(req.error);
-    });
-}
 
-async function guardarApunteEnIDB(clave, valor) {
-    try {
-        const db = await abrirIndexedDB();
-        return new Promise((resolve, reject) => {
-            const tx = db.transaction(IDB_STORE_NAME, "readwrite");
-            const store = tx.objectStore(IDB_STORE_NAME);
-            store.put(valor, clave);
-            tx.oncomplete = () => resolve(true);
-            tx.onerror = () => reject(tx.error);
-        });
-    } catch (err) {
-        console.warn("Error al guardar apunte en IndexedDB:", err);
-        return false;
-    }
-}
+async function guardarApunteEnIDB(clave, valor) { try { return await writeValue(clave, valor); } catch (error) { console.warn('No se pudo guardar el apunte:', error.message); return false; } }
 
-async function obtenerApunteDeIDB(clave) {
-    try {
-        const db = await abrirIndexedDB();
-        return new Promise((resolve, reject) => {
-            const tx = db.transaction(IDB_STORE_NAME, "readonly");
-            const store = tx.objectStore(IDB_STORE_NAME);
-            const req = store.get(clave);
-            req.onsuccess = () => resolve(req.result || null);
-            req.onerror = () => reject(tx.error);
-        });
-    } catch (err) {
-        console.warn("Error al leer apunte de IndexedDB:", err);
-        return null;
-    }
-}
+async function obtenerApunteDeIDB(clave) { try { return await readValue(clave); } catch (error) { console.warn('No se pudo leer el apunte:', error.message); return null; } }
 
 /* ==========================================================
    MÓDULO DE BASE DE DATOS EN LA NUBE SUPABASE (LOCAL-FIRST)
    ========================================================== */
-const SUPABASE_CONFIG = {
-    url: "https://xyaykxkytjnzykcjkopj.supabase.co",
-    publishableKey: "sb_publishable_R2Q2WhCk7zlwxnkT1iTtDA_8Wu5vjph"
-};
 
-let _supabaseClientInstance = null;
 
-function obtenerSupabaseClient() {
-    if (_supabaseClientInstance) return _supabaseClientInstance;
-    try {
-        if (typeof window !== "undefined" && window.supabase && typeof window.supabase.createClient === "function") {
-            _supabaseClientInstance = window.supabase.createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.publishableKey);
-            return _supabaseClientInstance;
-        }
-    } catch (e) {
-        console.warn("[Supabase] No se pudo inicializar cliente:", e);
-    }
-    return null;
-}
-
-function generarHashTexto(str) {
-    if (!str || typeof str !== "string") return "empty";
-    let hash = 5381;
-    for (let i = 0; i < str.length; i++) {
-        hash = ((hash << 5) + hash) + str.charCodeAt(i);
-        hash = hash & hash;
-    }
-    return "h_" + Math.abs(hash).toString(36);
-}
-
-const supabaseService = {
-    isAvailable() {
-        return !!obtenerSupabaseClient() && (typeof navigator === "undefined" || navigator.onLine !== false);
-    },
-
-    async sincronizarColeccionConNube(coleccion) {
-        const client = obtenerSupabaseClient();
-        if (!client || !Array.isArray(coleccion) || coleccion.length === 0) return;
-        try {
-            const filas = coleccion.map(doc => ({
-                id: String(doc.id),
-                nombre: doc.nombre || "Documento",
-                paginas: Number(doc.paginas) || 1,
-                palabras: Number(doc.palabras) || 0,
-                texto: doc.texto || "",
-                activo: doc.activo !== false,
-                user_id: (perfilUsuario && perfilUsuario.id) ? String(perfilUsuario.id) : "guest",
-                updated_at: new Date().toISOString()
-            }));
-
-            const { error } = await client.from("documentos_pdf").upsert(filas, { onConflict: "id" });
-            if (error) {
-                // Silencioso si la tabla no fue creada aún
-                if (error.code !== "42P01" && error.code !== "PGRST204" && error.code !== "PGRST200") {
-                    console.warn("[Supabase] Sincronización de documentos:", error.message);
-                }
-            } else {
-                console.log("[Supabase] Documentos sincronizados en la nube:", filas.length);
-            }
-        } catch (err) {
-            console.warn("[Supabase] Fallo no crítico al sincronizar documentos:", err);
-        }
-    },
-
-    async sincronizarColeccionDesdeNube() {
-        const client = obtenerSupabaseClient();
-        if (!client) return;
-        const miUserId = (perfilUsuario && perfilUsuario.id) ? String(perfilUsuario.id) : null;
-        // Si no hay cuenta autenticada o es invitado temporal, nunca descargar documentos privados de la nube
-        if (!miUserId || miUserId.startsWith("guest_") || perfilUsuario.esInvitado) return;
-        try {
-            const { data, error } = await client
-                .from("documentos_pdf")
-                .select("id, nombre, paginas, palabras, texto, activo, updated_at")
-                .eq("user_id", miUserId)
-                .order("created_at", { ascending: false })
-                .limit(50);
-
-            if (error || !Array.isArray(data)) return;
-
-            let huboCambios = false;
-            for (const row of data) {
-                if (!row || !row.id || !row.texto) continue;
-                const existe = apuntesColeccion.some(d => d.id === row.id || d.nombre === row.nombre);
-                if (!existe) {
-                    apuntesColeccion.push({
-                        id: row.id,
-                        nombre: row.nombre,
-                        paginas: row.paginas || 1,
-                        palabras: row.palabras || (row.texto ? row.texto.split(/\s+/).filter(Boolean).length : 0),
-                        texto: row.texto,
-                        icono: "☁️",
-                        tipoLabel: "Nube",
-                        metaDetalle: `${row.paginas || 1} pág(s) (Nube)`,
-                        activo: row.activo !== false,
-                        timestamp: Date.now()
-                    });
-                    huboCambios = true;
-                }
-            }
-
-            if (huboCambios) {
-                await guardarColeccionEnStorage();
-                actualizarUIIndicadoresPDF();
-                mostrarToast(`☁️ Se sincronizaron documentos desde tu nube de Supabase.`, "info");
-            }
-        } catch (err) {
-            console.warn("[Supabase] No se pudieron descargar documentos de la nube:", err);
-        }
-    },
-
-    async eliminarDocumento(docId) {
-        const client = obtenerSupabaseClient();
-        if (!client || !docId) return;
-        try {
-            await client.from("documentos_pdf").delete().eq("id", String(docId));
-        } catch (err) {
-            console.warn("[Supabase] No se pudo eliminar documento en nube:", err);
-        }
-    },
-
-    async eliminarTodosDocumentosUsuario(ids = []) {
-        const client = obtenerSupabaseClient();
-        if (!client) return;
-        try {
-            const miUserId = (perfilUsuario && perfilUsuario.id) ? String(perfilUsuario.id) : null;
-            if (miUserId && !miUserId.startsWith("guest_")) {
-                await client.from("documentos_pdf").delete().eq("user_id", miUserId);
-            }
-            if (Array.isArray(ids) && ids.length > 0) {
-                await client.from("documentos_pdf").delete().in("id", ids.map(String));
-            }
-        } catch (err) {
-            console.warn("[Supabase] No se pudieron limpiar documentos en nube:", err);
-        }
-    },
-
-    async guardarPerfil(perfil) {
-        const client = obtenerSupabaseClient();
-        if (!client || !perfil || !perfil.id) return;
-        // Solo registrar cuentas reales con nombre (ignorar visitantes temporales/invitados)
-        if (perfil.esInvitado || String(perfil.id).startsWith("guest_") || !perfil.apodo || perfil.apodo.trim().toLowerCase() === "invitado") {
-            return;
-        }
-        try {
-            const fila = {
-                id: String(perfil.id),
-                apodo: perfil.apodo || "Estudiante",
-                username: perfil.username || "",
-                carrera: perfil.carrera || "",
-                avatar: perfil.avatar || "🦁",
-                tipo_avatar: perfil.tipoAvatar || "emoji",
-                foto_data_url: perfil.fotoDataUrl || "",
-                victorias: perfil.victorias || 0,
-                partidas_jugadas: perfil.partidasJugadas || 0,
-                puntos_totales: perfil.puntosTotales || 0,
-                max_racha_historica: perfil.maxRachaHistorica || 0,
-                total_robos: perfil.totalRobos || 0,
-                updated_at: new Date().toISOString()
-            };
-            const { error } = await client.from("perfiles").upsert([fila], { onConflict: "id" });
-            if (error && error.code !== "42P01" && error.code !== "PGRST204" && error.code !== "PGRST200") {
-                console.warn("[Supabase] Guardar perfil:", error.message);
-            }
-        } catch (err) {
-            console.warn("[Supabase] No se pudo guardar perfil en nube:", err);
-        }
-    },
-
-    async obtenerPreguntaCache(hashContexto, tipoJuego, dificultad) {
-        const client = obtenerSupabaseClient();
-        if (!client || !hashContexto) return null;
-        try {
-            let query = client
-                .from("preguntas_cache")
-                .select("pregunta")
-                .eq("hash_contexto", hashContexto)
-                .eq("tipo_juego", tipoJuego);
-            if (dificultad) {
-                query = query.eq("dificultad", dificultad);
-            }
-            const { data, error } = await query.order("created_at", { ascending: false }).limit(5);
-
-            if (!error && Array.isArray(data) && data.length > 0) {
-                const pick = data[Math.floor(Math.random() * data.length)];
-                return pick.pregunta;
-            }
-        } catch (err) {
-            console.warn("[Supabase] Error al consultar caché de preguntas:", err);
-        }
-        return null;
-    },
-
-    async guardarPreguntaCache(hashContexto, tipoJuego, dificultad, pregunta) {
-        const client = obtenerSupabaseClient();
-        if (!client || !hashContexto || !pregunta) return;
-        try {
-            await client.from("preguntas_cache").insert([{
-                hash_contexto: hashContexto,
-                tipo_juego: tipoJuego,
-                dificultad: dificultad || "universitario",
-                pregunta: pregunta,
-                created_at: new Date().toISOString()
-            }]);
-        } catch (err) {
-            // Ignorar silenciosamente si no existe tabla aún
-        }
-    }
-};
+const supabaseService = createCloudService({ getCollection: () => apuntesColeccion, saveCollection: guardarColeccionEnStorage, refresh: actualizarUIIndicadoresPDF });
 
 window.supabaseService = supabaseService;
 
 // Cargar apuntes persistidos desde IndexedDB (o fallback localStorage)
 async function cargarApuntesGuardados() {
     try {
-        const limpiadoManual = localStorage.getItem("luibanez_apuntes_limpiados_manual") === "true";
+        const limpiadoManual = studyStorage.getItem("luibanez_apuntes_limpiados_manual") === "true";
         if (limpiadoManual) {
             apuntesColeccion.length = 0;
             sincronizarApuntesEstadoLegacy();
@@ -12712,15 +9916,15 @@ async function cargarApuntesGuardados() {
         }
 
         const idbColeccion = await obtenerApunteDeIDB("apuntesColeccion");
-        const yaMigrado = localStorage.getItem("luibanez_apuntes_migrado_v1") === "true";
+        const yaMigrado = studyStorage.getItem("luibanez_apuntes_migrado_v1") === "true";
 
         if (Array.isArray(idbColeccion)) {
             // Si la colección ya existe en IndexedDB (incluso si está vacía []), se respeta la decisión del usuario
             apuntesColeccion.length = 0;
             apuntesColeccion.push(...idbColeccion);
             // Asegurar que los depósitos obsoletos no contengan datos zombi
-            localStorage.setItem("luibanez_apuntes_migrado_v1", "true");
-            localStorage.removeItem(APUNTES_STORAGE_KEY);
+            studyStorage.setItem("luibanez_apuntes_migrado_v1", "true");
+            studyStorage.removeItem(APUNTES_STORAGE_KEY);
         } else if (!yaMigrado) {
             // Migración retroactiva una única vez si nunca se había creado la colección
             const idbData = await obtenerApunteDeIDB("apuntesEstado");
@@ -12739,7 +9943,7 @@ async function cargarApuntesGuardados() {
                     timestamp: Date.now()
                 });
             } else {
-                const guardado = localStorage.getItem(APUNTES_STORAGE_KEY);
+                const guardado = studyStorage.getItem(APUNTES_STORAGE_KEY);
                 if (guardado) {
                     try {
                         const data = JSON.parse(guardado);
@@ -12761,18 +9965,13 @@ async function cargarApuntesGuardados() {
                     } catch (e) {}
                 }
             }
-            localStorage.setItem("luibanez_apuntes_migrado_v1", "true");
-            localStorage.removeItem(APUNTES_STORAGE_KEY);
+            studyStorage.setItem("luibanez_apuntes_migrado_v1", "true");
+            studyStorage.removeItem(APUNTES_STORAGE_KEY);
             await guardarApunteEnIDB("apuntesEstado", null);
         }
 
-        // Purgar documentos ajenos de química que se descargaron por error de sincronización global en versiones previas
-        for (let i = apuntesColeccion.length - 1; i >= 0; i--) {
-            const d = apuntesColeccion[i];
-            if (d && d.nombre && (d.nombre.includes("SFI-2C") || d.nombre.includes("Hidratos de Carbono"))) {
-                apuntesColeccion.splice(i, 1);
-            }
-        }
+        if (!yaMigrado && currentUser() && apuntesColeccion.length) await supabaseService.sincronizarColeccionConNube(apuntesColeccion);
+        // Persistir la colección migrada sin eliminar material por su nombre.
         await guardarApunteEnIDB("apuntesColeccion", apuntesColeccion);
 
         sincronizarApuntesEstadoLegacy();
@@ -12785,82 +9984,19 @@ async function cargarApuntesGuardados() {
     }
 }
 
-async function sincronizarPerfilesPorDefectoEnSupabase() {
-    const client = obtenerSupabaseClient();
-    if (!client) return;
-    try {
-        // 1. Eliminar cuentas de prueba o corruptas de Supabase (las 2 que vio el usuario)
-        await client.from("perfiles").delete().in("id", ["acc_1790905602677_uyds", "acc_1791509383895_dbtl"]);
-        await client.from("perfiles").delete().eq("username", "asd");
-        await client.from("perfiles").delete().eq("apodo", "asd");
-
-        // 2. Garantizar las 2 cuentas oficiales por default en Supabase: Iván y Lucas
-        await client.from("perfiles").upsert([
-            {
-                id: CUENTA_PREDEFINIDA_IVAN.id,
-                apodo: CUENTA_PREDEFINIDA_IVAN.apodo,
-                username: CUENTA_PREDEFINIDA_IVAN.username,
-                carrera: CUENTA_PREDEFINIDA_IVAN.carrera,
-                avatar: CUENTA_PREDEFINIDA_IVAN.avatar,
-                tipo_avatar: CUENTA_PREDEFINIDA_IVAN.tipoAvatar,
-                foto_data_url: CUENTA_PREDEFINIDA_IVAN.fotoDataUrl,
-                victorias: CUENTA_PREDEFINIDA_IVAN.victorias,
-                partidas_jugadas: CUENTA_PREDEFINIDA_IVAN.partidasJugadas,
-                puntos_totales: CUENTA_PREDEFINIDA_IVAN.puntosTotales,
-                max_racha_historica: CUENTA_PREDEFINIDA_IVAN.maxRachaHistorica,
-                total_robos: CUENTA_PREDEFINIDA_IVAN.totalRobos,
-                updated_at: new Date().toISOString()
-            },
-            {
-                id: CUENTA_PREDEFINIDA_LUCAS.id,
-                apodo: CUENTA_PREDEFINIDA_LUCAS.apodo,
-                username: CUENTA_PREDEFINIDA_LUCAS.username,
-                carrera: CUENTA_PREDEFINIDA_LUCAS.carrera,
-                avatar: CUENTA_PREDEFINIDA_LUCAS.avatar,
-                tipo_avatar: CUENTA_PREDEFINIDA_LUCAS.tipoAvatar,
-                foto_data_url: CUENTA_PREDEFINIDA_LUCAS.fotoDataUrl,
-                victorias: CUENTA_PREDEFINIDA_LUCAS.victorias,
-                partidas_jugadas: CUENTA_PREDEFINIDA_LUCAS.partidasJugadas,
-                puntos_totales: CUENTA_PREDEFINIDA_LUCAS.puntosTotales,
-                max_racha_historica: CUENTA_PREDEFINIDA_LUCAS.maxRachaHistorica,
-                total_robos: CUENTA_PREDEFINIDA_LUCAS.totalRobos,
-                updated_at: new Date().toISOString()
-            }
-        ], { onConflict: "id" });
-    } catch (err) {
-        console.warn("[Supabase] Sincronización de perfiles por defecto:", err);
-    }
-}
 
 async function asegurarSincronizacionNube() {
-    try {
-        let intentos = 0;
-        while ((typeof window === "undefined" || !window.supabase) && intentos < 25) {
-            await new Promise(r => setTimeout(r, 200));
-            intentos++;
-        }
-        if (supabaseService.isAvailable()) {
-            // Sincronizar y depurar perfiles oficiales (elimina cuentas viejas y deja a Iván y Lucas)
-            await sincronizarPerfilesPorDefectoEnSupabase();
-
-            // 1. Si hay documentos locales activos, respaldarlos en Supabase (no re-descargar PDFs viejos eliminados)
-            if (apuntesColeccion.length > 0) {
-                await supabaseService.sincronizarColeccionConNube(apuntesColeccion);
-            }
-            // 2. Respaldar perfil del estudiante (solo cuentas creadas y registradas)
-            if (perfilUsuario && perfilUsuario.id && !perfilUsuario.esInvitado && perfilUsuario.apodo !== "Invitado") {
-                await supabaseService.guardarPerfil(perfilUsuario);
-            }
-        }
-    } catch (err) {
-        console.warn("[Supabase] Sincronización inicial:", err);
-    }
+ if (!currentUser()) return;
+ try {
+  await supabaseService.guardarPerfil(perfilUsuario);
+  if (navigator.onLine !== false) await supabaseService.sincronizarColeccionDesdeNube();
+ } catch (error) { mostrarToast('Los cambios siguen en este dispositivo. La sincronización está pendiente.', 'aviso'); }
 }
 window.sincronizarConNubeAhora = asegurarSincronizacionNube;
 
-async function guardarColeccionEnStorage() {
+async function guardarColeccionEnStorage(sincronizar = true) {
     try {
-        await guardarApunteEnIDB("apuntesColeccion", apuntesColeccion);
+        if (!await guardarApunteEnIDB("apuntesColeccion", apuntesColeccion)) throw new Error("No se pudo guardar la colección en este dispositivo.");
         sincronizarApuntesEstadoLegacy();
         await guardarApunteEnIDB("apuntesEstado", apuntesEstado);
 
@@ -12871,14 +10007,15 @@ async function guardarColeccionEnStorage() {
             palabras: d.palabras,
             activo: d.activo
         }));
-        localStorage.setItem(APUNTES_COLECCION_KEY + "_meta", JSON.stringify(metadata));
+        studyStorage.setItem(APUNTES_COLECCION_KEY + "_meta", JSON.stringify(metadata));
 
         // Sincronizar en segundo plano con Supabase si está disponible
-        if (supabaseService.isAvailable() && apuntesColeccion.length > 0) {
+        if (sincronizar && currentUser() && apuntesColeccion.length > 0) {
             supabaseService.sincronizarColeccionConNube(apuntesColeccion).catch(() => {});
         }
     } catch (e) {
-        console.warn("No se pudo guardar la colección en storage:", e);
+        mostrarToast("No se pudo guardar el documento. Exportá tus datos o liberá espacio antes de continuar.", "error");
+        throw e;
     }
 }
 window.guardarApuntesEnStorage = guardarColeccionEnStorage;
@@ -12914,10 +10051,10 @@ async function limpiarTodosLosApuntes() {
     }
 
     try {
-        localStorage.setItem("luibanez_apuntes_migrado_v1", "true");
-        localStorage.setItem("luibanez_apuntes_limpiados_manual", "true");
-        localStorage.removeItem(APUNTES_STORAGE_KEY);
-        localStorage.removeItem(APUNTES_COLECCION_KEY + "_meta");
+        studyStorage.setItem("luibanez_apuntes_migrado_v1", "true");
+        studyStorage.setItem("luibanez_apuntes_limpiados_manual", "true");
+        studyStorage.removeItem(APUNTES_STORAGE_KEY);
+        studyStorage.removeItem(APUNTES_COLECCION_KEY + "_meta");
     } catch (_) {}
 
     await guardarApunteEnIDB("apuntesColeccion", []);
@@ -12925,7 +10062,7 @@ async function limpiarTodosLosApuntes() {
     sincronizarApuntesEstadoLegacy();
     actualizarUIIndicadoresPDF();
 
-    if (supabaseService.isAvailable()) {
+    if (currentUser()) {
         supabaseService.eliminarTodosDocumentosUsuario(ids).catch(() => {});
     }
 }
@@ -12934,13 +10071,13 @@ window.limpiarTodosLosApuntes = limpiarTodosLosApuntes;
 async function agregarDocumentosAColeccion(nuevosDocs) {
     if (!Array.isArray(nuevosDocs)) nuevosDocs = [nuevosDocs];
     try {
-        localStorage.removeItem("luibanez_apuntes_limpiados_manual");
+        studyStorage.removeItem("luibanez_apuntes_limpiados_manual");
     } catch (_) {}
     for (const doc of nuevosDocs) {
         if (!doc || !doc.texto) continue;
-        const indexExistente = apuntesColeccion.findIndex(d => d.nombre === doc.nombre);
+        const indexExistente = apuntesColeccion.findIndex(d => doc.id ? d.id === doc.id : d.nombre === doc.nombre);
         const item = {
-            id: doc.id || ("doc_" + Date.now() + "_" + Math.random().toString(36).substr(2, 5)),
+            id: doc.id || (indexExistente >= 0 ? apuntesColeccion[indexExistente].id : crypto.randomUUID()),
             nombre: doc.nombre || "Documento sin título",
             paginas: doc.paginas || 1,
             palabras: doc.palabras || (doc.texto ? doc.texto.split(/\s+/).filter(Boolean).length : 0),
@@ -12949,7 +10086,8 @@ async function agregarDocumentosAColeccion(nuevosDocs) {
             tipoLabel: doc.tipoLabel || "PDF",
             metaDetalle: doc.metaDetalle || `${doc.paginas || 1} pág(s)`,
             activo: doc.activo !== false,
-            timestamp: Date.now()
+            timestamp: Date.now(),
+            updated_at: new Date().toISOString()
         };
         if (indexExistente >= 0) {
             apuntesColeccion[indexExistente] = item;
@@ -12965,6 +10103,7 @@ async function toggleDocumentoActivo(docId) {
     const doc = apuntesColeccion.find(d => d.id === docId);
     if (!doc) return;
     doc.activo = !doc.activo;
+    doc.updated_at = new Date().toISOString();
     await guardarColeccionEnStorage();
     actualizarUIIndicadoresPDF();
     const estadoTxt = doc.activo ? "activado para los desafíos" : "desactivado temporalmente";
@@ -12976,15 +10115,15 @@ async function eliminarDocumentoColeccion(docId) {
     const index = apuntesColeccion.findIndex(d => d.id === docId);
     if (index === -1) return;
     const eliminado = apuntesColeccion.splice(index, 1)[0];
-    localStorage.setItem("luibanez_apuntes_migrado_v1", "true");
+    studyStorage.setItem("luibanez_apuntes_migrado_v1", "true");
     if (apuntesColeccion.length === 0) {
-        localStorage.setItem("luibanez_apuntes_limpiados_manual", "true");
+        studyStorage.setItem("luibanez_apuntes_limpiados_manual", "true");
     }
-    localStorage.removeItem(APUNTES_STORAGE_KEY);
+    studyStorage.removeItem(APUNTES_STORAGE_KEY);
     await guardarApunteEnIDB("apuntesEstado", null);
     await guardarColeccionEnStorage();
     actualizarUIIndicadoresPDF();
-    if (supabaseService.isAvailable()) {
+    if (currentUser()) {
         supabaseService.eliminarDocumento(docId).catch(() => {});
     }
     mostrarToast(`🗑️ "${eliminado.nombre}" quitado de la biblioteca.`, "info");
@@ -13050,13 +10189,13 @@ function renderizarBandejaMultiPdf(trayId, countId, metaId, listId, dropzoneId) 
         metaElem.textContent = `${totalPags} páginas acumuladas listas para IA`;
     }
 
-    listElem.innerHTML = "";
+    setHTML(listElem, "");
     apuntesColeccion.forEach(doc => {
         const item = document.createElement("div");
         item.className = `setup-multi-pdf-item ${doc.activo !== false ? "" : "is-inactive"}`;
         const safeDocName = escapeHtml(doc.nombre || "Documento");
         const safeIcon = escapeHtml(doc.icono || "📄");
-        item.innerHTML = `
+        setHTML(item, `
             <div class="setup-multi-pdf-item__left">
                 <input type="checkbox" class="setup-multi-pdf-item__checkbox" ${doc.activo !== false ? "checked" : ""} title="${doc.activo !== false ? "Desmarcar para excluir de las preguntas" : "Marcar para incluir en las preguntas"}">
                 <span class="setup-multi-pdf-item__icon">${safeIcon}</span>
@@ -13066,7 +10205,7 @@ function renderizarBandejaMultiPdf(trayId, countId, metaId, listId, dropzoneId) 
                 </div>
             </div>
             <button type="button" class="setup-multi-pdf-item__remove" title="Quitar este documento">✕</button>
-        `;
+        `);
 
         const chk = item.querySelector(".setup-multi-pdf-item__checkbox");
         if (chk) {
@@ -13163,7 +10302,7 @@ function actualizarUIIndicadoresPDF() {
     if (dom.soloPdfCardDesc) {
         if (apunteActivo) {
             const safeDisplay = escapeHtml(apunteActivo.nombreDisplay || apunteActivo.nombre);
-            dom.soloPdfCardDesc.innerHTML = `<strong style="color: #34d399;">📚 Archivos activos (${Number(apunteActivo.activosDocs) || 1}):</strong> ${safeDisplay} (${Number(apunteActivo.paginas) || 1} págs). Los juegos de la plataforma están usando este material para formular desafíos.`;
+            setHTML(dom.soloPdfCardDesc, `<strong style="color: #34d399;">📚 Archivos activos (${Number(apunteActivo.activosDocs) || 1}):</strong> ${safeDisplay} (${Number(apunteActivo.paginas) || 1} págs). Los juegos de la plataforma están usando este material para formular desafíos.`);
         } else {
             dom.soloPdfCardDesc.textContent = "Cargá uno o varios resúmenes en PDF de tu materia. La IA de Google Gemini extraerá los conceptos y adaptará las preguntas de todos tus juegos automáticamente.";
         }
@@ -13172,6 +10311,7 @@ function actualizarUIIndicadoresPDF() {
 
 // Extracción de texto Client-Side mediante Mozilla PDF.js
 async function procesarArchivoPDF(file) {
+    validateStudyFile(file);
     if (!file) return null;
     const ext = file.name.split('.').pop().toLowerCase();
 
@@ -13190,23 +10330,10 @@ async function procesarArchivoPDF(file) {
     }
 
     // Archivo PDF con PDF.js
-    if (typeof window.pdfjsLib === 'undefined') {
-        throw new Error("La biblioteca de lectura de PDF aún se está cargando. Por favor, aguardá un segundo y volvé a intentarlo.");
-    }
-
+    const pdfjsLib = await loadPDF();
     try {
-        if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
-            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-        }
-
         const arrayBuffer = await file.arrayBuffer();
-        const loadingTask = pdfjsLib.getDocument({
-            data: arrayBuffer,
-            cMapUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/cmaps/',
-            cMapPacked: true,
-            standardFontDataUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/standard_fonts/'
-        });
-
+        const loadingTask = pdfjsLib.getDocument(pdfOptions(arrayBuffer));
         const pdf = await loadingTask.promise;
         let fullText = "";
 
@@ -13225,6 +10352,7 @@ async function procesarArchivoPDF(file) {
         }
 
         const textoLimpio = fullText.trim();
+        validateExtractedText(textoLimpio);
         const palabrasTotal = textoLimpio ? textoLimpio.split(/\s+/).filter(Boolean).length : 0;
 
         if (palabrasTotal < 10) {
@@ -13244,60 +10372,9 @@ async function procesarArchivoPDF(file) {
 }
 
 // Función Central Reutilizable para Consultar la Serverless Function de Gemini con Caché en Supabase
-async function generarPreguntaIA({ materia, tema, tipoJuego = 'bolillero', contextoPDF = null, dificultad = 'universitario', cantidadTemas = 10, preguntasPrevias = [], instruccionUsuario = '' }) {
-    // Si no se proveyó contexto explícito, buscar apunte cargado
-    if (!contextoPDF) {
-        const apunte = apuntesEstado[tipoJuego] || apuntesEstado.bolillero || apuntesEstado.global;
-        if (apunte && apunte.texto) {
-            contextoPDF = apunte.texto;
-        }
-    }
-
-    const hashContexto = generarHashTexto((contextoPDF || "") + "::" + (materia || "") + "::" + (tema || ""));
-
-    // Optimización con caché de Supabase: si no hay requerimientos específicos y existe en nube, responder de inmediato
-    if (supabaseService.isAvailable() && (!preguntasPrevias || preguntasPrevias.length === 0) && !instruccionUsuario) {
-        try {
-            const cached = await supabaseService.obtenerPreguntaCache(hashContexto, tipoJuego, dificultad);
-            if (cached) {
-                console.log("[Supabase] Pregunta servida desde caché en la nube.");
-                return cached;
-            }
-        } catch (_) {}
-    }
-
-    const payload = {
-        materia: materia || "General",
-        tema: tema || "Conceptos Principales",
-        tipoJuego,
-        contextoPDF: contextoPDF || "",
-        dificultad,
-        cantidadTemas,
-        preguntasPrevias,
-        instruccionUsuario
-    };
-
-    const resp = await fetch('/api/gemini', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(payload)
-    });
-
-    if (!resp.ok) {
-        const errJson = await resp.json().catch(() => ({}));
-        throw new Error(errJson.error || `Error HTTP ${resp.status} en Gemini Gateway`);
-    }
-
-    const json = await resp.json();
-
-    // Guardar en caché de la nube para próximas sesiones y compas
-    if (supabaseService.isAvailable() && json.data) {
-        supabaseService.guardarPreguntaCache(hashContexto, tipoJuego, dificultad, json.data).catch(() => {});
-    }
-
-    return json.data;
+async function generarPreguntaIA({ materia, tema, tipoJuego = 'bolillero', contextoPDF = null, dificultad = 'universitario', cantidadTemas = 10, cantidadPares = 6, preguntasPrevias = [], instruccionUsuario = '' }) {
+ if (!contextoPDF) contextoPDF = (apuntesEstado[tipoJuego] || apuntesEstado.bolillero || apuntesEstado.global)?.texto || '';
+ return requestAI({ materia: materia || 'General', tema: tema || 'Conceptos Principales', tipoJuego, contextoPDF: muestrearContexto(contextoPDF), dificultad, cantidadTemas, cantidadPares, preguntasPrevias: preguntasPrevias.slice(0,30).map(p => String(p).slice(0,350)), instruccionUsuario });
 }
 
 // =========================================================
@@ -13514,7 +10591,7 @@ async function solicitarPreguntaIABolillero() {
         }
         if (dom.bolilleroIARetryBtn) {
             dom.bolilleroIARetryBtn.disabled = true;
-            dom.bolilleroIARetryBtn.innerHTML = "✅ Límite alcanzado (5/5)";
+            setHTML(dom.bolilleroIARetryBtn, "✅ Límite alcanzado (5/5)");
         }
         return;
     }
@@ -13628,15 +10705,15 @@ function renderPreguntaIABolillero(data) {
     if (dom.bolilleroIARetryBtn) {
         if (numPregunta >= 5) {
             dom.bolilleroIARetryBtn.disabled = true;
-            dom.bolilleroIARetryBtn.innerHTML = "✅ Límite alcanzado (5/5)";
+            setHTML(dom.bolilleroIARetryBtn, "✅ Límite alcanzado (5/5)");
         } else {
             dom.bolilleroIARetryBtn.disabled = false;
-            dom.bolilleroIARetryBtn.innerHTML = `🔄 Otra Pregunta (${numPregunta}/5)`;
+            setHTML(dom.bolilleroIARetryBtn, `🔄 Otra Pregunta (${numPregunta}/5)`);
         }
     }
 
     dom.bolilleroIAPregunta.textContent = data.pregunta;
-    dom.bolilleroIAOpciones.innerHTML = "";
+    setHTML(dom.bolilleroIAOpciones, "");
 
     const letras = ["A", "B", "C", "D"];
 
@@ -13644,10 +10721,10 @@ function renderPreguntaIABolillero(data) {
         const btn = document.createElement("button");
         btn.type = "button";
         btn.className = "ia-option-btn";
-        btn.innerHTML = `
+        setHTML(btn, `
             <span class="option-letter">${letras[idx]}</span>
             <span class="option-text">${escapeHtml(opcTexto)}</span>
-        `;
+        `);
 
         btn.addEventListener("click", () => {
             const esCorrecta = (idx === data.respuestaCorrecta);
@@ -13665,12 +10742,12 @@ function renderPreguntaIABolillero(data) {
             if (dom.bolilleroIAFeedback) {
                 dom.bolilleroIAFeedback.classList.remove("hidden");
                 dom.bolilleroIAFeedback.className = `bolillero-ia-feedback ${esCorrecta ? '' : 'is-error'}`;
-                dom.bolilleroIAFeedback.innerHTML = `
+                setHTML(dom.bolilleroIAFeedback, `
                     <div style="font-weight: 700; margin-bottom: 0.35rem; color: ${esCorrecta ? '#34d399' : '#f87171'};">
                         ${esCorrecta ? '🎉 ¡Respuesta Correcta!' : '❌ Respuesta Incorrecta'}
                     </div>
                     <div>${escapeHtml(data.explicacion)}</div>
-                `;
+                `);
             }
         });
 
@@ -13791,6 +10868,8 @@ async function enriquecerJuegoActualConIA(iniciarInmediato = true) {
    EVENTOS & LISTENERS
    ========================================================== */
 function registrarEventos() {
+ if (window.__studyEventsRegistered) return;
+ window.__studyEventsRegistered = true;
     /* Eventos Google Gemini & Carga de Apuntes PDF */
     cargarApuntesGuardados();
 
@@ -14031,7 +11110,7 @@ function registrarEventos() {
         if (homeDetailedGrid) homeDetailedGrid.classList.toggle("hidden", esSimple);
 
         if (guardar) {
-            try { localStorage.setItem("luibanez_home_view_mode", esSimple ? "simple" : "detailed"); } catch (e) {}
+            try { studyStorage.setItem("luibanez_home_view_mode", esSimple ? "simple" : "detailed"); } catch (e) {}
         }
     }
 
@@ -14044,17 +11123,9 @@ function registrarEventos() {
 
     // Restaurar preferencia de vista del inicio
     try {
-        const modoGuardado = localStorage.getItem("luibanez_home_view_mode") || "detailed";
+        const modoGuardado = studyStorage.getItem("luibanez_home_view_mode") || "detailed";
         aplicarModoVistaHome(modoGuardado, false);
     } catch (e) {}
-
-    // Botón de salir de Modo Desarrollador dentro de viewJuntos
-    const btnSalirModoDev = document.getElementById("btnSalirModoDev");
-    if (btnSalirModoDev) {
-        btnSalirModoDev.addEventListener("click", () => {
-            desactivarModoDev();
-        });
-    }
 
     // Botones Cuadrículas de Estudiar Solo (viewSolo)
     if (dom.soloOpenBolilleroBtn) dom.soloOpenBolilleroBtn.addEventListener("click", () => cambiarVista("bolillero"));
@@ -14247,13 +11318,13 @@ function inicializarModoBolillero() {
 
     const guardarModo = (modo) => {
         try {
-            localStorage.setItem("luibanez_bolillero_mode", modo);
+            studyStorage.setItem("luibanez_bolillero_mode", modo);
         } catch (_) {}
     };
 
     const cargarModo = () => {
         try {
-            return localStorage.getItem("luibanez_bolillero_mode") || "tech";
+            return studyStorage.getItem("luibanez_bolillero_mode") || "tech";
         } catch (_) {
             return "tech";
         }
@@ -14418,11 +11489,11 @@ function inicializarModoBolillero() {
             const identificador = userInput || selectVal;
             const pin = dom.authLoginPin?.value;
             if (!identificador) {
-                mostrarToast("⚠️ Ingresá tu nombre de usuario (ej: ivi) o seleccioná tu cuenta.", "aviso");
+                mostrarToast("⚠️ Ingresá el correo de tu cuenta.", "aviso");
                 return;
             }
             if (!pin) {
-                mostrarToast("⚠️ Ingresá tu contraseña o PIN de 4 números.", "aviso");
+                mostrarToast("⚠️ Ingresá tu contraseña.", "aviso");
                 return;
             }
             iniciarSesionConPin(identificador, pin);
@@ -14993,13 +12064,9 @@ function inicializarModoBolillero() {
     }
 
     window.addEventListener("hashchange", () => {
-        const hash = window.location.hash.replace("#", "");
-        const normalized = (hash === "duelo" || hash === "juntos") ? "juntos" : hash;
-        if (["solo", "juntos", "bolillero", "fama", "home", "laboratorio", "podio"].includes(normalized)) {
-            if (normalized !== estado.interfaz.vistaActual) {
-                cambiarVista(normalized);
-            }
-        }
+        if (window.location.hash === "#main-content") return;
+        const target = normalizeRoute(window.location.hash);
+        if (target !== estado.interfaz.vistaActual) cambiarVista(target);
     });
 
     window.addEventListener("storage", () => {
@@ -15017,10 +12084,29 @@ function inicializarModoBolillero() {
     });
 }
 
-function iniciarAplicacion() {
+async function iniciarAplicacion() {
+ if (window.__studyStarted) return;
+ window.__studyStarted = true;
+ if (currentUser()?.user_metadata?.carrera === 'Medicina') {
+  try { await loadMedical(); }
+  catch {
+   const notice = document.createElement('div'); notice.className = 'secure-game'; notice.setAttribute('role','alert');
+   const text = document.createElement('p'); text.textContent = 'No se pudieron cargar tus materias. Conectate y reintentá.';
+   const retry = document.createElement('button'); retry.type = 'button'; retry.className = 'button button--primary'; retry.textContent = 'Reintentar'; retry.onclick = () => location.reload();
+   notice.append(text,retry); document.querySelector('main').prepend(notice); return;
+  }
+ }
+ setupAccountTools({ report: mostrarToast, welcome: mostrarAnimacionBienvenidaIvan, importDocuments: async docs => {
+ const existing = await obtenerApunteDeIDB('apuntesColeccion') || [];
+ const merged = [...existing];
+ for (const doc of docs) if (doc && typeof doc.texto === 'string' && !merged.some(d => d.id === doc.id)) merged.push(doc);
+ if (!await guardarApunteEnIDB('apuntesColeccion', merged)) throw new Error('No se pudo guardar la importación.');
+ const saved = await obtenerApunteDeIDB('apuntesColeccion');
+ if (!Array.isArray(saved) || saved.length !== merged.length) throw new Error('La copia no pudo verificarse. Los originales se conservan.');
+ if (currentUser()) await supabaseService.sincronizarColeccionConNube(merged);
+} });
     try { inicializarTema(); } catch (e) { console.error("Error tema:", e); }
     try { inicializarModoRendimiento(); } catch (e) { console.error("Error rendimiento:", e); }
-    try { inicializarModoDev(); } catch (e) { console.error("Error modo dev:", e); }
     try { cargarDatos(); } catch (e) { console.error("Error cargar datos:", e); }
     try { cargarPerfilUsuario(); } catch (e) { console.error("Error cargar perfil:", e); }
     try { reconstruirBolillero(); } catch (e) { console.error("Error reconstruir bolillero:", e); }
@@ -15054,63 +12140,15 @@ function iniciarAplicacion() {
         }
     }
 
+    if (!roomFromUrl && currentUser()) {
+      const savedRoom = sessionStorage.getItem('study:activeRoom:' + currentUser().id);
+      if (savedRoom) { cambiarVista('juntos'); unirseASalaOnline(savedRoom); }
+    }
+
     // =========================================================
     // REGISTRO Y GESTOR DE ACTUALIZACIÓN AUTOMÁTICA PWA
     // =========================================================
-    if ("serviceWorker" in navigator) {
-        window.addEventListener("load", () => {
-            let refreshing = false;
-            // Cuando un nuevo Service Worker toma el control, solo recargar si fue solicitado explícitamente
-            navigator.serviceWorker.addEventListener("controllerchange", () => {
-                if (!refreshing && sessionStorage.getItem("user_requested_update") === "true") {
-                    sessionStorage.removeItem("user_requested_update");
-                    refreshing = true;
-                    console.log("[PWA] Nuevo Service Worker activado tras solicitud. Recargando...");
-                    window.location.reload();
-                }
-            });
-
-            navigator.serviceWorker.register(`./sw.js?v=${APP_BUILD_VERSION}`, { updateViaCache: "none" })
-                .then(reg => {
-                    console.log("Service Worker Luibañez activo:", reg.scope);
-                    reg.update();
-
-                    if (reg.waiting) {
-                        reg.waiting.postMessage({ type: "SKIP_WAITING" });
-                    }
-
-                    reg.addEventListener("updatefound", () => {
-                        const newWorker = reg.installing;
-                        if (newWorker) {
-                            newWorker.addEventListener("statechange", () => {
-                                if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
-                                    console.log("[PWA] Nueva versión disponible. Activando inmediatamente...");
-                                    newWorker.postMessage({ type: "SKIP_WAITING" });
-                                }
-                            });
-                        }
-                    });
-                })
-                .catch(err => {
-                    console.warn("Fallo al registrar Service Worker:", err);
-                });
-        });
-
-        // Al cambiar de pestaña o volver a la app en celular/PC, verificar actualizaciones
-        document.addEventListener("visibilitychange", () => {
-            if (document.visibilityState === "visible") {
-                verificarActualizacionesDisponibles(true);
-                navigator.serviceWorker.getRegistration().then(reg => {
-                    if (reg) reg.update();
-                }).catch(() => {});
-            }
-        });
-
-        // Chequeo periódico en segundo plano cada 5 minutos
-        setInterval(() => {
-            verificarActualizacionesDisponibles(true);
-        }, 5 * 60 * 1000);
-    }
+    initializePWA(APP_BUILD_VERSION);
 
     // El botón manual de actualización rápida y la etiqueta de versión ya se vinculan en inicializarDrawerMenu()
 
@@ -15602,52 +12640,28 @@ function iniciarAplicacion() {
 // =========================================================
 // GESTOR DE VERSIONES Y ACTUALIZACIÓN AUTOMÁTICA
 // =========================================================
-const APP_BUILD_VERSION = "29.56";
+const APP_BUILD_VERSION = "30.0.0";
 
 async function forzarActualizacionCompleta(mostrarNotificacion = true) {
-    const lastAttempt = parseInt(sessionStorage.getItem("last_auto_update_ts") || "0", 10);
-    if (Date.now() - lastAttempt < 15000) {
-        console.warn("[Auto-Update] Recarga reciente detectada. Evitando bucle de actualización.");
-        return;
-    }
-    sessionStorage.setItem("last_auto_update_ts", Date.now().toString());
-    sessionStorage.setItem("user_requested_update", "true");
-
-    const btnActualizar = document.getElementById("btnForzarActualizar");
-    if (btnActualizar) {
-        btnActualizar.disabled = true;
-        btnActualizar.style.opacity = "0.75";
-        btnActualizar.style.pointerEvents = "none";
-        btnActualizar.innerHTML = `<span style="display:inline-block; animation: spin 0.8s linear infinite;">🔄</span> Actualizando...`;
-    }
-
-    if (mostrarNotificacion && typeof mostrarToast === "function") {
-        mostrarToast("🔄 Descargando última versión...", "info");
-    }
-
-    try {
-        if ("serviceWorker" in navigator) {
-            const registrations = await navigator.serviceWorker.getRegistrations();
-            for (const registration of registrations) {
-                try {
-                    await registration.update();
-                } catch (_) {}
-            }
-        }
-
-        if ("caches" in window) {
-            const cacheNames = await caches.keys();
-            await Promise.all(cacheNames.map(name => caches.delete(name).catch(() => {})));
-        }
-
-        // Una única recarga limpia sin mutar la URL ni generar bucles
-        setTimeout(() => {
-            window.location.reload();
-        }, 300);
-    } catch (err) {
-        console.warn("Error al forzar actualización:", err);
-        window.location.reload();
-    }
+ const button = document.getElementById('btnForzarActualizar');
+ return withAuthAction(button, async () => {
+  if (!navigator.onLine) throw new Error('Conectate para descargar una actualización. Tu versión actual sigue disponible.');
+  const registration = await navigator.serviceWorker?.getRegistration();
+  if (!registration) { location.reload(); return; }
+  await registration.update();
+  if (registration.installing) await new Promise((resolve, reject) => {
+   const worker = registration.installing;
+   const timeout = setTimeout(() => reject(new Error('La descarga tardó demasiado. Reintentá.')), 20000);
+   worker.addEventListener('statechange', () => {
+    if (worker.state === 'installed') { clearTimeout(timeout); resolve(); }
+    if (worker.state === 'redundant') { clearTimeout(timeout); reject(new Error('No se pudo descargar la actualización completa.')); }
+   });
+  });
+  if (registration.waiting) {
+   sessionStorage.setItem('user_requested_update', 'true');
+   registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+  } else if (mostrarNotificacion) mostrarToast('La página ya está actualizada.', 'info');
+ }, mostrarToast);
 }
 
 async function verificarActualizacionesDisponibles(silencioso = true) {
@@ -15884,18 +12898,18 @@ function abrirModalReglas(gameKey) {
     if (dom.rulesModalTabs) {
         if (gameKey === "bolillero" || gameKey === "bolillero_versus" || gameKey === "bolillero_coop") {
             dom.rulesModalTabs.classList.remove("hidden");
-            dom.rulesModalTabs.innerHTML = `
+            setHTML(dom.rulesModalTabs, `
                 <button type="button" class="rules-tab ${gameKey === 'bolillero_versus' ? 'is-active' : ''}" data-rule="bolillero_versus" aria-selected="${gameKey === 'bolillero_versus'}">⚔️ Versus</button>
                 <button type="button" class="rules-tab ${gameKey === 'bolillero_coop' ? 'is-active' : ''}" data-rule="bolillero_coop" aria-selected="${gameKey === 'bolillero_coop'}">🤝 Cooperativo</button>
                 <button type="button" class="rules-tab ${gameKey === 'bolillero' ? 'is-active' : ''}" data-rule="bolillero" aria-selected="${gameKey === 'bolillero'}">👤 Individual</button>
-            `;
+            `);
         } else if (gameKey === "bomba" || gameKey === "bomba_versus" || gameKey === "bomba_coop") {
             dom.rulesModalTabs.classList.remove("hidden");
-            dom.rulesModalTabs.innerHTML = `
+            setHTML(dom.rulesModalTabs, `
                 <button type="button" class="rules-tab ${gameKey === 'bomba_versus' ? 'is-active' : ''}" data-rule="bomba_versus" aria-selected="${gameKey === 'bomba_versus'}">⚔️ Versus</button>
                 <button type="button" class="rules-tab ${gameKey === 'bomba_coop' ? 'is-active' : ''}" data-rule="bomba_coop" aria-selected="${gameKey === 'bomba_coop'}">🤝 Cooperativo</button>
                 <button type="button" class="rules-tab ${gameKey === 'bomba' ? 'is-active' : ''}" data-rule="bomba" aria-selected="${gameKey === 'bomba'}">👤 Individual</button>
-            `;
+            `);
         } else {
             dom.rulesModalTabs.classList.add("hidden");
         }
@@ -15910,7 +12924,7 @@ function abrirModalReglas(gameKey) {
             </li>
         `).join("");
 
-        dom.rulesModalBody.innerHTML = `
+        setHTML(dom.rulesModalBody, `
             <div class="rules-card rules-card--highlight">
                 <div class="rules-card__title">🎯 Objetivo</div>
                 <p style="margin: 0; color: #e2e8f0; line-height: 1.45;">${data.objetivo}</p>
@@ -15930,11 +12944,11 @@ function abrirModalReglas(gameKey) {
                 <div class="rules-card__title" style="color: #fbbf24;">💡 Consejo Pro</div>
                 <p style="margin: 0; color: #fde68a; line-height: 1.45; font-size: 0.86rem;">${data.tip}</p>
             </div>
-        `;
+        `);
     }
 
     if (dom.rulesDontShowAgainCheckbox) {
-        dom.rulesDontShowAgainCheckbox.checked = localStorage.getItem("luibanez_rules_dont_show_" + gameKey) === "true";
+        dom.rulesDontShowAgainCheckbox.checked = studyStorage.getItem("luibanez_rules_dont_show_" + gameKey) === "true";
     }
 
     // Pausar temporizador de la bomba si está activa en segundo plano (SÓLO en individual, NUNCA en partidas online)
@@ -15955,9 +12969,9 @@ function abrirModalReglas(gameKey) {
 function cerrarModalReglas() {
     if (dom.rulesDontShowAgainCheckbox && reglaActualClave) {
         if (dom.rulesDontShowAgainCheckbox.checked) {
-            localStorage.setItem("luibanez_rules_dont_show_" + reglaActualClave, "true");
+            studyStorage.setItem("luibanez_rules_dont_show_" + reglaActualClave, "true");
         } else {
-            localStorage.removeItem("luibanez_rules_dont_show_" + reglaActualClave);
+            studyStorage.removeItem("luibanez_rules_dont_show_" + reglaActualClave);
         }
     }
 
@@ -15979,14 +12993,15 @@ function cerrarModalReglas() {
 }
 
 function comprobarYMostrarReglas(gameKey) {
-    if (localStorage.getItem("luibanez_rules_dont_show_" + gameKey) !== "true") {
+    if (studyStorage.getItem("luibanez_rules_dont_show_" + gameKey) !== "true") {
         setTimeout(() => {
             abrirModalReglas(gameKey);
         }, 300);
     }
 }
 
-document.addEventListener("DOMContentLoaded", iniciarAplicacion);
+if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", iniciarAplicacion, { once: true });
+else queueMicrotask(iniciarAplicacion);
 /* =========================================================
    MÓDULO LUIBAÑEZ v5: PROMPT DE GEMINI IA & GENERADOR DE JUEGOS
    ========================================================= */
@@ -16191,6 +13206,9 @@ const juegosEduEstado = {
    LANZADOR CENTRAL DE JUEGOS EDUCATIVOS
    ========================================================= */
 async function abrirArenaJuego(tipoJuego, modo, listaId = null, forzarNuevas = false) {
+    detenerPracticaLocal();
+    const secure = await import('./modules/online-game.mjs'); secure.stopOnlineGame();
+    juegosEduEstado.esOnline = false;
     juegosEduEstado.juegoActual = tipoJuego;
     juegosEduEstado.modo = modo || "solo";
     
@@ -16224,7 +13242,7 @@ async function abrirArenaJuego(tipoJuego, modo, listaId = null, forzarNuevas = f
     // Si se fuerzan nuevas preguntas (reintento / replay), limpiar preguntas previas
     if (forzarNuevas) {
         const temaAct = juegosEduEstado.temas[juegosEduEstado.temaIndice];
-        if (temaAct) temaAct.bomba = null;
+        if (temaAct?.bomba?.generadoIA) temaAct.bomba = null;
         if (tipoJuego === "impostor") juegosEduEstado.impostor.casosPool = [];
     }
 
@@ -16508,86 +13526,7 @@ function dispararGlitchBomba() {
 }
 
 // Función para garantizar que ninguna opción destaque por ser más larga o corta que las demás
-function normalizarLongitudOpciones(opcionesArray) {
-    if (!Array.isArray(opcionesArray) || opcionesArray.length <= 1) return opcionesArray;
-
-    const dangles = ['de', 'del', 'la', 'el', 'los', 'las', 'que', 'en', 'y', 'e', 'a', 'con', 'por', 'para', 'su', 'sus', 'un', 'una', 'al', 'o', 'u', 'como', 'sobre', 'sin'];
-    
-    function cleanDangling(str) {
-        let words = str.trim().split(/\s+/).filter(Boolean);
-        while (words.length > 0 && dangles.includes(words[words.length - 1].toLowerCase())) {
-            words.pop();
-        }
-        return words.join(' ');
-    }
-
-    // 1. Limpieza inicial de paréntesis y signos finales
-    let cleaned = opcionesArray.map(txt => {
-        let s = String(txt || '').trim();
-        s = s.replace(/\s*\([^)]*\)/g, '');
-        return s.replace(/[.;:]$/, '').trim();
-    });
-
-    // 2. Conectores subordinados que suelen inflar la respuesta correcta
-    const conectores = [
-        ', lo que significa que', ', lo que significa', ', lo cual implica que', ', lo cual implica',
-        ', es decir que', ', debido a que', ', ya que', ', garantizando que',
-        ', resultando en', '; por ende', ', permitiendo que', ', permitiendo',
-        ', de modo que', ', de manera que', ', estableciendo que', ', puesto que',
-        ', dando lugar a', ', de forma que', ', actuando como', ', hasta alcanzar',
-        ', con el objetivo de', ', a efectos de', ', en tanto que', ', mientras que'
-    ];
-
-    cleaned = cleaned.map(s => {
-        for (const c of conectores) {
-            const idx = s.toLowerCase().indexOf(c);
-            if (idx !== -1) {
-                const parte = s.slice(0, idx).trim();
-                if (parte.split(/\s+/).filter(Boolean).length >= 7) {
-                    s = parte;
-                    break;
-                }
-            }
-        }
-        // Si aún tiene coma y supera 11 palabras, cortar en la primera coma si quedan >= 7 palabras
-        if (s.split(/\s+/).filter(Boolean).length > 11 && s.includes(',')) {
-            const antesComa = s.split(',')[0].trim();
-            if (antesComa.split(/\s+/).filter(Boolean).length >= 7) {
-                s = antesComa;
-            }
-        }
-        return cleanDangling(s);
-    });
-
-    // 3. Recortar cualquier opción que supere 12 palabras para que no delate la respuesta
-    cleaned = cleaned.map(s => {
-        const words = s.split(/\s+/).filter(Boolean);
-        if (words.length > 12) {
-            return cleanDangling(words.slice(0, 11).join(' '));
-        }
-        return s;
-    });
-
-    // 4. Si algunos distractores quedaron demasiado cortos (<= 6 palabras), expandir con marco académico
-    const wordCounts = cleaned.map(s => s.split(/\s+/).filter(Boolean).length);
-    const maxWords = Math.max(...wordCounts);
-
-    cleaned = cleaned.map(s => {
-        const words = s.split(/\s+/).filter(Boolean);
-        if (words.length < maxWords - 3 && words.length <= 6) {
-            if (/^[A-ZÁÉÍÓÚÑ]/i.test(s)) {
-                if (!s.toLowerCase().startsWith('se ') && !s.toLowerCase().startsWith('el ') && !s.toLowerCase().startsWith('la ') && !s.toLowerCase().startsWith('los ') && !s.toLowerCase().startsWith('las ')) {
-                    s = 'Se observa ' + s.charAt(0).toLowerCase() + s.slice(1) + ' en el sistema';
-                } else {
-                    s = s + ' en las condiciones del sistema';
-                }
-            }
-        }
-        return s.trim();
-    });
-
-    return cleaned;
-}
+function normalizarLongitudOpciones(opcionesArray) { return opcionesArray; }
 
 function renderFase1Bomba(tema) {
     if (!dom.bombaFase1Question || !dom.bombaFase1Options) return;
@@ -16612,7 +13551,7 @@ function renderFase1Bomba(tema) {
         correcta: idx === idxCorrecto1
     })).sort(() => Math.random() - 0.5);
 
-    dom.bombaFase1Options.innerHTML = "";
+    setHTML(dom.bombaFase1Options, "");
     opciones.forEach((opc) => {
         const btn = document.createElement("button");
         btn.type = "button";
@@ -16679,7 +13618,7 @@ function renderFase2Bomba(tema) {
     };
 
     if (dom.bombaFase2ProblemBox) {
-        dom.bombaFase2ProblemBox.innerHTML = `<strong>Premisa de Análisis:</strong> ${f2.contexto || ""}`;
+        setHTML(dom.bombaFase2ProblemBox, `<strong>Premisa de Análisis:</strong> ${f2.contexto || ""}`);
     }
     dom.bombaFase2Question.textContent = f2.pregunta;
 
@@ -16690,7 +13629,7 @@ function renderFase2Bomba(tema) {
         correcta: idx === idxCorrecto2
     })).sort(() => Math.random() - 0.5);
 
-    dom.bombaFase2Options.innerHTML = "";
+    setHTML(dom.bombaFase2Options, "");
     opciones.forEach((opc) => {
         const btn = document.createElement("button");
         btn.type = "button";
@@ -16757,7 +13696,7 @@ function renderFase3Bomba(tema) {
     };
 
     if (dom.bombaFase3ProblemBox) {
-        dom.bombaFase3ProblemBox.innerHTML = `<strong>Desafío Maestro:</strong> ${f3.desafioMaestro || ""}`;
+        setHTML(dom.bombaFase3ProblemBox, `<strong>Desafío Maestro:</strong> ${f3.desafioMaestro || ""}`);
     }
     dom.bombaFase3Question.textContent = f3.pregunta;
 
@@ -16768,7 +13707,7 @@ function renderFase3Bomba(tema) {
         correcta: idx === idxCorrecto3
     })).sort(() => Math.random() - 0.5);
 
-    dom.bombaFase3Options.innerHTML = "";
+    setHTML(dom.bombaFase3Options, "");
     opciones.forEach((opc) => {
         const btn = document.createElement("button");
         btn.type = "button";
@@ -16842,13 +13781,13 @@ function desactivarBombaExito() {
     if (dom.bombaResultTitle) dom.bombaResultTitle.textContent = "¡BOMBA DESACTIVADA!";
     if (dom.bombaResultDesc) dom.bombaResultDesc.textContent = `Excelente dominio teórico: completaste las 3 fases conceptuales.`;
     if (dom.bombaResultStats) {
-        dom.bombaResultStats.innerHTML = `
+        setHTML(dom.bombaResultStats, `
             <div class="fama-stats-cards" style="margin: 1rem 0;">
                 <div class="fama-stat-card"><span class="fama-stat-num">${puntos}</span><span class="fama-stat-label">Puntos Ganados</span></div>
                 <div class="fama-stat-card"><span class="fama-stat-num">${b.tiempoRestante}s</span><span class="fama-stat-label">Tiempo Sobrante</span></div>
                 <div class="fama-stat-card"><span class="fama-stat-num">${b.fallos}</span><span class="fama-stat-label">Errores</span></div>
             </div>
-        `;
+        `);
     }
 
     // Si es modo online, sincronizar con la sala
@@ -16918,7 +13857,7 @@ function detonarBomba(motivo) {
     // Puntos obtenidos en base al progreso de cables alcanzado (mínimo 50, o 150 por fase)
     const puntos = Math.max(50, (b.fase - 1) * 150);
     if (dom.bombaResultStats) {
-        dom.bombaResultStats.innerHTML = `<p style="color: #f87171; font-weight: bold; font-size: 1.1rem;">💥 Puntos obtenidos: ${puntos} pts</p>`;
+        setHTML(dom.bombaResultStats, `<p style="color: #f87171; font-weight: bold; font-size: 1.1rem;">💥 Puntos obtenidos: ${puntos} pts</p>`);
     }
 
     if (juegosEduEstado.esOnline) {
@@ -17212,16 +14151,16 @@ function lanzarOlaImpostor() {
     ].sort(() => Math.random() - 0.5);
 
     if (dom.impostorCardsGrid) {
-        dom.impostorCardsGrid.innerHTML = "";
+        setHTML(dom.impostorCardsGrid, "");
         cardsData.forEach((c, idx) => {
             const cardEl = document.createElement("div");
             cardEl.className = "impostor-card";
             cardEl.style.pointerEvents = "auto";
             cardEl._cardData = c;
-            cardEl.innerHTML = `
+            setHTML(cardEl, `
                 <div class="impostor-card__num">Afirmación #${idx + 1}</div>
                 <div class="impostor-card__text">${c.texto}</div>
-            `;
+            `);
             cardEl.addEventListener("click", () => resolverClickImpostor(c, cardEl));
             dom.impostorCardsGrid.appendChild(cardEl);
         });
@@ -17286,10 +14225,10 @@ function resolverClickImpostor(cardData, cardEl) {
         mostrarToast(`🎯 ¡IMPOSTOR ATRAPADO! +${ptsGanados} pts`);
 
         if (dom.impostorFeedbackBox && dom.impostorFeedbackContent) {
-            dom.impostorFeedbackContent.innerHTML = `
+            setHTML(dom.impostorFeedbackContent, `
                 <div style="font-weight: 700; font-size: 1.05rem; color: #4ade80;">🎯 ¡IMPOSTOR ATRAPADO! (+${ptsGanados} pts)</div>
                 <p style="margin: 0.35rem 0 0; font-size: 0.9rem; color: #cbd5e1; line-height: 1.45;">${cardData.explicacion || "Detectaste con precisión el error conceptual infiltrado."}</p>
-            `;
+            `);
             dom.impostorFeedbackBox.classList.remove("hidden");
         }
     } else {
@@ -17300,10 +14239,10 @@ function resolverClickImpostor(cardData, cardEl) {
         mostrarToast("❌ ¡Inocente! Esa afirmación es verdadera (-50 pts)");
 
         if (dom.impostorFeedbackBox && dom.impostorFeedbackContent) {
-            dom.impostorFeedbackContent.innerHTML = `
+            setHTML(dom.impostorFeedbackContent, `
                 <div style="font-weight: 700; font-size: 1.05rem; color: #f87171;">❌ Esa afirmación era un postulado verdadero (-50 pts)</div>
                 <p style="margin: 0.35rem 0 0; font-size: 0.9rem; color: #cbd5e1; line-height: 1.45;">${cardData.explicacion || "El impostor estaba en la tarjeta destacada en rojo. Identificá afirmaciones que contradigan los axiomas de la materia."}</p>
-            `;
+            `);
             dom.impostorFeedbackBox.classList.remove("hidden");
         }
     }
@@ -17332,10 +14271,10 @@ function tiempoAgotadoOlaImpostor() {
     mostrarToast("⌛ ¡Tiempo agotado en este caso!");
 
     if (dom.impostorFeedbackBox && dom.impostorFeedbackContent) {
-        dom.impostorFeedbackContent.innerHTML = `
+        setHTML(dom.impostorFeedbackContent, `
             <div style="font-weight: 700; font-size: 1.05rem; color: #f59e0b;">⌛ El tiempo expiró</div>
             <p style="margin: 0.35rem 0 0; font-size: 0.9rem; color: #cbd5e1; line-height: 1.45;">Avanzando al siguiente caso del expediente...</p>
-        `;
+        `);
         dom.impostorFeedbackBox.classList.remove("hidden");
     }
 
@@ -17465,7 +14404,7 @@ function iniciarMemotest(modo) {
 
 function renderTableroMemotest() {
     if (!dom.memotestGrid) return;
-    dom.memotestGrid.innerHTML = "";
+    setHTML(dom.memotestGrid, "");
 
     juegosEduEstado.memotest.cartas.forEach((c) => {
         const cardEl = document.createElement("div");
@@ -17476,7 +14415,7 @@ function renderTableroMemotest() {
         cardEl.setAttribute("role", "button");
         cardEl.setAttribute("aria-label", `Carta de Memotest ${c.tipo}`);
 
-        cardEl.innerHTML = `
+        setHTML(cardEl, `
             <div class="memotest-card__inner">
                 <div class="memotest-card__face-back">
                     <span class="memotest-card__back-pattern"></span>
@@ -17487,7 +14426,7 @@ function renderTableroMemotest() {
                     <span class="memotest-card__text">${c.texto}</span>
                 </div>
             </div>
-        `;
+        `);
 
         cardEl.addEventListener("click", () => clickCartaMemotest(c, cardEl));
         cardEl.addEventListener("keydown", (e) => {
@@ -17780,7 +14719,7 @@ const MULTIVERSE_STORAGE_KEY = "luibanez-multiverse-v1";
 
 function obtenerMultiversoHistorial() {
     try {
-        return JSON.parse(localStorage.getItem(MULTIVERSE_STORAGE_KEY)) || {
+        return JSON.parse(studyStorage.getItem(MULTIVERSE_STORAGE_KEY)) || {
             partidas: [],
             statsPorJuego: {
                 bolillero: { partidas: 0, victorias: 0, puntos: 0 },
@@ -17817,7 +14756,7 @@ function registrarResultadoJuego(tipoJuego, puntos, gano) {
     if (gano) multiverso.statsPorJuego[tipoJuego].victorias++;
     multiverso.statsPorJuego[tipoJuego].puntos += puntos;
 
-    localStorage.setItem(MULTIVERSE_STORAGE_KEY, JSON.stringify(multiverso));
+    studyStorage.setItem(MULTIVERSE_STORAGE_KEY, JSON.stringify(multiverso));
 
     // Si el usuario tiene cuenta, actualizar su perfil con insignias especiales
     if (perfilUsuario.activo && perfilUsuario.perfil) {
@@ -17836,13 +14775,6 @@ function registrarResultadoJuego(tipoJuego, puntos, gano) {
     actualizarUIMultiversoFama("general");
 }
 
-function guardarCuentasEnStorage() {
-    guardarPerfilUsuario();
-}
-
-function actualizarUIUsuarioActivo() {
-    actualizarUIPerfilUsuario();
-}
 
 function actualizarUIMultiversoFama(tabFiltro = "general") {
     const multiverso = obtenerMultiversoHistorial();
@@ -17883,7 +14815,7 @@ function actualizarUIMultiversoFama(tabFiltro = "general") {
 
 function renderTablaFamaMultiverso(partidas, tabFiltro) {
     if (!dom.famaLeaderboardBody) return;
-    dom.famaLeaderboardBody.innerHTML = "";
+    setHTML(dom.famaLeaderboardBody, "");
 
     // Agrupar por jugador
     const jugadoresMap = {};
@@ -17905,7 +14837,7 @@ function renderTablaFamaMultiverso(partidas, tabFiltro) {
     }
 
     if (ranking.length === 0) {
-        dom.famaLeaderboardBody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding: 2rem; color: #8e97a8;">No hay partidas registradas en esta modalidad. ¡Jugá tu primera partida!</td></tr>`;
+        setHTML(dom.famaLeaderboardBody, `<tr><td colspan="8" style="text-align:center; padding: 2rem; color: #8e97a8;">No hay partidas registradas en esta modalidad. ¡Jugá tu primera partida!</td></tr>`);
         return;
     }
 
@@ -17920,7 +14852,7 @@ function renderTablaFamaMultiverso(partidas, tabFiltro) {
             rankBadgeHtml = `<span class="fama-rank-cell fama-rank-cell--bronze">🥉</span>`;
         }
 
-        tr.innerHTML = `
+        setHTML(tr, `
             <td class="fama-col-rank">${rankBadgeHtml}</td>
             <td class="fama-col-player">
                 <div class="fama-player-cell">
@@ -17934,22 +14866,13 @@ function renderTablaFamaMultiverso(partidas, tabFiltro) {
             <td><span class="fama-stat-score">${Number(j.puntos) || 0}</span></td>
             <td><span class="fama-streak-pill"><span class="streak-mini-flame">🔥</span> x${Math.min(5, (Number(j.victorias) || 0) + 1)}</span></td>
             <td>${escapeHtml(tabFiltro)}</td>
-        `;
+        `);
         dom.famaLeaderboardBody.appendChild(tr);
     });
 }
 
 // Render de avatar con marco evolutivo Y badges especiales
-function obtenerBadgesEspecialesHtml(insignias) {
-    if (!insignias) return "";
-    let badges = "";
-    if (insignias.bomba) badges += `<span class="avatar-badge-special badge-spec--bomba" title="Artificiero: Campeón de La Bomba">💣</span>`;
-    if (insignias.impostor) badges += `<span class="avatar-badge-special badge-spec--impostor" title="Detective: Campeón de Impostor">🕵️</span>`;
-    if (insignias.memotest) badges += `<span class="avatar-badge-special badge-spec--memotest" title="Sinapsis: Campeón de Memotest">🧠</span>`;
-    if (insignias.bolillero) badges += `<span class="avatar-badge-special badge-spec--bolillero" title="Maestro Bolillero">🎲</span>`;
-    if (insignias.triatlon) badges += `<span class="avatar-badge-special badge-spec--triatlon" title="Titán Triatleta">🏅</span>`;
-    return badges;
-}
+
 
 /* =========================================================
    SALA MULTIJUGADOR V24.6: TABS, SELECCIÓN DE JUEGO Y FORMATO
@@ -18011,7 +14934,7 @@ function seleccionarJuegoLobby(juegoId) {
             memotest: "🧠 ¡INICIAR MEMOTEST CONECTADO!",
             triatlon: "🏅 ¡INICIAR TRIATLÓN ACADÉMICO!"
         };
-        dom.dueloLaunchOnlineMatchBtn.innerHTML = gameTitles[juegoId] || "🚀 ¡COMENZAR PARTIDA AHORA!";
+        setHTML(dom.dueloLaunchOnlineMatchBtn, gameTitles[juegoId] || "🚀 ¡COMENZAR PARTIDA AHORA!");
     }
 
     // Alternar visibilidad de los paneles de opciones específicos por juego
@@ -18408,28 +15331,7 @@ setTimeout(() => {
 /* =========================================================
    MÓDULO: ESTUDIAR SOLO, ESTUDIAR JUNTOS Y PIZARRÓN / NOTAS
    ========================================================= */
-function irASeccionEstudio(idSeccion, navId) {
-    if (typeof cambiarVista === "function") {
-        cambiarVista("home");
-    }
-    setTimeout(() => {
-        const el = document.getElementById(idSeccion);
-        if (el) {
-            el.scrollIntoView({ behavior: "smooth", block: "start" });
-            el.classList.remove("section-highlight");
-            void el.offsetWidth; // trigger reflow
-            el.classList.add("section-highlight");
-            setTimeout(() => el.classList.remove("section-highlight"), 1500);
-        }
-    }, 80);
 
-    // Actualizar active state en navbars
-    document.querySelectorAll(".top-nav__links .nav-link, .drawer-nav .drawer-nav-item").forEach(btn => {
-        btn.classList.remove("is-active");
-    });
-    const activeNavBtn = document.getElementById(navId);
-    if (activeNavBtn) activeNavBtn.classList.add("is-active");
-}
 
 (function initSoloJuntosAndScratchpad() {
     // 2. Botones Cooperativos en Estudiar Juntos
@@ -18576,17 +15478,17 @@ function irASeccionEstudio(idSeccion, navId) {
     // Persistencia de notas de texto
     const STORAGE_KEY_NOTES = "luibanez-scratchpad-notes";
     if (scratchpadTextarea) {
-        const savedNotes = localStorage.getItem(STORAGE_KEY_NOTES);
+        const savedNotes = studyStorage.getItem(STORAGE_KEY_NOTES);
         if (savedNotes) scratchpadTextarea.value = savedNotes;
 
         scratchpadTextarea.addEventListener("input", () => {
-            localStorage.setItem(STORAGE_KEY_NOTES, scratchpadTextarea.value);
+            studyStorage.setItem(STORAGE_KEY_NOTES, scratchpadTextarea.value);
         });
     }
     if (scratchpadClearNotesBtn && scratchpadTextarea) {
         scratchpadClearNotesBtn.addEventListener("click", () => {
             scratchpadTextarea.value = "";
-            localStorage.removeItem(STORAGE_KEY_NOTES);
+            studyStorage.removeItem(STORAGE_KEY_NOTES);
         });
     }
 
@@ -18616,7 +15518,7 @@ function irASeccionEstudio(idSeccion, navId) {
             }
         }
 
-        const savedDrawing = localStorage.getItem(STORAGE_KEY_DRAWING);
+        const savedDrawing = studyStorage.getItem(STORAGE_KEY_DRAWING);
         if (savedDrawing) {
             const img = new Image();
             img.onload = () => {
@@ -18627,7 +15529,7 @@ function irASeccionEstudio(idSeccion, navId) {
 
         function guardarDibujo() {
             try {
-                localStorage.setItem(STORAGE_KEY_DRAWING, scratchpadCanvas.toDataURL("image/png"));
+                studyStorage.setItem(STORAGE_KEY_DRAWING, scratchpadCanvas.toDataURL("image/png"));
             } catch(e) {}
         }
 
@@ -18721,7 +15623,7 @@ function irASeccionEstudio(idSeccion, navId) {
         if (scratchpadClearBtn) {
             scratchpadClearBtn.addEventListener("click", () => {
                 ctx.clearRect(0, 0, scratchpadCanvas.width, scratchpadCanvas.height);
-                localStorage.removeItem(STORAGE_KEY_DRAWING);
+                studyStorage.removeItem(STORAGE_KEY_DRAWING);
             });
         }
     }
@@ -18971,7 +15873,7 @@ function guardarContabilidadStorage() {
             subvistaActiva: "diario",
             ts: Date.now()
         };
-        localStorage.setItem(CONTABILIDAD_STORAGE_KEY, JSON.stringify(payload));
+        studyStorage.setItem(CONTABILIDAD_STORAGE_KEY, JSON.stringify(payload));
     } catch (e) {
         console.warn("No se pudo guardar contabilidad en storage:", e);
     }
@@ -18979,7 +15881,7 @@ function guardarContabilidadStorage() {
 
 function cargarContabilidadStorage() {
     try {
-        const raw = localStorage.getItem(CONTABILIDAD_STORAGE_KEY);
+        const raw = studyStorage.getItem(CONTABILIDAD_STORAGE_KEY);
         if (!raw) return false;
         const data = JSON.parse(raw);
         if (data && Array.isArray(data.asientos) && data.asientos.length > 0) {
@@ -19117,7 +16019,7 @@ function guardarLaboratorioStorage() {
             ejerciciosPorMateria: laboratorioEstado.ejerciciosPorMateria,
             ts: Date.now()
         };
-        localStorage.setItem(LABORATORIO_STORAGE_KEY, JSON.stringify(payload));
+        studyStorage.setItem(LABORATORIO_STORAGE_KEY, JSON.stringify(payload));
     } catch (e) {
         console.warn("No se pudo guardar laboratorio en storage:", e);
     }
@@ -19125,7 +16027,7 @@ function guardarLaboratorioStorage() {
 
 function cargarLaboratorioStorage() {
     try {
-        const raw = localStorage.getItem(LABORATORIO_STORAGE_KEY);
+        const raw = studyStorage.getItem(LABORATORIO_STORAGE_KEY);
         if (!raw) return false;
         const data = JSON.parse(raw);
         if (data) {
@@ -19468,10 +16370,10 @@ function renderizarGrillaFrecuencias() {
     if (cols.includes("xifi")) headHtml += `<th>xi · fi</th>`;
     if (cols.includes("var")) headHtml += `<th>xi² · fi</th>`;
     headHtml += `<th style="width: 40px;"></th></tr>`;
-    dom.labGridTableHead.innerHTML = headHtml;
+    setHTML(dom.labGridTableHead, headHtml);
 
     // Filas del cuerpo
-    dom.labGridTableBody.innerHTML = "";
+    setHTML(dom.labGridTableBody, "");
     let nAcum = 0;
     const nTotal = laboratorioEstado.tablaDatos.reduce((acc, r) => {
         const f = parseFloat(r.fi);
@@ -19501,7 +16403,7 @@ function renderizarGrillaFrecuencias() {
         if (cols.includes("var")) rowHtml += `<td><span class="lab-calc-cell">${x2fi !== null ? x2fi.toFixed(2) : '-'}</span></td>`;
 
         rowHtml += `<td><button class="button button--ghost button--xs lab-del-row-btn" data-idx="${idx}" style="color: #f87171; padding: 0.1rem 0.35rem;" type="button" title="Eliminar fila">✕</button></td>`;
-        tr.innerHTML = rowHtml;
+        setHTML(tr, rowHtml);
         dom.labGridTableBody.appendChild(tr);
     });
 
@@ -19904,7 +16806,7 @@ function ajustarPasoDistInput(dir) {
 
 function buildDistParamsUI(dist, overrideValues = null) {
     if (!dom.labDistParamsRow) return;
-    dom.labDistParamsRow.innerHTML = "";
+    setHTML(dom.labDistParamsRow, "");
 
     dist.params.forEach(pd => {
         const val = (overrideValues && overrideValues[pd.key] !== undefined)
@@ -19914,10 +16816,10 @@ function buildDistParamsUI(dist, overrideValues = null) {
 
         const field = document.createElement("div");
         field.className = "lab-dist-param-field";
-        field.innerHTML = `
+        setHTML(field, `
             <label for="param_${pd.key}">${pd.label}</label>
             <input id="param_${pd.key}" type="text" inputmode="decimal" value="${val}" placeholder="${placeholder}">
-        `;
+        `);
 
         const inp = field.querySelector("input");
         inp.addEventListener("input", recalcularYRenderizarDistribucion);
@@ -19947,7 +16849,7 @@ function readDistParams(dist) {
 
 function buildDistTailPillsUI(dist) {
     if (!dom.labDistTailPills) return;
-    dom.labDistTailPills.innerHTML = "";
+    setHTML(dom.labDistTailPills, "");
 
     const mode = (laboratorioEstado.calcProb && laboratorioEstado.calcProb.mode) || "vp";
     const currentTail = (laboratorioEstado.calcProb && laboratorioEstado.calcProb.tail) || "left";
@@ -19980,10 +16882,10 @@ function buildDistTailPillsUI(dist) {
         pill.type = "button";
         pill.className = `lab-dist-tail-pill ${o.k === currentTail ? "is-active" : ""}`;
         pill.dataset.tail = o.k;
-        pill.innerHTML = `
+        setHTML(pill, `
             <span>${o.l}</span>
             <span class="math-notation">${o.m}</span>
-        `;
+        `);
         pill.addEventListener("click", () => cambiarColaDistLab(o.k));
         dom.labDistTailPills.appendChild(pill);
     });
@@ -20066,8 +16968,8 @@ function renderContinuousChart(dist, params, tail, x) {
     const zlines = document.getElementById("labDistZlines");
     const ticks = document.getElementById("labDistTicks");
 
-    if (barsGroup) barsGroup.innerHTML = "";
-    if (zlines) zlines.innerHTML = "";
+    if (barsGroup) setHTML(barsGroup, "");
+    if (zlines) setHTML(zlines, "");
 
     const domX = chartDomain(dist, params);
     const xmin = domX[0], xmax = domX[1];
@@ -20141,14 +17043,14 @@ function renderContinuousChart(dist, params, tail, x) {
             if (tvLabel.slice(-2) === ".0") tvLabel = tvLabel.slice(0, -2);
             html += `<line class="tick" x1="${px.toFixed(1)}" y1="140" x2="${px.toFixed(1)}" y2="145"></line><text class="tick-label" x="${px.toFixed(1)}" y="156" text-anchor="middle">${tvLabel}</text>`;
         }
-        ticks.innerHTML = html;
+        setHTML(ticks, html);
     }
 }
 
 function drawZlineSvg(px, label) {
     const zlines = document.getElementById("labDistZlines");
     if (!zlines) return;
-    zlines.innerHTML += `<line class="zline" x1="${px}" y1="12" x2="${px}" y2="140"></line><text class="zlabel" x="${px}" y="10" text-anchor="middle">${label}</text>`;
+    setHTML(zlines, zlines.innerHTML + `<line class="zline" x1="${px}" y1="12" x2="${px}" y2="140"></line><text class="zlabel" x="${px}" y="10" text-anchor="middle">${label}</text>`);
 }
 
 function renderDiscreteChart(dist, params, tail, x) {
@@ -20162,7 +17064,7 @@ function renderDiscreteChart(dist, params, tail, x) {
     if (curveLine) curveLine.setAttribute("d", "");
     if (shadeA) shadeA.setAttribute("d", "");
     if (shadeB) shadeB.setAttribute("d", "");
-    if (zlines) zlines.innerHTML = "";
+    if (zlines) setHTML(zlines, "");
 
     const hasX = (x !== null && x !== undefined && isFinite(x));
     const mk = dist.maxK(params);
@@ -20205,8 +17107,8 @@ function renderDiscreteChart(dist, params, tail, x) {
         }
     });
 
-    if (barsGroup) barsGroup.innerHTML = bars;
-    if (ticks) ticks.innerHTML = tickHtml;
+    if (barsGroup) setHTML(barsGroup, bars);
+    if (ticks) setHTML(ticks, tickHtml);
 }
 
 function recalcularYRenderizarDistribucion() {
@@ -20353,7 +17255,8 @@ function inicializarCalculadoraCientificaMini() {
             } else if (key === "=") {
                 try {
                     const cleanExpr = expr.replace(/×/g, "*").replace(/÷/g, "/");
-                    const res = Function(`'use strict'; return (${cleanExpr})`)();
+                    const res = evaluateExpression(cleanExpr);
+                    if (!Number.isFinite(res)) throw new Error('Expresión inválida');
                     dom.labCalcScreen.value = String(res);
                     expr = String(res);
                 } catch (e) {
@@ -20459,7 +17362,7 @@ function recalcularMatrizBayes() {
 
     // Renderizar sección completa de fórmulas de probabilidad de cátedra
     if (dom.labBayesFormulasContainer) {
-        dom.labBayesFormulasContainer.innerHTML = `
+        setHTML(dom.labBayesFormulasContainer, `
             <div class="lab-bayes-header-box" style="margin-top: 0.5rem;">
                 <span class="lab-bayes-header-title">📐 Fórmulas Oficiales de Probabilidad de Cátedra (Cálculo en Vivo):</span>
                 <p class="lab-bayes-header-desc">Desglose analítico paso a paso calculado automáticamente con los totales y celdas de la tabla.</p>
@@ -20549,7 +17452,7 @@ function recalcularMatrizBayes() {
                     </div>
                 </div>
             </div>
-        `;
+        `);
     }
 }
 
@@ -20924,109 +17827,29 @@ function cerrarPizarronFlotanteLab() {
 }
 
 async function emprolijarFormulasConIA() {
-    const canvas = dom.labScratchCanvas;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext("2d");
-    const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    let hasStrokes = false;
-    for (let i = 3; i < imgData.data.length; i += 32) {
-        if (imgData.data[i] > 10) {
-            hasStrokes = true;
-            break;
-        }
-    }
-
-    if (!hasStrokes) {
-        mostrarToast("✏️ Escribí o dibujá tus cuentas o fórmulas en el pizarrón primero.");
-        return;
-    }
-
-    if (dom.labAiCleanOverlay) dom.labAiCleanOverlay.classList.remove("hidden");
-    if (dom.labAiCleanText) dom.labAiCleanText.textContent = "✨ Analizando escritura y emprolijando fórmulas con IA...";
-
-    try {
-        const dataUrl = canvas.toDataURL("image/png");
-        let formulas = [];
-        let consejo = "";
-
-        try {
-            const resp = await fetch("/api/gemini", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    tipoJuego: "pizarron_ocr",
-                    imagenBase64: dataUrl,
-                    materia: "Estadística y Probabilidad",
-                    tema: laboratorioEstado.temaSeleccionado || "descriptiva"
-                })
-            });
-
-            if (resp.ok) {
-                const json = await resp.json();
-                if (json && json.data && Array.isArray(json.data.formulas) && json.data.formulas.length > 0) {
-                    formulas = json.data.formulas;
-                    consejo = json.data.consejo || "";
-                }
-            }
-        } catch (apiErr) {
-            console.warn("Fallo Gemini OCR en pizarrón, aplicando extractor didáctico inteligente:", apiErr);
-        }
-
-        if (formulas.length === 0) {
-            const nVal = document.getElementById("labStatN")?.textContent || "0";
-            const meanVal = document.getElementById("labStatMean")?.textContent || "0.00";
-            const stdVal = document.getElementById("labStatStd")?.textContent || "0.00";
-            const varVal = document.getElementById("labStatVar")?.textContent || "0.00";
-            const modeVal = document.getElementById("labStatMode")?.textContent || "-";
-            const medVal = document.getElementById("labStatMedian")?.textContent || "-";
-
-            formulas = [
-                {
-                    titulo: "Media Muestral (x̄) - Emprolijada",
-                    manuscrito: "x̄ = Σ(xi · fi) / N",
-                    latex: `\\bar{x} = \\frac{\\sum x_i \\cdot f_i}{N} = ${meanVal}`,
-                    resultado: meanVal,
-                    explicacion: `Promedio calculado con tamaño de muestra N = ${nVal}.`
-                },
-                {
-                    titulo: "Desvío Estándar Muestral (s) & Varianza (s²)",
-                    manuscrito: "s = √(s²), s² = [Σ(xi²·fi) - N·x̄²] / (N-1)",
-                    latex: `s^2 = ${varVal} \\implies s = \\sqrt{${varVal}} = ${stdVal}`,
-                    resultado: stdVal,
-                    explicacion: "Medida de dispersión absoluta alrededor de la media."
-                },
-                {
-                    titulo: "Medidas de Posición (Mo & Me)",
-                    manuscrito: `Moda = ${modeVal}, Mediana = ${medVal}`,
-                    latex: `Mo = ${modeVal} \\quad | \\quad Me = ${medVal}`,
-                    resultado: `${modeVal} / ${medVal}`,
-                    explicacion: "Valores centrales representativos de la distribución."
-                }
-            ];
-            consejo = "Podés copiar cada fórmula en texto limpio o hacer clic en 'Liberar Espacio' para seguir haciendo cuentas.";
-        }
-
-        renderizarFormulasReconocidas(formulas, consejo);
-
-    } catch (err) {
-        console.error("Error al emprolijar con IA:", err);
-        mostrarToast("⚠️ No se pudo procesar la escritura en este momento.");
-    } finally {
-        if (dom.labAiCleanOverlay) dom.labAiCleanOverlay.classList.add("hidden");
-    }
+ const canvas = dom.labScratchCanvas;
+ if (!canvas) return;
+ const button = document.getElementById('labScratchAiCleanBtn');
+ return withAuthAction(button, async () => {
+  if (dom.labAiCleanOverlay) dom.labAiCleanOverlay.classList.remove('hidden');
+  try {
+   const result = await requestAI({ tipoJuego: 'pizarron_ocr', imagenBase64: canvas.toDataURL('image/png'), materia: 'Estadística y Probabilidad', tema: laboratorioEstado.temaSeleccionado || 'descriptiva' });
+   if (!result.formulas.length) { mostrarToast('No se reconocieron fórmulas. Escribí más claro y reintentá.', 'info'); return; }
+   renderizarFormulasReconocidas(result.formulas, result.consejo);
+  } finally { dom.labAiCleanOverlay?.classList.add('hidden'); }
+ }, mostrarToast);
 }
 
 function renderizarFormulasReconocidas(formulas, consejo) {
     if (!dom.labWhiteboardAiResult || !dom.labAiResultContent) return;
 
-    dom.labAiResultContent.innerHTML = "";
+    setHTML(dom.labAiResultContent, "");
 
     formulas.forEach((f, idx) => {
         const item = document.createElement("div");
         item.className = "lab-ai-formula-item";
 
-        item.innerHTML = `
+        setHTML(item, `
             <div class="lab-ai-formula-item-top">
                 <span class="lab-ai-formula-title">✨ ${f.titulo || `Fórmula ${idx + 1}`}</span>
                 <button type="button" class="button button--ghost button--xs lab-copy-formula-btn" title="Copiar fórmula">
@@ -21035,7 +17858,7 @@ function renderizarFormulasReconocidas(formulas, consejo) {
             </div>
             <div class="lab-ai-formula-math">${f.latex || f.resultado || f.manuscrito || ""}</div>
             ${f.explicacion ? `<span class="lab-ai-formula-exp">${f.explicacion}</span>` : ""}
-        `;
+        `);
 
         const copyBtn = item.querySelector(".lab-copy-formula-btn");
         if (copyBtn) {
@@ -21057,7 +17880,7 @@ function renderizarFormulasReconocidas(formulas, consejo) {
         tipEl.style.fontSize = "0.74rem";
         tipEl.style.color = "#38bdf8";
         tipEl.style.marginTop = "0.25rem";
-        tipEl.innerHTML = `💡 <em>${consejo}</em>`;
+        setHTML(tipEl, `💡 <em>${consejo}</em>`);
         dom.labAiResultContent.appendChild(tipEl);
     }
 
@@ -21268,7 +18091,7 @@ function mostrarPasoModalLab(paso) {
 function renderizarSelectorMateriasLab() {
     const grid = dom.labDisciplinesGrid || dom.labDisciplinesList;
     if (!grid) return;
-    grid.innerHTML = "";
+    setHTML(grid, "");
 
     const ordenPrioritario = ["estadistica", "contabilidad"];
     const materiasList = Object.values(CATALOGO_MATERIAS_LABORATORIO).slice().sort((a, b) => {
@@ -21287,13 +18110,13 @@ function renderizarSelectorMateriasLab() {
         card.setAttribute("tabindex", "0");
         card.dataset.materia = mat.id;
 
-        card.innerHTML = `
+        setHTML(card, `
             <div class="lab-subject-icon-box">
                 <span>${mat.icono}</span>
             </div>
             <strong class="lab-subject-name">${mat.nombre}</strong>
             <span class="lab-subject-badge">${mat.badge}</span>
-        `;
+        `);
 
         const entrarAMateria = () => {
             seleccionarMateriaLab(mat.id);
@@ -21346,11 +18169,11 @@ function seleccionarMateriaLab(materiaId) {
 
 function renderizarOpcionesSubtemasLab(materiaId) {
     if (!dom.labSubtopicsGrid) return;
-    dom.labSubtopicsGrid.innerHTML = "";
+    setHTML(dom.labSubtopicsGrid, "");
 
     const mat = CATALOGO_MATERIAS_LABORATORIO[materiaId] || CATALOGO_MATERIAS_LABORATORIO.contabilidad;
     if (dom.labSubtopicsTitle) {
-        dom.labSubtopicsTitle.innerHTML = `<span>🎯 Opciones y temas a practicar en <strong>${mat.nombre}</strong>:</span>`;
+        setHTML(dom.labSubtopicsTitle, `<span>🎯 Opciones y temas a practicar en <strong>${mat.nombre}</strong>:</span>`);
     }
 
     const seleccionados = Array.isArray(laboratorioEstado.temasSeleccionados)
@@ -21381,14 +18204,14 @@ function renderizarOpcionesSubtemasLab(materiaId) {
         card.appendChild(chk);
 
         // Estructura visual idéntica a las tarjetas del primer menú
-        card.innerHTML += `
+        setHTML(card, card.innerHTML + `
             <div class="lab-subtopic-icon-box">
                 <span>${sub.icono || mat.icono}</span>
             </div>
             <strong class="lab-subtopic-name">${sub.nombre}</strong>
             <span class="lab-subtopic-desc">${sub.desc}</span>
             <span class="lab-subtopic-badge">${estaMarcado ? "✓ Seleccionado" : "+ Elegir"}</span>
-        `;
+        `);
 
         const toggler = () => {
             const nuevoEstado = !chk.checked;
@@ -21585,7 +18408,7 @@ function inicializarModuloContabilidad() {
                         saldo: 0,
                         tipoSaldo: "deudor"
                     };
-                    renderizarLibroMayorUI();
+                    renderLibroMayorUI();
                     sincronizarBalanceSumasYSaldos();
                 }
             }
@@ -21649,29 +18472,29 @@ function actualizarDetalleAsiento(asientoIndex, valor) {
 
 function renderizarLibroDiarioUI() {
     if (!dom.labDiarioTableBody) return;
-    dom.labDiarioTableBody.innerHTML = "";
+    setHTML(dom.labDiarioTableBody, "");
 
     contabilidadEstado.asientos.forEach((asiento, aIdx) => {
         // Fila de Encabezado del Asiento (📝 Asiento N° X | 📅 Fecha | Detalle | 🗑️)
         const headerRow = document.createElement("tr");
         headerRow.className = "lab-asiento-header-row";
-        headerRow.innerHTML = `
+        setHTML(headerRow, `
             <td colspan="4" class="lab-asiento-header-cell">
                 <div class="lab-asiento-header-top">
                     <span class="lab-asiento-title-badge">📝 Asiento N° ${asiento.id || aIdx + 1}</span>
                     <div class="lab-asiento-fecha-box" title="Fecha del asiento contable">
                         <span class="lab-asiento-fecha-icon" aria-hidden="true">📅</span>
-                        <input type="text" class="lab-diario-input lab-asiento-fecha-input" value="${asiento.fecha || ''}" placeholder="dd/mm" title="Fecha del asiento (ej. 03/10)" oninput="actualizarFechaAsiento(${aIdx}, this.value)">
+                        <input type="text" class="lab-diario-input lab-asiento-fecha-input" value="${escapeHtml(asiento.fecha || '')}" placeholder="dd/mm" title="Fecha del asiento (ej. 03/10)" data-study-input="actualizarFechaAsiento(${aIdx}, this.value)">
                     </div>
                 </div>
                 <div class="lab-asiento-header-bottom">
-                    <input type="text" class="lab-diario-input lab-asiento-detalle-input" value="${asiento.detalle || ''}" placeholder="Concepto / Detalle de la operación..." oninput="actualizarDetalleAsiento(${aIdx}, this.value)">
+                    <input type="text" class="lab-diario-input lab-asiento-detalle-input" value="${escapeHtml(asiento.detalle || '')}" placeholder="Concepto / Detalle de la operación..." data-study-input="actualizarDetalleAsiento(${aIdx}, this.value)">
                 </div>
             </td>
             <td class="lab-asiento-del-cell" style="text-align: center; vertical-align: middle;">
-                <button type="button" class="button button--ghost button--xs button--danger-text lab-btn-del-asiento" title="Eliminar este asiento completo" onclick="eliminarAsientoContable(${aIdx})">🗑️</button>
+                <button type="button" class="button button--ghost button--xs button--danger-text lab-btn-del-asiento" title="Eliminar este asiento completo" data-study-click="eliminarAsientoContable(${aIdx})">🗑️</button>
             </td>
-        `;
+        `);
         dom.labDiarioTableBody.appendChild(headerRow);
 
         // Filas de Cuentas (Cuenta, Variación, Debe, Haber, Eliminar) - La fecha ya pertenece al asiento
@@ -21681,12 +18504,12 @@ function renderizarLibroDiarioUI() {
 
             const v = fila.variacion || "";
 
-            tr.innerHTML = `
+            setHTML(tr, `
                 <td class="lab-cell-cuenta">
-                    <input type="text" list="labListaCuentasContables" class="lab-diario-input lab-diario-input--cuenta" value="${fila.cuenta || ''}" placeholder="Cuenta (ej. Caja, Deudores por Ventas...)" oninput="actualizarCeldaDiario(${aIdx}, ${fIdx}, 'cuenta', this.value)">
+                    <input type="text" list="labListaCuentasContables" class="lab-diario-input lab-diario-input--cuenta" value="${escapeHtml(fila.cuenta || '')}" placeholder="Cuenta (ej. Caja, Deudores por Ventas...)" data-study-input="actualizarCeldaDiario(${aIdx}, ${fIdx}, 'cuenta', this.value)">
                 </td>
                 <td class="lab-cell-variacion">
-                    <select class="lab-diario-input lab-diario-select-variacion" onchange="actualizarCeldaDiario(${aIdx}, ${fIdx}, 'variacion', this.value)">
+                    <select class="lab-diario-input lab-diario-select-variacion" data-study-change="actualizarCeldaDiario(${aIdx}, ${fIdx}, 'variacion', this.value)">
                         <option value="" ${!v ? 'selected' : ''}>Variación</option>
                         <option value="A+" ${v === 'A+' ? 'selected' : ''}>A+ (Activo +)</option>
                         <option value="A-" ${v === 'A-' ? 'selected' : ''}>A- (Activo -)</option>
@@ -21703,28 +18526,28 @@ function renderizarLibroDiarioUI() {
                     </select>
                 </td>
                 <td class="lab-cell-debe">
-                    <input type="number" step="any" min="0" class="lab-diario-input lab-diario-input--number lab-diario-input--debe" value="${fila.debe !== '' && fila.debe !== undefined && fila.debe !== null ? fila.debe : ''}" placeholder="$ Debe" oninput="actualizarCeldaDiario(${aIdx}, ${fIdx}, 'debe', this.value)">
+                    <input type="number" step="any" min="0" class="lab-diario-input lab-diario-input--number lab-diario-input--debe" value="${fila.debe !== '' && fila.debe !== undefined && fila.debe !== null ? fila.debe : ''}" placeholder="$ Debe" data-study-input="actualizarCeldaDiario(${aIdx}, ${fIdx}, 'debe', this.value)">
                 </td>
                 <td class="lab-cell-haber">
-                    <input type="number" step="any" min="0" class="lab-diario-input lab-diario-input--number lab-diario-input--haber" value="${fila.haber !== '' && fila.haber !== undefined && fila.haber !== null ? fila.haber : ''}" placeholder="$ Haber" oninput="actualizarCeldaDiario(${aIdx}, ${fIdx}, 'haber', this.value)">
+                    <input type="number" step="any" min="0" class="lab-diario-input lab-diario-input--number lab-diario-input--haber" value="${fila.haber !== '' && fila.haber !== undefined && fila.haber !== null ? fila.haber : ''}" placeholder="$ Haber" data-study-input="actualizarCeldaDiario(${aIdx}, ${fIdx}, 'haber', this.value)">
                 </td>
                 <td class="lab-cell-actions lab-asiento-actions-cell">
-                    <button type="button" class="button button--ghost button--xs button--danger-text lab-btn-quitar-fila" title="Quitar línea de cuenta" onclick="eliminarFilaDeAsiento(${aIdx}, ${fIdx})">✕</button>
+                    <button type="button" class="button button--ghost button--xs button--danger-text lab-btn-quitar-fila" title="Quitar línea de cuenta" data-study-click="eliminarFilaDeAsiento(${aIdx}, ${fIdx})">✕</button>
                 </td>
-            `;
+            `);
             dom.labDiarioTableBody.appendChild(tr);
         });
 
         // Fila para agregar otra cuenta al asiento
         const addRow = document.createElement("tr");
         addRow.className = "lab-asiento-add-row";
-        addRow.innerHTML = `
+        setHTML(addRow, `
             <td colspan="5" class="lab-asiento-add-cell">
-                <button type="button" class="button button--ghost button--xs lab-btn-add-cuenta" onclick="agregarFilaAAsiento(${aIdx})">
+                <button type="button" class="button button--ghost button--xs lab-btn-add-cuenta" data-study-click="agregarFilaAAsiento(${aIdx})">
                     ➕ Agregar Renglón al Asiento N° ${asiento.id || aIdx + 1}
                 </button>
             </td>
-        `;
+        `);
         dom.labDiarioTableBody.appendChild(addRow);
     });
 
@@ -21891,16 +18714,16 @@ function sincronizarLibroMayor() {
 
 function renderLibroMayorUI() {
     if (!dom.labMayorCuentasGrid) return;
-    dom.labMayorCuentasGrid.innerHTML = "";
+    setHTML(dom.labMayorCuentasGrid, "");
 
     const cuentas = Object.keys(contabilidadEstado.mayores);
     if (cuentas.length === 0) {
-        dom.labMayorCuentasGrid.innerHTML = `
+        setHTML(dom.labMayorCuentasGrid, `
             <div style="grid-column: 1 / -1; padding: 2rem; text-align: center; color: var(--color-text-muted);">
                 <p>No hay cuentas registradas aún en el Libro Diario.</p>
                 <p style="font-size: 0.8rem;">Escribí las cuentas e importes en el Libro Diario y tocá 'Pasar a Libro Mayor'.</p>
             </div>
-        `;
+        `);
         return;
     }
 
@@ -21923,7 +18746,7 @@ function renderLibroMayorUI() {
         const pillClass = c.tipoSaldo === "deudor" ? "lab-t-saldo-pill--deudor" : "lab-t-saldo-pill--acreedor";
         const saldoTexto = `Saldo ${c.tipoSaldo === 'deudor' ? 'Deudor' : 'Acreedor'}: $${c.saldo.toLocaleString('es-AR', { minimumFractionDigits: 2 })}`;
 
-        card.innerHTML = `
+        setHTML(card, `
             <div class="lab-t-header">${nom}</div>
             <div class="lab-t-body">
                 <div class="lab-t-col lab-t-col--debe">
@@ -21942,7 +18765,7 @@ function renderLibroMayorUI() {
                 </div>
                 <span class="lab-t-saldo-pill ${pillClass}">${saldoTexto}</span>
             </div>
-        `;
+        `);
 
         dom.labMayorCuentasGrid.appendChild(card);
     });
@@ -21950,7 +18773,7 @@ function renderLibroMayorUI() {
 
 function sincronizarBalanceSumasYSaldos() {
     if (!dom.labBalanceTableBody) return;
-    dom.labBalanceTableBody.innerHTML = "";
+    setHTML(dom.labBalanceTableBody, "");
 
     const cuentas = Object.keys(contabilidadEstado.mayores);
     let totSumDebe = 0;
@@ -21959,13 +18782,13 @@ function sincronizarBalanceSumasYSaldos() {
     let totSalAcreedor = 0;
 
     if (cuentas.length === 0) {
-        dom.labBalanceTableBody.innerHTML = `
+        setHTML(dom.labBalanceTableBody, `
             <tr>
                 <td colspan="5" style="text-align: center; color: var(--color-text-muted); padding: 1.5rem;">
                     Sin cuentas registradas aún. Completá los asientos en el Libro Diario y tocalos en 'Pasar a Libro Mayor' para balancear.
                 </td>
             </tr>
-        `;
+        `);
         if (dom.labBalTotalSumasDebe) dom.labBalTotalSumasDebe.textContent = "$0.00";
         if (dom.labBalTotalSumasHaber) dom.labBalTotalSumasHaber.textContent = "$0.00";
         if (dom.labBalTotalSaldoDeudor) dom.labBalTotalSaldoDeudor.textContent = "$0.00";
@@ -21988,13 +18811,13 @@ function sincronizarBalanceSumasYSaldos() {
         totSalAcreedor += salAcreedor;
 
         const tr = document.createElement("tr");
-        tr.innerHTML = `
+        setHTML(tr, `
             <td><strong>${nom}</strong></td>
             <td style="text-align: right; font-family: monospace;">$${c.totalDebe.toLocaleString('es-AR', { minimumFractionDigits: 2 })}</td>
             <td style="text-align: right; font-family: monospace;">$${c.totalHaber.toLocaleString('es-AR', { minimumFractionDigits: 2 })}</td>
             <td style="text-align: right; font-family: monospace; color: #34d399;">$${salDeudor ? salDeudor.toLocaleString('es-AR', { minimumFractionDigits: 2 }) : '-'}</td>
             <td style="text-align: right; font-family: monospace; color: #38bdf8;">$${salAcreedor ? salAcreedor.toLocaleString('es-AR', { minimumFractionDigits: 2 }) : '-'}</td>
-        `;
+        `);
         dom.labBalanceTableBody.appendChild(tr);
     });
 
@@ -22046,11 +18869,11 @@ function verificarEjercicioContable() {
         if (dom.labContabFeedbackIcon) dom.labContabFeedbackIcon.textContent = "⚠️";
         if (dom.labContabFeedbackTitle) dom.labContabFeedbackTitle.textContent = "Partida Doble Descuadrada";
         if (dom.labContabFeedbackMsg) {
-            dom.labContabFeedbackMsg.innerHTML = `
+            setHTML(dom.labContabFeedbackMsg, `
                 Tenés asientos donde la suma del Debe no es igual a la suma del Haber:<br>
                 <strong>${asientosDescuadrados.join("<br>")}</strong>.<br>
                 Revisá que todo débito tenga su contrapartida acreditada por el mismo valor.
-            `;
+            `);
         }
         mostrarToast("⚠️ Hay asientos desbalanceados en el Libro Diario.", "aviso");
         return;
@@ -22069,11 +18892,11 @@ function verificarEjercicioContable() {
     if (dom.labContabFeedbackIcon) dom.labContabFeedbackIcon.textContent = "🎉";
     if (dom.labContabFeedbackTitle) dom.labContabFeedbackTitle.textContent = "¡Registración Contable Verificada con Éxito!";
     if (dom.labContabFeedbackMsg) {
-        dom.labContabFeedbackMsg.innerHTML = `
+        setHTML(dom.labContabFeedbackMsg, `
             Todos los asientos cumplen estrictamente con la <strong>Partida Doble</strong>.<br>
             Total contabilizado: <strong>$${totalDebe.toLocaleString('es-AR', { minimumFractionDigits: 2 })}</strong>.<br>
             El Libro Mayor y el Balance de Sumas y Saldos se encuentran 100% equilibrados. ¡Ganaste +100 XP contables!
-        `;
+        `);
     }
 
     laboratorioEstado.xpTotal = (laboratorioEstado.xpTotal || 0) + 100;
@@ -22124,7 +18947,7 @@ function cerrarModalPromptLab() {
 
 function actualizarQuickChipsUI(tema) {
     if (!dom.labQuickChips) return;
-    dom.labQuickChips.innerHTML = "";
+    setHTML(dom.labQuickChips, "");
 
     const chipsPorTema = {
         discretas: [
@@ -22215,18 +19038,18 @@ let elementoQuimicoSeleccionado = TABLA_ELEMENTOS_QUIMICA[0];
 function renderizarTablaPeriodicaUI() {
     const grid = document.getElementById("labPeriodicGrid");
     if (!grid) return;
-    grid.innerHTML = "";
+    setHTML(grid, "");
 
     TABLA_ELEMENTOS_QUIMICA.forEach(elem => {
         const cell = document.createElement("div");
         cell.className = `lab-chem-cell ${elementoQuimicoSeleccionado.sym === elem.sym ? 'is-selected' : ''}`;
         cell.dataset.symbol = elem.sym;
 
-        cell.innerHTML = `
+        setHTML(cell, `
             <span class="lab-chem-cell-num">${elem.num}</span>
             <strong class="lab-chem-cell-sym">${elem.sym}</strong>
             <span class="lab-chem-cell-mass">${elem.mass.toFixed(1)}</span>
-        `;
+        `);
 
         cell.addEventListener("click", () => {
             seleccionarElementoQuimico(elem);
@@ -22584,28 +19407,7 @@ function inicializarGraficadorMatematicas() {
     plotear();
 }
 
-function evaluarExpresionMatematicaSegura(exprStr, x) {
-    try {
-        let limpio = exprStr.toLowerCase()
-            .replace(/\s+/g, "")
-            .replace(/\^/g, "**")
-            .replace(/sin\(/g, "Math.sin(")
-            .replace(/cos\(/g, "Math.cos(")
-            .replace(/tan\(/g, "Math.tan(")
-            .replace(/sqrt\(/g, "Math.sqrt(")
-            .replace(/abs\(/g, "Math.abs(");
-
-        // Permitir multiplicación implícita (ej. 2x -> 2*x)
-        limpio = limpio.replace(/(\d)x/g, "$1*x");
-        limpio = limpio.replace(/x/g, `(${x})`);
-
-        // Solo permitir números, operadores y Math
-        if (/[^0-9\+\-\*\/\.\(\)Math\.sincotabeqrt]/.test(limpio)) return NaN;
-        return Function(`"use strict"; return (${limpio})`)();
-    } catch {
-        return NaN;
-    }
-}
+function evaluarExpresionMatematicaSegura(expr, x = 0) { return evaluateExpression(expr, x); }
 
 function dibujarGraficaFuncion2D(canvas, exprStr) {
     const ctx = canvas.getContext("2d");
@@ -22839,8 +19641,8 @@ function inicializarModuloMatricesYLogica() {
         ];
 
         if (elVecBreakdown) {
-            elVecBreakdown.innerHTML = `• |u| = ${modU.toFixed(2)}, |v| = ${modV.toFixed(2)}<br>` +
-                `• Ángulo θ = ${angDeg.toFixed(2)}° • Producto vectorial u × v = (${cross.map(c => c.toFixed(2)).join(', ')})`;
+            setHTML(elVecBreakdown, `• |u| = ${modU.toFixed(2)}, |v| = ${modV.toFixed(2)}<br>` +
+                `• Ángulo θ = ${angDeg.toFixed(2)}° • Producto vectorial u × v = (${cross.map(c => c.toFixed(2)).join(', ')})`);
         }
         elVecResDot.textContent = `${dot.toFixed(2)}`;
     }
@@ -22867,8 +19669,8 @@ function inicializarModuloMatricesYLogica() {
         const deltaY = (a1 * c2) - (c1 * a2);
 
         if (elCrBreakdown) {
-            elCrBreakdown.innerHTML = `• Determinante principal Δ = ${delta.toFixed(2)}<br>` +
-                `• Δx = ${deltaX.toFixed(2)}, Δy = ${deltaY.toFixed(2)}`;
+            setHTML(elCrBreakdown, `• Determinante principal Δ = ${delta.toFixed(2)}<br>` +
+                `• Δx = ${deltaX.toFixed(2)}, Δy = ${deltaY.toFixed(2)}`);
         }
 
         if (delta !== 0) {
@@ -22920,7 +19722,7 @@ function inicializarCalculadoraQuimica() {
         const moleculas = n * 6.02214076e23;
 
         if (elBrMoles) {
-            elBrMoles.innerHTML = `• Moléculas ≈ ${moleculas.toExponential(3)} partículas (N_A)<br>• Fórmula: n = ${m.toFixed(2)} g / ${M.toFixed(2)} g/mol`;
+            setHTML(elBrMoles, `• Moléculas ≈ ${moleculas.toExponential(3)} partículas (N_A)<br>• Fórmula: n = ${m.toFixed(2)} g / ${M.toFixed(2)} g/mol`);
         }
         elResMoles.textContent = `${n.toFixed(4)} mol`;
     }
@@ -22940,7 +19742,7 @@ function inicializarCalculadoraQuimica() {
         const M = v > 0 ? n / v : 0;
 
         if (elBrMolar) {
-            elBrMolar.innerHTML = `• En ${(v * 1000).toFixed(0)} mL hay ${n.toFixed(3)} moles<br>• Concentración molar = ${M.toFixed(4)} mol/L`;
+            setHTML(elBrMolar, `• En ${(v * 1000).toFixed(0)} mL hay ${n.toFixed(3)} moles<br>• Concentración molar = ${M.toFixed(4)} mol/L`);
         }
         elResMolar.textContent = `${M.toFixed(2)} M`;
     }
@@ -22961,7 +19763,7 @@ function inicializarCalculadoraQuimica() {
         const tipo = pH < 6.9 ? "Ácida (pH < 7)" : pH > 7.1 ? "Básica / Alcalina (pH > 7)" : "Neutra (pH ≈ 7)";
 
         if (elBrPH) {
-            elBrPH.innerHTML = `• pOH = ${pOH.toFixed(2)} • [OH⁻] = ${ohConc.toExponential(2)} M<br>• Solución ${tipo}`;
+            setHTML(elBrPH, `• pOH = ${pOH.toFixed(2)} • [OH⁻] = ${ohConc.toExponential(2)} M<br>• Solución ${tipo}`);
         }
         elResPH.textContent = `${pH.toFixed(2)}`;
     }
@@ -22984,7 +19786,7 @@ function inicializarCalculadoraQuimica() {
         const V = P > 0 ? (n * R * Tk) / P : 0;
 
         if (elBrGas) {
-            elBrGas.innerHTML = `• T = ${Tk.toFixed(2)} K • P·V = n·R·T (R = 0.082 atm·L/mol·K)`;
+            setHTML(elBrGas, `• T = ${Tk.toFixed(2)} K • P·V = n·R·T (R = 0.082 atm·L/mol·K)`);
         }
         elResGas.textContent = `${V.toFixed(2)} Litros`;
     }
@@ -23034,7 +19836,7 @@ function inicializarCalculadoraFisica() {
         const vMed = t !== 0 ? d / t : v0;
 
         if (elCinBreak) {
-            elCinBreak.innerHTML = `• Distancia Recorrida: d = ${d.toFixed(2)} m<br>• Velocidad Media: ${vMed.toFixed(2)} m/s`;
+            setHTML(elCinBreak, `• Distancia Recorrida: d = ${d.toFixed(2)} m<br>• Velocidad Media: ${vMed.toFixed(2)} m/s`);
         }
         elCinRes.textContent = `${vf.toFixed(2)} m/s`;
     }
@@ -23064,8 +19866,8 @@ function inicializarCalculadoraFisica() {
         const acc = m > 0 ? Fnet / m : 0;
 
         if (elDinBreak) {
-            elDinBreak.innerHTML = `• Peso P = ${P.toFixed(2)} N (Px = ${Px.toFixed(2)} N, Py = ${Py.toFixed(2)} N)<br>` +
-                `• Normal N = ${N.toFixed(2)} N | Rozamiento fr = ${fr.toFixed(2)} N`;
+            setHTML(elDinBreak, `• Peso P = ${P.toFixed(2)} N (Px = ${Px.toFixed(2)} N, Py = ${Py.toFixed(2)} N)<br>` +
+                `• Normal N = ${N.toFixed(2)} N | Rozamiento fr = ${fr.toFixed(2)} N`);
         }
         elDinRes.textContent = `${acc.toFixed(2)} m/s²`;
     }
@@ -23090,7 +19892,7 @@ function inicializarCalculadoraFisica() {
         const Em = Ec + Ep;
 
         if (elEnBreak) {
-            elEnBreak.innerHTML = `• Energía Cinética (Ec): ${Ec.toFixed(2)} J<br>• Energía Potencial (Ep): ${Ep.toFixed(2)} J`;
+            setHTML(elEnBreak, `• Energía Cinética (Ec): ${Ec.toFixed(2)} J<br>• Energía Potencial (Ep): ${Ep.toFixed(2)} J`);
         }
         elEnRes.textContent = `${Em.toFixed(2)} Joules`;
     }
@@ -23118,8 +19920,8 @@ function inicializarCalculadoraFisica() {
         const Ppar = V * Ipar;
 
         if (elOhmBreak) {
-            elOhmBreak.innerHTML = `• En Serie: R_eq = ${Rserie.toFixed(2)} Ω (I = ${Iserie.toFixed(2)} A, P = ${Pserie.toFixed(2)} W)<br>` +
-                `• En Paralelo: R_eq = ${Rpar.toFixed(2)} Ω (I = ${Ipar.toFixed(2)} A, P = ${Ppar.toFixed(2)} W)`;
+            setHTML(elOhmBreak, `• En Serie: R_eq = ${Rserie.toFixed(2)} Ω (I = ${Iserie.toFixed(2)} A, P = ${Pserie.toFixed(2)} W)<br>` +
+                `• En Paralelo: R_eq = ${Rpar.toFixed(2)} Ω (I = ${Ipar.toFixed(2)} A, P = ${Ppar.toFixed(2)} W)`);
         }
         elOhmRes.textContent = `${Iserie.toFixed(2)} A`;
     }
@@ -23170,26 +19972,26 @@ function inicializarCalculadoraMatematicas() {
             const x1 = (-b + Math.sqrt(delta)) / (2 * a);
             const x2 = (-b - Math.sqrt(delta)) / (2 * a);
             if (elBhaskBreak) {
-                elBhaskBreak.innerHTML = `• Discriminante Δ = ${delta.toFixed(2)} (> 0, 2 raíces reales)<br>` +
+                setHTML(elBhaskBreak, `• Discriminante Δ = ${delta.toFixed(2)} (> 0, 2 raíces reales)<br>` +
                     `• Vértice V: (${vx.toFixed(2)}, ${vy.toFixed(2)}) • Eje de simetría: x = ${vx.toFixed(2)}<br>` +
-                    `• Forma factorizada: ${a} · (x - ${x1.toFixed(2)})(x - ${x2.toFixed(2)})`;
+                    `• Forma factorizada: ${a} · (x - ${x1.toFixed(2)})(x - ${x2.toFixed(2)})`);
             }
             elBhaskRes.textContent = `x₁ = ${x1.toFixed(2)}, x₂ = ${x2.toFixed(2)}`;
         } else if (delta === 0) {
             const x = -b / (2 * a);
             if (elBhaskBreak) {
-                elBhaskBreak.innerHTML = `• Discriminante Δ = 0 (raíz real doble)<br>` +
+                setHTML(elBhaskBreak, `• Discriminante Δ = 0 (raíz real doble)<br>` +
                     `• Vértice V: (${vx.toFixed(2)}, 0)<br>` +
-                    `• Forma factorizada: ${a} · (x - ${x.toFixed(2)})²`;
+                    `• Forma factorizada: ${a} · (x - ${x.toFixed(2)})²`);
             }
             elBhaskRes.textContent = `x₁ = x₂ = ${x.toFixed(2)}`;
         } else {
             const real = (-b / (2 * a)).toFixed(2);
             const imag = (Math.sqrt(-delta) / (2 * a)).toFixed(2);
             if (elBhaskBreak) {
-                elBhaskBreak.innerHTML = `• Discriminante Δ = ${delta.toFixed(2)} (< 0, raíces complejas conjugadas)<br>` +
+                setHTML(elBhaskBreak, `• Discriminante Δ = ${delta.toFixed(2)} (< 0, raíces complejas conjugadas)<br>` +
                     `• Vértice V: (${vx.toFixed(2)}, ${vy.toFixed(2)})<br>` +
-                    `• La parábola no interseca el eje real X.`;
+                    `• La parábola no interseca el eje real X.`);
             }
             elBhaskRes.textContent = `${real} ± ${imag}i`;
         }
@@ -23213,8 +20015,8 @@ function inicializarCalculadoraMatematicas() {
         const pct = A !== 0 ? (B / A) * 100 : 0;
 
         if (elR3Break) {
-            elR3Break.innerHTML = `• Proporción directa: X = (${B} × ${C}) / ${A} = ${X.toFixed(2)}<br>` +
-                `• Porcentaje de B respecto a A: ${pct.toFixed(2)}%`;
+            setHTML(elR3Break, `• Proporción directa: X = (${B} × ${C}) / ${A} = ${X.toFixed(2)}<br>` +
+                `• Porcentaje de B respecto a A: ${pct.toFixed(2)}%`);
         }
         elR3Res.textContent = `${X.toFixed(2)}`;
     }
@@ -23240,8 +20042,8 @@ function inicializarCalculadoraMatematicas() {
         const tanA = b !== 0 ? a / b : Infinity;
 
         if (elTrigBreak) {
-            elTrigBreak.innerHTML = `• Ángulo α = ${deg.toFixed(2)}° (${rad.toFixed(4)} rad)<br>` +
-                `• sin(α) = ${sinA.toFixed(4)} • cos(α) = ${cosA.toFixed(4)} • tan(α) = ${tanA.toFixed(4)}`;
+            setHTML(elTrigBreak, `• Ángulo α = ${deg.toFixed(2)}° (${rad.toFixed(4)} rad)<br>` +
+                `• sin(α) = ${sinA.toFixed(4)} • cos(α) = ${cosA.toFixed(4)} • tan(α) = ${tanA.toFixed(4)}`);
         }
         elTrigRes.textContent = `${h.toFixed(2)}`;
     }
@@ -23259,119 +20061,7 @@ function conmutarSubtabCalculo(sub) {
     if (btnInteg) btnInteg.classList.toggle("is-active", sub === "integ");
 }
 
-function evaluarExpresionSegura(expr, xVal) {
-    try {
-        if (!expr || typeof expr !== "string") return 0;
-        let s = expr
-            .toLowerCase()
-            .replace(/\s+/g, "")
-            .replace(/\*\*/g, "^")
-            .replace(/math\./g, "");
-
-        // Multiplicación implícita: 2x, 2(, )x, )(, x2, )2, 2sin, xsin
-        s = s
-            .replace(/(\d)(x|pi|e|sin|cos|tan|sqrt|exp|ln|log|abs|\()/g, "$1*$2")
-            .replace(/(x|pi|e|\))(\d|x|pi|e|sin|cos|tan|sqrt|exp|ln|log|abs|\()/g, "$1*$2");
-
-        let pos = 0;
-        const xNum = Number(xVal) || 0;
-
-        function parseExpression() {
-            let val = parseTerm();
-            while (pos < s.length && (s[pos] === "+" || s[pos] === "-")) {
-                const op = s[pos++];
-                const right = parseTerm();
-                val = op === "+" ? val + right : val - right;
-            }
-            return val;
-        }
-
-        function parseTerm() {
-            let val = parsePower();
-            while (pos < s.length && (s[pos] === "*" || s[pos] === "/")) {
-                const op = s[pos++];
-                const right = parsePower();
-                val = op === "*" ? val * right : val / right;
-            }
-            return val;
-        }
-
-        function parsePower() {
-            let base = parseUnary();
-            if (pos < s.length && s[pos] === "^") {
-                pos++;
-                const exp = parsePower();
-                base = Math.pow(base, exp);
-            }
-            return base;
-        }
-
-        function parseUnary() {
-            if (pos < s.length && s[pos] === "+") {
-                pos++;
-                return parseUnary();
-            }
-            if (pos < s.length && s[pos] === "-") {
-                pos++;
-                return -parseUnary();
-            }
-            return parsePrimary();
-        }
-
-        function parsePrimary() {
-            if (pos < s.length && s[pos] === "(") {
-                pos++;
-                const val = parseExpression();
-                if (s[pos] === ")") pos++;
-                return val;
-            }
-
-            // Funciones matemáticas soportadas
-            const funcs = ["sqrt", "sin", "cos", "tan", "exp", "log10", "log", "ln", "abs"];
-            for (const fn of funcs) {
-                if (s.startsWith(fn, pos)) {
-                    pos += fn.length;
-                    const arg = parsePrimary();
-                    if (fn === "sqrt") return Math.sqrt(arg);
-                    if (fn === "sin") return Math.sin(arg);
-                    if (fn === "cos") return Math.cos(arg);
-                    if (fn === "tan") return Math.tan(arg);
-                    if (fn === "exp") return Math.exp(arg);
-                    if (fn === "ln") return Math.log(arg);
-                    if (fn === "log" || fn === "log10") return Math.log10(arg);
-                    if (fn === "abs") return Math.abs(arg);
-                }
-            }
-
-            if (s.startsWith("pi", pos)) {
-                pos += 2;
-                return Math.PI;
-            }
-            if (s[pos] === "e") {
-                pos += 1;
-                return Math.E;
-            }
-            if (s[pos] === "x") {
-                pos += 1;
-                return xNum;
-            }
-
-            const numMatch = s.slice(pos).match(/^\d+(?:[.,]\d+)?/);
-            if (numMatch) {
-                pos += numMatch[0].length;
-                return parseFloat(numMatch[0].replace(",", "."));
-            }
-
-            return NaN;
-        }
-
-        const res = parseExpression();
-        if (pos < s.length) return NaN;
-        return typeof res === "number" && !isNaN(res) && isFinite(res) ? res : NaN;
-    } catch {
-        return NaN;
-    }
-}
+function evaluarExpresionSegura(expr, x = 0) { return evaluateExpression(expr, x); }
 
 function inicializarCalculadoraCalculo() {
     const btnDeriv = document.getElementById("labBtnCalcSubtabDeriv");
@@ -23406,9 +20096,9 @@ function inicializarCalculadoraCalculo() {
         }
 
         if (elDerivBreak) {
-            elDerivBreak.innerHTML = `• f(${x0}) = ${y0.toFixed(2)} • Pendiente recta tangente m = ${m.toFixed(2)}<br>` +
+            setHTML(elDerivBreak, `• f(${x0}) = ${y0.toFixed(2)} • Pendiente recta tangente m = ${m.toFixed(2)}<br>` +
                 `• Ecuación recta tangente: y = ${m.toFixed(2)}·x ${bTang >= 0 ? '+' : '-'} ${Math.abs(bTang).toFixed(2)}<br>` +
-                `• Ecuación recta normal: ${ecNormal}`;
+                `• Ecuación recta normal: ${ecNormal}`);
         }
         elDerivRes.textContent = `${m.toFixed(4)}`;
     }
@@ -23440,8 +20130,8 @@ function inicializarCalculadoraCalculo() {
         const area = (sum * step) / 3;
 
         if (elIntegBreak) {
-            elIntegBreak.innerHTML = `• Intervalo [${a}, ${b}] dividido en ${N} subintervalos (h = ${step.toFixed(4)})<br>` +
-                `• Método: Cuadratura de Simpson 1/3 compuesto.`;
+            setHTML(elIntegBreak, `• Intervalo [${a}, ${b}] dividido en ${N} subintervalos (h = ${step.toFixed(4)})<br>` +
+                `• Método: Cuadratura de Simpson 1/3 compuesto.`);
         }
         elIntegRes.textContent = `${area.toFixed(4)}`;
     }
@@ -23469,7 +20159,7 @@ function inicializarCalculadoraComputacion() {
         if (elHex) elHex.value = hex;
 
         if (elBreakBases) {
-            elBreakBases.innerHTML = `• Octal (Base 8): ${oct}<br>• Formato Byte: ${bin.padStart(8, '0')} (${bin.length} bits)`;
+            setHTML(elBreakBases, `• Octal (Base 8): ${oct}<br>• Formato Byte: ${bin.padStart(8, '0')} (${bin.length} bits)`);
         }
         if (elResHex) elResHex.textContent = `0x${hex}`;
     }
@@ -23510,11 +20200,11 @@ function inicializarCalculadoraComputacion() {
         const cN2 = N * N;
 
         if (elBreakBigO) {
-            elBreakBigO.innerHTML = `• O(1) Constante: 1 op.<br>` +
+            setHTML(elBreakBigO, `• O(1) Constante: 1 op.<br>` +
                 `• O(log N) Binario: ${cLog.toLocaleString('es-AR')} op.<br>` +
                 `• O(N) Lineal: ${N.toLocaleString('es-AR')} op.<br>` +
                 `• O(N log N) Quicksort/Merge: ~${cNlogN.toLocaleString('es-AR')} op.<br>` +
-                `• O(N²) Cuadrático: ${cN2.toExponential(2)} op.`;
+                `• O(N²) Cuadrático: ${cN2.toExponential(2)} op.`);
         }
         elResBigO.textContent = `~${cNlogN.toExponential(2)} op.`;
     }
@@ -23588,8 +20278,8 @@ function inicializarCalculadoraBiologia() {
         const desgloseGen = Object.entries(conteo).map(([g, c]) => `${(c / 4) * 100}% ${g}`).join(", ");
 
         if (elBreakGen) {
-            elBreakGen.innerHTML = `• Genotipos: ${desgloseGen}<br>` +
-                `• Fenotipo: ${pctDom}% Dominante [${domChar}-], ${pctRec}% Recesivo [${recChar}${recChar}]`;
+            setHTML(elBreakGen, `• Genotipos: ${desgloseGen}<br>` +
+                `• Fenotipo: ${pctDom}% Dominante [${domChar}-], ${pctRec}% Recesivo [${recChar}${recChar}]`);
         }
         if (elResRatio) {
             elResRatio.textContent = `${domCount} : ${recCount} (${pctDom}% / ${pctRec}%)`;
@@ -23612,9 +20302,9 @@ function inicializarCalculadoraBiologia() {
         const h2o = (moles * 6).toFixed(1);
 
         if (elBreakATP) {
-            elBreakATP.innerHTML = `• Glucólisis: ${(moles * 2).toFixed(1)} ATP + ${(moles * 2).toFixed(1)} NADH<br>` +
+            setHTML(elBreakATP, `• Glucólisis: ${(moles * 2).toFixed(1)} ATP + ${(moles * 2).toFixed(1)} NADH<br>` +
                 `• Oxidación del Piruvato & Krebs: ${(moles * 2).toFixed(1)} GTP + ${(moles * 8).toFixed(1)} NADH + ${(moles * 2).toFixed(1)} FADH₂<br>` +
-                `• Subproductos: ${co2} mol CO₂ y ${h2o} mol H₂O • Rendimiento neto teórico: 30 a 32 ATP/mol.`;
+                `• Subproductos: ${co2} mol CO₂ y ${h2o} mol H₂O • Rendimiento neto teórico: 30 a 32 ATP/mol.`);
         }
         elResATP.textContent = `${atp} ATP`;
     }
@@ -23656,7 +20346,7 @@ function inicializarCalculadoraFinanciera() {
         const n = Math.max(1, parseInt(elCuotas?.value, 10) || 6);
         const sist = elSistema?.value || "frances";
 
-        tbodyAmort.innerHTML = "";
+        setHTML(tbodyAmort, "");
         let saldo = C0;
 
         if (sist === "frances") {
@@ -23667,13 +20357,13 @@ function inicializarCalculadoraFinanciera() {
                 saldo = Math.max(0, saldo - amort);
 
                 const tr = document.createElement("tr");
-                tr.innerHTML = `
+                setHTML(tr, `
                     <td><strong>${k}</strong></td>
                     <td style="color: #38bdf8;">$${cuotaFija.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
                     <td style="color: #f87171;">$${interes.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
                     <td style="color: #34d399;">$${amort.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
                     <td>$${saldo.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
-                `;
+                `);
                 tbodyAmort.appendChild(tr);
             }
         } else {
@@ -23685,13 +20375,13 @@ function inicializarCalculadoraFinanciera() {
                 saldo = Math.max(0, saldo - amortConst);
 
                 const tr = document.createElement("tr");
-                tr.innerHTML = `
+                setHTML(tr, `
                     <td><strong>${k}</strong></td>
                     <td style="color: #38bdf8;">$${cuota.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
                     <td style="color: #f87171;">$${interes.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
                     <td style="color: #34d399;">$${amortConst.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
                     <td>$${saldo.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
-                `;
+                `);
                 tbodyAmort.appendChild(tr);
             }
         }
@@ -23718,8 +20408,8 @@ function inicializarCalculadoraFinanciera() {
         const gananciaComp = Icomp - Isimple;
 
         if (elIntBreak) {
-            elIntBreak.innerHTML = `• Monto Simple: $${Msimple.toLocaleString('es-AR', {minimumFractionDigits: 2})}<br>` +
-                `• Interés Simple: $${Isimple.toLocaleString('es-AR', {minimumFractionDigits: 2})} • Ganancia por capitalización: $${gananciaComp.toLocaleString('es-AR', {minimumFractionDigits: 2})}`;
+            setHTML(elIntBreak, `• Monto Simple: $${Msimple.toLocaleString('es-AR', {minimumFractionDigits: 2})}<br>` +
+                `• Interés Simple: $${Isimple.toLocaleString('es-AR', {minimumFractionDigits: 2})} • Ganancia por capitalización: $${gananciaComp.toLocaleString('es-AR', {minimumFractionDigits: 2})}`);
         }
         elIntRes.textContent = `$${Mcomp.toLocaleString('es-AR', {minimumFractionDigits: 2})}`;
     }
@@ -23740,8 +20430,8 @@ function inicializarCalculadoraFinanciera() {
         const tea = (Math.pow(1 + iPer, m) - 1) * 100;
 
         if (elTnaBreak) {
-            elTnaBreak.innerHTML = `• Tasa periódica efectiva: ${(iPer * 100).toFixed(4)}%<br>` +
-                `• Capitalizaciones por año: ${m} períodos.`;
+            setHTML(elTnaBreak, `• Tasa periódica efectiva: ${(iPer * 100).toFixed(4)}%<br>` +
+                `• Capitalizaciones por año: ${m} períodos.`);
         }
         elTeaRes.textContent = `${tea.toFixed(2)}%`;
     }
@@ -23784,8 +20474,8 @@ function inicializarCalculadoraMedicina() {
         else estadio = "G5 (Falla renal terminal, < 15 mL/min)";
 
         if (elRenalBreak) {
-            elRenalBreak.innerHTML = `• Estadío KDIGO: ${estadio}<br>` +
-                `• ${clcr < 60 ? '⚠️ Requiere ajuste de dosis en fármacos de excreción renal.' : '✅ Filtrado glomerular adecuado.'}`;
+            setHTML(elRenalBreak, `• Estadío KDIGO: ${estadio}<br>` +
+                `• ${clcr < 60 ? '⚠️ Requiere ajuste de dosis en fármacos de excreción renal.' : '✅ Filtrado glomerular adecuado.'}`);
         }
         elRenalRes.textContent = `${clcr.toFixed(2)} mL/min`;
     }
@@ -23815,8 +20505,8 @@ function inicializarCalculadoraMedicina() {
         else clasif = "Obesidad Grado III (≥ 40.0)";
 
         if (elImcBreak) {
-            elImcBreak.innerHTML = `• Clasificación OMS: ${clasif}<br>` +
-                `• Superficie Corporal (Fórmula Mosteller): ${sc.toFixed(2)} m²`;
+            setHTML(elImcBreak, `• Clasificación OMS: ${clasif}<br>` +
+                `• Superficie Corporal (Fórmula Mosteller): ${sc.toFixed(2)} m²`);
         }
         elImcRes.textContent = `${imc.toFixed(2)} kg/m²`;
     }
@@ -23849,8 +20539,8 @@ function inicializarCalculadoraContabilidad() {
         const margen = ventas !== 0 ? ((utilidad / ventas) * 100) : 0;
 
         if (elCmvBreakdown) {
-            elCmvBreakdown.innerHTML = `• Mercaderías Disponibles: $${disponibles.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}<br>` +
-                `• Utilidad Bruta: $${utilidad.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})} (Margen: ${margen.toFixed(2)}%)`;
+            setHTML(elCmvBreakdown, `• Mercaderías Disponibles: $${disponibles.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}<br>` +
+                `• Utilidad Bruta: $${utilidad.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})} (Margen: ${margen.toFixed(2)}%)`);
         }
         elCmvRes.textContent = `$${cmv.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
     }
@@ -23880,8 +20570,8 @@ function inicializarCalculadoraContabilidad() {
             const iva = neto * (alic / 100);
             const total = neto + iva;
             if (elIvaBreakdown) {
-                elIvaBreakdown.innerHTML = `• Neto Gravado: $${neto.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}<br>` +
-                    `• IVA Débito/Crédito (${alic}%): $${iva.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+                setHTML(elIvaBreakdown, `• Neto Gravado: $${neto.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}<br>` +
+                    `• IVA Débito/Crédito (${alic}%): $${iva.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`);
             }
             elIvaRes.textContent = `$${total.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
         } else {
@@ -23891,8 +20581,8 @@ function inicializarCalculadoraContabilidad() {
             const neto = total / (1 + (alic / 100));
             const iva = total - neto;
             if (elIvaBreakdown) {
-                elIvaBreakdown.innerHTML = `• Total Facturado: $${total.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}<br>` +
-                    `• IVA Contenido (${alic}%): $${iva.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+                setHTML(elIvaBreakdown, `• Total Facturado: $${total.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}<br>` +
+                    `• IVA Contenido (${alic}%): $${iva.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`);
             }
             elIvaRes.textContent = `$${neto.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
         }
@@ -23919,6 +20609,7 @@ function inicializarCalculadorasLaboratorio() {
 }
 
 async function extraerTextoDeCualquierArchivo(file) {
+    validateStudyFile(file);
     if (!file) return null;
     const nameLower = file.name.toLowerCase();
     const esPdf = file.type === "application/pdf" || nameLower.endsWith(".pdf");
@@ -23942,21 +20633,22 @@ async function extraerTextoDeCualquierArchivo(file) {
     let paginas = 1;
 
     if (esPdf) {
-        if (typeof pdfjsLib === "undefined") throw new Error("Librería PDF no disponible");
+        const pdfjsLib = await loadPDF();
         const arrayBuffer = await file.arrayBuffer();
-        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-        const maxPaginas = Math.min(pdf.numPages, 30);
+        const pdf = await pdfjsLib.getDocument(pdfOptions(arrayBuffer)).promise;
+        const maxPaginas = Math.min(pdf.numPages, 100);
         for (let i = 1; i <= maxPaginas; i++) {
             const page = await pdf.getPage(i);
             const content = await page.getTextContent();
             const textPage = content.items.map(item => item.str).join(" ");
             textoCompleto += `\n--- PÁGINA ${i} ---\n` + textPage;
         }
-        metaDetalle = `${pdf.numPages} páginas leídas con éxito`;
+        metaDetalle = `${maxPaginas} de ${pdf.numPages} páginas leídas`;
         paginas = pdf.numPages;
     } else if (esDocx) {
         if (typeof JSZip === "undefined") throw new Error("Librería JSZip no disponible");
         const arrayBuffer = await file.arrayBuffer();
+        validateOfficeArchive(arrayBuffer);
         const zip = await JSZip.loadAsync(arrayBuffer);
         const docFile = zip.file("word/document.xml");
         if (!docFile) throw new Error("No se encontró el texto principal en el archivo .docx");
@@ -23974,6 +20666,7 @@ async function extraerTextoDeCualquierArchivo(file) {
     } else if (esPptx) {
         if (typeof JSZip === "undefined") throw new Error("Librería JSZip no disponible");
         const arrayBuffer = await file.arrayBuffer();
+        validateOfficeArchive(arrayBuffer);
         const zip = await JSZip.loadAsync(arrayBuffer);
         const slideNames = Object.keys(zip.files).filter(k => /^ppt\/slides\/slide\d+\.xml$/.test(k));
         slideNames.sort((a, b) => {
@@ -24004,6 +20697,7 @@ async function extraerTextoDeCualquierArchivo(file) {
         paginas = Math.ceil(lines.length / 40) || 1;
     }
 
+    validateExtractedText(textoCompleto);
     if (!textoCompleto.trim()) {
         throw new Error("El archivo no contenía texto legible.");
     }
@@ -24146,7 +20840,7 @@ async function ejecutarGeneracionBolilleroIA() {
     const btn = dom.bolilleroBtnCargarConfig;
     if (btn) {
         btn.disabled = true;
-        btn.innerHTML = `<span style="display:inline-block; animation: spin 0.8s linear infinite;">🔄</span> Generando Bolillero con IA...`;
+        setHTML(btn, `<span style="display:inline-block; animation: spin 0.8s linear infinite;">🔄</span> Generando Bolillero con IA...`);
     }
 
     const apunte = bolilleroSetupEstado.archivoTexto
@@ -24191,8 +20885,7 @@ async function ejecutarGeneracionBolilleroIA() {
         }
 
         if (!palabras || palabras.length === 0) {
-            const etiqueta = orden || "Concepto Clave";
-            palabras = Array.from({ length: count }, (_, i) => `${etiqueta} #${i + 1}`);
+            throw new Error("No se pudieron extraer conceptos reales. Cargá material legible o ingresá temas manualmente.");
         }
 
         palabras = palabras.slice(0, count);
@@ -24230,7 +20923,7 @@ async function ejecutarGeneracionBolilleroIA() {
     } finally {
         if (btn) {
             btn.disabled = false;
-            btn.innerHTML = `🚀 Generar Bolillero con IA`;
+            setHTML(btn, `🚀 Generar Bolillero con IA`);
         }
     }
 }
@@ -24335,7 +21028,7 @@ async function ejecutarInicioBombaConfigurada() {
     const btn = dom.bombaBtnCargarConfig;
     if (btn) {
         btn.disabled = true;
-        btn.innerHTML = `<span style="display:inline-block; animation: spin 0.8s linear infinite;">🔄</span> Armando Desafío con IA...`;
+        setHTML(btn, `<span style="display:inline-block; animation: spin 0.8s linear infinite;">🔄</span> Armando Desafío con IA...`);
     }
 
     const apunte = bombaSetupEstado.archivoTexto
@@ -24395,7 +21088,7 @@ async function ejecutarInicioBombaConfigurada() {
 
     if (btn) {
         btn.disabled = false;
-        btn.innerHTML = `💣 Armar y Comenzar Desafío con IA`;
+        setHTML(btn, `💣 Armar y Comenzar Desafío con IA`);
     }
 }
 
@@ -24479,7 +21172,7 @@ function mostrarPistaLcdBomba(pistaTexto) {
         pistaBanner.style.cssText = "background: rgba(14, 165, 233, 0.18); border: 1.5px solid #38bdf8; border-radius: 8px; padding: 0.65rem 0.85rem; margin-top: 0.75rem; color: #e0f2fe; font-size: 0.82rem; line-height: 1.35; animation: fadeIn 0.3s ease;";
         dom.bombaLcdScreen?.prepend(pistaBanner);
     }
-    pistaBanner.innerHTML = `<strong>💡 PISTA TEÓRICA:</strong> ${escapeHtml(pistaTexto)}`;
+    setHTML(pistaBanner, `<strong>💡 PISTA TEÓRICA:</strong> ${escapeHtml(pistaTexto)}`);
 }
 
 function usarComodinBombaCongelar() {
@@ -24655,7 +21348,7 @@ async function ejecutarInicioImpostorConfigurado() {
     const btn = dom.impostorBtnCargarConfig;
     if (btn) {
         btn.disabled = true;
-        btn.innerHTML = `<span style="display:inline-block; animation: spin 0.8s linear infinite;">🔄</span> Calibrando Casos con IA...`;
+        setHTML(btn, `<span style="display:inline-block; animation: spin 0.8s linear infinite;">🔄</span> Calibrando Casos con IA...`);
     }
 
     const apunte = impostorSetupEstado.archivoTexto
@@ -24703,7 +21396,7 @@ async function ejecutarInicioImpostorConfigurado() {
     } finally {
         if (btn) {
             btn.disabled = false;
-            btn.innerHTML = `🕵️‍♂️ Iniciar Misión con IA`;
+            setHTML(btn, `🕵️‍♂️ Iniciar Misión con IA`);
         }
     }
 }
@@ -24823,7 +21516,7 @@ async function ejecutarInicioMemotestConfigurado() {
     const btn = dom.memotestBtnCargarConfig;
     if (btn) {
         btn.disabled = true;
-        btn.innerHTML = `<span style="display:inline-block; animation: spin 0.8s linear infinite;">🔄</span> Conectando Parejas con IA...`;
+        setHTML(btn, `<span style="display:inline-block; animation: spin 0.8s linear infinite;">🔄</span> Conectando Parejas con IA...`);
     }
 
     const apunte = memotestSetupEstado.archivoTexto
@@ -24874,7 +21567,7 @@ async function ejecutarInicioMemotestConfigurado() {
     } finally {
         if (btn) {
             btn.disabled = false;
-            btn.innerHTML = `🧠 Armar y Conectar Memotest con IA`;
+            setHTML(btn, `🧠 Armar y Conectar Memotest con IA`);
         }
     }
 }
@@ -24958,7 +21651,7 @@ async function generarOtroEjercicioIALab(btnElement = null) {
     btns.forEach(b => {
         b.disabled = true;
         if (!b.dataset.origHtml) b.dataset.origHtml = b.innerHTML;
-        b.innerHTML = `<span style="display:inline-block; animation: spin 0.8s linear infinite;">🔄</span> Generando con IA...`;
+        setHTML(b, `<span style="display:inline-block; animation: spin 0.8s linear infinite;">🔄</span> Generando con IA...`);
     });
 
     try {
@@ -24973,7 +21666,7 @@ async function generarOtroEjercicioIALab(btnElement = null) {
     } finally {
         btns.forEach(b => {
             b.disabled = false;
-            if (b.dataset.origHtml) b.innerHTML = b.dataset.origHtml;
+            if (b.dataset.origHtml) setHTML(b, b.dataset.origHtml);
         });
     }
 }
@@ -26550,10 +23243,10 @@ function renderizarEjercicioActual(resetRespuestas = false) {
     if (containerDatos) {
         if (contenidoDatos) {
             containerDatos.classList.remove("hidden");
-            containerDatos.innerHTML = formatearBloqueDatosLab(contenidoDatos, ej.datos_tipo);
+            setHTML(containerDatos, formatearBloqueDatosLab(contenidoDatos, ej.datos_tipo));
         } else {
             containerDatos.classList.add("hidden");
-            containerDatos.innerHTML = "";
+            setHTML(containerDatos, "");
         }
     }
 
@@ -26586,7 +23279,7 @@ function renderizarEjercicioActual(resetRespuestas = false) {
 
     // Renderizar incisos a), b), c), d), e)
     if (!dom.labQuestionsList) return;
-    dom.labQuestionsList.innerHTML = "";
+    setHTML(dom.labQuestionsList, "");
 
     ej.preguntas.forEach((q, idx) => {
         const item = document.createElement("div");
@@ -26597,7 +23290,7 @@ function renderizarEjercicioActual(resetRespuestas = false) {
             ? String(laboratorioEstado.respuestasUsuario[idx])
             : "";
 
-        item.innerHTML = `
+        setHTML(item, `
             <div class="lab-q-prompt-row">
                 <span class="lab-q-letter-badge">${q.letra.toUpperCase()})</span>
                 <p class="lab-q-text">${q.texto}</p>
@@ -26621,7 +23314,7 @@ function renderizarEjercicioActual(resetRespuestas = false) {
                 </div>
             </div>
             <div class="lab-q-reveal-box hidden" id="labQRevealBox_${idx}"></div>
-        `;
+        `);
 
         dom.labQuestionsList.appendChild(item);
 
@@ -26663,13 +23356,13 @@ function renderizarEjercicioActual(resetRespuestas = false) {
         if (laboratorioEstado.pistasReveladas && laboratorioEstado.pistasReveladas[idx]) {
             if (revealBox) {
                 revealBox.classList.remove("hidden");
-                revealBox.innerHTML = `<strong>💡 Pista para el Inciso ${q.letra.toUpperCase()}:</strong><p style="margin: 0.35rem 0 0;">${q.pista || "Consultá las fórmulas en la Mesa de Trabajo."}</p>`;
+                setHTML(revealBox, `<strong>💡 Pista para el Inciso ${q.letra.toUpperCase()}:</strong><p style="margin: 0.35rem 0 0;">${q.pista || "Consultá las fórmulas en la Mesa de Trabajo."}</p>`);
             }
         }
         if (laboratorioEstado.solucionesReveladas && laboratorioEstado.solucionesReveladas[idx]) {
             if (revealBox) {
                 revealBox.classList.remove("hidden");
-                revealBox.innerHTML = `<strong>📖 Respuesta Exacta (${q.esperado}) & Paso a Paso:</strong><p style="margin: 0.35rem 0 0;">${q.explicacion || `El valor teórico exacto es ${q.esperado}.`}</p>`;
+                setHTML(revealBox, `<strong>📖 Respuesta Exacta (${q.esperado}) & Paso a Paso:</strong><p style="margin: 0.35rem 0 0;">${q.explicacion || `El valor teórico exacto es ${q.esperado}.`}</p>`);
             }
         }
 
@@ -26793,7 +23486,7 @@ function mostrarPistaInciso(idx) {
     const revealBox = document.getElementById(`labQRevealBox_${idx}`);
     if (revealBox) {
         revealBox.classList.remove("hidden");
-        revealBox.innerHTML = `<strong>💡 Pista para el Inciso ${q.letra.toUpperCase()}:</strong><p style="margin: 0.35rem 0 0;">${q.pista || "Consultá las fórmulas en la Mesa de Trabajo."}</p>`;
+        setHTML(revealBox, `<strong>💡 Pista para el Inciso ${q.letra.toUpperCase()}:</strong><p style="margin: 0.35rem 0 0;">${q.pista || "Consultá las fórmulas en la Mesa de Trabajo."}</p>`);
         mostrarToast("💡 Pista desbloqueada.", "info");
     }
     guardarLaboratorioStorage();
@@ -26812,7 +23505,7 @@ function mostrarRespuestaInciso(idx) {
 
     if (revealBox) {
         revealBox.classList.remove("hidden");
-        revealBox.innerHTML = `<strong>📖 Respuesta Exacta (${q.esperado}) & Paso a Paso:</strong><p style="margin: 0.35rem 0 0;">${q.explicacion || `El valor teórico exacto es ${q.esperado}.`}</p>`;
+        setHTML(revealBox, `<strong>📖 Respuesta Exacta (${q.esperado}) & Paso a Paso:</strong><p style="margin: 0.35rem 0 0;">${q.explicacion || `El valor teórico exacto es ${q.esperado}.`}</p>`);
     }
 
     if (input) {
@@ -27250,13 +23943,13 @@ function inicializarReconexionResiliente() {
     const handleReconexion = () => {
         if (!onlineDueloEstado.codigoSala) return;
 
-        if (onlineDueloEstado.clienteMqtt && !onlineDueloEstado.clienteMqtt.connected) {
-            try { onlineDueloEstado.clienteMqtt.reconnect(); } catch (_) {}
+        if (onlineDueloEstado.transporteOnline && !onlineDueloEstado.transporteOnline.connected) {
+            try { onlineDueloEstado.transporteOnline.reconnect(); } catch (_) {}
         }
 
         if (!onlineDueloEstado.esHost) {
             setTimeout(() => {
-                if (onlineDueloEstado.clienteMqtt && onlineDueloEstado.clienteMqtt.connected) {
+                if (onlineDueloEstado.transporteOnline && onlineDueloEstado.transporteOnline.connected) {
                     publicarMensajeSala({
                         tipo: "SOLICITAR_ESTADO_SALA",
                         jugadorId: perfilUsuario.id
@@ -27310,18 +24003,7 @@ function aplicarSincronizacionEstadoDesdeHost(data) {
 }
 
 // 5. DESAMBIGUACIÓN DE NOMBRES DUPLICADOS
-function desambiguarApodoSala(apodoBase, listaJugadores) {
-    let base = (apodoBase || "Invitado").trim();
-    let existentes = (listaJugadores || []).map(j => (j.apodo || j.nombre || "").trim().toLowerCase());
-    if (!existentes.includes(base.toLowerCase())) {
-        return base;
-    }
-    let n = 2;
-    while (existentes.includes(`${base.toLowerCase()} (${n})`)) {
-        n++;
-    }
-    return `${base} (${n})`;
-}
+
 
 // 6. COPIA DE SEGURIDAD TOTAL (EXPORTAR / IMPORTAR EN JSON)
 function exportarCopiaDeSeguridadJson() {
@@ -27332,7 +24014,8 @@ function exportarCopiaDeSeguridadJson() {
             fechaExportacion: new Date().toISOString(),
             listas: estado.listas || [],
             listaSeleccionadaId: estado.listaSeleccionadaId || null,
-            perfilUsuario: typeof perfilUsuario !== "undefined" ? perfilUsuario : null,
+            localStats: Object.fromEntries(['victorias','partidasJugadas','puntosTotales','maxRachaHistorica','totalRobos'].map(key => [key, perfilUsuario[key] || 0])),
+            documentos: apuntesColeccion,
             dueloHistorial: (typeof cargarHistorialDuelo === "function") ? cargarHistorialDuelo() : [],
             apuntes: typeof apuntesEstado !== "undefined" ? apuntesEstado : null,
             dueloConfig: typeof dueloEstado !== "undefined" ? dueloEstado.config : null
@@ -27356,212 +24039,45 @@ function exportarCopiaDeSeguridadJson() {
     }
 }
 
-function importarCopiaDeSeguridadJson(archivo) {
-    if (!archivo) return;
-    const lector = new FileReader();
-    lector.onload = (e) => {
-        try {
-            const data = JSON.parse(e.target.result);
-            if (!data || (!Array.isArray(data.listas) && !data.perfilUsuario)) {
-                mostrarToast("❌ El archivo seleccionado no es un respaldo válido de Luibañez.", "error");
-                return;
-            }
-
-            let materiasAgregadas = 0;
-            if (Array.isArray(data.listas) && data.listas.length > 0) {
-                const idsExistentes = new Set((estado.listas || []).map(l => l.id));
-                data.listas.forEach(l => {
-                    if (idsExistentes.has(l.id)) {
-                        l.id = crypto.randomUUID();
-                    }
-                    estado.listas.push(l);
-                    idsExistentes.add(l.id);
-                    materiasAgregadas++;
-                });
-
-                if (!estado.listaSeleccionadaId && estado.listas.length > 0) {
-                    estado.listaSeleccionadaId = estado.listas[0].id;
-                }
-                guardarDatos();
-                actualizarInterfaz();
-                if (typeof actualizarDropdownListasDuelo === "function") {
-                    actualizarDropdownListasDuelo();
-                }
-            }
-
-            if (data.perfilUsuario && typeof perfilUsuario !== "undefined") {
-                asignarPropiedadesSeguras(perfilUsuario, data.perfilUsuario, [
-                    "id", "apodo", "username", "carrera", "avatar", "tipoAvatar",
-                    "fotoDataUrl", "victorias", "partidasJugadas", "puntosTotales",
-                    "maxRachaHistorica", "totalRobos", "insignias"
-                ]);
-                if (perfilUsuario.fotoDataUrl) {
-                    perfilUsuario.fotoDataUrl = sanitizarUrlSegura(perfilUsuario.fotoDataUrl);
-                }
-                guardarPerfilUsuario();
-            }
-
-            if (Array.isArray(data.dueloHistorial) && typeof guardarHistorialDuelo === "function") {
-                guardarHistorialDuelo(data.dueloHistorial);
-            }
-
-            if (data.apuntes && typeof apuntesEstado !== "undefined") {
-                asignarPropiedadesSeguras(apuntesEstado, data.apuntes, [
-                    "global", "bolillero", "bomba", "impostor", "memotest"
-                ]);
-                try { localStorage.setItem("luibanez_apuntes_v1", JSON.stringify(apuntesEstado)); } catch(_) {}
-            }
-
-            mostrarToast(`✅ Respaldo restaurado (${materiasAgregadas} materias incorporadas).`, "exito");
-        } catch (err) {
-            console.error("Error al importar:", err);
-            mostrarToast("❌ El archivo JSON no tiene un formato válido.", "error");
-        }
-    };
-    lector.readAsText(archivo);
+async function importarCopiaDeSeguridadJson(archivo) {
+ if (!archivo) return;
+ try {
+  const data = parseBackup(await archivo.text());
+  const existing = new Set(estado.listas.map(list => list.id));
+  const incoming = data.listas.filter(list => !existing.has(list.id));
+  const docs = Array.isArray(data.documentos) ? data.documentos : [];
+  if (!docs.length && data.apuntes) {
+   const legacy = data.apuntes.global || data.apuntes.bolillero || data.apuntes.bomba;
+   if (legacy?.texto) {
+    const hash = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(legacy.texto))),b=>b.toString(16).padStart(2,'0')).join('');
+    docs.push({ ...legacy, id: 'import-' + hash, nombre: legacy.nombre || 'Apunte importado' });
+   }
+  }
+  if (docs.some(doc => !doc || typeof doc.texto !== 'string' || typeof doc.nombre !== 'string')) throw new Error('El respaldo contiene documentos incompletos.');
+  estado.listas.push(...incoming);
+  if (!estado.listaSeleccionadaId) estado.listaSeleccionadaId = estado.listas[0]?.id || null;
+  actualizarInterfaz(); actualizarDropdownListasDuelo();
+  if (docs.length) await agregarDocumentosAColeccion(docs.filter(doc => !apuntesColeccion.some(saved => saved.id === doc.id)));
+  const stats = data.localStats || data.perfilUsuario || {};
+  for (const key of ['victorias','partidasJugadas','puntosTotales','maxRachaHistorica','totalRobos']) if (Number.isFinite(stats[key]) && stats[key]>=0) perfilUsuario[key] = Math.max(perfilUsuario[key] || 0, stats[key]);
+  guardarPerfilUsuario();
+  mostrarToast('Respaldo importado: ' + incoming.length + ' materias agregadas. Tu identidad y tus permisos se conservan.', 'exito');
+ } catch (error) { mostrarToast(error.message || 'No se pudo importar el respaldo.', 'error'); }
 }
 
 // 7. GENERACIÓN AUTOMÁTICA DIRECTA CON GEMINI FLASH (1-CLICK)
-function guardarGeminiApiKey(key) {
-    try {
-        localStorage.setItem("luibanez_gemini_api_key", (key || "").trim());
-        mostrarToast("🔑 API Key de Gemini guardada correctamente.", "exito");
-    } catch (_) {}
-}
 
-function obtenerGeminiApiKey() {
-    try {
-        return localStorage.getItem("luibanez_gemini_api_key") || "";
-    } catch (_) { return ""; }
-}
 
 async function generarTemarioConGeminiDirecto() {
-    const apiKey = obtenerGeminiApiKey();
-    if (!apiKey) {
-        mostrarToast("⚠️ Por favor ingresá y guardá tu API Key de Gemini primero.", "aviso");
-        const inp = document.getElementById("geminiDirectApiKeyInput");
-        if (inp) inp.focus();
-        return;
-    }
-
-    const statusEl = document.getElementById("geminiDirectStatus");
-    const btn = document.getElementById("geminiDirectGenerateBtn");
-
-    let textoBase = "";
-    let nombreMateria = "Materia de Estudio";
-    const apunte = apuntesEstado.global || apuntesEstado.bolillero || apuntesEstado.bomba;
-    if (apunte && apunte.texto) {
-        textoBase = apunte.texto;
-        nombreMateria = apunte.nombre || nombreMateria;
-    } else if (estado.listas.length > 0 && estado.listas[0].temas && estado.listas[0].temas.length > 0) {
-        textoBase = estado.listas[0].temas.map(t => `${t.nombre || t.titulo}: ${t.descripcion || t.guia || ""}`).join("\n");
-        nombreMateria = estado.listas[0].nombre;
-    } else {
-        textoBase = "Conceptos fundamentales universitarios de la materia: principios rectores, teoría, arquitectura y postulados clave.";
-    }
-
-    textoBase = textoBase.slice(0, 12000);
-
-    if (btn) btn.disabled = true;
-    if (statusEl) {
-        statusEl.style.display = "inline";
-        statusEl.textContent = "⏳ Consultando a Gemini Flash...";
-    }
-
-    let abortTimeout = null;
-    try {
-        const controller = new AbortController();
-        abortTimeout = setTimeout(() => controller.abort(), 18000);
-
-        const prompt = `Analizá el siguiente material académico de "${nombreMateria}" y generá exactamente 10 temas o conceptos clave para examen oral y juego de preguntas.
-Respondé ÚNICAMENTE con un array JSON válido sin texto adicional ni bloques de markdown (sin \`\`\`json).
-Cada elemento del array debe tener este formato:
-{
-  "nombre": "Título conciso del concepto",
-  "guia": "Guía breve de examen oral para desarrollar",
-  "preguntaBomba": "Pregunta de opción múltiple con 1 correcta y 3 falsas",
-  "cables": [
-    { "color": "azul", "texto": "Respuesta correcta", "correcta": true },
-    { "color": "rojo", "texto": "Respuesta incorrecta 1", "correcta": false },
-    { "color": "verde", "texto": "Respuesta incorrecta 2", "correcta": false },
-    { "color": "amarillo", "texto": "Respuesta incorrecta 3", "correcta": false }
-  ]
-}
-
-Material:
-${textoBase}`;
-
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`;
-        const res = await fetch(url, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "x-goog-api-key": apiKey
-            },
-            signal: controller.signal,
-            body: JSON.stringify({
-                contents: [{ parts: [{ text: prompt }] }],
-                generationConfig: {
-                    temperature: 0.3,
-                    responseMimeType: "application/json"
-                }
-            })
-        });
-
-        if (abortTimeout) clearTimeout(abortTimeout);
-
-        if (!res.ok) {
-            const errData = await res.json().catch(() => ({}));
-            throw new Error(errData.error?.message || `HTTP ${res.status}`);
-        }
-
-        const data = await res.json();
-        const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
-        let jsonLimpio = rawText.replace(/```json/g, "").replace(/```/g, "").trim();
-        const temasParseados = JSON.parse(jsonLimpio);
-
-        if (!Array.isArray(temasParseados) || temasParseados.length === 0) {
-            throw new Error("La IA no devolvió un array de temas.");
-        }
-
-        const nuevaLista = {
-            id: crypto.randomUUID(),
-            nombre: `${nombreMateria} (IA)`,
-            fechaCreacion: new Date().toISOString(),
-            temas: temasParseados.map((t, idx) => ({
-                id: `tema_ia_${idx}_${Date.now()}`,
-                nombre: t.nombre || `Tema ${idx + 1}`,
-                titulo: t.nombre || `Tema ${idx + 1}`,
-                descripcion: t.guia || "Desarrollá los conceptos principales.",
-                guia: t.guia || "Desarrollá los conceptos principales.",
-                preguntaBomba: t.preguntaBomba || null,
-                cables: Array.isArray(t.cables) ? t.cables : null
-            }))
-        };
-
-        estado.listas.unshift(nuevaLista);
-        estado.listaSeleccionadaId = nuevaLista.id;
-        guardarDatos();
-        actualizarInterfaz();
-        if (typeof actualizarDropdownListasDuelo === "function") {
-            actualizarDropdownListasDuelo();
-        }
-
-        mostrarToast(`🎉 ¡Generados ${nuevaLista.temas.length} temas y preguntas con IA!`, "exito");
-        if (dom.geminiPromptModal && typeof dom.geminiPromptModal.close === "function") {
-            dom.geminiPromptModal.close();
-        }
-    } catch (err) {
-        if (abortTimeout) clearTimeout(abortTimeout);
-        console.error("Error al generar con Gemini:", err);
-        const mensajeError = err.name === "AbortError" 
-            ? "La solicitud a Gemini tardó demasiado (tiempo de espera agotado)." 
-            : err.message;
-        mostrarToast(`❌ Error al consultar Gemini: ${mensajeError}`, "error");
-    } finally {
-        if (btn) btn.disabled = false;
-        if (statusEl) statusEl.style.display = "none";
-    }
+ const button = document.getElementById('geminiDirectGenerateBtn');
+ return withAuthAction(button, async () => {
+  const apunte = apuntesEstado.global || apuntesEstado.bolillero;
+  if (!apunte?.texto) throw new Error('Cargá un documento para generar un temario basado en tu material.');
+  const result = await generarPreguntaIA({ materia: apunte.nombre || 'Material de estudio', tema: 'Conceptos del documento', tipoJuego: 'temas_bolillero', contextoPDF: apunte.texto, cantidadTemas: 10 });
+  const lista = { id: crypto.randomUUID(), nombre: apunte.nombre + ' (IA)', temas: result.palabras.map(nombre => ({ id: crypto.randomUUID(), nombre, titulo: nombre, descripcion: '', guia: '' })) };
+  estado.listas.push(lista); estado.listaSeleccionadaId = lista.id; actualizarInterfaz(); actualizarDropdownListasDuelo();
+  mostrarToast('Temario generado a partir del documento.', 'exito'); dom.geminiPromptModal?.close();
+ }, mostrarToast);
 }
 
 // 8. REGISTRO DE EVENTOS DEL MÓDULO AVANZADO
@@ -27591,15 +24107,6 @@ function registrarEventosMejorasAvanzadas() {
     }
 
     // Gemini Direct API Box
-    const btnSaveKey = document.getElementById("geminiDirectSaveKeyBtn");
-    const inputKey = document.getElementById("geminiDirectApiKeyInput");
-    if (btnSaveKey && inputKey) {
-        inputKey.value = obtenerGeminiApiKey();
-        btnSaveKey.addEventListener("click", () => {
-            guardarGeminiApiKey(inputKey.value);
-        });
-    }
-
     const btnGenDirect = document.getElementById("geminiDirectGenerateBtn");
     if (btnGenDirect) {
         btnGenDirect.addEventListener("click", generarTemarioConGeminiDirecto);
@@ -27619,1861 +24126,19 @@ setTimeout(() => {
 }, 350);
 
 
-
-
 /* ==========================================================================
    MÓDULO ACADÉMICO: LICENCIATURA EN FINANZAS (UADE)
    5 Materias Calibradas con Criterio Docente Real, Simuladores & 4 Juegos
    Soporte Multi-Modelo (Modelos 1, 2, 3), Generador de Modelos IA & Reintentos
    ========================================================================== */
 
-const MATERIAS_FINANZAS = {
-    filosofia: {
-        id: "filosofia",
-        nombre: "Filosofía y Ética",
-        catedra: "Cátedra Filosofía y Ética - UADE",
-        titular: "Profesor de Cátedra (Criterio: Carpio, Platón, Aristóteles, Presocráticos)",
-        color: "#f59e0b",
-        criterioDocente: `CRITERIO DE EVALUACIÓN DE CÁTEDRA:
-- Rigor conceptual y fidelidad a las fuentes primarias (Carpio, Platón, Aristóteles, Presocráticos).
-- Exigencia estricta en ortografía, tildes diacríticas, coherencia sintáctica y cohesión textual discursiva.
-- En citas y fragmentos: detección precisa del autor y desarrollo exhaustivo de los conceptos ontológicos y gnoseológicos involucrados.
-- En análisis de casos (ej: 'la mesa blanca'): distinguir estrictamente entre sustancia primera, sustancia segunda y accidente de cualidad.
-- Escala oficial UADE: Menos de 60 pts = Desaprobado (1 a 3); 60-64 = 4; 65-69 = 5; 70-74 = 6; 75-84 = 7; 85-89 = 8; 90-94 = 9; 95-100 = 10.`,
-        conceptosClave: ["Sócrates", "Mayéutica", "Areté", "Cuidado del alma", "Platón", "Alegoría de la Caverna", "Mundo Sensible", "Mundo Inteligible", "Doxa", "Episteme", "Línea Dividida", "Aristóteles", "Hilemorfismo", "Materia y Forma", "Acto y Potencia", "Sustancia", "Accidente", "Protágoras", "Relativismo", "Gorgias", "Heráclito", "Logos", "Discordia de los opuestos"],
-        temarioPorModo: {
-            "1er_parcial": {
-                nombre: "1er Parcial",
-                unidades: "Unidades 1, 2 y 3 (Filosofía Clásica y Antigua)",
-                conceptos: ["Sócrates (Mayéutica, ironía, areté, cuidado del alma, Apología y Critón)", "Platón (Alegoría de la Caverna, Línea Dividida, Reminiscencia, Mundo Sensible vs Inteligible, Doxa vs Episteme, Mito del Carro Alado y República)", "Aristóteles (Metafísica del Ser, Sustancia Primera y Segunda, Accidente, Hilemorfismo, Acto y Potencia, Cuatro Causas, Ética a Nicómaco: Término Medio y Eudaimonía)", "Presocráticos (Heráclito: Devenir, Logos, Fuego Cósmico; Parménides: Vía de la Verdad y Ser inmutable; Milesios: Arjé)", "Sofistas (Protágoras: Homo mensura y relativismo; Gorgias: Tesis escépticas y retórica; Nomos vs Physis)"]
-            },
-            "2do_parcial": {
-                nombre: "2do Parcial",
-                unidades: "Unidades 4 y 5 (Filosofía Moderna, Gnoseología y Ética)",
-                conceptos: ["René Descartes (Racionalismo moderno, duda metódica en 3 niveles: sentidos, sueño y genio maligno, Cogito ergo sum como primera certeza, Res Cogitans, Res Infinita y Res Extensa, ideas innatas)", "David Hume (Empirismo radical, distinción entre impresiones e ideas, crítica destructiva a la idea de causalidad y conexión necesaria, hábito, creencia y costumbre psicológica)", "Immanuel Kant (Idealismo Trascendental, giro copernicano, juicios analíticos, sintéticos a posteriori y sintéticos a priori, espacio y tiempo como formas puras a priori de la sensibilidad sensible)", "Ética Deontológica de Kant (La buena voluntad como bien en sí mismo, actuar por deber vs conforme al deber, las dos fórmulas del Imperativo Categórico: ley universal y el ser humano como fin en sí mismo)", "Utilitarismo (Jeremy Bentham y John Stuart Mill, principio de mayor utilidad o felicidad para el mayor número, cálculo hedonista de placeres cualitativos vs deontología)", "Ética Aplicada a las Finanzas (Dilemas morales contemporáneos, deber fiduciario, transparencia vs asimetría de información, responsabilidad moral en el asesoramiento financiero)"]
-            },
-            "final": {
-                nombre: "Examen Final Integral",
-                unidades: "Programa Completo Integrador (Antigua, Moderna y Ética Aplicada)",
-                conceptos: ["Contraste ontológico: Platón (dualismo de dos mundos) vs Aristóteles (inmanencia de la sustancia)", "Problema del conocimiento: Racionalismo cartesiano vs Empirismo de Hume vs Síntesis kantiana", "Evolución moral: Ética de las virtudes y el término medio (Aristóteles) vs Deontología del imperativo categórico (Kant) vs Utilitarismo (Mill)", "Responsabilidad ética y transparencia en el ejercicio profesional de las finanzas y la economía"]
-            }
-        },
-        examenes: {
-            "1er_parcial": {
-                tituloModalidad: "1er Examen Parcial - Filosofía y Ética",
-                modelos: [
-                    {
-                        id: "filo_p1_m1",
-                        nombre: "Modelo 1 (Oficial Cátedra)",
-                        badge: "Examen Real",
-                        titulo: "1er Parcial · Modelo 1 (Cátedra UADE)",
-                        subtitulo: "Unidades 1, 2 y 3 (Presocráticos, Sofistas, Sócrates, Platón y Aristóteles)",
-                        duracion: "120 min · 60 pts para aprobar",
-                        consignas: [
-                            {
-                                numero: 1,
-                                puntos: 25,
-                                pregunta: `Identifique al filósofo referido en el siguiente fragmento y explique exhaustivamente los conceptos principales que contiene:
+const MATERIAS_FINANZAS = {};
+let financeLoading;
+async function loadFinance() {
+ if (!financeLoading) financeLoading = import("./modules/finance-data.mjs").then(module => Object.assign(MATERIAS_FINANZAS, module.MATERIAS_FINANZAS)).catch(error => { financeLoading = null; throw error; });
+ return financeLoading;
+}
 
-"No hago otra cosa que ir de un lado al otro persuadiéndolos a ustedes, sean jóvenes o ancianos, de no preocuparse por sus cuerpos ni por sus fortunas sin antes atender intensamente a su alma, de modo que llegue a ser perfecta; diciéndoles que no es de la fortuna la que nace la perfección, sino de la perfección que nace la fortuna y todos los demás bienes para los hombres".
-
-• Identifique al autor y la obra de referencia.
-• Desarrolle el concepto de cuidado del alma (psiché), virtud (areté) y la inversión de los valores tradicionales atenienses.
-• Explique la relación de este fragmento con el método de indagación e interpelación (ironía y mayéutica).`,
-                                placeholder: "Identifique al filósofo y desarrolle aquí su respuesta con adecuada coherencia, cohesión y ortografía..."
-                            },
-                            {
-                                numero: 2,
-                                puntos: 25,
-                                pregunta: `Lea atentamente el siguiente fragmento de República (Libro VII) en que Platón expone la Alegoría de la Caverna:
-
-"Si no me engaño, [el prisionero] necesitará acostumbrarse para ver los objetos de la región superior. Lo que más fácilmente distinguirá serán las sombras, luego las imágenes de los hombres y de los demás objetos que se reflejan en las aguas y, por último, los objetos mismos; después, elevando su mirada hacia la luz de los astros y de la luna, contemplará durante la noche las constelaciones y el firmamento más fácilmente que durante el día el sol y el resplandor del sol".
-
-• Relacione este fragmento con los grados del ser y del conocer expuestos en la Alegoría de la Línea Dividida.
-• Identifique qué elementos del pasaje corresponden al Mundo Sensible (opinión / doxa: eikasía y pístis) y cuáles al Mundo Inteligible (ciencia / episteme: diánoia y nóesis).
-• Explique cuál es el problema gnoseológico y ontológico central que Platón plantea con la liberación del prisionero.`,
-                                placeholder: "Desarrolle la correspondencia ontológica y gnoseológica de cada elemento del fragmento..."
-                            },
-                            {
-                                numero: 3,
-                                puntos: 20,
-                                pregunta: `Aristóteles y la Metafísica del Lenguaje:
-En un debate filosófico sobre la expresión cotidiana "la mesa blanca", uno de los interlocutores afirma que el término "blanca" constituye una sustancia.
-
-• ¿Es correcta o incorrecta dicha afirmación según la teoría de las categorías y la metafísica aristotélica? Justifique rigurosamente.
-• Explique la distinción ontológica fundamental entre Sustancia Primera (ousía), Sustancia Segunda y Accidente.
-• Relacione esta distinción con la Teoría Hilemórfica (materia y forma) y la explicación del cambio dinámico (pasaje del acto a la potencia).`,
-                                placeholder: "Justifique por qué 'blanca' no es una sustancia e integre los conceptos de accidente, hilemorfismo y acto/potencia..."
-                            },
-                            {
-                                numero: 4,
-                                puntos: 15,
-                                pregunta: `Sofistas vs. Filosofía Socrático-Platónica:
-Analice la célebre tesis de Protágoras: "El hombre es la medida de todas las cosas, de las que son en tanto que son, y de las que no son en tanto que no son".
-
-• Explique qué concepción de la verdad, del conocimiento y de la retórica se desprende de esta posición relativista y gnoseológica.
-• Confronte esta postura con la búsqueda socrática y platónica de definiciones universales, objetivas y esencias inmutables.
-• Aplique brevemente esta contraposición a un debate contemporáneo sobre posverdad, desinformación o fake news.`,
-                                placeholder: "Analice el homo mensura de Protágoras y confróntelo con la concepción socrático-platónica de la verdad..."
-                            },
-                            {
-                                numero: 5,
-                                puntos: 15,
-                                pregunta: `Presocráticos - Heráclito de Éfeso:
-El filósofo "censura al poeta que dice «que cese la discordia tanto entre dioses como entre hombres»; pues entonces no habría armonía, si no existieran lo agudo y lo grave; ni habría animales si no existieran hembra y macho, que son contrarios".
-
-• ¿A qué filósofo presocrático alude esta frase y qué ideas centrales de su ontología y física revela este pasaje?
-• Explique los conceptos de Devenir, Polemos (discordia/guerra como padre de todas las cosas), y el Logos como ley cósmica que rige la unidad de los opuestos.`,
-                                placeholder: "Identifique a Heráclito y desarrolle los conceptos de polemos, devenir, logos y contrarios..."
-                            }
-                        ]
-                    },
-                    {
-                        id: "filo_p1_m2",
-                        nombre: "Modelo 2 (Variante Ética y Causas)",
-                        badge: "Variante B",
-                        titulo: "1er Parcial · Modelo 2 (Ética, Metafísica y Sofística)",
-                        subtitulo: "Variante oficial complementaria: Aristóteles (Ética y Causas), Fedro y Parménides",
-                        duracion: "120 min · 60 pts para aprobar",
-                        consignas: [
-                            {
-                                numero: 1,
-                                puntos: 25,
-                                pregunta: `Aristóteles - Ética a Nicómaco y la Virtud Moral:
-Analice la siguiente definición aristotélica: "La virtud es una disposición voluntaria adquirida, que consiste en un término medio relativo a nosotros, definido por la razón y de conformidad con la conducta de un hombre prudente".
-
-• Explique la doctrina del Término Medio (mesótes) como cúspide entre dos extremos viciosos (exceso y defecto). Ejemplifique con el valor o la generosidad.
-• Distinga entre virtudes éticas (del carácter y la costumbre) y virtudes dianoéticas (de la razón práctica y teórica, como la phrónesis y la sophía).
-• ¿Por qué para Aristóteles la felicidad suprema (eudaimonía) no puede reducirse al placer sensual ni a la riqueza material?`,
-                                placeholder: "Desarrolle la doctrina del justo medio, virtudes éticas y dianoéticas, y la eudaimonía..."
-                            },
-                            {
-                                numero: 2,
-                                puntos: 25,
-                                pregunta: `Platón - El Mito del Carro Alado (Fedro) y el Alma Tripartita:
-En el Fedro, Platón describe al alma humana como una cuadriga guiada por un auriga y dos corceles, uno blanco y dócil y otro negro y rebelde.
-
-• Identifique qué representa cada uno de estos tres elementos en la psicología platónica (alma racional, irascible y concupiscible).
-• Relacione esta estructura psíquica con la organización política ideal de la República (gobernantes filósofos, guerreros guardianes y productores artesanos).
-• Explique qué es la Justicia para Platón tanto a nivel individual como en la polis.`,
-                                placeholder: "Explique la alegoría de la cuadriga, las tres partes del alma y la justicia como armonía..."
-                            },
-                            {
-                                numero: 3,
-                                puntos: 20,
-                                pregunta: `Las Cuatro Causas de Aristóteles:
-Para explicar plenamente cualquier ente o proceso natural, Aristóteles formula la teoría de las cuatro causas:
-• Defina y ejemplifique en una estatua de bronce y en un ser vivo: Causa Material, Causa Formal, Causa Eficiente (o Motriz) y Causa Final (Telos).
-• ¿Por qué sostiene Aristóteles que la Causa Final es la causa rectora y principal de la naturaleza (teleología)?`,
-                                placeholder: "Defina las 4 causas con ejemplos claros y justifique la primacía del Telos..."
-                            },
-                            {
-                                numero: 4,
-                                puntos: 15,
-                                pregunta: `Gorgias de Leontinos y la Retórica:
-En su Encomio de Helena y en Sobre el No-Ser, Gorgias postula tres tesis escépticas radicales: 1) Nada existe; 2) Si algo existiera, sería incognoscible; 3) Si fuera cognoscible, sería incomunicable.
-• Explique el significado de estas tres afirmaciones.
-• Analice por qué Gorgias concebía a la palabra y a la retórica como "un gran tirano que con un cuerpo pequeñísimo obra prodigios". Confronte con la mayéutica.`,
-                                placeholder: "Analice las tres tesis de Gorgias y el poder seductor de la palabra frente al método socrático..."
-                            },
-                            {
-                                numero: 5,
-                                puntos: 15,
-                                pregunta: `Parménides de Elea vs. Heráclito:
-En su Poema en verso, la diosa revela a Parménides la Vía de la Verdad: "El Ser es y es imposible que no sea; el No-Ser no es y no puede ser pensado ni expresado".
-• Detalle los cuatro atributos lógicos y ontológicos del Ser parmenídeo (inmóvil, eterno, indivisible y continuo).
-• Confronte radicalmente esta visión estática del ser con la física del cambio perpetuo y la discordia de Heráclito.`,
-                                placeholder: "Exponga la vía de la verdad parmenídea y confróntela con el devenir heraclíteo..."
-                            }
-                        ]
-                    },
-                    {
-                        id: "filo_p1_m3",
-                        nombre: "Modelo 3 (Simulacro Integral)",
-                        badge: "Simulacro",
-                        titulo: "1er Parcial · Modelo 3 (Simulacro de Cátedra)",
-                        subtitulo: "Variante C: Sócrates (Critón), Banquete de Platón, Hilemorfismo y Presocráticos",
-                        duracion: "120 min · 60 pts para aprobar",
-                        consignas: [
-                            {
-                                numero: 1,
-                                puntos: 25,
-                                pregunta: `Sócrates en el diálogo "Critón": Obediencia a las Leyes de la Polis:
-Cuando Critón le ofrece sobornar a los carceleros para huir de Atenas y salvar su vida, Sócrates se niega tajantemente personificando a las Leyes de Atenas.
-• ¿Cuáles son los argumentos filosóficos y morales con los que Sócrates rechaza la fuga?
-• Desarrolle el principio socrático de que "es mejor sufrir una injusticia antes que cometerla" y la noción de pacto tácito con la ciudad.`,
-                                placeholder: "Analice la personificación de las leyes en el Critón y el imperativo socrático de no devolver mal por mal..."
-                            },
-                            {
-                                numero: 2,
-                                puntos: 25,
-                                pregunta: `Platón - El Banquete y la Dialéctica del Amor (Eros):
-A través del discurso de Diotima de Mantinea, Sócrates explica la naturaleza de Eros y el ascenso dialéctico hacia la Belleza en sí.
-• ¿Por qué Eros es presentado como un dáimon (intermediario entre dioses y mortales, hijo de Poros y Penía)?
-• Describa los peldaños del ascenso amoroso: desde la belleza de un cuerpo físico hasta la Idea suprema de la Belleza en sí misma.`,
-                                placeholder: "Desarrolle el mito del nacimiento de Eros y la escala dialéctica del amor hacia la Idea suprema..."
-                            },
-                            {
-                                numero: 3,
-                                puntos: 20,
-                                pregunta: `Aristóteles - El Primer Motor Inmóvil:
-En el libro Lambda de la Metafísica, Aristóteles deduce la necesidad de un principio primero para explicar el movimiento continuo del cosmos.
-• ¿Por qué el Motor Inmóvil debe ser Acto Puro (sin nada de potencia) y carente de materia?
-• ¿De qué manera mueve al universo si él mismo no se mueve ni ejerce fuerza física (causa final / como el objeto amado mueve al amante)?`,
-                                placeholder: "Explique la deducción del Acto Puro, su naturaleza de pensamiento del pensamiento y cómo mueve como causa final..."
-                            },
-                            {
-                                numero: 4,
-                                puntos: 15,
-                                pregunta: `Los Sofistas y la distinción Nomos vs. Physis:
-Los sofistas fueron los primeros en contraponer lo que existe por naturaleza (physis) y lo que existe por convención humana o ley positiva (nomos).
-• Explique cómo fundamentaban que las normas morales y las leyes políticas son relativas y artificiales.
-• ¿Cómo respondieron Sócrates y Platón a este desafío relativista?`,
-                                placeholder: "Desarrolle la antítesis entre physis y nomos y la respuesta platónica..."
-                            },
-                            {
-                                numero: 5,
-                                puntos: 15,
-                                pregunta: `Anaximandro y el Ápeiron:
-"De donde las cosas tienen su origen, hacia allí tienen también su perecer, según la necesidad; pues se pagan mutua pena y retribución por su injusticia, según la disposición del tiempo".
-• Explique por qué Anaximandro propone como arché al Ápeiron (lo indeterminado/ilimitado) en lugar de un elemento sensible como el agua de Tales.
-• ¿Qué significa la 'injusticia' cósmica que se retribuyen los elementos contrarios?`,
-                                placeholder: "Analice el fragmento de Anaximandro, el concepto de Ápeiron y el ciclo cósmico de compensación..."
-                            }
-                        ]
-                    }
-                ]
-            },
-            "2do_parcial": {
-                tituloModalidad: "2do Examen Parcial - Filosofía y Ética",
-                modelos: [
-                    {
-                        id: "filo_p2_m1",
-                        nombre: "Modelo 1 (Descartes, Hume y Kant)",
-                        badge: "Oficial",
-                        titulo: "2do Parcial · Modelo 1 (Modernidad y Crítica)",
-                        subtitulo: "Unidades 4 y 5: Racionalismo, Empirismo, Idealismo Trascendental y Ética Kantiana",
-                        duracion: "120 min · 60 pts para aprobar",
-                        consignas: [
-                            {
-                                numero: 1,
-                                puntos: 25,
-                                pregunta: "Descartes y la Duda Metódica: Analice los tres niveles de la duda (sensorial, vigilia/sueño y genio maligno). Explique por qué el 'Cogito, ergo sum' es la primera verdad inconmovible y deduzca las tres sustancias (res cogitans, res infinita y res extensa).",
-                                placeholder: "Desarrolle el método cartesiano de la duda y el cogito..."
-                            },
-                            {
-                                numero: 2,
-                                puntos: 25,
-                                pregunta: "David Hume y la Crítica a la Causalidad: Distinga entre impresiones e ideas. Explique por qué para Hume la idea de conexión necesaria no es un principio ontológico de la realidad sino una creencia psicológica nacida del hábito y la costumbre.",
-                                placeholder: "Desarrolle la gnoseología humeana y la disolución empírica de la causalidad necesaria..."
-                            },
-                            {
-                                numero: 3,
-                                puntos: 25,
-                                pregunta: "Immanuel Kant y los Juicios Sintéticos a Priori: Explique el Giro Copernicano kantiano. Defina juicios analíticos, sintéticos a posteriori y sintéticos a priori, y explique cómo el espacio y el tiempo son formas puras de la intuición sensible.",
-                                placeholder: "Desarrolle la revolución copernicana de Kant y la fundamentación del conocimiento científico..."
-                            },
-                            {
-                                numero: 4,
-                                puntos: 25,
-                                pregunta: "Ética Deontológica vs. Utilitarismo: Exponga la ética del deber de Kant, la buena voluntad y las dos formulaciones del Imperativo Categórico. Confróntela con el utilitarismo de John Stuart Mill y aplique a un dilema financiero contemporáneo.",
-                                placeholder: "Confronte el imperativo categórico kantiano con el principio utilitarista de la mayor felicidad..."
-                            }
-                        ]
-                    }
-                ]
-            },
-            "final": {
-                tituloModalidad: "Examen Final Integral - Filosofía y Ética",
-                modelos: [
-                    {
-                        id: "filo_final_m1",
-                        nombre: "Modelo 1 (Programa Completo Integrador)",
-                        badge: "Final",
-                        titulo: "Examen Final · Modelo 1 (Antigua, Moderna y Ética Aplicada)",
-                        subtitulo: "Integración gnoseológica y moral desde los clásicos griegos hasta la modernidad",
-                        duracion: "150 min · 60 pts para aprobar",
-                        consignas: [
-                            {
-                                numero: 1,
-                                puntos: 25,
-                                pregunta: "Confronte la concepción ontológica de las Ideas en Platón (trascendencia y dos mundos) con la concepción aristotélica de la Sustancia Primera e Inmanencia formal.",
-                                placeholder: "Desarrolle la confrontación ontológica entre Platón y Aristóteles..."
-                            },
-                            {
-                                numero: 2,
-                                puntos: 25,
-                                pregunta: "El problema del origen del conocimiento: Compare detalladamente las respuestas del Racionalismo Cartesiano (ideas innatas), Empirismo de Hume (tabla rasa e impresiones) y el Idealismo Trascendental de Kant (síntesis a priori).",
-                                placeholder: "Compare las posiciones gnoseológicas de Descartes, Hume y Kant..."
-                            },
-                            {
-                                numero: 3,
-                                puntos: 25,
-                                pregunta: "Analice el paso de la Ética de las Virtudes (Aristóteles y la eudaimonía como término medio) a la Ética del Deber (Kant y el imperativo categórico).",
-                                placeholder: "Desarrolle el tránsito de la virtud como hábito prudencial al deber por respeto a la ley moral..."
-                            },
-                            {
-                                numero: 4,
-                                puntos: 25,
-                                pregunta: "Ética, Finanzas y Responsabilidad Social: Justifique desde la filosofía moral si un asesor financiero debe guiarse por la maximización del beneficio inmediato del cliente o por un código ético universal de transparencia y bienestar sistémico.",
-                                placeholder: "Articule principios deontológicos y teleológicos aplicados a la intermediación financiera..."
-                            }
-                        ]
-                    }
-                ]
-            }
-        },
-        conceptosJuegos: [
-            {
-                id: "filo_c1",
-                nombre: "Sócrates y la Mayéutica",
-                guia: "Método socrático de diálogo que busca dar a luz la verdad interior mediante preguntas, ironía y examen del alma.",
-                preguntaBomba: "¿Cuál es el propósito central del método mayéutico practicado por Sócrates?",
-                cables: [
-                    { color: "azul", texto: "Ayudar al interlocutor a parir las verdades universales latentes en su propia alma", correcta: true },
-                    { color: "rojo", texto: "Inculcar dogmáticamente doctrinas morales fijadas por las leyes de la polis", correcta: false },
-                    { color: "verde", texto: "Cobrar honorarios por enseñar técnicas de persuasión política y retórica", correcta: false },
-                    { color: "amarillo", texto: "Demostrar que no existe ninguna verdad y que todo es relativo a la cultura", correcta: false }
-                ],
-                impostorAfirmaciones: [
-                    "Sócrates afirmaba que una vida sin examen no merece la pena ser vivida.",
-                    "El método socrático comienza con la ironía reconociendo la propia ignorancia.",
-                    "Sócrates cobraba elevadas sumas a los jóvenes atenienses por enseñarles retórica sofisticada.",
-                    "Para Sócrates, la virtud es conocimiento: nadie obra mal voluntariamente sino por ignorancia."
-                ],
-                impostorCorrecta: 2,
-                memotestPar: { concepto: "Mayéutica Socrática", definicion: "Arte dialéctico de dialogar para que el interlocutor dé a luz la verdad de su alma." }
-            },
-            {
-                id: "filo_c2",
-                nombre: "Platón y la Alegoría de la Caverna",
-                guia: "Representación de la condición humana encadenada al mundo sensible y su ascenso hacia el mundo inteligible del Sol/Bien.",
-                preguntaBomba: "En la alegoría de la caverna, ¿qué representan los objetos reflejados en el exterior y el Sol?",
-                cables: [
-                    { color: "azul", texto: "Las Ideas o Formas inteligibles y la Idea suprema del Bien absoluto", correcta: true },
-                    { color: "rojo", texto: "Las sombras pasajeras proyectadas por el fuego de las apariencias sensibles", correcta: false },
-                    { color: "verde", texto: "Las leyes escritas por los tiranos para gobernar las ciudades", correcta: false },
-                    { color: "amarillo", texto: "El mundo de la conjetura, la imaginación y la creencia vulgar", correcta: false }
-                ],
-                impostorAfirmaciones: [
-                    "Los prisioneros encadenados en el fondo representan al ser humano común atrapado en la doxa.",
-                    "La liberación del prisionero simboliza el arduo camino educativo de la dialéctica filosófica.",
-                    "Para Platón, las cosas materiales y sensibles poseen mayor grado de realidad que las Ideas inmateriales.",
-                    "El Sol exterior es el principio que otorga inteligibilidad, verdad y existencia a todas las esencias."
-                ],
-                impostorCorrecta: 2,
-                memotestPar: { concepto: "Mundo Inteligible", definicion: "Reino eterno e inmutable de las Ideas platónicas, accesible sólo por la nóesis." }
-            },
-            {
-                id: "filo_c3",
-                nombre: "Aristóteles: Sustancia y Accidente",
-                guia: "La sustancia primera es el individuo concreto existente; el accidente es aquello que inhiere en la sustancia y no existe por sí mismo.",
-                preguntaBomba: "En la frase 'la mesa de roble es blanca', ¿cómo clasifica Aristóteles al término 'blanca'?",
-                cables: [
-                    { color: "azul", texto: "Como un accidente de cualidad que no puede subsistir independientemente de la sustancia", correcta: true },
-                    { color: "rojo", texto: "Como una sustancia primera que existe por derecho propio en el espacio", correcta: false },
-                    { color: "verde", texto: "Como la causa final determinante de la esencia de la mesa", correcta: false },
-                    { color: "amarillo", texto: "Como la materia prima informe e incognoscible", correcta: false }
-                ],
-                impostorAfirmaciones: [
-                    "La sustancia primera es el ente individual concreto, por ejemplo este caballo o esta mesa.",
-                    "Los accidentes son diez modos del ser que predican determinaciones de la sustancia.",
-                    "Un accidente puede existir de forma autónoma en la realidad sin necesidad de ninguna sustancia.",
-                    "La sustancia segunda refiere a las especies y géneros universales que definen la esencia."
-                ],
-                impostorCorrecta: 2,
-                memotestPar: { concepto: "Sustancia Primera (Ousía)", definicion: "El sujeto individual concreto que no se predica de ningún otro y subyace a los accidentes." }
-            },
-            {
-                id: "filo_c4",
-                nombre: "Aristóteles: Hilemorfismo y Cambio",
-                guia: "Todo ente físico está compuesto de materia (hylé) y forma (morphé); el cambio es el pasaje dinámico de la potencia al acto.",
-                preguntaBomba: "¿Cómo define Aristóteles el movimiento o cambio en su Física?",
-                cables: [
-                    { color: "azul", texto: "El acto de lo que está en potencia en tanto que está en potencia", correcta: true },
-                    { color: "rojo", texto: "Una ilusión sensorial provocada por la discordia de los átomos en el vacío", correcta: false },
-                    { color: "verde", texto: "La aniquilación total de la materia previa y la creación ex-nihilo", correcta: false },
-                    { color: "amarillo", texto: "El reposo perpetuo del Primer Motor Inmóvil", correcta: false }
-                ],
-                impostorAfirmaciones: [
-                    "La materia es el sustrato indeterminado receptor de determinaciones (lo que está en potencia).",
-                    "La forma es la estructura configuradora y esencia que hace que una cosa sea lo que es (acto).",
-                    "Una semilla es un árbol en acto y una semilla en potencia.",
-                    "El cambio accidental modifica atributos sin alterar la identidad sustancial del ente."
-                ],
-                impostorCorrecta: 2,
-                memotestPar: { concepto: "Teoría Hilemórfica", definicion: "Postulado aristotélico de que toda sustancia material es un compuesto indisoluble de materia y forma." }
-            },
-            {
-                id: "filo_c5",
-                nombre: "Heráclito y el Logos de los Opuestos",
-                guia: "El devenir constante de todas las cosas gobernado por el Logos y la tensión armónica de los contrarios (polemos).",
-                preguntaBomba: "¿Qué sostiene Heráclito de Éfeso acerca de la lucha de contrarios en la naturaleza?",
-                cables: [
-                    { color: "azul", texto: "Que el conflicto (polemos) es el padre y rey de todas las cosas y engendra la armonía del cosmos", correcta: true },
-                    { color: "rojo", texto: "Que debe suprimirse toda discordia para que impere un estatismo eterno sin cambio", correcta: false },
-                    { color: "verde", texto: "Que el cosmos es un engaño y el ser es único, inmóvil e indivisible", correcta: false },
-                    { color: "amarillo", texto: "Que los contrarios se anulan recíprocamente dejando el universo en el caos absoluto", correcta: false }
-                ],
-                impostorAfirmaciones: [
-                    "Heráclito utilizó la metáfora del río para ilustrar que todo fluye y nada permanece idéntico.",
-                    "El fuego es el símbolo y principio primordial de la transformación incesante en Heráclito.",
-                    "Para Heráclito, la discordia debe eliminarse porque destruye la verdad y el orden del universo.",
-                    "El Logos es la razón cósmica que gobierna y unifica las tensiones opuestas del devenir."
-                ],
-                impostorCorrecta: 2,
-                memotestPar: { concepto: "Logos Heraclíteo", definicion: "Ley universal y principio de inteligibilidad que unifica armónicamente los contrarios en el perpetuo devenir." }
-            }
-        ]
-    },
-
-    sfi: {
-        id: "sfi",
-        nombre: "Sistema Financiero Internacional",
-        catedra: "Cátedra Karina Díaz · Fernández Matías - DEEFI",
-        titular: "Prof. Karina Díaz",
-        color: "#10b981",
-        criterioDocente: `CRITERIO DE EVALUACIÓN DE CÁTEDRA (Prof. Karina Díaz):
-- 4 Multiple Choice iniciales de alta precisión institucional (bonos soberanos, HME, ETTI, euromercados).
-- Rigor técnico absoluto en la separación institucional entre el Departamento del Tesoro (emisor fiscal de deuda soberana cupón cero T-Bills) y la Reserva Federal (FED / FOMC, autoridad monetaria que opera sólo en mercado secundario mediante OMO).
-- Dominio de las 4 tendencias de los 90 (desregulación, globalización de capitales, titulización/securitización, innovación financiera) y la transición de bancocéntrico a orientado a mercados de capitales.
-- Precisión en clasificación de emisiones internacionales: Bonos domésticos, Bonos Extranjeros (Yankee, Samurai, Bulldog) y Eurobonos (moneda no doméstica, colocación sindicada extraterritorial).
-- Dominio de la ETTI: Expectativas puras, prima por liquidez y mercados segmentados.`,
-        conceptosClave: ["Departamento del Tesoro", "Reserva Federal (FED)", "FOMC", "T-Bills Cupón Cero", "Eurobonos", "Bonos Extranjeros", "Yankee", "ETTI", "Expectativas Puras", "Prima de Liquidez", "Segmentación de Mercados", "Mercado Eficiente (Fama)", "Forma Débil", "Forma Semifuerte", "Forma Fuerte", "Titulización", "Desregulación de los 90", "Bancocéntrico vs Mercados"],
-        temarioPorModo: {
-            "1er_parcial": {
-                nombre: "1er Parcial",
-                unidades: "Unidades 1 a 4 (Arquitectura Financiera Global, Fed, ETTI y Deuda)",
-                conceptos: ["Arquitectura del Sistema Financiero Internacional e Instituciones (FMI, Banco Mundial, BIS de Basilea)", "Reserva Federal de EE.UU. (Fed, FOMC, balance, operaciones de mercado abierto OMO, Repos y Reverse Repos, tasa target Fed Funds, tasa SOFR)", "Estructura Temporal de Tasas de Interés (ETTI, curva de rendimientos, teorías: Expectativas Puras, Prima por Liquidez, Segmentación de Mercados, inversión de la curva 10Y-2Y y recesión)", "Mercado de Dinero y Deuda Internacional (Treasuries, Eurobonos, Bonos Extranjeros: Yankee, Samurai, Bulldog; Préstamos sindicados internacionales, Plan Brady)", "Riesgo Soberano y Spread EMBI+ (JP Morgan, agencias de calificación crediticia: Moody's, S&P, Fitch, riesgo país y diferenciales de crédito)"]
-            },
-            "2do_parcial": {
-                nombre: "2do Parcial",
-                unidades: "Unidades 5 a 7 (Renta Variable Global, Derivados, Divisas y Riesgo Sistémico)",
-                conceptos: ["ADRs y GDRs (American Depositary Receipts niveles I, II, III, Rule 144A, ratio de conversión, arbitraje de precios y fondeo transfronterizo)", "Mercado de Divisas y Paridades Cambiarias (Forex, tipo de cambio Spot vs Forward, Paridad de Tasas de Interés Cubierta CIP y No Cubierta UIP, Carry Trade)", "Contratos de Derivados: Forwards vs Futuros (Estandarización, mercado OTC vs bolsas reguladas, márgenes de garantía inicial y de variación, Cámara Compensadora o Clearing House, mark-to-market)", "Opciones Financieras (Call y Put, compradores y lanzadores, valor intrínseco y valor tiempo, griegas: Delta y Vega, estrategias de cobertura: Protective Put, Covered Call, Straddle)", "Swaps Financieros (Swaps de Tasa de Interés IRS fijo por flotante contra SOFR, Currency Swaps de divisas)", "Volatilidad e Índice VIX (Cálculo del miedo de mercado sobre opciones del S&P 500)", "Regulación Bancaria Basilea III (Coeficiente de Cobertura de Liquidez LCR, Ratio de Fondeo Estable Neto NSFR, Capital Tier 1 y colchones anticíclicos)", "Crisis Financieras Internacionales (Crisis Subprime 2008, colapso de Lehman Brothers, crisis de deuda soberana europea 2010-2012 y contagio sistémico)"]
-            },
-            "final": {
-                nombre: "Examen Final Integral",
-                unidades: "Integración Total (Unidades 1 a 7)",
-                conceptos: ["Interacción entre política monetaria de la Fed, tasas globales y mercados de divisas", "Estrategias de financiamiento internacional y cobertura con derivados (futuros, opciones y swaps)", "Estabilidad financiera global, Basilea III y gestión de crisis bancarias sistémicas"]
-            }
-        },
-        examenes: {
-            "1er_parcial": {
-                tituloModalidad: "1er Examen Parcial - Sistema Financiero Internacional",
-                modelos: [
-                    {
-                        id: "sfi_p1_m1",
-                        nombre: "Modelo 1 (Oficial Karina Díaz)",
-                        badge: "Examen Real",
-                        titulo: "1er Parcial · Modelo 1 (Cátedra Karina Díaz)",
-                        subtitulo: "Unidades 1 a 4: Instituciones, FED, ETTI y Renta Fija Internacional",
-                        duracion: "120 min · 60 pts para aprobar",
-                        consignas: [
-                            {
-                                numero: 1,
-                                puntos: 20,
-                                pregunta: `BLOQUE I: Cuestionario de Opción Múltiple Institucional (4 Ítems Conceptuales Clave):
-
-1.1) ¿Qué entidad gubernamental emite los bonos soberanos a cupón cero (Treasury Bills) en el mercado estadounidense?
-[A] El Comité Federal de Mercado Abierto (FOMC)
-[B] El Departamento del Tesoro de los Estados Unidos (US Treasury)
-[C] El Banco de la Reserva Federal de Nueva York
-[D] La Comisión de Bolsa y Valores (SEC)
-
-1.2) Según la Hipótesis del Mercado Eficiente (HME) de Eugene Fama, un mercado se encuentra en su FORMA SEMIFUERTE cuando los precios de los activos reflejan:
-[A] Únicamente la serie histórica de precios y volúmenes pasados.
-[B] Toda la información disponible públicamente, incluyendo balances, dividendos, noticias y análisis macroeconómico.
-[C] Absolutamente toda la información, incluyendo la confidencial o privilegiada (insider trading).
-[D] Ningún tipo de información porque los precios siguen un camino errático irracional.
-
-1.3) Una empresa corporativa con sede central en Tailandia emite títulos de deuda denominados en dólares estadounidenses y los coloca entre inversores internacionales en Singapur y Londres. Este instrumento clasifica formalmente como:
-[A] Bono Soberano Doméstico
-[B] Eurobono (Eurodollar Bond)
-[C] Bono Yankee
-[D] Bono Samurai
-
-1.4) La Teoría de las Expectativas Puras sobre la Estructura Temporal de Tasas de Interés (ETTI) postula que:
-[A] Las tasas de largo plazo reflejan el promedio ponderado de las tasas cortas esperadas por el mercado sin requerir prima de liquidez.
-[B] Los inversores siempre exigen un rendimiento adicional compensatorio por inmovilizar capital a largo plazo.
-[C] Los mercados de corto y largo plazo están completamente desconectados por regulaciones bancarias.
-[D] La curva de rendimientos siempre debe presentar pendiente negativa.`,
-                                placeholder: "Indique sus respuestas justificadas para 1.1, 1.2, 1.3 y 1.4..."
-                            },
-                            {
-                                numero: 2,
-                                puntos: 25,
-                                pregunta: `BLOQUE II: Transformación del Sistema Financiero Internacional
-a) Desarrolle y analice en profundidad las cuatro grandes tendencias macrofinancieras que transformaron el sistema financiero global a partir de la década de 1990:
-   1. Desregulación y liberalización financiera.
-   2. Globalización e integración transfronteriza de flujos de capital.
-   3. Titulización o securitización de activos.
-   4. Innovación financiera, proliferación de derivados y banca en la sombra (shadow banking).
-
-b) Explique la transformación estructural que experimentó el sistema financiero pasando del modelo tradicional 'bancocéntrico' al modelo moderno 'orientado al mercado de capitales'.`,
-                                placeholder: "Desarrolle las 4 tendencias de los 90 y explique la transición de bancocéntrico a mercado de capitales..."
-                            },
-                            {
-                                numero: 3,
-                                puntos: 20,
-                                pregunta: `BLOQUE III: Teoría de Mercados Eficientes (HME)
-a) Defina el concepto de mercado financiero eficiente según Eugene Fama y explicite sus supuestos subyacentes.
-b) Explique las tres formas de eficiencia del mercado (Débil, Semifuerte y Fuerte). Indique para cada forma qué tipo de análisis (Técnico o Fundamental) queda invalidado.
-c) ¿Qué consecuencias prácticas tiene la validez de la forma semifuerte para los gestores de fondos de inversión (gestión activa vs. fondos indexados / gestión pasiva)?`,
-                                placeholder: "Explique la HME, las tres formas débil/semifuerte/fuerte y sus implicancias en gestión activa vs pasiva..."
-                            },
-                            {
-                                numero: 4,
-                                puntos: 15,
-                                pregunta: `BLOQUE IV: Relación Institucional FED y Departamento del Tesoro
-Analice la siguiente cuestión institucional de política monetaria y fiscal:
-¿Puede la Reserva Federal (FED) financiar de forma directa y primaria el déficit fiscal del Departamento del Tesoro de los Estados Unidos?
-
-• Responda de manera categórica indicando el marco legal vigente.
-• Explique la diferencia crucial entre el mercado primario de bonos y el mercado secundario.
-• Detalle cómo la FED interviene e impacta sobre las tasas y la liquidez a través del FOMC mediante las Operaciones de Mercado Abierto (OMO).`,
-                                placeholder: "Explique el marco legal que prohíbe el financiamiento directo de la FED al Tesoro y describa las operaciones de mercado abierto..."
-                            },
-                            {
-                                numero: 5,
-                                puntos: 20,
-                                pregunta: `BLOQUE V: Caso Práctico de Emisión Internacional y ETTI
-a) Caso de Emisión: Compare detalladamente la emisión de un Bono Extranjero (Foreign Bond) frente a un Eurobono. Considere moneda de denominación, país de colocación, jurisdicción legal, sindicato colocador y ventajas de costo regulatorio.
-b) Curva de Rendimientos (Yield Curve): Explique la Teoría de Preferencia por la Liquidez y la Teoría de Segmentación de Mercados. ¿Qué factores pueden provocar que una curva de tasas de interés se invierta y qué señal macroeconómica emite históricamente dicha inversión?`,
-                                placeholder: "Compare Eurobonos vs Bonos Extranjeros y desarrolle las teorías de la curva de tasas y su inversión..."
-                            }
-                        ]
-                    },
-                    {
-                        id: "sfi_p1_m2",
-                        nombre: "Modelo 2 (Repo, SOFR y Mercados de Deuda)",
-                        badge: "Variante B",
-                        titulo: "1er Parcial · Modelo 2 (Mercado de Dinero y Riesgo Soberano)",
-                        subtitulo: "Variante oficial B: Repos, Tasa SOFR, EMBI+, Spreads y Eurodólares",
-                        duracion: "120 min · 60 pts para aprobar",
-                        consignas: [
-                            {
-                                numero: 1,
-                                puntos: 20,
-                                pregunta: `BLOQUE I: Multiple Choice Técnico Avanzado (4 Ítems):
-1.1) En una operación de Reporto (Repo), el intermediario que vende un título con compromiso de recompra está efectuando económicamente:
-[A] Una venta definitiva de acciones sin garantía.
-[B] Un préstamo de dinero garantizado por títulos de deuda a una tasa implícita (repo rate).
-[C] Una suscripción primaria de bonos soberanos cupón cero.
-[D] Una cobertura con contratos de opciones put.
-
-1.2) ¿Por qué la tasa SOFR (Secured Overnight Financing Rate) sustituyó a la histórica tasa LIBOR en los mercados financieros globales?
-[A] Porque la LIBOR dependía de estimaciones subjetivas de bancos que sufrieron manipulación, mientras SOFR se basa en transacciones reales garantizadas con Treasuries.
-[B] Porque la LIBOR era una tasa exclusivamente en euros y SOFR en libras esterlinas.
-[C] Porque la Reserva Federal prohibió el uso de tasas de interés en préstamos interbancarios.
-[D] Ninguna es correcta.
-
-1.3) Un bono emitido en EE.UU. por una corporación británica nominado en dólares estadounidenses bajo regulación de la SEC es un:
-[A] Eurobono
-[B] Bono Yankee
-[C] Bono Samurai
-[D] Treasury Bond
-
-1.4) La Duration Modificada de un bono mide fundamentalmente:
-[A] El plazo en años que falta para el cobro del último cupón.
-[B] La sensibilidad porcentual del precio del bono ante variaciones de 1% en la Tasa Interna de Retorno (TIR).
-[C] La probabilidad matemática de quiebra del emisor.
-[D] El porcentaje de inflación devengada durante el año.`,
-                                placeholder: "Respuestas y justificación concisa para 1.1, 1.2, 1.3 y 1.4..."
-                            },
-                            {
-                                numero: 2,
-                                puntos: 25,
-                                pregunta: `BLOQUE II: El Mercado de Eurodólares y la Desregulación
-a) Explique el origen histórico del mercado de Eurodólares durante la Guerra Fría y por qué se concentró inicialmente en Londres y Zúrich.
-b) Analice el impacto de la Regulación Q en Estados Unidos (que fijaba topes a las tasas pasivas de los bancos) y los encajes obligatorios en el crecimiento explosivo de los depósitos offshore en dólares.
-c) ¿Cuáles son los riesgos de estabilidad financiera que genera un mercado internacional de dólares no regulado por la Reserva Federal?`,
-                                placeholder: "Desarrolle el origen del mercado de eurodólares, impacto de la regulación Q y riesgos sistémicos..."
-                            },
-                            {
-                                numero: 3,
-                                puntos: 25,
-                                pregunta: `BLOQUE III: Riesgo País y Spreads Soberanos (EMBI+)
-a) Defina el indicador EMBI+ (Emerging Markets Bond Index Plus) elaborado por J.P. Morgan.
-b) Explique qué es un 'Spread de Crédito' (diferencial de tasas) y por qué se toma como benchmark de referencia a la curva de rendimiento de los Bonos del Tesoro de EE.UU. (US Treasuries).
-c) Si los Treasuries a 10 años rinden 4.2% anual y el bono argentino rinde 14.5%, ¿a cuántos puntos básicos (bps) equivale el riesgo país y qué factores macroeconómicos lo determinan?`,
-                                placeholder: "Defina el EMBI+, cálculo del spread crediticio en bps y determinantes del riesgo país..."
-                            },
-                            {
-                                numero: 4,
-                                puntos: 15,
-                                pregunta: `BLOQUE IV: Estructura del FOMC y Herramientas de Política Monetaria
-• Explique la composición institucional del Comité Federal de Mercado Abierto (FOMC): los 7 Gobernadores de la Junta y los 5 Presidentes de Bancos de la Reserva Federal (con el rol permanente de Nueva York).
-• Distinga entre la Tasa de Fondos Federales (Fed Funds Rate target), la Tasa de Descuento (Discount Window) y la Tasa de Interés sobre Reservas Bancarias (IORB).`,
-                                placeholder: "Detalle la estructura del FOMC y las tres tasas operativas de la Reserva Federal..."
-                            },
-                            {
-                                numero: 5,
-                                puntos: 15,
-                                pregunta: `BLOQUE V: Convexidad y Riesgo de Tasa de Interés
-• Explique por qué la relación Precio-Rendimiento en un bono de renta fija no es lineal sino convexa.
-• ¿Por qué ante grandes variaciones en la tasa de interés la Duration por sí sola es una aproximación insuficiente que debe complementarse con la Convexidad?`,
-                                placeholder: "Explique la curvatura de convexidad y su rol protector para el tenedor del bono..."
-                            }
-                        ]
-                    }
-                ]
-            },
-            "2do_parcial": {
-                tituloModalidad: "2do Examen Parcial - Sistema Financiero Internacional",
-                modelos: [
-                    {
-                        id: "sfi_p2_m1",
-                        nombre: "Modelo 1 (Renta Variable, ADRs y Derivados)",
-                        badge: "Oficial",
-                        titulo: "2do Parcial · Modelo 1 (Renta Variable y Derivados)",
-                        subtitulo: "Unidades 5 a 7: ADRs, Futuros vs Forwards, Opciones Call/Put e Índice VIX",
-                        duracion: "120 min · 60 pts para aprobar",
-                        consignas: [
-                            {
-                                numero: 1,
-                                puntos: 25,
-                                pregunta: "Mercado de Renta Variable y ADRs: Explique el funcionamiento de los American Depositary Receipts (ADRs). Distinga los Niveles I, II y III, requisitos ante la SEC y la Ley Sarbanes-Oxley (SOX).",
-                                placeholder: "Desarrolle el mecanismo de los ADRs, niveles y regulación SOX..."
-                            },
-                            {
-                                numero: 2,
-                                puntos: 25,
-                                pregunta: "Contratos de Futuros vs. Forward: Analice las diferencias estructurales: negociación en mercados organizados vs OTC, estandarización, márgenes de garantía, mark-to-market y riesgo de contraparte con la Cámara Compensadora (Clearing House).",
-                                placeholder: "Compare en detalle contratos Futuros y Forwards..."
-                            },
-                            {
-                                numero: 3,
-                                puntos: 25,
-                                pregunta: "Mercado de Opciones Financieras: Defina contratos Call y Put. Explique las obligaciones y derechos del comprador (holder) y del vendedor (writer). Distinga entre valor intrínseco y valor tiempo, y entre opciones europeas y americanas.",
-                                placeholder: "Desarrolle el funcionamiento técnico de las opciones Call y Put y sus determinantes de valor..."
-                            },
-                            {
-                                numero: 4,
-                                puntos: 25,
-                                pregunta: "Indicadores de Mercado y Riesgo: Analice el índice VIX (indicador de volatilidad implícita del S&P 500). Explique cómo se calcula conceptualmente a partir de los precios de opciones y por qué es conocido como el 'índice del miedo'.",
-                                placeholder: "Explique la interpretación y relevancia macrofinanciera del índice VIX..."
-                            }
-                        ]
-                    }
-                ]
-            },
-            "final": {
-                tituloModalidad: "Examen Final Integrador - Sistema Financiero Internacional",
-                modelos: [
-                    {
-                        id: "sfi_final_m1",
-                        nombre: "Modelo 1 (Programa Completo de Cátedra)",
-                        badge: "Final",
-                        titulo: "Examen Final · Modelo 1 (Integrador Total)",
-                        subtitulo: "Unidades 1 a 7: Arquitectura global, política monetaria, derivados y crisis sistémicas",
-                        duracion: "150 min · 60 pts para aprobar",
-                        consignas: [
-                            {
-                                numero: 1,
-                                puntos: 25,
-                                pregunta: "Políticas Monetarias Globales y Bonos Soberanos: Analice cómo el target de la tasa de Fondos Federales de la Reserva Federal impacta en el flujo internacional de capitales hacia mercados emergentes y en la valuación de los bonos corporativos.",
-                                placeholder: "Desarrolle el mecanismo de transmisión de la tasa de la FED sobre la liquidez global..."
-                            },
-                            {
-                                numero: 2,
-                                puntos: 25,
-                                pregunta: "Duration Modificada y Convexidad: Defina ambos conceptos para la gestión del riesgo de tasa de interés en carteras de renta fija. Explique por qué la duration subestima el aumento de precio ante bajas de tasas y sobreestima la caída ante subas.",
-                                placeholder: "Explique la relación matemática y económica entre duration, convexidad y precio del bono..."
-                            },
-                            {
-                                numero: 3,
-                                puntos: 25,
-                                pregunta: "Estrategias de Cobertura con Derivados: Diseñe una estrategia de cobertura para una empresa multinacional exportadora que tiene cuentas a cobrar en Euros dentro de 90 días, utilizando futuros o puts.",
-                                placeholder: "Desarrolle la estrategia de hedging contra riesgo cambiario paso a paso..."
-                            },
-                            {
-                                numero: 4,
-                                puntos: 25,
-                                pregunta: "Crisis Financiera Internacional de 2008: Analice las fallas de mercado que la originaron (hipotecas subprime, rol de las agencias calificadoras de riesgo, securitización opaca y apalancamiento bancario).",
-                                placeholder: "Desarrolle las causas sistémicas y la transformación regulatoria posterior a 2008..."
-                            }
-                        ]
-                    }
-                ]
-            }
-        },
-        conceptosJuegos: [
-            {
-                id: "sfi_c1",
-                nombre: "Emisión de Bonos Cupón Cero (T-Bills)",
-                guia: "Los Treasury Bills son emitidos por el Departamento del Tesoro de EE.UU. a descuento, no por la Reserva Federal.",
-                preguntaBomba: "¿Qué entidad emite directamente los bonos soberanos cupón cero (T-Bills) en los Estados Unidos?",
-                cables: [
-                    { color: "azul", texto: "El Departamento del Tesoro de los Estados Unidos (US Treasury)", correcta: true },
-                    { color: "rojo", texto: "La Junta de Gobernadores de la Reserva Federal (FED)", correcta: false },
-                    { color: "verde", texto: "El Comité Federal de Mercado Abierto (FOMC)", correcta: false },
-                    { color: "amarillo", texto: "El Banco Central Europeo en acuerdo bilateral", correcta: false }
-                ],
-                impostorAfirmaciones: [
-                    "Los Treasury Bills son títulos de deuda pública emitidos a descuento con vencimiento inferior a un año.",
-                    "El emisor oficial y responsable del pago es el Departamento del Tesoro de EE.UU.",
-                    "La Reserva Federal emite T-Bills para financiar directamente el gasto corriente del Congreso.",
-                    "En el vencimiento, el Tesoro abona el valor nominal o par completo al tenedor del bono."
-                ],
-                impostorCorrecta: 2,
-                memotestPar: { concepto: "Treasury Bills (T-Bills)", definicion: "Instrumento soberano cupón cero de corto plazo emitido por el Tesoro de EE.UU." }
-            },
-            {
-                id: "sfi_c2",
-                nombre: "Hipótesis de Mercado Eficiente (HME)",
-                guia: "Eugene Fama postuló que los precios reflejan toda la información disponible en tres grados: débil, semifuerte y fuerte.",
-                preguntaBomba: "Bajo la forma semifuerte de la HME, ¿qué información está ya incorporada en los precios de las acciones?",
-                cables: [
-                    { color: "azul", texto: "Toda la información disponible públicamente, incluyendo balances, reportes y noticias", correcta: true },
-                    { color: "rojo", texto: "Únicamente la secuencia histórica de cotizaciones pasadas", correcta: false },
-                    { color: "verde", texto: "Toda la información interna y privada que manejan los directivos de la empresa", correcta: false },
-                    { color: "amarillo", texto: "Ninguna información objetiva porque los mercados son puramente emocionales", correcta: false }
-                ],
-                impostorAfirmaciones: [
-                    "En la forma débil, el análisis técnico no puede generar rendimientos anormales consistentes.",
-                    "En la forma semifuerte, los precios reaccionan casi instantáneamente a los anuncios públicos de resultados.",
-                    "En la forma semifuerte, el análisis fundamental permite batir al mercado de manera sistemática.",
-                    "En la forma fuerte, ni siquiera los inversores con información privilegiada obtienen ganancias extraordinarias."
-                ],
-                impostorCorrecta: 2,
-                memotestPar: { concepto: "Eficiencia Semifuerte", definicion: "Grado de mercado donde los precios descuentan de inmediato toda la información pública disponible." }
-            },
-            {
-                id: "sfi_c3",
-                nombre: "Clasificación de Eurobonos",
-                guia: "Títulos de deuda colocados internacionalmente denominados en una moneda distinta a la del país donde se emite.",
-                preguntaBomba: "Si una empresa argentina coloca bonos nominados en dólares en los mercados de Londres y Zúrich, ¿cómo se denomina dicho bono?",
-                cables: [
-                    { color: "azul", texto: "Eurobono (Eurodollar Bond)", correcta: true },
-                    { color: "rojo", texto: "Bono Yankee registrado localmente en la SEC", correcta: false },
-                    { color: "verde", texto: "Bono Samurai emitido en yenes japoneses", correcta: false },
-                    { color: "amarillo", texto: "Bono Soberano Doméstico con oferta pública local", correcta: false }
-                ],
-                impostorAfirmaciones: [
-                    "Los Eurobonos suelen emitirse al portador y con menores trabas regulatorias que las colocaciones domésticas.",
-                    "Un Eurobono está nominado en una divisa distinta a la moneda del mercado local de colocación.",
-                    "Un bono emitido en EE.UU. por una corporación extranjera nominado en dólares es un Eurobono.",
-                    "El sindicato colocador internacional distribuye la emisión entre inversores de múltiples jurisdicciones."
-                ],
-                impostorCorrecta: 2,
-                memotestPar: { concepto: "Eurobono", definicion: "Bono internacional emitido en una moneda diferente a la del país o mercado de su colocación." }
-            },
-            {
-                id: "sfi_c4",
-                nombre: "ETTI: Curva de Rendimientos Invertida",
-                guia: "La inversión de la curva de rendimientos (tasas cortas superiores a tasas largas) anticipa históricamente recesiones económicas.",
-                preguntaBomba: "¿Qué fenómeno macroeconómico suele anticipar una curva de rendimientos de bonos soberanos invertida?",
-                cables: [
-                    { color: "azul", texto: "Una desaceleración económica severa o recesión esperada por el mercado", correcta: true },
-                    { color: "rojo", texto: "Un auge hiperinflacionario sin precedentes con pleno empleo", correcta: false },
-                    { color: "verde", texto: "Un aumento inmediato del superávit fiscal del gobierno central", correcta: false },
-                    { color: "amarillo", texto: "La eliminación total del riesgo de crédito corporativo", correcta: false }
-                ],
-                impostorAfirmaciones: [
-                    "La curva de rendimientos normal presenta pendiente positiva por exigencia de prima por liquidez a mayor plazo.",
-                    "La Teoría de las Expectativas Puras asume que los bonos a distinto plazo son sustitutos perfectos.",
-                    "Una curva invertida significa que el mercado anticipa que los bancos centrales subirán agresivamente las tasas a futuro.",
-                    "La Teoría de Mercados Segmentados postula que la oferta y demanda fijan la tasa en cada tramo de madurez de forma aislada."
-                ],
-                impostorCorrecta: 2,
-                memotestPar: { concepto: "Curva Invertida (Yield Curve)", definicion: "Estructura de tasas donde los rendimientos de corto plazo superan a los de largo plazo, señal de recesión." }
-            },
-            {
-                id: "sfi_c5",
-                nombre: "Independencia de la FED y Operaciones OMO",
-                guia: "La FED no financia directamente al Tesoro en mercado primario; interviene en mercado secundario mediante el FOMC para fijar liquidez.",
-                preguntaBomba: "¿Cómo ejecuta el FOMC de la Reserva Federal la regulación del circulante y las tasas de corto plazo?",
-                cables: [
-                    { color: "azul", texto: "Comprando y vendiendo títulos del Tesoro en el mercado secundario mediante OMO", correcta: true },
-                    { color: "rojo", texto: "Comprando directamente la emisión primaria de bonos al Tesoro sin intermediarios", correcta: false },
-                    { color: "verde", texto: "Fijando por decreto legal los precios de las acciones en Wall Street", correcta: false },
-                    { color: "amarillo", texto: "Confiscando los depósitos en dólares de los bancos extranjeros", correcta: false }
-                ],
-                impostorAfirmaciones: [
-                    "El FOMC fija el rango objetivo para la tasa de Fondos Federales (Fed Funds Rate).",
-                    "La FED tiene prohibido constitucional y legalmente financiar directamente el déficit del Tesoro en primario.",
-                    "Cuando la FED compra títulos en el mercado secundario, absorbe liquidez y presiona las tasas al alza.",
-                    "El Libro Beige recopila la evidencia anecdótica sobre la actividad económica en los 12 distritos de la FED."
-                ],
-                impostorCorrecta: 2,
-                memotestPar: { concepto: "Operaciones de Mercado Abierto (OMO)", definicion: "Compraventa de títulos soberanos por el banco central en el mercado secundario para regular la liquidez." }
-            }
-        ]
-    },
-
-    historia: {
-        id: "historia",
-        nombre: "Historia Económica Mundial",
-        catedra: "Cátedra Prof. Andrea Picardi · DESOH",
-        titular: "Prof. Andrea Picardi",
-        color: "#3b82f6",
-        criterioDocente: `CRITERIO DE EVALUACIÓN DE CÁTEDRA (Prof. Andrea Picardi):
-- Estructura oficial del examen: 100 puntos totales distribuidos en dos bloques obligatorios:
-  • PARTE I (40 puntos): Elegir 1 de 2 grandes temas históricos estructurales. Exige desarrollo EXTENSO, PROFUNDO y MULTIDIMENSIONAL (articulando dimensiones política, económica, agraria, tecnológica, demográfica, social e institucional).
-  • PARTE II (60 puntos): 3 consignas de desarrollo analítico de 20 puntos cada una (total 100 pts).
-- Se penaliza duramente el esquematismo, respuestas breves de 3 renglones o falta de contexto histórico.
-- Dominio riguroso de autores y doctrinas de cátedra: Cameron, Marichal, David Ricardo (teoría del valor, Corn Laws, ventajas comparativas), Karl Marx (crítica de la economía política, plusvalía), Friedrich List (proteccionismo nacional de industrias nacientes), Patrón Oro clásico (ajuste de Hume) y crisis estructurales (1929, Bretton Woods, 1973).`,
-        conceptosClave: ["Transición Feudalismo-Capitalismo", "Crisis del Siglo XIV", "Debate Dobb-Sweezy-Brenner", "Revolución Agrícola", "Cercamientos (Enclosures)", "Revolución Gloriosa 1688", "Revolución Industrial Británica", "Industria Textil Algodonera", "Máquina de Vapor (Watt)", "Segunda Revolución Industrial", "Taylorismo y Fordismo", "Mercantilismo", "Metalismo", "Balanza Comercial Favorable", "Patrón Oro Internacional", "Reglas del Juego", "Mecanismo Precio-Flujo de Hume", "David Ricardo y Ventajas Comparativas", "Debate Corn Laws y Librecambio", "Karl Marx y Plusvalía", "Friedrich List y Proteccionismo", "Imperialismo Decimonónico", "Tratado de Versalles e Hiperinflación 1923", "Gran Depresión de 1929", "New Deal y Glass-Steagall", "Acuerdos de Bretton Woods 1944", "Treinta Gloriosos", "Crisis del Petróleo 1973/79 y Estanflación", "Neoliberalismo y Consenso de Washington"],
-        temarioPorModo: {
-            "1er_parcial": {
-                nombre: "1er Parcial",
-                unidades: "Unidades 1 a 4 (Del Feudalismo a la Segunda Revolución Industrial)",
-                conceptos: ["Régimen Feudal, Crisis del siglo XIV y Peste Negra de 1348 (escasez de mano de obra, suba de salarios reales y disolución de la servidumbre)", "Expansión Ultramarina y Mercantilismo (Colbertismo francés, Actas de Navegación británicas de 1651, Compañías de Indias Orientales VOC holandesa)", "Revolución de los Precios del siglo XVI (afluencia de metales preciosos americanos a España, inflación europea y teoría cuantitativa temprana)", "Primera Revolución Industrial Británica (1760-1830: Enclosures, mecanización textil algodonera, máquina de vapor de Watt, carbón mineral y sistema fabril)", "Ferrocarril e integración de mercados nacionales (industrias pesadas e inversiones de capital)", "Segunda Revolución Industrial (1870-1914: acero, química, electricidad, petróleo, gran empresa moderna de Chandler, taylorismo y fordismo, ascenso de EE.UU. y Alemania)", "Patrón Oro Clásico (1870-1914: paridades fijas, libre convertibilidad, mecanismo de flujo en especie de Hume y hegemonía de la libra esterlina)"]
-            },
-            "2do_parcial": {
-                nombre: "2do Parcial",
-                unidades: "Unidad II (Segunda Rev. Industrial, Doctrinas Económicas e Imperialismo) + Siglo XX (Guerras Mundiales, Gran Depresión, Bretton Woods, Treinta Gloriosos y Neoliberalismo)",
-                conceptos: [
-                    "Segunda Revolución Industrial (1850-1914): Avances tecnológicos (acero Bessemer/Siemens, química pesada, electricidad, petróleo, motor de combustión), profundización fabril, capitalismo monopólico-financiero (trusts, cárteles, banca mixta), inversiones y migraciones masivas",
-                    "Consolidación de la División Internacional del Trabajo: Centro industrializado (Gran Bretaña, Alemania, EE.UU.) vs Periferia agroexportadora proveedora de alimentos y materias primas",
-                    "Liberalismo Económico - David Ricardo: Teoría del valor, renta diferencial de la tierra, ley de rendimientos decrecientes, ventajas comparativas, debate y derogación de las Corn Laws de 1846 e instauración del librecambio británico",
-                    "Socialismo Científico - Karl Marx: Crítica de la economía política, teoría del valor-trabajo, plusvalía absoluta y relativa, explotación laboral y contradicciones estructurales del modo de producción capitalista",
-                    "Debate Librecambio vs Proteccionismo - Friedrich List: 'Sistema Nacional de Economía Política', crítica al cosmopolitismo ricardiano ('patear la escalera'), proteccionismo educador para industrias nacientes y Zollverein alemán",
-                    "Vigencia del Patrón Oro Clásico (1870-1914): Libre convertibilidad, paridades fijas respaldadas en metal, mecanismo de ajuste precio-flujo de especie de David Hume, hegemonía de la libra esterlina y Banco de Inglaterra",
-                    "El Imperialismo y camino a la Primera Guerra Mundial: Reparto colonial de África y Asia, búsqueda de materias primas y mercados cautivos, exportación de excedentes de capital (Hobson, Lenin) y tensiones interimperialistas",
-                    "Primera Guerra Mundial y Consecuencias Económicas de la Paz: Tratado de Versalles, crítica de Keynes, reparaciones punitivas a Alemania, deuda interaliada e hiperinflación de 1923 (Rentenmark y Plan Dawes)",
-                    "La Gran Depresión de 1929: Causas estructurales, crash bursátil de Wall Street, espiral deflacionaria, corridas bancarias en cadena, arancel proteccionista Smoot-Hawley (1930) y propagación mundial a la periferia",
-                    "El New Deal de Roosevelt: Regulación financiera y bancaria (Ley Glass-Steagall, seguro de depósitos FDIC, supervisión de la SEC), obras públicas (TVA, WPA) y políticas de estímulo a la demanda agregada",
-                    "Acuerdos de Bretton Woods (1944) y Posguerra: Conferencia monetaria (Plan Keynes vs Plan White), creación del FMI y Banco Mundial, patrón de cambio oro-dólar ($35 la onza) y Plan Marshall para la reconstrucción europea",
-                    "Los 'Treinta Gloriosos' (1945-1973): Edad de Oro del Capitalismo, concertación social capital-trabajo, consolidación del Estado de Bienestar, productividad fordista y pleno empleo en economías occidentales",
-                    "Crisis Petroleras de 1973 y 1979, Estanflación y Neoliberalismo: Ruptura unilateral de convertibilidad oro por Nixon en 1971, shocks de precios de la OPEP, crisis del paradigma keynesiano, estanflación y ascenso del Monetarismo y Neoliberalismo (Reagan, Thatcher y Consenso de Washington)"
-                ]
-            },
-            "final": {
-                nombre: "Examen Final Integral",
-                unidades: "Integración Histórica Total (Feudalismo a Globalización)",
-                conceptos: ["Comparación de regímenes monetarios: Patrón Oro clásico vs Bretton Woods vs Patrón fiduciario flotante", "Análisis estructural de grandes crisis: Peste Negra 1348, Gran Depresión 1929 y Crisis Petrolera 1973", "Transiciones tecnológicas e institucionales en el crecimiento económico moderno según Cameron y Chandler"]
-            }
-        },
-        examenes: {
-            "1er_parcial": {
-                tituloModalidad: "1er Examen Parcial - Historia Económica Mundial",
-                modelos: [
-                    {
-                        id: "hem_p1_m1",
-                        nombre: "Modelo 1 (Oficial Andrea Picardi)",
-                        badge: "Examen Real",
-                        titulo: "1er Parcial · Modelo 1 (Cátedra Andrea Picardi)",
-                        subtitulo: "100 Puntos Oficiales · Bloque I (40 pts) + Bloque II (3 de 4 de 20 pts)",
-                        duracion: "120 min · 60 pts para aprobar",
-                        consignas: [
-                            {
-                                numero: 1,
-                                puntos: 40,
-                                pregunta: `PARTE I (40 PUNTOS): TEMA ESTRUCTURAL A ELECCIÓN
-Elige y desarrolla en profundidad UNA (1) de las siguientes dos opciones con enfoque multidimensional:
-
-• OPCIÓN A: LA TRANSICIÓN DEL FEUDALISMO AL CAPITALISMO EN EUROPA OCCIDENTAL.
-1) Las características del señorío feudal y la servidumbre.
-2) El impacto demográfico y agrario de la Peste Negra y la crisis del siglo XIV.
-3) El debate historiográfico sobre los motores de la transición (Sweezy vs. Dobb y Brenner).
-4) Las monarquías absolutistas, la acumulación originaria y el trabajo libre asalariado.
-
-• OPCIÓN B: FACTORES DETERMINANTES DE LA REVOLUCIÓN INDUSTRIAL EN INGLATERRA.
-1) La Revolución Agrícola: enclosures, sistema Norfolk y liberación de mano de obra.
-2) El marco institucional post-Revolución Gloriosa de 1688 y derechos de propiedad.
-3) Ventajas geográficas: carbón de coque, hierro y canales navegables.
-4) Comercio colonial ultramarino y mercado interno británico.`,
-                                placeholder: "Indique la opción elegida (OPCIÓN A u OPCIÓN B) y desarrolle su respuesta ampliamente..."
-                            },
-                            {
-                                numero: 2,
-                                puntos: 20,
-                                pregunta: "PARTE II - CONSIGNA 1: EL MERCANTILISMO Y EL COMERCIO COLONIAL. Defina metalismo/bullionismo, balanza comercial favorable, proteccionismo, manufacturas reales y monopolios coloniales, y las críticas de David Hume y Adam Smith.",
-                                placeholder: "Desarrolle exhaustivamente los principios del mercantilismo..."
-                            },
-                            {
-                                numero: 3,
-                                puntos: 20,
-                                pregunta: "PARTE II - CONSIGNA 2: LA PRIMERA FASE DE LA REVOLUCIÓN INDUSTRIAL (1760-1840). Textil algodonero, máquina de vapor de James Watt, surgimiento del sistema fabril (factory system) y disciplina de la clase obrera.",
-                                placeholder: "Analice la primera fase de la industrialización británica..."
-                            },
-                            {
-                                numero: 4,
-                                puntos: 20,
-                                pregunta: "PARTE II - CONSIGNA 3: LA SEGUNDA FASE DE LA REVOLUCIÓN INDUSTRIAL (1870-1914). Nuevas fuentes de energía (petróleo, electricidad), acero, ferrocarril, taylorismo/fordismo y concentración corporativa (trusts y cárteles).",
-                                placeholder: "Desarrolle los sectores dinámicos, taylorismo y corporaciones..."
-                            },
-                            {
-                                numero: 5,
-                                puntos: 20,
-                                pregunta: "PARTE II - CONSIGNA 4: EL PATRÓN ORO INTERNACIONAL (1870-1914). Reglas del juego, libre convertibilidad, mecanismo de ajuste precio-flujo de Hume y rol hegemónico de la libra esterlina británica.",
-                                placeholder: "Desarrolle las reglas del patrón oro y el mecanismo de Hume..."
-                            }
-                        ]
-                    },
-                    {
-                        id: "hem_p1_m2",
-                        nombre: "Modelo 2 (Expansión Comercial y Gran Crecimiento)",
-                        badge: "Variante B",
-                        titulo: "1er Parcial · Modelo 2 (Comercio Colonial y Globalización)",
-                        subtitulo: "Variante oficial B: Revolución de los precios, VOC, división del trabajo e industrialización tardía",
-                        duracion: "120 min · 60 pts para aprobar",
-                        consignas: [
-                            {
-                                numero: 1,
-                                puntos: 40,
-                                pregunta: `PARTE I (40 PUNTOS): TEMA ESTRUCTURAL A ELECCIÓN
-Elige y desarrolla en profundidad UNA (1) de las siguientes opciones:
-
-• OPCIÓN A: LA EXPANSIÓN ULTRA-MARINA EUROPEA DEL SIGLO XVI Y LA REVOLUCIÓN DE LOS PRECIOS.
-Analice la teoría cuantitativa y la inflación provocada por la plata americana según Earl Hamilton. El traslado del eje económico del Mediterráneo al Atlántico (Amberes, Ámsterdam) y el nacimiento de las primeras Sociedades por Acciones (VOC holandesa y Compañía de las Indias Orientales inglesa).
-
-• OPCIÓN B: EL GRAN CRECIMIENTO DE 1873 A 1914 Y LA DIVISIÓN INTERNACIONAL DEL TRABAJO.
-Analice la relación asimétrica entre los países centrales industrializados (Gran Bretaña, Alemania, EE.UU.) y los países periféricos agroexportadores. El impacto del vapor, los ferrocarriles, la emigración masiva europea y las inversiones extranjeras directas.`,
-                                placeholder: "Indique la opción elegida (OPCIÓN A u OPCIÓN B) y desarrolle su análisis multidimensional..."
-                            },
-                            {
-                                numero: 2,
-                                puntos: 20,
-                                pregunta: "PARTE II - CONSIGNA 1: LA FISIOCRACIA FRENTE AL MERCANTILISMO. Explique la doctrina del 'Cuadro Económico' de François Quesnay, por qué consideraban a la agricultura como la única actividad productora de 'producto neto' y el principio del laissez-faire.",
-                                placeholder: "Desarrolle los principios de la escuela fisiócrata..."
-                            },
-                            {
-                                numero: 3,
-                                puntos: 20,
-                                pregunta: "PARTE II - CONSIGNA 2: LA INDUSTRIALIZACIÓN DE BÉLGICA Y FRANCIA. Compare el modelo belga (dotación de carbón y cercanía a Inglaterra) con la industrialización francesa (lenta transición agraria, predominio del campesinado propietario y manufacturas de lujo).",
-                                placeholder: "Compare los senderos de industrialización en Bélgica y Francia..."
-                            },
-                            {
-                                numero: 4,
-                                puntos: 20,
-                                pregunta: "PARTE II - CONSIGNA 3: LA INDUSTRIALIZACIÓN DE ALEMANIA Y EL ROL DE LA BANCA MIXTA. El impacto del Zollverein (unión aduanera de 1834), la unificación imperial de 1871 y la articulación entre grandes bancos de inversión (Grossbanken), cárteles y la industria química pesada.",
-                                placeholder: "Analice el despegue industrial alemán y el rol del crédito bancario..."
-                            },
-                            {
-                                numero: 5,
-                                puntos: 20,
-                                pregunta: "PARTE II - CONSIGNA 4: LA DEROGACIÓN DE LAS LEYES DE CEREALES (CORN LAWS) EN INGLATERRA (1846). Explique el triunfo de los industriales de Manchester frente a los terratenientes agrarios, la teoría de las ventajas comparativas de David Ricardo y el advenimiento del librecambio.",
-                                placeholder: "Analice el debate de las Corn Laws y el librecambio ricardiano..."
-                            }
-                        ]
-                    }
-                ]
-            },
-            "2do_parcial": {
-                tituloModalidad: "2do Examen Parcial - Historia Económica Mundial",
-                modelos: [
-                    {
-                        id: "hem_p2_m1",
-                        nombre: "Modelo 1 (Oficial Andrea Picardi: Unidad II + Siglo XX)",
-                        badge: "Examen Real",
-                        titulo: "2do Parcial · Modelo 1 (Cátedra Andrea Picardi)",
-                        subtitulo: "100 Puntos Oficiales · Bloque I (40 pts) + Bloque II (3 consignas de 20 pts)",
-                        duracion: "120 min · 60 pts para aprobar",
-                        consignas: [
-                            {
-                                numero: 1,
-                                puntos: 40,
-                                pregunta: `PARTE I (40 PUNTOS): TEMA ESTRUCTURAL A ELECCIÓN
-Elige y desarrolla en profundidad UNA (1) de las siguientes dos opciones con enfoque multidimensional (articulando dimensiones política, económica, agraria, tecnológica, demográfica, social e institucional):
-
-• OPCIÓN A: LA SEGUNDA REVOLUCIÓN INDUSTRIAL (1850-1914), EL CAPITALISMO CORPORATIVO Y EL IMPERIALISMO.
-1) Los sectores dinámicos y matrices energéticas (acero Bessemer/Siemens, química pesada, electricidad, petróleo y motor de combustión interna) frente a la Primera Revolución Industrial.
-2) La gran empresa moderna y la concentración empresarial: cárteles en Alemania, trusts en EE.UU. y el rol articulador de la banca mixta de inversión (Grossbanken).
-3) El afianzamiento de la División Internacional del Trabajo: flujos de capital británicos, migraciones masivas europeas y el rol de las economías periféricas proveedoras de materias primas.
-4) Las teorías del Imperialismo (Hobson, Lenin) y el reparto colonial de África y Asia como válvula de escape a los excedentes de producción y capital, antesala de la Primera Guerra Mundial.
-
-• OPCIÓN B: LA GRAN DEPRESIÓN DE 1929 Y LA RUPTURA DEL MODELO LIBERAL DE ENTREGUERRAS.
-1) Las causas estructurales en la economía norteamericana: sobreproducción industrial y agrícola, endeudamiento, especulación bursátil a crédito y fragilidad bancaria.
-2) La dinámica de la crisis: el Crack de Wall Street de octubre de 1929, la espiral deflacionaria, las quiebras bancarias en cadena y la contracción de la oferta monetaria.
-3) Los mecanismos de propagación internacional: corte del crédito externo estadounidense, colapso del comercio mundial y el arancel proteccionista Smoot-Hawley de 1930.
-4) La respuesta del New Deal de Roosevelt: regulación financiera (Ley Glass-Steagall, seguro FDIC, SEC), programas de empleo y obras públicas (TVA, WPA) y el cambio en la doctrina de intervención estatal.`,
-                                placeholder: "Indique la opción elegida (OPCIÓN A u OPCIÓN B) y desarrolle su análisis multidimensional exhaustivo..."
-                            },
-                            {
-                                numero: 2,
-                                puntos: 20,
-                                pregunta: "PARTE II - CONSIGNA 1: DEBATES DOCTRINARIOS DEL SIGLO XIX: LIBERALISMO RICARDIANO Y CRÍTICA MARXISTA. Confronte detalladamente: a) La teoría ricardiana de las ventajas comparativas, la renta diferencial de la tierra y la derogación de las Corn Laws de 1846 en Inglaterra; b) La crítica de Karl Marx a la economía política clásica: el concepto de plusvalía (absoluta y relativa), la explotación laboral y las contradicciones estructurales de la acumulación capitalista.",
-                                placeholder: "Confronte a David Ricardo (Corn Laws, ventajas comparativas) y Karl Marx (plusvalía, contradicciones del capital)..."
-                            },
-                            {
-                                numero: 3,
-                                puntos: 20,
-                                pregunta: "PARTE II - CONSIGNA 2: EL PATRÓN ORO CLÁSICO (1870-1914) Y EL COLAPSO MONETARIO DE ENTREGUERRAS. Explique los tres pilares del Patrón Oro Clásico (paridades fijas, convertibilidad y libre flujo de metal) y el mecanismo de ajuste precio-flujo de David Hume. Luego detalle por qué se quebró en 1914 con la Primera Guerra Mundial y cómo las reparaciones del Tratado de Versalles desembocaron en la hiperinflación alemana de 1923 (analice el papel del Rentenmark y el Plan Dawes).",
-                                placeholder: "Desarrolle el funcionamiento del patrón oro, el mecanismo de Hume y la hiperinflación alemana de 1923..."
-                            },
-                            {
-                                numero: 4,
-                                puntos: 20,
-                                pregunta: "PARTE II - CONSIGNA 3: LOS ACUERDOS DE BRETTON WOODS (1944) Y LA CRISIS DE LOS AÑOS SETENTA. Analice el orden monetario internacional acordado en Bretton Woods (FMI, Banco Mundial, patrón de cambio oro-dólar a USD 35 la onza) y el auge de los 'Treinta Gloriosos' (1945-1973). Luego explique las causas estructurales de su colapso: el fin unilateral de la convertibilidad oro por Richard Nixon en 1971, los shocks petroleros de la OPEP (1973/79) y el fenómeno inédito de la estanflación.",
-                                placeholder: "Analice la arquitectura de Bretton Woods, los Treinta Gloriosos y la ruptura estanflacionaria de los 70..."
-                            }
-                        ]
-                    },
-                    {
-                        id: "hem_p2_m2",
-                        nombre: "Modelo 2 (Cátedra Andrea Picardi: Proteccionismo, Guerras y Posguerra)",
-                        badge: "Variante B",
-                        titulo: "2do Parcial · Modelo 2 (Cátedra Andrea Picardi)",
-                        subtitulo: "100 Puntos Oficiales · Bloque I (40 pts) + Bloque II (3 consignas de 20 pts)",
-                        duracion: "120 min · 60 pts para aprobar",
-                        consignas: [
-                            {
-                                numero: 1,
-                                puntos: 40,
-                                pregunta: `PARTE I (40 PUNTOS): TEMA ESTRUCTURAL A ELECCIÓN
-Elige y desarrolla en profundidad UNA (1) de las siguientes dos opciones con articulación multidimensional:
-
-• OPCIÓN A: REGÍMENES MONETARIOS Y COMERCIO GLOBAL: DEL PATRÓN ORO CLÁSICO A BRETTON WOODS.
-1) El Patrón Oro Internacional (1870-1914): el rol de la City de Londres y la libra esterlina como ancla, disciplina monetaria y mecanismo de Hume.
-2) El desorden monetario de entreguerras: abandono de la convertibilidad en la Gran Guerra, hiperinflación alemana de 1923, devaluaciones competitivas y bloques comerciales cerrados.
-3) Los acuerdos de Bretton Woods de 1944: el debate Keynes (Bancor) vs White (Dólar), paridades fijas ajustables con el dólar vinculado al oro ($35/oz), FMI y Banco Mundial.
-4) La crisis y disolución del régimen en 1971: el Dilema de Triffin, la expansión de los eurodólares, la sangría de reservas estadounidenses y el fin de la convertibilidad decretado por Nixon.
-
-• OPCIÓN B: EL ROL DEL ESTADO EN LA ECONOMÍA MUNDIAL: DE LA SEGUNDA INDUSTRIALIZACIÓN AL ESTADO DE BIENESTAR Y EL NEOLIBERALISMO.
-1) El capitalismo corporativo y el estado en la Segunda Revolución Industrial: proteccionismo arancelario (Friedrich List en Alemania, aranceles en EE.UU.), compras estatales, ferrocarriles y leyes antimonopolio (Sherman Act de 1890).
-2) El quiebre del liberalismo tras el Crack del 29: el intervencionismo estatal del New Deal (Roosevelt) y la justificación keynesiana del sostenimiento de la demanda efectiva.
-3) La consolidación del Estado de Bienestar en los 'Treinta Gloriosos' (1945-1973): pacto social capital-trabajo, servicios públicos universales y pleno empleo.
-4) La crisis fiscal y la ofensiva neoliberal (décadas de 1970 y 1980): estanflación, agotamiento del modelo fordista, desregulación financiera, privatizaciones y el Consenso de Washington.`,
-                                placeholder: "Indique la opción elegida (OPCIÓN A u OPCIÓN B) y desarrolle su análisis multidimensional..."
-                            },
-                            {
-                                numero: 2,
-                                puntos: 20,
-                                pregunta: "PARTE II - CONSIGNA 1: FRIEDRICH LIST Y EL PROTECCIONISMO DE INDUSTRIAS NACIENTES. Analice los postulados centrales de Friedrich List en su 'Sistema Nacional de Economía Política' (1841). Explique por qué criticaba el librecambio ricardiano acusándolo de 'patear la escalera', cuál era su doctrina sobre la protección arancelaria transitoria a las industrias nacientes y cómo influyeron sus ideas en el Zollverein y el despegue manufacturero de Alemania.",
-                                placeholder: "Desarrolle la doctrina de Friedrich List, la crítica al librecambio y el Zollverein..."
-                            },
-                            {
-                                numero: 3,
-                                puntos: 20,
-                                pregunta: "PARTE II - CONSIGNA 2: LA CRISIS DE 1929: TRANSMISIÓN INTERNACIONAL Y REPERCUSIONES EN AMÉRICA LATINA. Analice los canales de transmisión del colapso económico de 1929 hacia los países exportadores de materias primas y alimentos (periferia agroexportadora). Explique el desplome de los términos de intercambio, el cese de los flujos de crédito exterior, la cesación de pagos de la deuda soberana y el surgimiento del modelo de Industrialización por Sustitución de Importaciones (ISI).",
-                                placeholder: "Analice la transmisión global de la crisis de 1929 y el surgimiento del modelo ISI en América Latina..."
-                            },
-                            {
-                                numero: 4,
-                                puntos: 20,
-                                pregunta: "PARTE II - CONSIGNA 3: EL PLAN MARSHALL Y LA EDAD DE ORO DEL CAPITALISMO (1945-1973). Analice los objetivos geopolíticos y económicos del Plan Marshall (1948) para la reconstrucción de Europa Occidental y la contención en el marco de la Guerra Fría. Luego describa los pilares productivos e institucionales de los 'Treinta Gloriosos': organización científica del trabajo (taylorismo y fordismo masivo), aumentos salariales indexados a la productividad y expansión de los derechos sociales.",
-                                placeholder: "Desarrolle el Plan Marshall, la reconstrucción europea y el modelo socio-productivo de los Treinta Gloriosos..."
-                            }
-                        ]
-                    }
-                ]
-            },
-            "final": {
-                tituloModalidad: "Examen Final Integrador - Historia Económica Mundial",
-                modelos: [
-                    {
-                        id: "hem_final_m1",
-                        nombre: "Modelo 1 (Evolución Integral del Capitalismo)",
-                        badge: "Final",
-                        titulo: "Examen Final · Modelo 1 (Feudalismo a Crisis Globales)",
-                        subtitulo: "Integración histórica total: regímenes monetarios, revoluciones y crisis según Cameron y Marichal",
-                        duracion: "150 min · 60 pts para aprobar",
-                        consignas: [
-                            {
-                                numero: 1,
-                                puntos: 35,
-                                pregunta: "Revoluciones Industriales Comparadas: Compare la Primera Revolución Industrial británica y la Segunda Revolución Industrial alemana/norteamericana.",
-                                placeholder: "Compare tecnologías, energías, empresas y sociedad..."
-                            },
-                            {
-                                numero: 2,
-                                puntos: 35,
-                                pregunta: "Sistemas Monetarios en Perspectiva Histórica: Patrón Oro Clásico (1870-1914), Entreguerras y Patrón Bretton Woods (1944-1971).",
-                                placeholder: "Trace la evolución de los regímenes monetarios globales..."
-                            },
-                            {
-                                numero: 3,
-                                puntos: 30,
-                                pregunta: "Las Grandes Crisis Financieras según Carlos Marichal: Confronte el Crack del 29 y la Crisis Subprime de 2008 en sus regularidades estructurales.",
-                                placeholder: "Analice los patrones comunes de las crisis financieras según Marichal..."
-                            }
-                        ]
-                    }
-                ]
-            }
-        },
-        conceptosJuegos: [
-            {
-                id: "hem_c1",
-                nombre: "Mercantilismo y Bullionismo",
-                guia: "Doctrina económica que identificaba la riqueza de una nación con la acumulación de metales preciosos (oro y plata).",
-                preguntaBomba: "¿Cuál era la meta principal de la política comercial mercantilista de los siglos XVII y XVIII?",
-                cables: [
-                    { color: "azul", texto: "Lograr una balanza comercial favorable maximizando exportaciones y restringiendo importaciones", correcta: true },
-                    { color: "rojo", texto: "Establecer el libre comercio internacional eliminando todo arancel y monopolio", correcta: false },
-                    { color: "verde", texto: "Promover la desindustrialización para volver exclusivamente a la producción agraria", correcta: false },
-                    { color: "amarillo", texto: "Distribuir equitativamente los metales preciosos entre todas las naciones europeas", correcta: false }
-                ],
-                impostorAfirmaciones: [
-                    "El metalismo o bullionismo consideraba al oro y la plata como la forma suprema de riqueza estatal.",
-                    "Las Actas de Navegación inglesas fueron un ejemplo paradigmático de legislación proteccionista mercantilista.",
-                    "El mercantilismo defendía la libre competencia irrestricta y el cese de los monopolios coloniales reales.",
-                    "Fisiócratas como François Quesnay criticaron al mercantilismo señalando que sólo la tierra genera producto neto."
-                ],
-                impostorCorrecta: 2,
-                memotestPar: { concepto: "Balanza Comercial Favorable", definicion: "Principio mercantilista de exportar bienes de alto valor e importar lo mínimo para acumular metales." }
-            },
-            {
-                id: "hem_c2",
-                nombre: "Revolución Agrícola y Enclosures",
-                guia: "Proceso de cercamiento de tierras comunales en Inglaterra que privatizó el agro y expulsó campesinos hacia las fábricas urbanas.",
-                preguntaBomba: "¿Qué consecuencia social y demográfica decisiva tuvieron las Leyes de Cercamiento (Enclosure Acts) en Inglaterra?",
-                cables: [
-                    { color: "azul", texto: "Expulsaron a campesinos desposeídos creando la mano de obra proletaria urbana para las fábricas", correcta: true },
-                    { color: "rojo", texto: "Restablecieron los lazos feudales y la servidumbre perpetua de la gleba", correcta: false },
-                    { color: "verde", texto: "Provocaron la desaparición absoluta de la propiedad privada de la tierra", correcta: false },
-                    { color: "amarillo", texto: "Frenaron la introducción de innovaciones técnicas como el sistema Norfolk", correcta: false }
-                ],
-                impostorAfirmaciones: [
-                    "El sistema Norfolk eliminó el barbecho mediante la rotación cuatrienal de cultivos.",
-                    "Los cercamientos permitieron aplicar inversiones de capital y mejorar los rindes agrícolas.",
-                    "Las leyes de cercamiento beneficiaron principalmente a los pequeños campesinos comuneros sin títulos formales.",
-                    "El aumento de la productividad agrícola permitió alimentar a una población urbana creciente no dedicada al campo."
-                ],
-                impostorCorrecta: 2,
-                memotestPar: { concepto: "Leyes de Cercamiento (Enclosures)", definicion: "Privatización de tierras comunales que convirtió al campesinado en proletariado fabril asalariado." }
-            },
-            {
-                id: "hem_c3",
-                nombre: "Primera Revolución Industrial: Textil y Vapor",
-                guia: "La industria textil algodonera en Lancashire y la máquina de vapor de James Watt lideraron la primera ola industrializadora.",
-                preguntaBomba: "¿Cuál fue el sector industrial líder (de punta) durante la Primera Revolución Industrial británica?",
-                cables: [
-                    { color: "azul", texto: "La industria textil manufacturera del algodón", correcta: true },
-                    { color: "rojo", texto: "La industria petroquímica y de refinación de plásticos", correcta: false },
-                    { color: "verde", texto: "La fabricación masiva de automóviles a combustión interna", correcta: false },
-                    { color: "amarillo", texto: "La industria aeroespacial y de telecomunicaciones satelitales", correcta: false }
-                ],
-                impostorAfirmaciones: [
-                    "La máquina de vapor perfeccionada por James Watt independizó a las fábricas de los ríos.",
-                    "El carbón mineral (coque) reemplazó a la leña vegetal como combustible clave de la fundición de hierro.",
-                    "La primera revolución industrial se caracterizó por la robótica automatizada y la electricidad.",
-                    "El factory system impuso una rígida disciplina laboral basada en el control del tiempo por reloj."
-                ],
-                impostorCorrecta: 2,
-                memotestPar: { concepto: "Sector Algodonero de Punta", definicion: "Primer rubro industrial mecanizado a gran escala que motorizó las exportaciones británicas." }
-            },
-            {
-                id: "hem_c4",
-                nombre: "Segunda Revolución Industrial y Taylorismo",
-                guia: "Nuevas energías (petróleo y electricidad), acero, química y organización científica del trabajo con cronómetro y línea de montaje.",
-                preguntaBomba: "¿Cuál es el núcleo central del sistema de organización del trabajo formulado por Frederick Taylor?",
-                cables: [
-                    { color: "azul", texto: "La descomposición de tareas en movimientos mínimos cronometrados eliminando tiempos muertos", correcta: true },
-                    { color: "rojo", texto: "Permitir que cada obrero decida libremente su propio ritmo y herramientas de producción", correcta: false },
-                    { color: "verde", texto: "El retorno a los gremios artesanales medievales con aprendizaje prolongado", correcta: false },
-                    { color: "amarillo", texto: "La prohibición absoluta de la maquinaria en los talleres siderúrgicos", correcta: false }
-                ],
-                impostorAfirmaciones: [
-                    "Henry Ford añadió al taylorismo la cinta transportadora mecánica móvil en la producción del Modelo T.",
-                    "En la segunda revolución industrial, el acero sustituyó al hierro dulce en rieles y estructuras.",
-                    "El taylorismo promovía que los obreros organizaran colectivamente la dirección técnica de la empresa.",
-                    "Alemania y los Estados Unidos superaron a Gran Bretaña en los sectores químicos y eléctricos modernos."
-                ],
-                impostorCorrecta: 2,
-                memotestPar: { concepto: "Taylorismo", definicion: "Estudio científico de tiempos y movimientos para maximizar la productividad y disciplina obrera." }
-            },
-            {
-                id: "hem_c5",
-                nombre: "Patrón Oro y Ajuste de Hume",
-                guia: "Mecanismo automático precio-flujo de oro donde el déficit de pagos drenaba metal, bajaba precios y restablecía el equilibrio.",
-                preguntaBomba: "Según el mecanismo de ajuste precio-flujo de David Hume, ¿qué ocurría cuando un país sufría déficit comercial?",
-                cables: [
-                    { color: "azul", texto: "Salía oro del país, reduciendo la masa monetaria y haciendo bajar los precios internos hasta volverlos competitivos", correcta: true },
-                    { color: "rojo", texto: "El Banco de Inglaterra le regalaba libras esterlinas a fondo perdido para tapar el déficit", correcta: false },
-                    { color: "verde", texto: "El gobierno devaluaba su moneda por decreto rompiendo la paridad fija con el oro", correcta: false },
-                    { color: "amarillo", texto: "Se prohibía la venta de bienes al exterior por cinco años consecutivos", correcta: false }
-                ],
-                impostorAfirmaciones: [
-                    "Bajo el Patrón Oro, cada unidad monetaria nacional tenía una paridad legal fija e inmutable en peso de oro.",
-                    "Los bancos centrales debían asegurar la libre convertibilidad de sus billetes en monedas o barras de oro.",
-                    "En el Patrón Oro, los bancos centrales aplicaban libremente controles de cambios y cepos monetarios.",
-                    "La libra esterlina británica actuaba como la principal moneda de liquidación y reserva internacional."
-                ],
-                impostorCorrecta: 2,
-                memotestPar: { concepto: "Ajuste Precio-Flujo en Especie", definicion: "Teoría de David Hume que explica cómo el flujo de oro reequilibra automáticamente la balanza de pagos." }
-            }
-        ]
-    },
-
-    estadistica: {
-        id: "estadistica",
-        nombre: "Estadística 1",
-        catedra: "Cátedra Estadística 1 - UADE",
-        titular: "Cátedra de Métodos Cuantitativos UADE",
-        color: "#8b5cf6",
-        criterioDocente: `CRITERIO DE EVALUACIÓN DE CÁTEDRA (UADE Estadística 1):
-- EXIGENCIA METODOLÓGICA ABSOLUTA: Todo resultado numérico debe estar respaldado por su fórmula explícita y desarrollo paso a paso. Cálculos sin procedimiento o respuestas sueltas se anulan con 0 puntos.
-- Problema 1: Probabilidad en tablas de contingencia 2x2. Distinguir rigurosamente entre:
-  • Probabilidad conjunta P(A ∩ B)
-  • Probabilidad condicional P(A | B) = P(A ∩ B) / P(B)
-  • Verificación FORMAL de Independencia Estadística: P(A | B) = P(A) o P(A ∩ B) = P(A) * P(B).
-  • Regla de la adición P(A ∪ B) = P(A) + P(B) - P(A ∩ B).
-  • Muestreo sin reposición (hipergeométrico).
-- Problema 2: Datos agrupados en intervalos: Media x̄, S², S, Coeficiente de Variación CV = S / x̄ (homogeneidad ≤ 25%), Percentiles por interpolación y Moda modal.
-- Escala oficial UADE: Menos de 60 = 1 a 3; 60 = 4; 70 = 5; 80 = 6; 85 = 7; 90 = 8; 95 = 9; 100 = 10.`,
-        conceptosClave: ["Tabla de Contingencia 2x2", "Probabilidad Conjunta", "Probabilidad Condicional", "Independencia Estadística", "Regla de Adición", "Muestreo Sin Reposición", "Datos Agrupados en Intervalos", "Marca de Clase (xi)", "Media Aritmética", "Varianza Muestral", "Desvío Estándar", "Coeficiente de Variación (CV)", "Homogeneidad", "Percentil 85", "Moda Modal"],
-        temarioPorModo: {
-            "1er_parcial": {
-                nombre: "1er Parcial",
-                unidades: "Unidades 1 a 3 (Estadística Descriptiva y Probabilidad Básica)",
-                conceptos: ["Distribución de frecuencias para datos agrupados en intervalos (amplitud, marca de clase, frecuencias relativas y acumuladas)", "Medidas de posición central (Media aritmética muestral y ponderada, Mediana por interpolación de clases, Moda)", "Medidas de dispersión y forma (Varianza muestral s² y poblacional σ², Desvío estándar, Coeficiente de variación CV)", "Espacio muestral, eventos y axiomas de probabilidad de Kolmogorov", "Regla de la Adición de probabilidades: P(A ∪ B) = P(A) + P(B) - P(A ∩ B)", "Probabilidad Condicional: P(A | B) = P(A ∩ B) / P(B)", "Regla de la Multiplicación y Tablas de contingencia 2x2", "Prueba formal de Independencia Estadística de sucesos (P(A ∩ B) = P(A)·P(B) o P(A|B) = P(A))"]
-            },
-            "2do_parcial": {
-                nombre: "2do Parcial",
-                unidades: "Unidades 4 a 6 (Teorema de Bayes, Variables Aleatorias y Distribuciones Teóricas)",
-                conceptos: ["Teorema de la Probabilidad Total y Teorema de Bayes (Cálculo de probabilidades a posteriori ante pruebas diagnósticas, auditorías o tests de crédito)", "Variable Aleatoria Discreta (Función de cuantía p(x), función de distribución acumulada F(x), Esperanza Matemática E(X) = μ y Varianza Var(X) = σ²)", "Distribución Binomial (Proceso de Bernoulli, parámetros n y p, supuestos de independencia, cálculo de probabilidades P(X=k), media n·p y varianza n·p·(1-p))", "Distribución de Poisson (Tasa media de ocurrencia λ en intervalos de tiempo o espacio, cálculo de probabilidades P(X=k) = (e^-λ · λ^k) / k!, media y varianza λ)", "Aproximación de Poisson a la Binomial (condiciones: n grande, p pequeño)", "Variable Aleatoria Continua (Función de densidad f(x) y función de distribución F(x))", "Distribución Normal o Gaussiana (Parámetros μ y σ, propiedades de simetría, campana de Gauss)", "Estandarización de la variable Normal (Z = (X - μ) / σ) y lectura de tabla normal estándar para áreas acumuladas", "Problemas de percentiles y cálculo inverso en distribución normal (hallar el valor crítico X para una probabilidad acumulada)"]
-            },
-            "final": {
-                nombre: "Examen Final Integral",
-                unidades: "Integración Metodológica Total",
-                conceptos: ["Articulación completa de estadística descriptiva de datos con inferencia y probabilidad", "Aplicación de Teorema de Bayes a árboles de decisión financiera", "Distribución Normal, aproximación de distribuciones y Teorema Central del Límite (comportamiento de la media muestral X̄)"]
-            }
-        },
-        examenes: {
-            "1er_parcial": {
-                tituloModalidad: "1er Examen Parcial - Estadística 1",
-                modelos: [
-                    {
-                        id: "estad_p1_m1",
-                        nombre: "Modelo 1 (Oficial UADE Retail)",
-                        badge: "Examen Real",
-                        titulo: "1er Parcial · Modelo 1 (Retail & Call Center)",
-                        subtitulo: "Examen real de cátedra: Probabilidades 2x2 y 400 llamadas en intervalos",
-                        duracion: "120 min · Procedimiento paso a paso obligatorio",
-                        consignas: [
-                            {
-                                numero: 1,
-                                puntos: 50,
-                                pregunta: `PROBLEMA 1: ANÁLISIS DE VENTAS EN RETAIL Y PROBABILIDADES (50 Puntos)
-Un hipermercado realizó un estudio cuantitativo sobre una muestra de 500 clientes según su forma de pago y el volumen de compra:
-• 200 clientes pagaron con Tarjeta de Crédito (TC) y 300 con Débito/Efectivo (DE).
-• Del total de 500 clientes, 150 realizaron compras mayores a $50.000 (M).
-• De los 200 clientes que pagaron con Tarjeta de Crédito, 90 realizaron compras mayores a $50.000.
-
-Construya mentalmente la tabla 2x2 y responda desarrollando fórmula y cálculo exacto:
-a) (10 pts) Calcule la probabilidad conjunta: P(M ∩ TC).
-b) (10 pts) Calcule la probabilidad condicional: P(M | TC).
-c) (10 pts) Demuestre formalmente si los sucesos M y TC son INDEPENDIENTES verificando P(M | TC) = P(M).
-d) (10 pts) Calcule la probabilidad de la unión: P(M ∪ TC).
-e) (10 pts) Si se eligen al azar 3 clientes SIN REPOSICIÓN, calcule la probabilidad de que los 3 hayan pagado con Tarjeta de Crédito.`,
-                                placeholder: "Detalle paso a paso: a) P(M ∩ TC), b) P(M | TC), c) Prueba formal, d) P(M ∪ TC), e) Sin reposición..."
-                            },
-                            {
-                                numero: 2,
-                                puntos: 50,
-                                pregunta: `PROBLEMA 2: CALL CENTER Y DATOS AGRUPADOS EN INTERVALOS (50 Puntos)
-Muestra de n = 400 llamadas en un centro de reclamos financieros:
-
-| Intervalo de Duración (min) | Frecuencia (fi) |
-| :--- | :--- |
-| [0 - 4) | 60 |
-| [4 - 8) | 140 |
-| [8 - 12) | 120 |
-| [12 - 16) | 60 |
-| [16 - 20] | 20 |
-| **Total (n)** | **400** |
-
-Desarrolle con fórmulas de cátedra:
-a) (10 pts) Media Aritmética (x̄) indicando marcas de clase (xi).
-b) (10 pts) Varianza (S²), Desvío Estándar (S) y Coeficiente de Variación (CV = S / x̄). Diagnostique si la muestra es HOMOGÉNEA (CV ≤ 25%).
-c) (10 pts) Percentil 85 (P85) indicando intervalo, Fi-1 y fórmula de interpolación. Interprete el resultado en minutos.
-d) (10 pts) Moda (Mo) mediante la fórmula modal para datos agrupados.
-e) (10 pts) ¿Qué porcentaje exacto de llamadas superó los 12 minutos de duración?`,
-                                placeholder: "Detalle fórmulas y desarrollos: a) x̄, b) S y CV (homogeneidad), c) P85 con interpolación, d) Moda, e) % > 12 min..."
-                            }
-                        ]
-                    },
-                    {
-                        id: "estad_p1_m2",
-                        nombre: "Modelo 2 (Variante Créditos Bancarios)",
-                        badge: "Variante B",
-                        titulo: "1er Parcial · Modelo 2 (Créditos & Montos de Préstamos)",
-                        subtitulo: "Variante complementaria: Probabilidades crediticias y datos agrupados de préstamos",
-                        duracion: "120 min · Procedimiento obligatorio",
-                        consignas: [
-                            {
-                                numero: 1,
-                                puntos: 50,
-                                pregunta: `PROBLEMA 1: SOLICITUDES DE CRÉDITO Y PROBABILIDADES (50 Puntos)
-Un banco digital analizó 600 solicitudes crediticias recibidas en el mes:
-• 240 solicitudes fueron de Monotributistas (M) y 360 de empleados en Relación de Dependencia (RD).
-• Del total de 600 solicitudes, 420 fueron Aprobadas (A) y 180 fueron Rechazadas (R).
-• De los 240 Monotributistas, 120 resultaron Aprobados.
-
-Desarrolle con procedimiento completo:
-a) (10 pts) P(A ∩ M) - Probabilidad conjunta de ser Monotributista Y ser Aprobado.
-b) (10 pts) P(A | M) - Probabilidad de aprobación DADO que el solicitante es Monotributista.
-c) (10 pts) Verifique FORMALMENTE si la aprobación crediticia (A) es INDEPENDIENTE de la condición laboral de Monotributista (M).
-d) (10 pts) P(A ∪ M) - Probabilidad de que una solicitud sea Aprobada O pertenezca a un Monotributista.
-e) (10 pts) Si se toman 3 solicitudes al azar SIN REPOSICIÓN, calcule la probabilidad de que las 3 pertenezcan a empleados en Relación de Dependencia (RD).`,
-                                placeholder: "Desarrolle cálculos paso a paso: a) Conjunta, b) Condicional, c) Independencia formal, d) Unión, e) Sin reposición..."
-                            },
-                            {
-                                numero: 2,
-                                puntos: 50,
-                                pregunta: `PROBLEMA 2: MONTOS DE PRÉSTAMOS EN INTERVALOS (50 Puntos)
-Muestra de n = 300 préstamos otorgados (en miles de pesos):
-
-| Intervalo de Monto ($k) | Clientes (fi) |
-| :--- | :--- |
-| [100 - 200) | 45 |
-| [200 - 300) | 105 |
-| [300 - 400) | 90 |
-| [400 - 500) | 45 |
-| [500 - 600] | 15 |
-| **Total (n)** | **300** |
-
-Calcule con fórmulas y justifique:
-a) (10 pts) Media aritmética (x̄) de los préstamos en miles de pesos.
-b) (10 pts) Desvío estándar (S) y Coeficiente de Variación (CV). ¿Es la media un valor representativo del conjunto de préstamos? Fundamente con el criterio del 25%.
-c) (10 pts) Percentil 75 (P75 o Tercer Cuartil Q3): Calcule por interpolación e interprete en dinero.
-d) (10 pts) Moda (Mo) de los préstamos.
-e) (10 pts) ¿Qué porcentaje de préstamos fue de al menos $400.000?`,
-                                placeholder: "Desarrolle cálculos con fórmulas: a) x̄, b) CV y representatividad, c) P75 con interpolación, d) Mo, e) % ≥ $400k..."
-                            }
-                        ]
-                    }
-                ]
-            },
-            "2do_parcial": {
-                tituloModalidad: "2do Examen Parcial - Estadística 1",
-                modelos: [
-                    {
-                        id: "estad_p2_m1",
-                        nombre: "Modelo 1 (Modelos Teóricos Discretos y Continuos)",
-                        badge: "Oficial",
-                        titulo: "2do Parcial · Modelo 1 (Binomial, Poisson y Normal)",
-                        subtitulo: "Variables aleatorias y distribuciones teóricas de probabilidad",
-                        duracion: "120 min · 60 pts para aprobar",
-                        consignas: [
-                            {
-                                numero: 1,
-                                puntos: 35,
-                                pregunta: "Distribución Binomial: En una entidad bancaria, la probabilidad de que una solicitud online sea rechazada es p = 0.15. Si se reciben 12 solicitudes independientes, calcule: a) P(X = 2), b) P(X ≥ 1), c) Esperanza matemática y desvío estándar.",
-                                placeholder: "Desarrolle aplicando la fórmula binomial P(X = k)..."
-                            },
-                            {
-                                numero: 2,
-                                puntos: 35,
-                                pregunta: "Distribución de Poisson: En una mesa de dinero ingresan órdenes a razón de λ = 4 órdenes por minuto. Calcule: a) P(X = 0) en un minuto, b) Probabilidad de más de 8 órdenes en un lapso de 3 minutos (ajuste de parámetro), c) Varianza del proceso.",
-                                placeholder: "Desarrolle aplicando la distribución de Poisson..."
-                            },
-                            {
-                                numero: 3,
-                                puntos: 30,
-                                pregunta: "Distribución Normal: El rendimiento diario de un fondo común sigue una distribución normal con μ = 0.08% y σ = 0.25%. Tipifique mediante Z y calcule: a) Probabilidad de rendimiento negativo P(X < 0), b) Rendimiento superado sólo por el 5% de los mejores días (P95).",
-                                placeholder: "Desarrolle la estandarización Z y uso de tabla normal..."
-                            }
-                        ]
-                    }
-                ]
-            },
-            "final": {
-                tituloModalidad: "Examen Final Integrador - Estadística 1",
-                modelos: [
-                    {
-                        id: "estad_final_m1",
-                        nombre: "Modelo 1 (Programa Completo de Métodos Cuantitativos)",
-                        badge: "Final",
-                        titulo: "Examen Final · Modelo 1 (Bayes, TCL y Descriptiva)",
-                        subtitulo: "Integración metodológica: Teorema de Bayes, Teorema Central del Límite y Análisis de Dispersión",
-                        duracion: "150 min · 60 pts para aprobar",
-                        consignas: [
-                            {
-                                numero: 1,
-                                puntos: 35,
-                                pregunta: "Teorema de Bayes y Calificación Crediticia: En una cartera corporativa, el 70% de las empresas son de Bajo Riesgo (B) y el 30% de Alto Riesgo (A). P(D|A) = 0.20 y P(D|B) = 0.02. Si una empresa cae en default, calcule por Bayes la probabilidad de que perteneciera al grupo de Bajo Riesgo: P(B|D).",
-                                placeholder: "Desarrolle probabilidad total y teorema de Bayes..."
-                            },
-                            {
-                                numero: 2,
-                                puntos: 35,
-                                pregunta: "Teorema Central del Límite (TCL): El monto gastado por cliente tiene μ = $25.000 y σ = $8.000 (distribución desconocida). Si se toma una muestra aleatoria de n = 64 clientes, calcule la probabilidad de que la media muestral X̄ supere los $27.000. Justifique la validez del TCL.",
-                                placeholder: "Aplique el TCL con error estándar σ/√n..."
-                            },
-                            {
-                                numero: 3,
-                                puntos: 30,
-                                pregunta: "Comparación de Medidas de Dispersión: Explique por qué el desvío estándar no debe utilizarse directamente para comparar la dispersión de dos acciones que cotizan a precios muy dispares ($100 vs $50.000), y fundamente el uso del Coeficiente de Variación (CV).",
-                                placeholder: "Fundamente el coeficiente de variación y la dispersión relativa..."
-                            }
-                        ]
-                    }
-                ]
-            }
-        },
-        conceptosJuegos: [
-            {
-                id: "estad_c1",
-                nombre: "Probabilidad Condicional y Bayes",
-                guia: "La probabilidad condicional P(A|B) evalúa la ocurrencia de A habiendo ocurrido B: P(A ∩ B) / P(B).",
-                preguntaBomba: "¿Cuál es la fórmula matemática formal para calcular la probabilidad condicional de A dado B?",
-                cables: [
-                    { color: "azul", texto: "P(A | B) = P(A ∩ B) / P(B)", correcta: true },
-                    { color: "rojo", texto: "P(A | B) = P(A) * P(B) + P(A ∪ B)", correcta: false },
-                    { color: "verde", texto: "P(A | B) = P(A) / P(A ∩ B)", correcta: false },
-                    { color: "amarillo", texto: "P(A | B) = 1 - P(A ∪ B)", correcta: false }
-                ],
-                impostorAfirmaciones: [
-                    "Si dos sucesos son independientes, se cumple estrictamente que P(A | B) = P(A).",
-                    "La regla de adición general establece que P(A ∪ B) = P(A) + P(B) - P(A ∩ B).",
-                    "Dos sucesos mutuamente excluyentes con probabilidad positiva son siempre independientes.",
-                    "El Teorema de Bayes permite calcular probabilidades a posteriori actualizando las previas."
-                ],
-                impostorCorrecta: 2,
-                memotestPar: { concepto: "Independencia Estadística", definicion: "Condición matemática donde la ocurrencia de B no altera la probabilidad de A: P(A|B) = P(A)." }
-            },
-            {
-                id: "estad_c2",
-                nombre: "Coeficiente de Variación (CV) y Homogeneidad",
-                guia: "CV = (S / x̄) * 100%. Medida relativa de dispersión adimensional. Si CV ≤ 25%, la muestra es homogénea y la media es representativa.",
-                preguntaBomba: "¿Cuándo se considera que una media aritmética es representativa según el criterio oficial de homogeneidad de cátedra UADE?",
-                cables: [
-                    { color: "azul", texto: "Cuando el Coeficiente de Variación (CV) es menor o igual al 25%", correcta: true },
-                    { color: "rojo", texto: "Cuando el desvío estándar es exactamente el doble que la varianza", correcta: false },
-                    { color: "verde", texto: "Únicamente si la mediana coincide con el percentil 99", correcta: false },
-                    { color: "amarillo", texto: "Cuando la muestra tiene menos de 10 observaciones", correcta: false }
-                ],
-                impostorAfirmaciones: [
-                    "El Coeficiente de Variación es una medida adimensional que permite comparar dispersiones de distintas unidades.",
-                    "Se calcula como el cociente entre el desvío estándar y el valor absoluto de la media aritmética.",
-                    "Un CV del 60% indica una distribución sumamente homogénea y altamente concentrada en el promedio.",
-                    "La varianza tiene las unidades de la variable elevadas al cuadrado."
-                ],
-                impostorCorrecta: 2,
-                memotestPar: { concepto: "Coeficiente de Variación (CV)", definicion: "Cociente S / x̄ que mide la dispersión relativa y valida si la media es representativa (≤ 25%)." }
-            },
-            {
-                id: "estad_c3",
-                nombre: "Percentil 85 en Datos Agrupados",
-                guia: "Cuantil que deja por debajo al 85% de las observaciones y por encima al 15% restante mediante interpolación lineal de frecuencias acumuladas.",
-                preguntaBomba: "¿Qué representa conceptualmente el Percentil 85 (P85) en una distribución de datos?",
-                cables: [
-                    { color: "azul", texto: "El valor de la variable que no es superado por el 85% de las observaciones de la muestra", correcta: true },
-                    { color: "rojo", texto: "El promedio entre el valor mínimo y el 85% del valor máximo", correcta: false },
-                    { color: "verde", texto: "El intervalo que concentra a las 85 observaciones con mayor frecuencia", correcta: false },
-                    { color: "amarillo", texto: "La probabilidad fija de cometer un error tipo I del 85%", correcta: false }
-                ],
-                impostorAfirmaciones: [
-                    "Para ubicar el intervalo del P85 se busca el primer intervalo cuya frecuencia acumulada Fi cubra 0.85 * n.",
-                    "La fórmula de interpolación utiliza el límite inferior del intervalo y su amplitud c.",
-                    "El percentil 50 de una distribución es exactamente igual al promedio ponderado en cualquier distribución asimétrica.",
-                    "El percentil 85 es superado únicamente por el 15% de las observaciones superiores."
-                ],
-                impostorCorrecta: 2,
-                memotestPar: { concepto: "Percentil 85 (P85)", definicion: "Medida de posición que divide la distribución dejando el 85% de observaciones por debajo." }
-            },
-            {
-                id: "estad_c4",
-                nombre: "Distribución Normal Estándar Z",
-                guia: "Curva simétrica en forma de campana con media 0 y varianza 1 tipificada por la fórmula Z = (X - μ) / σ.",
-                preguntaBomba: "¿Cuál es la transformación requerida para estandarizar una variable continua X ~ N(μ, σ)?",
-                cables: [
-                    { color: "azul", texto: "Z = (X - μ) / σ", correcta: true },
-                    { color: "rojo", texto: "Z = (X * μ) / σ²", correcta: false },
-                    { color: "verde", texto: "Z = (X - σ) / μ", correcta: false },
-                    { color: "amarillo", texto: "Z = √(X² + μ²)", correcta: false }
-                ],
-                impostorAfirmaciones: [
-                    "El área total bajo la curva de densidad normal estandarizada es estrictamente igual a 1.",
-                    "Aproximadamente el 68.2% de los datos se ubican en el intervalo [μ - σ, μ + σ].",
-                    "La distribución normal es asimétrica hacia la derecha con media superior a la mediana.",
-                    "En Z = 0 la distribución normal alcanza su valor máximo de densidad."
-                ],
-                impostorCorrecta: 2,
-                memotestPar: { concepto: "Tipificación Z", definicion: "Transformación (X - μ) / σ que convierte cualquier variable normal en Normal Estándar N(0, 1)." }
-            },
-            {
-                id: "estad_c5",
-                nombre: "Muestreo Sin Reposición (Hipergeométrica)",
-                guia: "Cuando los elementos no vuelven a la población, los ensayos sucesivos son dependientes y la probabilidad cambia en cada extracción.",
-                preguntaBomba: "Si de 500 clientes (200 con tarjeta) extraemos 3 al azar sin reposición, ¿cómo se calcula la probabilidad de que los 3 usen tarjeta?",
-                cables: [
-                    { color: "azul", texto: "(200/500) * (199/499) * (198/498)", correcta: true },
-                    { color: "rojo", texto: "(200/500)³ sin modificar el denominador", correcta: false },
-                    { color: "verde", texto: "3 * (200/500) / 300", correcta: false },
-                    { color: "amarillo", texto: "(200/500) + (199/500) + (198/500)", correcta: false }
-                ],
-                impostorAfirmaciones: [
-                    "En el muestreo sin reposición la composición de la población se modifica tras cada extracción.",
-                    "Los sucesos sucesivos de extracción son dependientes entre sí.",
-                    "En extracciones sin reposición, la probabilidad del segundo elemento siempre es idéntica a la del primero.",
-                    "Si la población fuera infinita o con reposición, el modelo aplicable sería el Binomial."
-                ],
-                impostorCorrecta: 2,
-                memotestPar: { concepto: "Muestreo Sin Reposición", definicion: "Proceso donde cada extracción reduce el espacio muestral y genera probabilidades condicionales sucesivas." }
-            }
-        ]
-    },
-
-    contabilidad: {
-        id: "contabilidad",
-        nombre: "Contabilidad 1",
-        catedra: "Cátedra Cdra. Alicia Landini - UADE",
-        titular: "Cdra. Alicia Landini",
-        color: "#ec4899",
-        criterioDocente: `CRITERIO DE EVALUACIÓN DE CÁTEDRA (Cdra. Alicia Landini):
-- Estructura dual estricta del parcial oficial:
-  • 30% TEÓRICO: 13 preguntas Multiple Choice de 6 opciones (A, B, C, D, Todas son correctas, Ninguna es correcta).
-    REGLA DE ORO OBLIGATORIA: El alumno debe justificar OBLIGATORIAMENTE en el campo de texto las opciones que NO marcó (descartadas) para que el ítem sume puntos.
-  • 70% PRÁCTICO: Caso integral de 4 meses con Libro Diario:
-    1) Asientos de suscripción e integración de capital social.
-    2) Variación patrimonial obligatoria al lado de cada cuenta (A+, A-, P+, P-, PN+, R+, R-).
-    3) Partida doble perfecta: Debe = Haber.
-    4) Leyenda documental respaldatoria obligatoria: S/ Acta Constitutiva, S/ Factura Original, S/ Minuta Contable, S/ Recibo.
-    5) Mayorización y Balance de Sumas y Saldos / Situación Patrimonial.
-- Escala oficial UADE: Menos de 60 pts = Desaprobado (1 a 3); 60 = 4; hasta 100 = 10.`,
-        conceptosClave: ["Ecuación Patrimonial Fundamental", "Variaciones Permutativas", "Variaciones Modificativas", "Principio de Devengado", "Valuación al Costo", "Prudencia", "Suscripción de Capital", "Integración de Capital", "Libro Diario", "Debe y Haber", "Leyenda Documental Respaldatoria", "Balance de Sumas y Saldos", "CMV (Costo de Mercaderías Vendidas)", "Intereses Positivos y Negativos a Devengar"],
-        temarioPorModo: {
-            "1er_parcial": {
-                nombre: "1er Parcial",
-                unidades: "Unidades 1 a 4 (Ecuación Patrimonial, Partida Doble, Asientos y Comprobantes)",
-                conceptos: ["Ecuación Patrimonial Fundamental Estática (A = P + PN) y Dinámica (A = P + Capital + Resultados Acumulados + Ingresos - Gastos)", "Cuentas contables: Naturaleza, débitos, créditos y saldos normales", "Variaciones Patrimoniales Permutativas (sectoriales y entre sectores) y Modificativas (positivas y negativas)", "Documentación de respaldo comercial: Facturas A/B/C, Recibos, Remitos, Notas de Débito y Crédito comerciales y bancarias", "Registración en Libro Diario (Criterio Cátedra Landini: Debe, Haber, cuentas normalizadas y comprobante de respaldo)", "Mayorización de cuentas y confección del Balance de Comprobación de Sumas y Saldos (8 columnas)"]
-            },
-            "2do_parcial": {
-                nombre: "2do Parcial",
-                unidades: "Unidades 5 a 8 (Rubros Específicos: Caja y Bancos, Créditos, Inventarios y Bienes de Uso)",
-                conceptos: ["Caja y Bancos: Arqueo de caja chica y fondos fijos (faltantes y sobrantes de caja), Conciliación Bancaria completa (libro banco vs extracto, partidas transitorias vs permanentes, asientos de ajuste obligatorios)", "Créditos por Ventas: Ventas a plazo con componentes financieros explícitos e implícitos (intereses positivos a devengar), Devengamiento periódico, Estimación y registro de la Previsión para Deudores Incobrables, reclasificación de deudores morosos y en gestión judicial", "Bienes de Cambio e Inventarios: Métodos de costeo PEPS (FIFO), UEPS (LIFO) y PPP (Precio Promedio Ponderado), Ficha de stock en unidades y valores monetarios, Determinación del Costo de Mercaderías Vendidas (CMV = Existencia Inicial + Compras - Existencia Final) y asientos de compra/venta", "Bienes de Uso: Criterio de incorporación al activo (precio de compra + gastos inherentes necesarios activables: fletes, seguros de traslado, instalación), Gastos de mantenimiento y reparaciones vs mejoras activables, Métodos de Depreciación/Amortización (línea recta según vida útil, unidades producidas, valor residual y valor recuperable), Asientos de depreciación del ejercicio acumulada, Venta y reemplazo de bienes de uso con determinación de Resultado por Venta"]
-            },
-            "final": {
-                nombre: "Examen Final Integral",
-                unidades: "Ciclo Contable Completo y Estados Contables Básicos (RT)",
-                conceptos: ["Balance de saldos ajustado tras auditoría de rubros", "Asientos de refundición de cuentas de resultado (R+ y R-) determinando el Resultado del Ejercicio", "Asiento de cierre formal y reapertura de libros de cuentas patrimoniales", "Presentación de Estados Contables Básicos según Resoluciones Técnicas (RT 8 y 9): Estado de Situación Patrimonial y Estado de Resultados clasificado"]
-            }
-        },
-        examenes: {
-            "1er_parcial": {
-                tituloModalidad: "1er Examen Parcial - Contabilidad 1",
-                modelos: [
-                    {
-                        id: "cont_p1_m1",
-                        nombre: "Modelo 1 (Oficial Alicia Landini)",
-                        badge: "Examen Real",
-                        titulo: "1er Parcial · Modelo 1 (Fintech Austral S.A.)",
-                        subtitulo: "30% Teórico con Justificación de Descarte + 70% Práctico con Asientos y Balance",
-                        duracion: "120 min · 60 pts para aprobar",
-                        consignas: [
-                            {
-                                numero: 1,
-                                puntos: 15,
-                                pregunta: `BLOQUE I (PARTE TEÓRICA - 30% DEL PARCIAL): PREGUNTAS MULTIPLE CHOICE CON JUSTIFICACIÓN DE DESCARTE
-(Para validar sus puntos teóricos, seleccione la/s opción/es correcta/s y JUSTIFIQUE OBLIGATORIAMENTE en el campo inferior por qué descartó las restantes opciones).
-
-Pregunta T1: Principio de Devengado y Ejercicio Contable
-Respecto al principio contable de DEVENGADO, determine la proposición correcta:
-[A] Los resultados positivos (ganancias) se reconocen únicamente en el momento en que se cobra el dinero en efectivo.
-[B] Los efectos patrimoniales de las operaciones se reconocen contablemente en los períodos en que se generan los hechos sustanciales, con total independencia de si se cobraron o pagaron.
-[C] Los gastos devengados impagos no deben registrarse en el Libro Diario hasta su efectiva cancelación en el banco.
-[D] El devengado sólo se aplica a los entes que no persiguen fines de lucro.
-[E] Todas son correctas.
-[F] Ninguna es correcta.
-
-Pregunta T2: Variaciones Patrimoniales
-Una compra de mercaderías financiada en cuenta corriente comercial a 30 días genera una variación patrimonial:
-[A] Modificativa Negativa, porque aumenta la deuda con los proveedores.
-[B] Permutativa Exclusiva del Activo.
-[C] Permutativa Intersectorial o Mixta (aumenta un Activo y aumenta en igual medida un Pasivo, sin alterar el Patrimonio Neto).
-[D] Modificativa Positiva, porque la empresa tiene más bienes de cambio en su inventario.
-[E] Todas son correctas.
-[F] Ninguna es correcta.`,
-                                placeholder: "Indique la opción elegida para T1 y T2 Y JUSTIFIQUE DETALLADAMENTE por qué descartó cada una de las opciones no marcadas..."
-                            },
-                            {
-                                numero: 2,
-                                puntos: 15,
-                                pregunta: `BLOQUE I (CONTINUACIÓN TEÓRICA):
-Pregunta T3: Documentación Respaldatoria y Minuta Contable
-¿Qué función contable cumple la Minuta Contable como comprobante de respaldo?
-[A] Es un documento comercial externo emitido por la AFIP/ARCA para validar créditos fiscales.
-[B] Es un comprobante interno emitido por el sector contable para respaldar registraciones que no poseen comprobante comercial externo directo (como determinación del CMV, devengamientos periódicos o refundición de cuentas).
-[C] Sustituye formalmente a la factura de venta en transacciones con consumidores finales.
-[D] Se utiliza exclusivamente para justificar el pago de sueldos en efectivo.
-[E] Todas son correctas.
-[F] Ninguna es correcta.
-
-Pregunta T4: Medición de Bienes de Uso y Principio de Prudencia
-Al ingresar una maquinaria al patrimonio, el costo de incorporación contable está integrado por:
-[A] Únicamente el precio de contado facturado por el proveedor, excluyendo fletes e instalación.
-[B] El precio de compra neto de contado más todos los gastos necesarios hasta poner el bien en condiciones de ser utilizado económicamente (flete, seguro de traslado, instalación y puesta a punto).
-[C] El valor que la gerencia estime que valdrá la máquina dentro de diez años.
-[D] El precio de lista financiado incluyendo intereses explícitos futuros.
-[E] Todas son correctas.
-[F] Ninguna es correcta.`,
-                                placeholder: "Indique las respuestas a T3 y T4 Y JUSTIFIQUE OBLIGATORIAMENTE por qué descartó las opciones no seleccionadas..."
-                            },
-                            {
-                                numero: 3,
-                                puntos: 70,
-                                pregunta: `BLOQUE II (PARTE PRÁCTICA - 70% DEL PARCIAL): CASO INTEGRAL DE 4 MESES "FINTECH AUSTRAL S.A."
-Enunciado cronológico de operaciones:
-
-1. 01/03 - Constitución: Se funda "Fintech Austral S.A.". Los socios suscriben $1.000.000 (10.000 acciones de $100 V/N). S/ Contrato Constitutivo.
-2. 01/03 - Integración: Se integra:
-   • $400.000 en efectivo que se deposita en cuenta corriente Banco Macro. S/ Boleta depósito.
-   • $350.000 en Mercaderías de reventa. S/ Remito e inventario.
-   • Saldo de $250.000 se integrará en 60 días.
-3. 15/03 - Adquisición de Rodado: Se compra utilitario en $500.000. Se paga $200.000 vía transferencia Banco Macro y saldo con pagaré a 90 días con $30.000 de intereses a vencer (Total pagaré $330.000). S/ Factura original y pagaré.
-4. 02/04 - Venta de Mercaderías: Se venden mercaderías por $600.000 (50% cheque al día y 50% c/c comercial a 30 días). S/ Factura duplicada.
-   El CMV es de $250.000. S/ Minuta contable.
-5. 30/04 - Devengamientos:
-   • Se devengan intereses del pagaré correspondientes a 45 días ($15.000). S/ Minuta contable.
-   • Factura de alquiler del local del mes por $80.000 recibida e impaga. S/ Factura recibida.
-
-CONSIGNAS A CONFECCIONAR:
-a) Asientos en el LIBRO DIARIO con cuentas, variación patrimonial (A+, A-, P+, P-, PN+, R+, R-), importes Debe/Haber y leyendas S/ (...).
-b) Comprobación de Partida Doble (Total Debe = Total Haber).
-c) Ecuación Patrimonial Final al 30/04: Activo = Pasivo + PN.`,
-                                placeholder: `Confeccione aquí los asientos en formato de Libro Diario:
--------------------------------------------------------------
-1/03: [Cuenta Debe] (Variación) $Importe  a  [Cuenta Haber] (Variación) $Importe | S/ (...)
-...
-Total Debe = $________ | Total Haber = $________
-Balance al 30/04: Activo = Pasivo + PN`
-                            }
-                        ]
-                    },
-                    {
-                        id: "cont_p1_m2",
-                        nombre: "Modelo 2 (Variante Inversora del Plata S.A.)",
-                        badge: "Variante B",
-                        titulo: "1er Parcial · Modelo 2 (Inversora del Plata S.A.)",
-                        subtitulo: "Variante oficial B: Bienes de uso, venta financiada con interés explícito y sueldos",
-                        duracion: "120 min · 60 pts para aprobar",
-                        consignas: [
-                            {
-                                numero: 1,
-                                puntos: 15,
-                                pregunta: `BLOQUE I: PARTE TEÓRICA CON JUSTIFICACIÓN DE DESCARTE (Preguntas T1 y T2):
-Pregunta T1: Valuación al Costo vs. Valor Neto de Realización (VNR)
-Para bienes de cambio de fácil comercialización con mercado transparente (ej: cereales o metales preciosos), las normas contables permiten valuar al:
-[A] Costo histórico original reexpresado sin límite.
-[B] Valor Neto de Realización (precio de venta de contado menos gastos directos de venta).
-[C] Cero pesos para aplicar máxima prudencia.
-[D] Valor nominal del capital suscripto.
-[E] Todas son correctas.
-[F] Ninguna es correcta.
-
-Pregunta T2: Conciliación Bancaria y Tipología de Diferencias
-Una nota de débito bancaria por comisiones de mantenimiento que aún no fue registrada por la empresa representa una:
-[A] Diferencia temporaria o transitoria que se corrige sola el mes próximo.
-[B] Diferencia permanente que exige obligatoriamente un asiento de ajuste en el Libro Diario.
-[C] Variación modificativa positiva del patrimonio.
-[D] Falsedad ideológica en los estados contables.
-[E] Todas son correctas.
-[F] Ninguna es correcta.`,
-                                placeholder: "Indique opciones elegidas y JUSTIFIQUE OBLIGATORIAMENTE las opciones descartadas..."
-                            },
-                            {
-                                numero: 2,
-                                puntos: 15,
-                                pregunta: `BLOQUE I: PARTE TEÓRICA (Preguntas T3 y T4):
-Pregunta T3: Cuentas Regularizadoras del Activo
-La cuenta 'Previsión para Deudores Incobrables' o 'Intereses Negativos a Devengar' tienen saldo:
-[A] Deudor y aumentan el valor de los activos.
-[B] Acreedor y restan o regularizan el valor de la cuenta principal en el Activo.
-[C] Cero y no figuran en el Estado de Situación Patrimonial.
-[D] De Patrimonio Neto como reserva legal.
-[E] Todas son correctas.
-[F] Ninguna es correcta.
-
-Pregunta T4: Ecuación Contable Dinámica
-La ecuación contable dinámica se formula matemáticamente como:
-[A] Activo + Pasivo = Patrimonio Neto + Resultados.
-[B] Activo + Gastos / Pérdidas = Pasivo + Capital + Ingresos / Ganancias.
-[C] Activo = Resultados Acumulados / Ventas.
-[D] Caja = Proveedores + Capital Social.
-[E] Todas son correctas.
-[F] Ninguna es correcta.`,
-                                placeholder: "Indique respuestas y justifique detalladamente el descarte de las demás opciones..."
-                            },
-                            {
-                                numero: 3,
-                                puntos: 70,
-                                pregunta: `BLOQUE II: CASO INTEGRAL "INVERSORA DEL PLATA S.A." (Marzo - Junio):
-1. 05/03: Constitución e Integración: Se constituye la sociedad. Suscripción por $1.500.000. Los socios integran en el acto $800.000 con depósito en Banco Santander c/c, $500.000 en Mercaderías y el saldo a 30 días. S/ Acta y comprobantes.
-2. 20/03: Se compran Instalaciones comerciales por $300.000 con cheque propio de Banco Santander. S/ Factura original.
-3. 10/04: Venta de mercaderías por $700.000 en cuenta corriente a 60 días con un interés comercial del 10% financiado a vencer ($70.000). Total facturado: $770.000. Costo de la mercadería: $320.000. S/ Factura duplicada y minuta.
-4. 30/04: Devengamiento de intereses de la venta correspondiente al primer mes ($35.000). S/ Minuta contable.
-5. 31/05: Liquidación y devengamiento de los sueldos del personal del mes por $150.000, los cuales se abonarán el cuarto día hábil del mes siguiente. S/ Minuta de sueldos.
-
-CONSIGNAS:
-a) Libro Diario con cuentas, variaciones patrimoniales y leyendas.
-b) Comprobación de partida doble (Debe = Haber).
-c) Ecuación Patrimonial al 31/05.`,
-                                placeholder: `Libro Diario:
--------------------------------------------------------------
-5/03: ...
-Total Debe = $________ | Total Haber = $________
-Balance al 31/05: Activo = Pasivo + PN`
-                            }
-                        ]
-                    }
-                ]
-            },
-            "2do_parcial": {
-                tituloModalidad: "2do Examen Parcial - Contabilidad 1",
-                modelos: [
-                    {
-                        id: "cont_p2_m1",
-                        nombre: "Modelo 1 (Rubros Patrimoniales y Valuación)",
-                        badge: "Oficial",
-                        titulo: "2do Parcial · Modelo 1 (Inventarios, Créditos y Arqueos)",
-                        subtitulo: "Rubros específicos: Conciliación bancaria, PEPS/UEPS/PPP y Previsión incobrables",
-                        duracion: "120 min · 60 pts para aprobar",
-                        consignas: [
-                            {
-                                numero: 1,
-                                puntos: 30,
-                                pregunta: "Conciliación Bancaria y Arqueo de Caja: Diferencias permanentes vs temporarias. Registración de ajustes contables por notas de débito bancarias y faltante/sobrante de caja.",
-                                placeholder: "Desarrolle conciliación bancaria y arqueo..."
-                            },
-                            {
-                                numero: 2,
-                                puntos: 35,
-                                pregunta: "Valuación de Bienes de Cambio: Compare los métodos PEPS, UEPS y PPP en un escenario de inflación sostenida. Analice el impacto en el CMV y en el inventario final.",
-                                placeholder: "Compare PEPS, UEPS y PPP..."
-                            },
-                            {
-                                numero: 3,
-                                puntos: 35,
-                                pregunta: "Rubro Créditos: Previsión para Deudores Incobrables. Constitución al cierre, uso por incobrabilidad efectiva y recupero de previsión en exceso.",
-                                placeholder: "Explique la mecánica de la previsión de incobrables..."
-                            }
-                        ]
-                    }
-                ]
-            },
-            "final": {
-                tituloModalidad: "Examen Final Integrador - Contabilidad 1",
-                modelos: [
-                    {
-                        id: "cont_final_m1",
-                        nombre: "Modelo 1 (Ciclo Contable y Estados Contables Básicos)",
-                        badge: "Final",
-                        titulo: "Examen Final · Modelo 1 (Ciclo y Balances Finales)",
-                        subtitulo: "Estados contables básicos (RT), refundición de resultados y balance general",
-                        duracion: "150 min · 60 pts para aprobar",
-                        consignas: [
-                            {
-                                numero: 1,
-                                puntos: 35,
-                                pregunta: "Los Cuatro Estados Contables Básicos: Estado de Situación Patrimonial, Estado de Resultados, Estado de Evolución del Patrimonio Neto y Estado de Flujo de Efectivo. Objetivos e interrelación.",
-                                placeholder: "Desarrolle los 4 estados contables..."
-                            },
-                            {
-                                numero: 2,
-                                puntos: 35,
-                                pregunta: "Cierre de Ejercicio: Asiento de refundición de cuentas de resultado y asiento de cierre de cuentas patrimoniales en los libros Diario y Mayor.",
-                                placeholder: "Explique los asientos de cierre de ejercicio..."
-                            },
-                            {
-                                numero: 3,
-                                puntos: 30,
-                                pregunta: "Criterios de Medición al Cierre: Regla de costo o mercado el menor, y concepto de Valor Recuperable (mayor entre VNR y VUE).",
-                                placeholder: "Desarrolle el valor límite de los activos..."
-                            }
-                        ]
-                    }
-                ]
-            }
-        },
-        conceptosJuegos: [
-            {
-                id: "cont_c1",
-                nombre: "Principio de Devengado",
-                guia: "Los resultados económicos deben registrarse en el período en que suceden los hechos económicos, sin importar su cobro o pago.",
-                preguntaBomba: "¿Cuándo debe registrarse una pérdida o gasto según el principio contable de devengado?",
-                cables: [
-                    { color: "azul", texto: "En el período en que se genera el hecho económico, independientemente de cuándo se pague", correcta: true },
-                    { color: "rojo", texto: "Únicamente en el momento en que se emite el cheque o se transfiere el dinero bancario", correcta: false },
-                    { color: "verde", texto: "Al año siguiente cuando el contador general firma los estados contables", correcta: false },
-                    { color: "amarillo", texto: "Sólo si el gasto genera una factura electrónica con CAE de la AFIP", correcta: false }
-                ],
-                impostorAfirmaciones: [
-                    "El devengado asigna los ingresos y egresos al ejercicio económico al cual corresponden.",
-                    "Los alquileres devengados del mes no pagados generan una deuda (Alquileres a Pagar) y un resultado negativo.",
-                    "Bajo el principio de devengado, una venta no se registra si el cliente no la pagó de contado en el mostrador.",
-                    "El criterio de lo percibido sólo atiende a los flujos efectivos de entrada y salida monetaria."
-                ],
-                impostorCorrecta: 2,
-                memotestPar: { concepto: "Principio de Devengado", definicion: "Reconocimiento patrimonial de hechos económicos cuando se generan, no cuando se cobran o pagan." }
-            },
-            {
-                id: "cont_c2",
-                nombre: "Variación Patrimonial Permutativa vs Modificativa",
-                guia: "Permutativa: no altera la cuantía del Patrimonio Neto; Modificativa: altera el PN mediante ingresos, gastos, ganancias o pérdidas.",
-                preguntaBomba: "El depósito de $100.000 en efectivo en la cuenta corriente bancaria de la empresa genera una variación:",
-                cables: [
-                    { color: "azul", texto: "Permutativa exclusiva del Activo (aumenta Banco y disminuye Caja en igual valor)", correcta: true },
-                    { color: "rojo", texto: "Modificativa Positiva porque el dinero está seguro en un banco", correcta: false },
-                    { color: "verde", texto: "Modificativa Negativa por las comisiones que cobrará el banco", correcta: false },
-                    { color: "amarillo", texto: "Permutativa del Pasivo porque el banco contrae una deuda con nosotros", correcta: false }
-                ],
-                impostorAfirmaciones: [
-                    "Una variación permutativa cambia la composición cualitativa del patrimonio sin modificar el total del PN.",
-                    "Una variación modificativa involucra necesariamente al menos una cuenta de Resultado Positivo o Negativo.",
-                    "El cobro en efectivo de una venta con ganancia genera una variación puramente permutativa.",
-                    "El pago de un pasivo con efectivo es una variación permutativa intersectorial (A- y P-)."
-                ],
-                impostorCorrecta: 2,
-                memotestPar: { concepto: "Variación Modificativa", definicion: "Operación que altera la cuantía del Patrimonio Neto por generación de resultados económicos." }
-            },
-            {
-                id: "cont_c3",
-                nombre: "Suscripción e Integración de Capital",
-                guia: "Suscripción es el compromiso jurídico de aportar; Integración es la entrega real y efectiva de los bienes o fondos aportados.",
-                preguntaBomba: "¿Qué asiento contable registra la suscripción de capital de una Sociedad Anónima?",
-                cables: [
-                    { color: "azul", texto: "Accionistas (A+) al Debe contra Capital Social (PN+) al Haber", correcta: true },
-                    { color: "rojo", texto: "Caja (A+) al Debe contra Ventas (R+) al Haber", correcta: false },
-                    { color: "verde", texto: "Banco Cuenta Corriente (A+) al Debe contra Proveedores (P+) al Haber", correcta: false },
-                    { color: "amarillo", texto: "Capital Social (PN-) al Debe contra Gastos Generales (R-) al Haber", correcta: false }
-                ],
-                impostorAfirmaciones: [
-                    "La suscripción genera un derecho de cobro para la sociedad contra los socios (cuenta deudora del Activo).",
-                    "El Capital Social es una cuenta representativa del Patrimonio Neto que se acredita al constituirse.",
-                    "La integración de capital ocurre automáticamente sin necesidad de que los socios entreguen ningún bien.",
-                    "La cuenta 'Accionistas' o 'Socios Cta. Aporte' se acredita cuando los socios integran sus aportes."
-                ],
-                impostorCorrecta: 2,
-                memotestPar: { concepto: "Suscripción de Capital", definicion: "Compromiso legal inicial asumido por los socios de aportar fondos a la sociedad constituida." }
-            },
-            {
-                id: "cont_c4",
-                nombre: "Minuta Contable y Determinación del CMV",
-                guia: "Comprobante interno que respalda asientos sin documento comercial externo directo, como el devengamiento o la registración del CMV.",
-                preguntaBomba: "¿Qué documentación respaldatoria respalda formalmente el asiento de Costo de Mercaderías Vendidas (CMV)?",
-                cables: [
-                    { color: "azul", texto: "Minuta contable interna de determinación del costo de venta", correcta: true },
-                    { color: "rojo", texto: "Factura de venta original emitida por el proveedor de luz", correcta: false },
-                    { color: "verde", texto: "Pagaré comercial firmado por el cliente moroso", correcta: false },
-                    { color: "amarillo", texto: "Contrato de alquiler timbrado ante escribano", correcta: false }
-                ],
-                impostorAfirmaciones: [
-                    "El asiento del CMV debita la cuenta de resultado negativo 'CMV' y acredita la cuenta de activo 'Mercaderías'.",
-                    "La minuta contable es un comprobante de uso y emisión estrictamente interna.",
-                    "El CMV debe coincidir exactamente con el precio total cobrado por la venta facturada al cliente.",
-                    "La fórmula de inventario periódico para CMV es: Existencia Inicial + Compras Netas - Existencia Final."
-                ],
-                impostorCorrecta: 2,
-                memotestPar: { concepto: "Minuta Contable", definicion: "Documento respaldatorio interno para asientos no originados en comprobantes comerciales externos." }
-            },
-            {
-                id: "cont_c5",
-                nombre: "Balance de Sumas y Saldos",
-                guia: "Instrumento de control contable que verifica que la suma de débitos sea igual a la de créditos y que los saldos deudores igualen a los acreedores.",
-                preguntaBomba: "¿Cuál es la función primordial del Balance de Sumas y Saldos en el ciclo contable?",
-                cables: [
-                    { color: "azul", texto: "Comprobar la igualdad numérica de la partida doble en los mayores antes de los estados contables", correcta: true },
-                    { color: "rojo", texto: "Liquidar el impuesto a las ganancias que se debe abonar a la entidad fiscal", correcta: false },
-                    { color: "verde", texto: "Distribuir dividendos extraordinarios en efectivo a los directores", correcta: false },
-                    { color: "amarillo", texto: "Anular todos los asientos registrados en el Libro Diario durante el año", correcta: false }
-                ],
-                impostorAfirmaciones: [
-                    "En el balance de comprobación, el total de Sumas del Debe debe ser idéntico al total de Sumas del Haber.",
-                    "El total de Saldos Deudores debe igualar al total de Saldos Acreedores.",
-                    "Si el Balance de Sumas y Saldos balancea, garantiza con 100% de certeza que no se omitió ningún asiento.",
-                    "Sirve de base fundamental para confeccionar los asientos de ajuste y los Estados Contables."
-                ],
-                impostorCorrecta: 2,
-                memotestPar: { concepto: "Balance de Sumas y Saldos", definicion: "Planilla de comprobación aritmética de la partida doble de todos los mayores contables." }
-            }
-        ]
-    }
-};
 
 /* ==========================================================================
    ESTADO Y CONTROLADOR DE SIMULADOR MULTI-MODELO
@@ -29491,16 +24156,16 @@ function guardarBorradorExamenMateria(matId, examId) {
         textareas.forEach((t, idx) => {
             if (t.value.trim()) respuestas[idx] = t.value;
         });
-        const raw = localStorage.getItem(FINANZAS_BORRADORES_KEY);
+        const raw = studyStorage.getItem(FINANZAS_BORRADORES_KEY);
         const store = raw ? JSON.parse(raw) : {};
         store[`${matId}_${examId}`] = { respuestas, ts: Date.now() };
-        localStorage.setItem(FINANZAS_BORRADORES_KEY, JSON.stringify(store));
+        studyStorage.setItem(FINANZAS_BORRADORES_KEY, JSON.stringify(store));
     } catch (_) {}
 }
 
 function restaurarBorradorExamenMateria(matId, examId) {
     try {
-        const raw = localStorage.getItem(FINANZAS_BORRADORES_KEY);
+        const raw = studyStorage.getItem(FINANZAS_BORRADORES_KEY);
         if (!raw) return;
         const store = JSON.parse(raw);
         const saved = store[`${matId}_${examId}`];
@@ -29517,7 +24182,7 @@ function restaurarBorradorExamenMateria(matId, examId) {
 
 function borrarBorradorExamenMateria(matId, examId = null) {
     try {
-        const raw = localStorage.getItem(FINANZAS_BORRADORES_KEY);
+        const raw = studyStorage.getItem(FINANZAS_BORRADORES_KEY);
         if (!raw) return;
         const store = JSON.parse(raw);
         if (examId) {
@@ -29527,7 +24192,7 @@ function borrarBorradorExamenMateria(matId, examId = null) {
                 if (k.startsWith(`${matId}_`)) delete store[k];
             });
         }
-        localStorage.setItem(FINANZAS_BORRADORES_KEY, JSON.stringify(store));
+        studyStorage.setItem(FINANZAS_BORRADORES_KEY, JSON.stringify(store));
     } catch (_) {}
 }
 
@@ -29561,7 +24226,7 @@ function normalizarMateriaFinanzasKey(materiaKey) {
 
 function cargarModelosCustomAlmacenados() {
     try {
-        const raw = localStorage.getItem(FINANZAS_CUSTOM_MODELS_KEY);
+        const raw = studyStorage.getItem(FINANZAS_CUSTOM_MODELS_KEY);
         if (raw) return JSON.parse(raw);
     } catch (_) {}
     return {};
@@ -29573,7 +24238,7 @@ function guardarModeloCustomEnStorage(matId, modo, nuevoModelo) {
         const key = `${matId}_${modo}`;
         if (!store[key]) store[key] = [];
         store[key].push(nuevoModelo);
-        localStorage.setItem(FINANZAS_CUSTOM_MODELS_KEY, JSON.stringify(store));
+        studyStorage.setItem(FINANZAS_CUSTOM_MODELS_KEY, JSON.stringify(store));
     } catch (e) {
         console.warn("No se pudo guardar modelo custom en storage:", e);
     }
@@ -29625,7 +24290,8 @@ function seleccionarModeloExamen(materiaKey, modeloIndex) {
     generarExamenParaMateria(matId, modo, modeloIndex);
 }
 
-function generarExamenParaMateria(materiaKey, modoForzado = null, modeloIndexForzado = null) {
+async function generarExamenParaMateria(materiaKey, modoForzado = null, modeloIndexForzado = null) {
+    await loadFinance();
     const matId = normalizarMateriaFinanzasKey(materiaKey);
     const mat = MATERIAS_FINANZAS[matId];
     if (!mat) return;
@@ -29649,7 +24315,7 @@ function generarExamenParaMateria(materiaKey, modoForzado = null, modeloIndexFor
     const feedbackPanel = document.getElementById(`finExamFeedback_${matId}`);
     if (feedbackPanel) {
         feedbackPanel.classList.add("hidden");
-        feedbackPanel.innerHTML = "";
+        setHTML(feedbackPanel, "");
     }
 
     // 1. Selector visual de modelos disponibles
@@ -29668,7 +24334,7 @@ function generarExamenParaMateria(materiaKey, modoForzado = null, modeloIndexFor
             <button 
                 class="fin-model-chip ${isActive ? 'is-active' : ''}" 
                 type="button" 
-                onclick="seleccionarModeloExamen('${matId}', ${idx})"
+                data-study-click="seleccionarModeloExamen('${matId}', ${idx})"
                 title="${m.titulo}"
             >
                 ${badgeIcon}${m.nombre}
@@ -29682,7 +24348,7 @@ function generarExamenParaMateria(materiaKey, modoForzado = null, modeloIndexFor
                 <button 
                     class="fin-btn-gen-ai" 
                     type="button" 
-                    onclick="generarNuevoModeloConIA('${matId}', '${modo}')"
+                    data-study-click="generarNuevoModeloConIA('${matId}', '${modo}')"
                     title="Crea un modelo de examen con consignas 100% inéditas generadas por Inteligencia Artificial para este examen"
                 >
                     ✨ Crear Nuevo Modelo con IA
@@ -29690,7 +24356,7 @@ function generarExamenParaMateria(materiaKey, modoForzado = null, modeloIndexFor
                 <button 
                     class="fin-btn-retry" 
                     type="button" 
-                    onclick="limpiarYReintentarExamen('${matId}')"
+                    data-study-click="limpiarYReintentarExamen('${matId}')"
                     title="Limpia tus respuestas para rehacer este modelo desde cero"
                 >
                     🔄 Reintentar / Limpiar Hoja
@@ -29698,7 +24364,7 @@ function generarExamenParaMateria(materiaKey, modoForzado = null, modeloIndexFor
                 <button 
                     class="fin-btn-delete-custom" 
                     type="button" 
-                    onclick="borrarModelosCustomDeMateria('${matId}')"
+                    data-study-click="borrarModelosCustomDeMateria('${matId}')"
                     title="Borra los exámenes creados con IA y vuelve a los modelos oficiales originales"
                 >
                     🗑️ Borrar Exámenes Creados
@@ -29772,7 +24438,7 @@ function generarExamenParaMateria(materiaKey, modoForzado = null, modeloIndexFor
         `;
     }
 
-    sheet.innerHTML = `
+    setHTML(sheet, `
         <div class="fin-active-exam-paper">
             ${modelosBarHtml}
 
@@ -29808,7 +24474,7 @@ function generarExamenParaMateria(materiaKey, modoForzado = null, modeloIndexFor
                     <button 
                         class="button button--ghost" 
                         type="button" 
-                        onclick="limpiarYReintentarExamen('${matId}')"
+                        data-study-click="limpiarYReintentarExamen('${matId}')"
                     >
                         🔄 Limpiar y Reintentar
                     </button>
@@ -29816,14 +24482,14 @@ function generarExamenParaMateria(materiaKey, modoForzado = null, modeloIndexFor
                         id="finSubmitBtn_${matId}" 
                         class="button button--primary fin-btn-submit" 
                         type="button" 
-                        onclick="evaluarExamenMateria('${matId}')"
+                        data-study-click="evaluarExamenMateria('${matId}')"
                     >
                         🔍 Entregar y Evaluar con IA Docente
                     </button>
                 </div>
             </div>
         </div>
-    `;
+    `);
 
     // Restaurar borrador previo si el alumno ya había escrito respuestas en este modelo
     restaurarBorradorExamenMateria(matId, examenData.id);
@@ -29853,7 +24519,7 @@ function limpiarYReintentarExamen(materiaKey) {
     const feedbackPanel = document.getElementById(`finExamFeedback_${matId}`);
     if (feedbackPanel) {
         feedbackPanel.classList.add("hidden");
-        feedbackPanel.innerHTML = "";
+        setHTML(feedbackPanel, "");
     }
 
     if (textareas[0]) textareas[0].focus();
@@ -29875,7 +24541,7 @@ function borrarModelosCustomDeMateria(materiaKey) {
     });
 
     try {
-        localStorage.setItem(FINANZAS_CUSTOM_MODELS_KEY, JSON.stringify(store));
+        studyStorage.setItem(FINANZAS_CUSTOM_MODELS_KEY, JSON.stringify(store));
     } catch (_) {}
 
     estadoFinanzas.modeloActivoIndex[matId] = 0;
@@ -29893,6 +24559,7 @@ window.borrarModelosCustomDeMateria = borrarModelosCustomDeMateria;
 
 // GENERADOR Y BANCO DE MODELOS FINHUB MULTI-MODO INÉDITOS
 async function generarNuevoModeloConIA(materiaKey, modoForzado = null) {
+    await loadFinance();
     const matId = normalizarMateriaFinanzasKey(materiaKey);
     const mat = MATERIAS_FINANZAS[matId];
     if (!mat) return;
@@ -29994,7 +24661,6 @@ ESTÁ ESTRICTAMENTE PROHIBIDO repetir las preguntas anteriores o hacer simples p
 
     mostrarToast(`✨ Creando el Modelo ${nuevoNum} inédito para ${mat.nombre} (${nombreModo})...`, "info");
 
-    const directKey = typeof obtenerGeminiApiKey === "function" ? obtenerGeminiApiKey() : "";
     let nuevoModeloGenerado = null;
 
     try {
@@ -30027,51 +24693,16 @@ Formato de respuesta: Devuelve ÚNICAMENTE un objeto JSON válido (sin markdown 
   ]
 }`;
 
-        if (directKey) {
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`;
-            const res = await fetch(url, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "x-goog-api-key": directKey
-                },
-                body: JSON.stringify({
-                    contents: [{ parts: [{ text: prompt }] }],
-                    generationConfig: { temperature: 0.85, maxOutputTokens: 3000, responseMimeType: "application/json" }
-                })
-            });
-            if (res.ok) {
-                const data = await res.json();
-                const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
-                const cleanJson = rawText.replace(/\`\`\`json/gi, "").replace(/\`\`\`/g, "").trim();
-                nuevoModeloGenerado = JSON.parse(cleanJson);
-            }
-        } else {
-            const res = await fetch("/api/gemini", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    materia: mat.nombre,
-                    tema: `${mat.nombre} - ${modo} - Modelo ${nuevoNum} Inedito Variedad ${Date.now() % 1000}`,
-                    tipoJuego: "modelo_examen_finanzas",
-                    prompt: prompt
-                })
-            });
-            if (res.ok) {
-                const jsonResp = await res.json();
-                const payload = jsonResp?.data || jsonResp;
-                if (payload && Array.isArray(payload.consignas) && payload.consignas.length > 0) {
-                    nuevoModeloGenerado = payload;
-                }
-            }
-        }
+        nuevoModeloGenerado = await requestAI({ materia: mat.nombre, tema: mat.nombre + ' - ' + modo, tipoJuego: 'modelo_examen_finanzas', prompt });
     } catch (e) {
         console.warn("Fallo al generar modelo con Gemini, usando motor pedagógico local:", e);
     }
 
     // Fallback generador pedagógico procedimental diversificado según variantIndex y modo estricto
     if (!nuevoModeloGenerado || !Array.isArray(nuevoModeloGenerado.consignas) || nuevoModeloGenerado.consignas.length === 0) {
+        const { crearModeloIneditoProcedural } = await import('./modules/finance-generator.mjs');
         nuevoModeloGenerado = crearModeloIneditoProcedural(matId, modo, nuevoNum, customCount);
+        nuevoModeloGenerado.badge = 'Práctica local';
     }
 
     if (!nuevoModeloGenerado.id) nuevoModeloGenerado.id = `${matId}_ia_${modo}_${Date.now()}`;
@@ -30090,1584 +24721,8 @@ Formato de respuesta: Devuelve ÚNICAMENTE un objeto JSON válido (sin markdown 
 }
 
 
-function crearModeloIneditoProcedural(matId, modo, num, variantIndex = 0) {
-    const timestamp = Date.now();
-    const v = variantIndex % 4;
-    const bankData = {
-    "filosofia": {
-        "1er_parcial": [
-            [
-                {
-                    "numero": 1,
-                    "puntos": 25,
-                    "pregunta": "Análisis de Fragmento Socrático: Confronte la postura de Calicles en el Gorgias ('el poder del más fuerte como ley natural') con la afirmación socrática de que la justicia consiste en gobernar las pasiones del alma. Explique el método dialéctico y la areté.",
-                    "placeholder": "Desarrolle la confrontación entre Sócrates y Calicles..."
-                },
-                {
-                    "numero": 2,
-                    "puntos": 25,
-                    "pregunta": "Platón y la Teoría de la Reminiscencia (Menón): ¿Por qué para Platón 'aprender es recordar' (anámnesis)? Relacione la inmortalidad del alma con la visión previa de las Ideas en el Topos Uranos.",
-                    "placeholder": "Explique la anámnesis y el conocimiento como recuerdo..."
-                },
-                {
-                    "numero": 3,
-                    "puntos": 20,
-                    "pregunta": "Aristóteles y la Metafísica del Ser: 'El Ser se dice de muchas maneras'. Explique esta célebre fórmula aristotélica, distinga la analogía del ser frente al unívoco parmenídeo y defina qué es la Ousía o sustancia.",
-                    "placeholder": "Explique la polisemia del ser y la primacía de la sustancia..."
-                },
-                {
-                    "numero": 4,
-                    "puntos": 15,
-                    "pregunta": "Heráclito y el Fuego Cósmico: ¿Por qué Heráclito eligió al Fuego como símbolo primordial del Logos y del cosmos eterno 'que ningún dios ni hombre hizo'? Relacione con la medida de los opuestos.",
-                    "placeholder": "Desarrolle el significado del fuego como principio del devenir..."
-                },
-                {
-                    "numero": 5,
-                    "puntos": 15,
-                    "pregunta": "Ética Aplicada a la Actividad Financiera: ¿Es legítimo desde la ética aristotélica perseguir el lucro financiero por sí mismo (crematística antinatural) o debe subordinarse a la economía doméstica y al bien común de la polis?",
-                    "placeholder": "Confronte crematística natural vs antinatural en Aristóteles..."
-                }
-            ],
-            [
-                {
-                    "numero": 1,
-                    "puntos": 25,
-                    "pregunta": "La Alegoría de la Caverna (República VII): Explique detalladamente los cuatro grados del ser y del conocer (conjetura, creencia, pensamiento discursivo e intelección pura) y el ascenso del prisionero hacia la Idea del Bien.",
-                    "placeholder": "Desarrolle la alegoría y los grados ontológicos y gnoseológicos..."
-                },
-                {
-                    "numero": 2,
-                    "puntos": 25,
-                    "pregunta": "Las Cuatro Causas de Aristóteles: Explique y ejemplifique la causa material, formal, eficiente y final. ¿Por qué la causa final posee primacía ontológica en la física y metafísica aristotélica (teleología)?",
-                    "placeholder": "Desarrolle la teoría de las cuatro causas y la teleología..."
-                },
-                {
-                    "numero": 3,
-                    "puntos": 20,
-                    "pregunta": "Sócrates frente a los Sofistas: Compare la concepción sofística de la verdad (Protágoras: 'el hombre es la medida de todas las cosas') frente a la búsqueda socrática de definiciones universales y el examen moral de la vida.",
-                    "placeholder": "Confronte relativismo sofístico vs universalismo socrático..."
-                },
-                {
-                    "numero": 4,
-                    "puntos": 15,
-                    "pregunta": "Parménides y la Vía de la Verdad: Explique la tesis de que 'el ser es y el no-ser no es'. ¿Por qué para Parménides el cambio, el movimiento y la multiplicidad son meras ilusiones engañosas de los sentidos?",
-                    "placeholder": "Explique el poema de Parménides y las propiedades del Ser inmutable..."
-                },
-                {
-                    "numero": 5,
-                    "puntos": 15,
-                    "pregunta": "Ética a Nicómaco y la Felicidad: ¿Qué entiende Aristóteles por Eudaimonía? Explique por qué la virtud ética consiste en el 'justo medio' entre dos extremos viciosos (exceso y defecto).",
-                    "placeholder": "Desarrolle la doctrina del término medio y la vida contemplativa..."
-                }
-            ],
-            [
-                {
-                    "numero": 1,
-                    "puntos": 25,
-                    "pregunta": "Juicio y Muerte de Sócrates en la Apología: ¿Por qué Sócrates sostiene que 'una vida sin examen no merece ser vivida' y rehúsa renunciar a su misión filosófica a cambio de conservar la vida? Analice el papel de las leyes atenienses en el Critón.",
-                    "placeholder": "Analice el juicio de Sócrates, la piedad y el deber hacia la polis..."
-                },
-                {
-                    "numero": 2,
-                    "puntos": 25,
-                    "pregunta": "La Estructura Tripartita del Alma en Platón (Fedro): Analice el mito del carro alado. Describa las tres partes del alma (racional, irascible y apetitiva) y qué virtud cardinal corresponde a cada una para lograr la justicia.",
-                    "placeholder": "Explique el mito del carro alado y la correspondencia con las virtudes..."
-                },
-                {
-                    "numero": 3,
-                    "puntos": 20,
-                    "pregunta": "Sustancia Primera y Sustancia Segunda en Aristóteles: A partir de las Categorías, diferencie la sustancia primera (individuo concreto, 'este hombre') de la sustancia segunda (género y especie). ¿Cómo resuelve Aristóteles la crítica al mundo de las ideas platónico?",
-                    "placeholder": "Diferencie sustancia primera y segunda con ejemplos..."
-                },
-                {
-                    "numero": 4,
-                    "puntos": 15,
-                    "pregunta": "El Problema del Arjé en los Filósofos Milesios: Compare las propuestas de Tales (Agua), Anaximandro (Ápeiron) y Anaxímenes (Aire). ¿Por qué representan el paso fundamental del Mito al Logos racional?",
-                    "placeholder": "Analice la búsqueda del principio material primordial en Mileto..."
-                },
-                {
-                    "numero": 5,
-                    "puntos": 15,
-                    "pregunta": "La Polis Ideal y la Justicia Platónica: ¿Cómo organiza Platón las tres clases sociales de la República y por qué fundamenta que solo los filósofos deben gobernar para garantizar una sociedad virtuosa?",
-                    "placeholder": "Desarrolle la teoría del rey-filósofo y la justicia en la ciudad..."
-                }
-            ],
-            [
-                {
-                    "numero": 1,
-                    "puntos": 25,
-                    "pregunta": "Mayéutica e Ironía Socrática: Analice cómo Sócrates destruye las falsas certezas de sus interlocutores para dar a luz la verdad latente en el alma. Confronte el saber moral con la mera técnica profesional.",
-                    "placeholder": "Explique la función de la ironía y el alumbramiento mayéutico..."
-                },
-                {
-                    "numero": 2,
-                    "puntos": 25,
-                    "pregunta": "El Banquete de Platón y la Escala de Eros: A partir del discurso de Diotima, analice el origen de Eros (hijo de Poros y Penía) y cómo el deseo de lo bello asciende desde los cuerpos individuales hasta la Belleza en sí.",
-                    "placeholder": "Desarrolle la naturaleza de Eros y el ascenso dialéctico hacia la Belleza..."
-                },
-                {
-                    "numero": 3,
-                    "puntos": 20,
-                    "pregunta": "Hilemorfismo y Teoría del Cambio en Aristóteles: Explique los conceptos de Materia (hylé), Forma (morphé), Acto (enérgeia) y Potencia (dýnamis). ¿Cómo resuelve Aristóteles la aporía eleática del no-ser?",
-                    "placeholder": "Explique la composición hilemórfica y el pasaje de la potencia al acto..."
-                },
-                {
-                    "numero": 4,
-                    "puntos": 15,
-                    "pregunta": "Sofística y Nihilismo en Gorgias: Analice las tres tesis de Gorgias en 'Sobre el No-Ser' (nada existe; si existiera no sería cognoscible; si fuera cognoscible no sería comunicable) y el poder persuasivo de la retórica.",
-                    "placeholder": "Desarrolle las tres tesis escépticas y la retórica sofística..."
-                },
-                {
-                    "numero": 5,
-                    "puntos": 15,
-                    "pregunta": "El Primer Motor Inmóvil de Aristóteles: Explique por qué en el libro Lambda de la Metafísica se deduce la existencia de un principio supremo inmaterial, Acto Puro, que mueve como causa final al universo entero.",
-                    "placeholder": "Analice la naturaleza del Motor Inmóvil y su forma de atracción..."
-                }
-            ]
-        ],
-        "2do_parcial": [
-            [
-                {
-                    "numero": 1,
-                    "puntos": 25,
-                    "pregunta": "René Descartes y la Duda Metódica: Analice detalladamente los tres niveles sucesivos de la duda cartesiana (engaño de los sentidos, argumento del sueño e hipótesis del genio maligno). Explique por qué el 'Cogito ergo sum' resiste la duda hiperbólica y se convierte en la primera certeza indudable.",
-                    "placeholder": "Desarrolle los 3 niveles de duda y el descubrimiento del Cogito..."
-                },
-                {
-                    "numero": 2,
-                    "puntos": 25,
-                    "pregunta": "David Hume y la Crítica al Principio de Causalidad: A partir de la distinción entre impresiones e ideas, explique por qué para Hume no existe ninguna impresión que respalde la 'conexión necesaria' entre causa y efecto. ¿Qué rol juegan el hábito y la costumbre psicológica en nuestras expectativas?",
-                    "placeholder": "Explique la crítica de Hume a la causalidad y el hábito..."
-                },
-                {
-                    "numero": 3,
-                    "puntos": 20,
-                    "pregunta": "Immanuel Kant y el Giro Copernicano: ¿Qué sostiene Kant al afirmar que los objetos deben regirse por nuestro conocimiento y no nuestro conocimiento por los objetos? Explique qué es un juicio sintético a priori y por qué es la base de la ciencia moderna.",
-                    "placeholder": "Desarrolle la revolución copernicana kantiana y los juicios a priori..."
-                },
-                {
-                    "numero": 4,
-                    "puntos": 15,
-                    "pregunta": "Ética Deontológica de Kant: La Buena Voluntad y el Imperativo Categórico: ¿Por qué para Kant nada es bueno sin restricción excepto la buena voluntad? Confronte el actuar 'por deber' con el actuar 'conforme al deber' y enuncie las dos fórmulas del Imperativo Categórico.",
-                    "placeholder": "Desarrolle la buena voluntad, el deber y el imperativo categórico..."
-                },
-                {
-                    "numero": 5,
-                    "puntos": 15,
-                    "pregunta": "Utilitarismo y Ética en Mercados Financieros: Compare el principio utilitarista de la mayor felicidad para el mayor número (Bentham y Mill) con la exigencia deontológica kantiana de transparencia irrestricta. ¿Es ético ocultar riesgos a inversores para evitar un pánico bancario?",
-                    "placeholder": "Confronte utilitarismo vs deontología aplicado a la banca y finanzas..."
-                }
-            ],
-            [
-                {
-                    "numero": 1,
-                    "puntos": 25,
-                    "pregunta": "Descartes y la Demostración de Dios: Explique la prueba cartesiana de la existencia de Dios por la idea de lo perfecto e infinito en la mente finita. ¿Por qué la veracidad divina es la pieza clave para derribar la hipótesis del genio maligno y validar la matemática y el mundo exterior?",
-                    "placeholder": "Desarrolle la prueba de Dios y su función epistemológica de garantía..."
-                },
-                {
-                    "numero": 2,
-                    "puntos": 25,
-                    "pregunta": "Hume y la Disolución del 'Yo' o Sustancia Pensante: ¿Por qué sostiene Hume que al mirar en nuestro interior sólo hallamos impresiones pasajeras de frío, calor o dolor, pero nunca un 'yo' sustancial permanente? Explique la teoría del yo como 'haz o colección de percepciones'.",
-                    "placeholder": "Analice la crítica empirista a la noción de alma sustancial..."
-                },
-                {
-                    "numero": 3,
-                    "puntos": 20,
-                    "pregunta": "Kant y la Estética Trascendental: Explique por qué el Espacio y el Tiempo no son propiedades de las cosas en sí (noúmenos) sino 'formas puras a priori de la sensibilidad humana'. Distinga entre Fenómeno y Noúmeno.",
-                    "placeholder": "Desarrolle el espacio y tiempo como intuiciones puras y fenómeno vs noúmeno..."
-                },
-                {
-                    "numero": 4,
-                    "puntos": 15,
-                    "pregunta": "Autonomía vs Heteronomía en la Moral Kantiana: Explique por qué Kant rechaza las éticas heterónomas basadas en premios celestiales o castigos terrenales. ¿Qué significa que el ser humano es un fin en sí mismo y legislador en el reino de los fines?",
-                    "placeholder": "Explique la autonomía moral y la dignidad humana en Kant..."
-                },
-                {
-                    "numero": 5,
-                    "puntos": 15,
-                    "pregunta": "Uso de Información Privilegiada (Insider Trading): Analice desde la ética del deber de Kant por qué operar en bolsa con información confidencial viola la fórmula de la ley universal y la dignidad de los demás participantes del mercado.",
-                    "placeholder": "Aplique el imperativo categórico a la práctica de insider trading..."
-                }
-            ],
-            [
-                {
-                    "numero": 1,
-                    "puntos": 25,
-                    "pregunta": "La Segunda Meditación de Descartes y el Ejemplo del Trozo de Cera: ¿Cómo demuestra Descartes que los atributos sensibles de la cera (color, olor, figura, dureza) cambian al acercarse al fuego pero la cera permanece? ¿Por qué esta inspección es del entendimiento y no de los sentidos?",
-                    "placeholder": "Analice el análisis de la cera y la primacía del intelecto..."
-                },
-                {
-                    "numero": 2,
-                    "puntos": 25,
-                    "pregunta": "El Problema de la Inducción en David Hume: ¿Por qué ninguna cantidad de observaciones empíricas pasadas garantiza lógicamente que 'el sol saldrá mañana'? Explique por qué las ciencias de la naturaleza descansan sobre la creencia psicológica y no sobre la demostración matemática.",
-                    "placeholder": "Desarrolle el problema de la inducción y la justificación del conocimiento empírico..."
-                },
-                {
-                    "numero": 3,
-                    "puntos": 20,
-                    "pregunta": "Kant y la Analítica Trascendental: 'Los pensamientos sin contenido son vacíos; las intuiciones sin conceptos son ciegas'. Explique esta célebre frase kantiana y cómo cooperan la Sensibilidad y el Entendimiento mediante las Categorías.",
-                    "placeholder": "Explique la articulación entre intuiciones sensibles y conceptos puros..."
-                },
-                {
-                    "numero": 4,
-                    "puntos": 15,
-                    "pregunta": "John Stuart Mill y la Calidad de los Placeres: ¿Cómo responde Mill a la crítica de que el utilitarismo es una 'filosofía de puercos'? Explique la distinción cualitativa entre placeres intelectuales y corporales ('es mejor ser un Sócrates insatisfecho que un cerdo satisfecho').",
-                    "placeholder": "Desarrolle la doctrina de los placeres superiores en John Stuart Mill..."
-                },
-                {
-                    "numero": 5,
-                    "puntos": 15,
-                    "pregunta": "Deber Fiduciario del Asesor Financiero: Analice el conflicto de interés cuando un asesor cobra comisiones encubiertas por colocar fondos de alto riesgo. Confronte la ética de la virtud profesional con el cálculo económico egoísta.",
-                    "placeholder": "Desarrolle el deber fiduciario y la responsabilidad ética del profesional..."
-                }
-            ],
-            [
-                {
-                    "numero": 1,
-                    "puntos": 25,
-                    "pregunta": "Confrontación Epistemológica: Racionalismo vs Empirismo: Compare rigurosamente la postura de Descartes (ideas innatas, criterio de claridad y distinción) frente a la de David Hume (tabla rasa, principio de copia y relaciones de ideas vs cuestiones de hecho).",
-                    "placeholder": "Confronte racionalismo cartesiano vs empirismo de Hume..."
-                },
-                {
-                    "numero": 2,
-                    "puntos": 25,
-                    "pregunta": "Kant y la Dialéctica Trascendental: ¿Por qué para Kant la Metafísica tradicional no puede ser una ciencia? Explique las tres Ideas Trascendentales de la razón pura (Alma, Mundo, Dios) y su función regulativa en la búsqueda del saber.",
-                    "placeholder": "Analice los límites del conocimiento y las ideas regulativas de la razón..."
-                },
-                {
-                    "numero": 3,
-                    "puntos": 20,
-                    "pregunta": "El Dilema del Tranvía en la Filosofía Moral: Confronte la respuesta utilitarista (desviar el tranvía para sacrificar a 1 persona y salvar a 5) con la objeción deontológica kantiana (prohibición categórica de utilizar activamente a un ser humano como medio para un fin).",
-                    "placeholder": "Analice el dilema del tranvía desde Kant y el consecuencialismo..."
-                },
-                {
-                    "numero": 4,
-                    "puntos": 15,
-                    "pregunta": "Ética en la Gestión Corporativa: Análisis del Fraude Contable: Evalúe el maquillaje de balances financieros (ej. Enron o Lehman Brothers) a la luz del imperativo de veracidad kantiano y el daño colectivo a la confianza pública de mercado.",
-                    "placeholder": "Analice la mentira y el falseamiento contable desde la deontología kantiana..."
-                },
-                {
-                    "numero": 5,
-                    "puntos": 15,
-                    "pregunta": "El Ejemplo Kantiano del Comerciante: ¿Por qué para Kant el comerciante que cobra precios justos a niños y clientes novatos únicamente por temor a perder clientes 'obra conforme al deber pero sin mérito moral'? Explique el valor moral intrínseco.",
-                    "placeholder": "Explique el mérito moral del acto por puro respeto a la ley moral..."
-                }
-            ]
-        ],
-        "final": [
-            [
-                {
-                    "numero": 1,
-                    "puntos": 25,
-                    "pregunta": "Ontología Comparada: Dualismo Platónico vs Fenómeno y Noúmeno Kantiano: Confronte el mundo de las Ideas de Platón con la distinción fenómeno/noúmeno en Kant. ¿Dónde reside la realidad objetiva y cómo se accede a ella en cada pensador?",
-                    "placeholder": "Confronte la metafísica platónica con el idealismo trascendental kantiano..."
-                },
-                {
-                    "numero": 2,
-                    "puntos": 25,
-                    "pregunta": "Causalidad y Ciencia: De Aristóteles a David Hume: Compare la concepción teleológica de las cuatro causas aristotélicas con la crítica destructiva de Hume a la conexión necesaria. ¿Cómo fundamenta cada uno el orden del cosmos?",
-                    "placeholder": "Compare la teleología aristotélica con el escepticismo de Hume sobre la causalidad..."
-                },
-                {
-                    "numero": 3,
-                    "puntos": 20,
-                    "pregunta": "Evolución de los Modelos Éticos: Cuadro comparativo entre: 1) Ética de las virtudes y el término medio (Aristóteles); 2) Deontología del imperativo categórico (Kant); 3) Utilitarismo consecuencialista (Mill). Analice sus fundamentos y diferencias.",
-                    "placeholder": "Desarrolle el cuadro comparativo de los tres grandes paradigmas éticos..."
-                },
-                {
-                    "numero": 4,
-                    "puntos": 15,
-                    "pregunta": "Sócrates y la Obligación Moral hacia las Leyes: A partir del Critón, analice por qué Sócrates prefiere acatar una sentencia de muerte injusta antes que desobedecer las leyes de Atenas y destruir la polis.",
-                    "placeholder": "Analice el deber ciudadano y la justicia en el Critón..."
-                },
-                {
-                    "numero": 5,
-                    "puntos": 15,
-                    "pregunta": "Deontología Profesional en Finanzas: Elabore una reflexión crítica sobre el rol social y ético del Licenciado en Finanzas de UADE ante dilemas de optimización de beneficios versus responsabilidad con la comunidad.",
-                    "placeholder": "Desarrolle la ética profesional aplicada al sector financiero..."
-                }
-            ],
-            [
-                {
-                    "numero": 1,
-                    "puntos": 25,
-                    "pregunta": "Evolución de la Epistemología: Trace el camino gnoseológico desde la mayéutica socrática y la anámnesis platónica, pasando por la duda metódica cartesiana, hasta la revolución copernicana de Kant.",
-                    "placeholder": "Trace la evolución histórica de la teoría del conocimiento..."
-                },
-                {
-                    "numero": 2,
-                    "puntos": 25,
-                    "pregunta": "El Problema de la Sustancia en la Historia: Compare cómo conciben la sustancia: 1) Parménides (Ser único); 2) Aristóteles (Ousía primera); 3) Descartes (Res cogitans, extensa e infinita); 4) Hume (rechazo de la sustancia).",
-                    "placeholder": "Analice el concepto de sustancia a través de los autores clásicos y modernos..."
-                },
-                {
-                    "numero": 3,
-                    "puntos": 20,
-                    "pregunta": "Teorías de la Justicia: Platón vs Utilitarismo: Confronte la justicia como armonía jerárquica de las partes en la República de Platón frente a la justicia como maximización de la utilidad colectiva en Bentham y Mill.",
-                    "placeholder": "Confronte la justicia platónica con la justicia utilitarista..."
-                },
-                {
-                    "numero": 4,
-                    "puntos": 15,
-                    "pregunta": "Libertad y Autonomía Moral: Compare el concepto aristotélico de acto voluntario y deliberación con la autonomía de la voluntad kantiana. ¿Cuándo es un sujeto plenamente responsable de sus actos?",
-                    "placeholder": "Desarrolle la libertad moral en Aristóteles y Kant..."
-                },
-                {
-                    "numero": 5,
-                    "puntos": 15,
-                    "pregunta": "Asimetría Informativa y Ética de Mercados: Analice las implicancias éticas de la venta de derivados financieros complejos a clientes minoristas no capacitados. ¿Qué deber moral impone la buena fe contractual?",
-                    "placeholder": "Evalúe la asimetría informativa y la protección del inversor..."
-                }
-            ],
-            [
-                {
-                    "numero": 1,
-                    "puntos": 25,
-                    "pregunta": "Racionalismo vs Empirismo y la Síntesis Kantiana: Analice cómo Kant resuelve la disputa entre las ideas innatas de Descartes y la experiencia sensible de Hume, estableciendo los límites legítimos de la razón teórica.",
-                    "placeholder": "Explique cómo Kant sintetiza racionalismo y empirismo..."
-                },
-                {
-                    "numero": 2,
-                    "puntos": 25,
-                    "pregunta": "El Concepto de Felicidad en la Filosofía: Contraste la Eudaimonía aristotélica (vida según la virtud contemplativa) con la felicidad del utilitarismo (balance de placer sobre dolor). ¿Cuál ofrece una mejor guía para la vida humana?",
-                    "placeholder": "Confronte la felicidad aristotélica vs la felicidad utilitarista..."
-                },
-                {
-                    "numero": 3,
-                    "puntos": 20,
-                    "pregunta": "El Devenir y la Permanencia: Heráclito y Parménides: Analice el debate presocrático sobre el cambio. ¿Cómo reconcilia Aristóteles ambas posturas mediante su teoría del acto y la potencia?",
-                    "placeholder": "Explique el debate del cambio en Heráclito, Parménides y la solución aristotélica..."
-                },
-                {
-                    "numero": 4,
-                    "puntos": 15,
-                    "pregunta": "El Método Filosófico Comparado: Describa las características de: 1) Diálogo elenjos socrático; 2) Silogismo demostrativo aristotélico; 3) Método de la duda cartesiana; 4) Método crítico trascendental kantiano.",
-                    "placeholder": "Compare los métodos filosóficos fundamentales..."
-                },
-                {
-                    "numero": 5,
-                    "puntos": 15,
-                    "pregunta": "Códigos de Conducta y Transparencia Financiera: Explique por qué los estándares éticos (CFA Institute, CNV) exigen anteponer el interés del cliente sobre el interés propio o de la firma colocadora.",
-                    "placeholder": "Fundamente los principios deontológicos de conducta fiduciaria..."
-                }
-            ],
-            [
-                {
-                    "numero": 1,
-                    "puntos": 25,
-                    "pregunta": "Concepciones Antropológicas del Ser Humano: Analice la naturaleza del alma humana en Platón (carro alado y dualismo), Aristóteles (forma sustancial del cuerpo orgánico), Descartes (sustancia pensante separada del cuerpo mecánico) y Kant (sujeto moral autónomo).",
-                    "placeholder": "Desarrolle la concepción del hombre en los cuatro grandes pensadores..."
-                },
-                {
-                    "numero": 2,
-                    "puntos": 25,
-                    "pregunta": "Doxa vs Episteme: Verdad y Apariencia: Desde el mito de la caverna platónico hasta el escepticismo moderado de Hume, analice qué distingue a la opinión subjetiva del conocimiento verdadero fundamentado.",
-                    "placeholder": "Analice la distinción entre opinión y ciencia en Platón y la modernidad..."
-                },
-                {
-                    "numero": 3,
-                    "puntos": 20,
-                    "pregunta": "Medios y Fines en la Sociedad Contemporánea: Analice la segunda formulación del imperativo categórico kantiano ('obra de tal modo que uses a la humanidad siempre como fin y nunca como mero medio') frente al utilitarismo de costos/beneficios empresariales.",
-                    "placeholder": "Desarrolle el principio de la humanidad como fin en sí mismo..."
-                },
-                {
-                    "numero": 4,
-                    "puntos": 15,
-                    "pregunta": "El Tránsito del Mito al Logos en Grecia Antigua: Explique qué condiciones históricas, políticas y geográficas favorecieron el nacimiento de la filosofía en las colonias jonias frente a las explicaciones mítico-religiosas tradicionales.",
-                    "placeholder": "Explique las causas del nacimiento del pensamiento racional en Grecia..."
-                },
-                {
-                    "numero": 5,
-                    "puntos": 15,
-                    "pregunta": "Inteligencia Artificial y Ética Financiera: Reflexione sobre la delegación de decisiones de inversión y otorgamiento de créditos a algoritmos opacos. ¿Quién asume la responsabilidad moral ante fallas sistémicas?",
-                    "placeholder": "Analice la responsabilidad moral y la IA en la toma de decisiones financieras..."
-                }
-            ]
-        ]
-    },
-    "sfi": {
-        "1er_parcial": [
-            [
-                {
-                    "numero": 1,
-                    "puntos": 20,
-                    "pregunta": "BLOQUE I: Operaciones de la Fed: Distinga entre compras definitivas (Outright) y operaciones de Repos y Reverse Repos. Explique su efecto en la masa monetaria y en la tasa target.",
-                    "placeholder": "Desarrolle la política monetaria y las OMO de la Fed..."
-                },
-                {
-                    "numero": 2,
-                    "puntos": 25,
-                    "pregunta": "Teorías de la Curva de Rendimientos (ETTI): Compare la Teoría de Expectativas Puras con la de Prima por Liquidez y Segmentación de Mercados.",
-                    "placeholder": "Analice supuestos e implicancias de las tres teorías de la ETTI..."
-                },
-                {
-                    "numero": 3,
-                    "puntos": 25,
-                    "pregunta": "Clasificación de Deuda Internacional: Eurobonos vs Bonos Extranjeros (Yankee, Samurai, Bulldog). Explique monedas, agentes colocadores y ventajas de emitir en euromercados.",
-                    "placeholder": "Distinga emisiones internacionales con ejemplos prácticos..."
-                },
-                {
-                    "numero": 4,
-                    "puntos": 15,
-                    "pregunta": "Hipótesis de Mercado Eficiente (Fama): Distinga las formas Débil, Semifuerte y Fuerte. ¿Por qué el análisis técnico no genera retornos extraordinarios según la forma débil?",
-                    "placeholder": "Explique los tres niveles de eficiencia informacional de Eugene Fama..."
-                },
-                {
-                    "numero": 5,
-                    "puntos": 15,
-                    "pregunta": "Impacto del Carry Trade y Subas de Tasas en Mercados Emergentes: Analice la fuga de capitales, depreciación cambiaria y riesgo soberano cuando la Fed endurece su política monetaria.",
-                    "placeholder": "Desarrolle el canal de transmisión de la Fed a emergentes..."
-                }
-            ],
-            [
-                {
-                    "numero": 1,
-                    "puntos": 25,
-                    "pregunta": "Mercado de Euromonedas y Préstamos Sindicados: ¿Cómo se originaron los eurodólares en Londres? Explique la estructura de un crédito bancario sindicado internacional (Lead Manager, Facility Agent y Bancos participantes).",
-                    "placeholder": "Explique el funcionamiento de los préstamos sindicados y los euromercados..."
-                },
-                {
-                    "numero": 2,
-                    "puntos": 25,
-                    "pregunta": "Inversión de la Curva de Rendimientos de los Treasuries: Explique por qué el diferencial entre las tasas a 10 años y 2 años (10Y-2Y) se vuelve negativo y por qué históricamente anticipa recesiones económicas en EE.UU.",
-                    "placeholder": "Analice las causas macroeconómicas de la inversión de la curva de rendimientos..."
-                },
-                {
-                    "numero": 3,
-                    "puntos": 20,
-                    "pregunta": "Swaps de Tasa de Interés (IRS): Un banco cambia flujos de tasa fija por tasa flotante (SOFR). Explique el funcionamiento del contrato, el nocional, los pagos netos y para qué se utiliza en cobertura de balances corporativos.",
-                    "placeholder": "Desarrolle la mecánica de un IRS de tasa fija a flotante..."
-                },
-                {
-                    "numero": 4,
-                    "puntos": 15,
-                    "pregunta": "Bonos Brady y Crisis de Deuda Emergente: Explique la reestructuración de deudas bancarias de los años 80/90 a través de bonos respaldados con Bonos cupón cero del Tesoro estadounidense.",
-                    "placeholder": "Analice el Plan Brady y el nacimiento del mercado de bonos emergentes..."
-                },
-                {
-                    "numero": 5,
-                    "puntos": 15,
-                    "pregunta": "Régimen de Tipo de Cambio Flotante vs Fijo: Compare ambos sistemas a la luz del Trilema Monetario de Mundell-Fleming. ¿Por qué un país no puede tener simultáneamente tipo de cambio fijo, libre movilidad de capitales y política monetaria independiente?",
-                    "placeholder": "Explique el Trilema de la Trinidad Imposible de Mundell-Fleming..."
-                }
-            ],
-            [
-                {
-                    "numero": 1,
-                    "puntos": 25,
-                    "pregunta": "Emisión Primaria vs Mercado Secundario en Treasuries: Distinga rigurosamente el rol del Departamento del Tesoro (subastas primarias a descuento de T-Bills) frente al rol de la Reserva Federal (intervenciones en secundario vía FOMC).",
-                    "placeholder": "Explique la separación institucional entre Tesoro y FED..."
-                },
-                {
-                    "numero": 2,
-                    "puntos": 25,
-                    "pregunta": "Las Cuatro Grandes Tendencias de los Años 90: Analice la desregulación financiera, la globalización de capitales, la titulización de activos y la innovación con derivados. ¿Cómo impulsaron el paso del modelo bancocéntrico al modelo de mercado?",
-                    "placeholder": "Desarrolle las 4 tendencias de los 90 y el cambio de modelo..."
-                },
-                {
-                    "numero": 3,
-                    "puntos": 20,
-                    "pregunta": "Gestión Activa vs Gestión Pasiva Indexada: A partir de la forma semifuerte de la Hipótesis de Mercado Eficiente, ¿por qué los fondos cotizados (ETFs) indexados han ganado terreno frente a los fondos mutuos de gestión activa?",
-                    "placeholder": "Analice el debate entre gestión pasiva y activa según la HME..."
-                },
-                {
-                    "numero": 4,
-                    "puntos": 15,
-                    "pregunta": "Tasa SOFR vs Antigua Tasa LIBOR: Explique por qué los reguladores globales reemplazaron la tasa Libor por la tasa SOFR (Secured Overnight Financing Rate) respaldada por operaciones de Repo con Treasuries.",
-                    "placeholder": "Explique la transición de LIBOR a SOFR y el riesgo de manipulación..."
-                },
-                {
-                    "numero": 5,
-                    "puntos": 15,
-                    "pregunta": "Ataques Especulativos y Crisis de Balanza de Pagos: Explique el modelo de primera generación de Paul Krugman sobre crisis cambiarias en países que intentan defender paridades fijas con déficit fiscal.",
-                    "placeholder": "Desarrolle los modelos de crisis cambiaria y agotamiento de reservas..."
-                }
-            ],
-            [
-                {
-                    "numero": 1,
-                    "puntos": 25,
-                    "pregunta": "Regulación Financiera Internacional de Basilea III: Explique los pilares de Basilea, el ratio de capital común Tier 1, el Coeficiente de Cobertura de Liquidez (LCR) y el Ratio de Fondeo Estable Neto (NSFR).",
-                    "placeholder": "Desarrolle los estándares de solvencia y liquidez de Basilea III..."
-                },
-                {
-                    "numero": 2,
-                    "puntos": 25,
-                    "pregunta": "Mercados Forwards vs Futuros Financieros: Compare ambos instrumentos en cuanto a estandarización, mercado over-the-counter vs cámara compensadora (clearing house), margen inicial, margen de variación y riesgo de incumplimiento.",
-                    "placeholder": "Compare contratos forwards vs futuros con cuadro comparativo..."
-                },
-                {
-                    "numero": 3,
-                    "puntos": 20,
-                    "pregunta": "Quantitative Easing (QE) y Expansión Cuantitativa: ¿En qué circunstancias los bancos centrales aplican QE? Explique cómo la compra de bonos de largo plazo aplana la curva de tasas y estimula la inversión privada.",
-                    "placeholder": "Analice el QE como herramienta no convencional de política monetaria..."
-                },
-                {
-                    "numero": 4,
-                    "puntos": 15,
-                    "pregunta": "Riesgo Soberano y Spread EMBI+: Explique cómo calcula JP Morgan el diferencial de rendimiento entre bonos de un país emergente y los Bonos del Tesoro de EE.UU. ¿Qué factores determinan la prima de riesgo país?",
-                    "placeholder": "Explique la construcción del EMBI+ y los determinantes del riesgo país..."
-                },
-                {
-                    "numero": 5,
-                    "puntos": 15,
-                    "pregunta": "El Euro y la Unión Económica y Monetaria: ¿Qué implicó la adopción de una moneda única sin una unión fiscal común? Analice los desequilibrios generados en la crisis de deuda soberana europea de 2010-2012.",
-                    "placeholder": "Analice las tensiones de la unión monetaria europea sin unión fiscal..."
-                }
-            ]
-        ],
-        "2do_parcial": [
-            [
-                {
-                    "numero": 1,
-                    "puntos": 25,
-                    "pregunta": "ADRs (American Depositary Receipts) y Acceso a Wall Street: Explique la estructura de emisión de ADRs, el rol del Banco Depositario y del Banco Custodio local. Distinga minuciosamente entre ADRs Nivel I (OTC), Nivel II (Bolsas reguladas) y Nivel III (Oferta pública con aumento de capital). ¿Qué exige la SEC y la Ley Sarbanes-Oxley (SOX)?",
-                    "placeholder": "Desarrolle los niveles de ADRs, registro SEC y ley SOX..."
-                },
-                {
-                    "numero": 2,
-                    "puntos": 25,
-                    "pregunta": "Paridad de Tasas de Interés Cubierta (CIP) y No Cubierta (UIP): Formule matemáticamente la condición de arbitraje CIP: F = S * (1 + rd) / (1 + rf). Demuestre paso a paso cómo un operador financiero obtiene ganancias de arbitraje sin riesgo si el tipo de cambio forward de mercado difiere del teórico.",
-                    "placeholder": "Desarrolle la fórmula CIP, arbitraje cubierto y paridad no cubierta..."
-                },
-                {
-                    "numero": 3,
-                    "puntos": 20,
-                    "pregunta": "Contratos de Opciones Financieras (Call y Put): Defina derechos y obligaciones del comprador (holder) y vendedor/lanzador (writer) de un Call y de un Put. Explique los conceptos de 'In the Money' (ITM), 'At the Money' (ATM) y 'Out of the Money' (OTM), y distinga entre valor intrínseco y valor tiempo.",
-                    "placeholder": "Explique los 4 perfiles de opciones y los determinantes de la prima..."
-                },
-                {
-                    "numero": 4,
-                    "puntos": 15,
-                    "pregunta": "Swaps de Tasa de Interés (IRS): Flujo Fijo vs Flotante contra SOFR: Diseñe un contrato IRS donde una empresa con deuda a tasa flotante intercambia flujos con un banco a tasa fija del 4.5% anual sobre un nocional de USD 50 millones. Calcule el flujo neto si la tasa SOFR semestral resulta ser 5.2%.",
-                    "placeholder": "Desarrolle la liquidación neta y la cobertura del IRS..."
-                },
-                {
-                    "numero": 5,
-                    "puntos": 15,
-                    "pregunta": "El Índice de Volatilidad VIX y Cobertura de Cola: Explique conceptualmente cómo se calcula el VIX a partir de los precios de las opciones fuera del dinero sobre el S&P 500. ¿Por qué se denomina el 'índice del miedo' y cómo se utiliza para coberturas de eventos de cisne negro?",
-                    "placeholder": "Analice el índice VIX y su utilización en carteras de inversión..."
-                }
-            ],
-            [
-                {
-                    "numero": 1,
-                    "puntos": 25,
-                    "pregunta": "Mecánica Institucional de los Futuros Financieros: Explique con precisión técnica el rol de la Cámara de Compensación (Clearing House), el mecanismo de novación contractual, el depósito de Margen Inicial, el cálculo del Margen de Variación diario (Mark-to-Market) y la llamada de margen (Margin Call).",
-                    "placeholder": "Desarrolle la cámara compensadora y la liquidación mark-to-market..."
-                },
-                {
-                    "numero": 2,
-                    "puntos": 25,
-                    "pregunta": "Estrategia de Cobertura Cambiaria Corporativa: Una empresa exportadora argentina cobrará USD 2.000.000 dentro de 90 días. Compare dos alternativas de hedging: a) Venta de contratos forward de divisas; b) Compra de opciones Put sobre dólares. Analice ventajas, desventajas, costo inicial y perfil de riesgo de cada alternativa.",
-                    "placeholder": "Compare forward vs put de cobertura para la exportadora..."
-                },
-                {
-                    "numero": 3,
-                    "puntos": 20,
-                    "pregunta": "Regulación Bancaria Basilea III en Liquidez y Solvencia: Analice en profundidad el Ratio de Cobertura de Liquidez (LCR a 30 días bajo estrés severo) y el Ratio de Fondeo Estable Neto (NSFR a 1 año). ¿Cómo evitan que los bancos colapsen por corridas de liquidez mayorista?",
-                    "placeholder": "Desarrolle los ratios LCR y NSFR y su importancia regulatoria..."
-                },
-                {
-                    "numero": 4,
-                    "puntos": 15,
-                    "pregunta": "La Crisis Financiera Global de 2008 y los Productos Estructurados: Explique el proceso de originación y securitización de hipotecas subprime en Bonos Respaldados por Hipotecas (MBS) y Obligaciones de Deuda Colateralizada (CDO). ¿Qué falló en las agencias de calificación crediticia y en el modelo 'originar para distribuir'?",
-                    "placeholder": "Analice el colapso de las hipotecas subprime y los derivados estructurados..."
-                },
-                {
-                    "numero": 5,
-                    "puntos": 15,
-                    "pregunta": "Cross-Currency Swaps (Swaps de Divisas): Explique la diferencia estructural entre un IRS tradicional y un Cross-Currency Swap. ¿Por qué en este último se produce un intercambio real del principal al inicio y al vencimiento, además de los pagos de cupones periódicos?",
-                    "placeholder": "Desarrolle la estructura de pagos de un swap de divisas..."
-                }
-            ],
-            [
-                {
-                    "numero": 1,
-                    "puntos": 25,
-                    "pregunta": "Estrategias con Opciones: Straddle y Protective Put: Diseñe y grafique cualitativamente el perfil de pérdidas y ganancias de: a) Un 'Protective Put' (acción comprada + put comprado) para proteger una cartera contra caídas; b) Un 'Long Straddle' (call comprado + put comprado al mismo precio de ejercicio) para apostar a un salto brusco de volatilidad.",
-                    "placeholder": "Analice las estrategias protective put y straddle con sus zonas de ganancias..."
-                },
-                {
-                    "numero": 2,
-                    "puntos": 25,
-                    "pregunta": "Arbitraje Transfronterizo con ADRs y Tipo de Cambio Implícito: Una acción argentina cotiza en ByMA a $4.500 y su ADR cotiza en el NYSE a USD 15. Si el ratio de conversión es de 3 acciones locales por 1 ADR, calcule el Contado con Liquidación (CCL) implícito y explique la operativa de arbitraje si el dólar financiero sube a $1.000.",
-                    "placeholder": "Cálculo matemático de paridad ADR y mecanismo de arbitraje..."
-                },
-                {
-                    "numero": 3,
-                    "puntos": 20,
-                    "pregunta": "Griegas de las Opciones Financieras (Delta y Vega): Defina qué mide el Delta de una opción (sensibilidad del precio de la opción ante variaciones del activo subyacente) y cómo se utiliza para construir una cobertura 'Delta Neutral'. Explique el significado de Vega ante shocks de volatilidad implícita.",
-                    "placeholder": "Explique Delta, cobertura delta-neutral y sensibilidad Vega..."
-                },
-                {
-                    "numero": 4,
-                    "puntos": 15,
-                    "pregunta": "Basilea III y los Colchones de Capital (Buffers): Explique el Colchón de Conservación de Capital (2.5%) y el Colchón Anticíclico (0% a 2.5%). ¿Por qué se exige a los Bancos de Importancia Sistémica Global (G-SIBs) un recargo adicional de capital Tier 1?",
-                    "placeholder": "Desarrolle los colchones anticíclicos y la regulación para G-SIBs..."
-                },
-                {
-                    "numero": 5,
-                    "puntos": 15,
-                    "pregunta": "La Crisis de Deuda Soberana Europea de 2010-2012: Analice los problemas estructurales de Grecia, Portugal, Irlanda y España (PIIGS), la disparidad en los rendimientos soberanos frente al Bund alemán y la trascendencia del discurso de Mario Draghi ('whatever it takes') del BCE.",
-                    "placeholder": "Analice la crisis del euro y la intervención del BCE..."
-                }
-            ],
-            [
-                {
-                    "numero": 1,
-                    "puntos": 25,
-                    "pregunta": "Perfil de Riesgo Asimétrico: Venta de Opciones Descubiertas (Naked Call): Explique por qué el lanzador de un Call descubierto asume un riesgo de pérdida potencialmente ilimitado a cambio de una ganancia máxima acotada al cobro de la prima. Confronte con el lanzamiento cubierto (Covered Call).",
-                    "placeholder": "Analice el riesgo de la venta descubierta vs lanzamiento cubierto..."
-                },
-                {
-                    "numero": 2,
-                    "puntos": 25,
-                    "pregunta": "Forwards de Liquidación Financiera (NDF - Non-Deliverable Forwards): ¿En qué consisten los contratos NDF en monedas no convertibles o con control de cambios (cepos cambiarios)? Explique cómo se liquida la diferencia neta en dólares al vencimiento sin entrega física de la moneda local.",
-                    "placeholder": "Explique el funcionamiento y liquidación de los contratos NDF..."
-                },
-                {
-                    "numero": 3,
-                    "puntos": 20,
-                    "pregunta": "Banca en la Sombra (Shadow Banking) y Corridas de Repos: Analice el rol de las instituciones financieras no bancarias (fondos monetarios, vehículos de inversión estructurada SIVs). ¿Cómo provocó la pérdida de confianza en el colateral de repos el congelamiento del crédito interbancario en 2008?",
-                    "placeholder": "Desarrolle el concepto de shadow banking y la corrida de liquidez en repos..."
-                },
-                {
-                    "numero": 4,
-                    "puntos": 15,
-                    "pregunta": "ADRs Regla 144A y Regulación S: Distinga las colocaciones públicas registradas en la SEC de las emisiones privadas bajo la Regla 144A dirigidas a Compradores Institucionales Calificados (QIBs). ¿Qué ventajas de costo y rapidez ofrece a los emisores corporativos?",
-                    "placeholder": "Compare ofertas públicas de ADRs con colocaciones privadas 144A..."
-                },
-                {
-                    "numero": 5,
-                    "puntos": 15,
-                    "pregunta": "Gestión Integral de Riesgo de Mercado y Tasa de Interés: Proponga una combinación de derivados financieros (swaps de tasa y opciones de divisas) para inmunizar el balance de un banco comercial ante una suba simultánea de tasas de interés y una devaluación abrupta.",
-                    "placeholder": "Diseñe la estrategia integral de inmunización de balance..."
-                }
-            ]
-        ],
-        "final": [
-            [
-                {
-                    "numero": 1,
-                    "puntos": 25,
-                    "pregunta": "Transmisión de Política Monetaria Global y Curva de Tasas: Analice cómo un ciclo restrictivo de la Reserva Federal (suba de Fed Funds y Quantitative Tightening) altera la pendiente de la curva de rendimientos (ETTI), eleva el costo de fondeo internacional y desata presiones devaluatorias y salidas de capitales en mercados emergentes.",
-                    "placeholder": "Desarrolle la transmisión macrofinanciera de la Fed a nivel global..."
-                },
-                {
-                    "numero": 2,
-                    "puntos": 25,
-                    "pregunta": "Duration Modificada, Convexidad y Riesgo de Renta Fija: Formule e interprete la aproximación del cambio porcentual en el precio de un bono soberano: ΔP/P ≈ -D_mod * Δy + 0.5 * Convexidad * (Δy)². Explique por qué la convexidad es una propiedad sumamente deseable para el inversor.",
-                    "placeholder": "Desarrolle duration, convexidad y sensibilidad de precios de bonos..."
-                },
-                {
-                    "numero": 3,
-                    "puntos": 25,
-                    "pregunta": "Estrategias Corporativas Integradas con Derivados: Una corporación multinacional emitió bonos a tasa fija en euros a 5 años pero sus ingresos operativos provienen en dólares a tasa flotante. Diseñe la estructura de derivados (Cross-Currency IRS) para sincronizar flujos de caja y neutralizar el riesgo.",
-                    "placeholder": "Diseñe la cobertura completa de moneda y tasa con derivados..."
-                },
-                {
-                    "numero": 4,
-                    "puntos": 25,
-                    "pregunta": "Evolución de la Regulación Bancaria Global: Basilea I, II y III: Compare los tres acuerdos de Basilea. ¿Por qué Basilea I y II fracasaron en prever la crisis de 2008 y cómo transformó Basilea III la exigencia de capital común Tier 1, los colchones anticíclicos y el riesgo de liquidez sistémica?",
-                    "placeholder": "Analice la evolución de Basilea y las reformas post-crisis de 2008..."
-                }
-            ],
-            [
-                {
-                    "numero": 1,
-                    "puntos": 25,
-                    "pregunta": "Arquitectura Financiera Multilateral y el Rol del FMI: Analice el funcionamiento de los préstamos de ajuste del FMI, las condicionalidades macroeconómicas, la creación de Derechos Especiales de Giro (DEG) y su efectividad para contener crisis de balanza de pagos.",
-                    "placeholder": "Desarrolle las funciones y críticas al FMI en crisis soberanas..."
-                },
-                {
-                    "numero": 2,
-                    "puntos": 25,
-                    "pregunta": "Mercado Cambiario y Eficiencia: Contraste la Paridad del Poder Adquisitivo (PPP) en el largo plazo con la Paridad de Tasas de Interés (CIP/UIP) en el corto plazo. ¿Por qué el Carry Trade desafía empíricamente la hipótesis de paridad no cubierta?",
-                    "placeholder": "Confronte PPP, CIP, UIP y el funcionamiento del Carry Trade..."
-                },
-                {
-                    "numero": 3,
-                    "puntos": 25,
-                    "pregunta": "Renta Variable Internacional y Gobierno Corporativo: Analice los beneficios para una empresa de listar ADRs Nivel III en Wall Street en términos de menor costo de capital, mayor liquidez de acciones y exigencias de transparencia bajo la Ley Sarbanes-Oxley.",
-                    "placeholder": "Analice los determinantes del listado de ADRs y gobierno corporativo..."
-                },
-                {
-                    "numero": 4,
-                    "puntos": 25,
-                    "pregunta": "Riesgo de Contraparte y Cámaras Compensadoras Centrales (CCP): A partir de la reforma del G20 tras 2008, analice por qué se obligó a liquidar los contratos de derivados OTC estandarizados a través de CCPs y cómo se gestiona el riesgo de colapso de una cámara.",
-                    "placeholder": "Explique el rol de las CCPs en la estabilidad de los derivados globales..."
-                }
-            ],
-            [
-                {
-                    "numero": 1,
-                    "puntos": 25,
-                    "pregunta": "Deuda Soberana y Cláusulas de Acción Colectiva (CACs): Explique cómo operan las CACs en los contratos de bonos soberanos internacionales bajo ley extranjera (Nueva York/Londres) para evitar el bloqueo de acreedores 'holdouts' o fondos buitre durante una reestructuración.",
-                    "placeholder": "Desarrolle el funcionamiento de las CACs en reestructuraciones de deuda..."
-                },
-                {
-                    "numero": 2,
-                    "puntos": 25,
-                    "pregunta": "Estructuras de Titulización (Securitización) y Credit Default Swaps (CDS): Explique la mecánica de un CDS como seguro de impago crediticio. ¿Cómo amplificó el mercado de CDS sintéticos el contagio financiero durante la caída de AIG y Lehman Brothers?",
-                    "placeholder": "Explique la función de los CDS y su impacto multiplicador en crisis..."
-                },
-                {
-                    "numero": 3,
-                    "puntos": 25,
-                    "pregunta": "Modelos de Eficiencia de Mercado y Finanzas Conductuales: Confronte la Hipótesis del Mercado Eficiente de Eugene Fama con las objeciones de las Finanzas Conductuales (Behavioral Finance de Shiller y Thaler): euforia irracional, aversión a la pérdida y efecto manada.",
-                    "placeholder": "Compare la HME con los sesgos cognitivos de Behavioral Finance..."
-                },
-                {
-                    "numero": 4,
-                    "puntos": 25,
-                    "pregunta": "Crisis Bancarias Comparadas: Confronte las causas estructurales de la Crisis Asiática de 1997 (descalce de moneda y vencimientos, tipo de cambio fijo) con la Crisis Financiera de 2008 (apalancamiento, titulización opaca y banca en la sombra).",
-                    "placeholder": "Compare la crisis asiática del 97 y la crisis subprime del 2008..."
-                }
-            ],
-            [
-                {
-                    "numero": 1,
-                    "puntos": 25,
-                    "pregunta": "El Trilema Monetario de Mundell-Fleming en la Práctica Global: Compare las elecciones macroeconómicas de: a) Estados Unidos (política monetaria autónoma y libre movilidad de capitales con flotación cambiaria); b) Zona Euro (tipo de cambio fijo irrevocable con libre movilidad y política monetaria centralizada); c) China (tipo de cambio administrado con controles de cuenta capital).",
-                    "placeholder": "Analice el Trilema de Mundell-Fleming en las principales economías mundiales..."
-                },
-                {
-                    "numero": 2,
-                    "puntos": 25,
-                    "pregunta": "Riesgo de Tasa de Interés en el Balance Bancario: Analice el descalce entre activos bancarios a tasa fija de largo plazo (bonos soberanos y créditos hipotecarios) y pasivos a corto plazo (depósitos a la vista). Confronte con la quiebra de Silicon Valley Bank (SVB) en 2023.",
-                    "placeholder": "Analice el riesgo de tasa de interés en balances y el colapso de SVB..."
-                },
-                {
-                    "numero": 3,
-                    "puntos": 25,
-                    "pregunta": "Mercado de Dinero Internacional y Financiación en Eurodólares: Explique el funcionamiento de los papeles comerciales internacionales (Euro-CP) y los certificados de depósito negociables (Euro-CDs) como fuentes de liquidez mayorista para corporaciones globales.",
-                    "placeholder": "Explique las fuentes de fondeo corporativo en el mercado de dinero..."
-                },
-                {
-                    "numero": 4,
-                    "puntos": 25,
-                    "pregunta": "Estabilidad Financiera y Futuro del Sistema Monetario Internacional: Analice los debates en torno a la desdolarización del comercio internacional, el avance de monedas digitales de bancos centrales (CBDC) y los desafíos de gobernanza del sistema financiero mundial.",
-                    "placeholder": "Evalúe el papel futuro del dólar, CBDCs y estabilidad financiera global..."
-                }
-            ]
-        ]
-    },
-    "historia": {
-        "1er_parcial": [
-            [
-                {
-                    "numero": 1,
-                    "puntos": 40,
-                    "pregunta": "PARTE I (40 PUNTOS): LA SEGUNDA REVOLUCIÓN INDUSTRIAL Y EL ASCENSO DE EE.UU. Y ALEMANIA (1870-1914). Analice las innovaciones tecnológicas (acero, química, electricidad, petróleo), la gran empresa moderna con gerencia profesional (Chandler), el fordismo y la pérdida del liderazgo británico.",
-                    "placeholder": "Desarrolle la Segunda Revolución Industrial y el nuevo liderazgo..."
-                },
-                {
-                    "numero": 2,
-                    "puntos": 20,
-                    "pregunta": "PARTE II: LA PESTE NEGRA DE 1348. Analice el colapso demográfico, la escasez de siervos y la suba de salarios reales en la disolución del régimen feudal en Europa Occidental.",
-                    "placeholder": "Desarrolle las consecuencias económicas de la Peste Negra..."
-                },
-                {
-                    "numero": 3,
-                    "puntos": 20,
-                    "pregunta": "PARTE II: LA MÁQUINA DE VAPOR Y LA MINERÍA DEL CARBÓN. Explique el salto de la energía orgánica a la mineral y cómo la máquina de Watt transformó el transporte y la manufactura.",
-                    "placeholder": "Analice la transición energética al carbón mineral..."
-                },
-                {
-                    "numero": 4,
-                    "puntos": 20,
-                    "pregunta": "PARTE II: EL COLBERTISMO MERCANTILISTA. Describa la política industrial francesa, manufacturas reales, control de calidad y aduanas proteccionistas.",
-                    "placeholder": "Desarrolle el mercantilismo colbertiano en Francia..."
-                }
-            ],
-            [
-                {
-                    "numero": 1,
-                    "puntos": 40,
-                    "pregunta": "PARTE I (40 PUNTOS): LA GRAN DEPRESIÓN DE 1873 A 1896 Y LA DIVISIÓN INTERNACIONAL DEL TRABAJO. Analice la caída sostenida de precios de materias primas y manufacturas, el avance de ferrocarriles y barcos a vapor, la oleada migratoria transatlántica y la especialización entre países centrales industrializados y periferias agroexportadoras.",
-                    "placeholder": "Desarrolle la crisis de 1873 y la división internacional del trabajo..."
-                },
-                {
-                    "numero": 2,
-                    "puntos": 20,
-                    "pregunta": "PARTE II: LA PRIMERA REVOLUCIÓN INDUSTRIAL BRITÁNICA (1760-1830). Explique las Leyes de Cercamiento (Enclosures), el despegue del sector textil algodonero en Lancashire y el nacimiento del sistema fabril (factory system).",
-                    "placeholder": "Desarrolle los factores del despegue fabril británico..."
-                },
-                {
-                    "numero": 3,
-                    "puntos": 20,
-                    "pregunta": "PARTE II: LA REVOLUCIÓN DE LOS PRECIOS EN EL SIGLO XVI. Analice el impacto de la llegada masiva de metales preciosos americanos a España y su difusión inflacionaria por el continente europeo según la teoría de Earl Hamilton.",
-                    "placeholder": "Explique la teoría cuantitativa y la inflación del siglo XVI..."
-                },
-                {
-                    "numero": 4,
-                    "puntos": 20,
-                    "pregunta": "PARTE II: LAS ACTAS DE NAVEGACIÓN Y EL MERCANTILISMO INGLÉS. Describa cómo las leyes marítimas de 1651 garantizaron el monopolio colonial de fletes a la flota británica y debilitaron a Holanda.",
-                    "placeholder": "Desarrolle las Actas de Navegación y la hegemonía comercial británica..."
-                }
-            ],
-            [
-                {
-                    "numero": 1,
-                    "puntos": 40,
-                    "pregunta": "PARTE I (40 PUNTOS): LA TRANSICIÓN DEL FEUDALISMO AL CAPITALISMO EN EUROPA OCCIDENTAL. Analice las relaciones feudovasalláticas, el señorío feudal y la servidumbre. Explique el debate historiográfico entre Maurice Dobb, Paul Sweezy y Robert Brenner sobre los factores determinantes del cambio.",
-                    "placeholder": "Desarrolle el debate historiográfico de la transición al capitalismo..."
-                },
-                {
-                    "numero": 2,
-                    "puntos": 20,
-                    "pregunta": "PARTE II: EL FERROCARRIL Y LA UNIFICACIÓN DE MERCADOS. Explique el papel de la red ferroviaria como impulsora de las industrias pesadas (hierro, carbón) y articuladora del comercio interregional en el siglo XIX.",
-                    "placeholder": "Analice el impacto integrador y económico del ferrocarril..."
-                },
-                {
-                    "numero": 3,
-                    "puntos": 20,
-                    "pregunta": "PARTE II: LA FISIOCRACIA FRENTE AL MERCANTILISMO. Explique la doctrina del 'Cuadro Económico' de François Quesnay, por qué consideraban a la agricultura como la única actividad productora de 'producto neto' y el principio del laissez-faire.",
-                    "placeholder": "Desarrolle los principios de la escuela fisiócrata..."
-                },
-                {
-                    "numero": 4,
-                    "puntos": 20,
-                    "pregunta": "PARTE II: EL PATRÓN ORO INTERNACIONAL (1870-1914). Reglas del juego, libre convertibilidad, mecanismo de ajuste precio-flujo de Hume y rol hegemónico de la libra esterlina británica.",
-                    "placeholder": "Desarrolle las reglas del patrón oro y el mecanismo de Hume..."
-                }
-            ],
-            [
-                {
-                    "numero": 1,
-                    "puntos": 40,
-                    "pregunta": "PARTE I (40 PUNTOS): FACTORES DETERMINANTES DE LA REVOLUCIÓN INDUSTRIAL EN INGLATERRA. Analice: 1) La Revolución Agrícola (enclosures y sistema Norfolk); 2) El marco institucional post-Revolución Gloriosa de 1688 y derechos de propiedad; 3) Dotación de carbón y canales navegables; 4) Comercio colonial ultramarino.",
-                    "placeholder": "Desarrolle exhaustivamente las condiciones británicas de la industrialización..."
-                },
-                {
-                    "numero": 2,
-                    "puntos": 20,
-                    "pregunta": "PARTE II: EL MERCANTILISMO Y EL BULLIONISMO. Defina metalismo, balanza comercial favorable, manufacturas reales y monopolios comerciales como la Compañía Holandesa de Indias Orientales (VOC).",
-                    "placeholder": "Desarrolle los principios del mercantilismo y la VOC..."
-                },
-                {
-                    "numero": 3,
-                    "puntos": 20,
-                    "pregunta": "PARTE II: LA INDUSTRIALIZACIÓN DE ALEMANIA Y LA BANCA MIXTA. El impacto del Zollverein (1834), la unificación de 1871 y la articulación entre grandes bancos de inversión (Grossbanken), cárteles y la industria química pesada.",
-                    "placeholder": "Analice el modelo de industrialización alemán y el crédito..."
-                },
-                {
-                    "numero": 4,
-                    "puntos": 20,
-                    "pregunta": "PARTE II: LA DEROGACIÓN DE LAS CORN LAWS EN INGLATERRA (1846). Explique el triunfo de los industriales de Manchester frente a los terratenientes agrarios, la teoría de las ventajas comparativas de David Ricardo y el advenimiento del librecambio.",
-                    "placeholder": "Analice el debate de las leyes de cereales y el librecambio..."
-                }
-            ]
-        ],
-        "2do_parcial": [
-            [
-                {
-                    "numero": 1,
-                    "puntos": 40,
-                    "pregunta": "PARTE I (40 PUNTOS): TEMA ESTRUCTURAL A ELECCIÓN\nElige y desarrolla en profundidad UNA (1) de las siguientes dos opciones con enfoque multidimensional:\n\n• OPCIÓN A: LA SEGUNDA REVOLUCIÓN INDUSTRIAL (1850-1914), EL CAPITALISMO CORPORATIVO Y EL IMPERIALISMO.\n1) Nuevos sectores dinámicos y fuentes de energía: acero Bessemer/Siemens, electricidad, química pesada y motores de combustión interna vs la Primera Revolución Industrial.\n2) Concentración empresarial y financiamiento: cárteles en Alemania, trusts en EE.UU. y el rol articulador de la banca mixta de inversión (Grossbanken).\n3) Afianzamiento de la División Internacional del Trabajo: flujos de capital británicos, migraciones masivas europeas y economías primario-exportadoras periféricas.\n4) Las teorías del Imperialismo (Hobson, Lenin) y el reparto colonial de África y Asia como válvula de escape a excedentes de capital, antesala de la Primera Guerra Mundial.\n\n• OPCIÓN B: LA GRAN DEPRESIÓN DE 1929 Y LA CRISIS DEL CAPITALISMO LIBERAL.\n1) Causas estructurales en EE.UU.: sobreproducción agrícola e industrial, burbuja especulativa bursátil y fragilidad del sistema bancario fraccionario.\n2) La dinámica de la crisis: el Crack de Wall Street de 1929, la espiral deflacionaria, las corridas bancarias en cadena y la contracción de la oferta monetaria.\n3) Transmisión global: corte de préstamos externos, colapso del comercio y el arancel proteccionista Smoot-Hawley (1930).\n4) Las reformas del New Deal: Ley Glass-Steagall, seguro de depósitos FDIC, supervisión de la SEC y gasto público reactivador (TVA, WPA).",
-                    "placeholder": "Indique la opción elegida (OPCIÓN A u OPCIÓN B) y desarrolle su análisis multidimensional exhaustivo..."
-                },
-                {
-                    "numero": 2,
-                    "puntos": 20,
-                    "pregunta": "PARTE II - CONSIGNA 1: DEBATES DOCTRINARIOS DEL SIGLO XIX: DAVID RICARDO Y KARL MARX. Confronte la teoría de las ventajas comparativas y la renta diferencial de la tierra de David Ricardo (en el marco del debate y derogación de las Corn Laws de 1846 en Inglaterra) con la crítica de la economía política de Karl Marx (el concepto de plusvalía absoluta y relativa, la explotación laboral y las contradicciones intrínsecas de la acumulación capitalista).",
-                    "placeholder": "Confronte a David Ricardo (Corn Laws, ventajas comparativas) y Karl Marx (plusvalía, contradicciones del capital)..."
-                },
-                {
-                    "numero": 3,
-                    "puntos": 20,
-                    "pregunta": "PARTE II - CONSIGNA 2: EL PATRÓN ORO CLÁSICO (1870-1914) Y EL DESORDEN MONETARIO DE ENTREGUERRAS. Explique el funcionamiento del Patrón Oro Clásico (paridades fijas, convertibilidad y el mecanismo de ajuste precio-flujo de David Hume). Explique por qué colapsó en 1914 con la Primera Guerra Mundial y cómo las reparaciones de Versalles desembocaron en la hiperinflación alemana de 1923.",
-                    "placeholder": "Desarrolle el funcionamiento del patrón oro clásico, el ajuste de Hume y la crisis de posguerra..."
-                },
-                {
-                    "numero": 4,
-                    "puntos": 20,
-                    "pregunta": "PARTE II - CONSIGNA 3: LOS ACUERDOS DE BRETTON WOODS (1944) Y LOS TREINTA GLORIOSOS. Analice la arquitectura monetaria acordada en Bretton Woods (FMI, Banco Mundial, patrón de cambio oro-dólar a USD 35 la onza) y el Plan Marshall. Explique los factores que sostuvieron la 'Edad de Oro del Capitalismo' (1945-1973): productividad fordista, estado de bienestar keynesiano y pleno empleo.",
-                    "placeholder": "Desarrolle la arquitectura de Bretton Woods, el Plan Marshall y los Treinta Gloriosos..."
-                }
-            ],
-            [
-                {
-                    "numero": 1,
-                    "puntos": 40,
-                    "pregunta": "PARTE I (40 PUNTOS): TEMA ESTRUCTURAL A ELECCIÓN\nElige y desarrolla en profundidad UNA (1) de las siguientes dos opciones con articulación multidimensional:\n\n• OPCIÓN A: REGÍMENES MONETARIOS INTERNACIONALES: DEL PATRÓN ORO A LA CAÍDA DE BRETTON WOODS.\n1) El Patrón Oro Clásico (1870-1914): el rol de la City de Londres y la libra esterlina como moneda vehicular, disciplina monetaria y ajuste de Hume.\n2) La Primera Guerra Mundial, el abandono de la paridad oro, el Tratado de Versalles y la hiperinflación de Weimar en 1923.\n3) El sistema de Bretton Woods (1944): el debate Keynes (Bancor) vs White (Dólar), paridades fijas ajustables y el Fondo Monetario Internacional.\n4) La crisis del sistema en 1971: el Dilema de Triffin, los eurodólares, la sangría de oro de la Reserva Federal y la inconvertibilidad decretada por Richard Nixon.\n\n• OPCIÓN B: EL ROL DEL ESTADO EN LA ECONOMÍA: DEL PROTECCIONISMO A LOS TREINTA GLORIOSOS Y LA OFENSIVA NEOLIBERAL.\n1) El debate librecambio vs proteccionismo en el siglo XIX: la postura de Friedrich List para el desarrollo de industrias nacientes en Alemania y EE.UU. frente al libre comercio británico.\n2) El intervencionismo estatal tras la crisis de 1929: el New Deal rooseveltiano y el quiebre de la ortodoxia neoclásica.\n3) El Estado de Bienestar en la posguerra (1945-1973): pacto social capital-trabajo, servicios públicos universales y pleno empleo.\n4) La crisis del estado keynesiano en los 70: los shocks petroleros de 1973/79, la estanflación y el ascenso del neoliberalismo (Reagan y Thatcher).",
-                    "placeholder": "Indique la opción elegida (OPCIÓN A u OPCIÓN B) y desarrolle su análisis multidimensional..."
-                },
-                {
-                    "numero": 2,
-                    "puntos": 20,
-                    "pregunta": "PARTE II - CONSIGNA 1: FRIEDRICH LIST Y EL PROTECCIONISMO DE INDUSTRIAS NACIENTES. Analice los postulados de Friedrich List en su 'Sistema Nacional de Economía Política'. Explique por qué cuestionaba el libre comercio propugnado por David Ricardo calificándolo de 'retirar la escalera' y cómo influyeron sus ideas en el Zollverein y el despegue manufacturero de Alemania.",
-                    "placeholder": "Desarrolle la doctrina de Friedrich List, la crítica al librecambio y el Zollverein..."
-                },
-                {
-                    "numero": 3,
-                    "puntos": 20,
-                    "pregunta": "PARTE II - CONSIGNA 2: LA HIPERINFLACIÓN ALEMANA DE 1923 Y EL PLAN DAWES. Analice las causas de la hiperinflación en la República de Weimar: el peso insostenible de las reparaciones de Versalles, la ocupación militar franco-belga del Ruhr y la monetización del déficit por el Reichsbank. Explique cómo se detuvo el colapso mediante el Rentenmark (1923) y la renegociación del Plan Dawes (1924).",
-                    "placeholder": "Analice la hiperinflación de 1923 y el plan de estabilización del Rentenmark..."
-                },
-                {
-                    "numero": 4,
-                    "puntos": 20,
-                    "pregunta": "PARTE II - CONSIGNA 3: LAS CRISIS PETROLERAS (1973 Y 1979) Y LA ESTANFLACIÓN. Explique el accionar del cártel de la OPEP, el shock de oferta energética y por qué la combinación de inflación acelerada con estancamiento y desempleo (estanflación) invalidó los preceptos de la Curva de Phillips keynesiana, abriendo paso a las políticas monetaristas de Milton Friedman y Paul Volcker.",
-                    "placeholder": "Analice el shock de oferta, la estanflación y el shock de tasas de Volcker..."
-                }
-            ],
-            [
-                {
-                    "numero": 1,
-                    "puntos": 40,
-                    "pregunta": "PARTE I (40 PUNTOS): TEMA ESTRUCTURAL A ELECCIÓN\nElige y desarrolla en profundidad UNA (1) de las siguientes dos opciones:\n\n• OPCIÓN A: LA SEGUNDA MITAD DEL SIGLO XIX: CAPITALISMO MONOPÓLICO, DOCTRINAS Y DIVISIÓN DEL TRABAJO.\n1) La conformación de grandes conglomerados corporativos: cárteles en Alemania y trusts en EE.UU., y el tránsito hacia el capitalismo financiero según Rudolf Hilferding.\n2) El avance del liberalismo económico en Gran Bretaña: David Ricardo, la ventaja comparativa y la derogación de las Corn Laws en 1846.\n3) La crítica de Karl Marx al modo de producción capitalista: plusvalía, pauperización proletaria y contradicciones de clase.\n4) La integración del mercado mundial: migraciones masivas desde Europa, inversiones de capital en transporte (ferrocarril y vapores) y el patrón oro.\n\n• OPCIÓN B: EL IMPACTO GLOBAL DE LA CRISIS DE 1929 Y LA RESPUESTA INSTITUCIONAL.\n1) Causas estructurales y desencadenamiento del Crack de Wall Street de 1929: exceso de especulación a crédito y saturación de la demanda de durables.\n2) El colapso del sistema bancario estadounidense: corridas, falta de liquidez y contracción de la masa monetaria según Friedman y Schwartz.\n3) El impacto demoledor sobre la periferia agroexportadora (especialmente América Latina) y el inicio de la Industrialización por Sustitución de Importaciones (ISI).\n4) La regulación financiera del New Deal: separación de banca comercial y de inversión (Glass-Steagall) y supervisión del mercado de capitales.",
-                    "placeholder": "Indique la opción elegida (OPCIÓN A u OPCIÓN B) y desarrolle su desarrollo multidimensional..."
-                },
-                {
-                    "numero": 2,
-                    "puntos": 20,
-                    "pregunta": "PARTE II - CONSIGNA 1: DAVID RICARDO: TEORÍA DE LA RENTA Y DEROGACIÓN DE LAS CORN LAWS (1846). Explique la teoría ricardiana de la renta diferencial de la tierra: por qué el avance sobre tierras menos fértiles elevaba el precio del trigo, encarecía los alimentos de subsistencia, obligaba a subir los salarios nominales y estrangulaba la tasa media de ganancia de los industriales. ¿Por qué la derogación de las Corn Laws selló el triunfo del librecambio británico?",
-                    "placeholder": "Analice el debate de las leyes de cereales y el librecambio ricardiano..."
-                },
-                {
-                    "numero": 3,
-                    "puntos": 20,
-                    "pregunta": "PARTE II - CONSIGNA 2: TEORÍAS DEL IMPERIALISMO Y EL CAMINO A LA PRIMERA GUERRA MUNDIAL. Analice las teorías económicas del imperialismo formuladas a fines del siglo XIX y principios del XX (John A. Hobson, Rudolf Hilferding, Vladimir Lenin). Explique la exportación de capitales, la pugna por mercados coloniales cerrados y su papel decisivo en el estallido de la Primera Guerra Mundial en 1914.",
-                    "placeholder": "Desarrolle las teorías del imperialismo y el conflicto interimperialista..."
-                },
-                {
-                    "numero": 4,
-                    "puntos": 20,
-                    "pregunta": "PARTE II - CONSIGNA 3: EL PLAN MARSHALL Y LA EDAD DE ORO DEL CAPITALISMO (1945-1973). Explique las motivaciones geopolíticas y económicas del Plan Marshall en Europa Occidental. Describa los pilares productivos e institucionales de los 'Treinta Gloriosos': organización científica del trabajo (taylorismo/fordismo), pacto salarial vinculado a la productividad y expansión de la seguridad social.",
-                    "placeholder": "Desarrolle el Plan Marshall, la reconstrucción europea y el modelo de los Treinta Gloriosos..."
-                }
-            ],
-            [
-                {
-                    "numero": 1,
-                    "puntos": 40,
-                    "pregunta": "PARTE I (40 PUNTOS): TEMA ESTRUCTURAL A ELECCIÓN\nElige y desarrolla en profundidad UNA (1) de las siguientes dos opciones:\n\n• OPCIÓN A: DISPUTAS DOCTRINARIAS Y ORGANIZACIÓN DEL TRABAJO: DEL LIBERALISMO CLÁSICO AL TAYLORISMO Y FORDISMO.\n1) Las doctrinas del siglo XIX: confrontación entre el librecambio ricardiano, el proteccionismo pedagógico de Friedrich List y la crítica de la economía política de Karl Marx (plusvalía).\n2) La Segunda Revolución Industrial y la transformación del proceso de trabajo: del oficio artesanal a la división minuciosa de tareas con el taylorismo y la cadena de montaje fordista.\n3) El surgimiento de la gran corporación moderna (Chandler): separación de propiedad y gestión, jerarquías gerenciales y economías de escala y alcance.\n4) El Patrón Oro Clásico (1870-1914): libre movilidad del metal, paridad cambiaria fija y hegemonía financiera británica.\n\n• OPCIÓN B: EL COLAPSO DEL ORDEN LIBERAL DE ENTREGUERRAS Y LA EDIFICACIÓN DE BRETTON WOODS.\n1) Los tratados de paz post-1918: consecuencias económicas de la paz según Keynes, desarticulación monetaria y la catástrofe inflacionaria de Alemania en 1923.\n2) La Gran Depresión de 1929: deflación, quiebras masivas de bancos comerciales y el fin del patrón oro de entreguerras.\n3) El diseño del orden de posguerra en Bretton Woods (1944): debate Keynes vs White, el dólar convertible en oro y los roles del FMI y Banco Mundial.\n4) Los límites del sistema: el Dilema de Triffin, la pérdida de reservas de EE.UU. por la Guerra de Vietnam, la decisión de Nixon de 1971 y los shocks de la OPEP de 1973/79.",
-                    "placeholder": "Indique la opción elegida (OPCIÓN A u OPCIÓN B) y desarrolle su análisis multidimensional..."
-                },
-                {
-                    "numero": 2,
-                    "puntos": 20,
-                    "pregunta": "PARTE II - CONSIGNA 1: KARL MARX: PLUSVALÍA ABSOLUTA, PLUSVALÍA RELATIVA Y TASA DE GANANCIA. Explique detalladamente la distinción en la teoría marxista entre plusvalía absoluta (prolongación de la jornada laboral) y plusvalía relativa (aumento de la productividad social que abarata los medios de subsistencia del obrero). Explique por qué Marx postula la ley de la tendencia decreciente de la tasa media de ganancia.",
-                    "placeholder": "Explique la plusvalía absoluta y relativa y las contradicciones del capitalismo en Marx..."
-                },
-                {
-                    "numero": 3,
-                    "puntos": 20,
-                    "pregunta": "PARTE II - CONSIGNA 2: EL AJUSTE DE HUME Y LAS REGLAS DEL JUEGO DEL PATRÓN ORO CLÁSICO. Detalle conceptualmente y con su lógica económica el mecanismo precio-flujo de especie formulado por David Hume para corregir desequilibrios en la balanza de pagos. Explique las 'reglas del juego' que debían acatar los bancos centrales para no esterilizar los flujos de oro y preservar la convertibilidad.",
-                    "placeholder": "Desarrolle las reglas del patrón oro y el mecanismo de Hume..."
-                },
-                {
-                    "numero": 4,
-                    "puntos": 20,
-                    "pregunta": "PARTE II - CONSIGNA 3: EL NEW DEAL DE ROOSEVELT: REFORMA BANCARIA Y RECUPERACIÓN ECONÓMICA. Analice el 'Primer New Deal' (1933-1934): el feriado bancario (Bank Holiday), la Ley Glass-Steagall (separación entre banca de depósitos y de inversión), la creación de la FDIC y los planes de obras públicas. Evalúe cómo estas medidas buscaron restaurar la confianza y cortar la espiral deflacionaria.",
-                    "placeholder": "Desarrolle el New Deal y la arquitectura monetaria y social..."
-                }
-            ]
-        ],
-        "final": [
-            [
-                {
-                    "numero": 1,
-                    "puntos": 35,
-                    "pregunta": "Evolución Histórica de los Regímenes Monetarios Internacionales: Trace y compare los cuatro grandes regímenes monetarios: 1) Patrón Oro Clásico (1870-1914); 2) Caos monetario y devaluaciones competitivas de entreguerras; 3) Régimen de Bretton Woods (1944-1971); 4) Patrón fiduciario y flotación cambiaria contemporánea.",
-                    "placeholder": "Trace la evolución comparativa de los sistemas monetarios mundiales..."
-                },
-                {
-                    "numero": 2,
-                    "puntos": 35,
-                    "pregunta": "Revoluciones Industriales Comparadas: Confronte la Primera Revolución Industrial británica (energía de vapor, carbón, sector textil algodonero, empresas familiares) con la Segunda Revolución Industrial alemana y estadounidense (electricidad, química, petróleo, gran corporación gerencial de Chandler).",
-                    "placeholder": "Compare en detalle la Primera y Segunda Revolución Industrial..."
-                },
-                {
-                    "numero": 3,
-                    "puntos": 30,
-                    "pregunta": "Grandes Crisis Financieras en Perspectiva Histórica (Carlos Marichal): Analice los patrones comunes y disparidades entre el Pánico de 1873, el Crack de 1929 y la Crisis Subprime de 2008 en términos de burbujas crediticias, apalancamiento y contagio transfronterizo.",
-                    "placeholder": "Desarrolle el análisis comparativo de las grandes crisis según Marichal..."
-                }
-            ],
-            [
-                {
-                    "numero": 1,
-                    "puntos": 35,
-                    "pregunta": "Hegemonías Económicas Globales: Gran Bretaña en el Siglo XIX vs Estados Unidos en el Siglo XX: Analice los fundamentos de cada hegemonía: liderazgo productivo, supremacía naval/militar, control de los centros financieros globales (Londres vs Wall Street) y provisión de moneda de reserva internacional.",
-                    "placeholder": "Compare la hegemonía británica y estadounidense..."
-                },
-                {
-                    "numero": 2,
-                    "puntos": 35,
-                    "pregunta": "El Rol del Estado en la Economía Mundial: Del Mercantilismo al Neoliberalismo: Analice cómo mutó la intervención estatal: del proteccionismo colbertiano del siglo XVII al librecambio británico del XIX, el estado benefactor keynesiano de posguerra y la desregulación de fines del siglo XX.",
-                    "placeholder": "Trace la transformación histórica del rol económico del estado..."
-                },
-                {
-                    "numero": 3,
-                    "puntos": 30,
-                    "pregunta": "Evolución de la Organización del Trabajo Fabril: Del trabajo a domicilio (putting-out system) al factory system disciplinado de la revolución industrial, el taylorismo cronometrado, la cadena de montaje fordista y el toyotismo flexible japonés.",
-                    "placeholder": "Desarrolle la evolución histórica de los sistemas de trabajo..."
-                }
-            ],
-            [
-                {
-                    "numero": 1,
-                    "puntos": 35,
-                    "pregunta": "Olas de Globalización e Integración de Mercados: Compare la Primera Ola de Globalización (1870-1914) con la Segunda Ola iniciada tras la Segunda Guerra Mundial. Analice los flujos de comercio, capitales y mano de obra en ambos períodos.",
-                    "placeholder": "Confronte la primera y segunda ola de globalización económica..."
-                },
-                {
-                    "numero": 2,
-                    "puntos": 35,
-                    "pregunta": "Crisis de Deuda Externa en América Latina: Confronte las crisis de deuda soberana de los años 1820/1870 con la gran crisis de la deuda de los años 80 ('década perdida') a partir de shocks de tasas de interés internacionales y caída de términos de intercambio.",
-                    "placeholder": "Analice las crisis de deuda latinoamericana en perspectiva histórica..."
-                },
-                {
-                    "numero": 3,
-                    "puntos": 30,
-                    "pregunta": "Instituciones y Crecimiento Económico según Rondo Cameron: Analice la interacción entre derechos de propiedad, marco legal, sistema financiero y educación en el despegue económico de las naciones modernas.",
-                    "placeholder": "Desarrolle el papel de las instituciones en el desarrollo económico según Cameron..."
-                }
-            ],
-            [
-                {
-                    "numero": 1,
-                    "puntos": 35,
-                    "pregunta": "Sistemas Bancarios y Financiamiento del Despegue Industrial: Confronte el modelo bancario británico (bancos comerciales de depósito a corto plazo) con el modelo de banca mixta alemana (Grossbanken con participación accionaria industrial) y el mercado bursátil de Wall Street.",
-                    "placeholder": "Compare los sistemas financieros de financiamiento del desarrollo..."
-                },
-                {
-                    "numero": 2,
-                    "puntos": 35,
-                    "pregunta": "El Fenómeno Inflacionario a través de los Siglos: Analice: 1) La Revolución de los Precios del siglo XVI; 2) La hiperinflación alemana de 1923; 3) La estanflación de los años 70. Identifique causas monetarias, fiscales y de oferta en cada episodio.",
-                    "placeholder": "Analice los grandes episodios inflacionarios de la historia..."
-                },
-                {
-                    "numero": 3,
-                    "puntos": 30,
-                    "pregunta": "Balance Histórico del Capitalismo Global: Evalúe las tensiones contemporáneas de la economía internacional: tensiones comerciales entre potencias, reconfiguración de cadenas globales de valor (nearshoring) y transición energética.",
-                    "placeholder": "Reflexione sobre los desafíos del capitalismo global contemporáneo..."
-                }
-            ]
-        ]
-    },
-    "estadistica": {
-        "1er_parcial": [
-            [
-                {
-                    "numero": 1,
-                    "puntos": 50,
-                    "pregunta": "PROBLEMA 1: CONTROL DE CALIDAD Y PROBABILIDADES EN LÍNEAS DE PRODUCCIÓN (50 Puntos)\\n800 componentes electrónicos inspeccionados en dos turnos:\\n• 320 producidos en Turno Mañana (TM) y 480 en Turno Tarde (TT).\\n• 120 presentaron Defectos (D), de los cuales 48 pertenecían al Turno Mañana.\\nCalcule paso a paso con fórmulas:\\na) (10 pts) P(D ∩ TM) - Probabilidad conjunta.\\nb) (10 pts) P(D | TM) - Probabilidad condicional.\\nc) (10 pts) Prueba formal de independencia: ¿P(D | TM) = P(D)?\\nd) (10 pts) P(D ∪ TM) - Regla de la adición.\\ne) (10 pts) Probabilidad de extraer 3 componentes al azar del TM SIN reposición.",
-                    "placeholder": "Desarrolle cálculos paso a paso: a) P(D∩TM), b) P(D|TM), c) Prueba formal, d) Unión, e) Sin reposición..."
-                },
-                {
-                    "numero": 2,
-                    "puntos": 50,
-                    "pregunta": "PROBLEMA 2: TIEMPOS DE ENTREGA LOGÍSTICA EN INTERVALOS (50 Puntos)\\nMuestra de n = 500 envíos según horas de entrega:\\n[12 - 24): 50 | [24 - 36): 150 | [36 - 48): 200 | [48 - 60): 75 | [60 - 72]: 25\\nCalcule con desarrollo explícito:\\na) (10 pts) Media aritmética (x̄) de los tiempos de entrega.\\nb) (10 pts) Varianza (S²), Desvío estándar (S) y Coeficiente de Variación (CV). ¿Es representativa la media?\\nc) (10 pts) Percentil 90 (P90) con fórmula de interpolación.\\nd) (10 pts) Moda (Mo) del tiempo de entrega.\\ne) (10 pts) Porcentaje de entregas que tardó más de 48 horas.",
-                    "placeholder": "Fórmulas y cálculos: a) Media, b) Varianza y CV, c) P90 con interpolación, d) Moda, e) % > 48..."
-                }
-            ],
-            [
-                {
-                    "numero": 1,
-                    "puntos": 50,
-                    "pregunta": "PROBLEMA 1: TEST DIAGNÓSTICO CLÍNICO Y TEOREMA DE BAYES (50 Puntos)\\nEn un programa de control sanitario para una condición con prevalencia del 2% (P(E) = 0.02):\\n• Sensibilidad del test: P(+ | E) = 0.95 (detecta al 95% de los afectados).\\n• Especificidad del test: P(- | Sano) = 0.90 (el 90% de los sanos da negativo, 10% falsos positivos).\\nCalcule con rigurosidad:\\na) (15 pts) Tabla de contingencia 2x2 para una población teórica de 10.000 individuos.\\nb) (15 pts) Probabilidad total de que un individuo dé positivo al test: P(+).\\nc) (20 pts) Teorema de Bayes: Si un individuo dio positivo, ¿cuál es la probabilidad real de que esté afectado: P(E | +)? Interprete la paradoja del falso positivo.",
-                    "placeholder": "Desarrolle: a) Matriz 2x2 con 10.000 casos, b) P(+) total, c) Teorema de Bayes e interpretación..."
-                },
-                {
-                    "numero": 2,
-                    "puntos": 50,
-                    "pregunta": "PROBLEMA 2: RENDIMIENTOS SEMANALES Y MEDIDAS DE POSICIÓN (50 Puntos)\\nDistribución de frecuencias de n = 400 carteras de inversión según rendimiento porcentual:\\n[-4% a 0%): 40 | [0% a 4%): 120 | [4% a 8%): 160 | [8% a 12%): 60 | [12% a 16%]: 20\\nDetermine paso a paso:\\na) (10 pts) Media aritmética ponderada (x̄) del rendimiento.\\nb) (15 pts) Mediana (Me) con fórmula de interpolación sobre el intervalo mediano.\\nc) (15 pts) Cuartil 1 (Q1) y Cuartil 3 (Q3) y Rango Intercuartil (RIC = Q3 - Q1).\\nd) (10 pts) Coeficiente de variación (CV) y evaluación de homogeneidad de la muestra.",
-                    "placeholder": "Desarrolle: a) Media ponderada, b) Mediana con interpolación, c) Q1, Q3 y RIC, d) CV..."
-                }
-            ],
-            [
-                {
-                    "numero": 1,
-                    "puntos": 50,
-                    "pregunta": "PROBLEMA 1: SOLICITUDES DE CRÉDITO Y PROBABILIDADES (50 Puntos)\\nUn banco digital analizó 600 solicitudes crediticias recibidas en el mes:\\n• 240 solicitudes fueron de Monotributistas (M) y 360 de empleados en Relación de Dependencia (RD).\\n• Del total de 600 solicitudes, 420 fueron Aprobadas (A) y 180 fueron Rechazadas (R).\\n• De los 240 Monotributistas, 120 resultaron Aprobados.\\nDesarrolle con procedimiento completo:\\na) (10 pts) P(A ∩ M) - Probabilidad conjunta de ser Monotributista Y ser Aprobado.\\nb) (10 pts) P(A | M) - Probabilidad de aprobación DADO que el solicitante es Monotributista.\\nc) (10 pts) Verifique FORMALMENTE si la aprobación crediticia (A) es INDEPENDIENTE de la condición de Monotributista (M).\\nd) (10 pts) P(A ∪ M) - Probabilidad de que una solicitud sea Aprobada O pertenezca a un Monotributista.\\ne) (10 pts) Si se toman 3 solicitudes al azar SIN REPOSICIÓN, probabilidad de que las 3 pertenezcan a empleados en Relación de Dependencia.",
-                    "placeholder": "Desarrolle cálculos paso a paso: a) Conjunta, b) Condicional, c) Independencia formal, d) Unión, e) Sin reposición..."
-                },
-                {
-                    "numero": 2,
-                    "puntos": 50,
-                    "pregunta": "PROBLEMA 2: MONTOS DE PRÉSTAMOS EN INTERVALOS (50 Puntos)\\nMuestra de n = 300 préstamos otorgados (en miles de pesos):\\n[100 - 200): 45 | [200 - 300): 105 | [300 - 400): 90 | [400 - 500): 45 | [500 - 600]: 15\\nCalcule con fórmulas y justifique:\\na) (10 pts) Media aritmética (x̄) de los préstamos en miles de pesos.\\nb) (10 pts) Desvío estándar (S) y Coeficiente de Variación (CV). ¿Es la media un valor representativo del conjunto de préstamos? Fundamente con el criterio del 25%.\\nc) (10 pts) Percentil 75 (P75 o Tercer Cuartil Q3): Calcule por interpolación e interprete en dinero.\\nd) (10 pts) Moda (Mo) de los préstamos.\\ne) (10 pts) ¿Qué porcentaje de préstamos fue de al menos $400.000?",
-                    "placeholder": "Desarrolle cálculos con fórmulas: a) x̄, b) CV y representatividad, c) P75 con interpolación, d) Mo, e) % ≥ $400k..."
-                }
-            ],
-            [
-                {
-                    "numero": 1,
-                    "puntos": 50,
-                    "pregunta": "PROBLEMA 1: ANÁLISIS DE VENTAS EN RETAIL Y PROBABILIDADES (50 Puntos)\\nUn hipermercado realizó un estudio cuantitativo sobre 500 clientes:\\n• 200 clientes pagaron con Tarjeta de Crédito (TC) y 300 con Débito/Efectivo (DE).\\n• Del total de 500 clientes, 150 realizaron compras mayores a $50.000 (M).\\n• De los 200 clientes que pagaron con Tarjeta de Crédito, 90 realizaron compras mayores a $50.000.\\nResponda desarrollando fórmula y cálculo exacto:\\na) (10 pts) Calcule la probabilidad conjunta: P(M ∩ TC).\\nb) (10 pts) Calcule la probabilidad condicional: P(M | TC).\\nc) (10 pts) Demuestre formalmente si los sucesos M y TC son INDEPENDIENTES verificando P(M | TC) = P(M).\\nd) (10 pts) Calcule la probabilidad de la unión: P(M ∪ TC).\\ne) (10 pts) Si se eligen al azar 3 clientes SIN REPOSICIÓN, calcule la probabilidad de que los 3 hayan pagado con Tarjeta de Crédito.",
-                    "placeholder": "Detalle paso a paso: a) P(M ∩ TC), b) P(M | TC), c) Prueba formal, d) P(M ∪ TC), e) Sin reposición..."
-                },
-                {
-                    "numero": 2,
-                    "puntos": 50,
-                    "pregunta": "PROBLEMA 2: CALL CENTER Y DATOS AGRUPADOS EN INTERVALOS (50 Puntos)\\nMuestra de n = 400 llamadas en un centro de reclamos financieros:\\n[0 - 4): 60 | [4 - 8): 140 | [8 - 12): 120 | [12 - 16): 60 | [16 - 20]: 20\\nDesarrolle con fórmulas de cátedra:\\na) (10 pts) Media Aritmética (x̄) indicando marcas de clase (xi).\\nb) (10 pts) Varianza (S²), Desvío Estándar (S) y Coeficiente de Variación (CV = S / x̄). Diagnostique si la muestra es HOMOGÉNEA (CV ≤ 25%).\\nc) (10 pts) Percentil 85 (P85) indicando intervalo, Fi-1 y fórmula de interpolación. Interprete el resultado en minutos.\\nd) (10 pts) Moda (Mo) mediante la fórmula modal para datos agrupados.\\ne) (10 pts) ¿Qué porcentaje exacto de llamadas superó los 12 minutos de duración?",
-                    "placeholder": "Detalle fórmulas y desarrollos: a) x̄, b) S y CV (homogeneidad), c) P85 con interpolación, d) Moda, e) % > 12 min..."
-                }
-            ]
-        ],
-        "2do_parcial": [
-            [
-                {
-                    "numero": 1,
-                    "puntos": 35,
-                    "pregunta": "PROBLEMA 1: TEOREMA DE BAYES Y DETECCIÓN DE FRAUDE FINANCIERO (35 Puntos)\\nEn una pasarela de pagos fintech, la probabilidad a priori de que una transacción sea Fraudulenta (F) es del 1% (P(F) = 0.01). Las transacciones Legítimas (L) representan el 99%.\\nUn sistema de Inteligencia Artificial detecta transacciones sospechosas y genera una Alerta (+):\\n• Sensibilidad: Si la transacción es fraudulenta, el sistema alerta con probabilidad P(+ | F) = 0.98.\\n• Tasa de falsos positivos: Si la transacción es legítima, el sistema genera alerta errónea con probabilidad P(+ | L) = 0.05.\\nCalcule con procedimiento riguroso:\\na) (15 pts) Probabilidad total de que se genere una alerta en una transacción tomada al azar: P(+).\\nb) (20 pts) Teorema de Bayes: Si el sistema emite una alerta (+), ¿cuál es la probabilidad real de que la transacción sea efectivamente un Fraude: P(F | +)? Interprete el resultado y comente la paradoja del falso positivo en auditorías financieras.",
-                    "placeholder": "Desarrolle: a) Probabilidad total P(+), b) Fórmula de Bayes e interpretación cuantitativa..."
-                },
-                {
-                    "numero": 2,
-                    "puntos": 35,
-                    "pregunta": "PROBLEMA 2: DISTRIBUCIÓN BINOMIAL EN EVALUACIÓN DE SCORING CREDITICIO (35 Puntos)\\nUn analista de riesgo crediticio sabe que la probabilidad de que un cliente con calificación C entre en mora durante el primer año es p = 0.20.\\nSe toma una muestra aleatoria de n = 8 clientes independientes calificados con C:\\na) (10 pts) Indique la variable aleatoria X, sus parámetros y los supuestos de independencia del proceso de Bernoulli.\\nb) (10 pts) Calcule la probabilidad de que exactamente 2 clientes incurran en mora: P(X = 2).\\nc) (10 pts) Calcule la probabilidad de que a lo sumo 1 cliente incurra en mora: P(X ≤ 1).\\nd) (5 pts) Determine la esperanza matemática E(X) y el desvío estándar σ de clientes morosos.",
-                    "placeholder": "Fórmula binomial P(X = k), cálculos paso a paso y parámetros de la distribución..."
-                },
-                {
-                    "numero": 3,
-                    "puntos": 30,
-                    "pregunta": "PROBLEMA 3: DISTRIBUCIÓN NORMAL EN RENTABILIDAD BURSÁTIL (30 Puntos)\\nEl rendimiento mensual porcentual de un fondo de inversión sigue una distribución Normal con media μ = 2.5% y desvío estándar σ = 4.0%: X ~ N(2.5, 4.0).\\nUtilizando la tipificación Z = (X - μ) / σ y lectura de tabla normal estándar:\\na) (10 pts) Calcule la probabilidad de que en un mes elegido al azar el fondo obtenga un rendimiento negativo: P(X < 0).\\nb) (10 pts) Calcule la probabilidad de que el rendimiento mensual se ubique entre 0% y 6.5%: P(0 ≤ X ≤ 6.5).\\nc) (10 pts) ¿Cuál es el rendimiento mensual mínimo que debe obtener el fondo para ubicarse en el 10% de los meses más rentables (Percentil 90)?",
-                    "placeholder": "Desarrolle la tipificación Z, áreas bajo la curva normal y cálculo de percentiles inversos..."
-                }
-            ],
-            [
-                {
-                    "numero": 1,
-                    "puntos": 35,
-                    "pregunta": "PROBLEMA 1: PROCESO DE POISSON EN MESA DE OPERACIONES FINANCIERAS (35 Puntos)\\nA una mesa de dinero institucional ingresan órdenes de compra a razón de una tasa media de λ = 5 órdenes por minuto durante el horario de mayor volumen:\\na) (10 pts) Calcule la probabilidad de que en un minuto determinado ingresen exactamente 3 órdenes: P(X = 3).\\nb) (10 pts) Calcule la probabilidad de que no ingrese ninguna orden en un minuto: P(X = 0).\\nc) (15 pts) En un lapso de 2 minutos (ajustando la tasa a λ' = 10 órdenes en 2 min), calcule la probabilidad de registrar al menos 2 órdenes: P(X ≥ 2) aplicando la propiedad del suceso complemento.",
-                    "placeholder": "Fórmulas de Poisson paso a paso: a) P(X=3), b) P(X=0), c) P(X≥2) con complemento..."
-                },
-                {
-                    "numero": 2,
-                    "puntos": 35,
-                    "pregunta": "PROBLEMA 2: DISTRIBUCIÓN BINOMIAL EN CONTROL DE PLÁSTICOS BANCARIOS (35 Puntos)\\nUna máquina troqueladora de tarjetas de crédito tiene una tasa de falla histórica de p = 0.05 por unidad producida.\\nSi se extrae un lote de control de calidad de n = 15 tarjetas al azar:\\na) (10 pts) Calcule la probabilidad de que exactamente 1 tarjeta resulte defectuosa: P(X = 1).\\nb) (15 pts) Calcule la probabilidad de que al menos 2 tarjetas presenten fallas: P(X ≥ 2).\\nc) (10 pts) Si en un día se emiten 1.000 tarjetas, ¿cuál es el número promedio esperado de tarjetas defectuosas y su varianza muestral?",
-                    "placeholder": "Desarrolle fórmulas binomiales: a) P(X=1), b) P(X≥2), c) Esperanza y varianza para 1.000 unidades..."
-                },
-                {
-                    "numero": 3,
-                    "puntos": 30,
-                    "pregunta": "PROBLEMA 3: DISTRIBUCIÓN NORMAL EN TIEMPOS DE COMPENSACIÓN BANCARIA (30 Puntos)\\nEl tiempo que demora la compensación electrónica de valores interbancarios se distribuye normalmente con media μ = 36 horas y desvío estándar σ = 6 horas: X ~ N(36, 6).\\na) (10 pts) Calcule la probabilidad de que un cheque se liquide en menos de 24 horas: P(X < 24).\\nb) (10 pts) Determine el porcentaje de cheques cuya compensación tarda entre 30 y 45 horas.\\nc) (10 pts) El banco desea establecer un plazo garantizado T tal que el 95% de los cheques se compensen antes de dicho plazo (Percentil 95 con Z = 1.645). Calcule el valor exacto de T en horas.",
-                    "placeholder": "Tipificación Z, búsqueda en tabla normal y resolución de tiempo garantizado T..."
-                }
-            ],
-            [
-                {
-                    "numero": 1,
-                    "puntos": 35,
-                    "pregunta": "PROBLEMA 1: TEOREMA DE BAYES EN CARTERA CORPORATIVA Y DEFAULT (35 Puntos)\\nUna entidad financiera clasifica a sus clientes corporativos en tres categorías:\\n• Corporaciones AAA (C1): representan el 50% de la cartera. P(Default | C1) = 0.01.\\n• Medianas Empresas (C2): representan el 35% de la cartera. P(Default | C2) = 0.04.\\n• Pequeños Comercios (C3): representan el 15% de la cartera. P(Default | C3) = 0.10.\\na) (15 pts) Calcule la probabilidad total de que un cliente elegido al azar entre en cesación de pagos: P(Default).\\nb) (20 pts) Si se registra un default, calcule por Teorema de Bayes la probabilidad de que el deudor pertenezca a la categoría Medianas Empresas: P(C2 | Default). Confronte con la probabilidad a priori del 35%.",
-                    "placeholder": "Desarrolle probabilidad total y teorema de Bayes paso a paso..."
-                },
-                {
-                    "numero": 2,
-                    "puntos": 35,
-                    "pregunta": "PROBLEMA 2: DISTRIBUCIÓN DE POISSON EN AUTENTICACIÓN DIGITAL (35 Puntos)\\nUn servidor de home banking recibe solicitudes de inicio de sesión a razón de un promedio de λ = 8 solicitudes por segundo:\\na) (10 pts) Calcule la probabilidad de recibir exactamente 6 solicitudes en un segundo: P(X = 6).\\nb) (15 pts) En un intervalo de medio segundo (tasa proporcional λ' = 4), calcule la probabilidad de recibir más de 2 solicitudes: P(X > 2).\\nc) (10 pts) ¿Cuál es la varianza y el desvío estándar del número de solicitudes por segundo?",
-                    "placeholder": "Fórmulas de Poisson: a) P(X=6), b) Ajuste a medio segundo y P(X>2), c) Varianza y desvío..."
-                },
-                {
-                    "numero": 3,
-                    "puntos": 30,
-                    "pregunta": "PROBLEMA 3: DISTRIBUCIÓN NORMAL EN ESCALA SALARIAL BANCARIA (30 Puntos)\\nLos salarios mensuales de los analistas financieros junior en el microcentro financiero siguen una distribución Normal con media μ = $950.000 y desvío estándar σ = $150.000.\\na) (10 pts) ¿Qué proporción de analistas percibe un salario entre $800.000 y $1.200.000?\\nb) (10 pts) ¿Cuál es la probabilidad de que un analista seleccionado al azar gane más de $1.300.000 mensuales?\\nc) (10 pts) ¿A partir de qué salario mensual un analista se ubica en el 5% superior mejor remunerado (P95 con Z = 1.645)?",
-                    "placeholder": "Estandarización Z, cálculo de probabilidades acumuladas y determinación de salario percentil 95..."
-                }
-            ],
-            [
-                {
-                    "numero": 1,
-                    "puntos": 35,
-                    "pregunta": "PROBLEMA 1: VARIABLE ALEATORIA DISCRETA Y BONO ESTRUCTURADO (35 Puntos)\\nUn inversor analiza un bono estructurado cuyo pago final X (en miles de pesos) depende del escenario macroeconómico:\\n• Escenario 1 (Recesión): X = $50k con probabilidad p1 = 0.20.\\n• Escenario 2 (Estabilidad): X = $80k con probabilidad p2 = 0.50.\\n• Escenario 3 (Crecimiento): X = $120k con probabilidad p3 = 0.25.\\n• Escenario 4 (Auge): X = $150k con probabilidad p4 = 0.05.\\nCalcule paso a paso:\\na) (5 pts) Verifique que es una función de cuantía legítima.\\nb) (10 pts) Esperanza matemática E(X) del rendimiento del bono.\\nc) (10 pts) Varianza Var(X) y desvío estándar σ.\\nd) (10 pts) Si el bono cotiza a $85k en el mercado secundario, justifique si es financieramente conveniente comprarlo comparando el precio con su valor esperado.",
-                    "placeholder": "Desarrolle función de cuantía, esperanza matemática, varianza y análisis de conveniencia..."
-                },
-                {
-                    "numero": 2,
-                    "puntos": 35,
-                    "pregunta": "PROBLEMA 2: DISTRIBUCIÓN BINOMIAL Y APROXIMACIÓN A POISSON (35 Puntos)\\nEn una campaña de venta telefónica de seguros de desempleo, la tasa histórica de suscripción exitosa es p = 0.08.\\nUn operador efectúa n = 10 llamadas a clientes independientes:\\na) (10 pts) Calcule la probabilidad de concretar exactamente 2 ventas: P(X = 2).\\nb) (10 pts) Calcule la probabilidad de lograr al menos 1 venta: P(X ≥ 1).\\nc) (15 pts) Si el operador realiza n = 100 llamadas y la probabilidad de éxito de un producto premium fuera p = 0.02, justifique por qué se cumplen las condiciones para aproximar por Poisson y calcule P(X = 2) utilizando λ = n * p = 2.",
-                    "placeholder": "Fórmula binomial, suceso complementario y aproximación de Poisson con λ = 2..."
-                },
-                {
-                    "numero": 3,
-                    "puntos": 30,
-                    "pregunta": "PROBLEMA 3: DISTRIBUCIÓN NORMAL Y VALOR EN RIESGO (VaR) (30 Puntos)\\nEl valor diario de una cartera de activos financieros se distribuye normalmente con valor medio μ = $10.000.000 y desvío estándar σ = $400.000.\\na) (10 pts) Calcule la probabilidad de que al cierre de la rueda el valor de la cartera resulte inferior a $9.300.000.\\nb) (10 pts) Si la gerencia de riesgos define el límite de pérdida máxima tolerable bajo un nivel de confianza del 99% (Z = -2.33), determine el valor crítico mínimo que preservará la cartera.\\nc) (10 pts) Explique cómo se relaciona la simetría de la distribución normal con la coincidencia entre Media, Mediana y Moda.",
-                    "placeholder": "Tipificación Z, cálculo del Valor en Riesgo (VaR) al 99% y análisis de simetría de Gauss..."
-                }
-            ]
-        ],
-        "final": [
-            [
-                {
-                    "numero": 1,
-                    "puntos": 35,
-                    "pregunta": "Teorema de Bayes y Calificación Crediticia: En una cartera corporativa, el 70% de las empresas son de Bajo Riesgo (B) y el 30% de Alto Riesgo (A). P(D|A) = 0.20 y P(D|B) = 0.02. Si una empresa cae en default, calcule por Bayes la probabilidad de que perteneciera al grupo de Bajo Riesgo: P(B|D).",
-                    "placeholder": "Desarrolle probabilidad total y teorema de Bayes..."
-                },
-                {
-                    "numero": 2,
-                    "puntos": 35,
-                    "pregunta": "Teorema Central del Límite (TCL): El monto gastado por cliente tiene μ = $25.000 y σ = $8.000 (distribución poblacional desconocida). Si se toma una muestra aleatoria de n = 64 clientes, calcule la probabilidad de que la media muestral X̄ supere los $27.000. Justifique la validez del TCL.",
-                    "placeholder": "Aplique el TCL con error estándar σ/√n..."
-                },
-                {
-                    "numero": 3,
-                    "puntos": 30,
-                    "pregunta": "Comparación de Medidas de Dispersión: Explique por qué el desvío estándar no debe utilizarse directamente para comparar la dispersión de dos acciones que cotizan a precios muy dispares ($100 vs $50.000), y fundamente el uso del Coeficiente de Variación (CV).",
-                    "placeholder": "Fundamente el coeficiente de variación y la dispersión relativa..."
-                }
-            ],
-            [
-                {
-                    "numero": 1,
-                    "puntos": 35,
-                    "pregunta": "Probabilidad Total y Bayes en Evaluación de Riesgo de Crédito: Una entidad clasifica operaciones en Comerciales (60%), Personales (30%) e Hipotecarias (10%) con tasas de morosidad del 2%, 6% y 1% respectivamente. Si una operación resulta morosa, calcule la probabilidad de que sea un crédito personal.",
-                    "placeholder": "Desarrolle matriz de probabilidades y Bayes..."
-                },
-                {
-                    "numero": 2,
-                    "puntos": 35,
-                    "pregunta": "Distribución de la Media Muestral X̄ bajo el TCL: El salario en una industria tiene μ = $800.000 y σ = $120.000. Para una muestra de n = 100 empleados, determine el intervalo simétrico alrededor de la media que concentra el 95% de las medias muestrales posibles.",
-                    "placeholder": "Aplique el TCL para intervalo de medias muestrales..."
-                },
-                {
-                    "numero": 3,
-                    "puntos": 30,
-                    "pregunta": "Análisis de Asimetría y Medidas de Posición: En distribuciones de ingresos con fuerte asimetría positiva a la derecha, explique la relación de orden entre Moda, Mediana y Media aritmética. ¿Cuál de ellas representa mejor el salario típico?",
-                    "placeholder": "Confronte media, mediana y moda en distribuciones asimétricas..."
-                }
-            ],
-            [
-                {
-                    "numero": 1,
-                    "puntos": 35,
-                    "pregunta": "Teorema de Bayes en Auditoría de Facturación: Una empresa procesa facturas por 3 sucursales A (40%), B (35%) y C (25%). Las tasas de error contable son 1%, 2% y 3%. Al auditar una factura con error, determine la probabilidad de que provenga de la sucursal C.",
-                    "placeholder": "Calcule probabilidad total de error y Bayes para la sucursal C..."
-                },
-                {
-                    "numero": 2,
-                    "puntos": 35,
-                    "pregunta": "Teorema Central del Límite en Estimación de Ingresos: Una cadena de retail tiene ventas diarias por local con media $500.000 y desvío $80.000. Si se auditan n = 36 locales al azar, calcule la probabilidad de que el promedio muestral esté entre $480.000 y $520.000.",
-                    "placeholder": "Aplique tipificación Z de la media muestral..."
-                },
-                {
-                    "numero": 3,
-                    "puntos": 30,
-                    "pregunta": "Distribución Normal Estándar y Regla Empírica: Explique por qué en cualquier distribución normal el 68.3% de los datos cae a ±1 desvío estándar, el 95.4% a ±2 desvíos y el 99.7% a ±3 desvíos. Relacione con el control estadístico de procesos.",
-                    "placeholder": "Desarrolle las propiedades de las áreas normales y límites de control..."
-                }
-            ],
-            [
-                {
-                    "numero": 1,
-                    "puntos": 35,
-                    "pregunta": "Independencia Estadística y Tablas de Contingencia: Explique la diferencia conceptual entre dos sucesos mutuamente excluyentes y dos sucesos estadísticamente independientes. ¿Pueden dos sucesos con probabilidad positiva ser simultáneamente ambas cosas? Demuestre formalmente.",
-                    "placeholder": "Demostración matemática formal de exclusión mutua vs independencia..."
-                },
-                {
-                    "numero": 2,
-                    "puntos": 35,
-                    "pregunta": "Aplicación del TCL en Gestión de Riesgo de Carteras: Una cartera contiene 100 activos independientes con rendimientos esperados μ = 1% y σ = 2%. Utilice el Teorema Central del Límite para calcular la probabilidad de que el rendimiento medio de la cartera sea inferior a cero.",
-                    "placeholder": "Desarrolle el cálculo con error estándar de la cartera σ/√n..."
-                },
-                {
-                    "numero": 3,
-                    "puntos": 30,
-                    "pregunta": "Coeficiente de Variación y Diagnóstico de Homogeneidad: Explique el fundamento estadístico de la regla práctica que considera que una muestra es homogénea si CV ≤ 25%. ¿Qué problemas interpretativos acarrea una muestra con CV = 70%?",
-                    "placeholder": "Fundamente el análisis de homogeneidad y representatividad de la media..."
-                }
-            ]
-        ]
-    },
-    "contabilidad": {
-        "1er_parcial": [
-            [
-                {
-                    "numero": 1,
-                    "puntos": 15,
-                    "pregunta": "BLOQUE I: TEORÍA CON JUSTIFICACIÓN DE DESCARTE (T1 y T2):\\nT1: Principio de Valuación al Costo: Los bienes se incorporan por el sacrificio económico necesario para su puesta en marcha o venta. Justifique por qué se descartan las restantes opciones.\\nT2: Variación Modificativa Negativa: Identifique el hecho económico y justifique minuciosamente por qué descartó las demás alternativas.",
-                    "placeholder": "Respuestas y justificación exhaustiva de opciones descartadas para T1 y T2..."
-                },
-                {
-                    "numero": 2,
-                    "puntos": 15,
-                    "pregunta": "BLOQUE I: TEORÍA (T3 y T4):\\nT3: Fondo Fijo y Arqueo: Tratamiento contable de la rendición y reposición con cheque.\\nT4: Imputación de Ventas y CMV: ¿Por qué no se acredita Mercaderías al precio facturado de venta?",
-                    "placeholder": "Respuestas y justificaciones de descarte para T3 y T4..."
-                },
-                {
-                    "numero": 3,
-                    "puntos": 70,
-                    "pregunta": "BLOQUE II: CASO INTEGRAL 'DISTRIBUIDORA DEL CENTRO S.A.':\\n1. 01/04: Constitución: Suscripción por $1.200.000. Integran $600.000 en Banco Nación c/c, $400.000 en Mercaderías y el resto a 60 días. S/ Contrato social y boleta.\\n2. 12/04: Compra de Muebles y Útiles por $250.000. 40% con cheque Banco y 60% con pagaré a 60 días con $15.000 de interés a vencer. S/ Factura original y pagaré.\\n3. 05/05: Venta de mercaderías por $800.000. 50% con cheque al día y 50% en c/c a 30 días. CMV: $380.000. S/ Factura duplicada y minuta.\\n4. 31/05: Devengamiento de intereses del primer mes ($7.500) y luz del local por $45.000 impaga. S/ Minuta y factura de luz.\\nRegistre en Libro Diario con partida doble, leyenda documental y verifique el balance patrimonial.",
-                    "placeholder": "Libro Diario con cuentas, Debe, Haber, leyendas S/ y comprobación de partida doble..."
-                }
-            ],
-            [
-                {
-                    "numero": 1,
-                    "puntos": 15,
-                    "pregunta": "BLOQUE I: TEORÍA CON JUSTIFICACIÓN DE DESCARTE:\\nT1: Principio de lo Devengado: Los resultados económicos se reconocen en el período en que se originan, con independencia del cobro o pago. Analice su aplicación práctica en alquileres e intereses.\\nT2: Cuentas Regularizadoras del Activo: Función, saldo habitual (acreedor) y exposición en el estado de situación patrimonial (ej: Previsión Incobrables, Depreciación Acumulada).",
-                    "placeholder": "Desarrolle T1 y T2 fundamentando con normas contables..."
-                },
-                {
-                    "numero": 2,
-                    "puntos": 15,
-                    "pregunta": "BLOQUE I: TEORÍA (Conciliación Bancaria):\\nDistinga entre diferencias transitorias o temporarias (cheques pendientes de cobro, depósitos no acreditados) y permanentes (débitos por comisiones, errores de registro). ¿Cuáles exigen asiento de ajuste en el Libro Diario?",
-                    "placeholder": "Explique diferencias bancarias y asientos de ajuste..."
-                },
-                {
-                    "numero": 3,
-                    "puntos": 70,
-                    "pregunta": "BLOQUE II: CASO PRÁCTICO 'NORTE SUR COMERCIAL S.A.':\\n1. 02/06: Apertura: Caja $500.000, Banco Galicia c/c $800.000 y Mercaderías $600.000 (3.000 unidades a $200 c/u). Deuda Proveedores: $200.000. Capital: $1.700.000.\\n2. 08/06: Compra de 1.500 unidades a $220 c/u ($330.000). Se obtiene una bonificación comercial de $30.000 por volumen. Se abona 50% con transferencia bancaria y 50% en c/c con Proveedores. S/ Factura original.\\n3. 18/06: Venta de 2.000 unidades a $500 c/u ($1.000.000). Se cobra 40% al contado y por el 60% se recibe un pagaré a 60 días con $40.000 de interés incluido ($640.000). CMV registrado por inventario permanente. S/ Factura duplicada y minuta.\\n4. 30/06: Devengamiento del primer mes de intereses del pagaré a cobrar ($20.000) y devengamiento del sueldo del vendedor por $180.000 impago. S/ Minuta contable.\\nPautas: Asientos en Libro Diario con cuenta, tipo de variación patrimonial y verificación de igualdad A = P + PN.",
-                    "placeholder": "Libro Diario, asientos 1 a 4, cuentas T de mayor y comprobación final..."
-                }
-            ],
-            [
-                {
-                    "numero": 1,
-                    "puntos": 15,
-                    "pregunta": "BLOQUE I: TEORÍA CONTABLE:\\nT1: Bienes de Uso y Depreciaciones: Concepto de valor de incorporación, vida útil estimada, valor de rezago y método de amortización lineal. ¿Qué cuentas intervienen al cierre del ejercicio?\\nT2: Variación Patrimonial Permutativa Exclusiva del Activo: Defina y brinde 3 ejemplos de la vida comercial donde el Activo cambie cualitativamente sin modificar el monto total del Patrimonio Neto.",
-                    "placeholder": "Respuestas teóricas justificadas para T1 y T2..."
-                },
-                {
-                    "numero": 2,
-                    "puntos": 15,
-                    "pregunta": "BLOQUE I: COMPROBANTES Y CONTROL INTERNO:\\nIdentifique qué comprobante respalda legal y contablemente cada operación:\\na) Compra al contado.\\nb) Venta en cuenta corriente comercial.\\nc) Devolución de mercaderías defectuosas por parte de un cliente.\\nd) Depósito de cheques en cuenta corriente bancaria.",
-                    "placeholder": "Identifique comprobantes respaldatorios y efectos contables..."
-                },
-                {
-                    "numero": 3,
-                    "puntos": 70,
-                    "pregunta": "BLOQUE II: CASO INTEGRAL 'OMEGA LOGÍSTICA S.A.':\\n1. 01/08: Constitución: Aporte de socios de $2.000.000 integrado en efectivo y depositado en Banco Nación c/c.\\n2. 05/08: Compra de un Utilitario de reparto por $1.500.000. Se paga $500.000 con cheque bancario y el saldo ($1.000.000) mediante préstamo prendario en 10 cuotas con $100.000 de intereses adelantados a devengar. S/ Factura y contrato prendario.\\n3. 10/08: Pago de póliza de seguro contra todo riesgo por 6 meses por $120.000 con cheque Banco Nación. S/ Póliza y recibo.\\n4. 20/08: Venta de servicios logísticos por $600.000 cobrados con cheques al día de terceros (Valores a Depositar). S/ Factura duplicado.\\n5. 31/08: Devengamiento del primer mes del seguro ($20.000) y primer mes del interés del préstamo ($10.000). S/ Minutas de devengamiento.\\nRegistre en Libro Diario con partida doble, clasifique variaciones patrimoniales y demuestre la ecuación patrimonial al 31/08.",
-                    "placeholder": "Asientos en Libro Diario, Debe, Haber, análisis patrimonial y saldos..."
-                }
-            ],
-            [
-                {
-                    "numero": 1,
-                    "puntos": 15,
-                    "pregunta": "BLOQUE I: TEORÍA CON JUSTIFICACIÓN DE DESCARTE:\\nT1: Ecuación Patrimonial Dinámica: A = P + Capital + Resultados Acumulados + Ingresos - Gastos. Explique cómo impacta un cobro de un crédito en cuenta corriente en la ecuación.\\nT2: Principio de Prudencia Contable: 'Contabilizar las pérdidas cuando se conocen y las ganancias sólo cuando se realizan'. Justifique su aplicación práctica.",
-                    "placeholder": "Justifique conceptualmente T1 y T2 con normas profesionales..."
-                },
-                {
-                    "numero": 2,
-                    "puntos": 15,
-                    "pregunta": "BLOQUE I: PARTIDA DOBLE Y SALDOS:\\nExplique por qué las cuentas de Activo y de Pérdida tienen saldo habitual deudor, mientras que las de Pasivo, Patrimonio Neto y Ganancia tienen saldo acreedor. ¿Qué ocurre si una cuenta de Activo arroja saldo acreedor?",
-                    "placeholder": "Fundamente la mecánica de partida doble y saldos deudor/acreedor..."
-                },
-                {
-                    "numero": 3,
-                    "puntos": 70,
-                    "pregunta": "BLOQUE II: CASO PRÁCTICO 'HORIZONTE DIGITAL S.A.':\\n1. 01/10: Suscripción e integración: Capital suscripto por $1.500.000. Integran $1.000.000 en Banco Provincia c/c y $500.000 en Equipos de Computación. S/ Acta y comprobantes.\\n2. 07/10: Compra de mercaderías por $400.000. El flete hasta el depósito de la empresa cuesta $20.000 y se paga en efectivo. El resto se abona 50% con cheque y 50% en c/c con Proveedores. S/ Facturas.\\n3. 15/10: Venta al contado con cheque por $600.000, otorgando un descuento comercial del 5% ($30.000), cobrando $570.000 netos. CMV: $280.000. S/ Factura duplicada y recibo.\\n4. 31/10: Devengamiento de alquiler del local por $70.000 que se pagará el 5 del mes siguiente. S/ Minuta contable y contrato de locación.\\nRegistre en Libro Diario, clasifique las variaciones patrimoniales e indique el balance patrimonial resultante.",
-                    "placeholder": "Libro Diario, asientos 1 a 4, leyendas documentales y comprobación patrimonial..."
-                }
-            ]
-        ],
-        "2do_parcial": [
-            [
-                {
-                    "numero": 1,
-                    "puntos": 15,
-                    "pregunta": "BLOQUE I: TEORÍA DE RUBROS ESPECÍFICOS CON JUSTIFICACIÓN DE DESCARTE (30 Puntos totales):\\nT1: Conciliación Bancaria y Ajustes: Distinga entre diferencias temporarias (cheques pendientes de cobro por terceros, depósitos en 48h no acreditados) y permanentes (débitos bancarios por comisiones de mantenimiento, gastos de chequera, errores contables). ¿Cuáles exigen registración obligatoria de ajuste en el Libro Diario? Justifique el descarte de las restantes opciones.\\nT2: Valuación de Inventarios (PEPS vs PPP): En un escenario de precios de compra crecientes (inflación), compare el impacto de ambos métodos sobre el valor de la Existencia Final en el Activo y sobre el Costo de Mercaderías Vendidas (CMV) en los Resultados. Justifique el descarte de las demás alternativas.",
-                    "placeholder": "Respuestas justificadas y descarte riguroso para T1 y T2..."
-                },
-                {
-                    "numero": 2,
-                    "puntos": 15,
-                    "pregunta": "BLOQUE I: TEORÍA (Bienes de Uso y Depreciaciones):\\nT3: Costo de Incorporación de Bienes de Uso: ¿Qué erogaciones forman parte del valor de activación de una maquinaria? Distinga entre erogaciones necesarias activables (precio de factura neto de descuentos + fletes de traslado + seguros en tránsito + gastos de montaje y pruebas piloto) y gastos de mantenimiento o reparaciones ordinarias del ejercicio. Justifique el descarte.",
-                    "placeholder": "Desarrolle T3 y la justificación de descarte de alternativas..."
-                },
-                {
-                    "numero": 3,
-                    "puntos": 70,
-                    "pregunta": "BLOQUE II: CASO INTEGRAL DE RUBROS ESPECÍFICOS 'VANGUARDIA INDUSTRIAL S.A.' (70 Puntos):\\n1. 02/09: Caja y Bancos (Conciliación Bancaria y Ajustes): El saldo del Mayor de Banco Galicia c/c es $1.450.000 y el Extracto Bancario muestra $1.320.000. Se detectan: a) Cheque propio N° 101 entregado a proveedores pendiente de cobro por $250.000; b) Débito bancario por comisión de cuenta de $40.000 no contabilizado; c) Depósito de 48hs de $80.000 no acreditado en el extracto. Realice el cuadro de conciliación y el asiento de ajuste contable que corresponda s/ Minuta y extracto.\\n2. 10/09: Créditos por Ventas e Intereses a Devengar: Se venden mercaderías por $1.200.000 recibiendo un pagaré a 60 días por $1.320.000 que incluye $120.000 de intereses explícitos. CMV de la operación: $650.000. Registre la venta y el CMV indicando las variaciones patrimoniales y la cuenta regularizadora Intereses Positivos a Devengar. S/ Factura duplicada y pagaré.\\n3. 18/09: Bienes de Cambio (Ficha de Stock por PEPS): La empresa tenía 500 u. a $1.000 c/u ($500.000). Compra 800 u. a $1.200 c/u abonando con transferencia bancaria s/ Factura original. Luego vende 900 u. Registre la compra y la determinación y asiento del CMV por método PEPS (FIFO) con su respectiva minuta contable.\\n4. 25/09: Bienes de Uso y Depreciación: Se adquiere una Máquina industrial en $2.000.000. Se abona flete e instalación por $200.000 en efectivo. Vida útil estimada: 10 años (10% anual) con método lineal año de alta completo y sin valor de rezago. Registre la incorporación activando los gastos inherentes y registre la cuota de depreciación anual del ejercicio en la cuenta Depreciación Acumulada Maquinarias.\\n5. 30/09: Devengamiento de Intereses y Previsión para Incobrables: Devengue el primer mes de intereses del pagaré del día 10/09 ($60.000) y constituya una Previsión para Deudores Incobrables por $50.000 estimada por el departamento de créditos sobre la cartera morosa. S/ Minuta contable.\\nPautas de evaluación Cátedra Landini: Asientos completos en Libro Diario con cuentas normalizadas, Debe, Haber, variación patrimonial al lado de cada cuenta y leyendas documentales respaldatorias.",
-                    "placeholder": "Libro Diario, asientos 1 a 5, cuadro de conciliación bancaria y partida doble verificada..."
-                }
-            ],
-            [
-                {
-                    "numero": 1,
-                    "puntos": 15,
-                    "pregunta": "BLOQUE I: TEORÍA CON JUSTIFICACIÓN DE DESCARTE:\\nT1: Fondo Fijo y Arqueo de Caja Chica: Procedimiento de creación, rendición de gastos menores con comprobantes y reposición. Tratamiento contable de un Faltante de Caja (cuenta de pérdida) y Sobrante de Caja (cuenta de ganancia). Justifique por qué descartó las otras opciones.\\nT2: Componentes Financieros Implícitos en Ventas a Plazo: Cuando una empresa vende a 30 días sin cobrar interés explícito pero cobra un sobreprecio respecto al precio de contado, ¿cómo debe segregarse el resultado financiero del ingreso por ventas? Justifique.",
-                    "placeholder": "Desarrolle T1 y T2 justificando opciones descartadas..."
-                },
-                {
-                    "numero": 2,
-                    "puntos": 15,
-                    "pregunta": "BLOQUE I: TEORÍA (Sistemas de Depreciación de Bienes de Uso):\\nCompare el método de amortización lineal constante frente al método de unidades producidas o kilómetros recorridos. ¿En qué tipo de activos (rodados, maquinarias pesadas) resulta técnicamente más preciso este último para reflejar el desgaste económico real? Justifique el descarte.",
-                    "placeholder": "Compare métodos de amortización y justifique el descarte..."
-                },
-                {
-                    "numero": 3,
-                    "puntos": 70,
-                    "pregunta": "BLOQUE II: CASO INTEGRAL 'ALIMENTOS PAMPEANOS S.A.':\\n1. 03/11: Creación y Arqueo de Fondo Fijo: Se crea un Fondo Fijo por $100.000 emitiendo cheque Banco Nación. Al rendir se presentan comprobantes de fotocopias por $25.000, artículos de limpieza por $35.000 y viáticos por $20.000, existiendo $18.000 en efectivo (Faltante de $2.000). Se repone el fondo emitiendo nuevo cheque. Registre la creación, rendición con faltante y reposición.\\n2. 12/11: Créditos y Descuento de Documentos: La empresa posee un pagaré a cobrar de clientes por $500.000 y lo descuenta en el Banco Galicia. El banco acredita $460.000 en la cuenta corriente y retiene $40.000 por intereses bancarios adelantados a devengar. S/ Liquidación bancaria y pagaré.\\n3. 20/11: Bienes de Cambio por Precio Promedio Ponderado (PPP): Existencia inicial: 1.000 unidades a $500 c/u ($500.000). Compra: 2.000 unidades a $560 c/u ($1.120.000) con pagaré sin interés a 30 días. Calcule el nuevo costo unitario ponderado PPP y registre el CMV de una venta de 1.800 unidades efectuada a $1.000 c/u al contado. S/ Factura y minuta.\\n4. 28/11: Venta y Reemplazo de Bien de Uso: Se vende un Utilitario en $1.800.000 cobrando con cheque al día. Su Valor de Origen era de $2.500.000 y tenía una Depreciación Acumulada de $1.000.000 (Valor Residual Contable: $1.500.000). Registre la baja del rodado y la cuenta Resultado por Venta de Bienes de Uso (R+ de $300.000). S/ Boleto de compraventa y recibo.\\n5. 30/11: Devengamiento de los intereses bancarios del pagaré descontado el 12/11 por $20.000. S/ Minuta contable.",
-                    "placeholder": "Libro Diario, asientos 1 a 5 con Debe, Haber, leyendas y variaciones patrimoniales..."
-                }
-            ],
-            [
-                {
-                    "numero": 1,
-                    "puntos": 15,
-                    "pregunta": "BLOQUE I: TEORÍA CON JUSTIFICACIÓN DE DESCARTE:\\nT1: Previsión para Deudores Incobrables: Análisis de la naturaleza de la cuenta (regularizadora de activo), cálculo del quebranto estimado al cierre del ejercicio y registración de un incobrable real producido en el ejercicio siguiente (uso de la previsión vs quebranto por incobrabilidad). Justifique el descarte.\\nT2: Conciliación Bancaria: Cheque emitido y vencido: ¿Qué asiento de ajuste corresponde realizar cuando un cheque emitido a un proveedor supera los 30 días corridos sin haber sido presentado al cobro? Justifique.",
-                    "placeholder": "Desarrolle T1 y T2 fundamentando opciones descartadas..."
-                },
-                {
-                    "numero": 2,
-                    "puntos": 15,
-                    "pregunta": "BLOQUE I: TEORÍA (Mejoras vs Mantenimiento en Bienes de Uso):\\nDefina 'Mejora' en un bien de uso (erogación que aumenta la capacidad de servicio, alarga la vida útil o reduce costos futuros de operación) y fundamente por qué se activa en la cuenta del bien en lugar de imputarse a cuentas de resultado negativo. Justifique el descarte.",
-                    "placeholder": "Distinga mejoras activables de gastos de mantenimiento..."
-                },
-                {
-                    "numero": 3,
-                    "puntos": 70,
-                    "pregunta": "BLOQUE II: CASO INTEGRAL 'TECNOLOGÍA SUR S.A.':\\n1. 05/12: Conciliación Bancaria con Error de Registro: El extracto bancario de Banco Francés c/c muestra que un débito por luz de $85.000 fue registrado erróneamente en el libro banco de la empresa por $58.000. Además, el banco cobró comisiones por transferencias por $15.000 + IVA $3.150 ($18.150). Realice el cuadro conciliatorio y el asiento de ajuste contable correspondiente.\\n2. 14/12: Ventas con Tarjetas de Crédito: Venta de productos tecnológicos por $1.500.000 abonada con Tarjeta de Crédito en 1 pago. El cupón de la tarjeta cobra un 3% de comisión ($45.000) y retiene $15.000 de impuestos, acreditándose el neto en la cuenta Cupones de Tarjeta a Cobrar. CMV de la venta: $780.000. S/ Cupón y factura duplicada.\\n3. 22/12: Inventarios PEPS con Devolución de Compras: La empresa adquiere 600 u. a $800 c/u abonando con cheque. Al recibir el lote se detectan 100 unidades defectuosas que se devuelven al proveedor recibiendo Nota de Crédito original. Registre la compra original y la devolución con su impacto en la ficha de stock.\\n4. 28/12: Activación y Puesta a Punto de Servidor: Compra de Servidor informático por $3.000.000 con cheque a 30 días con $150.000 de intereses a devengar. Se abonan $300.000 en efectivo por configuración de software de red y licencias obligatorias para su puesta en marcha. Registre la activación integral del servidor.\\n5. 31/12: Amortización anual del servidor (vida útil 3 años lineal) y reclasificación de deudores morosos por $120.000 pasados a gestión judicial. S/ Minuta contable.",
-                    "placeholder": "Libro Diario, asientos 1 a 5, ajustes bancarios, variaciones y saldos mayorizados..."
-                }
-            ],
-            [
-                {
-                    "numero": 1,
-                    "puntos": 15,
-                    "pregunta": "BLOQUE I: TEORÍA DE RUBROS CON JUSTIFICACIÓN DE DESCARTE:\\nT1: Valuación al Valor Neto de Realización (VNR): Defina Precio de venta de contado menos gastos directos de venta. ¿En qué bienes de cambio con mercado transparente y cotización pública (commodities, granos, moneda extranjera) se aplica este criterio de valuación al cierre? Justifique el descarte.\\nT2: Cuentas de Orden y Contingencias: Distinga entre contingencias probables y cuantificables (que exigen asiento de previsión en el Libro Diario) y contingencias remotas o no cuantificables (que sólo se revelan en Notas a los Estados Contables). Justifique.",
-                    "placeholder": "Desarrolle T1 y T2 justificando descarte de alternativas..."
-                },
-                {
-                    "numero": 2,
-                    "puntos": 15,
-                    "pregunta": "BLOQUE I: TEORÍA (Activos Intangibles y Gastos de Organización):\\n¿Qué condiciones deben cumplirse para poder activar los Gastos de Organización y Preoperativos de una sociedad? ¿Cuál es el plazo máximo de amortización admitido por las Resoluciones Técnicas profesionales? Justifique el descarte.",
-                    "placeholder": "Explique tratamiento de activos intangibles y justifique descarte..."
-                },
-                {
-                    "numero": 3,
-                    "puntos": 70,
-                    "pregunta": "BLOQUE II: CASO INTEGRAL 'DISTRIBUIDORA RÍO DE LA PLATA S.A.':\\n1. 02/01: Arqueo y Diferencia de Cotización en Moneda Extranjera: La empresa posee en caja USD 10.000 registrados a un costo histórico de $800 por dólar ($8.000.000). Al cierre, la cotización oficial tipo comprador es de $920 por dólar ($9.200.000). Registre el asiento de ajuste por Diferencia de Cotización Positiva s/ Minuta de arqueo.\\n2. 11/01: Créditos con Intereses Punitorios: Un deudor en mora que debía una factura de $400.000 cancela su deuda en efectivo abonando $40.000 adicionales en concepto de intereses punitorios por mora. Registre la cobranza y la ganancia financiera s/ Recibo duplicado.\\n3. 18/01: Bienes de Cambio por PPP con Bonificación: Se compran 1.000 u. a $600 c/u. El proveedor otorga una bonificación comercial en factura del 10% por cantidad ($60.000), facturando $540.000 netos. Se abona 50% con transferencia y 50% en c/c. Calcule el costo unitario de incorporación ($540 por unidad) y registre la compra s/ Factura original.\\n4. 26/01: Adquisición de Inmueble con Segregación Terreno/Edificio: Se compra un Inmueble comercial en $10.000.000 pagando 40% con cheque y 60% con hipoteca a 5 años. La valuación técnica asigna 20% al Terreno ($2.000.000) y 80% al Edificio construido ($8.000.000). Registre la compra segregando ambas cuentas patrimoniales.\\n5. 31/01: Depreciación anual del Edificio (2% anual lineal sobre $8.000.000 = $160.000, recordando que el terreno no se amortiza) y devengamiento del primer mes de intereses hipotecarios por $100.000 impagos. S/ Minuta contable.",
-                    "placeholder": "Libro Diario, asientos 1 a 5, Debe, Haber, leyendas documentales y partida doble..."
-                }
-            ]
-        ],
-        "final": [
-            [
-                {
-                    "numero": 1,
-                    "puntos": 30,
-                    "pregunta": "BLOQUE I: AUDITORÍA DE RUBROS Y BALANCE DE SALDOS AJUSTADO (30 Puntos):\\nRealice los asientos de ajuste de cierre al 31/12:\\na) Conciliación bancaria: Débito bancario por comisiones de mantenimiento por $30.000 no contabilizado.\\nb) Inventarios: Faltante de mercaderías detectado en el inventario físico por $45.000.\\nc) Bienes de uso: Cuota de depreciación anual del ejercicio de Rodados (Valor de origen $4.000.000, vida útil 5 años lineal: $800.000).\\nd) Créditos: Estimación de la Previsión para Deudores Incobrables del ejercicio por $60.000.\\ne) Devengamientos: Intereses pasivos a devengar vencidos del mes por $25.000.",
-                    "placeholder": "Libro Diario con los 5 asientos de ajuste de cierre..."
-                },
-                {
-                    "numero": 2,
-                    "puntos": 35,
-                    "pregunta": "BLOQUE II: REFUNDICIÓN DE CUENTAS DE RESULTADO (35 Puntos):\\nA partir de las cuentas de resultado ajustadas: Ventas ($6.500.000), Intereses Ganados ($200.000), CMV ($3.200.000), Sueldos y Cargas Sociales ($1.400.000), Luz y Servicios ($180.000), Depreciaciones ($800.000) e Intereses Perdidos ($120.000):\\na) Confeccione el Asiento de Refundición de Cuentas de Resultado en el Libro Diario debitando las ganancias y acreditando las pérdidas.\\nb) Determine el Resultado del Ejercicio (Ganancia o Pérdida neta) y regístrelo en la cuenta patrimonial de Resultados No Asignados.",
-                    "placeholder": "Asiento de refundición de cuentas de resultado y determinación de la ganancia/pérdida neta..."
-                },
-                {
-                    "numero": 3,
-                    "puntos": 35,
-                    "pregunta": "BLOQUE III: CIERRE FORMAL Y ESTADOS CONTABLES BÁSICOS (RT 8 y 9) (35 Puntos):\\na) Realice el Asiento de Cierre Formal de Libros de las Cuentas Patrimoniales (invirtiendo débitos y créditos del Activo, Pasivo y Patrimonio Neto).\\nb) Presente la estructura sintética clasificada del Estado de Situación Patrimonial (Activo Corriente, Activo No Corriente, Pasivo Corriente, Pasivo No Corriente y Patrimonio Neto) y verifique la igualdad fundamental contable.",
-                    "placeholder": "Asiento de cierre patrimonial formal y esquema de presentación RT 8 y 9..."
-                }
-            ],
-            [
-                {
-                    "numero": 1,
-                    "puntos": 35,
-                    "pregunta": "Ciclo Contable Completo y Hoja de Trabajo de 8 Columnas: Explique el funcionamiento de la hoja de trabajo previa al balance general (Sumas Debe/Haber, Saldos Deudor/Acreedor, Ajustes, Saldos Ajustados y Clasificación Patrimonial / Resultados). ¿Cuál es la función de la columna de resultados para verificar el beneficio neto?",
-                    "placeholder": "Desarrolle la mecánica de la hoja de trabajo de balance..."
-                },
-                {
-                    "numero": 2,
-                    "puntos": 35,
-                    "pregunta": "Asientos de Cierre y Reapertura: Compare el propósito del asiento de refundición de pérdidas y ganancias frente al asiento de cierre de cuentas patrimoniales. Registre el asiento de reapertura al inicio del ejercicio siguiente.",
-                    "placeholder": "Explique el cierre de libros y asiento de reapertura..."
-                },
-                {
-                    "numero": 3,
-                    "puntos": 30,
-                    "pregunta": "Exposición según Resoluciones Técnicas (RT 8 y RT 9): Explique las pautas de clasificación de activos y pasivos en corrientes y no corrientes (criterio del plazo de 12 meses desde la fecha de cierre). Defina qué información se expone en Notas y Anexos a los estados contables.",
-                    "placeholder": "Desarrolle los criterios de clasificación corriente/no corriente según RT 8 y 9..."
-                }
-            ],
-            [
-                {
-                    "numero": 1,
-                    "puntos": 35,
-                    "pregunta": "Auditoría de Rubros y Ajustes de Ejercicios Anteriores (AREA): ¿En qué circunstancias una corrección de saldos no debe imputarse a cuentas de resultado del ejercicio actual sino a la cuenta AREA del Patrimonio Neto? Ejemplifique con un error en la depreciación de bienes de uso de ejercicios cerrados.",
-                    "placeholder": "Desarrolle el concepto y registración de AREA..."
-                },
-                {
-                    "numero": 2,
-                    "puntos": 35,
-                    "pregunta": "Determinación del Impuesto a las Ganancias y Asiento de Cierre: Si una sociedad anónima obtiene una ganancia contable antes de impuestos de $2.000.000 y la alícuota fiscal es del 30% ($600.000), registre el asiento del impuesto devengado contra Provisión Impuesto a las Ganancias a Pagar y el traslado del resultado neto a Resultados del Ejercicio.",
-                    "placeholder": "Asiento contable del impuesto a las ganancias y refundición neta..."
-                },
-                {
-                    "numero": 3,
-                    "puntos": 30,
-                    "pregunta": "El Estado de Resultados Clasificado: Describa las secciones obligatorias del Estado de Resultados según RT 9: Ventas Netas, Costo de Ventas, Ganancia Bruta, Gastos de Comercialización, Gastos de Administración, Resultados Financieros y por Tenencia, y Resultado Neto.",
-                    "placeholder": "Estructura analítica del Estado de Resultados según RT 9..."
-                }
-            ],
-            [
-                {
-                    "numero": 1,
-                    "puntos": 35,
-                    "pregunta": "Tratamiento Integral de Resultados Acumulados y Dividendos: A partir de la cuenta Resultados No Asignados con saldo acreedor de $1.500.000, la Asamblea de Accionistas aprueba: a) 5% a Reserva Legal ($75.000); b) Distribución de Dividendos en efectivo por $500.000; c) Distribución de Dividendos en acciones por $400.000. Registre en Libro Diario indicando variaciones patrimoniales.",
-                    "placeholder": "Asiento de distribución de dividendos y constitución de reservas..."
-                },
-                {
-                    "numero": 2,
-                    "puntos": 35,
-                    "pregunta": "Valuación y Exposición de Bienes de Uso (Anexo de Bienes de Uso): Explique cómo se construye el Anexo de Bienes de Uso obligatorio según RT 9 (Valores de Origen al inicio, altas, bajas, valores al cierre; Depreciaciones acumuladas al inicio, del ejercicio, de bajas y al cierre; y Valor Residual Neto).",
-                    "placeholder": "Desarrolle la estructura del Anexo de Bienes de Uso..."
-                },
-                {
-                    "numero": 3,
-                    "puntos": 30,
-                    "pregunta": "Principios Fundamentales de Contabilidad y Normas Profesionales: Analice cómo interactúan los principios de Devengado, Valuación al Costo, Prudencia y Uniformidad para asegurar que los Estados Contables reflejen la 'imagen fiel' del patrimonio de la empresa.",
-                    "placeholder": "Confronte los principios contables y la fidelidad de la información financiera..."
-                }
-            ]
-        ]
-    }
-};
-
-    const matData = bankData[matId] || bankData["filosofia"];
-    const modoData = matData[modo] || matData["1er_parcial"];
-    const variantList = (Array.isArray(modoData) && modoData.length > 0) ? modoData : matData["1er_parcial"];
-    const consignasBase = variantList[v] || variantList[0];
-
-    const nombresMaterias = {
-        filosofia: "Filosofía y Ética",
-        sfi: "Sistema Financiero Internacional",
-        historia: "Historia Económica Mundial",
-        estadistica: "Estadística 1",
-        contabilidad: "Contabilidad 1"
-    };
-    const nombreMat = nombresMaterias[matId] || "Licenciatura en Finanzas";
-
-    const nombresModos = {
-        "1er_parcial": "1er Parcial",
-        "2do_parcial": "2do Parcial",
-        "final": "Examen Final"
-    };
-    const tituloModo = nombresModos[modo] || "Examen Académico";
-
-    // Subtítulos pedagógicos contextualizados por materia y modo
-    let subtitulo = `Variante académica ${v + 1} · Programa oficial cátedra UADE`;
-    if (modo === "2do_parcial") {
-        subtitulo = `Variante académica ${v + 1} (Secuencia ${variantIndex + 1}) · Temario exclusivo de 2do Parcial`;
-    } else if (modo === "1er_parcial") {
-        subtitulo = `Variante académica ${v + 1} (Secuencia ${variantIndex + 1}) · Temario exclusivo de 1er Parcial`;
-    } else if (modo === "final") {
-        subtitulo = `Variante académica ${v + 1} (Secuencia ${variantIndex + 1}) · Integración total de la materia`;
-    }
-
-    return {
-        id: `${matId}_ia_${modo}_${timestamp}_${variantIndex}`,
-        nombre: `Modelo ${num} (IA Inédito)`,
-        badge: "IA",
-        titulo: `${tituloModo} · Modelo ${num} Inédito · ${nombreMat}`,
-        subtitulo: subtitulo,
-        duracion: modo === "final" ? "150 min · 60 pts para aprobar" : "120 min · 60 pts para aprobar",
-        consignas: JSON.parse(JSON.stringify(consignasBase))
-    };
-}
-
-
 async function evaluarExamenMateria(materiaKey) {
+    await loadFinance();
     const matId = normalizarMateriaFinanzasKey(materiaKey);
     const mat = MATERIAS_FINANZAS[matId];
     if (!mat) return;
@@ -31705,18 +24760,18 @@ async function evaluarExamenMateria(materiaKey) {
 
     if (submitBtn) {
         submitBtn.disabled = true;
-        submitBtn.innerHTML = "⏳ Evaluando con Criterio de Cátedra...";
+        setHTML(submitBtn, "⏳ Evaluando con Criterio de Cátedra...");
     }
 
     if (feedbackPanel) {
         feedbackPanel.classList.remove("hidden");
-        feedbackPanel.innerHTML = `
+        setHTML(feedbackPanel, `
             <div style="padding: 2rem; text-align: center; color: #94a3b8; background: rgba(15,23,42,0.8); border-radius: 12px; border: 1px solid rgba(255,255,255,0.08);">
                 <div class="fin-spinner" style="font-size: 2.5rem; margin-bottom: 0.75rem; animation: pulse 1.5s infinite;">🤖</div>
                 <h4 style="color: #f8fafc; margin-bottom: 0.4rem;">La IA Docente está evaluando tu intento...</h4>
                 <p style="font-size: 0.9rem; max-width: 500px; margin: 0 auto;">Verificando rigor conceptual, escala oficial de notas UADE (60=4) y rúbrica de cátedra.</p>
             </div>
-        `;
+        `);
     }
 
     let resultadoFinal = null;
@@ -31759,51 +24814,15 @@ Genera una devolución exhaustiva y devuelve ÚNICAMENTE un JSON válido (sin fo
   "recomendacionEstudio": "Consejo personalizado para el examen real"
 }`;
 
-        const directKey = typeof obtenerGeminiApiKey === "function" ? obtenerGeminiApiKey() : "";
-        if (directKey) {
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`;
-            const res = await fetch(url, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "x-goog-api-key": directKey
-                },
-                body: JSON.stringify({
-                    contents: [{ parts: [{ text: promptCorreccion }] }],
-                    generationConfig: { temperature: 0.2, maxOutputTokens: 2048, responseMimeType: "application/json" }
-                })
-            });
-            if (res.ok) {
-                const data = await res.json();
-                const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
-                const cleanJson = rawText.replace(/\`\`\`json/gi, "").replace(/\`\`\`/g, "").trim();
-                resultadoFinal = JSON.parse(cleanJson);
-            }
-        } else {
-            const res = await fetch("/api/gemini", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    materia: mat.nombre,
-                    tema: examenData.titulo || "Examen Parcial",
-                    tipoJuego: "evaluacion_examen_finanzas",
-                    prompt: promptCorreccion
-                })
-            });
-            if (res.ok) {
-                const data = await res.json();
-                const payload = data?.data || data;
-                if (payload && typeof payload.puntaje100 === "number") {
-                    resultadoFinal = payload;
-                }
-            }
-        }
+        resultadoFinal = await requestAI({ materia: mat.nombre, tema: examenData.titulo || 'Examen Parcial', tipoJuego: 'evaluacion_examen_finanzas', prompt: promptCorreccion });
+        resultadoFinal.fuente = 'Evaluación por IA';
     } catch (e) {
         console.warn("[Finanzas IA] Fallback a evaluación heurística de cátedra:", e);
     }
 
     if (!resultadoFinal) {
         resultadoFinal = evaluarExamenMateriaLocal(matId, respuestas, examenData);
+        resultadoFinal.fuente = "Evaluación orientativa local · IA no disponible";
     }
 
     // Registrar este intento en el historial del modelo
@@ -31829,10 +24848,11 @@ Genera una devolución exhaustiva y devuelve ÚNICAMENTE un JSON válido (sin fo
     }
 
     renderizarDevolucionDocente(feedbackPanel, resultadoFinal, matId, examenData);
+    const source = document.createElement("p"); source.className = "evaluation-source"; source.textContent = resultadoFinal.fuente; feedbackPanel?.prepend(source);
 
     if (submitBtn) {
         submitBtn.disabled = false;
-        submitBtn.innerHTML = "🔍 Re-evaluar Examen con IA Docente";
+        setHTML(submitBtn, "🔍 Re-evaluar Examen con IA Docente");
     }
 
     mostrarToast(
@@ -31963,7 +24983,7 @@ function renderizarDevolucionDocente(feedbackPanel, res, matId, examenData) {
         });
     }
 
-    feedbackPanel.innerHTML = `
+    setHTML(feedbackPanel, `
         <div class="fin-feedback-card" style="background: rgba(30,41,59,0.9); border: 2px solid ${badgeColor}; border-radius: 14px; padding: 1.5rem; margin-top: 1.5rem; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.6);">
             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 1rem; margin-bottom: 1rem;">
                 <div style="display: flex; align-items: center; gap: 0.75rem;">
@@ -32008,16 +25028,16 @@ function renderizarDevolucionDocente(feedbackPanel, res, matId, examenData) {
                     <strong>🎯 Recomendación para el examen real:</strong> ${escapeHtml(res.recomendacionEstudio)}
                 </div>
                 <div style="display: flex; gap: 0.5rem;">
-                    <button class="button button--secondary button--sm" type="button" onclick="limpiarYReintentarExamen('${escapeHtml(matId)}')">
+                    <button class="button button--secondary button--sm" type="button" data-study-click="limpiarYReintentarExamen('${escapeHtml(matId)}')">
                         🔄 Reintentar este Modelo
                     </button>
-                    <button class="button button--ghost button--sm" type="button" onclick="window.scrollTo({ top: 0, behavior: 'smooth' })">
+                    <button class="button button--ghost button--sm" type="button" data-study-click="scrollTop">
                         ↑ Subir a la Hoja
                     </button>
                 </div>
             </div>
         </div>
-    `;
+    `);
 
     feedbackPanel.scrollIntoView({ behavior: "smooth", block: "start" });
 }
@@ -32026,35 +25046,15 @@ function renderizarDevolucionDocente(feedbackPanel, res, matId, examenData) {
    INTEGRACIÓN CON LOS 4 JUEGOS DE ESTUDIAR SOLO (Bolillero, Bomba, Impostor, Memotest)
    ========================================================================== */
 
-function iniciarJuegoMateria(materiaKey, tipoJuego) {
+async function iniciarJuegoMateria(materiaKey, tipoJuego) {
+    await loadFinance();
     const matId = normalizarMateriaFinanzasKey(materiaKey);
     const mat = MATERIAS_FINANZAS[matId];
     if (!mat) return;
 
     const listaIdMateria = `fin_${matId}_conceptos`;
 
-    const listaJuego = {
-        id: listaIdMateria,
-        nombre: mat.nombre,
-        titulo: `${mat.nombre} (Finanzas)`,
-        descripcion: `Banco conceptual calibrado para ${mat.catedra}`,
-        temas: mat.conceptosJuegos.map((c, idx) => ({
-            id: c.id || `t_${matId}_${idx}`,
-            nombre: c.nombre,
-            titulo: c.nombre,
-            guia: c.guia,
-            descripcion: c.guia,
-            bomba: {
-                pregunta: c.preguntaBomba,
-                cables: c.cables
-            },
-            impostor: {
-                afirmaciones: c.impostorAfirmaciones,
-                indiceImpostor: c.impostorCorrecta
-            },
-            memotest: c.memotestPar
-        }))
-    };
+    const listaJuego = buildFinanceStudyList(mat, matId);
 
     const idxExistente = estado.listas.findIndex(l => l.id === listaIdMateria || l.nombre.toLowerCase() === mat.nombre.toLowerCase());
     if (idxExistente !== -1) {
@@ -32062,16 +25062,17 @@ function iniciarJuegoMateria(materiaKey, tipoJuego) {
     } else {
         estado.listas.push(listaJuego);
     }
-    estado.listaActivaId = listaIdMateria;
+    estado.listaSeleccionadaId = listaIdMateria;
+    guardarDatos();
+    reconstruirBolillero();
+    render();
 
     if (tipoJuego === "bolillero") {
-        cambiarVista("solo");
-        if (typeof renderizarSelectores === "function") renderizarSelectores();
-        if (typeof renderizarBolillero === "function") renderizarBolillero();
+        cambiarVista("bolillero");
         mostrarToast(`🎲 Bolillero cargado con los temas de ${mat.nombre}`, "exito");
     } else if (["bomba", "impostor", "memotest"].includes(tipoJuego)) {
         if (typeof abrirArenaJuego === "function") {
-            abrirArenaJuego(tipoJuego, "solo", listaIdMateria, true);
+            abrirArenaJuego(tipoJuego, "solo", listaIdMateria, false);
         } else {
             cambiarVista("solo");
             mostrarToast(`🕹️ Modo ${tipoJuego.toUpperCase()} activado para ${mat.nombre}`, "info");
@@ -32098,7 +25099,7 @@ const FINANZAS_HISTORIAL_STORAGE_KEY = "luibanez_finanzas_examenes_v1";
 
 function cargarHistorialExamenesFinanzas() {
     try {
-        const raw = localStorage.getItem(FINANZAS_HISTORIAL_STORAGE_KEY);
+        const raw = studyStorage.getItem(FINANZAS_HISTORIAL_STORAGE_KEY);
         if (raw) return JSON.parse(raw);
     } catch (_) {}
     return {};
@@ -32115,7 +25116,7 @@ function guardarHistorialExamenesFinanzas(matId, modo, resultado) {
             notaUade: resultado.notaUade,
             estado: resultado.estado
         });
-        localStorage.setItem(FINANZAS_HISTORIAL_STORAGE_KEY, JSON.stringify(hist));
+        studyStorage.setItem(FINANZAS_HISTORIAL_STORAGE_KEY, JSON.stringify(hist));
     } catch (e) {
         console.warn("No se pudo persistir historial de examen:", e);
     }
@@ -32132,3 +25133,106 @@ window.evaluarExamenMateria = evaluarExamenMateria;
 window.iniciarJuegoMateria = iniciarJuegoMateria;
 window.abrirPizarronNotasRapido = abrirPizarronNotasRapido;
 
+
+// Compatibility boundary for existing inline actions; new code uses ES modules.
+
+
+function cargarMateriaMedicinaEnBolillero(materia) {
+ if (!esCuentaIvanActiva()) { mostrarToast('Elegí Medicina en Cuenta y datos para acceder.', 'aviso'); return; }
+ const ids = { interna: 'lista_medicina_interna', farma: 'lista_farmacologia_2', salud: 'lista_salud_publica' };
+ const id = ids[materia];
+ if (!id) { mostrarToast('Materia desconocida.', 'error'); return; }
+ asegurarMateriasMedicinaIvan();
+ estado.listaSeleccionadaId = id;
+ actualizarInterfaz(); actualizarDropdownListasDuelo(); cambiarVista('bolillero');
+}
+window.cargarMateriaMedicinaEnBolillero = cargarMateriaMedicinaEnBolillero;
+
+function onlineGameCallbacks() {
+ return { navigate: state => { detenerPracticaLocal(); juegosEduEstado.esOnline = true; juegosEduEstado.juegoActual = state.game; cambiarVista('juegos'); }, back: () => {
+  if (onlineDueloEstado.esHost) publicarMensajeSala({ tipo: 'VOLVER_LOBBY_ONLINE' });
+  cambiarVista('juntos');
+ } };
+}
+async function prepararActividadesOnline(juego) {
+ const lista = estado.listas.find(l => l.id === dueloEstado.config.listaId) || estado.listas[0];
+ const temas = (lista?.temas?.length ? lista.temas : [{ nombre: 'Práctica general', descripcion: 'Ejercicio introductorio de estudio.' }]).map((t,i) => asegurarDatosJuegoTema({ ...t, nombre: t.nombre || t.titulo },i));
+ const tema = temas[0];
+ const apunte = apuntesEstado.global || apuntesEstado[juego];
+ let bomba = tema.bomba, casos = [], pares = [];
+ if (apunte?.texto) {
+   if (['bomba','triatlon'].includes(juego)) bomba = await generarPreguntaIA({ materia: apunte.nombre || 'Estudio', tema: tema.nombre, tipoJuego: 'bomba', contextoPDF: apunte.texto });
+   if (['impostor','triatlon'].includes(juego)) casos = (await generarPreguntaIA({ materia: apunte.nombre || 'Estudio', tema: tema.nombre, tipoJuego: 'impostor', contextoPDF: apunte.texto })).casos;
+   if (['memotest','triatlon'].includes(juego)) pares = (await generarPreguntaIA({ materia: apunte.nombre || 'Estudio', tema: tema.nombre, tipoJuego: 'memotest', contextoPDF: apunte.texto, cantidadPares: dueloEstado.config.memotest?.pares || 6 })).pares;
+ }
+ if (!casos.length) casos = temas.slice(0,dueloEstado.config.impostor?.casos || 5).map(t => ({ pregunta: 'Identificá la afirmación falsa: ' + t.nombre, opciones: [...t.impostor.afirmacionesVerdaderas, t.impostor.afirmacionImpostora], respuestaCorrecta: 3, explicacion: t.impostor.explicacionError || t.descripcion || t.nombre }));
+ if (!pares.length) pares = temas.slice(0,dueloEstado.config.memotest?.pares || 6).map(t => ({ concepto: t.memotest?.concepto || t.nombre, definicion: t.memotest?.definicionOFormula || t.descripcion || t.nombre }));
+ if (pares.length < 2 && ['memotest','triatlon'].includes(juego)) throw new Error('Cargá una lista con al menos dos conceptos o un documento para generar los pares.');
+ const rounds = [];
+ const quiz = (q,title) => ({ type: 'quiz', title, question: q.pregunta || title, options: q.opciones, correct: q.respuestaCorrecta, explanation: q.explicacion || title });
+ if (['bomba','triatlon'].includes(juego)) for (const [i,phase] of ['fase1','fase2','fase3'].entries()) rounds.push(quiz(bomba[phase], 'Cable ' + (i+1)));
+ if (['impostor','triatlon'].includes(juego)) casos.forEach((c,i) => rounds.push(quiz(c,'Impostor ' + (i+1))));
+ if (['memotest','triatlon'].includes(juego)) rounds.push({ type: 'memory', title: 'Conectá los conceptos con sus definiciones', pairs: pares.map(p => ({ concept: p.concepto, definition: p.definicion })) });
+ return rounds;
+}
+
+Object.assign(window, {
+ mostrarToast,
+ toggleTarjetaScratchpad,
+ abrirTarjetaScratchpad,
+ cambiarVista,
+ abrirModalAuth,
+ cerrarSesionPerfil,
+ toggleReadyInvitado,
+ reproducirSonido,
+ enviarMensajeOnline,
+ limpiarTodosLosApuntes,
+ toggleDocumentoActivo,
+ eliminarDocumentoColeccion,
+ procesarArchivosGenerico,
+ seleccionarJuegoLobby,
+ seleccionarFormatoLobby,
+ setupDueloLobbyTabs,
+ recalcularMatrizBayes,
+ actualizarFechaAsiento,
+ actualizarDetalleAsiento,
+ agregarFilaAAsiento,
+ eliminarFilaDeAsiento,
+ eliminarAsientoContable,
+ actualizarCeldaDiario,
+ evaluarExpresionMatematicaSegura,
+ evaluarExpresionSegura,
+ seleccionarModoExamenMateria,
+ seleccionarModeloExamen,
+ generarExamenParaMateria,
+ limpiarYReintentarExamen,
+ borrarModelosCustomDeMateria,
+ generarNuevoModeloConIA,
+ evaluarExamenMateria,
+ iniciarJuegoMateria,
+ abrirPizarronNotasRapido,
+ cargarMateriaMedicinaEnBolillero
+});
+
+function detenerPracticaLocal() {
+ detenerCronometroBombaRed();
+ for (const game of [juegosEduEstado.bomba,juegosEduEstado.impostor,juegosEduEstado.memotest]) {
+  if (game?.timerId) { clearInterval(game.timerId); game.timerId = null; }
+  if (game) game.activo = false;
+ }
+}
+
+let medicalLoading;
+async function loadMedical() {
+ if (!medicalLoading) medicalLoading = import('./modules/medical-data.mjs').then(data => {
+ Array.isArray(MATERIAS_MEDICINA_IVAN) ? MATERIAS_MEDICINA_IVAN.push(...data.MATERIAS_MEDICINA_IVAN) : Object.assign(MATERIAS_MEDICINA_IVAN, data.MATERIAS_MEDICINA_IVAN);
+ Array.isArray(CASOS_CLINICOS_MEDICINA) ? CASOS_CLINICOS_MEDICINA.push(...data.CASOS_CLINICOS_MEDICINA) : Object.assign(CASOS_CLINICOS_MEDICINA, data.CASOS_CLINICOS_MEDICINA);
+ Array.isArray(DATOS_FARMACOLOGIA_2) ? DATOS_FARMACOLOGIA_2.push(...data.DATOS_FARMACOLOGIA_2) : Object.assign(DATOS_FARMACOLOGIA_2, data.DATOS_FARMACOLOGIA_2);
+ Array.isArray(RESPUESTAS_TP_SALUD_PUBLICA) ? RESPUESTAS_TP_SALUD_PUBLICA.push(...data.RESPUESTAS_TP_SALUD_PUBLICA) : Object.assign(RESPUESTAS_TP_SALUD_PUBLICA, data.RESPUESTAS_TP_SALUD_PUBLICA);
+ Array.isArray(BANCO_CASOS_SHOCK_ROOM) ? BANCO_CASOS_SHOCK_ROOM.push(...data.BANCO_CASOS_SHOCK_ROOM) : Object.assign(BANCO_CASOS_SHOCK_ROOM, data.BANCO_CASOS_SHOCK_ROOM);
+ Array.isArray(BANCO_CASOS_INTERNA_AVANZADOS) ? BANCO_CASOS_INTERNA_AVANZADOS.push(...data.BANCO_CASOS_INTERNA_AVANZADOS) : Object.assign(BANCO_CASOS_INTERNA_AVANZADOS, data.BANCO_CASOS_INTERNA_AVANZADOS);
+ Array.isArray(BANCO_DESAFIOS_FARMACOLOGIA) ? BANCO_DESAFIOS_FARMACOLOGIA.push(...data.BANCO_DESAFIOS_FARMACOLOGIA) : Object.assign(BANCO_DESAFIOS_FARMACOLOGIA, data.BANCO_DESAFIOS_FARMACOLOGIA);
+ Array.isArray(BANCO_TPS_SALUD_PUBLICA) ? BANCO_TPS_SALUD_PUBLICA.push(...data.BANCO_TPS_SALUD_PUBLICA) : Object.assign(BANCO_TPS_SALUD_PUBLICA, data.BANCO_TPS_SALUD_PUBLICA);
+ }).catch(error => { medicalLoading = null; throw error; });
+ return medicalLoading;
+}

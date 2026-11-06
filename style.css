@@ -9141,51 +9141,21 @@ dialog:not([open]),
 }
 
 /* Modo Desarrollador Exclusivo (Lucas) */
-body.modo-dev-activo .juntos-locked-notice {
-    display: none !important;
-}
-.nav-link--dev {
-    color: #c084fc !important;
-    border-color: rgba(168, 85, 247, 0.4) !important;
-}
 
-.juntos-locked-notice {
-    background: linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(30, 27, 75, 0.4));
-    border: 2px dashed rgba(245, 158, 11, 0.5);
-    border-radius: var(--radius-lg);
-    padding: 2rem 1.5rem;
-    text-align: center;
-    margin-bottom: 2rem;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
-}
 
-.juntos-locked-chains {
-    font-size: 2.75rem;
-    margin-bottom: 0.75rem;
-    filter: drop-shadow(0 0 12px rgba(245, 158, 11, 0.5));
-    animation: chainJiggle 3s ease-in-out infinite;
-}
+
+
+
+
 
 @keyframes chainJiggle {
     0%, 100% { transform: translateY(0); }
     50% { transform: translateY(-4px) rotate(1deg); }
 }
 
-.juntos-locked-title {
-    font-size: 1.5rem;
-    font-weight: 800;
-    color: #fbbf24;
-    letter-spacing: 0.05em;
-    margin: 0 0 0.5rem;
-}
 
-.juntos-locked-subtitle {
-    color: var(--color-text-secondary);
-    font-size: 0.95rem;
-    max-width: 600px;
-    margin: 0 auto 1rem;
-    line-height: 1.5;
-}
+
+
 
 /* =========================================================
    OVERLAY DE CARGA Y SINCRONIZACIÓN DE IA PARA JUEGOS
@@ -23510,3 +23480,19 @@ body.modo-dev-activo .juntos-locked-notice {
 
 
 
+
+/* Account and synchronization controls */
+.sync-status { position: fixed; bottom: .5rem; left: .5rem; z-index: 30; max-width: min(32rem,90vw); padding: .4rem .7rem; background: var(--color-surface, #171a24); color: var(--color-text, #fff); border-radius: .5rem; font-size: .75rem; pointer-events: none; }
+.sync-status[data-error="true"] { border: 1px solid #e5a44f; }
+#accountToolsDialog { max-width: min(40rem,95vw); max-height: 90dvh; overflow: auto; }
+#accountToolsDialog form { display: grid; gap: .75rem; margin-block: 1rem; }
+#accountToolsDialog input, #accountToolsDialog select { color: var(--color-text, #fff); background: var(--color-surface, #171a24); border: 1px solid var(--color-border, #666); border-radius: .4rem; padding: .6rem; }
+#accountToolsDialog input[type="checkbox"] { width: auto; }
+
+.secure-game { max-width: 60rem; margin: 1rem auto; padding: clamp(1rem,4vw,2rem); border: 1px solid var(--color-border,#666); border-radius: 1rem; background: var(--color-surface,#171a24); }
+.secure-game-answers { display: grid; gap: .75rem; margin-block: 1rem; }
+.secure-game-answers button { text-align: left; white-space: normal; min-height: 3rem; }
+.secure-game-memory { display: grid; grid-template-columns: repeat(auto-fit,minmax(7rem,1fr)); gap: .6rem; margin-block: 1rem; }
+.secure-game-memory button { min-height: 6rem; white-space: normal; }
+.secure-game-tools { display:flex; flex-wrap:wrap; gap:.75rem; margin-block:1rem; }
+.secure-game-tools button { padding:.75rem; border-radius:.5rem; color:var(--color-text,#fff); background:var(--color-surface,#171a24); border:1px solid var(--color-border,#666); }
