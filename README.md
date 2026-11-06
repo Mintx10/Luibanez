@@ -2,7 +2,7 @@
 
 Aplicación de estudio con HTML, módulos ES, una función de Vercel para IA y Supabase para identidad, documentos y partidas. Las funciones de estudio local se pueden usar como invitado.
 
-Los cambios de este checkout están implementados y probados localmente. **No están desplegados y requieren las migraciones y la configuración de producción indicadas abajo.** El [informe de auditoría](audit/README.md) detalla resultados y límites de verificación.
+La versión 30.0.0 está publicada en https://luibanez.vercel.app y las tres migraciones están aplicadas al proyecto Supabase existente. El [informe del despliegue](audit/deployment.md) registra las comprobaciones reales y la configuración de correo pendiente. El [informe de auditoría](audit/README.md) detalla la cobertura local.
 
 ## Desarrollo y verificación
 

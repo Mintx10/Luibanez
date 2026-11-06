@@ -18,10 +18,10 @@ test('migration, RLS, room membership, turn authority, voting and quotas in Post
     -- PGlite has no pgcrypto. Test-only substitutes exercise access/flow, never production hashing.
     create function extensions.gen_salt(text,integer) returns text language sql as $$select 'test-salt'::text$$;
     create function extensions.crypt(text,text) returns text language sql as $$select 'test-only:' || $1$$;`);
-  const migration = fs.readFileSync('supabase/migrations/202611050001_secure_study.sql', 'utf8').replace('create extension if not exists pgcrypto with schema extensions;', '');
+  const migration = fs.readFileSync('supabase/migrations/20261106044845_secure_study.sql', 'utf8').replace('create extension if not exists pgcrypto with schema extensions;', '');
   await db.exec(migration);
-  await db.exec(fs.readFileSync('supabase/migrations/202611050002_verified_games.sql', 'utf8'));
-  await db.exec(fs.readFileSync('supabase/migrations/202611050003_document_sync.sql', 'utf8'));
+  await db.exec(fs.readFileSync('supabase/migrations/20261106044911_verified_games.sql', 'utf8'));
+  await db.exec(fs.readFileSync('supabase/migrations/20261106044918_document_sync.sql', 'utf8'));
   async function as(id, query, params = []) {
     await db.exec('reset role');
     await db.query("select set_config('request.jwt.claim.sub',$1,false)", [id]);

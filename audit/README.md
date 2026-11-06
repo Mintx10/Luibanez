@@ -2,7 +2,7 @@
 
 ## Estado
 
-Cambios implementados en el checkout local. No se modificó ni se desplegó el entorno remoto: no había credenciales administrativas de Supabase ni claves de Gemini disponibles para hacerlo y verificarlo.
+Auditoría local completada inicialmente el 5 de noviembre. El 6 de noviembre se publicó v30 y se aplicaron las tres migraciones al entorno remoto. El [informe de despliegue](deployment.md) actualiza el estado y distingue las verificaciones reales de las pruebas locales descritas aquí.
 
 La auditoría combina inspección de código, análisis de referencias, inventario de controles, pruebas de PostgreSQL y recorridos en navegador. **Un evento registrado demuestra que el control tiene una acción conectada; no certifica por sí solo todos sus resultados posibles ni la disponibilidad de un servicio externo.**
 
@@ -43,7 +43,7 @@ La auditoría combina inspección de código, análisis de referencias, inventar
 
 ## Límites de la verificación
 
-Las sesiones de los recorridos son de prueba. La base ejecutada es PostgreSQL mediante PGlite; sus funciones criptográficas de prueba no sustituyen una comprobación de `pgcrypto` real. No se enviaron correos reales, no se consumió Gemini, no se probó la entrega Realtime por la red de Supabase, ni se hizo un despliegue de Vercel. Las salas tienen recuperación por consulta periódica además de Realtime, y esa ruta sí se ejercitó con dos sesiones.
+Las sesiones de estos recorridos locales son de prueba. La base de las pruebas automatizadas es PostgreSQL mediante PGlite; sus funciones criptográficas sustituidas no certifican `pgcrypto` real. No se enviaron correos reales, no se consumió Gemini ni se probó la entrega Realtime por la red de Supabase. Las salas tienen recuperación por consulta periódica además de Realtime, y esa ruta sí se ejercitó con dos sesiones. La publicación posterior y las comprobaciones en PostgreSQL remoto, incluido bcrypt real, se registran por separado en el [informe de despliegue](deployment.md).
 
 Las pruebas de navegador se ejecutaron en Edge con tamaños de escritorio y móvil. No constituyen una comprobación en un iPhone físico, otros motores de navegador o todos los permisos de audio y archivos del sistema. No se afirma que se hayan ejecutado todas las combinaciones de los cientos de controles.
 
