@@ -22,6 +22,11 @@ test('migration, RLS, room membership, turn authority, voting and quotas in Post
   await db.exec(migration);
   await db.exec(fs.readFileSync('supabase/migrations/20261106044911_verified_games.sql', 'utf8'));
   await db.exec(fs.readFileSync('supabase/migrations/20261106044918_document_sync.sql', 'utf8'));
+  // Reproduce the inherited grants found in hosted Supabase, including TRUNCATE.
+  await db.exec('grant all on study_profiles,study_documents,study_public_rooms to anon,authenticated');
+  await db.exec(fs.readFileSync('supabase/migrations/20261106060716_security_hardening.sql', 'utf8'));
+  const privileges=(await db.query("select has_table_privilege('authenticated','study_profiles','TRUNCATE') as truncate_profile,has_table_privilege('authenticated','study_documents','UPDATE') as direct_document_write,has_table_privilege('anon','study_public_rooms','SELECT') as anon_discovery")).rows[0];
+  assert.deepEqual(privileges,{truncate_profile:false,direct_document_write:false,anon_discovery:false});
   async function as(id, query, params = []) {
     await db.exec('reset role');
     await db.query("select set_config('request.jwt.claim.sub',$1,false)", [id]);
@@ -29,10 +34,10 @@ test('migration, RLS, room membership, turn authority, voting and quotas in Post
     return db.query(query, params);
   }
   for (const id of [alice, bob, eve]) await as(id, "insert into study_profiles(id,apodo,carrera) values($1,$2,'Medicina')", [id, id === alice ? 'Alice' : 'Bob']);
-  await as(alice, "insert into study_documents(id,nombre,texto) values('one','Privado','Sólo Alice')");
+  await as(alice, "select study_sync_documents(jsonb_build_array(jsonb_build_object('id','one','nombre','Privado','texto','Sólo Alice','paginas',1,'palabras',2,'updated_at',now())))");
   assert.equal((await as(bob, 'select * from study_documents')).rows.length, 0);
-  await assert.rejects(as(bob, 'insert into study_documents(user_id,id,nombre,texto) values($1,\'bad\',\'Hack\',\'No\')', [alice]), /row-level security/);
-  await as(bob, 'delete from study_documents where user_id=$1', [alice]);
+  await assert.rejects(as(bob, 'insert into study_documents(user_id,id,nombre,texto) values($1,\'bad\',\'Hack\',\'No\')', [alice]), /permission denied/);
+  await assert.rejects(as(bob, 'delete from study_documents where user_id=$1', [alice]), /permission denied/);
   assert.equal((await as(alice, 'select * from study_documents')).rows.length, 1);
   const previous=(await as(alice,"select to_jsonb(d.*) as d from study_documents d where id='one'")).rows[0].d;
   await as(bob,'select study_delete_documents($1)',[['one']]);
@@ -64,6 +69,21 @@ test('migration, RLS, room membership, turn authority, voting and quotas in Post
   await assert.rejects(as(alice, 'select consume_ai_quota($1,$2)', [alice, 'a'.repeat(64)]), /permission denied/);
   await db.exec('reset role; set role service_role');
   for (let i = 0; i < 16; i++) assert.equal((await db.query('select consume_ai_quota($1,$2) as allowed', [alice, 'a'.repeat(64)])).rows[0].allowed, i < 15);
+  await db.exec('reset role; delete from private.ai_quota');
+  await db.query("insert into private.ai_quota values($1,date_trunc('day',now() at time zone 'UTC') at time zone 'UTC',200)",['daily-user:'+bob]);
+  await db.exec('set role service_role');
+  const capped=(await db.query('select consume_ai_quota_v2($1,$2) as quota',[bob,'b'.repeat(64)])).rows[0].quota;
+  assert.equal(capped.allowed,false);assert.equal(capped.reason,'daily');assert.ok(capped.retry_after>0);
+  await assert.rejects(as(bob,'select consume_ai_quota_v2($1,$2)',[bob,'b'.repeat(64)]),/permission denied/);
+  await assert.rejects(as(alice,'select study_sync_documents($1)',[[{id:'future',nombre:'Future',texto:'x',paginas:1,palabras:1,updated_at:new Date(Date.now()+3600000).toISOString()}]]),/fecha/);
+  await db.exec('reset role');
+  await db.query("insert into study_documents(user_id,id,nombre,texto) select $1,'limit-'||n,'Test','x' from generate_series(1,200) n",[eve]);
+  const additional={id:'over-limit',nombre:'Test',texto:'x',paginas:1,palabras:1,updated_at:new Date().toISOString()};
+  await assert.rejects(as(eve,'select study_sync_documents($1)',[[additional]]),/200 documentos/);
+  assert.equal((await as(eve,'select * from study_documents')).rows.length,200);
+  await as(eve,'select study_delete_documents($1)',[['limit-1']]);
+  await as(eve,'select study_sync_documents($1)',[[additional]]);
+  assert.equal((await as(eve,'select * from study_documents where deleted_at is null')).rows.length,200);
   // Objective games hide answer keys and validate progress, version and points atomically.
   await as(alice, 'select study_create_room($1,$2,$3,$4,$5)', ['FGHIJ','Quiz','',true,{ juego: 'bomba', formatoModo: 'versus', tiempoTurnoSegundos: 120, bomba: { maxFallos: 3 } }]);
   await as(bob, 'select study_join_room($1,$2)', ['FGHIJ','']);
@@ -89,4 +109,9 @@ test('migration, RLS, room membership, turn authority, voting and quotas in Post
   assert.equal((await as(alice,'select * from study_verified_results')).rows.length,0);
   await as(alice, 'select study_leave_room($1)', ['ABCDE']);
   await assert.rejects(as(bob, 'select study_read_room($1)', ['ABCDE']), /expiró/);
+  for(const letter of 'ABCDEFGHIJ') {
+    await as(eve,'select study_create_room($1,$2,$3,$4,$5)',['RATE'+letter,'Temporal','',false,{juego:'bomba',formatoModo:'versus'}]);
+    await as(eve,'select study_leave_room($1)',['RATE'+letter]);
+  }
+  await assert.rejects(as(eve,'select study_create_room($1,$2,$3,$4,$5)',['RATEK','Temporal','',false,{juego:'bomba',formatoModo:'versus'}]),/límite de creación/);
 });

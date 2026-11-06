@@ -13290,11 +13290,6 @@
           "handler": "click"
         },
         {
-          "id": null,
-          "label": "Actualizar resultados",
-          "handler": "click"
-        },
-        {
           "id": "famaPlayNewDueloBtn",
           "label": "⚔️ Jugar Nuevo Duelo",
           "handler": "click"

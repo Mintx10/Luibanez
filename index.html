@@ -18,7 +18,7 @@
     <link rel="icon" type="image/svg+xml" href="icon.svg?v=29.31">
     <link rel="apple-touch-icon" href="icon-192.png?v=29.31">
     <link rel="manifest" href="manifest.json?v=29.31">
-    <link rel="stylesheet" href="style.css?v=30.0.0">
+    <link rel="stylesheet" href="style.css?v=30.1.0">
     
     <link rel="stylesheet" href="vendor/katex/katex.min.css" crossorigin="anonymous">
     <link rel="stylesheet" href="vendor/fontawesome/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
@@ -353,7 +353,7 @@
                 </button>
 
                 <!-- Botones Simples de Iván (Medicina) -->
-                <button type="button" class="home-simple-banner home-simple-banner--med hidden" id="homeSimpleMedBtn" onclick="cambiarVista('med-interna')">
+                <button type="button" class="home-simple-banner home-simple-banner--med hidden" id="homeSimpleMedBtn" data-page-action="page-0">
                     <div class="home-simple-banner__content">
                         <span class="home-simple-banner__icon">🫀</span>
                         <div class="home-simple-banner__texts">
@@ -363,7 +363,7 @@
                     </div>
                     <span class="home-simple-banner__arrow">➜</span>
                 </button>
-                <button type="button" class="home-simple-banner home-simple-banner--farma hidden" id="homeSimpleFarmaBtn" onclick="cambiarVista('farmacologia-2')">
+                <button type="button" class="home-simple-banner home-simple-banner--farma hidden" id="homeSimpleFarmaBtn" data-page-action="page-1">
                     <div class="home-simple-banner__content">
                         <span class="home-simple-banner__icon">💊</span>
                         <div class="home-simple-banner__texts">
@@ -373,7 +373,7 @@
                     </div>
                     <span class="home-simple-banner__arrow">➜</span>
                 </button>
-                <button type="button" class="home-simple-banner home-simple-banner--salud hidden" id="homeSimpleSaludBtn" onclick="cambiarVista('salud-publica')">
+                <button type="button" class="home-simple-banner home-simple-banner--salud hidden" id="homeSimpleSaludBtn" data-page-action="page-2">
                     <div class="home-simple-banner__content">
                         <span class="home-simple-banner__icon">📊</span>
                         <div class="home-simple-banner__texts">
@@ -450,7 +450,7 @@
                         Ateneo de Casos Clínicos de alta complejidad, Fisiopatología, <strong>Shock Room de Resucitación</strong> y Biblioteca Multi-PDF de consensos y guías.
                     </p>
                     <div class="portal-card__actions">
-                        <button class="button button--primary button--full" type="button" onclick="cambiarVista('med-interna')">
+                        <button class="button button--primary button--full" type="button" data-page-action="page-3">
                             🫀 Entrar a Medicina Interna ➜
                         </button>
                     </div>
@@ -467,7 +467,7 @@
                         Matriz rápida 4x4 (Farmacodinamia, Farmacocinética, Usos y Efectos Adversos), desafíos de prescripción clínica y biblioteca de apuntes.
                     </p>
                     <div class="portal-card__actions">
-                        <button class="button button--primary button--full" type="button" onclick="cambiarVista('farmacologia-2')">
+                        <button class="button button--primary button--full" type="button" data-page-action="page-4">
                             💊 Entrar a Farmacología 2 ➜
                         </button>
                     </div>
@@ -484,7 +484,7 @@
                         Sala de Situación Sanitaria, Asistente de Trabajos Prácticos con IA, cálculo de tasas epidemiológicas y conceptos de APS Alma-Ata.
                     </p>
                     <div class="portal-card__actions">
-                        <button class="button button--primary button--full" type="button" onclick="cambiarVista('salud-publica')">
+                        <button class="button button--primary button--full" type="button" data-page-action="page-5">
                             📊 Entrar a Salud Pública ➜
                         </button>
                     </div>
@@ -2490,7 +2490,7 @@
                     </div>
 
                     <!-- Fila de Entrada de Mensaje con Multimedia -->
-                    <form id="dueloChatForm" class="duelo-chat-input-row" onsubmit="return false;">
+                    <form id="dueloChatForm" class="duelo-chat-input-row" data-prevent-submit>
                         <input type="file" id="dueloChatPhotoInput" accept="image/*" class="hidden">
                         <button id="dueloChatPhotoBtn" class="icon-button duelo-chat-tool-btn" type="button" title="Enviar foto o apunte (Cámara / Galería)">
                             📷
@@ -5738,7 +5738,7 @@
             <!-- Grid de las 5 Tarjetas de Materias -->
             <div class="fin-hub-grid">
                 <!-- Tarjeta 1: Filosofía y Ética -->
-                <article class="fin-card fin-card--filo" onclick="cambiarVista('fin-filosofia')">
+                <article class="fin-card fin-card--filo" data-page-action="page-6">
                     <div class="fin-card__header">
                         <span class="fin-card__icon">🏛️</span>
                         <div class="fin-card__badge-wrap">
@@ -5754,7 +5754,7 @@
                 </article>
 
                 <!-- Tarjeta 2: Sistema Financiero Internacional -->
-                <article class="fin-card fin-card--sfi" onclick="cambiarVista('fin-sfi')">
+                <article class="fin-card fin-card--sfi" data-page-action="page-7">
                     <div class="fin-card__header">
                         <span class="fin-card__icon">🌐</span>
                         <div class="fin-card__badge-wrap">
@@ -5770,7 +5770,7 @@
                 </article>
 
                 <!-- Tarjeta 3: Historia Económica Mundial -->
-                <article class="fin-card fin-card--historia" onclick="cambiarVista('fin-historia')">
+                <article class="fin-card fin-card--historia" data-page-action="page-8">
                     <div class="fin-card__header">
                         <span class="fin-card__icon">📜</span>
                         <div class="fin-card__badge-wrap">
@@ -5786,7 +5786,7 @@
                 </article>
 
                 <!-- Tarjeta 4: Estadística 1 -->
-                <article class="fin-card fin-card--estadistica" onclick="cambiarVista('fin-estadistica')">
+                <article class="fin-card fin-card--estadistica" data-page-action="page-9">
                     <div class="fin-card__header">
                         <span class="fin-card__icon">📊</span>
                         <div class="fin-card__badge-wrap">
@@ -5802,7 +5802,7 @@
                 </article>
 
                 <!-- Tarjeta 5: Contabilidad 1 -->
-                <article class="fin-card fin-card--contabilidad" onclick="cambiarVista('fin-contabilidad')">
+                <article class="fin-card fin-card--contabilidad" data-page-action="page-10">
                     <div class="fin-card__header">
                         <span class="fin-card__icon">📑</span>
                         <div class="fin-card__badge-wrap">
@@ -5825,7 +5825,7 @@
         <div class="fin-container">
             <header class="fin-sub-header fin-sub-header--filo">
                 <div class="fin-sub-header__nav">
-                    <button class="button button--ghost button--sm" type="button" onclick="cambiarVista('fin-hub')">← Volver a FinHub</button>
+                    <button class="button button--ghost button--sm" type="button" data-page-action="page-11">← Volver a FinHub</button>
                     <span class="fin-badge fin-badge--gold">🏛️ DEPARTAMENTO DE FILOSOFÍA & ÉTICA</span>
                 </div>
                 <div class="fin-sub-header__main">
@@ -5834,7 +5834,7 @@
                         <p class="fin-sub-desc">Criterio estricto de cátedra: Rigor en ortografía, tildes, coherencia, análisis de citas textuales y alegorías.</p>
                     </div>
                     <div class="fin-sub-header__actions">
-                        <button class="button button--secondary button--sm" type="button" onclick="abrirPizarronNotasRapido()">📝 Abrir Borrador / Notas</button>
+                        <button class="button button--secondary button--sm" type="button" data-page-action="page-12">📝 Abrir Borrador / Notas</button>
                     </div>
                 </div>
             </header>
@@ -5844,11 +5844,11 @@
                 <div class="fin-exam-toolbar">
                     <div class="fin-exam-modes">
                         <span class="fin-toolbar-label">Modalidad:</span>
-                        <button class="fin-mode-chip is-active" type="button" data-materia="filosofia" data-modo="1er_parcial" onclick="seleccionarModoExamenMateria('filosofia', '1er_parcial', this)">🎯 1er Parcial</button>
-                        <button class="fin-mode-chip" type="button" data-materia="filosofia" data-modo="2do_parcial" onclick="seleccionarModoExamenMateria('filosofia', '2do_parcial', this)">🎯 2do Parcial</button>
-                        <button class="fin-mode-chip" type="button" data-materia="filosofia" data-modo="final" onclick="seleccionarModoExamenMateria('filosofia', 'final', this)">🏆 Final Integral</button>
+                        <button class="fin-mode-chip is-active" type="button" data-materia="filosofia" data-modo="1er_parcial" data-page-action="page-13">🎯 1er Parcial</button>
+                        <button class="fin-mode-chip" type="button" data-materia="filosofia" data-modo="2do_parcial" data-page-action="page-14">🎯 2do Parcial</button>
+                        <button class="fin-mode-chip" type="button" data-materia="filosofia" data-modo="final" data-page-action="page-15">🏆 Final Integral</button>
                     </div>
-                    <button class="button button--primary" type="button" onclick="generarExamenParaMateria('filosofia')">
+                    <button class="button button--primary" type="button" data-page-action="page-16">
                         📝 Generar Modelo de Examen Real
                     </button>
                 </div>
@@ -5870,19 +5870,19 @@
             <div class="fin-games-section">
                 <h3 class="fin-section-title">🕹️ Entrenar con los 4 Juegos Académicos de Filosofía</h3>
                 <div class="fin-games-buttons">
-                    <button class="fin-game-btn" type="button" onclick="iniciarJuegoMateria('filosofia', 'bolillero')">
+                    <button class="fin-game-btn" type="button" data-page-action="page-17">
                         <span class="fin-game-icon">🎲</span>
                         <div><strong>Bolillero Oral</strong><small>Conceptos y preguntas orales</small></div>
                     </button>
-                    <button class="fin-game-btn" type="button" onclick="iniciarJuegoMateria('filosofia', 'bomba')">
+                    <button class="fin-game-btn" type="button" data-page-action="page-18">
                         <span class="fin-game-icon">💣</span>
                         <div><strong>Bomba Contrarreloj</strong><small>Desactivación conceptual</small></div>
                     </button>
-                    <button class="fin-game-btn" type="button" onclick="iniciarJuegoMateria('filosofia', 'impostor')">
+                    <button class="fin-game-btn" type="button" data-page-action="page-19">
                         <span class="fin-game-icon">🕵️</span>
                         <div><strong>El Impostor</strong><small>Detectar error conceptual</small></div>
                     </button>
-                    <button class="fin-game-btn" type="button" onclick="iniciarJuegoMateria('filosofia', 'memotest')">
+                    <button class="fin-game-btn" type="button" data-page-action="page-20">
                         <span class="fin-game-icon">🧠</span>
                         <div><strong>Memotest</strong><small>Autores, corrientes y términos</small></div>
                     </button>
@@ -5896,7 +5896,7 @@
         <div class="fin-container">
             <header class="fin-sub-header fin-sub-header--sfi">
                 <div class="fin-sub-header__nav">
-                    <button class="button button--ghost button--sm" type="button" onclick="cambiarVista('fin-hub')">← Volver a FinHub</button>
+                    <button class="button button--ghost button--sm" type="button" data-page-action="page-21">← Volver a FinHub</button>
                     <span class="fin-badge fin-badge--gold">🌐 CÁTEDRA PROF. KARINA DÍAZ · DEEFI</span>
                 </div>
                 <div class="fin-sub-header__main">
@@ -5905,7 +5905,7 @@
                         <p class="fin-sub-desc">Formatos: 4 Multiple Choice iniciales de alta precisión institucional + Desarrollo de transformaciones, ETTI, Fed y eurobonos.</p>
                     </div>
                     <div class="fin-sub-header__actions">
-                        <button class="button button--secondary button--sm" type="button" onclick="abrirPizarronNotasRapido()">📝 Abrir Borrador / Notas</button>
+                        <button class="button button--secondary button--sm" type="button" data-page-action="page-22">📝 Abrir Borrador / Notas</button>
                     </div>
                 </div>
             </header>
@@ -5914,11 +5914,11 @@
                 <div class="fin-exam-toolbar">
                     <div class="fin-exam-modes">
                         <span class="fin-toolbar-label">Modalidad:</span>
-                        <button class="fin-mode-chip is-active" type="button" data-materia="sfi" data-modo="1er_parcial" onclick="seleccionarModoExamenMateria('sfi', '1er_parcial', this)">🎯 1er Parcial</button>
-                        <button class="fin-mode-chip" type="button" data-materia="sfi" data-modo="2do_parcial" onclick="seleccionarModoExamenMateria('sfi', '2do_parcial', this)">🎯 2do Parcial</button>
-                        <button class="fin-mode-chip" type="button" data-materia="sfi" data-modo="final" onclick="seleccionarModoExamenMateria('sfi', 'final', this)">🏆 Final Integral</button>
+                        <button class="fin-mode-chip is-active" type="button" data-materia="sfi" data-modo="1er_parcial" data-page-action="page-23">🎯 1er Parcial</button>
+                        <button class="fin-mode-chip" type="button" data-materia="sfi" data-modo="2do_parcial" data-page-action="page-24">🎯 2do Parcial</button>
+                        <button class="fin-mode-chip" type="button" data-materia="sfi" data-modo="final" data-page-action="page-25">🏆 Final Integral</button>
                     </div>
-                    <button class="button button--primary" type="button" onclick="generarExamenParaMateria('sfi')">
+                    <button class="button button--primary" type="button" data-page-action="page-26">
                         📝 Generar Modelo de Examen Real
                     </button>
                 </div>
@@ -5937,19 +5937,19 @@
             <div class="fin-games-section">
                 <h3 class="fin-section-title">🕹️ Entrenar con los 4 Juegos Académicos de SFI</h3>
                 <div class="fin-games-buttons">
-                    <button class="fin-game-btn" type="button" onclick="iniciarJuegoMateria('sfi', 'bolillero')">
+                    <button class="fin-game-btn" type="button" data-page-action="page-27">
                         <span class="fin-game-icon">🎲</span>
                         <div><strong>Bolillero Oral</strong><small>Instrumentos y conceptos de SFI</small></div>
                     </button>
-                    <button class="fin-game-btn" type="button" onclick="iniciarJuegoMateria('sfi', 'bomba')">
+                    <button class="fin-game-btn" type="button" data-page-action="page-28">
                         <span class="fin-game-icon">💣</span>
                         <div><strong>Bomba Contrarreloj</strong><small>Términos y tasas a tiempo</small></div>
                     </button>
-                    <button class="fin-game-btn" type="button" onclick="iniciarJuegoMateria('sfi', 'impostor')">
+                    <button class="fin-game-btn" type="button" data-page-action="page-29">
                         <span class="fin-game-icon">🕵️</span>
                         <div><strong>El Impostor</strong><small>Detectar error financiero</small></div>
                     </button>
-                    <button class="fin-game-btn" type="button" onclick="iniciarJuegoMateria('sfi', 'memotest')">
+                    <button class="fin-game-btn" type="button" data-page-action="page-30">
                         <span class="fin-game-icon">🧠</span>
                         <div><strong>Memotest</strong><small>Mercados, plazas y emisores</small></div>
                     </button>
@@ -5963,7 +5963,7 @@
         <div class="fin-container">
             <header class="fin-sub-header fin-sub-header--historia">
                 <div class="fin-sub-header__nav">
-                    <button class="button button--ghost button--sm" type="button" onclick="cambiarVista('fin-hub')">← Volver a FinHub</button>
+                    <button class="button button--ghost button--sm" type="button" data-page-action="page-31">← Volver a FinHub</button>
                     <span class="fin-badge fin-badge--gold">📜 CÁTEDRA ANDREA G. PICARDI · DESOH</span>
                 </div>
                 <div class="fin-sub-header__main">
@@ -5972,7 +5972,7 @@
                         <p class="fin-sub-desc">Estructura oficial de 100 puntos: Parte 1 (40 pts multidimensional) + Parte 2 (60 pts, 3 de 4 temas analíticos).</p>
                     </div>
                     <div class="fin-sub-header__actions">
-                        <button class="button button--secondary button--sm" type="button" onclick="abrirPizarronNotasRapido()">📝 Abrir Borrador / Notas</button>
+                        <button class="button button--secondary button--sm" type="button" data-page-action="page-32">📝 Abrir Borrador / Notas</button>
                     </div>
                 </div>
             </header>
@@ -5981,11 +5981,11 @@
                 <div class="fin-exam-toolbar">
                     <div class="fin-exam-modes">
                         <span class="fin-toolbar-label">Modalidad:</span>
-                        <button class="fin-mode-chip is-active" type="button" data-materia="historia" data-modo="1er_parcial" onclick="seleccionarModoExamenMateria('historia', '1er_parcial', this)">🎯 1er Parcial</button>
-                        <button class="fin-mode-chip" type="button" data-materia="historia" data-modo="2do_parcial" onclick="seleccionarModoExamenMateria('historia', '2do_parcial', this)">🎯 2do Parcial</button>
-                        <button class="fin-mode-chip" type="button" data-materia="historia" data-modo="final" onclick="seleccionarModoExamenMateria('historia', 'final', this)">🏆 Final Integral</button>
+                        <button class="fin-mode-chip is-active" type="button" data-materia="historia" data-modo="1er_parcial" data-page-action="page-33">🎯 1er Parcial</button>
+                        <button class="fin-mode-chip" type="button" data-materia="historia" data-modo="2do_parcial" data-page-action="page-34">🎯 2do Parcial</button>
+                        <button class="fin-mode-chip" type="button" data-materia="historia" data-modo="final" data-page-action="page-35">🏆 Final Integral</button>
                     </div>
-                    <button class="button button--primary" type="button" onclick="generarExamenParaMateria('historia')">
+                    <button class="button button--primary" type="button" data-page-action="page-36">
                         📝 Generar Modelo de Examen Real
                     </button>
                 </div>
@@ -6004,19 +6004,19 @@
             <div class="fin-games-section">
                 <h3 class="fin-section-title">🕹️ Entrenar con los 4 Juegos Académicos de Historia</h3>
                 <div class="fin-games-buttons">
-                    <button class="fin-game-btn" type="button" onclick="iniciarJuegoMateria('historia', 'bolillero')">
+                    <button class="fin-game-btn" type="button" data-page-action="page-37">
                         <span class="fin-game-icon">🎲</span>
                         <div><strong>Bolillero Oral</strong><small>Hitos y transformaciones históricas</small></div>
                     </button>
-                    <button class="fin-game-btn" type="button" onclick="iniciarJuegoMateria('historia', 'bomba')">
+                    <button class="fin-game-btn" type="button" data-page-action="page-38">
                         <span class="fin-game-icon">💣</span>
                         <div><strong>Bomba Contrarreloj</strong><small>Hechos y fechas cruciales</small></div>
                     </button>
-                    <button class="fin-game-btn" type="button" onclick="iniciarJuegoMateria('historia', 'impostor')">
+                    <button class="fin-game-btn" type="button" data-page-action="page-39">
                         <span class="fin-game-icon">🕵️</span>
                         <div><strong>El Impostor</strong><small>Detectar error historiográfico</small></div>
                     </button>
-                    <button class="fin-game-btn" type="button" onclick="iniciarJuegoMateria('historia', 'memotest')">
+                    <button class="fin-game-btn" type="button" data-page-action="page-40">
                         <span class="fin-game-icon">🧠</span>
                         <div><strong>Memotest</strong><small>Autores, tratados y crisis</small></div>
                     </button>
@@ -6030,7 +6030,7 @@
         <div class="fin-container">
             <header class="fin-sub-header fin-sub-header--estadistica">
                 <div class="fin-sub-header__nav">
-                    <button class="button button--ghost button--sm" type="button" onclick="cambiarVista('fin-hub')">← Volver a FinHub</button>
+                    <button class="button button--ghost button--sm" type="button" data-page-action="page-41">← Volver a FinHub</button>
                     <span class="fin-badge fin-badge--gold">📊 CÁTEDRA ESTADÍSTICA EMPRESARIAL I · UADE</span>
                 </div>
                 <div class="fin-sub-header__main">
@@ -6039,7 +6039,7 @@
                         <p class="fin-sub-desc">Regla de oro: Cálculos sueltos o sin procedimiento anulan el ítem. Problema 1 (Probabilidades/Contingencia) + Problema 2 (Datos agrupados).</p>
                     </div>
                     <div class="fin-sub-header__actions">
-                        <button class="button button--secondary button--sm" type="button" onclick="abrirPizarronNotasRapido()">📝 Abrir Borrador / Notas</button>
+                        <button class="button button--secondary button--sm" type="button" data-page-action="page-42">📝 Abrir Borrador / Notas</button>
                     </div>
                 </div>
             </header>
@@ -6048,11 +6048,11 @@
                 <div class="fin-exam-toolbar">
                     <div class="fin-exam-modes">
                         <span class="fin-toolbar-label">Modalidad:</span>
-                        <button class="fin-mode-chip is-active" type="button" data-materia="estadistica" data-modo="1er_parcial" onclick="seleccionarModoExamenMateria('estadistica', '1er_parcial', this)">🎯 1er Parcial</button>
-                        <button class="fin-mode-chip" type="button" data-materia="estadistica" data-modo="2do_parcial" onclick="seleccionarModoExamenMateria('estadistica', '2do_parcial', this)">🎯 2do Parcial</button>
-                        <button class="fin-mode-chip" type="button" data-materia="estadistica" data-modo="final" onclick="seleccionarModoExamenMateria('estadistica', 'final', this)">🏆 Final Integral</button>
+                        <button class="fin-mode-chip is-active" type="button" data-materia="estadistica" data-modo="1er_parcial" data-page-action="page-43">🎯 1er Parcial</button>
+                        <button class="fin-mode-chip" type="button" data-materia="estadistica" data-modo="2do_parcial" data-page-action="page-44">🎯 2do Parcial</button>
+                        <button class="fin-mode-chip" type="button" data-materia="estadistica" data-modo="final" data-page-action="page-45">🏆 Final Integral</button>
                     </div>
-                    <button class="button button--primary" type="button" onclick="generarExamenParaMateria('estadistica')">
+                    <button class="button button--primary" type="button" data-page-action="page-46">
                         📝 Generar Modelo de Examen Real
                     </button>
                 </div>
@@ -6071,19 +6071,19 @@
             <div class="fin-games-section">
                 <h3 class="fin-section-title">🕹️ Entrenar con los 4 Juegos Académicos de Estadística</h3>
                 <div class="fin-games-buttons">
-                    <button class="fin-game-btn" type="button" onclick="iniciarJuegoMateria('estadistica', 'bolillero')">
+                    <button class="fin-game-btn" type="button" data-page-action="page-47">
                         <span class="fin-game-icon">🎲</span>
                         <div><strong>Bolillero Oral</strong><small>Fórmulas y propiedades estadísticas</small></div>
                     </button>
-                    <button class="fin-game-btn" type="button" onclick="iniciarJuegoMateria('estadistica', 'bomba')">
+                    <button class="fin-game-btn" type="button" data-page-action="page-48">
                         <span class="fin-game-icon">💣</span>
                         <div><strong>Bomba Contrarreloj</strong><small>Cálculos rápidos y distribuciones</small></div>
                     </button>
-                    <button class="fin-game-btn" type="button" onclick="iniciarJuegoMateria('estadistica', 'impostor')">
+                    <button class="fin-game-btn" type="button" data-page-action="page-49">
                         <span class="fin-game-icon">🕵️</span>
                         <div><strong>El Impostor</strong><small>Detectar error cuantitativo</small></div>
                     </button>
-                    <button class="fin-game-btn" type="button" onclick="iniciarJuegoMateria('estadistica', 'memotest')">
+                    <button class="fin-game-btn" type="button" data-page-action="page-50">
                         <span class="fin-game-icon">🧠</span>
                         <div><strong>Memotest</strong><small>Distribuciones, medias y varianzas</small></div>
                     </button>
@@ -6097,7 +6097,7 @@
         <div class="fin-container">
             <header class="fin-sub-header fin-sub-header--contabilidad">
                 <div class="fin-sub-header__nav">
-                    <button class="button button--ghost button--sm" type="button" onclick="cambiarVista('fin-hub')">← Volver a FinHub</button>
+                    <button class="button button--ghost button--sm" type="button" data-page-action="page-51">← Volver a FinHub</button>
                     <span class="fin-badge fin-badge--gold">📑 CÁTEDRA CONTABILIDAD I · UADE</span>
                 </div>
                 <div class="fin-sub-header__main">
@@ -6106,7 +6106,7 @@
                         <p class="fin-sub-desc">30% Teórico (13 Multiple Choice con justificación obligatoria de negativas) + 70% Práctico (Asientos cronológicos, variaciones y balance).</p>
                     </div>
                     <div class="fin-sub-header__actions">
-                        <button class="button button--secondary button--sm" type="button" onclick="abrirPizarronNotasRapido()">📝 Abrir Borrador / Notas</button>
+                        <button class="button button--secondary button--sm" type="button" data-page-action="page-52">📝 Abrir Borrador / Notas</button>
                     </div>
                 </div>
             </header>
@@ -6115,11 +6115,11 @@
                 <div class="fin-exam-toolbar">
                     <div class="fin-exam-modes">
                         <span class="fin-toolbar-label">Modalidad:</span>
-                        <button class="fin-mode-chip is-active" type="button" data-materia="contabilidad" data-modo="1er_parcial" onclick="seleccionarModoExamenMateria('contabilidad', '1er_parcial', this)">🎯 1er Parcial</button>
-                        <button class="fin-mode-chip" type="button" data-materia="contabilidad" data-modo="2do_parcial" onclick="seleccionarModoExamenMateria('contabilidad', '2do_parcial', this)">🎯 2do Parcial</button>
-                        <button class="fin-mode-chip" type="button" data-materia="contabilidad" data-modo="final" onclick="seleccionarModoExamenMateria('contabilidad', 'final', this)">🏆 Final Integral</button>
+                        <button class="fin-mode-chip is-active" type="button" data-materia="contabilidad" data-modo="1er_parcial" data-page-action="page-53">🎯 1er Parcial</button>
+                        <button class="fin-mode-chip" type="button" data-materia="contabilidad" data-modo="2do_parcial" data-page-action="page-54">🎯 2do Parcial</button>
+                        <button class="fin-mode-chip" type="button" data-materia="contabilidad" data-modo="final" data-page-action="page-55">🏆 Final Integral</button>
                     </div>
-                    <button class="button button--primary" type="button" onclick="generarExamenParaMateria('contabilidad')">
+                    <button class="button button--primary" type="button" data-page-action="page-56">
                         📝 Generar Modelo de Examen Real
                     </button>
                 </div>
@@ -6138,19 +6138,19 @@
             <div class="fin-games-section">
                 <h3 class="fin-section-title">🕹️ Entrenar con los 4 Juegos Académicos de Contabilidad</h3>
                 <div class="fin-games-buttons">
-                    <button class="fin-game-btn" type="button" onclick="iniciarJuegoMateria('contabilidad', 'bolillero')">
+                    <button class="fin-game-btn" type="button" data-page-action="page-57">
                         <span class="fin-game-icon">🎲</span>
                         <div><strong>Bolillero Oral</strong><small>Cuentas contables y principios</small></div>
                     </button>
-                    <button class="fin-game-btn" type="button" onclick="iniciarJuegoMateria('contabilidad', 'bomba')">
+                    <button class="fin-game-btn" type="button" data-page-action="page-58">
                         <span class="fin-game-icon">💣</span>
                         <div><strong>Bomba Contrarreloj</strong><small>Variaciones y saldos a tiempo</small></div>
                     </button>
-                    <button class="fin-game-btn" type="button" onclick="iniciarJuegoMateria('contabilidad', 'impostor')">
+                    <button class="fin-game-btn" type="button" data-page-action="page-59">
                         <span class="fin-game-icon">🕵️</span>
                         <div><strong>El Impostor</strong><small>Detectar error contable / imputación</small></div>
                     </button>
-                    <button class="fin-game-btn" type="button" onclick="iniciarJuegoMateria('contabilidad', 'memotest')">
+                    <button class="fin-game-btn" type="button" data-page-action="page-60">
                         <span class="fin-game-icon">🧠</span>
                         <div><strong>Memotest</strong><small>Cuentas, rubros y saldos habituales</small></div>
                     </button>
@@ -6549,7 +6549,7 @@
         </div>
 
         <!-- Panel Crear Cuenta -->
-        <form id="authRegisterForm" class="auth-panel" autocomplete="off" onsubmit="return false;">
+        <form id="authRegisterForm" class="auth-panel" autocomplete="off" data-prevent-submit>
             <p class="auth-desc">Guardá tus victorias en el Salón de la Fama y desbloqueá marcos evolutivos.</p>
 
             <div class="field">
@@ -6600,7 +6600,7 @@
         </form>
 
         <!-- Panel Iniciar Sesión con Usuario y PIN -->
-        <form id="authLoginForm" class="auth-panel hidden" autocomplete="off" onsubmit="return false;">
+        <form id="authLoginForm" class="auth-panel hidden" autocomplete="off" data-prevent-submit>
             <p class="auth-desc">Ingresá tu correo verificado y tu contraseña:</p>
 
 

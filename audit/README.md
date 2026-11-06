@@ -2,6 +2,8 @@
 
 ## Estado
 
+Actualización: el [refuerzo de seguridad v30.1](security.md) añade una cuarta migración, pruebas de ataques y controles de mínimo privilegio. Los resultados de esta auditoría inicial se conservan como historial.
+
 Auditoría local completada inicialmente el 5 de noviembre. El 6 de noviembre se publicó v30 y se aplicaron las tres migraciones al entorno remoto. El [informe de despliegue](deployment.md) actualiza el estado y distingue las verificaciones reales de las pruebas locales descritas aquí.
 
 La auditoría combina inspección de código, análisis de referencias, inventario de controles, pruebas de PostgreSQL y recorridos en navegador. **Un evento registrado demuestra que el control tiene una acción conectada; no certifica por sí solo todos sus resultados posibles ni la disponibilidad de un servicio externo.**

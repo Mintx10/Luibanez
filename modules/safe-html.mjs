@@ -1,7 +1,7 @@
 import DOMPurify from '../vendor/dompurify.mjs';
 const actions = new Set(['entrarALobbyDesdeCartelera','eliminarAsientoContable','eliminarFilaDeAsiento','agregarFilaAAsiento','seleccionarModeloExamen','generarNuevoModeloConIA','limpiarYReintentarExamen','borrarModelosCustomDeMateria','evaluarExamenMateria','actualizarFechaAsiento','actualizarDetalleAsiento','actualizarCeldaDiario']);
 export function setHTML(element, markup) {
-  element.innerHTML = DOMPurify.sanitize(String(markup ?? ''), { ADD_DATA_URI_TAGS: ['audio', 'source'], FORBID_TAGS: ['script', 'iframe', 'object', 'embed'], FORBID_ATTR: ['srcdoc'] });
+  element.innerHTML = DOMPurify.sanitize(String(markup ?? ''), { ADD_DATA_URI_TAGS: ['audio', 'source'], FORBID_TAGS: ['script', 'iframe', 'object', 'embed'], FORBID_ATTR: ['srcdoc', 'data-page-action', 'data-prevent-submit'] });
 }
 function dispatch(event) {
   const target = event.target.closest?.(`[data-study-${event.type}]`);

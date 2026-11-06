@@ -1,8 +1,8 @@
-# Luibañez · v30
+# Luibañez · v30.1
 
 Aplicación de estudio con HTML, módulos ES, una función de Vercel para IA y Supabase para identidad, documentos y partidas. Las funciones de estudio local se pueden usar como invitado.
 
-La versión 30.0.0 está publicada en https://luibanez.vercel.app y las tres migraciones están aplicadas al proyecto Supabase existente. El [informe del despliegue](audit/deployment.md) registra las comprobaciones reales y la configuración de correo pendiente. El [informe de auditoría](audit/README.md) detalla la cobertura local.
+La versión 30.1.0 está publicada en https://luibanez.vercel.app y las cuatro migraciones están aplicadas al proyecto Supabase existente. El [informe del despliegue](audit/deployment.md) registra las comprobaciones reales y la configuración de correo pendiente. El [informe de auditoría](audit/README.md) detalla la cobertura local.
 
 ## Desarrollo y verificación
 
@@ -35,7 +35,7 @@ La compilación genera `dist/` y la vista previa de producción usa `http://127.
 ## Activación en Supabase y Vercel
 
 1. Respaldar la base y comprobar las migraciones en un entorno de prueba. El proyecto Supabase se mantiene; no hay que crear otro sitio ni cambiar de hosting.
-2. Aplicar, como propietario de la base, los tres SQL de `supabase/migrations/`, en orden. Son migraciones de una sola ejecución, no scripts para repetir sobre la misma base.
+2. Aplicar, como propietario de la base, los cuatro SQL de `supabase/migrations/`, en orden. Son migraciones de una sola ejecución, no scripts para repetir sobre la misma base.
 3. Habilitar correo/contraseña y confirmación de correo en Supabase Auth. Configurar SMTP, Site URL y las URLs permitidas de confirmación y recuperación para producción y para cada preview autorizado.
 4. Configurar en Vercel `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `GEMINI_API_KEY` y un `RATE_LIMIT_SALT` aleatorio. Usar la URL del proyecto existente. Las claves de servicio y de Gemini son exclusivamente del servidor. Las variables y sus ejemplos están en `.env.example`.
 5. Para un dominio adicional o un preview, añadir su origen exacto a `ALLOWED_ORIGINS`. No se habilitan comodines de dominios. Si se cambia el proyecto Supabase, actualizar también la configuración pública de `modules/session.mjs` y la CSP de `vercel.json`.
@@ -44,6 +44,12 @@ La compilación genera `dist/` y la vista previa de producción usa `http://127.
 **Hacer las migraciones y el despliegue de v30 en una misma ventana de mantenimiento.** Las tablas anteriores `perfiles`, `documentos_pdf` y `preguntas_cache` se conservan, pero se les revoca el acceso público. La versión v29 deja de poder sincronizar con ellas después de la migración. Un rollback a v29 requiere recuperar los permisos anteriores desde el respaldo; no basta con volver a desplegar el HTML anterior.
 
 El modelo predeterminado es `gemini-3.5-flash-lite`, configurable mediante `GEMINI_PRIMARY_MODEL` y `GEMINI_FALLBACK_MODEL`. Se eligió un modelo estable que admite respuestas estructuradas según el [catálogo oficial de Google](https://ai.google.dev/gemini-api/docs/models/gemini-3.5-flash-lite?frmapp=yes). Sin una clave real no se validó la disponibilidad ni la cuota de ese modelo para esta cuenta.
+
+## Seguridad y límites
+
+El [refuerzo de seguridad v30.1](audit/security.md) documenta los controles y las verificaciones. Las claves privadas de Gemini y Supabase quedan en variables Secret/Sensitive de Vercel; la clave `sb_publishable_...` del navegador es pública por diseño y no permite acceder a datos privados sin sesión y RLS.
+
+IA: 15 consultas/minuto y 200/día por usuario; 40/minuto y 1000/día por IP, almacenada como hash con secreto. El día se reinicia a medianoche UTC. Salas: hasta 3 abiertas simultáneas, 10 creaciones/minuto y 100/24 horas por cuenta. Nube: 200 documentos activos, 100 MB de texto y 2000 registros totales incluyendo marcadores de borrado; los originales locales se conservan si una operación se rechaza. Estos límites se aplican en servidor. Un reloj del dispositivo adelantado más de cinco minutos requiere corregirse antes de sincronizar.
 
 ## Cuentas y datos anteriores
 

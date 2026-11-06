@@ -13,6 +13,24 @@ function status(message, error = false) {
   output.dataset.error = String(error);
 }
 async function queue() { return await readValue(pendingKey) || []; }
+export async function fetchCloudDocuments(db, userId) {
+  const rows = [];
+  let cursor;
+  for (let page = 0; page < 11; page++) {
+    let query = db.from('study_documents').select('*').eq('user_id', userId).order('id', { ascending: true }).limit(200);
+    if (cursor) query = query.gt('id', cursor);
+    const { data, error } = await query;
+    if (error) throw error;
+    if (!Array.isArray(data)) throw new Error('La nube devolvió documentos inválidos.');
+    rows.push(...data);
+    if (rows.length > 2000) throw new Error('La colección supera el límite de sincronización.');
+    if (data.length < 200) return rows;
+    const nextCursor = data.at(-1).id;
+    if (!nextCursor || nextCursor === cursor) throw new Error('La descarga no pudo avanzar. Reintentá.');
+    cursor = nextCursor;
+  }
+  throw new Error('La colección supera el límite de sincronización.');
+}
 function mutateQueue(update) {
   const operation = queueMutation.then(async () => { const next = update(await queue()); await writeValue(pendingKey, next); return next; });
   queueMutation = operation.catch(() => {});
@@ -82,8 +100,9 @@ export function createCloudService({ getCollection, saveCollection, refresh }) {
       const id = currentUser()?.id;
       if (!id) return;
       await flushCloudQueue();
-      const { data, error } = await getClient().from('study_documents').select('*').eq('user_id', id).limit(200);
-      if (error) { status('No se pudo descargar la nube. Los documentos locales se conservan.', true); throw error; }
+      let data;
+      try { data = await fetchCloudDocuments(getClient(), id); }
+      catch (error) { status('No se pudo descargar la nube. Los documentos locales se conservan.', true); throw error; }
       const pendingDeletes = new Set((await queue()).filter(i => i.kind === 'delete').flatMap(i => i.ids));
       const collection = getCollection();
       for (const row of data || []) {

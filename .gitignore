@@ -10,3 +10,4 @@ Thumbs.db
 dist/
 test-results/
 playwright-report/
+supabase/.temp/

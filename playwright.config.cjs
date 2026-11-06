@@ -1,6 +1,7 @@
 const { defineConfig, devices } = require('@playwright/test');
 module.exports = defineConfig({
-  testDir: './tests/browser', fullyParallel: false, timeout: 45000,
+  // Each room scenario runs PostgreSQL/WASM plus two browser sessions.
+  testDir: './tests/browser', fullyParallel: false, workers: 2, timeout: 45000,
   use: { baseURL: 'http://127.0.0.1:5500', serviceWorkers: 'block', trace: 'retain-on-failure' },
   webServer: [
     { command: 'node scripts/dev-server.cjs', url: 'http://127.0.0.1:5500', reuseExistingServer: !process.env.CI },

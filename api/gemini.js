@@ -3,13 +3,14 @@ const { HttpError, validateInput } = require('../lib/ai-validation.cjs');
 const { authorize } = require('../lib/api-access.cjs');
 const { buildPrompt } = require('../lib/ai-prompts.cjs');
 const { generate } = require('../lib/ai-provider.cjs');
+const { allowedOrigins } = require('../lib/api-security.cjs');
 
 module.exports = async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('Vary', 'Origin');
   const origin = req.headers.origin;
-  const allowed = new Set(['https://luibanez.vercel.app', 'http://localhost:3000', 'http://localhost:5500', 'http://127.0.0.1:5500', ...(process.env.ALLOWED_ORIGINS || '').split(',').map(s => s.trim()).filter(Boolean)]);
+  const allowed = allowedOrigins();
   if (origin && !allowed.has(origin)) return res.status(403).json({ error: 'Origen no autorizado.', code: 'FORBIDDEN_ORIGIN' });
   if (origin) res.setHeader('Access-Control-Allow-Origin', origin);
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -33,7 +34,7 @@ module.exports = async function handler(req, res) {
     const data = await generate({ parts, tipoJuego: body.tipoJuego, apiKey });
     return res.status(200).json({ ok: true, tipoJuego: body.tipoJuego, materia: body.materia || 'General', tema: body.tema || 'Conceptos Generales', tienePDF: Boolean(body.contextoPDF), data });
   } catch (error) {
-    if (error.status === 429) res.setHeader('Retry-After', '60');
+    if (error.status === 429) res.setHeader('Retry-After', String(error.retryAfter || 60));
     if (!(error instanceof HttpError)) console.error('[AI] Unexpected error:', error.name);
     return res.status(error.status || 500).json({ error: error instanceof HttpError ? error.message : 'Error interno al procesar la solicitud.', code: error.code || 'INTERNAL_ERROR' });
   }
