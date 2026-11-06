@@ -1,7 +1,11 @@
 import { authHeaders } from './session.mjs';
+import {activeCareer,ownSubject} from './campus/store.mjs';
 const inFlight = new Map();
 const cache = new Map();
 export async function requestAI(payload) {
+  const subjectId=location.hash.startsWith('#materia/')?location.hash.slice(9):sessionStorage.getItem('campus:practice-subject');
+  const subject=ownSubject(subjectId);const career=activeCareer();
+  if(career)payload={...payload,careerId:career.id,...(subject?.careerId===career.id?{subjectId:subject.id}:{})};
   const headers = await authHeaders();
   // Memory only: private material is never put in a shared cloud cache.
   const keyBytes = new TextEncoder().encode(JSON.stringify(payload));

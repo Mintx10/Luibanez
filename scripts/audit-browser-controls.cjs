@@ -1,21 +1,21 @@
 'use strict';
 const fs=require('node:fs');
 const {chromium}=require('@playwright/test');
-const {mockAuth,mockUser,ready}=require('../tests/browser/helpers.cjs');
+const {mockAuth,mockUser,ready,closeDialogs}=require('../tests/browser/helpers.cjs');
 async function audit(){
  const browser=await chromium.launch({channel:'msedge',headless:true});const results=[];
  const selectors=[...fs.readFileSync('script.js','utf8').matchAll(/\.closest\(["']([^"']+)["']\)/g)].map(match=>match[1]);
  try{
-  for(const carrera of [null,'Medicina','Licenciatura en Finanzas']){
+  for(const career of [null,...require('../catalog.json').careers]){
    const context=await browser.newContext({baseURL:'http://127.0.0.1:5500'});const page=await context.newPage();
    await page.addInitScript(()=>{const original=EventTarget.prototype.addEventListener;const map=new WeakMap();window.__registeredEvents=map;EventTarget.prototype.addEventListener=function(type,handler,options){const events=map.get(this)||new Set();events.add(type);map.set(this,events);return original.call(this,type,handler,options)}});
-   await mockAuth(page,carrera?{...mockUser,user_metadata:{apodo:'Auditoría',carrera}}:null);await ready(page);await page.waitForTimeout(400);
-   const views=carrera==='Medicina'?['med-interna','farmacologia-2','salud-publica']:carrera?['fin-filosofia','fin-sfi','fin-historia','fin-estadistica','fin-contabilidad']:['home','solo','bolillero','laboratorio','fama'];
+   const carrera=career?.value;await mockAuth(page,carrera?{...mockUser,user_metadata:{apodo:'Auditoría',carrera}}:null);await ready(page);await page.waitForTimeout(400);
+   const views=career?['campus','materias',...career.subjects.map(s=>'materia/'+s.id),...career.subjects.filter(s=>s.legacyRoute).map(s=>'legacy/'+s.legacyRoute)]:['home','laboratorio','juntos'];
    for(const view of views){
-    await page.evaluate(view=>window.cambiarVista(view),view);
+    await closeDialogs(page);await page.evaluate(view=>window.cambiarVista(view),view);if(view.startsWith('materia/'))await page.waitForSelector('#viewSubject h1');
     const controls=await page.evaluate(selectors=>{
      const events=window.__registeredEvents;
-     return [...document.querySelectorAll('button')].map(element=>{
+     return [...document.querySelectorAll('button')].filter(e=>!e.closest('[inert]')&&e.checkVisibility({checkVisibilityCSS:true})).map(element=>{
       const own=element.onclick||events.get(element)?.has('click');
       const form=element.type==='submit'&&element.form&&(element.form.onsubmit||events.get(element.form)?.has('submit'));
       const delegated=element.closest('[data-study-click]')||selectors.some(selector=>{try{return element.matches(selector)}catch{return false}});

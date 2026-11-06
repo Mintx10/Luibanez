@@ -3,7 +3,7 @@
     {
       "id": null,
       "section": "global",
-      "line": 31,
+      "line": 32,
       "label": "Saltar al contenido principal",
       "type": "a",
       "action": "Navegar a main-content",
@@ -18,7 +18,7 @@
     {
       "id": "menuToggleBtn",
       "section": "global",
-      "line": 39,
+      "line": 40,
       "label": "Abrir menú de navegación",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -33,7 +33,7 @@
     {
       "id": "brandLink",
       "section": "global",
-      "line": 45,
+      "line": 46,
       "label": "Luibañez - Inicio",
       "type": "a",
       "action": "Navegar a home",
@@ -48,7 +48,7 @@
     {
       "id": "navHomeBtn",
       "section": "global",
-      "line": 53,
+      "line": 54,
       "label": "🏠 Inicio",
       "type": "button",
       "action": "Navegar a home",
@@ -63,7 +63,7 @@
     {
       "id": "navSoloBtn",
       "section": "global",
-      "line": 56,
+      "line": 57,
       "label": "Ir a Estudiar Solo",
       "type": "button",
       "action": "Navegar a solo",
@@ -78,7 +78,7 @@
     {
       "id": "navLabBtn",
       "section": "global",
-      "line": 59,
+      "line": 60,
       "label": "Ir al Laboratorio de Prácticas",
       "type": "button",
       "action": "Navegar a laboratorio",
@@ -93,7 +93,7 @@
     {
       "id": "navJuntosBtn",
       "section": "global",
-      "line": 62,
+      "line": 63,
       "label": "Ir a Estudiar Juntos",
       "type": "button",
       "action": "Navegar a juntos",
@@ -108,7 +108,7 @@
     {
       "id": "navFamaBtn",
       "section": "global",
-      "line": 65,
+      "line": 66,
       "label": "🏆 Salón de la Fama",
       "type": "button",
       "action": "Navegar a fama",
@@ -123,7 +123,7 @@
     {
       "id": "navFinHubBtn",
       "section": "global",
-      "line": 68,
+      "line": 69,
       "label": "Ir a FinHub (Lic. en Finanzas)",
       "type": "button",
       "action": "Navegar a fin-hub",
@@ -138,7 +138,7 @@
     {
       "id": "navMedInternaBtn",
       "section": "global",
-      "line": 72,
+      "line": 73,
       "label": "Ir a Medicina Interna",
       "type": "button",
       "action": "Navegar a med-interna",
@@ -153,7 +153,7 @@
     {
       "id": "navFarmaBtn",
       "section": "global",
-      "line": 75,
+      "line": 76,
       "label": "Ir a Farmacología 2",
       "type": "button",
       "action": "Navegar a farmacologia-2",
@@ -168,7 +168,7 @@
     {
       "id": "navSaludBtn",
       "section": "global",
-      "line": 78,
+      "line": 79,
       "label": "Ir a Salud Pública",
       "type": "button",
       "action": "Navegar a salud-publica",
@@ -183,7 +183,7 @@
     {
       "id": "themeToggleBtn",
       "section": "global",
-      "line": 85,
+      "line": 86,
       "label": "Cambiar a modo claro",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -198,7 +198,7 @@
     {
       "id": "perfToggleBtn",
       "section": "global",
-      "line": 90,
+      "line": 91,
       "label": "Alternar entre Efectos Visuales y Modo Lite",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -213,7 +213,7 @@
     {
       "id": "scratchpadPill",
       "section": "global",
-      "line": 95,
+      "line": 96,
       "label": "Abrir Pizarrón y Notas",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -228,7 +228,7 @@
     {
       "id": "pomodoroPill",
       "section": "global",
-      "line": 101,
+      "line": 102,
       "label": "Abrir temporizador Pomodoro",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -243,7 +243,7 @@
     {
       "id": "topNavLoginBtn",
       "section": "global",
-      "line": 112,
+      "line": 113,
       "label": "Iniciar Sesión en tu cuenta",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -258,7 +258,7 @@
     {
       "id": "topNavRegisterBtn",
       "section": "global",
-      "line": 115,
+      "line": 116,
       "label": "Crear una cuenta nueva",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -273,7 +273,7 @@
     {
       "id": "userHeaderPill",
       "section": "global",
-      "line": 121,
+      "line": 122,
       "label": "Menú de usuario",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -288,7 +288,7 @@
     {
       "id": "userDropdownMedBtn",
       "section": "global",
-      "line": 132,
+      "line": 133,
       "label": "🩺 Gabinete Médico",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -303,7 +303,7 @@
     {
       "id": "userDropdownProfileBtn",
       "section": "global",
-      "line": 135,
+      "line": 136,
       "label": "👤 Mi Perfil y Racha",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -318,7 +318,7 @@
     {
       "id": "userDropdownLogoutBtn",
       "section": "global",
-      "line": 138,
+      "line": 139,
       "label": "🚪 Cerrar Sesión",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -333,7 +333,7 @@
     {
       "id": "drawerCloseBtn",
       "section": "drawerMenu",
-      "line": 157,
+      "line": 158,
       "label": "Cerrar menú",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -348,7 +348,7 @@
     {
       "id": "drawerLoginBtn",
       "section": "drawerMenu",
-      "line": 166,
+      "line": 167,
       "label": "🔑 Iniciar Sesión",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -363,7 +363,7 @@
     {
       "id": "drawerRegisterBtn",
       "section": "drawerMenu",
-      "line": 167,
+      "line": 168,
       "label": "✨ Registrarse",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -378,7 +378,7 @@
     {
       "id": "drawerLogoutBtn",
       "section": "drawerMenu",
-      "line": 177,
+      "line": 178,
       "label": "🚪 Cerrar Sesión",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -393,7 +393,7 @@
     {
       "id": "drawerNavHome",
       "section": "drawerMenu",
-      "line": 185,
+      "line": 186,
       "label": "🏠 Inicio",
       "type": "button",
       "action": "Navegar a home",
@@ -408,7 +408,7 @@
     {
       "id": "drawerNavSolo",
       "section": "drawerMenu",
-      "line": 189,
+      "line": 190,
       "label": "👤 Estudiar Solo",
       "type": "button",
       "action": "Navegar a solo",
@@ -423,7 +423,7 @@
     {
       "id": "drawerNavLaboratorio",
       "section": "drawerMenu",
-      "line": 193,
+      "line": 194,
       "label": "🔬 Laboratorio ¡Nuevo!",
       "type": "button",
       "action": "Navegar a laboratorio",
@@ -438,7 +438,7 @@
     {
       "id": "drawerNavJuntos",
       "section": "drawerMenu",
-      "line": 198,
+      "line": 199,
       "label": "🤝 Estudiar Juntos",
       "type": "button",
       "action": "Navegar a juntos",
@@ -453,7 +453,7 @@
     {
       "id": "drawerNavFama",
       "section": "drawerMenu",
-      "line": 202,
+      "line": 203,
       "label": "🏆 Salón de la Fama",
       "type": "button",
       "action": "Navegar a fama",
@@ -468,7 +468,7 @@
     {
       "id": "drawerNavMedInterna",
       "section": "drawerMenu",
-      "line": 207,
+      "line": 208,
       "label": "🫀 Medicina Interna",
       "type": "button",
       "action": "Navegar a med-interna",
@@ -483,7 +483,7 @@
     {
       "id": "drawerNavFarma",
       "section": "drawerMenu",
-      "line": 211,
+      "line": 212,
       "label": "💊 Farmacología 2",
       "type": "button",
       "action": "Navegar a farmacologia-2",
@@ -498,7 +498,7 @@
     {
       "id": "drawerNavSalud",
       "section": "drawerMenu",
-      "line": 215,
+      "line": 216,
       "label": "📊 Salud Pública",
       "type": "button",
       "action": "Navegar a salud-publica",
@@ -513,7 +513,7 @@
     {
       "id": "drawerNavFinHub",
       "section": "drawerMenu",
-      "line": 220,
+      "line": 221,
       "label": "📈 FinHub (Terminal)",
       "type": "button",
       "action": "Navegar a fin-hub",
@@ -528,7 +528,7 @@
     {
       "id": "drawerNavFinFilo",
       "section": "drawerMenu",
-      "line": 224,
+      "line": 225,
       "label": "🏛️ Filosofía y Ética",
       "type": "button",
       "action": "Navegar a fin-filosofia",
@@ -543,7 +543,7 @@
     {
       "id": "drawerNavFinSfi",
       "section": "drawerMenu",
-      "line": 228,
+      "line": 229,
       "label": "🌐 Sistema Financiero",
       "type": "button",
       "action": "Navegar a fin-sfi",
@@ -558,7 +558,7 @@
     {
       "id": "drawerNavFinHem",
       "section": "drawerMenu",
-      "line": 232,
+      "line": 233,
       "label": "📜 Historia Económica",
       "type": "button",
       "action": "Navegar a fin-historia",
@@ -573,7 +573,7 @@
     {
       "id": "drawerNavFinEstad",
       "section": "drawerMenu",
-      "line": 236,
+      "line": 237,
       "label": "📊 Estadística 1",
       "type": "button",
       "action": "Navegar a fin-estadistica",
@@ -588,7 +588,7 @@
     {
       "id": "drawerNavFinCont",
       "section": "drawerMenu",
-      "line": 240,
+      "line": 241,
       "label": "📑 Contabilidad 1",
       "type": "button",
       "action": "Navegar a fin-contabilidad",
@@ -603,7 +603,7 @@
     {
       "id": "drawerThemeToggleBtn",
       "section": "drawerMenu",
-      "line": 251,
+      "line": 252,
       "label": "Cambiar tema",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -618,7 +618,7 @@
     {
       "id": "drawerPerfToggleBtn",
       "section": "drawerMenu",
-      "line": 255,
+      "line": 256,
       "label": "Alternar rendimiento y animaciones",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -633,7 +633,7 @@
     {
       "id": "drawerScratchpadBtn",
       "section": "drawerMenu",
-      "line": 259,
+      "line": 260,
       "label": "Abrir pizarrón y notas",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -648,7 +648,7 @@
     {
       "id": "btnForzarActualizar",
       "section": "drawerMenu",
-      "line": 269,
+      "line": 270,
       "label": "Limpiar caché y recargar versión más reciente",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -663,7 +663,7 @@
     {
       "id": "homeViewSimpleBtn",
       "section": "viewHome",
-      "line": 311,
+      "line": 312,
       "label": "⚡ Diseño Simple",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -678,7 +678,7 @@
     {
       "id": "homeViewDetailedBtn",
       "section": "viewHome",
-      "line": 314,
+      "line": 315,
       "label": "📑 Diseño Detallado",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -693,7 +693,7 @@
     {
       "id": "homeSimpleSoloBtn",
       "section": "viewHome",
-      "line": 322,
+      "line": 323,
       "label": "👤 Entrar a Estudiar Solo Bolillero, Bomba, Impostor y Memotest ➜",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -708,7 +708,7 @@
     {
       "id": "homeSimpleJuntosBtn",
       "section": "viewHome",
-      "line": 333,
+      "line": 334,
       "label": "🤝 Entrar a Estudiar Juntos Multijugador Online Versus y Cooperativo ➜",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -723,7 +723,7 @@
     {
       "id": "homeSimpleLabBtn",
       "section": "viewHome",
-      "line": 344,
+      "line": 345,
       "label": "🔬 Laboratorio de Prácticas Estadística, Contabilidad, Gauss y Bayes ➜",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -738,7 +738,7 @@
     {
       "id": "homeSimpleMedBtn",
       "section": "viewHome",
-      "line": 356,
+      "line": 357,
       "label": "🫀 Medicina Interna Ateneo de Casos Clínicos y Shock Room ➜",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -753,7 +753,7 @@
     {
       "id": "homeSimpleFarmaBtn",
       "section": "viewHome",
-      "line": 366,
+      "line": 367,
       "label": "💊 Farmacología 2 Fichero 4x4 y Desafíos Farmacológicos ➜",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -768,7 +768,7 @@
     {
       "id": "homeSimpleSaludBtn",
       "section": "viewHome",
-      "line": 376,
+      "line": 377,
       "label": "📊 Salud Pública Sala de Situación y Asistente de TPs ➜",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -783,7 +783,7 @@
     {
       "id": "homeGoToSoloBtn",
       "section": "viewHome",
-      "line": 402,
+      "line": 403,
       "label": "Entrar a Estudiar Solo ➜",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -798,7 +798,7 @@
     {
       "id": "homeGoToJuntosBtn",
       "section": "viewHome",
-      "line": 419,
+      "line": 420,
       "label": "Entrar a Estudiar Juntos",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -813,7 +813,7 @@
     {
       "id": "homeGoToLabBtn",
       "section": "viewHome",
-      "line": 436,
+      "line": 437,
       "label": "🔬 Entrar al Laboratorio ➜",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -828,7 +828,7 @@
     {
       "id": null,
       "section": "viewHome",
-      "line": 453,
+      "line": 454,
       "label": "🫀 Entrar a Medicina Interna ➜",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -843,7 +843,7 @@
     {
       "id": null,
       "section": "viewHome",
-      "line": 470,
+      "line": 471,
       "label": "💊 Entrar a Farmacología 2 ➜",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -858,7 +858,7 @@
     {
       "id": null,
       "section": "viewHome",
-      "line": 487,
+      "line": 488,
       "label": "📊 Entrar a Salud Pública ➜",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -873,7 +873,7 @@
     {
       "id": "shockRefreshPatientBtn",
       "section": "medShockRoomHome",
-      "line": 511,
+      "line": 512,
       "label": "Generar otro caso de Shock Room",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -888,7 +888,7 @@
     {
       "id": "shockDirectOralBtn",
       "section": "medShockRoomHome",
-      "line": 514,
+      "line": 515,
       "label": "Llevar tema al Bolillero Oral",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -903,7 +903,7 @@
     {
       "id": null,
       "section": "medShockRoomHome",
-      "line": 542,
+      "line": 543,
       "label": "🫀 Monitor",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -918,7 +918,7 @@
     {
       "id": null,
       "section": "medShockRoomHome",
-      "line": 543,
+      "line": 544,
       "label": "📋 Caso & Estudios",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -933,7 +933,7 @@
     {
       "id": null,
       "section": "medShockRoomHome",
-      "line": 544,
+      "line": 545,
       "label": "🩺 Dictamen IA",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -948,7 +948,7 @@
     {
       "id": null,
       "section": "medShockRoomHome",
-      "line": 711,
+      "line": 712,
       "label": "🧠 SNC",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -963,7 +963,7 @@
     {
       "id": null,
       "section": "medShockRoomHome",
-      "line": 712,
+      "line": 713,
       "label": "🫁 Tórax",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -978,7 +978,7 @@
     {
       "id": null,
       "section": "medShockRoomHome",
-      "line": 713,
+      "line": 714,
       "label": "🫀 Cardio",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -993,7 +993,7 @@
     {
       "id": null,
       "section": "medShockRoomHome",
-      "line": 714,
+      "line": 715,
       "label": "🩺 Abdomen",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -1008,7 +1008,7 @@
     {
       "id": null,
       "section": "medShockRoomHome",
-      "line": 715,
+      "line": 716,
       "label": "🩸 Renal",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -1023,7 +1023,7 @@
     {
       "id": null,
       "section": "medShockRoomHome",
-      "line": 742,
+      "line": 743,
       "label": "📋 Historia Clínica",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -1038,7 +1038,7 @@
     {
       "id": null,
       "section": "medShockRoomHome",
-      "line": 745,
+      "line": 746,
       "label": "🧪 Laboratorios",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -1053,7 +1053,7 @@
     {
       "id": null,
       "section": "medShockRoomHome",
-      "line": 748,
+      "line": 749,
       "label": "🩻 Imágenes (Rx/TC/ECG)",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -1068,7 +1068,7 @@
     {
       "id": null,
       "section": "medShockRoomHome",
-      "line": 803,
+      "line": 804,
       "label": "🩻 Rx Tórax",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -1083,7 +1083,7 @@
     {
       "id": null,
       "section": "medShockRoomHome",
-      "line": 806,
+      "line": 807,
       "label": "🔬 Angio-TC Multislice",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -1098,7 +1098,7 @@
     {
       "id": null,
       "section": "medShockRoomHome",
-      "line": 809,
+      "line": 810,
       "label": "📈 ECG 12D",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -1113,7 +1113,7 @@
     {
       "id": "shockTemplateBtn",
       "section": "medShockRoomHome",
-      "line": 931,
+      "line": 932,
       "label": "Insertar plantilla estructurada",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -1128,7 +1128,7 @@
     {
       "id": "shockSubmitDiagnosisBtn",
       "section": "medShockRoomHome",
-      "line": 944,
+      "line": 945,
       "label": "🩺 Dictaminar con IA",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -1143,7 +1143,7 @@
     {
       "id": "soloRulesBtn",
       "section": "viewSolo",
-      "line": 970,
+      "line": 971,
       "label": "Ver guía de modos de estudio",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -1158,7 +1158,7 @@
     {
       "id": "soloOpenBolilleroBtn",
       "section": "viewSolo",
-      "line": 1002,
+      "line": 1003,
       "label": "Abrir Bolillero 🎲",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -1173,7 +1173,7 @@
     {
       "id": "soloOpenBombaBtn",
       "section": "viewSolo",
-      "line": 1025,
+      "line": 1026,
       "label": "Practicar Bomba 💣",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -1188,7 +1188,7 @@
     {
       "id": "soloOpenImpostorBtn",
       "section": "viewSolo",
-      "line": 1048,
+      "line": 1049,
       "label": "Cazar Impostor 🕵️‍♂️",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -1203,7 +1203,7 @@
     {
       "id": "soloOpenMemotestBtn",
       "section": "viewSolo",
-      "line": 1071,
+      "line": 1072,
       "label": "Jugar Memotest 🧠",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -1218,7 +1218,7 @@
     {
       "id": "newListButton",
       "section": "viewBolillero",
-      "line": 1092,
+      "line": 1093,
       "label": "+ Nueva lista",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -1233,7 +1233,7 @@
     {
       "id": "backFromBolilleroBtn",
       "section": "viewBolillero",
-      "line": 1108,
+      "line": 1109,
       "label": "⬅️ Volver a Estudiar Solo",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -1248,7 +1248,7 @@
     {
       "id": "bolilleroRulesBtn",
       "section": "viewBolillero",
-      "line": 1118,
+      "line": 1119,
       "label": "Ver reglas y cómo funciona el Bolillero",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -1263,7 +1263,7 @@
     {
       "id": "bolilleroOpenSetupBtn",
       "section": "viewBolillero",
-      "line": 1135,
+      "line": 1136,
       "label": "Configurar bolillero con IA o cargar archivo de estudio",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -1278,7 +1278,7 @@
     {
       "id": "addTopicButton",
       "section": "viewBolillero",
-      "line": 1139,
+      "line": 1140,
       "label": "Escribir una palabra o concepto manualmente",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -1293,7 +1293,7 @@
     {
       "id": "btnBolilleroTech",
       "section": "bolilleroDrawSection",
-      "line": 1160,
+      "line": 1161,
       "label": "Ruleta Circular Tecnológica",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -1308,7 +1308,7 @@
     {
       "id": "btnBolilleroClassic",
       "section": "bolilleroDrawSection",
-      "line": 1164,
+      "line": 1165,
       "label": "Cápsula Clásica",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -1323,7 +1323,7 @@
     {
       "id": "spinButton",
       "section": "bolilleroDrawSection",
-      "line": 1216,
+      "line": 1217,
       "label": "Presioná la barra espaciadora para girar",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -1338,7 +1338,7 @@
     {
       "id": "drawAgainButton",
       "section": "resultSection",
-      "line": 1232,
+      "line": 1233,
       "label": "Presioná la barra espaciadora para girar de nuevo",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -1353,7 +1353,7 @@
     {
       "id": "restoreRoundButton",
       "section": "resultSection",
-      "line": 1235,
+      "line": 1236,
       "label": "Restaurar bolillero completo",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -1368,7 +1368,7 @@
     {
       "id": "bolilleroIAGenerateBtn",
       "section": "resultSection",
-      "line": 1248,
+      "line": 1249,
       "label": "🤖 Generar Pregunta con IA",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -1383,7 +1383,7 @@
     {
       "id": "bolilleroIARetryBtn",
       "section": "resultSection",
-      "line": 1262,
+      "line": 1263,
       "label": "🔄 Otra Pregunta sobre este tema",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -1398,7 +1398,7 @@
     {
       "id": "backFromDueloBtn",
       "section": "viewDuelo",
-      "line": 1280,
+      "line": 1281,
       "label": "⬅️ Volver al Inicio",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -1413,7 +1413,7 @@
     {
       "id": "dueloRulesBtn",
       "section": "viewDuelo",
-      "line": 1283,
+      "line": 1284,
       "label": "Ver reglas de la partida online",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -1428,7 +1428,7 @@
     {
       "id": "dueloOpenCreateModalBtn",
       "section": "viewDuelo",
-      "line": 1299,
+      "line": 1300,
       "label": "➕ Crear Sala",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -1443,7 +1443,7 @@
     {
       "id": "dueloOpenPinModalBtn",
       "section": "viewDuelo",
-      "line": 1302,
+      "line": 1303,
       "label": "🔑 Unirse con Código",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -1458,7 +1458,7 @@
     {
       "id": "dueloChangeAvatarBtn",
       "section": "viewDuelo",
-      "line": 1329,
+      "line": 1330,
       "label": "Elegir cualquier emoji o subir foto",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -1473,7 +1473,7 @@
     {
       "id": "dueloAuthModalBtn",
       "section": "viewDuelo",
-      "line": 1332,
+      "line": 1333,
       "label": "🔐 Mi Cuenta",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -1488,7 +1488,7 @@
     {
       "id": "dueloCreateAccountPromptBtn",
       "section": "viewDuelo",
-      "line": 1344,
+      "line": 1345,
       "label": "Crear PIN",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -1503,7 +1503,7 @@
     {
       "id": null,
       "section": "viewDuelo",
-      "line": 1363,
+      "line": 1364,
       "label": "Todas",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -1518,7 +1518,7 @@
     {
       "id": null,
       "section": "viewDuelo",
-      "line": 1364,
+      "line": 1365,
       "label": "💣 Bomba",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -1533,7 +1533,7 @@
     {
       "id": null,
       "section": "viewDuelo",
-      "line": 1365,
+      "line": 1366,
       "label": "🎲 Bolillero",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -1548,7 +1548,7 @@
     {
       "id": null,
       "section": "viewDuelo",
-      "line": 1366,
+      "line": 1367,
       "label": "🕵️ Impostor",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -1563,7 +1563,7 @@
     {
       "id": null,
       "section": "viewDuelo",
-      "line": 1367,
+      "line": 1368,
       "label": "🧠 Memotest",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -1578,7 +1578,7 @@
     {
       "id": null,
       "section": "viewDuelo",
-      "line": 1368,
+      "line": 1369,
       "label": "🏅 Triatlón",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -1593,7 +1593,7 @@
     {
       "id": "dueloEmptyCreateBtn",
       "section": "viewDuelo",
-      "line": 1381,
+      "line": 1382,
       "label": "➕ Crear Sala",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -1608,7 +1608,7 @@
     {
       "id": "dueloCloseCreateModalBtn",
       "section": "dueloCreateRoomModal",
-      "line": 1394,
+      "line": 1395,
       "label": "Cerrar modal",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -1623,7 +1623,7 @@
     {
       "id": null,
       "section": "dueloCreateRoomModal",
-      "line": 1410,
+      "line": 1411,
       "label": "💣 Desactivá la Bomba Tensión ✔",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -1638,7 +1638,7 @@
     {
       "id": null,
       "section": "dueloCreateRoomModal",
-      "line": 1421,
+      "line": 1422,
       "label": "🎲 Bolillero de Estudio Ruleta ✔",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -1653,7 +1653,7 @@
     {
       "id": null,
       "section": "dueloCreateRoomModal",
-      "line": 1432,
+      "line": 1433,
       "label": "🕵️‍♂️ Caza al Impostor Falacias ✔",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -1668,7 +1668,7 @@
     {
       "id": null,
       "section": "dueloCreateRoomModal",
-      "line": 1443,
+      "line": 1444,
       "label": "🧠 Memotest Teórico Memoria ✔",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -1683,7 +1683,7 @@
     {
       "id": null,
       "section": "dueloCreateRoomModal",
-      "line": 1454,
+      "line": 1455,
       "label": "🏅 Triatlón Académico 3 Rondas ✔",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -1698,7 +1698,7 @@
     {
       "id": null,
       "section": "dueloCreateRoomModal",
-      "line": 1483,
+      "line": 1484,
       "label": "⚔️ Versus Competitivo Todos contra todos: podio en vivo y racha de fuego ✔",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -1713,7 +1713,7 @@
     {
       "id": null,
       "section": "dueloCreateRoomModal",
-      "line": 1491,
+      "line": 1492,
       "label": "🤝 Cooperativo en Equipo Equipo contra el reloj: maletín y vidas compartidas ✔",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -1728,7 +1728,7 @@
     {
       "id": "dueloChipPdf",
       "section": "dueloCreateRoomModal",
-      "line": 1561,
+      "line": 1562,
       "label": "📄 Mi Documento PDF Preguntas 100% de tu material ✔",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -1743,7 +1743,7 @@
     {
       "id": "dueloChipGeneral",
       "section": "dueloCreateRoomModal",
-      "line": 1570,
+      "line": 1571,
       "label": "🎲 Banco Temático Partida rápida sin PDF ✔",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -1758,7 +1758,7 @@
     {
       "id": "dueloUploadPdfBtn",
       "section": "dueloCreateRoomModal",
-      "line": 1603,
+      "line": 1604,
       "label": "➕ Sumar / Cambiar PDF",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -1773,7 +1773,7 @@
     {
       "id": "dueloRemovePdfBtn",
       "section": "dueloCreateRoomModal",
-      "line": 1606,
+      "line": 1607,
       "label": "Desvincular PDF y usar temario predeterminado",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -1788,7 +1788,7 @@
     {
       "id": "dueloEmptyUploadPdfBtn",
       "section": "dueloCreateRoomModal",
-      "line": 1619,
+      "line": 1620,
       "label": "📂 Seleccionar Archivo PDF",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -1803,7 +1803,7 @@
     {
       "id": "dueloCreateRoomBtn",
       "section": "dueloCreateRoomModal",
-      "line": 1940,
+      "line": 1941,
       "label": "✨ Crear Sala y Abrir Lobby Online",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -1818,7 +1818,7 @@
     {
       "id": "dueloClosePinModalBtn",
       "section": "dueloJoinByPinModal",
-      "line": 1954,
+      "line": 1955,
       "label": "Cerrar modal",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -1833,7 +1833,7 @@
     {
       "id": "dueloJoinRoomBtn",
       "section": "dueloJoinByPinModal",
-      "line": 1977,
+      "line": 1978,
       "label": "🚀 Entrar a la Sala",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -1848,7 +1848,7 @@
     {
       "id": "dueloCopyLinkBtn",
       "section": "viewDuelo",
-      "line": 2013,
+      "line": 2014,
       "label": "📋 Copiar Link Mágico",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -1863,7 +1863,7 @@
     {
       "id": "dueloShareLinkBtn",
       "section": "viewDuelo",
-      "line": 2016,
+      "line": 2017,
       "label": "📲 Compartir",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -1878,7 +1878,7 @@
     {
       "id": "dueloLaunchOnlineMatchBtn",
       "section": "viewDuelo",
-      "line": 2046,
+      "line": 2047,
       "label": "🚀 ¡COMENZAR PARTIDA AHORA!",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -1893,7 +1893,7 @@
     {
       "id": "dueloGuestReadyBtn",
       "section": "viewDuelo",
-      "line": 2057,
+      "line": 2058,
       "label": "✅ ¡Estoy Listo!",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -1908,7 +1908,7 @@
     {
       "id": "dueloLeaveOnlineRoomBtn",
       "section": "viewDuelo",
-      "line": 2067,
+      "line": 2068,
       "label": "✕ Salir de la Sala",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -1923,7 +1923,7 @@
     {
       "id": "dueloArenaRulesBtn",
       "section": "viewDuelo",
-      "line": 2088,
+      "line": 2089,
       "label": "Ver reglas y mecánicas de la partida",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -1938,7 +1938,7 @@
     {
       "id": "dueloEndMatchBtn",
       "section": "viewDuelo",
-      "line": 2091,
+      "line": 2092,
       "label": "Finalizar la partida y coronar al campeón",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -1953,7 +1953,7 @@
     {
       "id": "dueloSpinBtn",
       "section": "viewDuelo",
-      "line": 2141,
+      "line": 2142,
       "label": "🎰 GIRAR DOBLE RULETA",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -1968,7 +1968,7 @@
     {
       "id": "dueloFinRondaNextBtn",
       "section": "viewDuelo",
-      "line": 2155,
+      "line": 2156,
       "label": "🎰 Comenzar Ronda 2 (Girar Bolillero)",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -1983,7 +1983,7 @@
     {
       "id": "dueloQuickScratchpadBtn",
       "section": "dueloTurnArea",
-      "line": 2179,
+      "line": 2180,
       "label": "Abrir Pizarrón y Notas",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -1998,7 +1998,7 @@
     {
       "id": "dueloQuickPomodoroBtn",
       "section": "dueloTurnArea",
-      "line": 2182,
+      "line": 2183,
       "label": "Abrir Reloj Pomodoro",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -2013,7 +2013,7 @@
     {
       "id": "dueloOradorFinishBtn",
       "section": "dueloTurnArea",
-      "line": 2206,
+      "line": 2207,
       "label": "🏁 Finalizar Turno",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -2028,7 +2028,7 @@
     {
       "id": "dueloOradorConcedeBtn",
       "section": "dueloTurnArea",
-      "line": 2209,
+      "line": 2210,
       "label": "⏭️ Pasar de Turno",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -2043,7 +2043,7 @@
     {
       "id": "dueloThiefFinishBtn",
       "section": "dueloTurnArea",
-      "line": 2216,
+      "line": 2217,
       "label": "⚡ ¡Terminé mi Robo! (Pasar a Calificación)",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -2058,7 +2058,7 @@
     {
       "id": "dueloHostRoboSuccessBtn",
       "section": "dueloTurnArea",
-      "line": 2225,
+      "line": 2226,
       "label": "🟢 ¡Robo Exitoso! (+10 pts)",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -2073,7 +2073,7 @@
     {
       "id": "dueloHostRoboFailBtn",
       "section": "dueloTurnArea",
-      "line": 2228,
+      "line": 2229,
       "label": "🔴 Robo Fallido (0 pts)",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -2088,7 +2088,7 @@
     {
       "id": "dueloTimerToggleBtn",
       "section": "dueloTurnArea",
-      "line": 2239,
+      "line": 2240,
       "label": "Pausar / Reanudar cronómetro",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -2103,7 +2103,7 @@
     {
       "id": "dueloBtnSocorro",
       "section": "dueloTurnArea",
-      "line": 2255,
+      "line": 2256,
       "label": "Resolver a medias con otro por 5 pts cada uno",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -2118,7 +2118,7 @@
     {
       "id": "dueloBtnPista",
       "section": "dueloTurnArea",
-      "line": 2261,
+      "line": 2262,
       "label": "Obtener 15 seg para ver apuntes",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -2133,7 +2133,7 @@
     {
       "id": "dueloBtnPaso",
       "section": "dueloTurnArea",
-      "line": 2267,
+      "line": 2268,
       "label": "Cambiar tema por otro sin penalización",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -2148,7 +2148,7 @@
     {
       "id": "dueloBtnRelevoCoop",
       "section": "dueloTurnArea",
-      "line": 2273,
+      "line": 2274,
       "label": "Pedir relevo a un compañero si tenés dudas",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -2163,7 +2163,7 @@
     {
       "id": "dueloAcceptRelevoBtn",
       "section": "dueloTurnArea",
-      "line": 2289,
+      "line": 2290,
       "label": "🙋‍♂️ ¡Tomo el Relevo!",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -2178,7 +2178,7 @@
     {
       "id": "dueloGradeImpecableBtn",
       "section": "dueloTurnArea",
-      "line": 2299,
+      "line": 2300,
       "label": "🟢 ¡Impecable! +10 pts",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -2193,7 +2193,7 @@
     {
       "id": "dueloGradeAyudaBtn",
       "section": "dueloTurnArea",
-      "line": 2305,
+      "line": 2306,
       "label": "🟡 Con ayuda +5 pts",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -2208,7 +2208,7 @@
     {
       "id": "dueloGradePasoBtn",
       "section": "dueloTurnArea",
-      "line": 2311,
+      "line": 2312,
       "label": "🔴 A repasar / Paso 0 pts",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -2223,7 +2223,7 @@
     {
       "id": "dueloOnlineVote10Btn",
       "section": "dueloTurnArea",
-      "line": 2328,
+      "line": 2329,
       "label": "🟢 ¡Impecable! +10 pts",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -2238,7 +2238,7 @@
     {
       "id": "dueloOnlineVote5Btn",
       "section": "dueloTurnArea",
-      "line": 2333,
+      "line": 2334,
       "label": "🟡 Con ayuda +5 pts",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -2253,7 +2253,7 @@
     {
       "id": "dueloOnlineVote0Btn",
       "section": "dueloTurnArea",
-      "line": 2338,
+      "line": 2339,
       "label": "🔴 A repasar / Paso 0 pts",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -2268,7 +2268,7 @@
     {
       "id": "dueloHostNextSpinBtn",
       "section": "dueloTurnArea",
-      "line": 2365,
+      "line": 2366,
       "label": "🎲 Siguiente Ronda / Sorteo",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -2283,7 +2283,7 @@
     {
       "id": "dueloThiefSuccessBtn",
       "section": "dueloTurnArea",
-      "line": 2389,
+      "line": 2390,
       "label": "🟢 ¡Robo Exitoso! (+10 pts)",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -2298,7 +2298,7 @@
     {
       "id": "dueloThiefFailBtn",
       "section": "dueloTurnArea",
-      "line": 2392,
+      "line": 2393,
       "label": "🔴 Falló el robo (0 pts)",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -2313,7 +2313,7 @@
     {
       "id": "dueloOnlineBuzzerTriggerBtn",
       "section": "dueloTurnArea",
-      "line": 2405,
+      "line": 2406,
       "label": "⚡ ¡TOCAR PRIMERO PARA ROBAR! ⚡",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -2328,7 +2328,7 @@
     {
       "id": "dueloChatToggleBtn",
       "section": "viewDuelo",
-      "line": 2443,
+      "line": 2444,
       "label": "Abrir chat en vivo",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -2343,7 +2343,7 @@
     {
       "id": "dueloChatCloseBtn",
       "section": "viewDuelo",
-      "line": 2457,
+      "line": 2458,
       "label": "Minimizar chat",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -2358,7 +2358,7 @@
     {
       "id": "dueloVoiceCancelBtn",
       "section": "viewDuelo",
-      "line": 2475,
+      "line": 2476,
       "label": "Cancelar audio",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -2373,7 +2373,7 @@
     {
       "id": "dueloVoiceSendBtn",
       "section": "viewDuelo",
-      "line": 2476,
+      "line": 2477,
       "label": "Enviar audio",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -2388,7 +2388,7 @@
     {
       "id": null,
       "section": "viewDuelo",
-      "line": 2482,
+      "line": 2483,
       "label": "😂",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -2403,7 +2403,7 @@
     {
       "id": null,
       "section": "viewDuelo",
-      "line": 2483,
+      "line": 2484,
       "label": "🔥",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -2418,7 +2418,7 @@
     {
       "id": null,
       "section": "viewDuelo",
-      "line": 2484,
+      "line": 2485,
       "label": "👏",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -2433,7 +2433,7 @@
     {
       "id": null,
       "section": "viewDuelo",
-      "line": 2485,
+      "line": 2486,
       "label": "💀",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -2448,7 +2448,7 @@
     {
       "id": null,
       "section": "viewDuelo",
-      "line": 2486,
+      "line": 2487,
       "label": "😱",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -2463,7 +2463,7 @@
     {
       "id": null,
       "section": "viewDuelo",
-      "line": 2487,
+      "line": 2488,
       "label": "🎯",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -2478,7 +2478,7 @@
     {
       "id": null,
       "section": "viewDuelo",
-      "line": 2488,
+      "line": 2489,
       "label": "⏳",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -2493,7 +2493,7 @@
     {
       "id": null,
       "section": "viewDuelo",
-      "line": 2489,
+      "line": 2490,
       "label": "👍",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -2508,7 +2508,7 @@
     {
       "id": "dueloChatPhotoBtn",
       "section": "viewDuelo",
-      "line": 2495,
+      "line": 2496,
       "label": "Enviar foto o apunte (Cámara / Galería)",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -2523,7 +2523,7 @@
     {
       "id": "dueloChatMicBtn",
       "section": "viewDuelo",
-      "line": 2498,
+      "line": 2499,
       "label": "Grabar nota de voz (Audio)",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -2538,7 +2538,7 @@
     {
       "id": "dueloChatSendBtn",
       "section": "viewDuelo",
-      "line": 2502,
+      "line": 2503,
       "label": "Enviar mensaje",
       "type": "submit",
       "action": "Enviar dueloChatForm",
@@ -2553,7 +2553,7 @@
     {
       "id": "juegosBackBtn",
       "section": "viewJuegosEdu",
-      "line": 2538,
+      "line": 2539,
       "label": "⬅ Volver",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -2568,7 +2568,7 @@
     {
       "id": "bombaOpenConfigBtn",
       "section": "viewJuegosEdu",
-      "line": 2551,
+      "line": 2552,
       "label": "Configurar tiempo, dificultad, comodines y archivo con IA",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -2583,7 +2583,7 @@
     {
       "id": "impostorOpenConfigBtn",
       "section": "viewJuegosEdu",
-      "line": 2554,
+      "line": 2555,
       "label": "Configurar casos, tiempo y archivo con IA",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -2598,7 +2598,7 @@
     {
       "id": "memotestOpenConfigBtn",
       "section": "viewJuegosEdu",
-      "line": 2557,
+      "line": 2558,
       "label": "Configurar pares, tiempo y archivo con IA",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -2613,7 +2613,7 @@
     {
       "id": "juegosRulesBtn",
       "section": "viewJuegosEdu",
-      "line": 2560,
+      "line": 2561,
       "label": "Ver reglas y controles de este juego",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -2628,7 +2628,7 @@
     {
       "id": "bombaBtnCortacables",
       "section": "viewJuegosEdu",
-      "line": 2661,
+      "line": 2662,
       "label": "Descarta 1 cable / opción errónea",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -2643,7 +2643,7 @@
     {
       "id": "bombaBtnCongelar",
       "section": "viewJuegosEdu",
-      "line": 2667,
+      "line": 2668,
       "label": "Pausa el cronómetro y otorga +15 segundos",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -2658,7 +2658,7 @@
     {
       "id": "bombaBtnPista",
       "section": "viewJuegosEdu",
-      "line": 2673,
+      "line": 2674,
       "label": "Muestra una pista teórica en la pantalla LCD",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -2673,7 +2673,7 @@
     {
       "id": "bombaPlayAgainBtn",
       "section": "viewJuegosEdu",
-      "line": 2731,
+      "line": 2732,
       "label": "Jugar Otra Bomba 💣",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -2688,7 +2688,7 @@
     {
       "id": "bombaBackToLobbyBtn",
       "section": "viewJuegosEdu",
-      "line": 2732,
+      "line": 2733,
       "label": "🔄 Volver a la Sala de Espera",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -2703,7 +2703,7 @@
     {
       "id": "bombaExitBtn",
       "section": "viewJuegosEdu",
-      "line": 2733,
+      "line": 2734,
       "label": "Salir al Menú",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -2718,7 +2718,7 @@
     {
       "id": null,
       "section": "viewJuegosEdu",
-      "line": 2758,
+      "line": 2759,
       "label": "10s (Rápido)",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -2733,7 +2733,7 @@
     {
       "id": null,
       "section": "viewJuegosEdu",
-      "line": 2759,
+      "line": 2760,
       "label": "15s (Estándar)",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -2748,7 +2748,7 @@
     {
       "id": null,
       "section": "viewJuegosEdu",
-      "line": 2760,
+      "line": 2761,
       "label": "20s (Analítico)",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -2763,7 +2763,7 @@
     {
       "id": null,
       "section": "viewJuegosEdu",
-      "line": 2761,
+      "line": 2762,
       "label": "30s (Sin Apuro)",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -2778,7 +2778,7 @@
     {
       "id": null,
       "section": "viewJuegosEdu",
-      "line": 2768,
+      "line": 2769,
       "label": "3 Rondas",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -2793,7 +2793,7 @@
     {
       "id": null,
       "section": "viewJuegosEdu",
-      "line": 2769,
+      "line": 2770,
       "label": "5 Rondas",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -2808,7 +2808,7 @@
     {
       "id": null,
       "section": "viewJuegosEdu",
-      "line": 2770,
+      "line": 2771,
       "label": "7 Rondas",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -2823,7 +2823,7 @@
     {
       "id": null,
       "section": "viewJuegosEdu",
-      "line": 2771,
+      "line": 2772,
       "label": "10 Rondas",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -2838,7 +2838,7 @@
     {
       "id": "impostorStartGameBtn",
       "section": "viewJuegosEdu",
-      "line": 2780,
+      "line": 2781,
       "label": "🚀 Comenzar Investigación",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -2853,7 +2853,7 @@
     {
       "id": "impostorBtn5050",
       "section": "viewJuegosEdu",
-      "line": 2824,
+      "line": 2825,
       "label": "Descarta 2 afirmaciones verdaderas",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -2868,7 +2868,7 @@
     {
       "id": "impostorBtnTiempo",
       "section": "viewJuegosEdu",
-      "line": 2830,
+      "line": 2831,
       "label": "Suma +15 segundos al cronómetro",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -2883,7 +2883,7 @@
     {
       "id": "impostorBtnSocorro",
       "section": "viewJuegosEdu",
-      "line": 2836,
+      "line": 2837,
       "label": "El radar detecta la tarjeta con el error conceptual",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -2898,7 +2898,7 @@
     {
       "id": "impostorNextWaveBtn",
       "section": "viewJuegosEdu",
-      "line": 2851,
+      "line": 2852,
       "label": "Siguiente Caso ➔",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -2913,7 +2913,7 @@
     {
       "id": "memotestBtnVistazo",
       "section": "viewJuegosEdu",
-      "line": 2897,
+      "line": 2898,
       "label": "Destapa todas las cartas durante 2.5 segundos para memorizarlas",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -2928,7 +2928,7 @@
     {
       "id": "memotestBtnCongelar",
       "section": "viewJuegosEdu",
-      "line": 2903,
+      "line": 2904,
       "label": "Pausa el reloj y suma +20 segundos de tiempo extra",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -2943,7 +2943,7 @@
     {
       "id": "memotestBtnConexion",
       "section": "viewJuegosEdu",
-      "line": 2909,
+      "line": 2910,
       "label": "Encuentra y conecta 1 par automáticamente",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -2958,7 +2958,7 @@
     {
       "id": "famaPlayNewDueloBtn",
       "section": "viewFama",
-      "line": 2944,
+      "line": 2945,
       "label": "⚔️ Jugar Nuevo Duelo",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -2973,7 +2973,7 @@
     {
       "id": "famaClearHistoryBtn",
       "section": "viewFama",
-      "line": 2947,
+      "line": 2948,
       "label": "🗑️ Borrar Todo el Historial",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -2988,7 +2988,7 @@
     {
       "id": null,
       "section": "viewFama",
-      "line": 3007,
+      "line": 3008,
       "label": "👑 General",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -3003,7 +3003,7 @@
     {
       "id": null,
       "section": "viewFama",
-      "line": 3008,
+      "line": 3009,
       "label": "🎲 Bolillero VS",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -3018,7 +3018,7 @@
     {
       "id": null,
       "section": "viewFama",
-      "line": 3009,
+      "line": 3010,
       "label": "💣 La Bomba",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -3033,7 +3033,7 @@
     {
       "id": null,
       "section": "viewFama",
-      "line": 3010,
+      "line": 3011,
       "label": "🕵️‍♂️ Impostor",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -3048,7 +3048,7 @@
     {
       "id": null,
       "section": "viewFama",
-      "line": 3011,
+      "line": 3012,
       "label": "🧠 Memotest",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -3063,7 +3063,7 @@
     {
       "id": null,
       "section": "viewFama",
-      "line": 3012,
+      "line": 3013,
       "label": "🏅 Triatlón",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -3078,7 +3078,7 @@
     {
       "id": "podioBtnVolverLobby",
       "section": "viewPodioOnline",
-      "line": 3112,
+      "line": 3113,
       "label": "🔄 Volver al Lobby (Jugar Otra)",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -3093,7 +3093,7 @@
     {
       "id": "podioBtnVolverMenu",
       "section": "viewPodioOnline",
-      "line": 3115,
+      "line": 3116,
       "label": "🏠 Volver al Menú Principal",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -3108,7 +3108,7 @@
     {
       "id": "podioBtnCompartirWsp",
       "section": "viewPodioOnline",
-      "line": 3118,
+      "line": 3119,
       "label": "📲 Compartir en WhatsApp",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -3123,7 +3123,7 @@
     {
       "id": "podioBtnSalondeLaFama",
       "section": "viewPodioOnline",
-      "line": 3121,
+      "line": 3122,
       "label": "🏆 Ver en Salón de la Fama",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -3138,7 +3138,7 @@
     {
       "id": "labBtnAbrirConfigModal",
       "section": "viewLaboratorio",
-      "line": 3150,
+      "line": 3151,
       "label": "Elegir materia de exactas o contabilidad y temas de estudio",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -3153,7 +3153,7 @@
     {
       "id": "labBtnGenerarConIA",
       "section": "viewLaboratorio",
-      "line": 3153,
+      "line": 3154,
       "label": "Crear o personalizar un ejercicio con IA según tu orden o tema",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -3168,7 +3168,7 @@
     {
       "id": "labBtnOtroEjercicioIA",
       "section": "viewLaboratorio",
-      "line": 3156,
+      "line": 3157,
       "label": "Generar de inmediato un nuevo ejercicio con IA diferente al anterior",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -3183,7 +3183,7 @@
     {
       "id": "labMobileBtnEnunciado",
       "section": "viewLaboratorio",
-      "line": 3169,
+      "line": 3170,
       "label": "📋 Enunciado & Preguntas",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -3198,7 +3198,7 @@
     {
       "id": "labMobileBtnHerramientas",
       "section": "viewLaboratorio",
-      "line": 3172,
+      "line": 3173,
       "label": "🛠️ Mesa de Trabajo & Tabla",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -3213,7 +3213,7 @@
     {
       "id": "labBtnQuickOtroIA",
       "section": "viewLaboratorio",
-      "line": 3189,
+      "line": 3190,
       "label": "Generar de inmediato otro ejercicio diferente con IA",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -3228,7 +3228,7 @@
     {
       "id": "labBtnSiguienteCasoModal",
       "section": "viewLaboratorio",
-      "line": 3234,
+      "line": 3235,
       "label": "🎲 Generar Siguiente Ejercicio",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -3243,7 +3243,7 @@
     {
       "id": "labTabBtnFreq",
       "section": "viewLaboratorio",
-      "line": 3248,
+      "line": 3249,
       "label": "📊 Tabla de Frecuencias",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -3258,7 +3258,7 @@
     {
       "id": "labTabBtnProb",
       "section": "viewLaboratorio",
-      "line": 3252,
+      "line": 3253,
       "label": "🧮 Campana & Probabilidad",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -3273,7 +3273,7 @@
     {
       "id": "labTabBtnBayes",
       "section": "viewLaboratorio",
-      "line": 3256,
+      "line": 3257,
       "label": "🔲 Matriz de Bayes",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -3288,7 +3288,7 @@
     {
       "id": "labTabBtnContabilidad",
       "section": "viewLaboratorio",
-      "line": 3262,
+      "line": 3263,
       "label": "💼 Contabilidad & Libros",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -3303,7 +3303,7 @@
     {
       "id": "labTabBtnQuimica",
       "section": "viewLaboratorio",
-      "line": 3268,
+      "line": 3269,
       "label": "🧪 Tabla Periódica & Masas",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -3318,7 +3318,7 @@
     {
       "id": "labTabBtnFisica",
       "section": "viewLaboratorio",
-      "line": 3274,
+      "line": 3275,
       "label": "⚡ Simulador Físico",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -3333,7 +3333,7 @@
     {
       "id": "labTabBtnMatematicas",
       "section": "viewLaboratorio",
-      "line": 3280,
+      "line": 3281,
       "label": "📐 Matemáticas & Álgebra",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -3348,7 +3348,7 @@
     {
       "id": "labTabBtnCalculo",
       "section": "viewLaboratorio",
-      "line": 3286,
+      "line": 3287,
       "label": "📈 Cálculo & Derivadas",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -3363,7 +3363,7 @@
     {
       "id": "labTabBtnMatrices",
       "section": "viewLaboratorio",
-      "line": 3292,
+      "line": 3293,
       "label": "🔲 Matrices & Vectores",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -3378,7 +3378,7 @@
     {
       "id": "labTabBtnComputacion",
       "section": "viewLaboratorio",
-      "line": 3298,
+      "line": 3299,
       "label": "💻 Lógica & Computación",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -3393,7 +3393,7 @@
     {
       "id": "labTabBtnBiologia",
       "section": "viewLaboratorio",
-      "line": 3304,
+      "line": 3305,
       "label": "🧬 Biología & Punnett",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -3408,7 +3408,7 @@
     {
       "id": "labTabBtnFinanciera",
       "section": "viewLaboratorio",
-      "line": 3310,
+      "line": 3311,
       "label": "💰 Finanzas & Préstamos",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -3423,7 +3423,7 @@
     {
       "id": "labTabBtnMedicina",
       "section": "viewLaboratorio",
-      "line": 3316,
+      "line": 3317,
       "label": "🩺 Medicina Clínica",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -3438,7 +3438,7 @@
     {
       "id": "labTabBtnScratch",
       "section": "viewLaboratorio",
-      "line": 3322,
+      "line": 3323,
       "label": "📝 Pizarrón",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -3453,7 +3453,7 @@
     {
       "id": "labBtnAddRow",
       "section": "viewLaboratorio",
-      "line": 3335,
+      "line": 3336,
       "label": "➕ Fila",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -3468,7 +3468,7 @@
     {
       "id": "labBtnRemoveRow",
       "section": "viewLaboratorio",
-      "line": 3338,
+      "line": 3339,
       "label": "➖ Fila",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -3483,7 +3483,7 @@
     {
       "id": "labBtnAddCol",
       "section": "viewLaboratorio",
-      "line": 3349,
+      "line": 3350,
       "label": "➕ Columna",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -3498,7 +3498,7 @@
     {
       "id": "labBtnRemoveCol",
       "section": "viewLaboratorio",
-      "line": 3352,
+      "line": 3353,
       "label": "Quitar columna seleccionada",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -3513,7 +3513,7 @@
     {
       "id": "labBtnClearTable",
       "section": "viewLaboratorio",
-      "line": 3358,
+      "line": 3359,
       "label": "🗑️ Limpiar",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -3528,7 +3528,7 @@
     {
       "id": null,
       "section": "viewLaboratorio",
-      "line": 3404,
+      "line": 3405,
       "label": "Copiar N",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -3543,7 +3543,7 @@
     {
       "id": null,
       "section": "viewLaboratorio",
-      "line": 3413,
+      "line": 3414,
       "label": "Copiar Moda",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -3558,7 +3558,7 @@
     {
       "id": null,
       "section": "viewLaboratorio",
-      "line": 3422,
+      "line": 3423,
       "label": "Copiar Mediana",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -3573,7 +3573,7 @@
     {
       "id": null,
       "section": "viewLaboratorio",
-      "line": 3431,
+      "line": 3432,
       "label": "Copiar Promedio",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -3588,7 +3588,7 @@
     {
       "id": null,
       "section": "viewLaboratorio",
-      "line": 3440,
+      "line": 3441,
       "label": "Copiar Desvío",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -3603,7 +3603,7 @@
     {
       "id": null,
       "section": "viewLaboratorio",
-      "line": 3449,
+      "line": 3450,
       "label": "Copiar CV",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -3618,7 +3618,7 @@
     {
       "id": null,
       "section": "viewLaboratorio",
-      "line": 3458,
+      "line": 3459,
       "label": "Copiar Varianza",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -3633,7 +3633,7 @@
     {
       "id": null,
       "section": "viewLaboratorio",
-      "line": 3471,
+      "line": 3472,
       "label": "🔔 Normal",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -3648,7 +3648,7 @@
     {
       "id": null,
       "section": "viewLaboratorio",
-      "line": 3472,
+      "line": 3473,
       "label": "📉 t-Student",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -3663,7 +3663,7 @@
     {
       "id": null,
       "section": "viewLaboratorio",
-      "line": 3473,
+      "line": 3474,
       "label": "📐 Chi-cuadrado (χ²)",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -3678,7 +3678,7 @@
     {
       "id": null,
       "section": "viewLaboratorio",
-      "line": 3474,
+      "line": 3475,
       "label": "⚖️ F-Fisher",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -3693,7 +3693,7 @@
     {
       "id": null,
       "section": "viewLaboratorio",
-      "line": 3475,
+      "line": 3476,
       "label": "🪙 Binomial",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -3708,7 +3708,7 @@
     {
       "id": null,
       "section": "viewLaboratorio",
-      "line": 3476,
+      "line": 3477,
       "label": "⏱️ Poisson",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -3723,7 +3723,7 @@
     {
       "id": null,
       "section": "viewLaboratorio",
-      "line": 3477,
+      "line": 3478,
       "label": "📦 Hipergeométrica",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -3738,7 +3738,7 @@
     {
       "id": null,
       "section": "viewLaboratorio",
-      "line": 3478,
+      "line": 3479,
       "label": "🔢 Mini Calculadora",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -3753,7 +3753,7 @@
     {
       "id": "labDistModeVP",
       "section": "viewLaboratorio",
-      "line": 3485,
+      "line": 3486,
       "label": "Valor ➔ P(X)",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -3768,7 +3768,7 @@
     {
       "id": "labDistModePV",
       "section": "viewLaboratorio",
-      "line": 3486,
+      "line": 3487,
       "label": "P(X) ➔ Valor",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -3783,7 +3783,7 @@
     {
       "id": "labDistSignToggle",
       "section": "viewLaboratorio",
-      "line": 3520,
+      "line": 3521,
       "label": "Cambiar Signo (±)",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -3798,7 +3798,7 @@
     {
       "id": "labDistStepDown",
       "section": "viewLaboratorio",
-      "line": 3521,
+      "line": 3522,
       "label": "Decrementar (−)",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -3813,7 +3813,7 @@
     {
       "id": "labDistStepUp",
       "section": "viewLaboratorio",
-      "line": 3523,
+      "line": 3524,
       "label": "Incrementar (+)",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -3828,7 +3828,7 @@
     {
       "id": null,
       "section": "viewLaboratorio",
-      "line": 3528,
+      "line": 3529,
       "label": "1.645 (90%)",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -3843,7 +3843,7 @@
     {
       "id": null,
       "section": "viewLaboratorio",
-      "line": 3529,
+      "line": 3530,
       "label": "1.960 (95%)",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -3858,7 +3858,7 @@
     {
       "id": null,
       "section": "viewLaboratorio",
-      "line": 3530,
+      "line": 3531,
       "label": "2.576 (99%)",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -3873,7 +3873,7 @@
     {
       "id": null,
       "section": "viewLaboratorio",
-      "line": 3531,
+      "line": 3532,
       "label": "p=0.05",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -3888,7 +3888,7 @@
     {
       "id": null,
       "section": "viewLaboratorio",
-      "line": 3532,
+      "line": 3533,
       "label": "p=0.01",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -3903,7 +3903,7 @@
     {
       "id": "labBtnCopyDistToCheckpoint",
       "section": "viewLaboratorio",
-      "line": 3546,
+      "line": 3547,
       "label": "Copiar valor calculado al campo de respuesta",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -3918,7 +3918,7 @@
     {
       "id": null,
       "section": "viewLaboratorio",
-      "line": 3558,
+      "line": 3559,
       "label": "AC",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -3933,7 +3933,7 @@
     {
       "id": null,
       "section": "viewLaboratorio",
-      "line": 3559,
+      "line": 3560,
       "label": "⌫",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -3948,7 +3948,7 @@
     {
       "id": null,
       "section": "viewLaboratorio",
-      "line": 3560,
+      "line": 3561,
       "label": "√",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -3963,7 +3963,7 @@
     {
       "id": null,
       "section": "viewLaboratorio",
-      "line": 3561,
+      "line": 3562,
       "label": "÷",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -3978,7 +3978,7 @@
     {
       "id": null,
       "section": "viewLaboratorio",
-      "line": 3563,
+      "line": 3564,
       "label": "7",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -3993,7 +3993,7 @@
     {
       "id": null,
       "section": "viewLaboratorio",
-      "line": 3564,
+      "line": 3565,
       "label": "8",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -4008,7 +4008,7 @@
     {
       "id": null,
       "section": "viewLaboratorio",
-      "line": 3565,
+      "line": 3566,
       "label": "9",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -4023,7 +4023,7 @@
     {
       "id": null,
       "section": "viewLaboratorio",
-      "line": 3566,
+      "line": 3567,
       "label": "×",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -4038,7 +4038,7 @@
     {
       "id": null,
       "section": "viewLaboratorio",
-      "line": 3568,
+      "line": 3569,
       "label": "4",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -4053,7 +4053,7 @@
     {
       "id": null,
       "section": "viewLaboratorio",
-      "line": 3569,
+      "line": 3570,
       "label": "5",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -4068,7 +4068,7 @@
     {
       "id": null,
       "section": "viewLaboratorio",
-      "line": 3570,
+      "line": 3571,
       "label": "6",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -4083,7 +4083,7 @@
     {
       "id": null,
       "section": "viewLaboratorio",
-      "line": 3571,
+      "line": 3572,
       "label": "-",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -4098,7 +4098,7 @@
     {
       "id": null,
       "section": "viewLaboratorio",
-      "line": 3573,
+      "line": 3574,
       "label": "1",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -4113,7 +4113,7 @@
     {
       "id": null,
       "section": "viewLaboratorio",
-      "line": 3574,
+      "line": 3575,
       "label": "2",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -4128,7 +4128,7 @@
     {
       "id": null,
       "section": "viewLaboratorio",
-      "line": 3575,
+      "line": 3576,
       "label": "3",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -4143,7 +4143,7 @@
     {
       "id": null,
       "section": "viewLaboratorio",
-      "line": 3576,
+      "line": 3577,
       "label": "+",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -4158,7 +4158,7 @@
     {
       "id": null,
       "section": "viewLaboratorio",
-      "line": 3578,
+      "line": 3579,
       "label": "0",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -4173,7 +4173,7 @@
     {
       "id": null,
       "section": "viewLaboratorio",
-      "line": 3579,
+      "line": 3580,
       "label": ".",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -4188,7 +4188,7 @@
     {
       "id": null,
       "section": "viewLaboratorio",
-      "line": 3580,
+      "line": 3581,
       "label": "x²",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -4203,7 +4203,7 @@
     {
       "id": null,
       "section": "viewLaboratorio",
-      "line": 3581,
+      "line": 3582,
       "label": "=",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -4218,7 +4218,7 @@
     {
       "id": "labBtnSubtabDiario",
       "section": "viewLaboratorio",
-      "line": 3660,
+      "line": 3661,
       "label": "📖 Libro Diario",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -4233,7 +4233,7 @@
     {
       "id": "labBtnSubtabMayor",
       "section": "viewLaboratorio",
-      "line": 3663,
+      "line": 3664,
       "label": "🔲 Libro Mayor (Cuentas T)",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -4248,7 +4248,7 @@
     {
       "id": "labBtnSubtabBalance",
       "section": "viewLaboratorio",
-      "line": 3666,
+      "line": 3667,
       "label": "⚖️ Balance de Sumas y Saldos",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -4263,7 +4263,7 @@
     {
       "id": "labBtnSubtabCalcContab",
       "section": "viewLaboratorio",
-      "line": 3669,
+      "line": 3670,
       "label": "🧮 Calculadora CMV & IVA",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -4278,7 +4278,7 @@
     {
       "id": "labBtnVerificarContabilidad",
       "section": "viewLaboratorio",
-      "line": 3674,
+      "line": 3675,
       "label": "✅ Verificar Ejercicio",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -4293,7 +4293,7 @@
     {
       "id": "labBtnAddAsiento",
       "section": "viewLaboratorio",
-      "line": 3684,
+      "line": 3685,
       "label": "➕ Nuevo Asiento",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -4308,7 +4308,7 @@
     {
       "id": "labBtnAutoMayorizar",
       "section": "viewLaboratorio",
-      "line": 3687,
+      "line": 3688,
       "label": "🔄 Pasar a Libro Mayor",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -4323,7 +4323,7 @@
     {
       "id": "labBtnLimpiarDiario",
       "section": "viewLaboratorio",
-      "line": 3692,
+      "line": 3693,
       "label": "🗑️ Vaciar Diario",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -4338,7 +4338,7 @@
     {
       "id": "labBtnSyncMayor",
       "section": "viewLaboratorio",
-      "line": 3781,
+      "line": 3782,
       "label": "🔄 Sincronizar desde Diario",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -4353,7 +4353,7 @@
     {
       "id": "labBtnAddCuentaTManual",
       "section": "viewLaboratorio",
-      "line": 3784,
+      "line": 3785,
       "label": "➕ Nueva Cuenta T",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -4368,7 +4368,7 @@
     {
       "id": "labBtnActualizarBalance",
       "section": "viewLaboratorio",
-      "line": 3799,
+      "line": 3800,
       "label": "🔄 Recalcular Balance",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -4383,7 +4383,7 @@
     {
       "id": "labBtnCerrarFeedbackContab",
       "section": "viewLaboratorio",
-      "line": 3929,
+      "line": 3930,
       "label": "✕",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -4398,7 +4398,7 @@
     {
       "id": "labBtnChemSubtabTabla",
       "section": "viewLaboratorio",
-      "line": 3940,
+      "line": 3941,
       "label": "🧪 Tabla Periódica & Masas",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -4413,7 +4413,7 @@
     {
       "id": "labBtnChemSubtabCalc",
       "section": "viewLaboratorio",
-      "line": 3941,
+      "line": 3942,
       "label": "⚖️ Calculadora Química (Moles, pH & Gases)",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -4428,7 +4428,7 @@
     {
       "id": "labBtnCalcMasaMolecular",
       "section": "viewLaboratorio",
-      "line": 3953,
+      "line": 3954,
       "label": "⚖️ Calcular Masa",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -4443,7 +4443,7 @@
     {
       "id": "labBtnCopiarMasaChem",
       "section": "viewLaboratorio",
-      "line": 3960,
+      "line": 3961,
       "label": "Copiar masa molar",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -4458,7 +4458,7 @@
     {
       "id": "labBtnCopyChemElementMass",
       "section": "viewLaboratorio",
-      "line": 3974,
+      "line": 3975,
       "label": "📋 Copiar Peso Atómico",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -4473,7 +4473,7 @@
     {
       "id": "labBtnInsertChemFormula",
       "section": "viewLaboratorio",
-      "line": 3975,
+      "line": 3976,
       "label": "➕ Usar en Fórmula",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -4488,7 +4488,7 @@
     {
       "id": "labBtnPhysSubtabSim",
       "section": "viewLaboratorio",
-      "line": 4102,
+      "line": 4103,
       "label": "🚀 Simulador Cinemático 2D",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -4503,7 +4503,7 @@
     {
       "id": "labBtnPhysSubtabCalc",
       "section": "viewLaboratorio",
-      "line": 4103,
+      "line": 4104,
       "label": "⚡ Calculadora Física (MRU/MRUV, Dinámica & Ohm)",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -4518,7 +4518,7 @@
     {
       "id": "labBtnPlayPhysics",
       "section": "viewLaboratorio",
-      "line": 4114,
+      "line": 4115,
       "label": "▶ Lanzar Móvil",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -4533,7 +4533,7 @@
     {
       "id": "labBtnResetPhysics",
       "section": "viewLaboratorio",
-      "line": 4117,
+      "line": 4118,
       "label": "↺ Reiniciar",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -4548,7 +4548,7 @@
     {
       "id": "labBtnCopyPhysRes",
       "section": "viewLaboratorio",
-      "line": 4150,
+      "line": 4151,
       "label": "Copiar resultados",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -4563,7 +4563,7 @@
     {
       "id": "labBtnMathSubtabGraf",
       "section": "viewLaboratorio",
-      "line": 4292,
+      "line": 4293,
       "label": "📈 Graficador Cartesiano 2D",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -4578,7 +4578,7 @@
     {
       "id": "labBtnMathSubtabCalc",
       "section": "viewLaboratorio",
-      "line": 4293,
+      "line": 4294,
       "label": "🧮 Calculadora Álgebra (Bhaskara, Regla 3 & Trig)",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -4593,7 +4593,7 @@
     {
       "id": "labBtnPlotFunc",
       "section": "viewLaboratorio",
-      "line": 4306,
+      "line": 4307,
       "label": "⚡ Graficar",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -4608,7 +4608,7 @@
     {
       "id": null,
       "section": "viewLaboratorio",
-      "line": 4322,
+      "line": 4323,
       "label": "Parábola Cuadrática",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -4623,7 +4623,7 @@
     {
       "id": null,
       "section": "viewLaboratorio",
-      "line": 4323,
+      "line": 4324,
       "label": "Recta Lineal",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -4638,7 +4638,7 @@
     {
       "id": null,
       "section": "viewLaboratorio",
-      "line": 4324,
+      "line": 4325,
       "label": "Cúbica con Extremos",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -4653,7 +4653,7 @@
     {
       "id": null,
       "section": "viewLaboratorio",
-      "line": 4325,
+      "line": 4326,
       "label": "Hipérbola (Asíntota)",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -4668,7 +4668,7 @@
     {
       "id": "labBtnSubtabMatriz2x2",
       "section": "viewLaboratorio",
-      "line": 4435,
+      "line": 4436,
       "label": "Matriz 2x2",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -4683,7 +4683,7 @@
     {
       "id": "labBtnSubtabMatriz3x3",
       "section": "viewLaboratorio",
-      "line": 4436,
+      "line": 4437,
       "label": "Matriz 3x3",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -4698,7 +4698,7 @@
     {
       "id": "labBtnSubtabVectores",
       "section": "viewLaboratorio",
-      "line": 4437,
+      "line": 4438,
       "label": "Vectores & Cramer",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -4713,7 +4713,7 @@
     {
       "id": "labBtnCopyDet2",
       "section": "viewLaboratorio",
-      "line": 4456,
+      "line": 4457,
       "label": "📋 Copiar det(A)",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -4728,7 +4728,7 @@
     {
       "id": "labBtnCopyDet3",
       "section": "viewLaboratorio",
-      "line": 4481,
+      "line": 4482,
       "label": "📋 Copiar det(A)",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -4743,7 +4743,7 @@
     {
       "id": "labBtnCalcSubtabDeriv",
       "section": "viewLaboratorio",
-      "line": 4549,
+      "line": 4550,
       "label": "⚡ Derivadas & Recta Tangente",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -4758,7 +4758,7 @@
     {
       "id": "labBtnCalcSubtabInteg",
       "section": "viewLaboratorio",
-      "line": 4550,
+      "line": 4551,
       "label": "∫ Integrales & Límites",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -4773,7 +4773,7 @@
     {
       "id": "labBtnFinSubtabPrest",
       "section": "viewLaboratorio",
-      "line": 4755,
+      "line": 4756,
       "label": "💳 Sistema de Amortización (Préstamos)",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -4788,7 +4788,7 @@
     {
       "id": "labBtnFinSubtabCalc",
       "section": "viewLaboratorio",
-      "line": 4756,
+      "line": 4757,
       "label": "💰 Calculadora Financiera (Tasas, Interés & VAN)",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -4803,7 +4803,7 @@
     {
       "id": "labMobileFloatToggleBtn",
       "section": "viewLaboratorio",
-      "line": 4952,
+      "line": 4953,
       "label": "Cambiar entre Enunciado y Mesa de Trabajo",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -4818,7 +4818,7 @@
     {
       "id": "medInternaToBolilleroBtn",
       "section": "viewMedInterna",
-      "line": 4973,
+      "line": 4974,
       "label": "🎲 Bolillero Oral de Fisiopato",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -4833,7 +4833,7 @@
     {
       "id": "medInternaToShockBtn",
       "section": "viewMedInterna",
-      "line": 4976,
+      "line": 4977,
       "label": "Abrir Shock Room y Centro de Resucitación Clínica",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -4848,7 +4848,7 @@
     {
       "id": "medInternaClearPdfsBtn",
       "section": "viewMedInterna",
-      "line": 5034,
+      "line": 5035,
       "label": "Limpiar todos",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -4863,7 +4863,7 @@
     {
       "id": null,
       "section": "viewMedInterna",
-      "line": 5045,
+      "line": 5046,
       "label": "🏥 Todos / Del PDF",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -4878,7 +4878,7 @@
     {
       "id": null,
       "section": "viewMedInterna",
-      "line": 5046,
+      "line": 5047,
       "label": "🫀 Cardiología",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -4893,7 +4893,7 @@
     {
       "id": null,
       "section": "viewMedInterna",
-      "line": 5047,
+      "line": 5048,
       "label": "🫁 Neumonología",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -4908,7 +4908,7 @@
     {
       "id": null,
       "section": "viewMedInterna",
-      "line": 5048,
+      "line": 5049,
       "label": "🧪 Gastroenterología",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -4923,7 +4923,7 @@
     {
       "id": null,
       "section": "viewMedInterna",
-      "line": 5049,
+      "line": 5050,
       "label": "💧 Nefrología e Iones",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -4938,7 +4938,7 @@
     {
       "id": null,
       "section": "viewMedInterna",
-      "line": 5050,
+      "line": 5051,
       "label": "🧠 Neurología Clínica",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -4953,7 +4953,7 @@
     {
       "id": null,
       "section": "viewMedInterna",
-      "line": 5051,
+      "line": 5052,
       "label": "🦠 Infectología",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -4968,7 +4968,7 @@
     {
       "id": null,
       "section": "viewMedInterna",
-      "line": 5072,
+      "line": 5073,
       "label": "Cuadros clásicos con foco en fisiopatología",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -4983,7 +4983,7 @@
     {
       "id": null,
       "section": "viewMedInterna",
-      "line": 5075,
+      "line": 5076,
       "label": "Diagnóstico diferencial complejo y scores",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -4998,7 +4998,7 @@
     {
       "id": null,
       "section": "viewMedInterna",
-      "line": 5078,
+      "line": 5079,
       "label": "Multicomorbilidad, shock y dilemas de tratamiento",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -5013,7 +5013,7 @@
     {
       "id": "medInternaGenerateCaseBtn",
       "section": "viewMedInterna",
-      "line": 5087,
+      "line": 5088,
       "label": "⚡ Generar Caso Clínico Avanzado",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -5028,7 +5028,7 @@
     {
       "id": "medInternaQuickEmergencyBtn",
       "section": "viewMedInterna",
-      "line": 5090,
+      "line": 5091,
       "label": "🚨 Urgencia de Guardia",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -5043,7 +5043,7 @@
     {
       "id": "medSubmitDiagnosisBtn",
       "section": "viewMedInterna",
-      "line": 5169,
+      "line": 5170,
       "label": "🚀 Enviar Diagnóstico para Evaluación por IA",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -5058,7 +5058,7 @@
     {
       "id": "medRevealDiscussionBtn",
       "section": "viewMedInterna",
-      "line": 5180,
+      "line": 5181,
       "label": "💡 Revelar Discusión Clínica y Resolución Razonada",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -5073,7 +5073,7 @@
     {
       "id": "medSendToOralExamBtn",
       "section": "viewMedInterna",
-      "line": 5183,
+      "line": 5184,
       "label": "🎤 Rendir este caso en Bolillero Oral",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -5088,7 +5088,7 @@
     {
       "id": "farmaToBolilleroBtn",
       "section": "viewFarmacologia2",
-      "line": 5226,
+      "line": 5227,
       "label": "🎲 Bolillero de Familias de Drogas",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -5103,7 +5103,7 @@
     {
       "id": "farmaClearPdfsBtn",
       "section": "viewFarmacologia2",
-      "line": 5278,
+      "line": 5279,
       "label": "Limpiar",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -5118,7 +5118,7 @@
     {
       "id": null,
       "section": "viewFarmacologia2",
-      "line": 5289,
+      "line": 5290,
       "label": "🧪 Todas / Del PDF",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -5133,7 +5133,7 @@
     {
       "id": null,
       "section": "viewFarmacologia2",
-      "line": 5290,
+      "line": 5291,
       "label": "🫀 Cardiovasculares & HTA",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -5148,7 +5148,7 @@
     {
       "id": null,
       "section": "viewFarmacologia2",
-      "line": 5291,
+      "line": 5292,
       "label": "🦠 Antibióticos & Antifúngicos",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -5163,7 +5163,7 @@
     {
       "id": null,
       "section": "viewFarmacologia2",
-      "line": 5292,
+      "line": 5293,
       "label": "🧠 SNC & Psicofármacos",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -5178,7 +5178,7 @@
     {
       "id": null,
       "section": "viewFarmacologia2",
-      "line": 5293,
+      "line": 5294,
       "label": "⚡ Sistema Autónomo",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -5193,7 +5193,7 @@
     {
       "id": null,
       "section": "viewFarmacologia2",
-      "line": 5294,
+      "line": 5295,
       "label": "🔥 AINEs & Analgesia",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -5208,7 +5208,7 @@
     {
       "id": null,
       "section": "viewFarmacologia2",
-      "line": 5295,
+      "line": 5296,
       "label": "🩸 Endocrino & Glucemia",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -5223,7 +5223,7 @@
     {
       "id": null,
       "section": "viewFarmacologia2",
-      "line": 5316,
+      "line": 5317,
       "label": "ADME, receptores y constantes cinéticas",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -5238,7 +5238,7 @@
     {
       "id": null,
       "section": "viewFarmacologia2",
-      "line": 5319,
+      "line": 5320,
       "label": "Polifarmacia, aclaramiento y CYP450",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -5253,7 +5253,7 @@
     {
       "id": null,
       "section": "viewFarmacologia2",
-      "line": 5322,
+      "line": 5323,
       "label": "Toxicología, shock farmacológico y RAM letales",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -5268,7 +5268,7 @@
     {
       "id": "farmaGenerateChallengeBtn",
       "section": "viewFarmacologia2",
-      "line": 5330,
+      "line": 5331,
       "label": "🧪 Generar Desafío Farmacoterapéutico",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -5283,7 +5283,7 @@
     {
       "id": "farmaToggle4x4Btn",
       "section": "viewFarmacologia2",
-      "line": 5333,
+      "line": 5334,
       "label": "📑 Explorar Fichero 4x4",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -5298,7 +5298,7 @@
     {
       "id": "farmaSubmitDiagnosisBtn",
       "section": "viewFarmacologia2",
-      "line": 5387,
+      "line": 5388,
       "label": "🚀 Enviar Resolución Farmacológica a IA",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -5313,7 +5313,7 @@
     {
       "id": "farmaRevealDiscussionBtn",
       "section": "viewFarmacologia2",
-      "line": 5396,
+      "line": 5397,
       "label": "💡 Revelar Análisis Farmacoterapéutico",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -5328,7 +5328,7 @@
     {
       "id": "farmaSendToOralBtn",
       "section": "viewFarmacologia2",
-      "line": 5399,
+      "line": 5400,
       "label": "🎤 Practicar esta droga en Bolillero",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -5343,7 +5343,7 @@
     {
       "id": "saludToBolilleroBtn",
       "section": "viewSaludPublica",
-      "line": 5452,
+      "line": 5453,
       "label": "🎲 Bolillero de Temas de Salud Pública",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -5358,7 +5358,7 @@
     {
       "id": "saludClearPdfsBtn",
       "section": "viewSaludPublica",
-      "line": 5517,
+      "line": 5518,
       "label": "Limpiar",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -5373,7 +5373,7 @@
     {
       "id": "calcCalcularBtn",
       "section": "viewSaludPublica",
-      "line": 5544,
+      "line": 5545,
       "label": "⚡ Calcular Indicadores del TP",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -5388,7 +5388,7 @@
     {
       "id": null,
       "section": "viewSaludPublica",
-      "line": 5573,
+      "line": 5574,
       "label": "Cálculo de Incidencia, Prevalencia y Tasas",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -5403,7 +5403,7 @@
     {
       "id": null,
       "section": "viewSaludPublica",
-      "line": 5576,
+      "line": 5577,
       "label": "Estrategias de APS, Leavell & Clark y Lalonde",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -5418,7 +5418,7 @@
     {
       "id": null,
       "section": "viewSaludPublica",
-      "line": 5579,
+      "line": 5580,
       "label": "Investigación de Brotes, Riesgo Relativo y Odds Ratio",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -5433,7 +5433,7 @@
     {
       "id": "saludGenerateTpBtn",
       "section": "viewSaludPublica",
-      "line": 5587,
+      "line": 5588,
       "label": "📋 Generar Consigna de TP Práctico",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -5448,7 +5448,7 @@
     {
       "id": "saludRandomTpBtn",
       "section": "viewSaludPublica",
-      "line": 5590,
+      "line": 5591,
       "label": "🎲 TP Rápido de Cátedra",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -5463,7 +5463,7 @@
     {
       "id": "saludRevealDiscussionBtn",
       "section": "viewSaludPublica",
-      "line": 5664,
+      "line": 5665,
       "label": "💡 Revelar Resolución Docente Paso a Paso",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -5478,7 +5478,7 @@
     {
       "id": "saludSendToOralBtn",
       "section": "viewSaludPublica",
-      "line": 5667,
+      "line": 5668,
       "label": "🎤 Practicar este TP en Bolillero",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -5493,7 +5493,7 @@
     {
       "id": null,
       "section": "viewFinFilosofia",
-      "line": 5828,
+      "line": 5829,
       "label": "← Volver a FinHub",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -5508,7 +5508,7 @@
     {
       "id": null,
       "section": "viewFinFilosofia",
-      "line": 5837,
+      "line": 5838,
       "label": "📝 Abrir Borrador / Notas",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -5523,7 +5523,7 @@
     {
       "id": null,
       "section": "viewFinFilosofia",
-      "line": 5847,
+      "line": 5848,
       "label": "🎯 1er Parcial",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -5538,7 +5538,7 @@
     {
       "id": null,
       "section": "viewFinFilosofia",
-      "line": 5848,
+      "line": 5849,
       "label": "🎯 2do Parcial",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -5553,7 +5553,7 @@
     {
       "id": null,
       "section": "viewFinFilosofia",
-      "line": 5849,
+      "line": 5850,
       "label": "🏆 Final Integral",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -5568,7 +5568,7 @@
     {
       "id": null,
       "section": "viewFinFilosofia",
-      "line": 5851,
+      "line": 5852,
       "label": "📝 Generar Modelo de Examen Real",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -5583,7 +5583,7 @@
     {
       "id": null,
       "section": "viewFinFilosofia",
-      "line": 5873,
+      "line": 5874,
       "label": "🎲 Bolillero Oral Conceptos y preguntas orales",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -5598,7 +5598,7 @@
     {
       "id": null,
       "section": "viewFinFilosofia",
-      "line": 5877,
+      "line": 5878,
       "label": "💣 Bomba Contrarreloj Desactivación conceptual",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -5613,7 +5613,7 @@
     {
       "id": null,
       "section": "viewFinFilosofia",
-      "line": 5881,
+      "line": 5882,
       "label": "🕵️ El Impostor Detectar error conceptual",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -5628,7 +5628,7 @@
     {
       "id": null,
       "section": "viewFinFilosofia",
-      "line": 5885,
+      "line": 5886,
       "label": "🧠 Memotest Autores, corrientes y términos",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -5643,7 +5643,7 @@
     {
       "id": null,
       "section": "viewFinSFI",
-      "line": 5899,
+      "line": 5900,
       "label": "← Volver a FinHub",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -5658,7 +5658,7 @@
     {
       "id": null,
       "section": "viewFinSFI",
-      "line": 5908,
+      "line": 5909,
       "label": "📝 Abrir Borrador / Notas",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -5673,7 +5673,7 @@
     {
       "id": null,
       "section": "viewFinSFI",
-      "line": 5917,
+      "line": 5918,
       "label": "🎯 1er Parcial",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -5688,7 +5688,7 @@
     {
       "id": null,
       "section": "viewFinSFI",
-      "line": 5918,
+      "line": 5919,
       "label": "🎯 2do Parcial",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -5703,7 +5703,7 @@
     {
       "id": null,
       "section": "viewFinSFI",
-      "line": 5919,
+      "line": 5920,
       "label": "🏆 Final Integral",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -5718,7 +5718,7 @@
     {
       "id": null,
       "section": "viewFinSFI",
-      "line": 5921,
+      "line": 5922,
       "label": "📝 Generar Modelo de Examen Real",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -5733,7 +5733,7 @@
     {
       "id": null,
       "section": "viewFinSFI",
-      "line": 5940,
+      "line": 5941,
       "label": "🎲 Bolillero Oral Instrumentos y conceptos de SFI",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -5748,7 +5748,7 @@
     {
       "id": null,
       "section": "viewFinSFI",
-      "line": 5944,
+      "line": 5945,
       "label": "💣 Bomba Contrarreloj Términos y tasas a tiempo",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -5763,7 +5763,7 @@
     {
       "id": null,
       "section": "viewFinSFI",
-      "line": 5948,
+      "line": 5949,
       "label": "🕵️ El Impostor Detectar error financiero",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -5778,7 +5778,7 @@
     {
       "id": null,
       "section": "viewFinSFI",
-      "line": 5952,
+      "line": 5953,
       "label": "🧠 Memotest Mercados, plazas y emisores",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -5793,7 +5793,7 @@
     {
       "id": null,
       "section": "viewFinHistoria",
-      "line": 5966,
+      "line": 5967,
       "label": "← Volver a FinHub",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -5808,7 +5808,7 @@
     {
       "id": null,
       "section": "viewFinHistoria",
-      "line": 5975,
+      "line": 5976,
       "label": "📝 Abrir Borrador / Notas",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -5823,7 +5823,7 @@
     {
       "id": null,
       "section": "viewFinHistoria",
-      "line": 5984,
+      "line": 5985,
       "label": "🎯 1er Parcial",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -5838,7 +5838,7 @@
     {
       "id": null,
       "section": "viewFinHistoria",
-      "line": 5985,
+      "line": 5986,
       "label": "🎯 2do Parcial",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -5853,7 +5853,7 @@
     {
       "id": null,
       "section": "viewFinHistoria",
-      "line": 5986,
+      "line": 5987,
       "label": "🏆 Final Integral",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -5868,7 +5868,7 @@
     {
       "id": null,
       "section": "viewFinHistoria",
-      "line": 5988,
+      "line": 5989,
       "label": "📝 Generar Modelo de Examen Real",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -5883,7 +5883,7 @@
     {
       "id": null,
       "section": "viewFinHistoria",
-      "line": 6007,
+      "line": 6008,
       "label": "🎲 Bolillero Oral Hitos y transformaciones históricas",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -5898,7 +5898,7 @@
     {
       "id": null,
       "section": "viewFinHistoria",
-      "line": 6011,
+      "line": 6012,
       "label": "💣 Bomba Contrarreloj Hechos y fechas cruciales",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -5913,7 +5913,7 @@
     {
       "id": null,
       "section": "viewFinHistoria",
-      "line": 6015,
+      "line": 6016,
       "label": "🕵️ El Impostor Detectar error historiográfico",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -5928,7 +5928,7 @@
     {
       "id": null,
       "section": "viewFinHistoria",
-      "line": 6019,
+      "line": 6020,
       "label": "🧠 Memotest Autores, tratados y crisis",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -5943,7 +5943,7 @@
     {
       "id": null,
       "section": "viewFinEstadistica",
-      "line": 6033,
+      "line": 6034,
       "label": "← Volver a FinHub",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -5958,7 +5958,7 @@
     {
       "id": null,
       "section": "viewFinEstadistica",
-      "line": 6042,
+      "line": 6043,
       "label": "📝 Abrir Borrador / Notas",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -5973,7 +5973,7 @@
     {
       "id": null,
       "section": "viewFinEstadistica",
-      "line": 6051,
+      "line": 6052,
       "label": "🎯 1er Parcial",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -5988,7 +5988,7 @@
     {
       "id": null,
       "section": "viewFinEstadistica",
-      "line": 6052,
+      "line": 6053,
       "label": "🎯 2do Parcial",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -6003,7 +6003,7 @@
     {
       "id": null,
       "section": "viewFinEstadistica",
-      "line": 6053,
+      "line": 6054,
       "label": "🏆 Final Integral",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -6018,7 +6018,7 @@
     {
       "id": null,
       "section": "viewFinEstadistica",
-      "line": 6055,
+      "line": 6056,
       "label": "📝 Generar Modelo de Examen Real",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -6033,7 +6033,7 @@
     {
       "id": null,
       "section": "viewFinEstadistica",
-      "line": 6074,
+      "line": 6075,
       "label": "🎲 Bolillero Oral Fórmulas y propiedades estadísticas",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -6048,7 +6048,7 @@
     {
       "id": null,
       "section": "viewFinEstadistica",
-      "line": 6078,
+      "line": 6079,
       "label": "💣 Bomba Contrarreloj Cálculos rápidos y distribuciones",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -6063,7 +6063,7 @@
     {
       "id": null,
       "section": "viewFinEstadistica",
-      "line": 6082,
+      "line": 6083,
       "label": "🕵️ El Impostor Detectar error cuantitativo",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -6078,7 +6078,7 @@
     {
       "id": null,
       "section": "viewFinEstadistica",
-      "line": 6086,
+      "line": 6087,
       "label": "🧠 Memotest Distribuciones, medias y varianzas",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -6093,7 +6093,7 @@
     {
       "id": null,
       "section": "viewFinContabilidad",
-      "line": 6100,
+      "line": 6101,
       "label": "← Volver a FinHub",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -6108,7 +6108,7 @@
     {
       "id": null,
       "section": "viewFinContabilidad",
-      "line": 6109,
+      "line": 6110,
       "label": "📝 Abrir Borrador / Notas",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -6123,7 +6123,7 @@
     {
       "id": null,
       "section": "viewFinContabilidad",
-      "line": 6118,
+      "line": 6119,
       "label": "🎯 1er Parcial",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -6138,7 +6138,7 @@
     {
       "id": null,
       "section": "viewFinContabilidad",
-      "line": 6119,
+      "line": 6120,
       "label": "🎯 2do Parcial",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -6153,7 +6153,7 @@
     {
       "id": null,
       "section": "viewFinContabilidad",
-      "line": 6120,
+      "line": 6121,
       "label": "🏆 Final Integral",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -6168,7 +6168,7 @@
     {
       "id": null,
       "section": "viewFinContabilidad",
-      "line": 6122,
+      "line": 6123,
       "label": "📝 Generar Modelo de Examen Real",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -6183,7 +6183,7 @@
     {
       "id": null,
       "section": "viewFinContabilidad",
-      "line": 6141,
+      "line": 6142,
       "label": "🎲 Bolillero Oral Cuentas contables y principios",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -6198,7 +6198,7 @@
     {
       "id": null,
       "section": "viewFinContabilidad",
-      "line": 6145,
+      "line": 6146,
       "label": "💣 Bomba Contrarreloj Variaciones y saldos a tiempo",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -6213,7 +6213,7 @@
     {
       "id": null,
       "section": "viewFinContabilidad",
-      "line": 6149,
+      "line": 6150,
       "label": "🕵️ El Impostor Detectar error contable / imputación",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -6228,7 +6228,7 @@
     {
       "id": null,
       "section": "viewFinContabilidad",
-      "line": 6153,
+      "line": 6154,
       "label": "🧠 Memotest Cuentas, rubros y saldos habituales",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -6243,7 +6243,7 @@
     {
       "id": "labWhiteboardMinBtn",
       "section": "labFloatingWhiteboard",
-      "line": 6173,
+      "line": 6174,
       "label": "Minimizar",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -6258,7 +6258,7 @@
     {
       "id": "labWhiteboardCloseBtn",
       "section": "labFloatingWhiteboard",
-      "line": 6174,
+      "line": 6175,
       "label": "Cerrar",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -6273,7 +6273,7 @@
     {
       "id": "labScratchPenBtn",
       "section": "labFloatingWhiteboard",
-      "line": 6182,
+      "line": 6183,
       "label": "Lápiz de dibujo libre",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -6288,7 +6288,7 @@
     {
       "id": "labScratchRulerBtn",
       "section": "labFloatingWhiteboard",
-      "line": 6183,
+      "line": 6184,
       "label": "Modo Regla: trazá líneas rectas perfectas",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -6303,7 +6303,7 @@
     {
       "id": "labScratchEraserBtn",
       "section": "labFloatingWhiteboard",
-      "line": 6184,
+      "line": 6185,
       "label": "Goma de borrar",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -6318,7 +6318,7 @@
     {
       "id": null,
       "section": "labFloatingWhiteboard",
-      "line": 6188,
+      "line": 6189,
       "label": "Tinta Grafito",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -6333,7 +6333,7 @@
     {
       "id": null,
       "section": "labFloatingWhiteboard",
-      "line": 6189,
+      "line": 6190,
       "label": "Azul Primario",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -6348,7 +6348,7 @@
     {
       "id": null,
       "section": "labFloatingWhiteboard",
-      "line": 6190,
+      "line": 6191,
       "label": "Verde",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -6363,7 +6363,7 @@
     {
       "id": null,
       "section": "labFloatingWhiteboard",
-      "line": 6191,
+      "line": 6192,
       "label": "Ámbar",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -6378,7 +6378,7 @@
     {
       "id": null,
       "section": "labFloatingWhiteboard",
-      "line": 6192,
+      "line": 6193,
       "label": "Rojo",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -6393,7 +6393,7 @@
     {
       "id": null,
       "section": "labFloatingWhiteboard",
-      "line": 6193,
+      "line": 6194,
       "label": "Blanco",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -6408,7 +6408,7 @@
     {
       "id": null,
       "section": "labFloatingWhiteboard",
-      "line": 6196,
+      "line": 6197,
       "label": "Trazo fino (2px)",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -6423,7 +6423,7 @@
     {
       "id": null,
       "section": "labFloatingWhiteboard",
-      "line": 6197,
+      "line": 6198,
       "label": "Trazo medio (4px)",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -6438,7 +6438,7 @@
     {
       "id": null,
       "section": "labFloatingWhiteboard",
-      "line": 6198,
+      "line": 6199,
       "label": "Trazo grueso (8px)",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -6453,7 +6453,7 @@
     {
       "id": "labScratchUndoBtn",
       "section": "labFloatingWhiteboard",
-      "line": 6201,
+      "line": 6202,
       "label": "Deshacer último trazo (Ctrl+Z)",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -6468,7 +6468,7 @@
     {
       "id": "labScratchClearBtn",
       "section": "labFloatingWhiteboard",
-      "line": 6204,
+      "line": 6205,
       "label": "Borrar todo el pizarrón",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -6483,7 +6483,7 @@
     {
       "id": "labScratchAiCleanBtn",
       "section": "labFloatingWhiteboard",
-      "line": 6207,
+      "line": 6208,
       "label": "Detectar y emprolijar fórmulas o números desprolijos con IA",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -6498,7 +6498,7 @@
     {
       "id": "labAiCopyAllBtn",
       "section": "labFloatingWhiteboard",
-      "line": 6231,
+      "line": 6232,
       "label": "Copiar fórmulas limpias",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -6513,7 +6513,7 @@
     {
       "id": "labAiCleanSpaceBtn",
       "section": "labFloatingWhiteboard",
-      "line": 6232,
+      "line": 6233,
       "label": "Limpiar pizarrón para tener más espacio",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -6528,7 +6528,7 @@
     {
       "id": "labAiResultCloseBtn",
       "section": "labFloatingWhiteboard",
-      "line": 6233,
+      "line": 6234,
       "label": "Cerrar resultados",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -6543,7 +6543,7 @@
     {
       "id": "pinPomodoroBtn",
       "section": "pomodoroFloatingCard",
-      "line": 6260,
+      "line": 6261,
       "label": "Fijar en pantalla",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -6558,7 +6558,7 @@
     {
       "id": "pomodoroConfigButton",
       "section": "pomodoroFloatingCard",
-      "line": 6268,
+      "line": 6269,
       "label": "Configurar tiempos",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -6573,7 +6573,7 @@
     {
       "id": "minimizePomodoroBtn",
       "section": "pomodoroFloatingCard",
-      "line": 6278,
+      "line": 6279,
       "label": "Minimizar a píldora",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -6588,7 +6588,7 @@
     {
       "id": "modeStudyBtn",
       "section": "pomodoroFloatingCard",
-      "line": 6291,
+      "line": 6292,
       "label": "📖 Estudio",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -6603,7 +6603,7 @@
     {
       "id": "modeShortBreakBtn",
       "section": "pomodoroFloatingCard",
-      "line": 6294,
+      "line": 6295,
       "label": "☕ Corto",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -6618,7 +6618,7 @@
     {
       "id": "modeLongBreakBtn",
       "section": "pomodoroFloatingCard",
-      "line": 6297,
+      "line": 6298,
       "label": "🌴 Largo",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -6633,7 +6633,7 @@
     {
       "id": "pomodoroToggleBtn",
       "section": "pomodoroFloatingCard",
-      "line": 6321,
+      "line": 6322,
       "label": "▶ Iniciar",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -6648,7 +6648,7 @@
     {
       "id": "pomodoroResetBtn",
       "section": "pomodoroFloatingCard",
-      "line": 6325,
+      "line": 6326,
       "label": "🔄 Reiniciar",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -6663,7 +6663,7 @@
     {
       "id": "pomodoroSkipBtn",
       "section": "pomodoroFloatingCard",
-      "line": 6329,
+      "line": 6330,
       "label": "Pasar a la siguiente fase",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -6678,7 +6678,7 @@
     {
       "id": "cancelListButton",
       "section": "listModal",
-      "line": 6355,
+      "line": 6356,
       "label": "Cancelar",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -6693,7 +6693,7 @@
     {
       "id": "saveListButton",
       "section": "listModal",
-      "line": 6356,
+      "line": 6357,
       "label": "Guardar",
       "type": "submit",
       "action": "Enviar listForm",
@@ -6708,7 +6708,7 @@
     {
       "id": "cancelTopicButton",
       "section": "topicModal",
-      "line": 6370,
+      "line": 6371,
       "label": "Cancelar",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -6723,7 +6723,7 @@
     {
       "id": "saveTopicButton",
       "section": "topicModal",
-      "line": 6371,
+      "line": 6372,
       "label": "Guardar",
       "type": "submit",
       "action": "Enviar topicForm",
@@ -6738,7 +6738,7 @@
     {
       "id": "closeIaWordsModalBtn",
       "section": "bolilleroIaWordsModal",
-      "line": 6384,
+      "line": 6385,
       "label": "Cerrar modal",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -6753,7 +6753,7 @@
     {
       "id": null,
       "section": "bolilleroIaWordsModal",
-      "line": 6411,
+      "line": 6412,
       "label": "5 temas",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -6768,7 +6768,7 @@
     {
       "id": null,
       "section": "bolilleroIaWordsModal",
-      "line": 6412,
+      "line": 6413,
       "label": "10 temas",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -6783,7 +6783,7 @@
     {
       "id": null,
       "section": "bolilleroIaWordsModal",
-      "line": 6413,
+      "line": 6414,
       "label": "15 temas",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -6798,7 +6798,7 @@
     {
       "id": null,
       "section": "bolilleroIaWordsModal",
-      "line": 6414,
+      "line": 6415,
       "label": "20 temas",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -6813,7 +6813,7 @@
     {
       "id": null,
       "section": "bolilleroIaWordsModal",
-      "line": 6415,
+      "line": 6416,
       "label": "30 temas",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -6828,7 +6828,7 @@
     {
       "id": "cancelIaWordsModalBtn",
       "section": "bolilleroIaWordsModal",
-      "line": 6440,
+      "line": 6441,
       "label": "Cancelar",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -6843,7 +6843,7 @@
     {
       "id": "submitIaWordsBtn",
       "section": "bolilleroIaWordsModal",
-      "line": 6441,
+      "line": 6442,
       "label": "🚀 Extraer con IA",
       "type": "submit",
       "action": "Enviar iaWordsForm",
@@ -6858,7 +6858,7 @@
     {
       "id": "cancelPomodoroButton",
       "section": "pomodoroModal",
-      "line": 6472,
+      "line": 6473,
       "label": "Cancelar",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -6873,7 +6873,7 @@
     {
       "id": "savePomodoroButton",
       "section": "pomodoroModal",
-      "line": 6473,
+      "line": 6474,
       "label": "Guardar",
       "type": "submit",
       "action": "Enviar pomodoroForm",
@@ -6888,7 +6888,7 @@
     {
       "id": "victoryRegisterGuestBtn",
       "section": "dueloVictoryModal",
-      "line": 6497,
+      "line": 6498,
       "label": "⭐ Registrarme ahora y guardar mis puntos",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -6903,7 +6903,7 @@
     {
       "id": "victoryReturnLobbyBtn",
       "section": "dueloVictoryModal",
-      "line": 6501,
+      "line": 6502,
       "label": "🔄 Volver al Lobby",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -6918,7 +6918,7 @@
     {
       "id": "victoryReturnHomeBtn",
       "section": "dueloVictoryModal",
-      "line": 6504,
+      "line": 6505,
       "label": "🏠 Menú Principal",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -6933,7 +6933,7 @@
     {
       "id": "victoryCopySummaryBtn",
       "section": "dueloVictoryModal",
-      "line": 6508,
+      "line": 6509,
       "label": "📸 Copiar Resumen (WhatsApp)",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -6948,7 +6948,7 @@
     {
       "id": "victoryGoToFamaBtn",
       "section": "dueloVictoryModal",
-      "line": 6511,
+      "line": 6512,
       "label": "🏆 Ver en Salón de la Fama",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -6963,7 +6963,7 @@
     {
       "id": "victoryCloseBtn",
       "section": "dueloVictoryModal",
-      "line": 6514,
+      "line": 6515,
       "label": "Cerrar",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -6978,7 +6978,7 @@
     {
       "id": "dueloCancelSocorroBtn",
       "section": "dueloSocorroModal",
-      "line": 6530,
+      "line": 6531,
       "label": "Cancelar",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -6993,7 +6993,7 @@
     {
       "id": "authModalCloseBtn",
       "section": "authAccountModal",
-      "line": 6542,
+      "line": 6543,
       "label": "Cerrar modal",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -7008,7 +7008,7 @@
     {
       "id": "authTabRegister",
       "section": "authAccountModal",
-      "line": 6547,
+      "line": 6548,
       "label": "✨ Crear Cuenta",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -7023,7 +7023,7 @@
     {
       "id": "authTabLogin",
       "section": "authAccountModal",
-      "line": 6548,
+      "line": 6549,
       "label": "🔑 Iniciar Sesión",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -7038,7 +7038,7 @@
     {
       "id": "authRegOpenAvatarPickerBtn",
       "section": "authAccountModal",
-      "line": 6575,
+      "line": 6576,
       "label": "🎨 Elegir Emoji o Foto",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -7053,7 +7053,7 @@
     {
       "id": "authContinueGuestBtn",
       "section": "authAccountModal",
-      "line": 6593,
+      "line": 6594,
       "label": "Continuar como Invitado",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -7068,7 +7068,7 @@
     {
       "id": "authSubmitRegisterBtn",
       "section": "authAccountModal",
-      "line": 6596,
+      "line": 6597,
       "label": "⭐ Registrar Mi Cuenta",
       "type": "submit",
       "action": "Enviar authRegisterForm",
@@ -7083,7 +7083,7 @@
     {
       "id": "authForgotPinBtn",
       "section": "authAccountModal",
-      "line": 6622,
+      "line": 6623,
       "label": "¿Olvidaste tu contraseña?",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -7098,7 +7098,7 @@
     {
       "id": "authSubmitLoginBtn",
       "section": "authAccountModal",
-      "line": 6628,
+      "line": 6629,
       "label": "🔑 Iniciar Sesión",
       "type": "submit",
       "action": "Enviar authLoginForm",
@@ -7113,7 +7113,7 @@
     {
       "id": "ivanWelcomeCloseBtn",
       "section": "ivanWelcomeModal",
-      "line": 6641,
+      "line": 6642,
       "label": "Cerrar",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -7128,7 +7128,7 @@
     {
       "id": "ivanWelcomeGoBtn",
       "section": "ivanWelcomeModal",
-      "line": 6659,
+      "line": 6660,
       "label": "🚀 ¡A estudiar!",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -7143,7 +7143,7 @@
     {
       "id": "medClinicCloseBtn",
       "section": "modalMedicinaClinica",
-      "line": 6677,
+      "line": 6678,
       "label": "Cerrar",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -7158,7 +7158,7 @@
     {
       "id": "medTabInterna",
       "section": "modalMedicinaClinica",
-      "line": 6682,
+      "line": 6683,
       "label": "🫀 Medicina Interna (Casos)",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -7173,7 +7173,7 @@
     {
       "id": "medTabFarma",
       "section": "modalMedicinaClinica",
-      "line": 6685,
+      "line": 6686,
       "label": "💊 Farmacología 2 (Fichero 4x4)",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -7188,7 +7188,7 @@
     {
       "id": "medTabSalud",
       "section": "modalMedicinaClinica",
-      "line": 6688,
+      "line": 6689,
       "label": "📊 Salud Pública (Asistente TPs)",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -7203,7 +7203,7 @@
     {
       "id": "medGenerarCasoBtn",
       "section": "modalMedicinaClinica",
-      "line": 6702,
+      "line": 6703,
       "label": "🎲 Generar Caso Clínico",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -7218,7 +7218,7 @@
     {
       "id": "medSaludQuickFormulaBtn",
       "section": "modalMedicinaClinica",
-      "line": 6831,
+      "line": 6832,
       "label": "📐 Fórmulas Epidemiológicas",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -7233,7 +7233,7 @@
     {
       "id": "medSaludResolverBtn",
       "section": "modalMedicinaClinica",
-      "line": 6834,
+      "line": 6835,
       "label": "✨ Estructurar Respuesta de TP",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -7248,7 +7248,7 @@
     {
       "id": "medSaludCopyBtn",
       "section": "modalMedicinaClinica",
-      "line": 6843,
+      "line": 6844,
       "label": "📋 Copiar",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -7263,7 +7263,7 @@
     {
       "id": null,
       "section": "modalMedicinaClinica",
-      "line": 6851,
+      "line": 6852,
       "label": "Tasa de Mortalidad Infantil & Materna",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -7278,7 +7278,7 @@
     {
       "id": null,
       "section": "modalMedicinaClinica",
-      "line": 6852,
+      "line": 6853,
       "label": "Prevalencia vs. Incidencia Acumulada",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -7293,7 +7293,7 @@
     {
       "id": null,
       "section": "modalMedicinaClinica",
-      "line": 6853,
+      "line": 6854,
       "label": "Niveles de Leavell & Clark (Prevención 1°, 2°, 3°)",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -7308,7 +7308,7 @@
     {
       "id": null,
       "section": "modalMedicinaClinica",
-      "line": 6854,
+      "line": 6855,
       "label": "Atención Primaria de la Salud (Alma-Ata / APS Renovada)",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -7323,7 +7323,7 @@
     {
       "id": null,
       "section": "modalMedicinaClinica",
-      "line": 6855,
+      "line": 6856,
       "label": "Transición Epidemiológica & Demográfica",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -7338,7 +7338,7 @@
     {
       "id": "avatarModalCloseBtn",
       "section": "avatarPickerModal",
-      "line": 6870,
+      "line": 6871,
       "label": "Cerrar selector",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -7353,7 +7353,7 @@
     {
       "id": "avatarTabEmojis",
       "section": "avatarPickerModal",
-      "line": 6875,
+      "line": 6876,
       "label": "😀 Emojis Completos",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -7368,7 +7368,7 @@
     {
       "id": "avatarTabPhoto",
       "section": "avatarPickerModal",
-      "line": 6876,
+      "line": 6877,
       "label": "📷 Cámara / Galería",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -7383,7 +7383,7 @@
     {
       "id": null,
       "section": "avatarPickerModal",
-      "line": 6887,
+      "line": 6888,
       "label": "Todos",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -7398,7 +7398,7 @@
     {
       "id": null,
       "section": "avatarPickerModal",
-      "line": 6888,
+      "line": 6889,
       "label": "😀 Caritas",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -7413,7 +7413,7 @@
     {
       "id": null,
       "section": "avatarPickerModal",
-      "line": 6889,
+      "line": 6890,
       "label": "🦁 Animales",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -7428,7 +7428,7 @@
     {
       "id": null,
       "section": "avatarPickerModal",
-      "line": 6890,
+      "line": 6891,
       "label": "🍕 Comida",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -7443,7 +7443,7 @@
     {
       "id": null,
       "section": "avatarPickerModal",
-      "line": 6891,
+      "line": 6892,
       "label": "⚽ Hobbies",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -7458,7 +7458,7 @@
     {
       "id": null,
       "section": "avatarPickerModal",
-      "line": 6892,
+      "line": 6893,
       "label": "💡 Objetos",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -7473,7 +7473,7 @@
     {
       "id": null,
       "section": "avatarPickerModal",
-      "line": 6893,
+      "line": 6894,
       "label": "✨ Símbolos",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -7488,7 +7488,7 @@
     {
       "id": "avatarCustomEmojiBtn",
       "section": "avatarPickerModal",
-      "line": 6906,
+      "line": 6907,
       "label": "Usar este",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -7503,7 +7503,7 @@
     {
       "id": "avatarCaptureCameraBtn",
       "section": "avatarPickerModal",
-      "line": 6918,
+      "line": 6919,
       "label": "📷 Abrir Cámara",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -7518,7 +7518,7 @@
     {
       "id": "avatarUploadGalleryBtn",
       "section": "avatarPickerModal",
-      "line": 6921,
+      "line": 6922,
       "label": "🖼️ Galería de Fotos",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -7533,7 +7533,7 @@
     {
       "id": "avatarConfirmPhotoBtn",
       "section": "avatarPickerModal",
-      "line": 6937,
+      "line": 6938,
       "label": "✔ Guardar Foto como Avatar",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -7548,7 +7548,7 @@
     {
       "id": "photoZoomCloseBtn",
       "section": "photoZoomModal",
-      "line": 6952,
+      "line": 6953,
       "label": "Cerrar imagen",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -7563,7 +7563,7 @@
     {
       "id": "rulesModalCloseBtn",
       "section": "rulesModal",
-      "line": 7000,
+      "line": 7001,
       "label": "Cerrar reglas",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -7578,7 +7578,7 @@
     {
       "id": null,
       "section": "rulesModal",
-      "line": 7005,
+      "line": 7006,
       "label": "⚔️ Versus",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -7593,7 +7593,7 @@
     {
       "id": null,
       "section": "rulesModal",
-      "line": 7006,
+      "line": 7007,
       "label": "🤝 Cooperativo",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -7608,7 +7608,7 @@
     {
       "id": null,
       "section": "rulesModal",
-      "line": 7007,
+      "line": 7008,
       "label": "👤 Individual",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -7623,7 +7623,7 @@
     {
       "id": "rulesModalUnderstoodBtn",
       "section": "rulesModal",
-      "line": 7019,
+      "line": 7020,
       "label": "¡Entendido, a jugar! 🚀",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -7638,7 +7638,7 @@
     {
       "id": "closeGeminiPromptModalBtn",
       "section": "geminiPromptModal",
-      "line": 7033,
+      "line": 7034,
       "label": "Cerrar modal",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -7653,7 +7653,7 @@
     {
       "id": null,
       "section": "geminiPromptModal",
-      "line": 7043,
+      "line": 7044,
       "label": "gemini.google.com",
       "type": "a",
       "action": "Revisar delegación por clase o contenedor",
@@ -7668,7 +7668,7 @@
     {
       "id": "geminiDirectGenerateBtn",
       "section": "geminiPromptModal",
-      "line": 7074,
+      "line": 7075,
       "label": "✨ Generar Temario con IA Directa",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -7683,7 +7683,7 @@
     {
       "id": "copyGeminiPromptInnerBtn",
       "section": "geminiPromptModal",
-      "line": 7082,
+      "line": 7083,
       "label": "📋 Copiar Prompt al Portapapeles",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -7698,7 +7698,7 @@
     {
       "id": null,
       "section": "geminiPromptModal",
-      "line": 7085,
+      "line": 7086,
       "label": "🚀 Abrir Gemini ↗",
       "type": "a",
       "action": "Revisar delegación por clase o contenedor",
@@ -7713,7 +7713,7 @@
     {
       "id": "closeGeminiPromptBottomBtn",
       "section": "geminiPromptModal",
-      "line": 7088,
+      "line": 7089,
       "label": "Cerrar",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -7728,7 +7728,7 @@
     {
       "id": "closeBolilleroSetupModalBtn",
       "section": "bolilleroSetupModal",
-      "line": 7108,
+      "line": 7109,
       "label": "Cerrar modal",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -7743,7 +7743,7 @@
     {
       "id": "bolilleroBtnQuitarPdf",
       "section": "bolilleroSetupModal",
-      "line": 7125,
+      "line": 7126,
       "label": "✕ Quitar",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -7758,7 +7758,7 @@
     {
       "id": "bolilleroAddMorePdfBtn",
       "section": "bolilleroSetupModal",
-      "line": 7141,
+      "line": 7142,
       "label": "➕ Sumar otro PDF",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -7773,7 +7773,7 @@
     {
       "id": null,
       "section": "bolilleroSetupModal",
-      "line": 7157,
+      "line": 7158,
       "label": "5",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -7788,7 +7788,7 @@
     {
       "id": null,
       "section": "bolilleroSetupModal",
-      "line": 7158,
+      "line": 7159,
       "label": "10",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -7803,7 +7803,7 @@
     {
       "id": null,
       "section": "bolilleroSetupModal",
-      "line": 7159,
+      "line": 7160,
       "label": "15",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -7818,7 +7818,7 @@
     {
       "id": null,
       "section": "bolilleroSetupModal",
-      "line": 7160,
+      "line": 7161,
       "label": "20",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -7833,7 +7833,7 @@
     {
       "id": null,
       "section": "bolilleroSetupModal",
-      "line": 7161,
+      "line": 7162,
       "label": "30",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -7848,7 +7848,7 @@
     {
       "id": null,
       "section": "bolilleroSetupModal",
-      "line": 7172,
+      "line": 7173,
       "label": "Fácil",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -7863,7 +7863,7 @@
     {
       "id": null,
       "section": "bolilleroSetupModal",
-      "line": 7175,
+      "line": 7176,
       "label": "Intermedio",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -7878,7 +7878,7 @@
     {
       "id": null,
       "section": "bolilleroSetupModal",
-      "line": 7178,
+      "line": 7179,
       "label": "Difícil",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -7893,7 +7893,7 @@
     {
       "id": null,
       "section": "bolilleroSetupModal",
-      "line": 7181,
+      "line": 7182,
       "label": "Extremo",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -7908,7 +7908,7 @@
     {
       "id": "bolilleroSetupOpenManualBtn",
       "section": "bolilleroSetupModal",
-      "line": 7203,
+      "line": 7204,
       "label": "✍️ Agregar Palabras a Mano",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -7923,7 +7923,7 @@
     {
       "id": "closeBolilleroSetupModalBottomBtn",
       "section": "bolilleroSetupModal",
-      "line": 7212,
+      "line": 7213,
       "label": "Cancelar / Usar Listas Actuales",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -7938,7 +7938,7 @@
     {
       "id": "bolilleroBtnCargarConfig",
       "section": "bolilleroSetupModal",
-      "line": 7213,
+      "line": 7214,
       "label": "🚀 Generar Bolillero con IA",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -7953,7 +7953,7 @@
     {
       "id": "closeBombaSetupModalBtn",
       "section": "bombaSetupModal",
-      "line": 7233,
+      "line": 7234,
       "label": "Cerrar modal",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -7968,7 +7968,7 @@
     {
       "id": "bombaBtnQuitarPdf",
       "section": "bombaSetupModal",
-      "line": 7250,
+      "line": 7251,
       "label": "✕ Quitar",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -7983,7 +7983,7 @@
     {
       "id": "bombaAddMorePdfBtn",
       "section": "bombaSetupModal",
-      "line": 7266,
+      "line": 7267,
       "label": "➕ Sumar otro PDF",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -7998,7 +7998,7 @@
     {
       "id": null,
       "section": "bombaSetupModal",
-      "line": 7282,
+      "line": 7283,
       "label": "⚡ 45s",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -8013,7 +8013,7 @@
     {
       "id": null,
       "section": "bombaSetupModal",
-      "line": 7283,
+      "line": 7284,
       "label": "🔥 60s",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -8028,7 +8028,7 @@
     {
       "id": null,
       "section": "bombaSetupModal",
-      "line": 7284,
+      "line": 7285,
       "label": "🎯 90s",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -8043,7 +8043,7 @@
     {
       "id": null,
       "section": "bombaSetupModal",
-      "line": 7285,
+      "line": 7286,
       "label": "🛡️ 120s",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -8058,7 +8058,7 @@
     {
       "id": null,
       "section": "bombaSetupModal",
-      "line": 7295,
+      "line": 7296,
       "label": "Fácil",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -8073,7 +8073,7 @@
     {
       "id": null,
       "section": "bombaSetupModal",
-      "line": 7298,
+      "line": 7299,
       "label": "Intermedio",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -8088,7 +8088,7 @@
     {
       "id": null,
       "section": "bombaSetupModal",
-      "line": 7301,
+      "line": 7302,
       "label": "Difícil",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -8103,7 +8103,7 @@
     {
       "id": null,
       "section": "bombaSetupModal",
-      "line": 7304,
+      "line": 7305,
       "label": "Extremo",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -8118,7 +8118,7 @@
     {
       "id": "closeBombaSetupModalBottomBtn",
       "section": "bombaSetupModal",
-      "line": 7379,
+      "line": 7380,
       "label": "Cancelar / Jugar Modo Clásico",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -8133,7 +8133,7 @@
     {
       "id": "bombaBtnCargarConfig",
       "section": "bombaSetupModal",
-      "line": 7380,
+      "line": 7381,
       "label": "💣 Armar y Comenzar Desafío con IA",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -8148,7 +8148,7 @@
     {
       "id": "closeImpostorSetupModalBtn",
       "section": "impostorSetupModal",
-      "line": 7400,
+      "line": 7401,
       "label": "Cerrar modal",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -8163,7 +8163,7 @@
     {
       "id": "impostorBtnQuitarPdf",
       "section": "impostorSetupModal",
-      "line": 7417,
+      "line": 7418,
       "label": "✕ Quitar",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -8178,7 +8178,7 @@
     {
       "id": "impostorAddMorePdfBtn",
       "section": "impostorSetupModal",
-      "line": 7433,
+      "line": 7434,
       "label": "➕ Sumar otro PDF",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -8193,7 +8193,7 @@
     {
       "id": null,
       "section": "impostorSetupModal",
-      "line": 7449,
+      "line": 7450,
       "label": "3 Casos",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -8208,7 +8208,7 @@
     {
       "id": null,
       "section": "impostorSetupModal",
-      "line": 7450,
+      "line": 7451,
       "label": "5 Casos",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -8223,7 +8223,7 @@
     {
       "id": null,
       "section": "impostorSetupModal",
-      "line": 7451,
+      "line": 7452,
       "label": "7 Casos",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -8238,7 +8238,7 @@
     {
       "id": null,
       "section": "impostorSetupModal",
-      "line": 7452,
+      "line": 7453,
       "label": "10 Casos",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -8253,7 +8253,7 @@
     {
       "id": null,
       "section": "impostorSetupModal",
-      "line": 7463,
+      "line": 7464,
       "label": "⚡ 10s",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -8268,7 +8268,7 @@
     {
       "id": null,
       "section": "impostorSetupModal",
-      "line": 7464,
+      "line": 7465,
       "label": "🎯 15s",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -8283,7 +8283,7 @@
     {
       "id": null,
       "section": "impostorSetupModal",
-      "line": 7465,
+      "line": 7466,
       "label": "🧠 20s",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -8298,7 +8298,7 @@
     {
       "id": null,
       "section": "impostorSetupModal",
-      "line": 7466,
+      "line": 7467,
       "label": "🛡️ 30s",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -8313,7 +8313,7 @@
     {
       "id": null,
       "section": "impostorSetupModal",
-      "line": 7476,
+      "line": 7477,
       "label": "Fácil",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -8328,7 +8328,7 @@
     {
       "id": null,
       "section": "impostorSetupModal",
-      "line": 7479,
+      "line": 7480,
       "label": "Intermedio",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -8343,7 +8343,7 @@
     {
       "id": null,
       "section": "impostorSetupModal",
-      "line": 7482,
+      "line": 7483,
       "label": "Difícil",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -8358,7 +8358,7 @@
     {
       "id": null,
       "section": "impostorSetupModal",
-      "line": 7485,
+      "line": 7486,
       "label": "Extremo",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -8373,7 +8373,7 @@
     {
       "id": "closeImpostorSetupModalBottomBtn",
       "section": "impostorSetupModal",
-      "line": 7560,
+      "line": 7561,
       "label": "Cancelar / Usar Casos Actuales",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -8388,7 +8388,7 @@
     {
       "id": "impostorBtnCargarConfig",
       "section": "impostorSetupModal",
-      "line": 7561,
+      "line": 7562,
       "label": "🕵️‍♂️ Iniciar Misión con IA",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -8403,7 +8403,7 @@
     {
       "id": "closeMemotestSetupModalBtn",
       "section": "memotestSetupModal",
-      "line": 7581,
+      "line": 7582,
       "label": "Cerrar modal",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -8418,7 +8418,7 @@
     {
       "id": "memotestBtnQuitarPdf",
       "section": "memotestSetupModal",
-      "line": 7598,
+      "line": 7599,
       "label": "✕ Quitar",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -8433,7 +8433,7 @@
     {
       "id": "memotestAddMorePdfBtn",
       "section": "memotestSetupModal",
-      "line": 7614,
+      "line": 7615,
       "label": "➕ Sumar otro PDF",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -8448,7 +8448,7 @@
     {
       "id": null,
       "section": "memotestSetupModal",
-      "line": 7630,
+      "line": 7631,
       "label": "4 (8)",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -8463,7 +8463,7 @@
     {
       "id": null,
       "section": "memotestSetupModal",
-      "line": 7631,
+      "line": 7632,
       "label": "6 (12)",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -8478,7 +8478,7 @@
     {
       "id": null,
       "section": "memotestSetupModal",
-      "line": 7632,
+      "line": 7633,
       "label": "8 (16)",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -8493,7 +8493,7 @@
     {
       "id": null,
       "section": "memotestSetupModal",
-      "line": 7633,
+      "line": 7634,
       "label": "10 (20)",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -8508,7 +8508,7 @@
     {
       "id": null,
       "section": "memotestSetupModal",
-      "line": 7634,
+      "line": 7635,
       "label": "12 (24)",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -8523,7 +8523,7 @@
     {
       "id": null,
       "section": "memotestSetupModal",
-      "line": 7645,
+      "line": 7646,
       "label": "🧘 Libre",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -8538,7 +8538,7 @@
     {
       "id": null,
       "section": "memotestSetupModal",
-      "line": 7646,
+      "line": 7647,
       "label": "⚡ 60s",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -8553,7 +8553,7 @@
     {
       "id": null,
       "section": "memotestSetupModal",
-      "line": 7647,
+      "line": 7648,
       "label": "🎯 90s",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -8568,7 +8568,7 @@
     {
       "id": null,
       "section": "memotestSetupModal",
-      "line": 7648,
+      "line": 7649,
       "label": "🛡️ 120s",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -8583,7 +8583,7 @@
     {
       "id": null,
       "section": "memotestSetupModal",
-      "line": 7658,
+      "line": 7659,
       "label": "Fácil",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -8598,7 +8598,7 @@
     {
       "id": null,
       "section": "memotestSetupModal",
-      "line": 7661,
+      "line": 7662,
       "label": "Intermedio",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -8613,7 +8613,7 @@
     {
       "id": null,
       "section": "memotestSetupModal",
-      "line": 7664,
+      "line": 7665,
       "label": "Difícil",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -8628,7 +8628,7 @@
     {
       "id": null,
       "section": "memotestSetupModal",
-      "line": 7667,
+      "line": 7668,
       "label": "Extremo",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -8643,7 +8643,7 @@
     {
       "id": "closeMemotestSetupModalBottomBtn",
       "section": "memotestSetupModal",
-      "line": 7742,
+      "line": 7743,
       "label": "Cancelar / Tablero Estándar",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -8658,7 +8658,7 @@
     {
       "id": "memotestBtnCargarConfig",
       "section": "memotestSetupModal",
-      "line": 7743,
+      "line": 7744,
       "label": "🧠 Armar y Conectar Memotest con IA",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -8673,7 +8673,7 @@
     {
       "id": "closeLabConfigModalBtn",
       "section": "labConfigModal",
-      "line": 7764,
+      "line": 7765,
       "label": "Cerrar modal",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -8688,7 +8688,7 @@
     {
       "id": "labBtnVolverMaterias",
       "section": "labConfigModal",
-      "line": 7779,
+      "line": 7780,
       "label": "← Elegir otra materia",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -8703,7 +8703,7 @@
     {
       "id": "labBtnSelectAllSubtopics",
       "section": "labConfigModal",
-      "line": 7798,
+      "line": 7799,
       "label": "Marcar todos los temas",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -8718,7 +8718,7 @@
     {
       "id": "labBtnClearSubtopics",
       "section": "labConfigModal",
-      "line": 7799,
+      "line": 7800,
       "label": "Desmarcar todos",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -8733,7 +8733,7 @@
     {
       "id": "labBtnQuitarPdf",
       "section": "labConfigModal",
-      "line": 7829,
+      "line": 7830,
       "label": "✕",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -8748,7 +8748,7 @@
     {
       "id": null,
       "section": "labConfigModal",
-      "line": 7840,
+      "line": 7841,
       "label": "Fácil",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -8763,7 +8763,7 @@
     {
       "id": null,
       "section": "labConfigModal",
-      "line": 7843,
+      "line": 7844,
       "label": "Intermedio",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -8778,7 +8778,7 @@
     {
       "id": null,
       "section": "labConfigModal",
-      "line": 7846,
+      "line": 7847,
       "label": "Difícil",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -8793,7 +8793,7 @@
     {
       "id": null,
       "section": "labConfigModal",
-      "line": 7849,
+      "line": 7850,
       "label": "Extremo",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -8808,7 +8808,7 @@
     {
       "id": "closeLabConfigModalBottomBtn",
       "section": "labConfigModal",
-      "line": 7866,
+      "line": 7867,
       "label": "Cancelar",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -8823,7 +8823,7 @@
     {
       "id": "labBtnCargarConfig",
       "section": "labConfigModal",
-      "line": 7867,
+      "line": 7868,
       "label": "🚀 Comenzar Práctica",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -8838,7 +8838,7 @@
     {
       "id": "closeLabPromptModalBtn",
       "section": "labPromptModal",
-      "line": 7881,
+      "line": 7882,
       "label": "Cerrar modal",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -8853,7 +8853,7 @@
     {
       "id": "labPromptModalChangeConfigBtn",
       "section": "labPromptModal",
-      "line": 7889,
+      "line": 7890,
       "label": "Cambiar tema / archivo ⚙️",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -8868,7 +8868,7 @@
     {
       "id": null,
       "section": "labPromptModal",
-      "line": 7899,
+      "line": 7900,
       "label": "Fácil",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -8883,7 +8883,7 @@
     {
       "id": null,
       "section": "labPromptModal",
-      "line": 7902,
+      "line": 7903,
       "label": "Intermedio",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -8898,7 +8898,7 @@
     {
       "id": null,
       "section": "labPromptModal",
-      "line": 7905,
+      "line": 7906,
       "label": "Difícil",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -8913,7 +8913,7 @@
     {
       "id": null,
       "section": "labPromptModal",
-      "line": 7908,
+      "line": 7909,
       "label": "Extremo",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -8928,7 +8928,7 @@
     {
       "id": "labBtnGenerarSorpresa",
       "section": "labPromptModal",
-      "line": 7936,
+      "line": 7937,
       "label": "Generar un ejercicio aleatorio variado",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -8943,7 +8943,7 @@
     {
       "id": "closeLabPromptModalBottomBtn",
       "section": "labPromptModal",
-      "line": 7940,
+      "line": 7941,
       "label": "Cancelar",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -8958,7 +8958,7 @@
     {
       "id": "labBtnEjecutarGeneracion",
       "section": "labPromptModal",
-      "line": 7941,
+      "line": 7942,
       "label": "🚀 Crear Ejercicio",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -8973,7 +8973,7 @@
     {
       "id": "scratchpadToggleModeBtn",
       "section": "scratchpadFloatingCard",
-      "line": 7968,
+      "line": 7969,
       "label": "Alternar entre Dibujo y Notas de Texto",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -8988,7 +8988,7 @@
     {
       "id": "pinScratchpadBtn",
       "section": "scratchpadFloatingCard",
-      "line": 7971,
+      "line": 7972,
       "label": "Fijar en pantalla",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -9003,7 +9003,7 @@
     {
       "id": "minimizeScratchpadBtn",
       "section": "scratchpadFloatingCard",
-      "line": 7974,
+      "line": 7975,
       "label": "Minimizar",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -9018,7 +9018,7 @@
     {
       "id": null,
       "section": "scratchpadFloatingCard",
-      "line": 7984,
+      "line": 7985,
       "label": "Blanco",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -9033,7 +9033,7 @@
     {
       "id": null,
       "section": "scratchpadFloatingCard",
-      "line": 7985,
+      "line": 7986,
       "label": "Celeste Neón",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -9048,7 +9048,7 @@
     {
       "id": null,
       "section": "scratchpadFloatingCard",
-      "line": 7986,
+      "line": 7987,
       "label": "Verde Esmeralda",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -9063,7 +9063,7 @@
     {
       "id": null,
       "section": "scratchpadFloatingCard",
-      "line": 7987,
+      "line": 7988,
       "label": "Amarillo",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -9078,7 +9078,7 @@
     {
       "id": null,
       "section": "scratchpadFloatingCard",
-      "line": 7988,
+      "line": 7989,
       "label": "Rojo / Coral",
       "type": "button",
       "action": "Evento delegado por atributo",
@@ -9093,7 +9093,7 @@
     {
       "id": "scratchpadPenBtn",
       "section": "scratchpadFloatingCard",
-      "line": 7991,
+      "line": 7992,
       "label": "Lápiz de dibujo",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -9108,7 +9108,7 @@
     {
       "id": "scratchpadEraserBtn",
       "section": "scratchpadFloatingCard",
-      "line": 7992,
+      "line": 7993,
       "label": "Goma de borrar",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -9123,7 +9123,7 @@
     {
       "id": "scratchpadClearBtn",
       "section": "scratchpadFloatingCard",
-      "line": 7993,
+      "line": 7994,
       "label": "Borrar todo",
       "type": "button",
       "action": "Evento registrado por ID",
@@ -9138,7 +9138,7 @@
     {
       "id": "scratchpadClearNotesBtn",
       "section": "scratchpadFloatingCard",
-      "line": 8007,
+      "line": 8008,
       "label": "Limpiar notas",
       "type": "button",
       "action": "Evento registrado por ID",

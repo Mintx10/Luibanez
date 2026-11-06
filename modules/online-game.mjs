@@ -1,4 +1,4 @@
-import { getClient, currentUser } from './session.mjs';
+import { getClient, currentRoomUser } from './session.mjs';
 let host;
 let latest;
 let timer;
@@ -62,7 +62,7 @@ function render(state, callbacks) {
       button.dataset.action = state.type === 'memory' ? 'flip' : 'answer'; button.dataset.index = index;
       button.textContent = state.type === 'memory' ? choice.text || `Carta ${index + 1}` : choice;
       button.setAttribute('aria-label', state.type === 'memory' ? `${choice.matched ? 'Par encontrado: ' : ''}${button.textContent}` : choice);
-      button.disabled = Boolean(choice.matched || (state.type === 'memory' && state.mode === 'coop' && state.turnUserId !== currentUser()?.id));
+      button.disabled = Boolean(choice.matched || (state.type === 'memory' && state.mode === 'coop' && state.turnUserId !== currentRoomUser()?.id));
       container.append(button);
     });
   }

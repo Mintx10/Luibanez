@@ -3,7 +3,7 @@ const {mockAuth,mockUser,ready,closeDialogs}=require('./helpers.cjs');
 const {studyPDF}=require('./pdf-fixture.cjs');
 const JSZip=require('../../jszip.min.js');
 test('text and PDF uploads extract real text, persist, and can be removed',async({page})=>{
- const errors=[];page.on('pageerror',e=>errors.push(e.message));await mockAuth(page);await ready(page,'#bolillero');await closeDialogs(page);
+ const errors=[];page.on('pageerror',e=>errors.push(e.message));await mockAuth(page,mockUser);await ready(page,'#bolillero');await closeDialogs(page);
  await page.locator('#bolilleroPdfFileInput').setInputFiles([{name:'estudio.txt',mimeType:'text/plain',buffer:Buffer.from('Media: suma de valores dividida por cantidad.\nVarianza: medida de dispersion de las observaciones de una muestra.\nProbabilidad: estudio de sucesos aleatorios en un experimento controlado.')}]);
  await expect(page.locator('#bolilleroMultiPdfList')).toContainText('estudio.txt');
  await page.locator('#bolilleroPdfFileInput').setInputFiles([{name:'estudio.pdf',mimeType:'application/pdf',buffer:studyPDF()}]);
@@ -39,7 +39,7 @@ test('offline document changes and deletions remain queued and retry when connec
  expect(await page.evaluate(()=>window.__authCalls.some(call=>call.name==='eq'&&call.args[0]==='user_id'&&call.args[1]==='11111111-1111-4111-8111-111111111111'))).toBe(true);
 });
 test('unsafe dynamic HTML is sanitized while delegated actions remain callable',async({page})=>{
- await mockAuth(page);await ready(page);
+ await mockAuth(page,mockUser);await ready(page);
  const result=await page.evaluate(async()=>{
   const {setHTML}=await import('/modules/safe-html.mjs');const element=document.createElement('div');document.body.append(element);
   window.__xss=0;let calls=0;window.eliminarAsientoContable=()=>calls++;

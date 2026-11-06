@@ -1,8 +1,8 @@
 "use strict";
 const CACHE_PREFIX = "luibanez-cache-";
-const CACHE_NAME = CACHE_PREFIX + "v30.1.0";
+const CACHE_NAME = CACHE_PREFIX + "v31.0.0";
 const STATIC_ASSETS = [
-  "./index.html", "./style.css?v=30.1.0", "./script.js?v=30.1.0",
+  "./index.html", "./campus.css", "./catalog.json", "./campus-config.json","./modules/campus/app.mjs","./modules/campus/catalog.mjs","./modules/campus/dom.mjs","./modules/campus/store.mjs","./modules/campus/onboarding.mjs","./modules/campus/captcha.mjs","./modules/campus/subject-view.mjs","./modules/campus/workbench.mjs","./modules/campus/content/pack.mjs","./modules/campus/content/subject.mjs", "./style.css?v=31.0.0", "./script.js?v=31.0.0",
   "./modules/bootstrap.mjs", "./modules/page-events.mjs", "./modules/file-limits.mjs", "./modules/medical-data.mjs", "./modules/finance-generator.mjs", "./modules/finance-catalog.mjs", "./modules/results.mjs", "./modules/study-data.mjs", "./modules/database.mjs", "./modules/pwa.mjs", "./modules/finance-data.mjs", "./modules/math.mjs", "./modules/storage.mjs", "./modules/session.mjs", "./modules/ai-client.mjs",
   "./modules/cloud.mjs", "./modules/account-tools.mjs", "./modules/rooms.mjs", "./modules/online-game.mjs",
   "./modules/navigation.mjs", "./modules/pdf.mjs", "./modules/safe-html.mjs", "./vendor/dompurify.mjs", "./vendor/supabase.js", "./vendor/katex/katex.min.js", "./vendor/katex/katex.min.css", "./vendor/fontawesome/css/all.min.css", "./jszip.min.js", "./manifest.json", "./icon.svg", "./icon-192.png", "./icon-512.png"
@@ -35,9 +35,10 @@ self.addEventListener("message", event => {
 self.addEventListener("fetch", event => {
   const url = new URL(event.request.url);
   if (event.request.method !== "GET" || url.origin !== self.location.origin || url.pathname.startsWith("/api/") || url.pathname.endsWith("/version.json")) return;
+  const academicAsset = /^\/modules\/campus\/content\/[a-z0-9.-]+\.mjs$/.test(url.pathname);
   const vendorAsset = url.pathname.startsWith("/vendor/");
-  const versionedAsset = /\.[a-f0-9]{12}\.(?:js|mjs|css)$/.test(url.pathname);
-  if (event.request.mode !== "navigate" && !paths.has(url.pathname) && !vendorAsset && !versionedAsset) return;
+  const versionedAsset = /\.[a-f0-9]{12}\.(?:js|mjs|css|json)$/.test(url.pathname);
+  if (event.request.mode !== "navigate" && !paths.has(url.pathname) && !vendorAsset && !versionedAsset && !academicAsset) return;
   event.respondWith((async () => {
     const cache = await caches.open(CACHE_NAME);
     // Serve the installed shell and its modules as one version until the update is accepted.
@@ -50,7 +51,7 @@ self.addEventListener("fetch", event => {
         if (previous) return previous;
       }
     }
-    try { const response = await fetch(event.request); if (vendorAsset && response.ok) await cache.put(event.request, response.clone()); return response; }
+    try { const response = await fetch(event.request); if ((vendorAsset||academicAsset) && response.ok) await cache.put(event.request, response.clone()); return response; }
     catch { return new Response("Recurso no disponible sin conexión.", { status: 503, headers: { "Content-Type": "text/plain; charset=utf-8" } }); }
   })());
 });

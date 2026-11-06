@@ -4,6 +4,7 @@ const { authorize } = require('../lib/api-access.cjs');
 const { buildPrompt } = require('../lib/ai-prompts.cjs');
 const { generate } = require('../lib/ai-provider.cjs');
 const { allowedOrigins } = require('../lib/api-security.cjs');
+const {academicContext}=require('../lib/academic-context.cjs');
 
 module.exports = async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
@@ -21,8 +22,9 @@ module.exports = async function handler(req, res) {
   try {
     if (!/^application\/json(?:;|$)/i.test(req.headers['content-type'] || '')) throw new HttpError(415, 'JSON_REQUIRED', 'Utilizá Content-Type: application/json.');
     if (Number(req.headers['content-length'] || 0) > 4_000_000) throw new HttpError(413, 'BODY_TOO_LARGE', 'La solicitud supera el límite de 4 MB.');
-    const body = validateInput(req.body);
+    let body = validateInput(req.body);
     await authorize(req);
+    body=await academicContext(body,req);
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) throw new HttpError(503, 'AI_NOT_CONFIGURED', 'El servicio de IA todavía no está configurado.');
     const parts = [];

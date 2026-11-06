@@ -2,7 +2,7 @@ const {test,expect}=require('@playwright/test');
 const {mockAuth,mockUser,ready,closeDialogs}=require('./helpers.cjs');
 test('CSP blocks injected inline scripts and event handlers while static Finance controls work',async({page})=>{
  await mockAuth(page,{...mockUser,user_metadata:{apodo:'Seguridad',carrera:'Licenciatura en Finanzas'}});
- await ready(page,'#fin-estadistica');await closeDialogs(page);
+ await ready(page,'#legacy/fin-estadistica');await closeDialogs(page);
  const result=await page.evaluate(async()=>{
   window.__injected=0;
   const script=document.createElement('script');script.textContent='window.__injected=1';document.body.append(script);
@@ -20,5 +20,5 @@ test('CSP blocks injected inline scripts and event handlers while static Finance
  await expect(page.locator('#finExamSheet_estadistica .fin-sheet-placeholder')).toHaveCount(0);
  await expect(page.locator('#finExamSheet_estadistica')).not.toBeEmpty();
  await view.getByRole('button',{name:'← Volver a FinHub',exact:true}).click();
- await expect(page.locator('#viewFinanzasHub')).toHaveClass(/view--active/);
+ await expect(page.locator('#viewCampus')).toHaveClass(/view--active/);
 });

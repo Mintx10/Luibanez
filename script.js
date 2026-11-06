@@ -1,3 +1,4 @@
+import {getCareer} from './modules/campus/catalog.mjs';
 import { validateStudyFile, validateOfficeArchive, validateExtractedText } from './modules/file-limits.mjs';
 import { buildFinanceStudyList } from './modules/finance-catalog.mjs';
 import { parseBackup, normalizeLists } from './modules/study-data.mjs';
@@ -8,7 +9,7 @@ import { setHTML } from './modules/safe-html.mjs';
 import { loadPDF, pdfOptions } from './modules/pdf.mjs';
 import { normalizeRoute, showRoute } from './modules/navigation.mjs';
 import { studyStorage } from './modules/storage.mjs';
-import { getClient, currentUser, currentAppearance, withAuthAction, register as registerAccount, signIn, signOut, resetPassword } from './modules/session.mjs';
+import { getClient, currentUser, currentRoomUser, guestAlias, currentAppearance, withAuthAction, register as registerAccount, signIn, signOut, resetPassword } from './modules/session.mjs';
 import { requestAI } from './modules/ai-client.mjs';
 import { createCloudService } from './modules/cloud.mjs';
 import { setupAccountTools, muestrearContexto } from './modules/account-tools.mjs';
@@ -1353,14 +1354,16 @@ window.abrirTarjetaScratchpad = abrirTarjetaScratchpad;
 let navigationSequence = 0;
 async function cambiarVista(vista) {
     const request = ++navigationSequence;
-    let rawTarget = normalizeRoute(vista);
+    const campusRoute=window.__campus?.prepareRoute(vista)||{view:normalizeRoute(vista),hash:normalizeRoute(vista)};
+    let rawTarget=normalizeRoute(campusRoute.view);
+    if(rawTarget.startsWith('materia/'))rawTarget='materia';
 
     // Validación de acceso exclusivo por carrera y perfil
     if (typeof esCarreraFinanzasActiva === "function" && rawTarget.startsWith("fin-") && !esCarreraFinanzasActiva()) {
         mostrarToast("🔒 El módulo de Finanzas es exclusivo para estudiantes de la carrera.", "aviso");
         rawTarget = "home";
     }
-    if (typeof esCuentaIvanActiva === "function" && (rawTarget.startsWith("med-") || rawTarget === "farmacologia-2" || rawTarget === "salud-publica") && !esCuentaIvanActiva()) {
+    if (typeof esCarreraMedicinaActiva === "function" && (rawTarget.startsWith("med-") || rawTarget === "farmacologia-2" || rawTarget === "salud-publica") && !esCarreraMedicinaActiva()) {
         mostrarToast("🔒 Elegí Medicina en Cuenta y datos para acceder a estas materias.", "aviso");
         rawTarget = "home";
     }
@@ -1370,7 +1373,7 @@ async function cambiarVista(vista) {
     if (request !== navigationSequence) return;
     showRoute(vistaDestino);
     if (vistaDestino !== "laboratorio" && animacionFisicaId !== null) { cancelAnimationFrame(animacionFisicaId); animacionFisicaId = null; estadoSimulacionFisica.corriendo = false; }
-    if (!['home','med-interna','farmacologia-2','salud-publica'].includes(vistaDestino) || !esCuentaIvanActiva()) detenerEcgMonitorCanvas();
+    if (!['home','med-interna','farmacologia-2','salud-publica'].includes(vistaDestino) || !esCarreraMedicinaActiva()) detenerEcgMonitorCanvas();
 
     // 2. Sincronizar botones de la barra superior (Navbar)
     if (dom.navHomeBtn) dom.navHomeBtn.classList.toggle("is-active", vistaDestino === "home");
@@ -1440,8 +1443,9 @@ async function cambiarVista(vista) {
     }
 
     const currentHash = window.location.hash.replace("#", "");
-    if (currentHash !== vistaDestino) {
-        window.location.hash = vistaDestino;
+    const routeHash = (vistaDestino === 'materia' || vistaDestino === campusRoute.view) ? campusRoute.hash : vistaDestino;
+    if (currentHash !== routeHash) {
+        window.location.hash = routeHash;
     }
 
     if (vistaDestino === "bolillero") {
@@ -1509,6 +1513,8 @@ async function cambiarVista(vista) {
         }
     }
 
+    await window.__campus?.render(routeHash);
+    if(request !== navigationSequence)return;
     window.scrollTo({ top: 0, behavior: "smooth" });
 }
 window.cambiarVista = cambiarVista;
@@ -1521,6 +1527,7 @@ function inicializarRutas() {
         cambiarVista("juntos");
         return;
     }
+    if(currentUser()){const pending=sessionStorage.getItem('campus:pending-route');if(pending){sessionStorage.removeItem('campus:pending-route');cambiarVista(pending);return;}}
     // Restore deep links and reloads using the same validated route registry.
     cambiarVista(normalizeRoute(window.location.hash));
 }
@@ -1529,7 +1536,7 @@ function inicializarRutas() {
    MODO CLARO / OSCURO (TEMA)
    ========================================================== */
 function inicializarTema() {
-    const temaGuardado = studyStorage.getItem(THEME_STORAGE_KEY) || "dark";
+    const temaGuardado = studyStorage.getItem(THEME_STORAGE_KEY) || "light";
     aplicarTema(temaGuardado);
 }
 
@@ -2914,9 +2921,9 @@ const RESPUESTAS_TP_SALUD_PUBLICA = {};
 let indiceCasoClinicoActual = 0;
 
 
-function esCuentaIvanActiva() { return !perfilUsuario.esInvitado && perfilUsuario.carrera === "Medicina"; }
+function esCarreraMedicinaActiva() { return !!currentUser() && getCareer(perfilUsuario.carrera)?.id === "medicina"; }
 
-function esCuentaLucasActiva() { return !perfilUsuario.esInvitado && perfilUsuario.carrera === "Licenciatura en Finanzas"; }
+function esCarreraFinanzasActiva() { return !!currentUser() && getCareer(perfilUsuario.carrera)?.id === "finanzas"; }
 
 
 function cargarPerfilUsuario() {
@@ -2926,12 +2933,12 @@ function cargarPerfilUsuario() {
  const meta = user?.user_metadata || {};
  Object.assign(perfilUsuario, { victorias: 0, partidasJugadas: 0, puntosTotales: 0, maxRachaHistorica: 0, totalRobos: 0 },
    Object.fromEntries(['victorias','partidasJugadas','puntosTotales','maxRachaHistorica','totalRobos'].map(k => [k, Number(local[k]) || 0])), {
-   id: user?.id || 'guest', esInvitado: !user, apodo: user ? (meta.apodo || 'Estudiante') : 'Invitado',
+   id: user?.id || currentRoomUser()?.id || 'guest', esInvitado: !user, apodo: user ? (meta.apodo || 'Estudiante') : guestAlias(),
    username: user ? (meta.apodo || 'Estudiante') : '', carrera: user ? (meta.carrera || 'General') : '',
    avatar: currentAppearance().avatar ?? local.avatar ?? meta.avatar ?? '👤', tipoAvatar: currentAppearance().tipoAvatar ?? local.tipoAvatar ?? 'emoji', fotoDataUrl: currentAppearance().fotoDataUrl ?? local.fotoDataUrl ?? '', email: user?.email || ''
  });
  studyStorage.setItem(ACTIVE_USER_STORAGE_KEY, JSON.stringify(perfilUsuario));
- if (esCuentaIvanActiva()) asegurarMateriasMedicinaIvan();
+ if (esCarreraMedicinaActiva()) asegurarMateriasMedicina();
  actualizarUIPerfilUsuario(); actualizarUIAuthHeader();
 }
 
@@ -3057,7 +3064,7 @@ function actualizarUIAuthHeader() {
         }
 
         // Modo Medicina: EXCLUSIVO Y ÚNICO PARA IVÁN ('ivi')
-        const esIvan = esCuentaIvanActiva();
+        const esIvan = esCarreraMedicinaActiva();
         actualizarNavExclusivoIvan(esIvan);
 
         const heroElem = document.querySelector("#viewHome .hero");
@@ -3074,7 +3081,7 @@ function actualizarUIAuthHeader() {
                 shockRoom.classList.remove("hidden");
                 sincronizarShockRoomHome();
             }
-            asegurarMateriasMedicinaIvan();
+            asegurarMateriasMedicina();
         } else {
             if (heroElem) heroElem.classList.remove("hidden");
             if (portalHub) portalHub.classList.remove("hidden");
@@ -3114,6 +3121,7 @@ function actualizarUIAuthHeader() {
 }
 
 function abrirModalAuth(pestaña = "login") {
+    if(pestaña === "register" && window.__campus){dom.authAccountModal?.close();window.__campus.beginOnboarding();return;}
     if (!dom.authAccountModal) return;
     cambiarPestañaAuth(pestaña);
     if (dom.authLoginUserInput && pestaña === "login") {
@@ -3139,6 +3147,7 @@ function abrirModalAuth(pestaña = "login") {
 }
 
 function cambiarPestañaAuth(pestaña) {
+    if(pestaña === "register" && window.__campus){dom.authAccountModal?.close();window.__campus.beginOnboarding();return;}
     if (dom.authTabRegister) dom.authTabRegister.classList.toggle("is-active", pestaña === "register");
     if (dom.authTabLogin) dom.authTabLogin.classList.toggle("is-active", pestaña === "login");
     if (dom.authRegisterForm) dom.authRegisterForm.classList.toggle("hidden", pestaña !== "register");
@@ -3172,7 +3181,7 @@ async function recuperarPin() {
  }, mostrarToast);
 }
 
-function asegurarMateriasMedicinaIvan() {
+function asegurarMateriasMedicina() {
     let modifico = false;
     MATERIAS_MEDICINA_IVAN.forEach(materia => {
         const existe = estado.listas.some(l => 
@@ -3197,7 +3206,7 @@ function asegurarMateriasMedicinaIvan() {
 /* ==========================================================
    PERSONALIZACIÓN EXCLUSIVA DE NAVEGACIÓN PARA DR. IVÁN ('ivi')
    ========================================================== */
-function esCarreraFinanzasActiva() { return esCuentaLucasActiva(); }
+
 
 function sincronizarPortalCardsHome(esIvan) {
     const cardJuntos = document.querySelector(".portal-hub-card--juntos");
@@ -3242,83 +3251,7 @@ function sincronizarPortalCardsHome(esIvan) {
     }
 }
 
-function actualizarNavPorCarrera() {
-    const esIvan = esCuentaIvanActiva();
-    const esFinanzas = esCarreraFinanzasActiva();
-
-    // 1. Desktop Top Navigation
-    const navHome = document.getElementById("navHomeBtn");
-    const navSolo = document.getElementById("navSoloBtn");
-    const navLab = document.getElementById("navLabBtn");
-    const navJuntos = document.getElementById("navJuntosBtn");
-    const navFama = document.getElementById("navFamaBtn");
-
-    const navMed = document.getElementById("navMedInternaBtn");
-    const navFarma = document.getElementById("navFarmaBtn");
-    const navSalud = document.getElementById("navSaludBtn");
-
-    const navFinHub = document.getElementById("navFinHubBtn");
-    const navFinFilo = document.getElementById("navFinFiloBtn");
-    const navFinSfi = document.getElementById("navFinSfiBtn");
-    const navFinHem = document.getElementById("navFinHemBtn");
-    const navFinEstad = document.getElementById("navFinEstadBtn");
-    const navFinCont = document.getElementById("navFinContBtn");
-
-    // 2. Mobile Drawer Navigation
-    const drawerHome = document.getElementById("drawerNavHome");
-    const drawerSolo = document.getElementById("drawerNavSolo");
-    const drawerLab = document.getElementById("drawerNavLaboratorio");
-    const drawerJuntos = document.getElementById("drawerNavJuntos");
-    const drawerFama = document.getElementById("drawerNavFama");
-
-    const drawerMed = document.getElementById("drawerNavMedInterna");
-    const drawerFarma = document.getElementById("drawerNavFarma");
-    const drawerSalud = document.getElementById("drawerNavSalud");
-
-    const drawerFinHub = document.getElementById("drawerNavFinHub");
-    const drawerFinFilo = document.getElementById("drawerNavFinFilo");
-    const drawerFinSfi = document.getElementById("drawerNavFinSfi");
-    const drawerFinHem = document.getElementById("drawerNavFinHem");
-    const drawerFinEstad = document.getElementById("drawerNavFinEstad");
-    const drawerFinCont = document.getElementById("drawerNavFinCont");
-
-    if (esIvan) {
-        // --- DR. IVÁN (MEDICINA) ---
-        // 1. Barra superior PC: Mostrar Inicio, Estudiar Solo y sus 3 Materias Médicas
-        if (navHome) navHome.classList.remove("hidden");
-        if (navSolo) navSolo.classList.remove("hidden");
-        if (navMed) navMed.classList.remove("hidden");
-        if (navFarma) navFarma.classList.remove("hidden");
-        if (navSalud) navSalud.classList.remove("hidden");
-
-        // Ocultar Laboratorio, Estudiar Juntos, Salón de la Fama y Finanzas
-        [navLab, navJuntos, navFama, navFinHub, navFinFilo, navFinSfi, navFinHem, navFinEstad, navFinCont].forEach(b => b?.classList.add("hidden"));
-
-        // 2. Menú Drawer Celular: Inicio, Estudiar Solo y 3 Materias
-        if (drawerHome) drawerHome.classList.remove("hidden");
-        if (drawerSolo) drawerSolo.classList.remove("hidden");
-        [drawerMed, drawerFarma, drawerSalud].forEach(b => b?.classList.remove("hidden"));
-        [drawerLab, drawerJuntos, drawerFama, drawerFinHub, drawerFinFilo, drawerFinSfi, drawerFinHem, drawerFinEstad, drawerFinCont].forEach(b => b?.classList.add("hidden"));
-
-    } else if (esFinanzas) {
-        // --- ESTUDIANTE DE FINANZAS ---
-        [navHome, navSolo, navLab, navJuntos, navFama].forEach(b => b?.classList.remove("hidden"));
-        if (navFinHub) navFinHub.classList.remove("hidden");
-        [navMed, navFarma, navSalud, navFinFilo, navFinSfi, navFinHem, navFinEstad, navFinCont].forEach(b => b?.classList.add("hidden"));
-
-        [drawerHome, drawerSolo, drawerLab, drawerJuntos, drawerFama].forEach(b => b?.classList.remove("hidden"));
-        [drawerFinHub, drawerFinFilo, drawerFinSfi, drawerFinHem, drawerFinEstad, drawerFinCont].forEach(b => b?.classList.remove("hidden"));
-        [drawerMed, drawerFarma, drawerSalud].forEach(b => b?.classList.add("hidden"));
-
-    } else {
-        // --- INVITADOS Y OTRAS CARRERAS ---
-        [navHome, navSolo, navLab, navJuntos, navFama].forEach(b => b?.classList.remove("hidden"));
-        [navMed, navFarma, navSalud, navFinHub, navFinFilo, navFinSfi, navFinHem, navFinEstad, navFinCont].forEach(b => b?.classList.add("hidden"));
-
-        [drawerHome, drawerSolo, drawerLab, drawerJuntos, drawerFama].forEach(b => b?.classList.remove("hidden"));
-        [drawerMed, drawerFarma, drawerSalud, drawerFinHub, drawerFinFilo, drawerFinSfi, drawerFinHem, drawerFinEstad, drawerFinCont].forEach(b => b?.classList.add("hidden"));
-    }
-}
+function actualizarNavPorCarrera() { window.__campus?.refreshNavigation(); }
 
 function actualizarNavExclusivoIvan(esIvan) {
     actualizarNavPorCarrera();
@@ -3972,7 +3905,7 @@ function actualizarOrganoFocoShock(organoKey) {
 }
 
 function sincronizarShockRoomHome() {
-    const esIvan = esCuentaIvanActiva();
+    const esIvan = esCarreraMedicinaActiva();
     const heroElem = document.querySelector("#viewHome .hero");
     const portalHub = document.querySelector("#viewHome .portal-hub-container");
     const panelMed = document.getElementById("panelMedicinaIvan");
@@ -5344,7 +5277,7 @@ function obtenerTopicSala(codigo) {
 
 async function conectarSalaSiEsNecesario(callback) {
  try {
-  if (!currentUser()) throw new Error('Iniciá sesión para jugar online.');
+  if (!currentRoomUser()) throw new Error('Ingresá con tu perfil o con un apodo de invitado.');
   if (!onlineDueloEstado.transporteOnline) {
    const { createRoomTransport } = await import('./modules/rooms.mjs');
    onlineDueloEstado.transporteOnline = createRoomTransport({ receive: procesarMensajeSala, report: mostrarToast, discover: rows => {
@@ -5683,8 +5616,8 @@ async function unirseASalaOnlineConfirmada(codigoIngresado, passIngresado = "") 
 
     const transport = await conectarSalaSiEsNecesario();
     if (!transport) return;
-    try { await supabaseService.guardarPerfil(perfilUsuario); await transport.join(codigo, passIngresado); sessionStorage.setItem('study:activeRoom:' + currentUser().id, codigo); }
-    catch (error) { sessionStorage.removeItem('study:activeRoom:' + currentUser()?.id); mostrarToast(error.message, 'error'); return; }
+    try { if(currentUser())await supabaseService.guardarPerfil(perfilUsuario); await transport.join(codigo, passIngresado); sessionStorage.setItem('study:activeRoom:' + currentRoomUser().id, codigo); }
+    catch (error) { sessionStorage.removeItem('study:activeRoom:' + currentRoomUser()?.id); mostrarToast(error.message, 'error'); return; }
     // Cerrar modal de PIN si estaba abierto
     if (dom.dueloJoinByPinModal && typeof dom.dueloJoinByPinModal.close === "function") {
         try { dom.dueloJoinByPinModal.close(); } catch (_) {}
@@ -5727,6 +5660,7 @@ async function unirseASalaOnlineConfirmada(codigoIngresado, passIngresado = "") 
 }
 
 function mostrarSalaDeEsperaOnline(codigo) {
+    window.__campus?.roomChanged();
     if (dom.dueloArena) dom.dueloArena.classList.add("hidden");
     if (dom.dueloLobby) dom.dueloLobby.classList.remove("hidden");
     if (dom.dueloOnlineSetupView) dom.dueloOnlineSetupView.classList.add("hidden");
@@ -6346,7 +6280,7 @@ function procesarMensajeSala(data) {
 }
 
 function salirDeSalaOnline() {
-    if (currentUser()) sessionStorage.removeItem('study:activeRoom:' + currentUser().id);
+    if (currentRoomUser()) sessionStorage.removeItem('study:activeRoom:' + currentRoomUser().id);
     import('./modules/online-game.mjs').then(module => module.stopOnlineGame());
     detenerBroadcastingSalaPublica();
     if (onlineDueloEstado.transporteOnline && onlineDueloEstado.codigoSala) {
@@ -6363,6 +6297,7 @@ function salirDeSalaOnline() {
     if (dom.dueloOnlineWaitingRoom) dom.dueloOnlineWaitingRoom.classList.add("hidden");
     if (dom.dueloOnlineSetupView) dom.dueloOnlineSetupView.classList.remove("hidden");
     iniciarDiscoveryLobbiesOnline();
+    window.__campus?.render("juntos");
 }
 
 function arrancarBolilleroOnlineCliente(data) {
@@ -12135,13 +12070,13 @@ async function iniciarAplicacion() {
         if (dom.dueloJoinRoomCode) {
             dom.dueloJoinRoomCode.value = roomFromUrl.toUpperCase();
         }
-        if (dom.dueloJoinByPinModal) {
+        if (dom.dueloJoinByPinModal && currentUser()) {
             dom.dueloJoinByPinModal.showModal();
         }
     }
 
-    if (!roomFromUrl && currentUser()) {
-      const savedRoom = sessionStorage.getItem('study:activeRoom:' + currentUser().id);
+    if (!roomFromUrl && currentRoomUser()) {
+      const savedRoom = sessionStorage.getItem('study:activeRoom:' + currentRoomUser().id);
       if (savedRoom) { cambiarVista('juntos'); unirseASalaOnline(savedRoom); }
     }
 
@@ -12640,7 +12575,7 @@ async function iniciarAplicacion() {
 // =========================================================
 // GESTOR DE VERSIONES Y ACTUALIZACIÓN AUTOMÁTICA
 // =========================================================
-const APP_BUILD_VERSION = "30.1.0";
+const APP_BUILD_VERSION = "31.0.0";
 
 async function forzarActualizacionCompleta(mostrarNotificacion = true) {
  const button = document.getElementById('btnForzarActualizar');
@@ -14735,8 +14670,10 @@ function obtenerMultiversoHistorial() {
 }
 
 function registrarResultadoJuego(tipoJuego, puntos, gano) {
+    if(!currentUser())return;
+    window.__campus?.recordGame(tipoJuego,puntos,gano);
     const multiverso = obtenerMultiversoHistorial();
-    const usuario = perfilUsuario.activo ? perfilUsuario.perfil.apodo : "Invitado";
+    const usuario = currentUser() ? perfilUsuario.apodo : "Invitado";
 
     const partida = {
         id: Date.now(),
@@ -15246,7 +15183,7 @@ function registrarEventosModulosV5() {
             if (juegosEduEstado.modo === "duelo") {
                 cambiarVista("juntos");
             } else {
-                cambiarVista("solo");
+                cambiarVista(window.__campus?.practiceReturn() ? "materia/"+window.__campus.practiceReturn() : "solo");
             }
         });
     }
@@ -25138,11 +25075,11 @@ window.abrirPizarronNotasRapido = abrirPizarronNotasRapido;
 
 
 function cargarMateriaMedicinaEnBolillero(materia) {
- if (!esCuentaIvanActiva()) { mostrarToast('Elegí Medicina en Cuenta y datos para acceder.', 'aviso'); return; }
+ if (!esCarreraMedicinaActiva()) { mostrarToast('Elegí Medicina en Cuenta y datos para acceder.', 'aviso'); return; }
  const ids = { interna: 'lista_medicina_interna', farma: 'lista_farmacologia_2', salud: 'lista_salud_publica' };
  const id = ids[materia];
  if (!id) { mostrarToast('Materia desconocida.', 'error'); return; }
- asegurarMateriasMedicinaIvan();
+ asegurarMateriasMedicina();
  estado.listaSeleccionadaId = id;
  actualizarInterfaz(); actualizarDropdownListasDuelo(); cambiarVista('bolillero');
 }
@@ -25236,3 +25173,16 @@ async function loadMedical() {
  }).catch(error => { medicalLoading = null; throw error; });
  return medicalLoading;
 }
+
+Object.assign(window,{
+ async refrescarPerfilAlumno(){if(getCareer(currentUser()?.user_metadata?.carrera)?.id==='medicina')await loadMedical();cargarPerfilUsuario();},
+ getCampusRoomInfo:()=>({code:onlineDueloEstado.codigoSala,host:onlineDueloEstado.esHost}),
+ unirseASalaOnline,salirDeSalaOnline,
+ async iniciarPracticaMateria(subject,game){
+  const question=q=>({pregunta:q.question,opciones:q.options,respuestaCorrecta:q.correct,explicacion:q.explanation});
+  const list={id:'campus-'+subject.id,nombre:subject.name,titulo:subject.name,descripcion:subject.intro,temas:subject.units.map((u,i)=>({id:subject.id+'-'+u.id,nombre:u.concept,titulo:u.title,guia:u.explanation+' '+u.application,descripcion:u.explanation,bomba:{fase1:question(subject.questions[i*2]),fase2:question(subject.questions[i*2+1]),fase3:question(subject.questions[(i*2+2)%12])},impostor:{afirmacionesVerdaderas:[u.explanation,subject.units[(i+1)%6].explanation,subject.units[(i+2)%6].explanation],afirmacionImpostora:u.concept+': '+subject.units[(i+3)%6].explanation,explicacionError:u.explanation},memotest:{concepto:u.concept,definicionOFormula:u.explanation,definicion:u.explanation}}))};
+  const index=estado.listas.findIndex(l=>l.id===list.id);if(index<0)estado.listas.push(list);else estado.listas[index]=list;
+  estado.listaSeleccionadaId=list.id;juegosEduEstado.impostor.casosPool=[];sessionStorage.setItem('campus:practice-subject',subject.id);guardarDatos();actualizarInterfaz();
+  if(game==='bolillero')await cambiarVista('bolillero');else await abrirArenaJuego(game,'solo',list.id,false);
+ }
+});

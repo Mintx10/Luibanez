@@ -1,4 +1,4 @@
-import { getClient, currentUser, clearRegistrationAppearance } from './session.mjs';
+import { getClient, currentUser, currentStudentProfile, clearRegistrationAppearance } from './session.mjs';
 import { readValue, writeValue } from './database.mjs';
 const pendingKey = 'cloud-pending-v1';
 let draining;
@@ -47,7 +47,7 @@ async function execute(item, userId) {
     result = { error: null };
   }
   else if (item.kind === 'delete') result = await db.rpc('study_delete_documents', { p_ids: item.ids });
-  else if (item.kind === 'profile') result = await db.from('study_profiles').upsert({ ...item.row, id: userId });
+  else if (item.kind === 'profile') result = await db.from('study_profiles').upsert({ ...item.row, id: userId, carrera:currentStudentProfile()?.carrera||currentUser().user_metadata?.carrera||'General' });
   else throw new Error('Operación de sincronización desconocida.');
   if (result.error) throw result.error;
   if (item.kind === 'profile') await clearRegistrationAppearance();
@@ -67,6 +67,7 @@ export async function flushCloudQueue() {
         items = await mutateQueue(items => items.filter(item => item.operationId !== first.operationId));
       }
       status('Cambios sincronizados');
+      window.dispatchEvent(new Event('study:cloud-synced'));
     } catch { status('Cambios guardados en este dispositivo · sincronización pendiente', true); }
   })();
   try { await draining; } finally { draining = null; }

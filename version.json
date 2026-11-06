@@ -1,1 +1,4 @@
-{"version": "30.1.0", "description": "Refuerzo de seguridad, CSP estricta y permisos mínimos"}
+{
+  "version": "31.0.0",
+  "description": "Campus personalizado para seis carreras; versión de revisión"
+}

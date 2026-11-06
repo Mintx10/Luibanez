@@ -1,3 +1,5 @@
+import {careers,getCareer} from './campus/catalog.mjs';
+import {setStudentCareer} from './session.mjs';
 import { currentUser, getClient, withAuthAction, updatePassword } from './session.mjs';
 import { legacyPreview, importLegacy, legacyDocuments } from './storage.mjs';
 export function muestrearContexto(text, max = 120000) {
@@ -27,13 +29,13 @@ export function setupAccountTools({ importDocuments, report, welcome }) {
   }
   dialog.querySelector('[data-close]').onclick = () => dialog.close();
   const career = dialog.querySelector('#accountCareer');
-  career.value = currentUser()?.user_metadata?.carrera || 'General';
+  career.replaceChildren(...careers.map(c=>new Option(c.name,c.id)));
+  career.value = getCareer(currentUser()?.user_metadata?.carrera)?.id || '';
   dialog.querySelector('#careerForm').classList.toggle('hidden', !currentUser());
   dialog.querySelector('#careerForm').onsubmit = event => {
     event.preventDefault();
     withAuthAction(event.submitter, async () => {
-      const { error } = await getClient().auth.updateUser({ data: { carrera: career.value } });
-      if (error) throw error;
+      await setStudentCareer(career.value);
       location.reload();
     }, report);
   };

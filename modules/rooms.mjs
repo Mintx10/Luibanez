@@ -1,4 +1,4 @@
-import { getClient, currentUser } from './session.mjs';
+import { getClient, currentUser, currentRoomUser, guestAlias } from './session.mjs';
 
 // The legacy game renderers consume messages. Transport and authority live in RPCs.
 export function createRoomTransport({ receive, discover, report }) {
@@ -6,7 +6,7 @@ export function createRoomTransport({ receive, discover, report }) {
   let generation = 0, lastHeartbeat = 0;
   let sendChain = Promise.resolve();
   async function rpc(name, args = {}) {
-    if (!currentUser()) throw new Error('Iniciá sesión para jugar online.');
+    if (!currentRoomUser()) throw new Error('Ingresá con un perfil o un apodo de invitado.');
     if (navigator.onLine === false) throw new Error('Necesitás conexión para jugar online.');
     const { data, error } = await getClient().rpc(name, args);
     if (error) throw new Error(error.message || 'No se pudo comunicar con la sala.');
@@ -67,11 +67,12 @@ export function createRoomTransport({ receive, discover, report }) {
   const transport = {
     connected: true,
     async create({ codigo, nombre, password, publica, config }) {
+      if(!currentUser())throw new Error('Necesitás un perfil de alumno para crear salas.');
       await rpc('study_create_room', { p_code: codigo, p_name: nombre, p_password: password, p_public: publica, p_config: config });
       if (roomCode && roomCode !== codigo) await rpc('study_leave_room', { p_code: roomCode });
     },
     async join(codigo, password) {
-      const result = await rpc('study_join_room', { p_code: codigo, p_password: password });
+      const result = await rpc(currentRoomUser()?.is_anonymous ? 'study_join_guest_room' : 'study_join_room', { p_code: codigo, p_password: password,...(currentRoomUser()?.is_anonymous?{p_apodo:guestAlias()}:{}) });
       if (result?.error) throw new Error(result.error);
       if (roomCode && roomCode !== codigo) await rpc('study_leave_room', { p_code: roomCode });
     },

@@ -1,5 +1,8 @@
 import { setStorageScope } from './storage.mjs';
 import { readValue } from './database.mjs';
+import { writeValue } from './database.mjs';
+import { getCareer } from './campus/catalog.mjs';
+import { requestCaptcha } from './campus/captcha.mjs';
 
 export const config = Object.freeze({
   url: 'https://xyaykxkytjnzykcjkopj.supabase.co',
@@ -7,6 +10,11 @@ export const config = Object.freeze({
 });
 let client;
 let user = null;
+let roomUser = null;
+let studentProfile = null;
+export function currentRoomUser() { return roomUser; }
+export function currentStudentProfile() { return studentProfile; }
+export function guestAlias() { try {return sessionStorage.getItem('study:guest-alias:'+roomUser?.id)||'Invitado';} catch {return 'Invitado';} }
 let appearance = {};
 export function currentAppearance() { return appearance; }
 async function appearanceKey(email) {
@@ -27,31 +35,34 @@ export async function initializeSession() {
   try {
     const cached = await db.auth.getSession();
     if (cached.data.session) {
-      if (navigator.onLine === false) user = cached.data.session.user?.email_confirmed_at ? cached.data.session.user : null;
+      if (navigator.onLine === false) roomUser = cached.data.session.user || null;
       else {
         const { data, error } = await Promise.race([db.auth.getUser(), new Promise(resolve => setTimeout(() => resolve({ error: true, data: {} }), 6000))]);
-        if (!error && data.user?.email_confirmed_at) user = data.user;
+        if (!error && data.user) roomUser = data.user;
       }
     }
-  } catch { user = null; }
+  } catch { roomUser = null; }
+  user=roomUser?.email_confirmed_at && !roomUser.is_anonymous ? roomUser : null;
   setStorageScope(user?.id);
   if (user) {
     try {
+      studentProfile=await readValue('campus:profile') || null;
       const pending=JSON.parse(localStorage.getItem(await appearanceKey(user.email)) || '{}');
       appearance=pending;
       if (navigator.onLine !== false) {
-        const {data,error}=await db.from('study_profiles').select('avatar,tipo_avatar,foto_data_url').eq('id',user.id).limit(1);
-        if (!error && data?.[0]) appearance={avatar:data[0].avatar,tipoAvatar:data[0].tipo_avatar,fotoDataUrl:data[0].foto_data_url};
+        const {data,error}=await db.from('study_profiles').select('id,apodo,carrera,avatar,tipo_avatar,foto_data_url').eq('id',user.id).limit(1);
+        if (!error && data?.[0]) {studentProfile=data[0];await writeValue('campus:profile',studentProfile);appearance={avatar:data[0].avatar,tipoAvatar:data[0].tipo_avatar,fotoDataUrl:data[0].foto_data_url};}
       }
       const pendingProfile=(await readValue('cloud-pending-v1') || []).filter(item=>item.kind==='profile').at(-1)?.row;
       if (pendingProfile) appearance={avatar:pendingProfile.avatar,tipoAvatar:pendingProfile.tipo_avatar,fotoDataUrl:pendingProfile.foto_data_url};
     } catch { appearance={}; }
+    if(studentProfile){user={...user,user_metadata:{...user.user_metadata,carrera:studentProfile.carrera,apodo:studentProfile.apodo}};roomUser=user;}
   }
   db.auth.onAuthStateChange((event, session) => {
     // Defer work out of Supabase's auth lock.
     setTimeout(() => {
       if (event === 'PASSWORD_RECOVERY') { window.dispatchEvent(new Event('study:password-recovery')); return; }
-      const next = session?.user?.email_confirmed_at ? session.user : null;
+      const next = session?.user?.email_confirmed_at && !session.user.is_anonymous ? session.user : null;
       if (event !== 'INITIAL_SESSION' && next?.id !== user?.id) location.reload();
     }, 0);
   });
@@ -69,23 +80,26 @@ export async function withAuthAction(button, action, report) {
   catch (error) { report(error.message || 'No se pudo completar la operación.', 'error'); }
   finally { if (button) { button.disabled = false; button.removeAttribute('aria-busy'); } }
 }
-export async function register({ email, password, apodo, carrera, avatar, tipoAvatar, fotoDataUrl }) {
+export async function register({ email, password, apodo, carrera, avatar='👤', tipoAvatar='emoji', fotoDataUrl='', selectedSubjects=[], captchaToken }) {
   if (user) throw new Error('Cerrá sesión para crear otra cuenta. Tu carrera se puede editar desde Cuenta y datos.');
   if (!apodo?.trim()) throw new Error('Ingresá tu nombre.');
   if (!/^\S+@\S+\.\S+$/.test(email || '')) throw new Error('Ingresá un correo válido.');
   if (typeof password !== 'string' || password.length < 12) throw new Error('Usá una contraseña de al menos 12 caracteres.');
-  if (!['Medicina', 'Licenciatura en Finanzas', 'General'].includes(carrera)) throw new Error('Elegí una carrera válida.');
+  if (!getCareer(carrera)) throw new Error('Elegí una carrera válida.');
   const db = requireClient();
   if ((fotoDataUrl || '').length>300000) throw new Error('Elegí una foto de perfil más pequeña.');
   // Photos belong in the private profile, never in JWT metadata or request headers.
-  const metadata = { apodo: apodo.trim(), carrera, avatar };
+  if(roomUser?.is_anonymous){await db.auth.signOut({scope:'local'});roomUser=null;}
+  const metadata = { apodo: apodo.trim(), carrera:getCareer(carrera).value, avatar, selected_subjects:selectedSubjects };
   localStorage.setItem(await appearanceKey(email),JSON.stringify({ avatar,tipoAvatar,fotoDataUrl }));
-  const { error } = await db.auth.signUp({ email: email.trim(), password, options: { data: metadata, emailRedirectTo: `${location.origin}/` } });
+  const captcha=await requestCaptcha(captchaToken);
+  const { error } = await db.auth.signUp({ email: email.trim(), password, options: { data: metadata, emailRedirectTo: `${location.origin}/`,captchaToken:captcha } });
   if (error) throw error;
 }
-export async function signIn(email, password) {
+export async function signIn(email, password, captchaToken) {
   if (!/^\S+@\S+\.\S+$/.test(email || '')) throw new Error('Ingresá el correo de tu cuenta.');
-  const { data, error } = await requireClient().auth.signInWithPassword({ email, password });
+  const captcha=await requestCaptcha(captchaToken);
+  const { data, error } = await requireClient().auth.signInWithPassword({ email, password,options:{captchaToken:captcha} });
   if (error) throw error;
   if (!data.user?.email_confirmed_at) throw new Error('Verificá tu correo para iniciar sesión.');
   location.reload();
@@ -95,9 +109,10 @@ export async function signOut() {
   if (error) throw error;
   location.reload();
 }
-export async function resetPassword(email) {
+export async function resetPassword(email,captchaToken) {
   if (!/^\S+@\S+\.\S+$/.test(email || '')) throw new Error('Ingresá tu correo en el campo de acceso.');
-  const { error } = await requireClient().auth.resetPasswordForEmail(email.trim(), { redirectTo: `${location.origin}/?recover=1` });
+  const captcha=await requestCaptcha(captchaToken);
+  const { error } = await requireClient().auth.resetPasswordForEmail(email.trim(), { redirectTo: `${location.origin}/?recover=1`,captchaToken:captcha });
   if (error) throw error;
 }
 export async function updatePassword(password) {
@@ -108,6 +123,28 @@ export async function updatePassword(password) {
 export async function authHeaders() {
   const db = requireClient();
   const { data, error } = await db.auth.getSession();
-  if (error || !data.session?.access_token || !data.session.user?.email_confirmed_at) throw new Error('Iniciá sesión y verificá tu correo para utilizar la IA.');
+  if (error || !data.session?.access_token || !data.session.user?.email_confirmed_at || data.session.user?.is_anonymous) throw new Error('Iniciá sesión y verificá tu correo para utilizar la IA.');
   return { 'Content-Type': 'application/json', Authorization: `Bearer ${data.session.access_token}` };
+}
+export async function beginGuestSession(apodo,captchaToken) {
+ const name=String(apodo||'').trim();if(name.length<2||name.length>40)throw new Error('Elegí un apodo de 2 a 40 caracteres.');
+ const db=requireClient();
+ if(!roomUser){const captcha=await requestCaptcha(captchaToken);const {data,error}=await db.auth.signInAnonymously({options:{captchaToken:captcha}});if(error)throw error;roomUser=data.user;if(!roomUser?.is_anonymous)throw new Error('No se pudo crear el acceso temporal.');}
+ if(roomUser.is_anonymous)sessionStorage.setItem('study:guest-alias:'+roomUser.id,name);
+ return roomUser;
+}
+export async function setStudentCareer(careerId) {
+ const career=getCareer(careerId);if(!career||!user)throw new Error('Elegí una carrera con tu cuenta verificada.');
+ const {error}=await requireClient().rpc('study_activate_career',{p_career:career.id});if(error)throw error;
+ studentProfile={...(studentProfile||{}),id:user.id,apodo:studentProfile?.apodo||user.user_metadata?.apodo||'Estudiante',carrera:career.value};
+ await writeValue('campus:profile',studentProfile);user={...user,user_metadata:{...user.user_metadata,carrera:career.value}};roomUser=user;
+}
+export async function updateStudentProfile({apodo,fotoDataUrl}){
+ if(!user||!apodo?.trim()||apodo.trim().length>80)throw new Error('Ingresá un apodo de 1 a 80 caracteres.');
+ if(fotoDataUrl!==undefined&&(!/^data:image\/jpeg;base64,[A-Za-z0-9+/]+=*$/.test(fotoDataUrl)||fotoDataUrl.length>300000))throw new Error('La foto no es válida o supera el tamaño permitido.');
+ const row={id:user.id,apodo:apodo.trim(),carrera:studentProfile?.carrera||user.user_metadata.carrera,avatar:appearance.avatar||user.user_metadata.avatar||'👤',...(fotoDataUrl?{tipo_avatar:'foto',foto_data_url:fotoDataUrl}:{})};
+ const {error}=await requireClient().from('study_profiles').upsert(row);if(error)throw error;
+ studentProfile={...(studentProfile||{}),...row};await writeValue('campus:profile',studentProfile);
+ if(fotoDataUrl)appearance={...appearance,tipoAvatar:'foto',fotoDataUrl};
+ user={...user,user_metadata:{...user.user_metadata,apodo:row.apodo}};roomUser=user;
 }

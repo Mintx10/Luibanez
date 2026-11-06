@@ -4,6 +4,14 @@ const { validateInput, validateOutput } = require('../lib/ai-validation.cjs');
 const { generate } = require('../lib/ai-provider.cjs');
 const { authorize } = require('../lib/api-access.cjs');
 const handler = require('../api/gemini.js');
+const {academicContext}=require('../lib/academic-context.cjs');
+test('academic context validates career and subject and resolves personal subjects through owner RLS',async()=>{
+ const result=await academicContext({careerId:'sistemas',subjectId:'sistemas-programacion-i'},{headers:{}});assert.equal(result.materia,'Programación I');
+ await assert.rejects(()=>academicContext({careerId:'medicina',subjectId:'sistemas-programacion-i'},{headers:{}}),e=>e.code==='INVALID_SUBJECT');
+ const request={headers:{authorization:'Bearer student-token'}},body={careerId:'sistemas',subjectId:'custom-44444444-4444-4444-8444-444444444444',contextoPDF:'Mis apuntes privados'};
+ await assert.rejects(()=>academicContext(body,request,{},async()=>Response.json([])),e=>e.code==='SUBJECT_FORBIDDEN');
+ const custom=await academicContext(body,request,{SUPABASE_URL:'https://test.supabase.co',SUPABASE_ANON_KEY:'public-key'},async(url,args)=>{assert.equal(args.headers.Authorization,request.headers.authorization);assert.ok(url.includes('career_id=eq.sistemas'));return Response.json([{id:body.subjectId,name:'Mi seminario',description:'Material propio'}]);});assert.equal(custom.materia,'Mi seminario');
+});
 const question = { pregunta: '¿Qué principio se aplica?', opciones: ['Primera opción completa', 'Segunda opción completa', 'Tercera opción completa', 'Cuarta opción completa'], respuestaCorrecta: 2, explicacion: 'Se conserva íntegramente la explicación.' };
 test('request rejects malformed JSON, unknown types, oversized context and invalid indices', () => {
   for (const value of ['{', null, [], { tipoJuego: 'fake' }, { contextoPDF: 'a'.repeat(120001) }, { preguntasPrevias: [123] }, { cantidadPares: 3 }]) assert.throws(() => validateInput(value));

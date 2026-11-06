@@ -1,0 +1,569 @@
+{
+  "version": 1,
+  "careers": [
+    {
+      "id": "finanzas",
+      "name": "Finanzas",
+      "value": "Licenciatura en Finanzas",
+      "color": "#245d91",
+      "icon": "↗",
+      "tagline": "Decisiones con fundamento",
+      "subjects": [
+        {
+          "id": "finanzas-filosofia-y-etica",
+          "name": "Filosofía y Ética",
+          "level": 1,
+          "icon": "↗",
+          "legacyRoute": "fin-filosofia"
+        },
+        {
+          "id": "finanzas-sistema-financiero-internacional",
+          "name": "Sistema Financiero Internacional",
+          "level": 1,
+          "icon": "↗",
+          "legacyRoute": "fin-sfi"
+        },
+        {
+          "id": "finanzas-historia-economica-mundial",
+          "name": "Historia Económica Mundial",
+          "level": 1,
+          "icon": "↗",
+          "legacyRoute": "fin-historia"
+        },
+        {
+          "id": "finanzas-estadistica",
+          "name": "Estadística",
+          "level": 1,
+          "icon": "↗",
+          "legacyRoute": "fin-estadistica"
+        },
+        {
+          "id": "finanzas-contabilidad",
+          "name": "Contabilidad",
+          "level": 2,
+          "icon": "↗",
+          "legacyRoute": "fin-contabilidad"
+        },
+        {
+          "id": "finanzas-matematica-financiera",
+          "name": "Matemática Financiera",
+          "level": 2,
+          "icon": "↗",
+          "legacyRoute": null
+        },
+        {
+          "id": "finanzas-microeconomia",
+          "name": "Microeconomía",
+          "level": 2,
+          "icon": "↗",
+          "legacyRoute": null
+        },
+        {
+          "id": "finanzas-macroeconomia",
+          "name": "Macroeconomía",
+          "level": 2,
+          "icon": "↗",
+          "legacyRoute": null
+        },
+        {
+          "id": "finanzas-finanzas-corporativas",
+          "name": "Finanzas Corporativas",
+          "level": 3,
+          "icon": "↗",
+          "legacyRoute": null
+        },
+        {
+          "id": "finanzas-inversiones",
+          "name": "Inversiones",
+          "level": 3,
+          "icon": "↗",
+          "legacyRoute": null
+        },
+        {
+          "id": "finanzas-derivados-financieros",
+          "name": "Derivados Financieros",
+          "level": 3,
+          "icon": "↗",
+          "legacyRoute": null
+        },
+        {
+          "id": "finanzas-econometria",
+          "name": "Econometría",
+          "level": 3,
+          "icon": "↗",
+          "legacyRoute": null
+        }
+      ]
+    },
+    {
+      "id": "medicina",
+      "name": "Medicina",
+      "value": "Medicina",
+      "color": "#097a80",
+      "icon": "✚",
+      "tagline": "Del mecanismo a la clínica",
+      "subjects": [
+        {
+          "id": "medicina-anatomia",
+          "name": "Anatomía",
+          "level": 1,
+          "icon": "✚",
+          "legacyRoute": null
+        },
+        {
+          "id": "medicina-histologia-y-embriologia",
+          "name": "Histología y Embriología",
+          "level": 1,
+          "icon": "✚",
+          "legacyRoute": null
+        },
+        {
+          "id": "medicina-bioquimica",
+          "name": "Bioquímica",
+          "level": 1,
+          "icon": "✚",
+          "legacyRoute": null
+        },
+        {
+          "id": "medicina-fisiologia",
+          "name": "Fisiología",
+          "level": 1,
+          "icon": "✚",
+          "legacyRoute": null
+        },
+        {
+          "id": "medicina-microbiologia",
+          "name": "Microbiología",
+          "level": 2,
+          "icon": "✚",
+          "legacyRoute": null
+        },
+        {
+          "id": "medicina-inmunologia",
+          "name": "Inmunología",
+          "level": 2,
+          "icon": "✚",
+          "legacyRoute": null
+        },
+        {
+          "id": "medicina-patologia",
+          "name": "Patología",
+          "level": 2,
+          "icon": "✚",
+          "legacyRoute": null
+        },
+        {
+          "id": "medicina-semiologia",
+          "name": "Semiología",
+          "level": 2,
+          "icon": "✚",
+          "legacyRoute": null
+        },
+        {
+          "id": "medicina-medicina-interna",
+          "name": "Medicina Interna",
+          "level": 3,
+          "icon": "✚",
+          "legacyRoute": "med-interna"
+        },
+        {
+          "id": "medicina-farmacologia-i",
+          "name": "Farmacología I",
+          "level": 3,
+          "icon": "✚",
+          "legacyRoute": null
+        },
+        {
+          "id": "medicina-farmacologia-ii",
+          "name": "Farmacología II",
+          "level": 3,
+          "icon": "✚",
+          "legacyRoute": "farmacologia-2"
+        },
+        {
+          "id": "medicina-salud-publica",
+          "name": "Salud Pública",
+          "level": 3,
+          "icon": "✚",
+          "legacyRoute": "salud-publica"
+        }
+      ]
+    },
+    {
+      "id": "marketing",
+      "name": "Marketing",
+      "value": "Marketing",
+      "color": "#9b4770",
+      "icon": "◎",
+      "tagline": "Ideas que conectan con personas",
+      "subjects": [
+        {
+          "id": "marketing-fundamentos-de-marketing",
+          "name": "Fundamentos de Marketing",
+          "level": 1,
+          "icon": "◎",
+          "legacyRoute": null
+        },
+        {
+          "id": "marketing-comportamiento-del-consumidor",
+          "name": "Comportamiento del Consumidor",
+          "level": 1,
+          "icon": "◎",
+          "legacyRoute": null
+        },
+        {
+          "id": "marketing-investigacion-de-mercados",
+          "name": "Investigación de Mercados",
+          "level": 1,
+          "icon": "◎",
+          "legacyRoute": null
+        },
+        {
+          "id": "marketing-estadistica-aplicada",
+          "name": "Estadística Aplicada",
+          "level": 1,
+          "icon": "◎",
+          "legacyRoute": null
+        },
+        {
+          "id": "marketing-marketing-estrategico",
+          "name": "Marketing Estratégico",
+          "level": 2,
+          "icon": "◎",
+          "legacyRoute": null
+        },
+        {
+          "id": "marketing-branding",
+          "name": "Branding",
+          "level": 2,
+          "icon": "◎",
+          "legacyRoute": null
+        },
+        {
+          "id": "marketing-marketing-digital",
+          "name": "Marketing Digital",
+          "level": 2,
+          "icon": "◎",
+          "legacyRoute": null
+        },
+        {
+          "id": "marketing-publicidad-y-creatividad",
+          "name": "Publicidad y Creatividad",
+          "level": 2,
+          "icon": "◎",
+          "legacyRoute": null
+        },
+        {
+          "id": "marketing-gestion-de-productos",
+          "name": "Gestión de Productos",
+          "level": 3,
+          "icon": "◎",
+          "legacyRoute": null
+        },
+        {
+          "id": "marketing-precios-y-rentabilidad",
+          "name": "Precios y Rentabilidad",
+          "level": 3,
+          "icon": "◎",
+          "legacyRoute": null
+        },
+        {
+          "id": "marketing-canales-de-distribucion",
+          "name": "Canales de Distribución",
+          "level": 3,
+          "icon": "◎",
+          "legacyRoute": null
+        },
+        {
+          "id": "marketing-metricas-y-analitica",
+          "name": "Métricas y Analítica",
+          "level": 3,
+          "icon": "◎",
+          "legacyRoute": null
+        }
+      ]
+    },
+    {
+      "id": "veterinaria",
+      "name": "Veterinaria",
+      "value": "Veterinaria",
+      "color": "#39704b",
+      "icon": "♧",
+      "tagline": "Cuidar cada especie",
+      "subjects": [
+        {
+          "id": "veterinaria-anatomia-animal",
+          "name": "Anatomía Animal",
+          "level": 1,
+          "icon": "♧",
+          "legacyRoute": null
+        },
+        {
+          "id": "veterinaria-histologia-y-embriologia",
+          "name": "Histología y Embriología",
+          "level": 1,
+          "icon": "♧",
+          "legacyRoute": null
+        },
+        {
+          "id": "veterinaria-fisiologia-animal",
+          "name": "Fisiología Animal",
+          "level": 1,
+          "icon": "♧",
+          "legacyRoute": null
+        },
+        {
+          "id": "veterinaria-bioquimica",
+          "name": "Bioquímica",
+          "level": 1,
+          "icon": "♧",
+          "legacyRoute": null
+        },
+        {
+          "id": "veterinaria-microbiologia-y-parasitologia",
+          "name": "Microbiología y Parasitología",
+          "level": 2,
+          "icon": "♧",
+          "legacyRoute": null
+        },
+        {
+          "id": "veterinaria-farmacologia-veterinaria",
+          "name": "Farmacología Veterinaria",
+          "level": 2,
+          "icon": "♧",
+          "legacyRoute": null
+        },
+        {
+          "id": "veterinaria-patologia-veterinaria",
+          "name": "Patología Veterinaria",
+          "level": 2,
+          "icon": "♧",
+          "legacyRoute": null
+        },
+        {
+          "id": "veterinaria-semiologia-veterinaria",
+          "name": "Semiología Veterinaria",
+          "level": 2,
+          "icon": "♧",
+          "legacyRoute": null
+        },
+        {
+          "id": "veterinaria-clinica-de-pequenos-animales",
+          "name": "Clínica de Pequeños Animales",
+          "level": 3,
+          "icon": "♧",
+          "legacyRoute": null
+        },
+        {
+          "id": "veterinaria-clinica-de-grandes-animales",
+          "name": "Clínica de Grandes Animales",
+          "level": 3,
+          "icon": "♧",
+          "legacyRoute": null
+        },
+        {
+          "id": "veterinaria-cirugia-veterinaria",
+          "name": "Cirugía Veterinaria",
+          "level": 3,
+          "icon": "♧",
+          "legacyRoute": null
+        },
+        {
+          "id": "veterinaria-salud-publica-y-zoonosis",
+          "name": "Salud Pública y Zoonosis",
+          "level": 3,
+          "icon": "♧",
+          "legacyRoute": null
+        }
+      ]
+    },
+    {
+      "id": "psicologia",
+      "name": "Psicología",
+      "value": "Psicología",
+      "color": "#735da1",
+      "icon": "◌",
+      "tagline": "Comprender con evidencia",
+      "subjects": [
+        {
+          "id": "psicologia-introduccion-a-la-psicologia",
+          "name": "Introducción a la Psicología",
+          "level": 1,
+          "icon": "◌",
+          "legacyRoute": null
+        },
+        {
+          "id": "psicologia-historia-de-la-psicologia",
+          "name": "Historia de la Psicología",
+          "level": 1,
+          "icon": "◌",
+          "legacyRoute": null
+        },
+        {
+          "id": "psicologia-psicologia-del-desarrollo",
+          "name": "Psicología del Desarrollo",
+          "level": 1,
+          "icon": "◌",
+          "legacyRoute": null
+        },
+        {
+          "id": "psicologia-psicologia-cognitiva",
+          "name": "Psicología Cognitiva",
+          "level": 1,
+          "icon": "◌",
+          "legacyRoute": null
+        },
+        {
+          "id": "psicologia-neurociencias",
+          "name": "Neurociencias",
+          "level": 2,
+          "icon": "◌",
+          "legacyRoute": null
+        },
+        {
+          "id": "psicologia-psicologia-social",
+          "name": "Psicología Social",
+          "level": 2,
+          "icon": "◌",
+          "legacyRoute": null
+        },
+        {
+          "id": "psicologia-metodologia-de-investigacion",
+          "name": "Metodología de Investigación",
+          "level": 2,
+          "icon": "◌",
+          "legacyRoute": null
+        },
+        {
+          "id": "psicologia-estadistica-y-psicometria",
+          "name": "Estadística y Psicometría",
+          "level": 2,
+          "icon": "◌",
+          "legacyRoute": null
+        },
+        {
+          "id": "psicologia-psicopatologia",
+          "name": "Psicopatología",
+          "level": 3,
+          "icon": "◌",
+          "legacyRoute": null
+        },
+        {
+          "id": "psicologia-evaluacion-psicologica",
+          "name": "Evaluación Psicológica",
+          "level": 3,
+          "icon": "◌",
+          "legacyRoute": null
+        },
+        {
+          "id": "psicologia-psicologia-clinica",
+          "name": "Psicología Clínica",
+          "level": 3,
+          "icon": "◌",
+          "legacyRoute": null
+        },
+        {
+          "id": "psicologia-etica-profesional",
+          "name": "Ética Profesional",
+          "level": 3,
+          "icon": "◌",
+          "legacyRoute": null
+        }
+      ]
+    },
+    {
+      "id": "sistemas",
+      "name": "Ingeniería en Sistemas",
+      "value": "Ingeniería en Sistemas",
+      "color": "#485bb0",
+      "icon": "⌘",
+      "tagline": "De la lógica a lo que funciona",
+      "subjects": [
+        {
+          "id": "sistemas-programacion-i",
+          "name": "Programación I",
+          "level": 1,
+          "icon": "⌘",
+          "legacyRoute": null
+        },
+        {
+          "id": "sistemas-programacion-ii",
+          "name": "Programación II",
+          "level": 1,
+          "icon": "⌘",
+          "legacyRoute": null
+        },
+        {
+          "id": "sistemas-algoritmos-y-estructuras-de-datos",
+          "name": "Algoritmos y Estructuras de Datos",
+          "level": 1,
+          "icon": "⌘",
+          "legacyRoute": null
+        },
+        {
+          "id": "sistemas-matematica-discreta",
+          "name": "Matemática Discreta",
+          "level": 1,
+          "icon": "⌘",
+          "legacyRoute": null
+        },
+        {
+          "id": "sistemas-analisis-matematico",
+          "name": "Análisis Matemático",
+          "level": 2,
+          "icon": "⌘",
+          "legacyRoute": null
+        },
+        {
+          "id": "sistemas-algebra-y-geometria",
+          "name": "Álgebra y Geometría",
+          "level": 2,
+          "icon": "⌘",
+          "legacyRoute": null
+        },
+        {
+          "id": "sistemas-arquitectura-de-computadoras",
+          "name": "Arquitectura de Computadoras",
+          "level": 2,
+          "icon": "⌘",
+          "legacyRoute": null
+        },
+        {
+          "id": "sistemas-sistemas-operativos",
+          "name": "Sistemas Operativos",
+          "level": 2,
+          "icon": "⌘",
+          "legacyRoute": null
+        },
+        {
+          "id": "sistemas-bases-de-datos",
+          "name": "Bases de Datos",
+          "level": 3,
+          "icon": "⌘",
+          "legacyRoute": null
+        },
+        {
+          "id": "sistemas-redes",
+          "name": "Redes",
+          "level": 3,
+          "icon": "⌘",
+          "legacyRoute": null
+        },
+        {
+          "id": "sistemas-ingenieria-de-software",
+          "name": "Ingeniería de Software",
+          "level": 3,
+          "icon": "⌘",
+          "legacyRoute": null
+        },
+        {
+          "id": "sistemas-seguridad-informatica",
+          "name": "Seguridad Informática",
+          "level": 3,
+          "icon": "⌘",
+          "legacyRoute": null
+        }
+      ]
+    }
+  ]
+}

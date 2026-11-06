@@ -7,9 +7,12 @@ const {authorize}=require('../lib/api-access.cjs');
 const env={SUPABASE_URL:'https://example.supabase.co',SUPABASE_ANON_KEY:'public',SUPABASE_SERVICE_ROLE_KEY:'server',RATE_LIMIT_SALT:'s'.repeat(64)};
 const req={headers:{authorization:'Bearer aaa.bbb.ccc'}};
 test('browser source contains no known private credential patterns',()=>{
- const files=['index.html','script.js','sw.js',...fs.readdirSync('modules').filter(name=>name.endsWith('.mjs')).map(name=>'modules/'+name)];
+ const files=['index.html','script.js','sw.js','catalog.json','campus-config.json',...fs.readdirSync('modules',{recursive:true}).filter(name=>name.endsWith('.mjs')).map(name=>'modules/'+name)];
  const patterns=[/AIza[0-9A-Za-z_-]{30,}/,/(?:ghp_|github_pat_)[A-Za-z0-9_]{20,}/,/sb_secret_[A-Za-z0-9_-]{15,}/,/-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/];
  for(const file of files){const text=fs.readFileSync(file,'utf8');for(const pattern of patterns)assert.ok(!pattern.test(text),file);}
+});
+test('anonymous identities never consume server AI quota even with forged email fields',async()=>{
+ let calls=0;await assert.rejects(()=>authorize(req,env,async()=>{calls++;return Response.json({id:'guest',is_anonymous:true,email_confirmed_at:'2026-11-06'});}),e=>e.code==='EMAIL_NOT_VERIFIED');assert.equal(calls,1);
 });
 test('page contains no executable inline scripts or event attributes and CSP blocks them',()=>{
  const html=parse(fs.readFileSync('index.html','utf8'));let bindings=0;
