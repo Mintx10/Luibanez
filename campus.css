@@ -82,3 +82,8 @@ body.campus-enabled .user-header-name,body.campus-enabled .user-header-caret{col
 @media(max-width:760px){body.campus-enabled #topNavLoginBtn{font-size:0!important;min-width:56px!important}body.campus-enabled #topNavLoginBtn:after{font-size:11px!important}body.campus-enabled #topNavAuthGuest{min-width:0!important}}
 
 @media(max-width:760px){html{scroll-padding-bottom:100px}body.campus-enabled{padding-bottom:90px}body.campus-enabled .view{scroll-margin-bottom:100px}body.campus-enabled #viewDuelo,body.campus-enabled #viewJuegosEdu{padding-bottom:100px}body.campus-enabled button{scroll-margin-bottom:90px}}
+.campus-account-fields{display:grid;gap:17px;border:0;margin:0;padding:0;min-width:0}.campus-account-fields:disabled{opacity:.7}
+#campusSignupStatus:not(:empty){padding:13px 15px;border:1px solid var(--campus-border);border-radius:10px;background:var(--campus-soft);margin:0;color:var(--campus-ink)}
+#campusSignupStatus[data-error="true"]{border-color:#b33540;color:#992b35;background:#fff1f2}
+:root[data-theme="dark"] #campusSignupStatus[data-error="true"]{color:#ffc1c8;background:#3a202d;border-color:#db8793}
+#campusSignupStatus:focus{outline:2px solid var(--campus-brand);outline-offset:3px}.campus-registration-unavailable{border:1px solid var(--campus-border);background:var(--campus-soft);border-radius:14px;padding:20px}.campus-registration-unavailable h3{margin-top:0}

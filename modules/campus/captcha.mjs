@@ -1,6 +1,7 @@
 import config from '../../campus-config.json' with {type:'json'};
 import {el,button} from './dom.mjs';
 let loading;
+export function hasCaptchaConfiguration(){return Boolean(config.turnstileSiteKey);}
 function load() {
  if (window.turnstile) return Promise.resolve(window.turnstile);
  if (!loading) loading=new Promise((resolve,reject)=>{

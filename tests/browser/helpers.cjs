@@ -15,7 +15,7 @@ async function mockAuth(page, user = null, backend = false) {
         getUser:async()=>({data:{user},error:null}),
         onAuthStateChange:()=>({data:{subscription:{unsubscribe(){}}}}),
         signInAnonymously:async args=>{record('signInAnonymously',args);user={id:'33333333-3333-4333-8333-333333333333',is_anonymous:true,user_metadata:{}};sessionStorage.setItem('__testUser',JSON.stringify(user));return {data:{user},error:null}},
-        signUp:async args=>{record('signUp',args);return {data:{user:null,session:null},error:null}},
+        signUp:async args=>{record('signUp',args);return {data:{user:null,session:null},error:window.__signupFailure?{message:window.__signupFailure}:null}},
         signInWithPassword:async args=>{record('signIn',args);if(args.password==='wrong')return {error:new Error('Credenciales incorrectas')};user=${JSON.stringify(mockUser)};sessionStorage.setItem('__testUser',JSON.stringify(user));return {data:{user},error:null}},
         signOut:async()=>{record('signOut',{});sessionStorage.setItem('__testUser','null');return {error:null}},
         resetPasswordForEmail:async(email,args)=>{record('resetPassword',{email,args});return {error:null}},

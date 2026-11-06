@@ -12576,7 +12576,7 @@ async function iniciarAplicacion() {
 // =========================================================
 // GESTOR DE VERSIONES Y ACTUALIZACIÓN AUTOMÁTICA
 // =========================================================
-const APP_BUILD_VERSION = "31.0.0";
+const APP_BUILD_VERSION = "31.0.1";
 
 async function forzarActualizacionCompleta(mostrarNotificacion = true) {
  const button = document.getElementById('btnForzarActualizar');

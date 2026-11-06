@@ -1,5 +1,11 @@
 # Luibañez 31 · campus en revisión
 
+## Corrección del registro · v31.0.1
+
+El último paso podía parecer inactivo: los errores quedaban debajo del formulario y no recibían foco. Ahora los errores aparecen dentro del formulario, junto al botón, se anuncian y se enfocan; los controles se recuperan tras un fallo y se impiden envíos repetidos. Los campos inválidos muestran una explicación explícita.
+
+Cuando falta la configuración pública de Turnstile, el paso de cuenta muestra el motivo del bloqueo antes de solicitar credenciales y permite volver a las materias o abrir el laboratorio. Esto no habilita el registro ni sustituye SMTP, Turnstile o las migraciones pendientes. Se aprobaron 18 comprobaciones de regresión en escritorio/móvil, incluidos error del servidor, reintento, validación y conservación de elecciones, además de las 27 pruebas de lógica/API/base de datos. La versión de la PWA se incrementa para identificar la corrección.
+
 Versión de revisión publicada en [Vercel Preview](https://luibanez-git-codex-campus-seis-carreras-salmar10.vercel.app), desde la [rama de GitHub](https://github.com/Mintx10/Luibanez/tree/codex/campus-seis-carreras). El acceso de revisión puede requerir iniciar sesión en Vercel. Producción conserva v30.1.0.
 
 La comprobación en el navegador de la Preview confirmó el inicio, las seis carreras, las doce materias de Sistemas y ejercicios locales del laboratorio. Se corrigieron el aviso de sesión anticipado al entrar como visitante y los mensajes que atribuían a Gemini un ejercicio generado localmente. Se volvieron a comprobar laboratorio, salas y PWA en ambos tamaños.
