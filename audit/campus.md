@@ -1,5 +1,9 @@
 # Luibañez 31 · campus en revisión
 
+Versión de revisión publicada en [Vercel Preview](https://luibanez-git-codex-campus-seis-carreras-salmar10.vercel.app), desde la [rama de GitHub](https://github.com/Mintx10/Luibanez/tree/codex/campus-seis-carreras). El acceso de revisión puede requerir iniciar sesión en Vercel. Producción conserva v30.1.0.
+
+La comprobación en el navegador de la Preview confirmó el inicio, las seis carreras, las doce materias de Sistemas y ejercicios locales del laboratorio. Se corrigieron el aviso de sesión anticipado al entrar como visitante y los mensajes que atribuían a Gemini un ejercicio generado localmente. Se volvieron a comprobar laboratorio, salas y PWA en ambos tamaños.
+
 ## Alcance implementado
 
 - Visitante: Laboratorio, Crear mi perfil de alumno y Estudiar juntos. Los destinos reservados conservan su ruta para después del acceso.
@@ -22,7 +26,7 @@ La PWA versiona también los JSON del catálogo y configuración pública. Preca
 
 ## Verificación
 
-Resultado local: **27 pruebas de lógica/API/PostgreSQL aprobadas**. **52 pruebas distintas de navegador aprobadas** entre el recorrido completo de las 72 materias en escritorio/móvil y la ejecución final de 40 comprobaciones de regresión. La matriz inspeccionó **95 combinaciones de ruta/perfil y 3634 registros de botones visibles**, sin botones sin evento registrado. El inventario HTML contiene 610 controles, sin IDs duplicados ni referencias sin resolver. Ambos CSS se analizaron sin errores de sintaxis. Estos números no certifican proveedores externos ni reemplazan una revisión docente.
+Resultado local: **27 pruebas de lógica/API/PostgreSQL aprobadas**. **54 pruebas distintas de navegador aprobadas** entre el recorrido completo de las 72 materias en escritorio/móvil y la ejecución final de 40 comprobaciones de regresión. La matriz inspeccionó **95 combinaciones de ruta/perfil y 3640 registros de botones visibles**, sin botones sin evento registrado. El inventario HTML contiene 610 controles, sin IDs duplicados ni referencias sin resolver. Ambos CSS se analizaron sin errores de sintaxis. Estos números no certifican proveedores externos ni reemplazan una revisión docente.
 
 Ejecutar `npm ci`, `npm test`, `npm run check`, `npm run build` y `npm run test:e2e`. Playwright utiliza Edge/Chromium en escritorio y viewport móvil; no certifica Safari ni un dispositivo físico. Las pruebas PostgreSQL usan PGlite con sustitutos de pgcrypto solo en pruebas: validan SQL, permisos y recorridos, no el proveedor de correo ni la implementación criptográfica de producción.
 

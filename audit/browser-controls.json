@@ -268,17 +268,42 @@
         },
         {
           "id": "labBtnGenerarConIA",
-          "label": "Crear o personalizar un ejercicio con IA según tu orden o tema",
+          "label": "Elegir materia, temas y dificultad de la práctica local",
           "handler": "click"
         },
         {
           "id": "labBtnOtroEjercicioIA",
-          "label": "Generar de inmediato un nuevo ejercicio con IA diferente al anterior",
+          "label": "Preparar otro ejercicio sin usar IA del servidor",
           "handler": "click"
         },
         {
           "id": "labBtnQuickOtroIA",
-          "label": "Generar de inmediato otro ejercicio diferente con IA",
+          "label": "Preparar otro ejercicio sin usar IA del servidor",
+          "handler": "click"
+        },
+        {
+          "id": "labBtnVerify_0",
+          "label": "Verificar",
+          "handler": "click"
+        },
+        {
+          "id": "labBtnVerify_1",
+          "label": "Verificar",
+          "handler": "click"
+        },
+        {
+          "id": "labBtnVerify_2",
+          "label": "Verificar",
+          "handler": "click"
+        },
+        {
+          "id": "labBtnVerify_3",
+          "label": "Verificar",
+          "handler": "click"
+        },
+        {
+          "id": "labBtnVerify_4",
+          "label": "Verificar",
           "handler": "click"
         },
         {
@@ -324,6 +349,11 @@
         {
           "id": "labBtnClearTable",
           "label": "🗑️ Limpiar",
+          "handler": "click"
+        },
+        {
+          "id": null,
+          "label": "Eliminar fila",
           "handler": "click"
         },
         {

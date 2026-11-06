@@ -5305,6 +5305,7 @@ async function publicarMensajeSala(data) {
 }
 
 function iniciarDiscoveryLobbiesOnline() {
+    if(!currentUser())return;
     conectarSalaSiEsNecesario(() => {
         if (onlineDueloEstado.transporteOnline && !lobbyBrowserState.suscrito) {
             onlineDueloEstado.transporteOnline.subscribe(LOBBY_DISCOVERY_TOPIC, (err) => {
@@ -17983,6 +17984,10 @@ function iniciarOReanudarLaboratorio() {
         inicializarCalculadorasLaboratorio();
     }
 
+    if(!currentUser()){
+        if(dom.labBtnGenerarConIA){dom.labBtnGenerarConIA.textContent='Configurar práctica';dom.labBtnGenerarConIA.title='Elegir materia, temas y dificultad de la práctica local';}
+        for(const button of [dom.labBtnOtroEjercicioIA,dom.labBtnQuickOtroIA,dom.labBtnSiguienteCasoModal].filter(Boolean)){button.textContent='Otro ejercicio local';button.title='Preparar otro ejercicio sin usar IA del servidor';}
+    }
     // Si la materia es contabilidad, asegurar subvista de Libro Diario
     if (laboratorioEstado.materiaSeleccionada === "contabilidad") {
         cambiarSubvistaContabilidad("diario");
@@ -17993,6 +17998,7 @@ function iniciarOReanudarLaboratorio() {
 
     // Abrir menú flotante solo si no hay ejercicio o si se ingresa por primera vez
     if (!laboratorioEstado.ejercicioActual) {
+        generarEjercicioProcedimentalPorMateria(laboratorioEstado.materiaSeleccionada||'estadistica');
         abrirModalConfigLab();
     } else {
         actualizarBadgesMateriaLabUI();
@@ -21588,15 +21594,15 @@ async function generarOtroEjercicioIALab(btnElement = null) {
     btns.forEach(b => {
         b.disabled = true;
         if (!b.dataset.origHtml) b.dataset.origHtml = b.innerHTML;
-        setHTML(b, `<span style="display:inline-block; animation: spin 0.8s linear infinite;">🔄</span> Generando con IA...`);
+        b.textContent=currentUser()?'Preparando ejercicio…':'Preparando ejercicio local…';
     });
 
     try {
-        mostrarToast("🎲 Conectando con Gemini para generar otro ejercicio inédito...", "info");
+        if(currentUser())mostrarToast("Consultando IA para preparar otra práctica…", "info");
         await generarEjercicioLaboratorio(true);
         if (dom.labCompletedCard) dom.labCompletedCard.classList.add("hidden");
         cambiarVistaMovilLab("enunciado", true);
-        mostrarToast("✨ ¡Nuevo ejercicio con IA listo! Totalmente diferente al anterior.", "exito");
+        mostrarToast(laboratorioEstado.ejercicioActual?.origen==='ia'?'Ejercicio generado con IA.':'Ejercicio local preparado sin IA del servidor.', "exito");
     } catch (err) {
         console.error("Error al generar otro ejercicio con IA:", err);
         mostrarToast("⚠️ Error al crear el nuevo ejercicio. Probá nuevamente.", "error");
@@ -21627,7 +21633,7 @@ async function generarEjercicioLaboratorio(forzarNuevo = false, ordenManual = nu
         : mat.nombre;
 
     // 1. Intentar con la API de Gemini mediante el endpoint /api/gemini
-    if (typeof generarPreguntaIA === "function") {
+    if (currentUser() && typeof generarPreguntaIA === "function") {
         try {
             mostrarToast(`🤖 Gemini está creando tu caso de estudio de ${mat.nombre}...`, "info");
             const prevEjercicios = Array.isArray(laboratorioEstado.historialEjercicios)
@@ -23570,7 +23576,7 @@ function configurarEventosLaboratorio() {
     // Botón "Personalizar con IA" (Abre modal de orden / personalización)
     if (dom.labBtnGenerarConIA) {
         dom.labBtnGenerarConIA.addEventListener("click", () => {
-            abrirModalPromptLab();
+            if(currentUser())abrirModalPromptLab();else abrirModalConfigLab();
         });
     }
 

@@ -100,3 +100,9 @@ test('student can add a private profile photo after signup and retain it after r
  await page.getByLabel('Foto de perfil').setInputFiles([{name:'foto.png',mimeType:'image/png',buffer:Buffer.from(png,'base64')}]);await page.getByRole('button',{name:'Guardar perfil',exact:true}).click();await expect(page.locator('dialog[open] [role=status]')).toContainText('Perfil guardado en la nube');await page.keyboard.press('Escape');await expect(page.locator('#userHeaderAvatar img')).toHaveAttribute('src',/^data:image\/jpeg;base64,/);
  await page.reload();await page.waitForSelector('#accountToolsBtn');await expect(page.locator('#userHeaderAvatar img')).toHaveAttribute('src',/^data:image\/jpeg;base64,/);expect(await page.evaluate(()=>window.__authCalls.filter(c=>c.name==='updateUser').length)).toBe(0);
 });
+test('visitor laboratory prepares real local exercises without claiming or requesting AI',async({page})=>{
+ let requests=0;page.on('request',r=>{if(r.url().includes('/api/gemini'))requests++;});await mockAuth(page);await ready(page,'#laboratorio');await closeDialogs(page);
+ await expect(page.locator('#labTituloCaso')).not.toBeEmpty();await expect(page.locator('#labQuestionsList')).not.toBeEmpty();await expect(page.locator('#labPanelEnunciado')).not.toContainText('Cargando ejercicio');
+ await page.locator('#labBtnOtroEjercicioIA').click();await expect(page.locator('#labBtnOtroEjercicioIA')).toBeEnabled();await expect(page.locator('#labBtnOtroEjercicioIA')).toContainText('local');await expect(page.locator('#appToastContainer')).not.toContainText('Gemini');expect(requests).toBe(0);
+ await navigate(page,'juntos');await expect(page.locator('#campusGuestJoin')).toBeVisible();await expect(page.locator('#appToastContainer')).not.toContainText('Ingresá con tu perfil');
+});
