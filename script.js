@@ -9,7 +9,8 @@ import { setHTML } from './modules/safe-html.mjs';
 import { loadPDF, pdfOptions } from './modules/pdf.mjs';
 import { normalizeRoute, showRoute } from './modules/navigation.mjs';
 import { studyStorage } from './modules/storage.mjs';
-import { getClient, currentUser, currentRoomUser, guestAlias, currentAppearance, withAuthAction, register as registerAccount, signIn, signOut, resetPassword } from './modules/session.mjs';
+import { getClient, currentUser, currentRoomUser, guestAlias, currentAppearance, withAuthAction, signIn, signOut } from './modules/session.mjs';
+import {openAccountRecovery} from './modules/campus/account-recovery.mjs';
 import { requestAI } from './modules/ai-client.mjs';
 import { createCloudService } from './modules/cloud.mjs';
 import { setupAccountTools, muestrearContexto } from './modules/account-tools.mjs';
@@ -3157,16 +3158,15 @@ function cambiarPestañaAuth(pestaña) {
 
 
 async function crearOActualizarCuenta(apodo, avatar, tipoAvatar, fotoDataUrl, password, email = '', carrera = 'General') {
- return withAuthAction(dom.authSubmitRegisterBtn, async () => {
-  if (!currentUser() && !dom.authRegisterForm.reportValidity()) return;
-  await registerAccount({ apodo, avatar, tipoAvatar, fotoDataUrl, password, email, carrera });
-  mostrarToast('Revisá tu correo para verificar tu cuenta y luego iniciá sesión.', 'info');
-  cambiarPestañaAuth('login');
- }, mostrarToast);
+ dom.authAccountModal?.close();abrirModalAuth('register');
 }
 
 async function iniciarSesionConPin(email, password) {
- return withAuthAction(dom.authSubmitLoginBtn, () => signIn(email, password), mostrarToast);
+ dom.authLoginError?.classList.add('hidden');
+ return withAuthAction(dom.authSubmitLoginBtn, () => signIn(email, password), message=>{
+  if(!dom.authLoginError){mostrarToast(message,'error');return;}
+  dom.authLoginError.textContent=message;dom.authLoginError.classList.remove('hidden');dom.authLoginError.setAttribute('role','alert');dom.authLoginError.tabIndex=-1;dom.authLoginError.focus();
+ });
 }
 
 async function cerrarSesionPerfil() {
@@ -3175,10 +3175,7 @@ async function cerrarSesionPerfil() {
 }
 
 async function recuperarPin() {
- return withAuthAction(dom.authForgotPinBtn, async () => {
-  await resetPassword(dom.authLoginUserInput?.value);
-  mostrarToast('Si el correo está registrado, recibirás un enlace para cambiar tu contraseña.', 'info');
- }, mostrarToast);
+ openAccountRecovery(dom.authLoginUserInput?.value);
 }
 
 function asegurarMateriasMedicina() {
@@ -11425,7 +11422,7 @@ function inicializarModoBolillero() {
             const identificador = userInput || selectVal;
             const pin = dom.authLoginPin?.value;
             if (!identificador) {
-                mostrarToast("⚠️ Ingresá el correo de tu cuenta.", "aviso");
+                mostrarToast("⚠️ Ingresá tu usuario.", "aviso");
                 return;
             }
             if (!pin) {

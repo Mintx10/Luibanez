@@ -80,28 +80,29 @@ export async function withAuthAction(button, action, report) {
   catch (error) { report(error.message || 'No se pudo completar la operación.', 'error'); }
   finally { if (button) { button.disabled = false; button.removeAttribute('aria-busy'); } }
 }
-export async function register({ email, password, apodo, carrera, avatar='👤', tipoAvatar='emoji', fotoDataUrl='', selectedSubjects=[], captchaToken }) {
+async function accountRequest(action,values,captchaToken){
+ requireClient();
+ const captcha=await requestCaptcha(captchaToken);
+ let response;
+ try{response=await fetch('/api/account',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,...values,captchaToken:captcha}),signal:AbortSignal.timeout(30000),cache:'no-store'});}catch{throw new Error('No se pudo completar el acceso. Reintentá con el mismo usuario y conservá tu clave de recuperación.');}
+ let result;try{result=await response.json();}catch{throw new Error('El acceso no respondió correctamente. Reintentá.');}
+ if(!response.ok||result.ok!==true)throw new Error(result.error||'No se pudo completar el acceso.');
+ return result;
+}
+export async function register({ username, password, recoveryKey, apodo, carrera, selectedSubjects=[], captchaToken }) {
   if (user) throw new Error('Cerrá sesión para crear otra cuenta. Tu carrera se puede editar desde Cuenta y datos.');
   if (!apodo?.trim()) throw new Error('Ingresá tu nombre.');
-  if (!/^\S+@\S+\.\S+$/.test(email || '')) throw new Error('Ingresá un correo válido.');
+  if (!/^[a-z0-9][a-z0-9_]{2,29}$/i.test(username?.trim() || '')) throw new Error('Elegí un usuario de 3 a 30 letras, números o guion bajo.');
   if (typeof password !== 'string' || password.length < 12) throw new Error('Usá una contraseña de al menos 12 caracteres.');
   if (!getCareer(carrera)) throw new Error('Elegí una carrera válida.');
   const db = requireClient();
-  if ((fotoDataUrl || '').length>300000) throw new Error('Elegí una foto de perfil más pequeña.');
-  // Photos belong in the private profile, never in JWT metadata or request headers.
   if(roomUser?.is_anonymous){await db.auth.signOut({scope:'local'});roomUser=null;}
-  const metadata = { apodo: apodo.trim(), carrera:getCareer(carrera).value, avatar, selected_subjects:selectedSubjects };
-  localStorage.setItem(await appearanceKey(email),JSON.stringify({ avatar,tipoAvatar,fotoDataUrl }));
-  const captcha=await requestCaptcha(captchaToken);
-  const { error } = await db.auth.signUp({ email: email.trim(), password, options: { data: metadata, emailRedirectTo: `${location.origin}/`,captchaToken:captcha } });
-  if (error) throw error;
+  return accountRequest('register',{username,password,recoveryKey,apodo,carrera:getCareer(carrera).id,selectedSubjects},captchaToken);
 }
-export async function signIn(email, password, captchaToken) {
-  if (!/^\S+@\S+\.\S+$/.test(email || '')) throw new Error('Ingresá el correo de tu cuenta.');
-  const captcha=await requestCaptcha(captchaToken);
-  const { data, error } = await requireClient().auth.signInWithPassword({ email, password,options:{captchaToken:captcha} });
+export async function signIn(username, password, captchaToken) {
+  const result=await accountRequest('login',{username,password},captchaToken);
+  const { error } = await requireClient().auth.setSession(result.session);
   if (error) throw error;
-  if (!data.user?.email_confirmed_at) throw new Error('Verificá tu correo para iniciar sesión.');
   location.reload();
 }
 export async function signOut() {
@@ -109,11 +110,8 @@ export async function signOut() {
   if (error) throw error;
   location.reload();
 }
-export async function resetPassword(email,captchaToken) {
-  if (!/^\S+@\S+\.\S+$/.test(email || '')) throw new Error('Ingresá tu correo en el campo de acceso.');
-  const captcha=await requestCaptcha(captchaToken);
-  const { error } = await requireClient().auth.resetPasswordForEmail(email.trim(), { redirectTo: `${location.origin}/?recover=1`,captchaToken:captcha });
-  if (error) throw error;
+export async function resetPassword(username,recoveryKey,password,captchaToken) {
+  return accountRequest('recover',{username,recoveryKey,password},captchaToken);
 }
 export async function updatePassword(password) {
   if (!password || password.length < 12) throw new Error('Usá al menos 12 caracteres.');
@@ -123,7 +121,7 @@ export async function updatePassword(password) {
 export async function authHeaders() {
   const db = requireClient();
   const { data, error } = await db.auth.getSession();
-  if (error || !data.session?.access_token || !data.session.user?.email_confirmed_at || data.session.user?.is_anonymous) throw new Error('Iniciá sesión y verificá tu correo para utilizar la IA.');
+  if (error || !data.session?.access_token || !data.session.user?.email_confirmed_at || data.session.user?.is_anonymous) throw new Error('Iniciá sesión con tu perfil de alumno para utilizar la IA.');
   return { 'Content-Type': 'application/json', Authorization: `Bearer ${data.session.access_token}` };
 }
 export async function beginGuestSession(apodo,captchaToken) {

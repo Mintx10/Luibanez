@@ -28,7 +28,7 @@ for (const file of [...scripts,path.join(output,'index.html'),path.join(output,'
     if (url.startsWith('./') && !relative.startsWith('.')) relative='./'+relative;
     return quote+relative+quote;
   });
-  if (path.basename(file)==='sw.js') source=source.replace('CACHE_PREFIX + "v31.0.1"',`CACHE_PREFIX + "v31.0.1-${revision}"`);
+  if (path.basename(file)==='sw.js') source=source.replace('CACHE_PREFIX + "v31.1.0"',`CACHE_PREFIX + "v31.1.0-${revision}"`);
   fs.writeFileSync(map.get(file) || file,source);
   if (map.has(file)) fs.unlinkSync(file);
 }

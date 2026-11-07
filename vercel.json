@@ -132,6 +132,10 @@
     }
   ],
   "functions": {
+    "api/account.js": {
+      "maxDuration": 30,
+      "includeFiles": "{lib/**,catalog.json}"
+    },
     "api/gemini.js": {
       "maxDuration": 45,
       "includeFiles": "{lib/**,catalog.json}"

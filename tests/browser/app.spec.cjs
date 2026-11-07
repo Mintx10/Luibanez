@@ -29,16 +29,16 @@ test('list and topic submit buttons persist work and safely render imported text
   expect(await page.locator('#topicsGrid img').count()).toBe(0);
   const mode = page.locator('#btnBolilleroClassic'); if (await mode.isVisible()) { await mode.click(); await expect(mode).toHaveAttribute('aria-checked','true'); }
 });
-test('registration, verified email login, recovery, logout and career selection', async ({ page }) => {
+test('username registration, recovery without email, login, logout and career selection', async ({ page }) => {
   await mockAuth(page); await ready(page);
   // Use the same modal entry point on mobile and desktop.
   await page.evaluate(() => window.abrirModalAuth('register'));
   await page.locator('[data-career=medicina]').click();await page.getByRole('button',{name:'Continuar con mis materias'}).click();await page.locator('#campusOnboarding input[type=checkbox]').first().check();await page.getByRole('button',{name:'Continuar con mi cuenta'}).click();
-  await page.locator('[name=apodo]').fill('Nuevo usuario');await page.locator('[name=email]').fill('nuevo@example.com');await page.locator('[name=password]').fill('UnaClaveSegura123!');await page.locator('#campusSignupForm button[type=submit]').click();
-  await expect.poll(()=>page.evaluate(()=>window.__authCalls.filter(c=>c.name==='signUp').length)).toBe(1);
-  await page.getByRole('button',{name:'Ya lo confirmé'}).click();await expect(page.locator('#authLoginForm')).toBeVisible();
-  await page.locator('#authLoginUserInput').fill('study@example.com'); await page.locator('#authForgotPinBtn').click();
-  await expect.poll(()=>page.evaluate(()=>window.__authCalls.filter(c=>c.name==='resetPassword').length)).toBe(1);
+  await page.locator('[name=apodo]').fill('Nuevo usuario');await page.locator('[name=username]').fill('nuevo_usuario');await page.locator('[name=password]').fill('UnaClaveSegura123!');await page.locator('[name=savedRecoveryKey]').check();await page.locator('#campusSignupForm button[type=submit]').click();
+  await expect.poll(()=>page.evaluate(()=>window.__authCalls.filter(c=>c.name==='register').length)).toBe(1);
+  await page.getByRole('button',{name:'Iniciar sesión',exact:true}).click();await expect(page.locator('#authLoginForm')).toBeVisible();
+  await page.locator('#authLoginUserInput').fill('study_user'); await page.locator('#authForgotPinBtn').click();
+  await page.locator('#campusAccountRecovery [name=recoveryKey]').fill('a'.repeat(32));await page.locator('#campusAccountRecovery [name=password]').fill('OtraClaveSegura123!');await page.locator('#campusAccountRecovery button[type=submit]').click();await expect(page.locator('#campusAccountRecovery [role=status]')).toContainText('Contraseña actualizada');await page.locator('#campusAccountRecovery').getByRole('button',{name:'Cerrar',exact:true}).click();
   await page.locator('#authLoginPin').fill('wrong'); await page.locator('#authSubmitLoginBtn').click(); await expect(page.locator('#authSubmitLoginBtn')).toBeEnabled();
   await page.locator('#authLoginPin').fill('UnaClaveSegura123!'); await Promise.all([page.waitForEvent('load'), page.locator('#authSubmitLoginBtn').click()]); await page.waitForSelector('#accountToolsBtn');
   await page.locator('#accountToolsBtn').click(); await page.locator('#accountCareer').selectOption('medicina'); await Promise.all([page.waitForEvent('load'), page.locator('#careerForm button').click()]); await page.waitForSelector('#accountToolsBtn');
@@ -89,10 +89,10 @@ test('main screens remain within the viewport on desktop and mobile',async({page
 test('signup keeps photos out of authentication metadata',async({page})=>{
  await mockAuth(page);await ready(page);await page.evaluate(()=>window.abrirModalAuth('register'));
  await page.locator('[data-career=finanzas]').click();await page.getByRole('button',{name:'Continuar con mis materias'}).click();await page.locator('#campusOnboarding input[type=checkbox]').first().check();await page.getByRole('button',{name:'Continuar con mi cuenta'}).click();
- await page.locator('[name=apodo]').fill('Perfil sin foto');await page.locator('[name=email]').fill('study@example.com');await page.locator('[name=password]').fill('UnaClaveSegura123!');await page.locator('#campusSignupForm button[type=submit]').click();
- await expect.poll(()=>page.evaluate(()=>window.__authCalls.filter(c=>c.name==='signUp').length)).toBe(1);
- const metadata=await page.evaluate(()=>window.__authCalls.find(call=>call.name==='signUp').args.options.data);
- expect(metadata).not.toHaveProperty('fotoDataUrl');expect(metadata.selected_subjects).toHaveLength(1);
+ await page.locator('[name=apodo]').fill('Perfil sin foto');await page.locator('[name=username]').fill('study_user');await page.locator('[name=password]').fill('UnaClaveSegura123!');await page.locator('[name=savedRecoveryKey]').check();await page.locator('#campusSignupForm button[type=submit]').click();
+ await expect.poll(()=>page.evaluate(()=>window.__authCalls.filter(c=>c.name==='register').length)).toBe(1);
+ const metadata=await page.evaluate(()=>window.__authCalls.find(call=>call.name==='register').args);
+ expect(metadata).not.toHaveProperty('fotoDataUrl');expect(metadata.selectedSubjects).toHaveLength(1);
 });
 test('student can add a private profile photo after signup and retain it after reload',async({page})=>{
  await mockAuth(page,mockUser);await ready(page);await page.getByRole('button',{name:'Editar mi perfil',exact:true}).click();

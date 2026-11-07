@@ -18,7 +18,7 @@
     <link rel="icon" type="image/svg+xml" href="icon.svg?v=29.31">
     <link rel="apple-touch-icon" href="icon-192.png?v=29.31">
     <link rel="manifest" href="manifest.json?v=29.31">
-    <link rel="stylesheet" href="style.css?v=31.0.1">
+    <link rel="stylesheet" href="style.css?v=31.1.0">
     
     <link rel="stylesheet" href="vendor/katex/katex.min.css" crossorigin="anonymous">
     <link rel="stylesheet" href="vendor/fontawesome/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
@@ -6586,8 +6586,8 @@
             </div>
 
             <div class="field">
-                <label for="authRegEmail">Correo electrónico</label>
-                <input id="authRegEmail" type="email" placeholder="tu@email.com" required autocomplete="email">
+                <label for="authRegEmail">Usuario</label>
+                <input id="authRegEmail" type="text" placeholder="tu_usuario" required autocomplete="username">
             </div>
 
             <div class="modal__actions">
@@ -6602,12 +6602,12 @@
 
         <!-- Panel Iniciar Sesión con Usuario y PIN -->
         <form id="authLoginForm" class="auth-panel hidden" autocomplete="off" data-prevent-submit>
-            <p class="auth-desc">Ingresá tu correo verificado y tu contraseña:</p>
+            <p class="auth-desc">Ingresá tu usuario y contraseña. No necesitás correo.</p>
 
 
             <div class="field">
-                <label for="authLoginUserInput">Correo electrónico</label>
-                <input id="authLoginUserInput" type="email" required placeholder="tu@email.com" autocomplete="username">
+                <label for="authLoginUserInput">Usuario</label>
+                <input id="authLoginUserInput" type="text" required minlength="3" maxlength="30" placeholder="tu_usuario" autocomplete="username" autocapitalize="none" spellcheck="false">
             </div>
 
             <div class="field">

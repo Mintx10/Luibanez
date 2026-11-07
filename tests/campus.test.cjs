@@ -13,7 +13,7 @@ test('all 72 subjects contain six units, twelve valid questions, three solved ca
 });
 test('campus migration enforces ownership, guest restrictions, independent careers and temporary cleanup',async t=>{
  const db=new PGlite();t.after(()=>db.close());const alice='11111111-1111-4111-8111-111111111111',bob='22222222-2222-4222-8222-222222222222',guest='33333333-3333-4333-8333-333333333333';
- await db.exec(`create role anon;create role authenticated;create role service_role;create schema auth;create table auth.users(id uuid primary key,is_anonymous boolean default false,email_confirmed_at timestamptz default now(),created_at timestamptz default now(),raw_user_meta_data jsonb default '{}');create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;grant usage on schema auth to authenticated;create schema extensions;create function extensions.gen_salt(text,integer) returns text language sql as $$select 'test'::text$$;create function extensions.crypt(text,text) returns text language sql as $$select 'test:'||$1$$;insert into auth.users(id) values('${alice}'),('${bob}'),('${guest}');update auth.users set is_anonymous=true,email_confirmed_at=null where id='${guest}';`);
+ await db.exec(`create role anon;create role authenticated;create role service_role;create schema auth;create table auth.users(id uuid primary key,is_anonymous boolean default false,email_confirmed_at timestamptz default now(),created_at timestamptz default now(),raw_app_meta_data jsonb default '{}',raw_user_meta_data jsonb default '{}');create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;grant usage on schema auth to authenticated;create schema extensions;create function extensions.gen_salt(text,integer) returns text language sql as $$select 'test'::text$$;create function extensions.crypt(text,text) returns text language sql as $$select 'test:'||$1$$;insert into auth.users(id) values('${alice}'),('${bob}'),('${guest}');update auth.users set is_anonymous=true,email_confirmed_at=null where id='${guest}';`);
  for(const name of fs.readdirSync('supabase/migrations').sort())await db.exec(fs.readFileSync('supabase/migrations/'+name,'utf8').replace('create extension if not exists pgcrypto with schema extensions;',''));
  async function as(user,sql){await db.exec('reset role');await db.query("select set_config('request.jwt.claim.sub',$1,false)",[user]);await db.exec('set role authenticated');return db.exec(sql);}
  await as(alice,`select study_activate_career('sistemas');select study_save_track('sistemas',array['sistemas-programacion-i']);select study_record_subject_progress('sistemas','sistemas-programacion-i','quiz',50,'{}',now());select study_activate_career('medicina');select study_save_track('medicina',array['medicina-anatomia']);`);
@@ -33,4 +33,21 @@ test('campus migration enforces ownership, guest restrictions, independent caree
  assert.equal((await db.query('select * from study_verified_results')).rows.length,0);
  assert.equal((await db.query('select study_cleanup_guests() n')).rows[0].n,0);
  await as(guest,`select study_leave_room('ABCDE')`);await db.exec('reset role');assert.equal((await db.query('select study_cleanup_guests() n')).rows[0].n,1);
+ // Username registry: pending Auth users cannot acquire student privileges,
+ // and neither guest nor signed-in browsers can read recovery hashes or map IDs.
+ const pending='55555555-5555-4555-8555-555555555555';
+ await db.query(`insert into auth.users(id,raw_app_meta_data) values($1,'{"study_auth":"username"}')`,[pending]);
+ await assert.rejects(()=>as(pending,`select study_activate_career('sistemas')`));
+ await assert.rejects(()=>as(alice,`select study_account_lookup('new_student')`));
+ await assert.rejects(()=>as(alice,`select * from private.study_username_accounts`));
+ await assert.rejects(()=>as(alice,`select study_account_register('new_student','${pending}','${'a'.repeat(64)}')`));
+ await db.exec('reset role');await db.exec('set role service_role');
+ await db.query('select study_account_register($1,$2,$3)',['new_student',pending,'a'.repeat(64)]);
+ assert.equal((await db.query('select study_account_lookup($1) account',['new_student'])).rows[0].account.user_id,pending);
+ const ip='b'.repeat(64),name='c'.repeat(64);
+ for(let i=0;i<5;i++)assert.equal((await db.query('select study_account_quota($1,$2,$3) q',[ip,name,'register'])).rows[0].q.allowed,true);
+ assert.equal((await db.query('select study_account_quota($1,$2,$3) q',[ip,name,'register'])).rows[0].q.allowed,false);
+ await assert.rejects(()=>db.query('select study_account_register($1,$2,$3)',['other_user',pending,'a'.repeat(64)]));
+ await as(pending,`select study_activate_career('sistemas')`);
+ assert.equal((await as(bob,`select * from study_student_tracks where user_id='${pending}'`))[0].rows.length,0);
 });

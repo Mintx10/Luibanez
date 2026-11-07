@@ -1,8 +1,10 @@
-# Luibañez · v30.1
+# Luibañez · campus en revisión
 
 Aplicación de estudio con HTML, módulos ES, una función de Vercel para IA y Supabase para identidad, documentos y partidas. Las funciones de estudio local se pueden usar como invitado.
 
 La versión 30.1.0 está publicada en https://luibanez.vercel.app y las cuatro migraciones están aplicadas al proyecto Supabase existente. El [informe del despliegue](audit/deployment.md) registra las comprobaciones reales y la configuración de correo pendiente. El [informe de auditoría](audit/README.md) detalla la cobertura local.
+
+La revisión **31.1.0** incorpora cuentas con **usuario y contraseña, sin correo ni SMTP**. Reemplaza el requisito anterior de confirmación por correo por decisión del propietario. La recuperación utiliza una clave privada descargable antes de crear la cuenta; perder contraseña y clave impide recuperar el acceso. El [informe de cuentas sin correo](audit/username-accounts.md) detalla la implementación, activación y límites de verificación. Los informes anteriores son históricos.
 
 ## Desarrollo y verificación
 
@@ -35,9 +37,10 @@ La compilación genera `dist/` y la vista previa de producción usa `http://127.
 ## Activación en Supabase y Vercel
 
 1. Respaldar la base y comprobar las migraciones en un entorno de prueba. El proyecto Supabase se mantiene; no hay que crear otro sitio ni cambiar de hosting.
-2. Aplicar, como propietario de la base, los cuatro SQL de `supabase/migrations/`, en orden. Son migraciones de una sola ejecución, no scripts para repetir sobre la misma base.
-3. Habilitar correo/contraseña y confirmación de correo en Supabase Auth. Configurar SMTP, Site URL y las URLs permitidas de confirmación y recuperación para producción y para cada preview autorizado.
+2. Aplicar, como propietario de la base, las migraciones pendientes de `supabase/migrations/`, en orden. Son migraciones de una sola ejecución, no scripts para repetir sobre la misma base. Las cuatro primeras ya están aplicadas.
+3. Mantener habilitado el proveedor de contraseña de Supabase Auth. El servidor provisiona las cuentas de usuario sin enviar correos. No hace falta SMTP, una dirección real ni comprar un dominio. No desactivar globalmente los controles de correo de las cuentas antiguas. Configurar Turnstile para la dirección exacta de Vercel y activar su protección en Supabase para los invitados anónimos.
 4. Configurar en Vercel `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `GEMINI_API_KEY` y un `RATE_LIMIT_SALT` aleatorio. Usar la URL del proyecto existente. Las claves de servicio y de Gemini son exclusivamente del servidor. Las variables y sus ejemplos están en `.env.example`.
+   Añadir `TURNSTILE_SITE_KEY` (pública, usada durante el build) y `TURNSTILE_SECRET_KEY` (secreta, solo servidor). Configurar los entornos autorizados; no compartir secretos de producción con previews de ramas no confiables. Volver a desplegar tras cambiar variables.
 5. Para un dominio adicional o un preview, añadir su origen exacto a `ALLOWED_ORIGINS`. No se habilitan comodines de dominios. Si se cambia el proyecto Supabase, actualizar también la configuración pública de `modules/session.mjs` y la CSP de `vercel.json`.
 6. Desplegar este checkout en Vercel: `vercel.json` utiliza `npm run build`, publica `dist/` y empaqueta `api/gemini.js` con `lib/`. La [configuración oficial de Vercel](https://vercel.com/docs/project-configuration/vercel-json) describe estas opciones.
 
@@ -53,7 +56,7 @@ IA: 15 consultas/minuto y 200/día por usuario; 40/minuto y 1000/día por IP, al
 
 ## Cuentas y datos anteriores
 
-Las cuentas con PIN del navegador no son credenciales de Supabase. Crear una cuenta con correo, verificarla e iniciar sesión. Desde **Cuenta y datos** se puede elegir carrera y revisar qué información anterior de este dispositivo importar. Los originales se conservan; no se importan PIN, claves API ni identidades antiguas. No se asignan documentos de la nube antigua a una identidad nueva basándose en un ID local.
+Las cuentas con PIN del navegador no son credenciales de Supabase. Crear una cuenta con usuario, guardar la clave de recuperación e iniciar sesión. Desde **Cuenta y datos** se puede elegir carrera y revisar qué información anterior de este dispositivo importar. Los originales se conservan; no se importan PIN, claves API ni identidades antiguas. No se asignan documentos de la nube antigua a una identidad nueva basándose en un ID local.
 
 El almacenamiento local e IndexedDB se separan por usuario. Los documentos y las fotos de perfil privados están sujetos a RLS. Las fotos no se guardan en los metadatos del JWT. Las operaciones sin conexión se guardan en una cola de IndexedDB; los borrados conservan un marcador mínimo en el servidor, con el contenido eliminado, para que una copia antigua no vuelva a subirlo accidentalmente.
 
@@ -63,4 +66,4 @@ Los archivos de estudio tienen un límite de 20 MB, 4 MB de texto extraído y ha
 
 ## Comprobación posterior al despliegue
 
-Verificar con dos cuentas reales: registro y correo, recuperación, cierre/expiración de sesión, aislamiento de documentos, sincronización después de perder conexión, sala con contraseña, reconexión, turnos y resultados. Comprobar también una actualización desde la PWA instalada anterior y permisos reales de micrófono/cámara cuando correspondan. Estas comprobaciones no quedan sustituidas por las pruebas locales ni por el inventario de eventos.
+Verificar con dos cuentas reales: registro con usuario, descarga y uso de clave de recuperación, cierre/expiración de sesión, aislamiento de documentos, sincronización después de perder conexión, sala con contraseña, reconexión, turnos y resultados. Comprobar también una actualización desde la PWA instalada anterior y permisos reales de micrófono/cámara cuando correspondan. Estas comprobaciones no quedan sustituidas por las pruebas locales ni por el inventario de eventos.

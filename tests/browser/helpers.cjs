@@ -1,5 +1,12 @@
 const mockUser = { id: '11111111-1111-4111-8111-111111111111', email: 'study@example.com', email_confirmed_at: '2026-11-05', user_metadata: { apodo: 'Estudiante', carrera: 'Licenciatura en Finanzas', avatar: '🦁' } };
 async function mockAuth(page, user = null, backend = false) {
+  await page.route('**/api/account',async route=>{
+    const body=route.request().postDataJSON();
+    const failure=await page.evaluate(body=>{window.__authCalls.push({name:body.action,args:body});return body.action==='register'?window.__signupFailure:'';},body);
+    if(failure)return route.fulfill({status:503,json:{error:failure}});
+    if(body.password==='wrong')return route.fulfill({status:401,json:{error:'Usuario o contraseña incorrectos.'}});
+    return route.fulfill({json:body.action==='login'?{ok:true,session:{access_token:'test-token',refresh_token:'test-refresh'}}:{ok:true,username:body.username.toLowerCase()}});
+  });
   await page.route('**/campus-config.json',route=>route.fulfill({json:{turnstileSiteKey:'test-public-sitekey',captchaRequired:true}}));
   await page.route('https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit',route=>route.fulfill({contentType:'text/javascript',body:"window.turnstile={render:(node,opts)=>{setTimeout(()=>opts.callback('test-captcha-token'),10);return 'test-widget'},remove:()=>{}}"}));
   await page.route('**/vendor/supabase.js', route => route.fulfill({ contentType: 'text/javascript', body: `
@@ -13,6 +20,7 @@ async function mockAuth(page, user = null, backend = false) {
       auth:{
         getSession:async()=>({data:{session:user?{user,access_token:'test-token'}:null},error:null}),
         getUser:async()=>({data:{user},error:null}),
+        setSession:async args=>{record('setSession',args);user=${JSON.stringify(mockUser)};sessionStorage.setItem('__testUser',JSON.stringify(user));return {data:{user},error:null}},
         onAuthStateChange:()=>({data:{subscription:{unsubscribe(){}}}}),
         signInAnonymously:async args=>{record('signInAnonymously',args);user={id:'33333333-3333-4333-8333-333333333333',is_anonymous:true,user_metadata:{}};sessionStorage.setItem('__testUser',JSON.stringify(user));return {data:{user},error:null}},
         signUp:async args=>{record('signUp',args);return {data:{user:null,session:null},error:window.__signupFailure?{message:window.__signupFailure}:null}},

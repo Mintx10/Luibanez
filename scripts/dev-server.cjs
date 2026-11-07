@@ -13,13 +13,13 @@ const server = http.createServer(async (req, res) => {
   res.setHeader('Cache-Control', 'no-store');
   let pathname;
   try { pathname = decodeURIComponent(new URL(req.url, 'http://localhost').pathname); } catch { res.writeHead(400).end(); return; }
-  if (pathname === '/api/gemini') {
+  if (pathname === '/api/gemini' || pathname === '/api/account') {
     const chunks = []; let size = 0;
     for await (const chunk of req) { size += chunk.length; if (size > 4_000_000) { res.writeHead(413).end(); return; } chunks.push(chunk); }
     req.body = Buffer.concat(chunks).toString();
     res.status = code => { res.statusCode = code; return res; };
     res.json = body => { res.setHeader('Content-Type', 'application/json'); res.end(JSON.stringify(body)); };
-    await require('../api/gemini.js')(req, res); return;
+    await require(pathname === '/api/account' ? '../api/account.js' : '../api/gemini.js')(req, res); return;
   }
   if (!['GET', 'HEAD'].includes(req.method)) { res.writeHead(405).end(); return; }
   if (pathname === '/') pathname = '/index.html';

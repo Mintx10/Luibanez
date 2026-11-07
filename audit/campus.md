@@ -1,3 +1,7 @@
+## Actualización vigente · cuentas sin correo v31.1.0
+
+El propietario reemplazó el requisito de correo por usuario, contraseña y clave privada de recuperación. **SMTP ya no es requisito de activación.** El [informe actualizado](username-accounts.md) contiene la implementación, las pruebas y los pendientes actuales de Turnstile, migraciones y variables del Preview. Los apartados de v31.0.1 siguientes describen la revisión anterior; cualquier exigencia de SMTP o confirmación por correo queda sustituida por esa decisión.
+
 # Luibañez 31 · campus en revisión
 
 ## Corrección del registro · v31.0.1
