@@ -106,8 +106,13 @@ export async function signIn(username, password, captchaToken) {
   location.reload();
 }
 export async function signOut() {
-  const { error } = await requireClient().auth.signOut({ scope: 'local' });
-  if (error) throw error;
+  const db=requireClient();
+  // Auth emits SIGNED_OUT before its promise settles. Leave protected routes
+  // before that listener reloads, so logout cannot reopen the registration gate.
+  const previous=location.href;
+  history.replaceState(null,'',location.pathname+location.search+'#home');
+  const { error } = await db.auth.signOut({ scope: 'local' });
+  if (error) {history.replaceState(null,'',previous);throw error;}
   location.reload();
 }
 export async function resetPassword(username,recoveryKey,password,captchaToken) {

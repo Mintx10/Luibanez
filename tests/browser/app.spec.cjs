@@ -46,6 +46,7 @@ test('username registration, recovery without email, login, logout and career se
   await page.goto('/#med-interna'); await page.waitForSelector('#accountToolsBtn'); await expect(page.locator('#viewSubject')).toHaveClass(/view--active/);
   await Promise.all([page.waitForEvent('load'), page.evaluate(()=>window.cerrarSesionPerfil())]); await page.waitForSelector('#accountToolsBtn');
   await expect(page.locator('#viewHome')).toHaveClass(/view--active/);
+  await expect(page.locator('#campusGate')).not.toBeVisible();
 });
 test('any medicine account can open all three oral study lists', async ({ page }) => {
   await mockAuth(page,{ ...mockUser, user_metadata: { apodo: 'Otra persona', carrera: 'Medicina' } }); await ready(page,'#legacy/med-interna');
