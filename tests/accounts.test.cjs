@@ -22,6 +22,7 @@ function backend(overrides={}){
 }
 test('username registration validates profile, strong passwords and recovery secret without any email input',()=>{
  assert.equal(validate(registration).username,'alumno_1');
+ assert.equal(validate({...registration,password:'abc123'}).password,'abc123');
  for(const patch of [{username:'a@b.com'},{username:'../admin'},{password:'corta'},{password:'á'.repeat(40)},{recoveryKey:'short'},{selectedSubjects:['medicina-anatomia']},{selectedSubjects:[]},{apodo:'x'},{captchaToken:''}])assert.throws(()=>validate({...registration,...patch}));
  assert.throws(()=>validate('x'.repeat(16001)),{code:'BODY_TOO_LARGE'});
 });

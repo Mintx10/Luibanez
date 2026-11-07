@@ -93,7 +93,7 @@ export async function register({ username, password, recoveryKey, apodo, carrera
   if (user) throw new Error('Cerrá sesión para crear otra cuenta. Tu carrera se puede editar desde Cuenta y datos.');
   if (!apodo?.trim()) throw new Error('Ingresá tu nombre.');
   if (!/^[a-z0-9][a-z0-9_]{2,29}$/i.test(username?.trim() || '')) throw new Error('Elegí un usuario de 3 a 30 letras, números o guion bajo.');
-  if (typeof password !== 'string' || password.length < 12) throw new Error('Usá una contraseña de al menos 12 caracteres.');
+  if (typeof password !== 'string' || password.length < 6) throw new Error('Usá una contraseña de al menos 6 caracteres.');
   if (!getCareer(carrera)) throw new Error('Elegí una carrera válida.');
   const db = requireClient();
   if(roomUser?.is_anonymous){await db.auth.signOut({scope:'local'});roomUser=null;}
@@ -119,7 +119,7 @@ export async function resetPassword(username,recoveryKey,password,captchaToken) 
   return accountRequest('recover',{username,recoveryKey,password},captchaToken);
 }
 export async function updatePassword(password) {
-  if (!password || password.length < 12) throw new Error('Usá al menos 12 caracteres.');
+  if (!password || password.length < 6) throw new Error('Usá al menos 6 caracteres.');
   const { error } = await requireClient().auth.updateUser({ password });
   if (error) throw error;
 }

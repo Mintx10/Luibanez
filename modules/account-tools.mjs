@@ -17,7 +17,7 @@ export function setupAccountTools({ importDocuments, report, welcome }) {
   dialog.setAttribute('aria-labelledby', 'accountToolsTitle');
   dialog.innerHTML = `<div class="modal__content"><header class="modal__header"><h2 id="accountToolsTitle">Cuenta y datos</h2><button type="button" data-close class="icon-button" aria-label="Cerrar">✕</button></header>
     <form id="careerForm"><label for="accountCareer">Carrera</label><select id="accountCareer"><option>General</option><option>Medicina</option><option>Licenciatura en Finanzas</option></select><button class="button button--primary" type="submit">Guardar carrera</button></form>
-    <form id="passwordRecoveryForm" class="hidden"><label for="newAccountPassword">Nueva contraseña</label><input id="newAccountPassword" type="password" minlength="12" required autocomplete="new-password"><button class="button button--primary" type="submit">Guardar contraseña</button></form>
+    <form id="passwordRecoveryForm" class="hidden"><label for="newAccountPassword">Nueva contraseña</label><input id="newAccountPassword" type="password" minlength="6" required autocomplete="new-password"><button class="button button--primary" type="submit">Guardar contraseña</button></form>
     <h3>Importar datos anteriores</h3><p>Revisá los datos compartidos que quedaron en este dispositivo y elegí cuáles pertenecen a tu perfil. Los originales se conservarán. Los PIN y claves no se importan.</p>
     <form id="legacyImportForm"><div id="legacyImportPreview"></div><button class="button button--secondary" type="submit">Importar selección</button></form>
     <p id="accountToolsMessage" role="status"></p></div>`;

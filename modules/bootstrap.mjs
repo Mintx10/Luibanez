@@ -4,6 +4,6 @@ import { initializeSession } from './session.mjs';
 await initializeSession();
 const {setupCampus}=await import('./campus/app.mjs');
 setupCampus();
-await import('../script.js?v=31.1.1');
+await import('../script.js?v=31.1.2');
 
 registerPageEvents();

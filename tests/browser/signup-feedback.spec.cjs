@@ -12,7 +12,7 @@ test('invalid signup fields show a focused inline explanation without sending a 
  await mockAuth(page);await accountStep(page);const form=page.locator('#campusSignupForm'),status=page.locator('#campusSignupStatus');
  await form.locator('button[type=submit]').click();await expect(status).toContainText('nombre o apodo');await expect(status).toBeFocused();
  await form.locator('[name=apodo]').fill('Alumno');await form.locator('[name=username]').fill('usuario con espacios');await form.locator('button[type=submit]').click();await expect(status).toContainText('sin espacios ni tildes');
- await form.locator('[name=username]').fill('alumno_1');await form.locator('[name=password]').fill('corta');await form.locator('button[type=submit]').click();await expect(status).toContainText('al menos 12 caracteres');await expect(status).toBeFocused();await expect(form.locator('button[type=submit]')).toBeEnabled();expect(await page.evaluate(()=>window.__authCalls.filter(c=>c.name==='register').length)).toBe(0);
+ await form.locator('[name=username]').fill('alumno_1');await form.locator('[name=password]').fill('corta');await form.locator('button[type=submit]').click();await expect(status).toContainText('al menos 6 caracteres');await expect(status).toBeFocused();await expect(form.locator('button[type=submit]')).toBeEnabled();expect(await page.evaluate(()=>window.__authCalls.filter(c=>c.name==='register').length)).toBe(0);
  await form.locator('[name=password]').fill('UnaClaveSegura123!');await form.locator('button[type=submit]').click();await expect(status).toContainText('Guardá tu clave de recuperación');
 });
 test('server signup failure is visible beside submit, receives focus and permits retry',async({page})=>{

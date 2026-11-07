@@ -65,7 +65,7 @@ function renderAccount(){
  const form=el('form',{id:'campusSignupForm',class:'campus-stack',novalidate:true});
  const name=el('input',{name:'apodo',required:true,minlength:2,maxlength:80,autocomplete:'nickname'});
  const username=el('input',{name:'username',required:true,minlength:3,maxlength:30,pattern:'[A-Za-z0-9][A-Za-z0-9_]{2,29}',autocomplete:'username',autocapitalize:'none',spellcheck:'false'});
- const password=el('input',{name:'password',type:'password',required:true,minlength:12,autocomplete:'new-password'});
+ const password=el('input',{name:'password',type:'password',required:true,minlength:6,autocomplete:'new-password'});
  const recovery=el('input',{name:'recoveryKey',value:recoveryKey,readonly:true,autocomplete:'off',spellcheck:'false'});
  const saved=el('input',{name:'savedRecoveryKey',type:'checkbox',required:true});
  const download=button('Descargar mi clave de recuperación',()=>{
@@ -74,7 +74,7 @@ function renderAccount(){
  },true);
  status.id='campusSignupStatus';status.setAttribute('aria-atomic','true');
  const submit=el('button',{type:'submit',class:'campus-button'},'Crear mi perfil de alumno');
- const inputs=el('fieldset',{class:'campus-account-fields'},field('Tu nombre o apodo',name),field('Usuario · de 3 a 30 letras, números o guion bajo',username),field('Contraseña · al menos 12 caracteres',password),el('p',{class:'campus-muted'},'No necesitás correo. Guardá esta clave privada: permite recuperar tu cuenta si olvidás la contraseña. Si perdés ambas, no podremos recuperar el acceso.'),field('Tu clave de recuperación',recovery),download,el('label',{class:'campus-subject-option'},saved,el('span',{},'Guardé mi clave de recuperación en un lugar privado.')));
+ const inputs=el('fieldset',{class:'campus-account-fields'},field('Tu nombre o apodo',name),field('Usuario · de 3 a 30 letras, números o guion bajo',username),field('Contraseña · al menos 6 caracteres',password),el('p',{class:'campus-muted'},'No necesitás correo. Guardá esta clave privada: permite recuperar tu cuenta si olvidás la contraseña. Si perdés ambas, no podremos recuperar el acceso.'),field('Tu clave de recuperación',recovery),download,el('label',{class:'campus-subject-option'},saved,el('span',{},'Guardé mi clave de recuperación en un lugar privado.')));
  form.append(el('p',{class:'campus-muted'},`${getCareer(draft.career).name} · ${draft.subjects.size} materias elegidas. Guardá tu avance, organizá salas y retomá desde tus dispositivos.`),inputs,status,el('div',{class:'campus-form-actions'},button('← Materias',()=>{step=1;render();},true),submit));
  for(const input of [name,username,password,saved])input.setAttribute('aria-describedby',status.id);
  form.addEventListener('submit',async event=>{
@@ -83,7 +83,7 @@ function renderAccount(){
   for(const input of [name,username,password,saved])input.removeAttribute('aria-invalid');
   if(name.value.trim().length<2||name.value.trim().length>80){validation='Ingresá un nombre o apodo de 2 a 80 caracteres.';name.setAttribute('aria-invalid','true');}
   else if(!username.validity.valid){validation='Usá un usuario de 3 a 30 letras, números o guion bajo, sin espacios ni tildes.';username.setAttribute('aria-invalid','true');}
-  else if(password.value.length<12){validation='La contraseña debe tener al menos 12 caracteres.';password.setAttribute('aria-invalid','true');}
+  else if(password.value.length<6){validation='La contraseña debe tener al menos 6 caracteres.';password.setAttribute('aria-invalid','true');}
   else if(new TextEncoder().encode(password.value).length>72){validation='La contraseña supera los 72 bytes. Usá una más corta.';password.setAttribute('aria-invalid','true');}
   else if(!saved.checked){validation='Guardá tu clave de recuperación y marcá la confirmación antes de crear tu perfil.';saved.setAttribute('aria-invalid','true');}
   if(validation){showStatus(validation,true,true);return;}

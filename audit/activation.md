@@ -1,5 +1,9 @@
 # Activación real · 7 de noviembre de 2026
 
+Actualización de la misma sesión: **alta real, login, persistencia de sesión en una pestaña nueva y guardado de selección/progreso comprobados**. La base contiene el perfil de prueba, su carrera y materia elegidas y la lectura registrada de una unidad. Recuperación y salas reales siguen en comprobación.
+
+El propietario pidió quitar el mínimo de 12 caracteres. Supabase impone un piso de 6; se ajustaron el proveedor y todos los formularios/API a **6 caracteres**, sin afirmar que se admiten contraseñas más cortas. La revisión 31.1.2 conserva el límite máximo de 72 bytes sin truncar. [Límite en la implementación oficial](https://github.com/supabase/auth/blob/master/internal/conf/configuration.go).
+
 ## Aplicado y comprobado
 
 - Supabase existente: migraciones `student_campus`, `username_accounts` y `campus_cleanup_schedule` aplicadas, además de las cuatro anteriores. Los archivos locales se alinearon con los identificadores reales del historial remoto.
@@ -13,7 +17,7 @@
 
 ## Pendiente antes de publicar
 
-El desafío real de Turnstile necesita intervención humana en la pestaña visible de revisión. El primer intento venció sin crear cuenta; el formulario conservó los datos y mostró el error. El alta real, inicio, recuperación, aislamiento entre dos cuentas, salas y consumo de IA todavía no se declaran aprobados.
+El desafío real de Turnstile necesita intervención humana. El primer intento venció sin crear cuenta; el formulario conservó los datos y mostró el error. Alta y login se aprobaron después con Turnstile real. Recuperación, aislamiento entre dos cuentas, salas y consumo de IA todavía no se declaran aprobados.
 
 La revisión automática rechazó crear un despliegue con destino Production antes de estas pruebas reales. Se continuó con Preview y el backend limitado a su rama. La asignación automática de dominios se restauró inmediatamente; la página pública conserva v30.1.0. No se eludió el rechazo con otra ruta de publicación.
 
