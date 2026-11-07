@@ -35,6 +35,8 @@ test('production origins exclude local and malformed or wildcard origins',()=>{
  assert.equal(set.has('https://u:p@example.com'),false);
  assert.equal(set.has('https://allowed.example'),true);
  assert.equal(allowedOrigins({}).has('http://localhost:5500'),true);
+  const staged=allowedOrigins({VERCEL_ENV:'production',VERCEL_URL:'luibanez-staged-salmar10.vercel.app',VERCEL_BRANCH_URL:'other-preview.vercel.app'});
+  assert.equal(staged.has('https://luibanez-staged-salmar10.vercel.app'),true);assert.equal(staged.has('https://other-preview.vercel.app'),false);
 });
 test('authentication rejects malformed and oversized tokens before contacting Supabase',async()=>{
  let calls=0;const request=async()=>{calls++;throw Error('Must not call')};

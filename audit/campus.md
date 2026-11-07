@@ -26,7 +26,7 @@ La comprobación en el navegador de la Preview confirmó el inicio, las seis car
 
 ## Datos y seguridad
 
-La migración nueva es `supabase/migrations/20261106090000_student_campus.sql`; las migraciones anteriores no se modifican. Crea catálogo, selecciones, materias personales, progreso y asociaciones de documentos. Las tablas privadas del alumno admiten lectura propia con RLS y escritura mediante operaciones que validan `auth.uid()`, propiedad y pertenencia de materia a carrera.
+La migración nueva es `supabase/migrations/20261107083349_student_campus.sql`; las migraciones anteriores no se modifican. Crea catálogo, selecciones, materias personales, progreso y asociaciones de documentos. Las tablas privadas del alumno admiten lectura propia con RLS y escritura mediante operaciones que validan `auth.uid()`, propiedad y pertenencia de materia a carrera.
 
 `private.is_student()` consulta `auth.users`, correo confirmado e identidad no anónima. No utiliza nombres ni metadatos editables para conceder privilegios. Los RPC anteriores de documentos quedan protegidos sin cambiar sus contratos. Los invitados conservan puntuaciones de sala, pero un trigger impide resultados permanentes para identidades anónimas. La limpieza bloquea la identidad, vuelve a comprobar participación activa y conserva invitados de salas vigentes.
 

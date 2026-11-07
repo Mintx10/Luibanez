@@ -1,8 +1,8 @@
 "use strict";
 const CACHE_PREFIX = "luibanez-cache-";
-const CACHE_NAME = CACHE_PREFIX + "v31.1.0";
+const CACHE_NAME = CACHE_PREFIX + "v31.1.1";
 const STATIC_ASSETS = [
-  "./index.html", "./campus.css", "./catalog.json", "./campus-config.json","./modules/campus/app.mjs","./modules/campus/catalog.mjs","./modules/campus/dom.mjs","./modules/campus/store.mjs","./modules/campus/onboarding.mjs","./modules/campus/captcha.mjs","./modules/campus/account-recovery.mjs","./modules/campus/subject-view.mjs","./modules/campus/workbench.mjs","./modules/campus/content/pack.mjs","./modules/campus/content/subject.mjs", "./style.css?v=31.1.0", "./script.js?v=31.1.0",
+  "./index.html", "./campus.css", "./catalog.json", "./campus-config.json","./modules/campus/app.mjs","./modules/campus/catalog.mjs","./modules/campus/dom.mjs","./modules/campus/store.mjs","./modules/campus/onboarding.mjs","./modules/campus/captcha.mjs","./modules/campus/account-recovery.mjs","./modules/campus/subject-view.mjs","./modules/campus/workbench.mjs","./modules/campus/content/pack.mjs","./modules/campus/content/subject.mjs", "./style.css?v=31.1.1", "./script.js?v=31.1.1",
   "./modules/bootstrap.mjs", "./modules/page-events.mjs", "./modules/file-limits.mjs", "./modules/medical-data.mjs", "./modules/finance-generator.mjs", "./modules/finance-catalog.mjs", "./modules/results.mjs", "./modules/study-data.mjs", "./modules/database.mjs", "./modules/pwa.mjs", "./modules/finance-data.mjs", "./modules/math.mjs", "./modules/storage.mjs", "./modules/session.mjs", "./modules/ai-client.mjs",
   "./modules/cloud.mjs", "./modules/account-tools.mjs", "./modules/rooms.mjs", "./modules/online-game.mjs",
   "./modules/navigation.mjs", "./modules/pdf.mjs", "./modules/safe-html.mjs", "./vendor/dompurify.mjs", "./vendor/supabase.js", "./vendor/katex/katex.min.js", "./vendor/katex/katex.min.css", "./vendor/fontawesome/css/all.min.css", "./jszip.min.js", "./manifest.json", "./icon.svg", "./icon-192.png", "./icon-512.png"

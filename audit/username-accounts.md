@@ -22,7 +22,7 @@ El propietario pidió reemplazar el correo por usuario y contraseña el 7 de nov
 
 ## Estado de activación
 
-La revisión se publica en la rama `codex/campus-seis-carreras` y Vercel Preview. Producción conserva v30.1.0. Las migraciones nuevas `20261106090000_student_campus.sql` y `20261107065238_username_accounts.sql` están comprobadas en PostgreSQL aislado, **pendientes de aplicar al proyecto compartido** durante la activación. No se modificaron las migraciones previamente aplicadas ni se eliminaron datos.
+La revisión se publica en la rama `codex/campus-seis-carreras` y Vercel Preview. Producción conserva v30.1.0. Las migraciones nuevas `20261107083349_student_campus.sql` y `20261107083422_username_accounts.sql` están comprobadas en PostgreSQL aislado, **pendientes de aplicar al proyecto compartido** durante la activación. No se modificaron las migraciones previamente aplicadas ni se eliminaron datos.
 
 La consulta real al proyecto Supabase confirmó cero usuarios de Auth y cero perfiles de alumno antes de este cambio. Las tablas antiguas se conservan. Los asesores actuales señalan funciones SECURITY DEFINER deliberadamente públicas para alumnos y tablas cerradas sin políticas; no se amplían permisos para silenciar los avisos. [Referencia del asesor](https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable).
 
