@@ -3,6 +3,8 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { createHash } = require('node:crypto');
 const root = path.resolve(__dirname, '..');
+const version=JSON.parse(fs.readFileSync(path.join(root,'package.json'),'utf8')).version;
+if(JSON.parse(fs.readFileSync(path.join(root,'version.json'),'utf8')).version!==version||!fs.readFileSync(path.join(root,'script.js'),'utf8').includes(`const APP_BUILD_VERSION = "${version}"`))throw new Error('Application version mismatch');
 const output = path.resolve(root, 'dist');
 // Delete only this checkout's generated output; never pass a computed path to a shell.
 if (output !== path.join(root, 'dist') || !output.startsWith(root + path.sep)) throw new Error('Unsafe output directory');
